@@ -552,12 +552,12 @@ async function login(username, password, remember) {
 async function profileForAuthUser(authUser) {
   const {data, error} = await db.from("profiles").select("*").eq("id", authUser.id).single();
   if (error) return null;
-  return mergeRemoteProfile(data);
+  return mergeRemoteProfile(data, authUser.id);
 }
 
-function mergeRemoteProfile(profile) {
+function mergeRemoteProfile(profile, expectedAuthId = currentAuthUser?.id) {
   if (profile.is_hidden) {
-    if (profile.id !== currentAuthUser?.id) return null;
+    if (profile.id !== expectedAuthId) return null;
     return {
       id: Number(profile.legacy_id), authId: profile.id, username: profile.username,
       name: profile.display_name || "Administración", nickname: "Control total",
