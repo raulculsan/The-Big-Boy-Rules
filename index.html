@@ -228,10 +228,12 @@
           </div>
 
           <form class="message-form" id="messageForm">
-            <button type="button" class="attach-button">＋</button>
+            <button type="button" class="attach-button" id="attachMessageButton" aria-label="Adjuntar archivo">＋</button>
+            <input id="messageAttachment" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
             <input id="messageInput" type="text" placeholder="Escribe algo al grupo..." autocomplete="off" />
             <button class="send-button" type="submit">Enviar</button>
           </form>
+          <div class="attachment-preview" id="messageAttachmentPreview" hidden></div>
         </article>
 
         <aside class="panel online-panel">
@@ -261,10 +263,14 @@
     <section class="page-section" id="momentos">
       <div class="section-intro">
         <div>
-          <span class="eyebrow">ARCHIVO DEL GRUPO</span>
-          <h2>Momentos legendarios.</h2>
+          <span class="eyebrow">HISTORIAS DEL GRUPO</span>
+          <h2>Momentos de las últimas 24 horas.</h2>
         </div>
-        <p>Un mural preparado para añadir viajes, fiestas, memes internos y cualquier recuerdo del grupo.</p>
+        <p>Sube una foto o vídeo para compartirlo con el grupo. Como una historia, desaparecerá automáticamente en 24 horas.</p>
+      </div>
+      <div class="moments-toolbar">
+        <button class="primary-button" id="addMomentButton" type="button">＋ Subir momento</button>
+        <span id="momentsStatus" class="news-status" aria-live="polite"></span>
       </div>
       <div class="moments-grid reveal" id="momentsGrid"></div>
     </section>
@@ -338,10 +344,13 @@
       <form id="profileForm" class="profile-form">
         <div class="avatar-editor">
           <div class="avatar avatar-preview" id="avatarPreview">U</div>
-          <label class="secondary-button file-button">
-            Cambiar foto
-            <input id="profileAvatar" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-          </label>
+          <div class="avatar-actions">
+            <label class="secondary-button file-button">
+              Cambiar foto
+              <input id="profileAvatar" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            </label>
+            <button class="text-button danger-text" id="removeAvatarButton" type="button">Quitar foto</button>
+          </div>
           <small>JPG, PNG o WebP · máximo 3 MB</small>
         </div>
         <label>
@@ -365,6 +374,36 @@
         <div class="modal-actions">
           <button class="secondary-button" id="cancelProfileEditor" type="button">Cancelar</button>
           <button class="primary-button" type="submit">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="mediaUploader" aria-hidden="true">
+    <div class="profile-editor-modal media-uploader-modal" role="dialog" aria-modal="true" aria-labelledby="mediaUploaderTitle">
+      <div class="modal-heading">
+        <div>
+          <span class="eyebrow" id="mediaUploaderEyebrow">NUEVA PUBLICACIÓN</span>
+          <h2 id="mediaUploaderTitle">Compartir una foto</h2>
+        </div>
+        <button class="icon-button" id="closeMediaUploader" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="mediaUploadForm" class="profile-form">
+        <label class="media-dropzone" for="mediaUploadFile">
+          <span>＋</span>
+          <strong>Selecciona una foto o vídeo</strong>
+          <small id="mediaUploadHelp">JPG, PNG, WebP o MP4 · máximo 15 MB</small>
+          <input id="mediaUploadFile" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" hidden required>
+        </label>
+        <div class="media-upload-preview" id="mediaUploadPreview"></div>
+        <label>
+          <span>Texto (opcional)</span>
+          <textarea id="mediaUploadCaption" maxlength="300" rows="3" placeholder="Cuenta algo sobre este momento..."></textarea>
+        </label>
+        <div class="form-feedback" id="mediaUploadFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelMediaUploader" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Compartir</button>
         </div>
       </form>
     </div>

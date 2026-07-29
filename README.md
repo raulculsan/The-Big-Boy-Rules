@@ -1,8 +1,8 @@
 # The Big Boy Rules
 
-Comunidad privada preparada para GitHub Pages con perfiles editables, fotos de
-perfil, chat y presencia en tiempo real, y noticias actuales de España y el
-mundo.
+Comunidad privada preparada para GitHub Pages con perfiles editables y galería
+personal, historias de grupo de 24 horas, chat con adjuntos, presencia en tiempo
+real y noticias actuales de España y el mundo.
 
 ## Activar las funciones compartidas
 
@@ -36,7 +36,11 @@ Nunca copies la clave `service_role` en la web.
 
 - Cada sesión se autentica en Supabase y solo puede modificar su propio perfil.
 - Las fotos se guardan en el bucket público `avatars` con un límite de 3 MB.
-- Los mensajes se guardan en la base de datos y llegan en tiempo real.
+- El usuario puede quitar su avatar y volver a la inicial de su nombre.
+- Los adjuntos, historias y publicaciones se guardan en `group-media` (15 MB).
+- Los mensajes y sus adjuntos llegan en tiempo real.
+- Los momentos empiezan vacíos y caducan 24 horas después de publicarse.
+- Cada perfil muestra una galería pública propia tipo Instagram.
 - El contador usa presencia por WebSocket; no deduce usuarios a partir de
   mensajes ni muestra miembros desconectados como conectados.
 - Noticias obtiene titulares actuales mediante los feeds de Google News y abre
