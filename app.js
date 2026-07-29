@@ -54,7 +54,7 @@ let postChannel = null;
 let privateChannel = null;
 let eventChannel = null;
 let settingsChannel = null;
-let activeNewsCategory = "espana";
+let activeNewsCategory = "deportes";
 let pendingAvatarFile = null;
 let removeAvatarRequested = false;
 let pendingMessageFile = null;
@@ -993,7 +993,12 @@ async function loadNews(force = false) {
   }
   grid.innerHTML = "";
   status.textContent = "Cargando titulares desde fuentes reales…";
-  const feed = activeNewsCategory === "espana" ? config.news?.espanaFeed : config.news?.mundoFeed;
+  const feeds = {
+    deportes: config.news?.deportesFeed,
+    espana: config.news?.espanaFeed,
+    mundo: config.news?.mundoFeed
+  };
+  const feed = feeds[activeNewsCategory];
   if (!feed) {
     status.textContent = "No hay una fuente configurada para esta categoría.";
     return;
@@ -1004,10 +1009,10 @@ async function loadNews(force = false) {
     if (!response.ok) throw new Error("El servicio de noticias no responde.");
     const payload = await response.json();
     if (payload.status !== "ok" || !payload.items?.length) throw new Error(payload.message || "No se recibieron titulares.");
-    const items = payload.items.slice(0, 12).map(item => ({
+    const items = payload.items.map(item => ({
       title: item.title, link: item.link, published: item.pubDate,
       source: extractNewsSource(item.title), image: item.thumbnail || item.enclosure?.link || ""
-    }));
+    })).sort((a, b) => newsTimestamp(b.published) - newsTimestamp(a.published)).slice(0, 12);
     sessionStorage.setItem(cacheKey, JSON.stringify({savedAt: Date.now(), items, feedTitle: payload.feed?.title || "Google News"}));
     renderNews(items, payload.feed?.title || "Google News");
   } catch (error) {
@@ -1022,9 +1027,10 @@ function extractNewsSource(title) {
 }
 
 function renderNews(items, feedTitle) {
-  newsItems = items;
+  const sortedItems = [...items].sort((a, b) => newsTimestamp(b.published) - newsTimestamp(a.published));
+  newsItems = sortedItems;
   document.getElementById("newsStatus").textContent = `Actualizado ahora · Fuente agregada: ${feedTitle}`;
-  document.getElementById("newsGrid").innerHTML = items.map((item, index) => {
+  document.getElementById("newsGrid").innerHTML = sortedItems.map((item, index) => {
     const cleanTitle = item.title.replace(new RegExp(` - ${item.source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
     return `<article class="news-card ${index === 0 ? "featured" : ""}">
       <div class="news-card-meta"><span>${escapeHtml(item.source)}</span><time>${formatNewsDate(item.published)}</time></div>
@@ -1034,9 +1040,17 @@ function renderNews(items, feedTitle) {
   }).join("");
 }
 
+function newsTimestamp(value) {
+  if (!value) return 0;
+  const normalized = value.includes("T") ? value : value.replace(" ", "T");
+  const date = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(normalized) ? normalized : `${normalized}Z`);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
 function formatNewsDate(value) {
-  const date = new Date(value.replace(" ", "T") + "Z");
-  if (Number.isNaN(date.getTime())) return "Fecha no disponible";
+  const timestamp = newsTimestamp(value);
+  if (!timestamp) return "Fecha no disponible";
+  const date = new Date(timestamp);
   return date.toLocaleString("es-ES", {day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"});
 }
 
