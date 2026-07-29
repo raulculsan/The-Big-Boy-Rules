@@ -2191,6 +2191,47 @@ body:not(.authenticated) .site-footer {
   font-weight: 800;
 }
 
+.superadmin-tools {
+  display: none;
+  margin-bottom: 20px;
+  padding: 22px;
+}
+
+.superadmin-tools.visible {
+  display: block;
+}
+
+.admin-create-user-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 14px;
+  align-items: end;
+  margin-top: 20px;
+}
+
+.admin-create-user-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.admin-create-user-form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.text-button.danger {
+  color: #ff9292;
+}
+
 .admin-table-wrap {
   overflow-x: auto;
   margin-top: 24px;
@@ -2232,6 +2273,12 @@ body:not(.authenticated) .site-footer {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .admin-create-user-form {
+    grid-template-columns: 1fr;
+  }
 }
 
 .role-chip {
