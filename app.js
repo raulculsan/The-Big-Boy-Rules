@@ -45,6 +45,7 @@ let profilePosts = [];
 let privateMessages = [];
 let groupEvents = [];
 let newsItems = [];
+let siteSettings = {};
 let onlineUsers = [];
 let presenceChannel = null;
 let messageChannel = null;
@@ -52,6 +53,7 @@ let momentChannel = null;
 let postChannel = null;
 let privateChannel = null;
 let eventChannel = null;
+let settingsChannel = null;
 let activeNewsCategory = "espana";
 let pendingAvatarFile = null;
 let removeAvatarRequested = false;
@@ -174,7 +176,11 @@ function renderProfile(memberId) {
         <div class="profile-nickname">${escapeHtml(member.nickname.toUpperCase())}</div>
         <p>${escapeHtml(member.bio)}</p>
         <div class="profile-tags">${member.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
-        ${canEdit ? `<button class="primary-button edit-profile-button" id="editProfileButton">Editar mi perfil</button>` : ""}
+        <div class="profile-actions">
+          ${canEdit
+            ? `<button class="primary-button edit-profile-button" id="editProfileButton">Editar mi perfil</button>`
+            : `<button class="primary-button edit-profile-button" data-private-member="${member.id}">✉ Enviar mensaje</button>`}
+        </div>
       </div>
     </article>
     <section class="profile-feed">
@@ -190,6 +196,24 @@ function renderProfile(memberId) {
   document.getElementById("editProfileButton")?.addEventListener("click", openProfileEditor);
   document.getElementById("addProfilePostButton")?.addEventListener("click", () => openMediaUploader("post"));
   goTo("perfil");
+}
+
+function spotifyEmbedUrl(value = "") {
+  const match = value.trim().match(/(?:open\.spotify\.com\/playlist\/|spotify:playlist:)([A-Za-z0-9]+)/);
+  return match ? `https://open.spotify.com/embed/playlist/${match[1]}?utm_source=generator&theme=0` : "";
+}
+
+function renderSpotify() {
+  const url = siteSettings.spotify_playlist || "";
+  const embed = spotifyEmbedUrl(url);
+  const player = document.getElementById("spotifyPlayer");
+  if (embed) {
+    player.innerHTML = `<iframe src="${escapeHtml(embed)}" title="Playlist de The Big Boy Rules en Spotify" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+    document.getElementById("editSpotifyButton").textContent = "Cambiar playlist";
+  } else {
+    player.innerHTML = `<div class="empty-state"><strong>Todavía no hay una playlist vinculada</strong><span>Kike puede añadir un enlace público de Spotify.</span></div>`;
+    document.getElementById("editSpotifyButton").textContent = "Vincular playlist";
+  }
 }
 
 function renderMediaCard(item, canDelete, kind) {
@@ -468,7 +492,7 @@ async function applyUserInterface(user, authUser = null) {
   renderCalendar();
   if (backendReady && authUser) {
     await loadRemoteProfiles();
-    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadPrivateMessages(), loadGroupEvents()]);
+    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()]);
     connectRealtime();
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
@@ -600,6 +624,12 @@ async function loadGroupEvents() {
   renderCalendar();
 }
 
+async function loadSiteSettings() {
+  const {data, error} = await db.from("site_settings").select("key,value");
+  siteSettings = error ? {} : Object.fromEntries(data.map(item => [item.key, item.value]));
+  renderSpotify();
+}
+
 function connectRealtime() {
   if (presenceChannel) db.removeChannel(presenceChannel);
   if (messageChannel) db.removeChannel(messageChannel);
@@ -607,6 +637,8 @@ function connectRealtime() {
   if (postChannel) db.removeChannel(postChannel);
   if (privateChannel) db.removeChannel(privateChannel);
   if (eventChannel) db.removeChannel(eventChannel);
+  if (settingsChannel) db.removeChannel(settingsChannel);
+  if (settingsChannel) db.removeChannel(settingsChannel);
   presenceChannel = db.channel("big-boy-presence", {config: {presence: {key: currentAuthUser.id}}});
   presenceChannel
     .on("presence", {event: "sync"}, () => {
@@ -645,6 +677,9 @@ function connectRealtime() {
     .subscribe();
   eventChannel = db.channel("group-events-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "group_events"}, () => loadGroupEvents())
+    .subscribe();
+  settingsChannel = db.channel("site-settings-live")
+    .on("postgres_changes", {event: "*", schema: "public", table: "site_settings"}, () => loadSiteSettings())
     .subscribe();
 }
 
@@ -742,6 +777,47 @@ async function deleteEvent() {
   if (!error) {
     closeEventEditor();
     await loadGroupEvents();
+  }
+}
+
+function openSpotifyEditor() {
+  if (currentUser?.username !== "kike" || currentUser?.roleKey !== "admin") return;
+  document.getElementById("spotifyPlaylistUrl").value = siteSettings.spotify_playlist || "";
+  document.getElementById("spotifyFeedback").textContent = "";
+  const modal = document.getElementById("spotifyEditor");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeSpotifyEditor() {
+  const modal = document.getElementById("spotifyEditor");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function saveSpotifyPlaylist(value) {
+  const feedback = document.getElementById("spotifyFeedback");
+  if (!spotifyEmbedUrl(value)) {
+    feedback.textContent = "Pega un enlace válido de una playlist pública de Spotify.";
+    return;
+  }
+  feedback.textContent = "Guardando…";
+  const {error} = await db.from("site_settings").upsert({
+    key: "spotify_playlist", value: value.trim(), updated_by: currentAuthUser.id, updated_at: new Date().toISOString()
+  });
+  if (error) {
+    feedback.textContent = error.message || "No se pudo guardar la playlist.";
+    return;
+  }
+  closeSpotifyEditor();
+  await loadSiteSettings();
+}
+
+async function removeSpotifyPlaylist() {
+  const {error} = await db.from("site_settings").delete().eq("key", "spotify_playlist");
+  if (!error) {
+    closeSpotifyEditor();
+    await loadSiteSettings();
   }
 }
 
@@ -1210,6 +1286,7 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     closeGlobalSearch();
     closeEventEditor();
+    closeSpotifyEditor();
   }
 });
 document.getElementById("previousMonthButton").addEventListener("click", () => {
@@ -1231,6 +1308,17 @@ document.getElementById("eventForm").addEventListener("submit", event => {
   saveEvent(event.currentTarget);
 });
 document.getElementById("deleteEventButton").addEventListener("click", deleteEvent);
+document.getElementById("editSpotifyButton").addEventListener("click", openSpotifyEditor);
+document.getElementById("closeSpotifyEditor").addEventListener("click", closeSpotifyEditor);
+document.getElementById("cancelSpotifyEditor").addEventListener("click", closeSpotifyEditor);
+document.getElementById("spotifyEditor").addEventListener("click", event => {
+  if (event.target.id === "spotifyEditor") closeSpotifyEditor();
+});
+document.getElementById("spotifyForm").addEventListener("submit", event => {
+  event.preventDefault();
+  saveSpotifyPlaylist(document.getElementById("spotifyPlaylistUrl").value);
+});
+document.getElementById("removeSpotifyButton").addEventListener("click", removeSpotifyPlaylist);
 
 applyStoredProfiles();
 if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("light");
@@ -1244,6 +1332,7 @@ renderMoments();
 renderPrivateContacts();
 renderPrivateConversation();
 renderCalendar();
+renderSpotify();
 loadNews(false);
 
 (async function restoreSession() {
