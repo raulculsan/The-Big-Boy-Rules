@@ -1032,8 +1032,10 @@ function renderNews(items, feedTitle) {
   document.getElementById("newsStatus").textContent = `Actualizado ahora · Fuente agregada: ${feedTitle}`;
   document.getElementById("newsGrid").innerHTML = sortedItems.map((item, index) => {
     const cleanTitle = item.title.replace(new RegExp(` - ${item.source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
+    const publishedTimestamp = newsTimestamp(item.published);
+    const publishedDateTime = publishedTimestamp ? new Date(publishedTimestamp).toISOString() : "";
     return `<article class="news-card ${index === 0 ? "featured" : ""}">
-      <div class="news-card-meta"><span>${escapeHtml(item.source)}</span><time>${formatNewsDate(item.published)}</time></div>
+      <div class="news-card-meta"><span>${escapeHtml(item.source)}</span><time${publishedDateTime ? ` datetime="${publishedDateTime}"` : ""}>${formatNewsDate(item.published)}</time></div>
       <h3>${escapeHtml(cleanTitle)}</h3>
       <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Leer en la fuente →</a>
     </article>`;
