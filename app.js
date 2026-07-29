@@ -74,6 +74,14 @@ function normalizeUsername(value = "") {
     .replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
 }
 
+function isSuperAdmin() {
+  return currentUser?.roleKey === "superadmin" && currentUser?.hidden === true;
+}
+
+function canManageSite() {
+  return currentUser?.roleKey === "admin" || isSuperAdmin();
+}
+
 function getMember(id) {
   return members.find(member => member.id === Number(id));
 }
@@ -165,6 +173,7 @@ function renderProfile(memberId) {
   if (!member) return;
   activeProfileId = member.id;
   const canEdit = currentUser?.id === member.id;
+  const canDeletePosts = canEdit || isSuperAdmin();
   const posts = profilePosts.filter(post => post.member === member.id);
   document.getElementById("profileContent").innerHTML = `
     <article class="profile-hero">
@@ -189,7 +198,7 @@ function renderProfile(memberId) {
         ${canEdit ? `<button class="primary-button" id="addProfilePostButton" type="button">＋ Nueva publicación</button>` : ""}
       </div>
       <div class="profile-posts-grid">
-        ${posts.length ? posts.map(post => renderMediaCard(post, canEdit, "post")).join("") :
+        ${posts.length ? posts.map(post => renderMediaCard(post, canDeletePosts, "post")).join("") :
           `<div class="empty-state profile-empty"><strong>Aún no hay publicaciones</strong><span>${canEdit ? "Comparte tu primera foto para empezar tu perfil." : `${escapeHtml(member.name)} todavía no ha publicado fotos.`}</span></div>`}
       </div>
     </section>`;
@@ -211,7 +220,7 @@ function renderSpotify() {
     player.innerHTML = `<iframe src="${escapeHtml(embed)}" title="Playlist de The Big Boy Rules en Spotify" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
     document.getElementById("editSpotifyButton").textContent = "Cambiar playlist";
   } else {
-    player.innerHTML = `<div class="empty-state"><strong>Todavía no hay una playlist vinculada</strong><span>Kike puede añadir un enlace público de Spotify.</span></div>`;
+    player.innerHTML = `<div class="empty-state"><strong>Todavía no hay una playlist vinculada</strong><span>La administración puede añadir un enlace público de Spotify.</span></div>`;
     document.getElementById("editSpotifyButton").textContent = "Vincular playlist";
   }
 }
@@ -239,7 +248,7 @@ function renderMessages() {
     setChatEnabled(false);
     return;
   }
-  setChatEnabled(Boolean(currentUser));
+  setChatEnabled(Boolean(currentUser) && !isSuperAdmin());
   if (!messages.length) {
     container.innerHTML = `<div class="empty-state"><strong>Aún no hay mensajes</strong><span>Sé la primera persona en escribir al grupo.</span></div>`;
     return;
@@ -252,7 +261,8 @@ function renderMessages() {
       <div><div class="message-head">
         <button class="message-author" data-profile="${message.member}">${escapeHtml(member?.name || "Miembro")}</button>
         <time datetime="${escapeHtml(message.createdAt)}">${formatMessageDate(message.createdAt)}</time>
-      </div>${message.text ? `<p>${escapeHtml(message.text)}</p>` : ""}${attachment}</div>
+      </div>${message.text ? `<p>${escapeHtml(message.text)}</p>` : ""}${attachment}
+      ${isSuperAdmin() ? `<button class="delete-media-button" data-delete-message="${message.id}" type="button">Eliminar mensaje</button>` : ""}</div>
     </div>`;
   }).join("");
   container.scrollTop = container.scrollHeight;
@@ -304,7 +314,7 @@ function renderMoments() {
     grid.innerHTML = `<div class="empty-state moments-empty"><strong>Todavía no hay momentos</strong><span>Sé la primera persona en compartir una historia con el grupo.</span></div>`;
     return;
   }
-  grid.innerHTML = moments.map(item => renderMediaCard(item, item.userId === currentAuthUser?.id, "moment")).join("");
+  grid.innerHTML = moments.map(item => renderMediaCard(item, item.userId === currentAuthUser?.id || isSuperAdmin(), "moment")).join("");
 }
 
 function renderPrivateContacts() {
@@ -386,7 +396,7 @@ function renderCalendar() {
       <time>${formatEventDate(event.startsAt)}</time><h4>${escapeHtml(event.title)}</h4>
       ${event.location ? `<p>⌖ ${escapeHtml(event.location)}</p>` : ""}
       ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
-      ${currentUser?.username === "kike" && currentUser?.roleKey === "admin" ? `<button class="text-button" data-event-id="${event.id}">Editar</button>` : ""}
+      ${canManageSite() ? `<button class="text-button" data-event-id="${event.id}">Editar</button>` : ""}
     </article>`).join("") : `<div class="empty-state compact">No hay eventos este mes.</div>`;
 }
 
@@ -432,16 +442,23 @@ function performSearch(query) {
 function renderAdminPanel() {
   const summary = document.getElementById("adminSummary");
   const table = document.getElementById("adminUsersTable");
-  if (!summary || !table || currentUser?.roleKey !== "admin") return;
+  const tools = document.getElementById("superAdminTools");
+  tools?.classList.toggle("visible", isSuperAdmin());
+  if (!summary || !table) return;
+  if (!canManageSite()) {
+    summary.innerHTML = "";
+    table.innerHTML = "";
+    return;
+  }
   summary.innerHTML = `
     <div class="admin-stat-card"><span>USUARIOS</span><strong>${members.length}</strong><small>cuentas registradas</small></div>
-    <div class="admin-stat-card"><span>ADMINISTRADORES</span><strong>${members.filter(item => item.roleKey === "admin").length}</strong><small>con acceso total</small></div>
+    <div class="admin-stat-card"><span>ADMINISTRADORES</span><strong>${members.filter(item => item.roleKey === "admin").length}</strong><small>visibles en el club</small></div>
     <div class="admin-stat-card"><span>EN LÍNEA</span><strong>${onlineUsers.length}</strong><small>presencia real ahora</small></div>`;
   table.innerHTML = members.map(user => `
     <tr><td><code>@${user.username}</code></td><td><div class="table-user">${getAvatar(user, "avatar small")}<strong>${escapeHtml(user.name)}</strong></div></td>
     <td><span class="role-chip ${user.roleKey}">${user.roleKey === "admin" ? "Administrador" : "Miembro"}</span></td>
     <td><span class="account-status ${onlineUsers.some(item => Number(item.legacy_id) === user.id) ? "" : "offline"}"><i></i>${onlineUsers.some(item => Number(item.legacy_id) === user.id) ? "En línea" : "Desconectado"}</span></td>
-    <td>—</td></tr>`).join("");
+    <td>—</td><td>${isSuperAdmin() && user.authId ? `<button class="text-button danger" type="button" data-delete-user="${user.authId}" data-delete-user-name="${escapeHtml(user.name)}">Eliminar</button>` : "—"}</td></tr>`).join("");
 }
 
 function refreshProfileSurfaces() {
@@ -462,8 +479,8 @@ function applyUserHeader(user) {
   });
   document.getElementById("sidebarUserName").textContent = user.name;
   document.getElementById("topbarUserName").textContent = user.name;
-  document.getElementById("sidebarUserRole").textContent = user.roleKey === "admin" ? "Administrador" : "Miembro";
-  document.querySelectorAll(".admin-only").forEach(node => node.style.display = user.roleKey === "admin" ? "" : "none");
+  document.getElementById("sidebarUserRole").textContent = isSuperAdmin() ? "Control total" : user.roleKey === "admin" ? "Administrador" : "Miembro";
+  document.querySelectorAll(".admin-only").forEach(node => node.style.display = canManageSite() ? "" : "none");
 }
 
 function getStoredSession() {
@@ -539,8 +556,26 @@ async function profileForAuthUser(authUser) {
 }
 
 function mergeRemoteProfile(profile) {
-  const member = getMember(profile.legacy_id);
-  if (!member) return null;
+  if (profile.is_hidden) {
+    if (profile.id !== currentAuthUser?.id) return null;
+    return {
+      id: Number(profile.legacy_id), authId: profile.id, username: profile.username,
+      name: profile.display_name || "Administración", nickname: "Control total",
+      roleKey: profile.role, role: "CONTROL TOTAL", bio: "", tags: [], avatarUrl: "",
+      bg: "linear-gradient(145deg, #4a3210, #0c0c0e 68%)", hidden: true
+    };
+  }
+  let member = getMember(profile.legacy_id);
+  if (!member) {
+    member = {
+      id: Number(profile.legacy_id), username: profile.username, password: "",
+      name: profile.display_name || profile.username, nickname: profile.nickname || "The Big Boy",
+      roleKey: profile.role, role: profile.role === "admin" ? "ADMINISTRADOR" : "MIEMBRO",
+      bio: profile.bio || "", tags: Array.isArray(profile.tags) ? profile.tags : [],
+      avatarUrl: "", bg: "linear-gradient(145deg, #262018, #0c0c0e 68%)"
+    };
+    members.push(member);
+  }
   Object.assign(member, {
     authId: profile.id,
     name: profile.display_name || member.name,
@@ -556,7 +591,7 @@ async function loadRemoteProfiles() {
   const {data, error} = await db.from("profiles").select("*").order("legacy_id");
   if (error) return;
   data.forEach(mergeRemoteProfile);
-  currentUser = getMember(currentUser.id);
+  if (!currentUser.hidden) currentUser = getMember(currentUser.id);
   refreshProfileSurfaces();
 }
 
@@ -653,12 +688,14 @@ function connectRealtime() {
     })
     .subscribe(async status => {
       if (status === "SUBSCRIBED") {
-        await presenceChannel.track({
-          user_id: currentAuthUser.id,
-          legacy_id: currentUser.id,
-          name: currentUser.name,
-          online_at: new Date().toISOString()
-        });
+        if (!isSuperAdmin()) {
+          await presenceChannel.track({
+            user_id: currentAuthUser.id,
+            legacy_id: currentUser.id,
+            name: currentUser.name,
+            online_at: new Date().toISOString()
+          });
+        }
       }
     });
   messageChannel = db.channel("messages-live")
@@ -724,7 +761,7 @@ function toLocalDateTime(value) {
 }
 
 function openEventEditor(eventId = null) {
-  if (currentUser?.username !== "kike" || currentUser?.roleKey !== "admin") return;
+  if (!canManageSite()) return;
   const event = groupEvents.find(item => String(item.id) === String(eventId));
   document.getElementById("eventEditorTitle").textContent = event ? "Editar evento" : "Nuevo evento";
   document.getElementById("eventId").value = event?.id || "";
@@ -775,7 +812,7 @@ async function saveEvent(form) {
 
 async function deleteEvent() {
   const id = document.getElementById("eventId").value;
-  if (!id || currentUser?.username !== "kike") return;
+  if (!id || !canManageSite()) return;
   const {error} = await db.from("group_events").delete().eq("id", id);
   if (!error) {
     closeEventEditor();
@@ -784,7 +821,7 @@ async function deleteEvent() {
 }
 
 function openSpotifyEditor() {
-  if (currentUser?.username !== "kike" || currentUser?.roleKey !== "admin") return;
+  if (!canManageSite()) return;
   document.getElementById("spotifyPlaylistUrl").value = siteSettings.spotify_playlist || "";
   document.getElementById("spotifyFeedback").textContent = "";
   const modal = document.getElementById("spotifyEditor");
@@ -965,11 +1002,60 @@ async function deleteMedia(kind, id) {
   const table = kind === "moment" ? "moments" : "profile_posts";
   const collection = kind === "moment" ? moments : profilePosts;
   const item = collection.find(entry => String(entry.id) === String(id));
-  if (!item || item.userId !== currentAuthUser.id) return;
-  const {error} = await db.from(table).delete().eq("id", item.id).eq("user_id", currentAuthUser.id);
+  if (!item || (item.userId !== currentAuthUser.id && !isSuperAdmin())) return;
+  let query = db.from(table).delete().eq("id", item.id);
+  if (!isSuperAdmin()) query = query.eq("user_id", currentAuthUser.id);
+  const {error} = await query;
   if (error) return;
   if (kind === "moment") await loadMoments();
   else await loadProfilePosts();
+}
+
+async function deleteGroupMessage(id) {
+  if (!isSuperAdmin() || !backendReady) return;
+  const {error} = await db.from("messages").delete().eq("id", id);
+  if (!error) await loadMessages();
+}
+
+async function invokeUserAdmin(action, values) {
+  if (!isSuperAdmin() || !db) throw new Error("No tienes permiso para administrar cuentas.");
+  const {data, error} = await db.functions.invoke("admin-users", {body: {action, ...values}});
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+async function createClubUser(form) {
+  const feedback = document.getElementById("createUserFeedback");
+  const submit = form.querySelector("[type=submit]");
+  submit.disabled = true;
+  feedback.textContent = "Creando cuenta…";
+  try {
+    await invokeUserAdmin("create", {
+      username: document.getElementById("newUsername").value,
+      displayName: document.getElementById("newDisplayName").value,
+      password: document.getElementById("newUserPassword").value
+    });
+    form.reset();
+    feedback.textContent = "Usuario creado correctamente.";
+    await loadRemoteProfiles();
+  } catch (error) {
+    feedback.textContent = error.message || "No se pudo crear el usuario.";
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+async function deleteClubUser(authId, name) {
+  if (!isSuperAdmin() || !authId) return;
+  if (!window.confirm(`¿Eliminar definitivamente la cuenta de ${name}?`)) return;
+  try {
+    await invokeUserAdmin("delete", {userId: authId});
+    members = members.filter(member => member.authId !== authId);
+    await loadRemoteProfiles();
+  } catch (error) {
+    window.alert(error.message || "No se pudo eliminar la cuenta.");
+  }
 }
 
 function fileToDataUrl(file) {
@@ -1093,6 +1179,10 @@ document.addEventListener("click", event => {
   if (deleteMoment) deleteMedia("moment", deleteMoment.dataset.deleteMoment);
   const deletePost = event.target.closest("[data-delete-post]");
   if (deletePost) deleteMedia("post", deletePost.dataset.deletePost);
+  const deleteMessage = event.target.closest("[data-delete-message]");
+  if (deleteMessage) deleteGroupMessage(deleteMessage.dataset.deleteMessage);
+  const deleteUser = event.target.closest("[data-delete-user]");
+  if (deleteUser) deleteClubUser(deleteUser.dataset.deleteUser, deleteUser.dataset.deleteUserName);
   const privateTarget = event.target.closest("[data-private-member]");
   if (privateTarget) openPrivateConversation(privateTarget.dataset.privateMember);
   const eventTarget = event.target.closest("[data-event-id]");
@@ -1138,7 +1228,10 @@ document.getElementById("userMenuButton").addEventListener("click", event => {
   document.getElementById("userDropdown").classList.toggle("open");
 });
 document.addEventListener("click", () => document.getElementById("userDropdown")?.classList.remove("open"));
-document.getElementById("myProfileButton").addEventListener("click", () => currentUser && renderProfile(currentUser.id));
+document.getElementById("myProfileButton").addEventListener("click", () => {
+  if (isSuperAdmin()) goTo("administracion");
+  else if (currentUser) renderProfile(currentUser.id);
+});
 document.getElementById("logoutButton").addEventListener("click", async () => {
   if (db) await db.auth.signOut();
   localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -1327,6 +1420,10 @@ document.getElementById("eventForm").addEventListener("submit", event => {
   saveEvent(event.currentTarget);
 });
 document.getElementById("deleteEventButton").addEventListener("click", deleteEvent);
+document.getElementById("createUserForm")?.addEventListener("submit", event => {
+  event.preventDefault();
+  createClubUser(event.currentTarget);
+});
 document.getElementById("editSpotifyButton").addEventListener("click", openSpotifyEditor);
 document.getElementById("closeSpotifyEditor").addEventListener("click", closeSpotifyEditor);
 document.getElementById("cancelSpotifyEditor").addEventListener("click", closeSpotifyEditor);
