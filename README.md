@@ -43,14 +43,19 @@ Nunca copies la clave `service_role` en la web.
 - Cada perfil muestra una galería pública propia tipo Instagram.
 - Los mensajes privados solo son visibles para el remitente y el destinatario.
 - Todos pueden consultar el calendario, pero las políticas de Supabase reservan
-  la creación, edición y eliminación de eventos a la cuenta `kike`.
+  la creación, edición y eliminación de eventos a la administración.
+- La cuenta de control total queda fuera de miembros, búsqueda, presencia y
+  actividad. Su contraseña existe únicamente en Supabase Auth y nunca debe
+  escribirse en el repositorio.
+- La función Edge `admin-users` permite que esa cuenta cree y elimine usuarios
+  sin exponer la clave `service_role` en el navegador.
 - La búsqueda superior encuentra miembros, mensajes, publicaciones, eventos y
   titulares ya cargados.
 - Noticias abre por Deportes (principalmente fútbol) y ordena siempre los
   titulares desde el más reciente al más antiguo.
 - Los perfiles ajenos incluyen acceso directo a la conversación privada.
-- Kike puede vincular o cambiar desde Inicio la playlist pública de Spotify del
-  grupo; el resto de miembros ve el reproductor integrado.
+- La administración puede vincular o cambiar desde Inicio la playlist pública
+  de Spotify del grupo; el resto de miembros ve el reproductor integrado.
 - El contador usa presencia por WebSocket; no deduce usuarios a partir de
   mensajes ni muestra miembros desconectados como conectados.
 - Noticias obtiene titulares actuales mediante los feeds de Google News y abre
