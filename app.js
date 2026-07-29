@@ -24,15 +24,6 @@ let members = baseMembers.map((item, index) => ({
   bg: `linear-gradient(145deg, ${item[6]}, #0c0c0e 68%)`
 }));
 
-const moments = [
-  ["Noche de inauguración", "Donde empezó todo.", "linear-gradient(145deg,#4a2d10,#111)"],
-  ["El viaje improvisado", "24 horas. Cero planificación.", "linear-gradient(145deg,#17334a,#111)"],
-  ["La foto oficial", "Los miembros, una sola regla.", "linear-gradient(145deg,#353535,#111)"],
-  ["Plan de domingo", "Terminó siendo lunes.", "linear-gradient(145deg,#44202f,#111)"],
-  ["Entrada del nuevo miembro", "La ceremonia Big Boy.", "linear-gradient(145deg,#3d3212,#111)"],
-  ["Archivo de memes", "Material altamente clasificado.", "linear-gradient(145deg,#18342a,#111)"]
-];
-
 const config = window.BIG_BOY_CONFIG || {};
 const backendReady = Boolean(config.supabaseUrl && config.supabasePublishableKey && window.supabase);
 const db = backendReady
@@ -49,11 +40,19 @@ const sidebar = document.getElementById("sidebar");
 let currentUser = null;
 let currentAuthUser = null;
 let messages = [];
+let moments = [];
+let profilePosts = [];
 let onlineUsers = [];
 let presenceChannel = null;
 let messageChannel = null;
+let momentChannel = null;
+let postChannel = null;
 let activeNewsCategory = "espana";
 let pendingAvatarFile = null;
+let removeAvatarRequested = false;
+let pendingMessageFile = null;
+let mediaUploadMode = "post";
+let activeProfileId = null;
 
 function escapeHtml(value = "") {
   const node = document.createElement("div");
@@ -150,7 +149,9 @@ function renderMembers() {
 function renderProfile(memberId) {
   const member = getMember(memberId);
   if (!member) return;
+  activeProfileId = member.id;
   const canEdit = currentUser?.id === member.id;
+  const posts = profilePosts.filter(post => post.member === member.id);
   document.getElementById("profileContent").innerHTML = `
     <article class="profile-hero">
       <div class="profile-visual ${member.avatarUrl ? "has-photo" : ""}"
@@ -163,9 +164,36 @@ function renderProfile(memberId) {
         <div class="profile-tags">${member.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
         ${canEdit ? `<button class="primary-button edit-profile-button" id="editProfileButton">Editar mi perfil</button>` : ""}
       </div>
-    </article>`;
+    </article>
+    <section class="profile-feed">
+      <div class="profile-feed-heading">
+        <div><span class="eyebrow">PUBLICACIONES</span><h3>${posts.length} ${posts.length === 1 ? "publicación" : "publicaciones"}</h3></div>
+        ${canEdit ? `<button class="primary-button" id="addProfilePostButton" type="button">＋ Nueva publicación</button>` : ""}
+      </div>
+      <div class="profile-posts-grid">
+        ${posts.length ? posts.map(post => renderMediaCard(post, canEdit, "post")).join("") :
+          `<div class="empty-state profile-empty"><strong>Aún no hay publicaciones</strong><span>${canEdit ? "Comparte tu primera foto para empezar tu perfil." : `${escapeHtml(member.name)} todavía no ha publicado fotos.`}</span></div>`}
+      </div>
+    </section>`;
   document.getElementById("editProfileButton")?.addEventListener("click", openProfileEditor);
+  document.getElementById("addProfilePostButton")?.addEventListener("click", () => openMediaUploader("post"));
   goTo("perfil");
+}
+
+function renderMediaCard(item, canDelete, kind) {
+  const member = getMember(item.member);
+  const media = item.mediaType === "video"
+    ? `<video src="${escapeHtml(item.mediaUrl)}" controls preload="metadata"></video>`
+    : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy">`;
+  return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}">
+    <div class="media-frame">${media}</div>
+    <div class="media-card-info">
+      ${kind === "moment" ? `<button class="media-author" data-profile="${item.member}">${getAvatar(member, "avatar tiny")}<strong>${escapeHtml(member?.name || "Miembro")}</strong></button>` : ""}
+      ${item.caption ? `<p>${escapeHtml(item.caption)}</p>` : ""}
+      <time datetime="${escapeHtml(item.createdAt)}">${kind === "moment" ? `Caduca ${formatExpiry(item.expiresAt)}` : formatRelativeTime(item.createdAt)}</time>
+      ${canDelete ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button">Eliminar</button>` : ""}
+    </div>
+  </article>`;
 }
 
 function renderMessages() {
@@ -182,12 +210,13 @@ function renderMessages() {
   }
   container.innerHTML = messages.map(message => {
     const member = getMember(message.member);
+    const attachment = message.attachmentUrl ? renderMessageAttachment(message) : "";
     return `<div class="message">
       ${getAvatar(member)}
       <div><div class="message-head">
-        <strong>${escapeHtml(member?.name || "Miembro")}</strong>
+        <button class="message-author" data-profile="${message.member}">${escapeHtml(member?.name || "Miembro")}</button>
         <time datetime="${escapeHtml(message.createdAt)}">${formatMessageDate(message.createdAt)}</time>
-      </div><p>${escapeHtml(message.text)}</p></div>
+      </div>${message.text ? `<p>${escapeHtml(message.text)}</p>` : ""}${attachment}</div>
     </div>`;
   }).join("");
   container.scrollTop = container.scrollHeight;
@@ -196,8 +225,10 @@ function renderMessages() {
 function setChatEnabled(enabled) {
   const input = document.getElementById("messageInput");
   const button = document.querySelector(".message-form .send-button");
+  const attach = document.getElementById("attachMessageButton");
   input.disabled = !enabled;
   button.disabled = !enabled;
+  attach.disabled = !enabled;
   input.placeholder = enabled ? "Escribe algo al grupo..." : "El chat necesita la conexión compartida";
 }
 
@@ -220,9 +251,24 @@ function renderPresence() {
   }).join("");
 }
 
+function renderMessageAttachment(message) {
+  if (message.attachmentType?.startsWith("image/")) {
+    return `<a class="message-image" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(message.attachmentUrl)}" alt="${escapeHtml(message.attachmentName || "Imagen adjunta")}" loading="lazy"></a>`;
+  }
+  return `<a class="message-file" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener" download>
+    <span>↧</span><div><strong>${escapeHtml(message.attachmentName || "Archivo adjunto")}</strong><small>${formatFileSize(message.attachmentSize)}</small></div>
+  </a>`;
+}
+
 function renderMoments() {
-  document.getElementById("momentsGrid").innerHTML = moments.map(([title, text, bg]) => `
-    <article class="moment-card" style="--moment-bg:${bg}"><div><h3>${title}</h3><p>${text}</p></div></article>`).join("");
+  const grid = document.getElementById("momentsGrid");
+  const status = document.getElementById("momentsStatus");
+  status.textContent = moments.length ? `${moments.length} ${moments.length === 1 ? "historia activa" : "historias activas"}` : "";
+  if (!moments.length) {
+    grid.innerHTML = `<div class="empty-state moments-empty"><strong>Todavía no hay momentos</strong><span>Sé la primera persona en compartir una historia con el grupo.</span></div>`;
+    return;
+  }
+  grid.innerHTML = moments.map(item => renderMediaCard(item, item.userId === currentAuthUser?.id, "moment")).join("");
 }
 
 function renderAdminPanel() {
@@ -288,7 +334,7 @@ async function applyUserInterface(user, authUser = null) {
   refreshProfileSurfaces();
   if (backendReady && authUser) {
     await loadRemoteProfiles();
-    await loadMessages();
+    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts()]);
     connectRealtime();
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
@@ -354,19 +400,58 @@ async function loadRemoteProfiles() {
 }
 
 async function loadMessages() {
-  const {data, error} = await db.from("messages").select("id,user_id,legacy_id,body,created_at").order("created_at").limit(200);
+  const {data, error} = await db.from("messages")
+    .select("id,user_id,legacy_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at")
+    .order("created_at").limit(200);
   if (error) {
     document.getElementById("messages").innerHTML = `<div class="empty-state"><strong>No se pudo cargar el chat</strong><span>${escapeHtml(error.message)}</span></div>`;
     return;
   }
-  messages = data.map(item => ({id: item.id, userId: item.user_id, member: item.legacy_id, text: item.body, createdAt: item.created_at}));
+  messages = data.map(mapMessage);
   renderMessages();
   renderActivity();
+}
+
+function mapMessage(item) {
+  return {
+    id: item.id, userId: item.user_id, member: item.legacy_id, text: item.body,
+    attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
+    attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
+    createdAt: item.created_at
+  };
+}
+
+function mapMedia(item) {
+  return {
+    id: item.id, userId: item.user_id, member: item.legacy_id, caption: item.caption,
+    mediaUrl: item.media_url, mediaType: item.media_type, createdAt: item.created_at,
+    expiresAt: item.expires_at
+  };
+}
+
+async function loadMoments() {
+  const {data, error} = await db.from("moments").select("*")
+    .gt("expires_at", new Date().toISOString()).order("created_at", {ascending: false});
+  if (error) {
+    document.getElementById("momentsStatus").textContent = "No se pudieron cargar las historias.";
+    moments = [];
+  } else {
+    moments = data.map(mapMedia);
+  }
+  renderMoments();
+}
+
+async function loadProfilePosts() {
+  const {data, error} = await db.from("profile_posts").select("*").order("created_at", {ascending: false});
+  profilePosts = error ? [] : data.map(mapMedia);
+  if (activeProfileId) renderProfile(activeProfileId);
 }
 
 function connectRealtime() {
   if (presenceChannel) db.removeChannel(presenceChannel);
   if (messageChannel) db.removeChannel(messageChannel);
+  if (momentChannel) db.removeChannel(momentChannel);
+  if (postChannel) db.removeChannel(postChannel);
   presenceChannel = db.channel("big-boy-presence", {config: {presence: {key: currentAuthUser.id}}});
   presenceChannel
     .on("presence", {event: "sync"}, () => {
@@ -390,16 +475,35 @@ function connectRealtime() {
     .on("postgres_changes", {event: "INSERT", schema: "public", table: "messages"}, payload => {
       const item = payload.new;
       if (messages.some(message => message.id === item.id)) return;
-      messages.push({id: item.id, userId: item.user_id, member: item.legacy_id, text: item.body, createdAt: item.created_at});
+      messages.push(mapMessage(item));
       renderMessages();
       renderActivity();
     }).subscribe();
+  momentChannel = db.channel("moments-live")
+    .on("postgres_changes", {event: "*", schema: "public", table: "moments"}, () => loadMoments())
+    .subscribe();
+  postChannel = db.channel("profile-posts-live")
+    .on("postgres_changes", {event: "*", schema: "public", table: "profile_posts"}, () => loadProfilePosts())
+    .subscribe();
 }
 
-async function sendMessage(text) {
+async function uploadGroupMedia(file, folder) {
+  if (file.size > 15 * 1024 * 1024) throw new Error("El archivo supera el máximo de 15 MB.");
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+  const path = `${currentAuthUser.id}/${folder}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
+  const {error} = await db.storage.from("group-media").upload(path, file, {contentType: file.type || "application/octet-stream"});
+  if (error) throw error;
+  return db.storage.from("group-media").getPublicUrl(path).data.publicUrl;
+}
+
+async function sendMessage(text, file = null) {
   if (!db || !currentAuthUser) return;
+  let attachmentUrl = null;
+  if (file) attachmentUrl = await uploadGroupMedia(file, "chat");
   const {error} = await db.from("messages").insert({
-    user_id: currentAuthUser.id, legacy_id: currentUser.id, body: text
+    user_id: currentAuthUser.id, legacy_id: currentUser.id, body: text,
+    attachment_url: attachmentUrl, attachment_name: file?.name || null,
+    attachment_type: file?.type || null, attachment_size: file?.size || null
   });
   if (error) throw error;
 }
@@ -407,6 +511,8 @@ async function sendMessage(text) {
 function openProfileEditor() {
   if (!currentUser) return;
   pendingAvatarFile = null;
+  removeAvatarRequested = false;
+  document.getElementById("profileAvatar").value = "";
   document.getElementById("profileName").value = currentUser.name;
   document.getElementById("profileNickname").value = currentUser.nickname;
   document.getElementById("profileBio").value = currentUser.bio;
@@ -434,7 +540,15 @@ async function saveProfile(form) {
   feedback.textContent = "Guardando…";
   try {
     let avatarUrl = currentUser.avatarUrl;
-    if (pendingAvatarFile) {
+    if (removeAvatarRequested) {
+      if (backendReady && currentAuthUser) {
+        const {data} = await db.storage.from("avatars").list(currentAuthUser.id);
+        if (data?.length) {
+          await db.storage.from("avatars").remove(data.map(item => `${currentAuthUser.id}/${item.name}`));
+        }
+      }
+      avatarUrl = "";
+    } else if (pendingAvatarFile) {
       if (pendingAvatarFile.size > 3 * 1024 * 1024) throw new Error("La imagen supera el máximo de 3 MB.");
       if (backendReady) {
         const extension = pendingAvatarFile.name.split(".").pop().toLowerCase();
@@ -470,6 +584,76 @@ async function saveProfile(form) {
   } finally {
     submit.disabled = false;
   }
+}
+
+function openMediaUploader(mode) {
+  if (!currentUser) return;
+  mediaUploadMode = mode;
+  const isMoment = mode === "moment";
+  document.getElementById("mediaUploaderEyebrow").textContent = isMoment ? "NUEVO MOMENTO" : "NUEVA PUBLICACIÓN";
+  document.getElementById("mediaUploaderTitle").textContent = isMoment ? "Compartir una historia" : "Compartir en mi perfil";
+  document.getElementById("mediaUploadHelp").textContent = isMoment
+    ? "La historia desaparecerá en 24 horas · máximo 15 MB"
+    : "Se mostrará de forma permanente en tu perfil · máximo 15 MB";
+  document.getElementById("mediaUploadFile").value = "";
+  document.getElementById("mediaUploadCaption").value = "";
+  document.getElementById("mediaUploadPreview").innerHTML = "";
+  document.getElementById("mediaUploadFeedback").textContent = "";
+  const modal = document.getElementById("mediaUploader");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeMediaUploader() {
+  const modal = document.getElementById("mediaUploader");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function publishMedia(form) {
+  const file = document.getElementById("mediaUploadFile").files[0];
+  const feedback = document.getElementById("mediaUploadFeedback");
+  const submit = form.querySelector("[type=submit]");
+  if (!file) return;
+  submit.disabled = true;
+  feedback.textContent = "Subiendo…";
+  try {
+    if (!backendReady || !currentAuthUser) throw new Error("Necesitas la conexión compartida para publicar.");
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) throw new Error("Selecciona una imagen o vídeo compatible.");
+    const mediaUrl = await uploadGroupMedia(file, mediaUploadMode === "moment" ? "moments" : "posts");
+    const record = {
+      user_id: currentAuthUser.id, legacy_id: currentUser.id,
+      caption: document.getElementById("mediaUploadCaption").value.trim(),
+      media_url: mediaUrl, media_type: file.type.startsWith("video/") ? "video" : "image"
+    };
+    const table = mediaUploadMode === "moment" ? "moments" : "profile_posts";
+    const {error} = await db.from(table).insert(record);
+    if (error) throw error;
+    closeMediaUploader();
+    if (mediaUploadMode === "moment") {
+      await loadMoments();
+      goTo("momentos");
+    } else {
+      await loadProfilePosts();
+      renderProfile(currentUser.id);
+    }
+  } catch (error) {
+    feedback.textContent = error.message || "No se pudo publicar el archivo.";
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+async function deleteMedia(kind, id) {
+  if (!backendReady || !currentAuthUser) return;
+  const table = kind === "moment" ? "moments" : "profile_posts";
+  const collection = kind === "moment" ? moments : profilePosts;
+  const item = collection.find(entry => String(entry.id) === String(id));
+  if (!item || item.userId !== currentAuthUser.id) return;
+  const {error} = await db.from(table).delete().eq("id", item.id).eq("user_id", currentAuthUser.id);
+  if (error) return;
+  if (kind === "moment") await loadMoments();
+  else await loadProfilePosts();
 }
 
 function fileToDataUrl(file) {
@@ -555,11 +739,27 @@ function formatRelativeTime(value) {
   return new Date(value).toLocaleDateString("es-ES");
 }
 
+function formatExpiry(value) {
+  const minutes = Math.max(0, Math.ceil((new Date(value).getTime() - Date.now()) / 60000));
+  if (minutes < 60) return `en ${minutes} min`;
+  return `en ${Math.ceil(minutes / 60)} h`;
+}
+
+function formatFileSize(bytes) {
+  if (!bytes) return "Archivo";
+  if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 document.addEventListener("click", event => {
   const goTarget = event.target.closest("[data-go]");
   if (goTarget) goTo(goTarget.dataset.go);
   const profileTarget = event.target.closest("[data-profile]");
   if (profileTarget) renderProfile(profileTarget.dataset.profile);
+  const deleteMoment = event.target.closest("[data-delete-moment]");
+  if (deleteMoment) deleteMedia("moment", deleteMoment.dataset.deleteMoment);
+  const deletePost = event.target.closest("[data-delete-post]");
+  if (deletePost) deleteMedia("post", deletePost.dataset.deletePost);
 });
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
@@ -605,8 +805,12 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   currentUser = null;
   currentAuthUser = null;
   messages = [];
+  moments = [];
+  profilePosts = [];
   if (presenceChannel) db.removeChannel(presenceChannel);
   if (messageChannel) db.removeChannel(messageChannel);
+  if (momentChannel) db.removeChannel(momentChannel);
+  if (postChannel) db.removeChannel(postChannel);
   showLogin();
   renderMessages();
 });
@@ -614,13 +818,16 @@ document.getElementById("messageForm").addEventListener("submit", async event =>
   event.preventDefault();
   const input = document.getElementById("messageInput");
   const text = input.value.trim();
-  if (!text) return;
+  if (!text && !pendingMessageFile) return;
   input.disabled = true;
   try {
-    await sendMessage(text);
+    await sendMessage(text, pendingMessageFile);
     input.value = "";
-  } catch {
-    input.setCustomValidity("No se pudo enviar el mensaje.");
+    pendingMessageFile = null;
+    document.getElementById("messageAttachment").value = "";
+    document.getElementById("messageAttachmentPreview").hidden = true;
+  } catch (error) {
+    input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
     input.reportValidity();
     input.setCustomValidity("");
   } finally {
@@ -639,10 +846,19 @@ document.getElementById("profileBio").addEventListener("input", event => {
 document.getElementById("profileAvatar").addEventListener("change", async event => {
   pendingAvatarFile = event.target.files[0] || null;
   if (!pendingAvatarFile) return;
+  removeAvatarRequested = false;
   const previewUrl = await fileToDataUrl(pendingAvatarFile);
   const preview = document.getElementById("avatarPreview");
   preview.classList.add("has-image");
   preview.innerHTML = `<img src="${previewUrl}" alt="Vista previa">`;
+});
+document.getElementById("removeAvatarButton").addEventListener("click", () => {
+  removeAvatarRequested = true;
+  pendingAvatarFile = null;
+  document.getElementById("profileAvatar").value = "";
+  const preview = document.getElementById("avatarPreview");
+  preview.classList.remove("has-image");
+  preview.textContent = currentUser?.name?.charAt(0) || "U";
 });
 document.getElementById("profileForm").addEventListener("submit", event => {
   event.preventDefault();
@@ -654,6 +870,56 @@ document.querySelectorAll("[data-news-category]").forEach(button => button.addEv
   loadNews(false);
 }));
 document.getElementById("refreshNewsButton").addEventListener("click", () => loadNews(true));
+document.getElementById("attachMessageButton").addEventListener("click", () => document.getElementById("messageAttachment").click());
+document.getElementById("messageAttachment").addEventListener("change", event => {
+  pendingMessageFile = event.target.files[0] || null;
+  const preview = document.getElementById("messageAttachmentPreview");
+  if (!pendingMessageFile) {
+    preview.hidden = true;
+    return;
+  }
+  if (pendingMessageFile.size > 15 * 1024 * 1024) {
+    event.target.value = "";
+    pendingMessageFile = null;
+    preview.hidden = false;
+    preview.innerHTML = `<span>El archivo supera el máximo de 15 MB.</span>`;
+    return;
+  }
+  preview.hidden = false;
+  preview.innerHTML = `<span>Adjunto: <strong>${escapeHtml(pendingMessageFile.name)}</strong> · ${formatFileSize(pendingMessageFile.size)}</span><button type="button" id="clearMessageAttachment">Quitar</button>`;
+  document.getElementById("clearMessageAttachment").addEventListener("click", () => {
+    pendingMessageFile = null;
+    document.getElementById("messageAttachment").value = "";
+    preview.hidden = true;
+  });
+});
+document.getElementById("addMomentButton").addEventListener("click", () => openMediaUploader("moment"));
+document.getElementById("closeMediaUploader").addEventListener("click", closeMediaUploader);
+document.getElementById("cancelMediaUploader").addEventListener("click", closeMediaUploader);
+document.getElementById("mediaUploader").addEventListener("click", event => {
+  if (event.target.id === "mediaUploader") closeMediaUploader();
+});
+document.getElementById("mediaUploadFile").addEventListener("change", async event => {
+  const file = event.target.files[0];
+  const preview = document.getElementById("mediaUploadPreview");
+  if (!file) {
+    preview.innerHTML = "";
+    return;
+  }
+  if (file.size > 15 * 1024 * 1024) {
+    event.target.value = "";
+    document.getElementById("mediaUploadFeedback").textContent = "El archivo supera el máximo de 15 MB.";
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  preview.innerHTML = file.type.startsWith("video/")
+    ? `<video src="${url}" controls></video>`
+    : `<img src="${url}" alt="Vista previa">`;
+});
+document.getElementById("mediaUploadForm").addEventListener("submit", event => {
+  event.preventDefault();
+  publishMedia(event.currentTarget);
+});
 
 applyStoredProfiles();
 if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("light");
@@ -663,6 +929,7 @@ renderMoments();
 renderActivity();
 renderMessages();
 renderPresence();
+renderMoments();
 loadNews(false);
 
 (async function restoreSession() {
