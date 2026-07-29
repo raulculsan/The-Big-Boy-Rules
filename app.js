@@ -418,12 +418,15 @@ function performSearch(query) {
     results.push({type: "Evento", title: event.title, detail: formatEventDate(event.startsAt), section: "calendario"});
   });
   newsItems.filter(item => normalizeUsername(`${item.title} ${item.source}`).includes(term)).slice(0, 6).forEach(item => {
-    results.push({type: "Noticia", title: item.title, detail: item.source, section: "noticias"});
+    results.push({type: "Noticia", title: item.title, detail: item.source, url: item.link});
   });
-  document.getElementById("searchResults").innerHTML = results.length ? results.slice(0, 20).map(result => `
-    <button class="search-result" ${result.profile ? `data-profile="${result.profile}"` : `data-search-section="${result.section}"`}>
-      <span>${result.type}</span><strong>${escapeHtml(result.title)}</strong><small>${escapeHtml(result.detail)}</small>
-    </button>`).join("") : `<div class="empty-state compact">No hay resultados para “${escapeHtml(query)}”.</div>`;
+  document.getElementById("searchResults").innerHTML = results.length ? results.slice(0, 20).map(result => {
+    const content = `<span>${result.type}</span><strong>${escapeHtml(result.title)}</strong><small>${escapeHtml(result.detail)}</small><b aria-hidden="true">→</b>`;
+    if (result.url) {
+      return `<a class="search-result" href="${escapeHtml(result.url)}" target="_blank" rel="noopener noreferrer" data-search-url>${content}</a>`;
+    }
+    return `<button type="button" class="search-result" ${result.profile ? `data-profile="${result.profile}"` : `data-search-section="${result.section}"`}>${content}</button>`;
+  }).join("") : `<div class="empty-state compact">No hay resultados para “${escapeHtml(query)}”.</div>`;
 }
 
 function renderAdminPanel() {
@@ -1096,7 +1099,8 @@ document.addEventListener("click", event => {
   if (eventTarget) openEventEditor(eventTarget.dataset.eventId);
   const searchSection = event.target.closest("[data-search-section]");
   if (searchSection) goTo(searchSection.dataset.searchSection);
-  if (profileTarget || searchSection) closeGlobalSearch();
+  const searchUrl = event.target.closest("[data-search-url]");
+  if (profileTarget || searchSection || searchUrl) closeGlobalSearch();
 });
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
