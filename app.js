@@ -42,17 +42,24 @@ let currentAuthUser = null;
 let messages = [];
 let moments = [];
 let profilePosts = [];
+let privateMessages = [];
+let groupEvents = [];
+let newsItems = [];
 let onlineUsers = [];
 let presenceChannel = null;
 let messageChannel = null;
 let momentChannel = null;
 let postChannel = null;
+let privateChannel = null;
+let eventChannel = null;
 let activeNewsCategory = "espana";
 let pendingAvatarFile = null;
 let removeAvatarRequested = false;
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
+let activePrivateMemberId = null;
+let calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 function escapeHtml(value = "") {
   const node = document.createElement("div");
@@ -67,6 +74,10 @@ function normalizeUsername(value = "") {
 
 function getMember(id) {
   return members.find(member => member.id === Number(id));
+}
+
+function getMemberByAuthId(id) {
+  return members.find(member => member.authId === id);
 }
 
 function getAvatar(member, className = "avatar") {
@@ -99,14 +110,15 @@ function goTo(sectionId) {
   navLinks.forEach(link => link.classList.toggle("active", link.dataset.section === sectionId));
   const titles = {
     inicio: "The Big Boy Rules", chat: "Chat del grupo", miembros: "Miembros",
-    perfil: "Perfil del miembro", momentos: "Momentos", noticias: "Noticias",
-    administracion: "Administración"
+    privados: "Mensajes privados", perfil: "Perfil del miembro", momentos: "Momentos",
+    noticias: "Noticias", calendario: "Calendario", administracion: "Administración"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
   sidebar.classList.remove("open");
   window.scrollTo({top: 0, behavior: "smooth"});
   history.replaceState(null, "", `#${sectionId}`);
   if (sectionId === "noticias") loadNews(false);
+  if (sectionId === "calendario") renderCalendar();
 }
 
 function renderFeatured() {
@@ -271,6 +283,125 @@ function renderMoments() {
   grid.innerHTML = moments.map(item => renderMediaCard(item, item.userId === currentAuthUser?.id, "moment")).join("");
 }
 
+function renderPrivateContacts() {
+  const panel = document.getElementById("privateContacts");
+  if (!currentUser) return;
+  panel.innerHTML = members.filter(member => member.id !== currentUser.id).map(member => {
+    const conversation = privateMessages.filter(message =>
+      [message.senderId, message.recipientId].includes(member.authId));
+    const latest = conversation.at(-1);
+    return `<button class="private-contact ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}">
+      ${getAvatar(member)}
+      <span><strong>${escapeHtml(member.name)}</strong><small>${latest ? escapeHtml(latest.body) : "Iniciar conversación"}</small></span>
+    </button>`;
+  }).join("");
+}
+
+function openPrivateConversation(memberId) {
+  const member = getMember(memberId);
+  if (!member || member.id === currentUser?.id) return;
+  activePrivateMemberId = member.id;
+  renderPrivateContacts();
+  renderPrivateConversation();
+  goTo("privados");
+}
+
+function renderPrivateConversation() {
+  const member = getMember(activePrivateMemberId);
+  const container = document.getElementById("privateMessages");
+  const input = document.getElementById("privateMessageInput");
+  const submit = document.querySelector("#privateMessageForm .send-button");
+  if (!member) {
+    document.getElementById("privateChatHeader").innerHTML = `<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>`;
+    container.innerHTML = `<div class="empty-state">Selecciona un miembro para comenzar una conversación privada.</div>`;
+    input.disabled = true;
+    submit.disabled = true;
+    return;
+  }
+  document.getElementById("privateChatHeader").innerHTML = `<div class="private-chat-person">${getAvatar(member, "avatar small")}<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>${escapeHtml(member.name)}</h3></div></div><button class="text-button" data-profile="${member.id}">Ver perfil →</button>`;
+  const items = privateMessages.filter(message =>
+    (message.senderId === currentAuthUser?.id && message.recipientId === member.authId)
+    || (message.senderId === member.authId && message.recipientId === currentAuthUser?.id));
+  container.innerHTML = items.length ? items.map(message => {
+    const sender = getMemberByAuthId(message.senderId);
+    const own = message.senderId === currentAuthUser?.id;
+    return `<div class="message private-message ${own ? "own" : ""}">
+      ${getAvatar(sender)}
+      <div><div class="message-head"><strong>${escapeHtml(sender?.name || "Miembro")}</strong><time>${formatMessageDate(message.createdAt)}</time></div><p>${escapeHtml(message.body)}</p></div>
+    </div>`;
+  }).join("") : `<div class="empty-state"><strong>Sin mensajes todavía</strong><span>Esta conversación es privada entre ${escapeHtml(currentUser.name)} y ${escapeHtml(member.name)}.</span></div>`;
+  input.disabled = false;
+  submit.disabled = false;
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderCalendar() {
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  document.getElementById("calendarMonthTitle").textContent = calendarDate.toLocaleDateString("es-ES", {month: "long", year: "numeric"});
+  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+  const days = new Date(year, month + 1, 0).getDate();
+  const todayKey = dateKey(new Date());
+  let cells = ["L", "M", "X", "J", "V", "S", "D"].map(day => `<div class="calendar-weekday">${day}</div>`).join("");
+  cells += Array.from({length: firstWeekday}, () => `<div class="calendar-day outside"></div>`).join("");
+  for (let day = 1; day <= days; day += 1) {
+    const date = new Date(year, month, day);
+    const events = groupEvents.filter(event => dateKey(new Date(event.startsAt)) === dateKey(date));
+    cells += `<div class="calendar-day ${dateKey(date) === todayKey ? "today" : ""}">
+      <span>${day}</span>${events.slice(0, 3).map(event => `<button data-event-id="${event.id}" title="${escapeHtml(event.title)}">${escapeHtml(event.title)}</button>`).join("")}
+      ${events.length > 3 ? `<small>+${events.length - 3} más</small>` : ""}
+    </div>`;
+  }
+  document.getElementById("calendarGrid").innerHTML = cells;
+  const monthEvents = groupEvents.filter(event => {
+    const date = new Date(event.startsAt);
+    return date.getFullYear() === year && date.getMonth() === month;
+  });
+  document.getElementById("calendarEventList").innerHTML = monthEvents.length ? monthEvents.map(event => `
+    <article class="calendar-event-card">
+      <time>${formatEventDate(event.startsAt)}</time><h4>${escapeHtml(event.title)}</h4>
+      ${event.location ? `<p>⌖ ${escapeHtml(event.location)}</p>` : ""}
+      ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
+      ${currentUser?.username === "kike" && currentUser?.roleKey === "admin" ? `<button class="text-button" data-event-id="${event.id}">Editar</button>` : ""}
+    </article>`).join("") : `<div class="empty-state compact">No hay eventos este mes.</div>`;
+}
+
+function dateKey(date) {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+function formatEventDate(value) {
+  return new Date(value).toLocaleString("es-ES", {weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"});
+}
+
+function performSearch(query) {
+  const term = normalizeUsername(query);
+  const results = [];
+  if (!term) {
+    document.getElementById("searchResults").innerHTML = `<div class="empty-state compact">Empieza a escribir para buscar en el club.</div>`;
+    return;
+  }
+  members.filter(member => normalizeUsername(`${member.name} ${member.username} ${member.nickname} ${member.bio} ${member.tags.join(" ")}`).includes(term))
+    .forEach(member => results.push({type: "Miembro", title: member.name, detail: member.nickname, profile: member.id}));
+  messages.filter(message => normalizeUsername(message.text).includes(term)).slice(-6).forEach(message => {
+    const member = getMember(message.member);
+    results.push({type: "Chat", title: message.text, detail: member?.name || "Miembro", section: "chat"});
+  });
+  profilePosts.filter(post => normalizeUsername(post.caption).includes(term)).slice(0, 6).forEach(post => {
+    results.push({type: "Publicación", title: post.caption || "Foto", detail: getMember(post.member)?.name || "", profile: post.member});
+  });
+  groupEvents.filter(event => normalizeUsername(`${event.title} ${event.description} ${event.location}`).includes(term)).forEach(event => {
+    results.push({type: "Evento", title: event.title, detail: formatEventDate(event.startsAt), section: "calendario"});
+  });
+  newsItems.filter(item => normalizeUsername(`${item.title} ${item.source}`).includes(term)).slice(0, 6).forEach(item => {
+    results.push({type: "Noticia", title: item.title, detail: item.source, section: "noticias"});
+  });
+  document.getElementById("searchResults").innerHTML = results.length ? results.slice(0, 20).map(result => `
+    <button class="search-result" ${result.profile ? `data-profile="${result.profile}"` : `data-search-section="${result.section}"`}>
+      <span>${result.type}</span><strong>${escapeHtml(result.title)}</strong><small>${escapeHtml(result.detail)}</small>
+    </button>`).join("") : `<div class="empty-state compact">No hay resultados para “${escapeHtml(query)}”.</div>`;
+}
+
 function renderAdminPanel() {
   const summary = document.getElementById("adminSummary");
   const table = document.getElementById("adminUsersTable");
@@ -332,9 +463,12 @@ async function applyUserInterface(user, authUser = null) {
   document.getElementById("loginScreen")?.classList.add("login-hidden");
   applyUserHeader(user);
   refreshProfileSurfaces();
+  renderPrivateContacts();
+  renderPrivateConversation();
+  renderCalendar();
   if (backendReady && authUser) {
     await loadRemoteProfiles();
-    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts()]);
+    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadPrivateMessages(), loadGroupEvents()]);
     connectRealtime();
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
@@ -447,11 +581,32 @@ async function loadProfilePosts() {
   if (activeProfileId) renderProfile(activeProfileId);
 }
 
+async function loadPrivateMessages() {
+  const {data, error} = await db.from("private_messages").select("*").order("created_at").limit(500);
+  privateMessages = error ? [] : data.map(item => ({
+    id: item.id, senderId: item.sender_id, recipientId: item.recipient_id,
+    body: item.body, createdAt: item.created_at
+  }));
+  renderPrivateContacts();
+  renderPrivateConversation();
+}
+
+async function loadGroupEvents() {
+  const {data, error} = await db.from("group_events").select("*").order("starts_at");
+  groupEvents = error ? [] : data.map(item => ({
+    id: item.id, title: item.title, description: item.description, startsAt: item.starts_at,
+    endsAt: item.ends_at, location: item.location, createdBy: item.created_by
+  }));
+  renderCalendar();
+}
+
 function connectRealtime() {
   if (presenceChannel) db.removeChannel(presenceChannel);
   if (messageChannel) db.removeChannel(messageChannel);
   if (momentChannel) db.removeChannel(momentChannel);
   if (postChannel) db.removeChannel(postChannel);
+  if (privateChannel) db.removeChannel(privateChannel);
+  if (eventChannel) db.removeChannel(eventChannel);
   presenceChannel = db.channel("big-boy-presence", {config: {presence: {key: currentAuthUser.id}}});
   presenceChannel
     .on("presence", {event: "sync"}, () => {
@@ -485,6 +640,12 @@ function connectRealtime() {
   postChannel = db.channel("profile-posts-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "profile_posts"}, () => loadProfilePosts())
     .subscribe();
+  privateChannel = db.channel(`private-messages-${currentAuthUser.id}`)
+    .on("postgres_changes", {event: "INSERT", schema: "public", table: "private_messages"}, () => loadPrivateMessages())
+    .subscribe();
+  eventChannel = db.channel("group-events-live")
+    .on("postgres_changes", {event: "*", schema: "public", table: "group_events"}, () => loadGroupEvents())
+    .subscribe();
 }
 
 async function uploadGroupMedia(file, folder) {
@@ -506,6 +667,82 @@ async function sendMessage(text, file = null) {
     attachment_type: file?.type || null, attachment_size: file?.size || null
   });
   if (error) throw error;
+}
+
+async function sendPrivateMessage(text) {
+  const recipient = getMember(activePrivateMemberId);
+  if (!recipient?.authId || !currentAuthUser) throw new Error("No se ha seleccionado un destinatario.");
+  const {error} = await db.from("private_messages").insert({
+    sender_id: currentAuthUser.id, recipient_id: recipient.authId, body: text
+  });
+  if (error) throw error;
+}
+
+function toLocalDateTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function openEventEditor(eventId = null) {
+  if (currentUser?.username !== "kike" || currentUser?.roleKey !== "admin") return;
+  const event = groupEvents.find(item => String(item.id) === String(eventId));
+  document.getElementById("eventEditorTitle").textContent = event ? "Editar evento" : "Nuevo evento";
+  document.getElementById("eventId").value = event?.id || "";
+  document.getElementById("eventTitle").value = event?.title || "";
+  document.getElementById("eventDescription").value = event?.description || "";
+  document.getElementById("eventStartsAt").value = toLocalDateTime(event?.startsAt || new Date(Date.now() + 3600000));
+  document.getElementById("eventEndsAt").value = toLocalDateTime(event?.endsAt);
+  document.getElementById("eventLocation").value = event?.location || "";
+  document.getElementById("eventFeedback").textContent = "";
+  document.getElementById("deleteEventButton").hidden = !event;
+  const modal = document.getElementById("eventEditor");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeEventEditor() {
+  const modal = document.getElementById("eventEditor");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function saveEvent(form) {
+  const feedback = document.getElementById("eventFeedback");
+  const submit = form.querySelector("[type=submit]");
+  submit.disabled = true;
+  feedback.textContent = "Guardando…";
+  try {
+    const id = document.getElementById("eventId").value;
+    const values = {
+      title: document.getElementById("eventTitle").value.trim(),
+      description: document.getElementById("eventDescription").value.trim(),
+      starts_at: new Date(document.getElementById("eventStartsAt").value).toISOString(),
+      ends_at: document.getElementById("eventEndsAt").value ? new Date(document.getElementById("eventEndsAt").value).toISOString() : null,
+      location: document.getElementById("eventLocation").value.trim(),
+      created_by: currentAuthUser.id, updated_at: new Date().toISOString()
+    };
+    const query = id ? db.from("group_events").update(values).eq("id", id) : db.from("group_events").insert(values);
+    const {error} = await query;
+    if (error) throw error;
+    closeEventEditor();
+    await loadGroupEvents();
+  } catch (error) {
+    feedback.textContent = error.message || "No se pudo guardar el evento.";
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+async function deleteEvent() {
+  const id = document.getElementById("eventId").value;
+  if (!id || currentUser?.username !== "kike") return;
+  const {error} = await db.from("group_events").delete().eq("id", id);
+  if (!error) {
+    closeEventEditor();
+    await loadGroupEvents();
+  }
 }
 
 function openProfileEditor() {
@@ -709,6 +946,7 @@ function extractNewsSource(title) {
 }
 
 function renderNews(items, feedTitle) {
+  newsItems = items;
   document.getElementById("newsStatus").textContent = `Actualizado ahora · Fuente agregada: ${feedTitle}`;
   document.getElementById("newsGrid").innerHTML = items.map((item, index) => {
     const cleanTitle = item.title.replace(new RegExp(` - ${item.source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
@@ -760,6 +998,13 @@ document.addEventListener("click", event => {
   if (deleteMoment) deleteMedia("moment", deleteMoment.dataset.deleteMoment);
   const deletePost = event.target.closest("[data-delete-post]");
   if (deletePost) deleteMedia("post", deletePost.dataset.deletePost);
+  const privateTarget = event.target.closest("[data-private-member]");
+  if (privateTarget) openPrivateConversation(privateTarget.dataset.privateMember);
+  const eventTarget = event.target.closest("[data-event-id]");
+  if (eventTarget) openEventEditor(eventTarget.dataset.eventId);
+  const searchSection = event.target.closest("[data-search-section]");
+  if (searchSection) goTo(searchSection.dataset.searchSection);
+  if (profileTarget || searchSection) closeGlobalSearch();
 });
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
@@ -807,10 +1052,14 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   messages = [];
   moments = [];
   profilePosts = [];
+  privateMessages = [];
+  groupEvents = [];
   if (presenceChannel) db.removeChannel(presenceChannel);
   if (messageChannel) db.removeChannel(messageChannel);
   if (momentChannel) db.removeChannel(momentChannel);
   if (postChannel) db.removeChannel(postChannel);
+  if (privateChannel) db.removeChannel(privateChannel);
+  if (eventChannel) db.removeChannel(eventChannel);
   showLogin();
   renderMessages();
 });
@@ -826,6 +1075,25 @@ document.getElementById("messageForm").addEventListener("submit", async event =>
     pendingMessageFile = null;
     document.getElementById("messageAttachment").value = "";
     document.getElementById("messageAttachmentPreview").hidden = true;
+  } catch (error) {
+    input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
+    input.reportValidity();
+    input.setCustomValidity("");
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+});
+document.getElementById("privateMessageForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const input = document.getElementById("privateMessageInput");
+  const text = input.value.trim();
+  if (!text) return;
+  input.disabled = true;
+  try {
+    await sendPrivateMessage(text);
+    input.value = "";
+    await loadPrivateMessages();
   } catch (error) {
     input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
     input.reportValidity();
@@ -920,6 +1188,49 @@ document.getElementById("mediaUploadForm").addEventListener("submit", event => {
   event.preventDefault();
   publishMedia(event.currentTarget);
 });
+function openGlobalSearch() {
+  const search = document.getElementById("globalSearch");
+  search.classList.add("open");
+  search.setAttribute("aria-hidden", "false");
+  document.getElementById("globalSearchInput").focus();
+}
+function closeGlobalSearch() {
+  const search = document.getElementById("globalSearch");
+  search.classList.remove("open");
+  search.setAttribute("aria-hidden", "true");
+}
+document.getElementById("searchButton").addEventListener("click", event => {
+  event.stopPropagation();
+  openGlobalSearch();
+});
+document.getElementById("closeSearchButton").addEventListener("click", closeGlobalSearch);
+document.getElementById("globalSearchInput").addEventListener("input", event => performSearch(event.target.value));
+document.getElementById("globalSearch").addEventListener("click", event => event.stopPropagation());
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    closeGlobalSearch();
+    closeEventEditor();
+  }
+});
+document.getElementById("previousMonthButton").addEventListener("click", () => {
+  calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
+  renderCalendar();
+});
+document.getElementById("nextMonthButton").addEventListener("click", () => {
+  calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
+  renderCalendar();
+});
+document.getElementById("addEventButton").addEventListener("click", () => openEventEditor());
+document.getElementById("closeEventEditor").addEventListener("click", closeEventEditor);
+document.getElementById("cancelEventEditor").addEventListener("click", closeEventEditor);
+document.getElementById("eventEditor").addEventListener("click", event => {
+  if (event.target.id === "eventEditor") closeEventEditor();
+});
+document.getElementById("eventForm").addEventListener("submit", event => {
+  event.preventDefault();
+  saveEvent(event.currentTarget);
+});
+document.getElementById("deleteEventButton").addEventListener("click", deleteEvent);
 
 applyStoredProfiles();
 if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("light");
@@ -930,6 +1241,9 @@ renderActivity();
 renderMessages();
 renderPresence();
 renderMoments();
+renderPrivateContacts();
+renderPrivateConversation();
+renderCalendar();
 loadNews(false);
 
 (async function restoreSession() {
@@ -948,7 +1262,7 @@ loadNews(false);
 })();
 
 const initialSection = location.hash.replace("#", "");
-if (["inicio", "chat", "miembros", "momentos", "noticias"].includes(initialSection)) goTo(initialSection);
+if (["inicio", "chat", "privados", "miembros", "momentos", "noticias", "calendario"].includes(initialSection)) goTo(initialSection);
 window.addEventListener("load", () => setTimeout(() => document.getElementById("pageLoader")?.classList.add("hidden"), 450));
 const cursorGlow = document.getElementById("cursorGlow");
 document.addEventListener("pointermove", event => {

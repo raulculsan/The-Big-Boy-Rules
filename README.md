@@ -2,7 +2,7 @@
 
 Comunidad privada preparada para GitHub Pages con perfiles editables y galería
 personal, historias de grupo de 24 horas, chat con adjuntos, presencia en tiempo
-real y noticias actuales de España y el mundo.
+real, mensajes privados, calendario administrado por Kike y noticias actuales.
 
 ## Activar las funciones compartidas
 
@@ -41,6 +41,11 @@ Nunca copies la clave `service_role` en la web.
 - Los mensajes y sus adjuntos llegan en tiempo real.
 - Los momentos empiezan vacíos y caducan 24 horas después de publicarse.
 - Cada perfil muestra una galería pública propia tipo Instagram.
+- Los mensajes privados solo son visibles para el remitente y el destinatario.
+- Todos pueden consultar el calendario, pero las políticas de Supabase reservan
+  la creación, edición y eliminación de eventos a la cuenta `kike`.
+- La búsqueda superior encuentra miembros, mensajes, publicaciones, eventos y
+  titulares ya cargados.
 - El contador usa presencia por WebSocket; no deduce usuarios a partir de
   mensajes ni muestra miembros desconectados como conectados.
 - Noticias obtiene titulares actuales mediante los feeds de Google News y abre

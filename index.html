@@ -102,6 +102,9 @@
         <span>◉</span> Chat del grupo
         <i class="notification-dot"></i>
       </a>
+      <a class="nav-link" href="#privados" data-section="privados">
+        <span>✉</span> Mensajes privados
+      </a>
       <a class="nav-link" href="#miembros" data-section="miembros">
         <span>♟</span> Miembros
       </a>
@@ -110,6 +113,9 @@
       </a>
       <a class="nav-link" href="#noticias" data-section="noticias">
         <span>◫</span> Noticias
+      </a>
+      <a class="nav-link" href="#calendario" data-section="calendario">
+        <span>□</span> Calendario
       </a>
       <a class="nav-link admin-only" href="#administracion" data-section="administracion">
         <span>♛</span> Administración
@@ -136,7 +142,17 @@
         <h1 id="pageTitle">The Big Boy Rules</h1>
       </div>
       <div class="top-actions">
-        <button class="icon-button">⌕</button>
+        <button class="icon-button" id="searchButton" aria-label="Buscar">⌕</button>
+        <div class="global-search" id="globalSearch" aria-hidden="true">
+          <div class="search-box">
+            <span>⌕</span>
+            <input id="globalSearchInput" type="search" placeholder="Buscar miembros, mensajes, publicaciones..." autocomplete="off">
+            <button id="closeSearchButton" type="button" aria-label="Cerrar búsqueda">×</button>
+          </div>
+          <div class="search-results" id="searchResults">
+            <div class="empty-state compact">Empieza a escribir para buscar en el club.</div>
+          </div>
+        </div>
         <div class="user-menu-wrap">
           <button class="profile-button" id="userMenuButton">
             <div class="avatar small" id="topbarAvatar">U</div>
@@ -255,6 +271,34 @@
       <div class="members-grid reveal" id="membersGrid"></div>
     </section>
 
+    <section class="page-section" id="privados">
+      <div class="section-intro">
+        <div>
+          <span class="eyebrow">CONVERSACIONES</span>
+          <h2>Mensajes privados.</h2>
+        </div>
+        <p>Habla directamente con cualquier miembro. Solo los dos participantes pueden leer la conversación.</p>
+      </div>
+      <div class="private-chat-layout">
+        <aside class="panel private-contacts">
+          <div class="panel-heading"><div><span class="eyebrow">MIEMBROS</span><h3>Conversaciones</h3></div></div>
+          <div id="privateContacts"></div>
+        </aside>
+        <article class="panel private-conversation">
+          <div class="chat-header" id="privateChatHeader">
+            <div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>
+          </div>
+          <div class="messages" id="privateMessages">
+            <div class="empty-state">Selecciona un miembro para comenzar una conversación privada.</div>
+          </div>
+          <form class="message-form" id="privateMessageForm">
+            <input id="privateMessageInput" type="text" maxlength="1200" placeholder="Escribe un mensaje privado..." autocomplete="off" disabled>
+            <button class="send-button" type="submit" disabled>Enviar</button>
+          </form>
+        </article>
+      </div>
+    </section>
+
     <section class="page-section" id="perfil">
       <button class="back-button" data-go="miembros">← Volver a miembros</button>
       <div id="profileContent"></div>
@@ -292,6 +336,31 @@
       </div>
       <div class="news-status" id="newsStatus" aria-live="polite">Cargando noticias reales…</div>
       <div class="news-grid reveal" id="newsGrid"></div>
+    </section>
+
+    <section class="page-section" id="calendario">
+      <div class="section-intro">
+        <div>
+          <span class="eyebrow">AGENDA DEL GRUPO</span>
+          <h2>Calendario de eventos.</h2>
+        </div>
+        <p>Todos los miembros pueden consultar los planes. Solo Kike, como administrador, puede crear, modificar o eliminar eventos.</p>
+      </div>
+      <div class="calendar-toolbar">
+        <div class="calendar-navigation">
+          <button class="icon-button" id="previousMonthButton" type="button" aria-label="Mes anterior">←</button>
+          <h3 id="calendarMonthTitle"></h3>
+          <button class="icon-button" id="nextMonthButton" type="button" aria-label="Mes siguiente">→</button>
+        </div>
+        <button class="primary-button admin-only" id="addEventButton" type="button">＋ Nuevo evento</button>
+      </div>
+      <div class="calendar-layout">
+        <div class="panel calendar-grid" id="calendarGrid"></div>
+        <aside class="panel event-list-panel">
+          <span class="eyebrow">PLANES DEL MES</span>
+          <div id="calendarEventList"></div>
+        </aside>
+      </div>
     </section>
 
     <section class="page-section" id="administracion">
@@ -404,6 +473,32 @@
         <div class="modal-actions">
           <button class="secondary-button" id="cancelMediaUploader" type="button">Cancelar</button>
           <button class="primary-button" type="submit">Compartir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="eventEditor" aria-hidden="true">
+    <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="eventEditorTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">CALENDARIO</span><h2 id="eventEditorTitle">Nuevo evento</h2></div>
+        <button class="icon-button" id="closeEventEditor" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="eventForm" class="profile-form">
+        <input id="eventId" type="hidden">
+        <label><span>Título</span><input id="eventTitle" maxlength="80" required></label>
+        <label><span>Descripción</span><textarea id="eventDescription" maxlength="500" rows="4"></textarea></label>
+        <div class="event-date-fields">
+          <label><span>Comienza</span><input id="eventStartsAt" type="datetime-local" required></label>
+          <label><span>Termina</span><input id="eventEndsAt" type="datetime-local"></label>
+        </div>
+        <label><span>Lugar</span><input id="eventLocation" maxlength="120" placeholder="Opcional"></label>
+        <div class="form-feedback" id="eventFeedback" role="status"></div>
+        <div class="modal-actions event-modal-actions">
+          <button class="text-button danger-text" id="deleteEventButton" type="button" hidden>Eliminar</button>
+          <span></span>
+          <button class="secondary-button" id="cancelEventEditor" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Guardar evento</button>
         </div>
       </form>
     </div>
