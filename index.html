@@ -358,7 +358,7 @@
           <span class="eyebrow">AGENDA DEL GRUPO</span>
           <h2>Calendario de eventos.</h2>
         </div>
-        <p>Todos los miembros pueden consultar los planes. Solo Kike, como administrador, puede crear, modificar o eliminar eventos.</p>
+        <p>Todos los miembros pueden consultar los planes. La administración puede crear, modificar o eliminar eventos.</p>
       </div>
       <div class="calendar-toolbar">
         <div class="calendar-navigation">
@@ -383,10 +383,27 @@
           <span class="eyebrow">CONTROL DEL CLUB</span>
           <h2>Administración.</h2>
         </div>
-        <p>Zona exclusiva del administrador para consultar usuarios, roles y estado de las cuentas.</p>
+        <p>Zona exclusiva para gestionar usuarios, contenido, calendario y configuración del club.</p>
       </div>
 
       <div class="admin-summary" id="adminSummary"></div>
+
+      <article class="panel superadmin-tools" id="superAdminTools">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">CONTROL DE CUENTAS</span>
+            <h3>Crear un usuario</h3>
+          </div>
+          <span class="admin-badge">Acceso protegido</span>
+        </div>
+        <form class="admin-create-user-form" id="createUserForm">
+          <label>Usuario<input id="newUsername" name="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]+" autocomplete="off"></label>
+          <label>Nombre visible<input id="newDisplayName" name="displayName" required maxlength="60" autocomplete="off"></label>
+          <label>Contraseña temporal<input id="newUserPassword" name="password" type="password" required minlength="8" autocomplete="new-password"></label>
+          <button class="primary-button" type="submit">Crear usuario</button>
+        </form>
+        <p class="form-feedback" id="createUserFeedback" aria-live="polite"></p>
+      </article>
 
       <article class="panel admin-users-panel">
         <div class="panel-heading">
@@ -394,7 +411,7 @@
             <span class="eyebrow">CUENTAS REGISTRADAS</span>
             <h3>Usuarios del club</h3>
           </div>
-          <span class="admin-badge">Kike · Administrador</span>
+          <span class="admin-badge">Panel de administración</span>
         </div>
         <div class="admin-table-wrap">
           <table class="admin-table">
@@ -405,6 +422,7 @@
                 <th>Rol</th>
                 <th>Estado</th>
                 <th>Último acceso</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="adminUsersTable"></tbody>
