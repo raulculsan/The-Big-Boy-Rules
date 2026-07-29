@@ -541,8 +541,10 @@ async function login(username, password, remember) {
   const email = `${normalizeUsername(username)}@bigboyrules.local`;
   const {data, error} = await db.auth.signInWithPassword({email, password});
   if (error) throw new Error("Usuario o contraseña incorrectos.");
+  currentAuthUser = data.user;
   const user = await profileForAuthUser(data.user);
   if (!user) {
+    currentAuthUser = null;
     await db.auth.signOut();
     throw new Error("Esta cuenta todavía no tiene un perfil del club.");
   }
