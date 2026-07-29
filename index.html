@@ -108,6 +108,9 @@
       <a class="nav-link" href="#momentos" data-section="momentos">
         <span>▦</span> Momentos
       </a>
+      <a class="nav-link" href="#noticias" data-section="noticias">
+        <span>◫</span> Noticias
+      </a>
       <a class="nav-link admin-only" href="#administracion" data-section="administracion">
         <span>♛</span> Administración
       </a>
@@ -154,7 +157,7 @@
           <span></span><span></span><span></span>
         </div>
         <div class="hero-copy">
-          <span class="status-pill"><i></i> 8 miembros conectados</span>
+          <span class="status-pill" id="heroOnlineStatus"><i></i> Sin conexión</span>
           <div class="hero-kicker">PRIVATE SOCIAL CLUB · EST. 2026</div>
           <h2>NO ES SOLO UN GRUPO.<br><em>ES UNA REGLA.</em></h2>
           <p>El punto de encuentro de The Big Boy Rules. Habla con el grupo, entra en el perfil de cada miembro y guarda los mejores momentos.</p>
@@ -217,10 +220,12 @@
               <span class="eyebrow">CANAL GENERAL</span>
               <h3># big-boy-chat</h3>
             </div>
-            <span class="online-label"><i></i> 8 online</span>
+            <span class="online-label" id="chatOnlineStatus"><i></i> 0 conectados</span>
           </div>
 
-          <div class="messages" id="messages"></div>
+          <div class="messages" id="messages">
+            <div class="empty-state">Accede para consultar el chat.</div>
+          </div>
 
           <form class="message-form" id="messageForm">
             <button type="button" class="attach-button">＋</button>
@@ -264,6 +269,25 @@
       <div class="moments-grid reveal" id="momentsGrid"></div>
     </section>
 
+    <section class="page-section" id="noticias">
+      <div class="section-intro">
+        <div>
+          <span class="eyebrow">ACTUALIDAD EN DIRECTO</span>
+          <h2>España y el mundo.</h2>
+        </div>
+        <p>Titulares obtenidos de medios reales. Cada noticia enlaza a su fuente original y muestra su hora de publicación.</p>
+      </div>
+      <div class="news-toolbar">
+        <div class="news-tabs" role="tablist" aria-label="Categorías de noticias">
+          <button class="news-tab active" type="button" data-news-category="espana">España</button>
+          <button class="news-tab" type="button" data-news-category="mundo">Mundo</button>
+        </div>
+        <button class="secondary-button news-refresh" id="refreshNewsButton" type="button">Actualizar</button>
+      </div>
+      <div class="news-status" id="newsStatus" aria-live="polite">Cargando noticias reales…</div>
+      <div class="news-grid reveal" id="newsGrid"></div>
+    </section>
+
     <section class="page-section" id="administracion">
       <div class="section-intro">
         <div>
@@ -302,6 +326,50 @@
 
   </main>
 
+  <div class="modal-backdrop" id="profileEditor" aria-hidden="true">
+    <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditorTitle">
+      <div class="modal-heading">
+        <div>
+          <span class="eyebrow">MI PERFIL</span>
+          <h2 id="profileEditorTitle">Editar perfil</h2>
+        </div>
+        <button class="icon-button" id="closeProfileEditor" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="profileForm" class="profile-form">
+        <div class="avatar-editor">
+          <div class="avatar avatar-preview" id="avatarPreview">U</div>
+          <label class="secondary-button file-button">
+            Cambiar foto
+            <input id="profileAvatar" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          </label>
+          <small>JPG, PNG o WebP · máximo 3 MB</small>
+        </div>
+        <label>
+          <span>Nombre visible</span>
+          <input id="profileName" maxlength="40" required>
+        </label>
+        <label>
+          <span>Apodo</span>
+          <input id="profileNickname" maxlength="50" required>
+        </label>
+        <label>
+          <span>Descripción</span>
+          <textarea id="profileBio" maxlength="350" rows="5" required></textarea>
+          <small><span id="bioCount">0</span>/350</small>
+        </label>
+        <label>
+          <span>Intereses (separados por comas)</span>
+          <input id="profileTags" maxlength="120" placeholder="Música, viajes, deporte">
+        </label>
+        <div class="form-feedback" id="profileFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelProfileEditor" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <div class="footer-mark">BB</div>
     <div>
@@ -311,6 +379,8 @@
     <span>LOYALTY · BROTHERHOOD · LEGACY</span>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
