@@ -74,12 +74,20 @@ create table if not exists public.group_events (
   check (ends_at is null or ends_at >= starts_at)
 );
 
+create table if not exists public.site_settings (
+  key text primary key,
+  value text not null default '',
+  updated_by uuid references public.profiles(id),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.profiles enable row level security;
 alter table public.messages enable row level security;
 alter table public.moments enable row level security;
 alter table public.profile_posts enable row level security;
 alter table public.private_messages enable row level security;
 alter table public.group_events enable row level security;
+alter table public.site_settings enable row level security;
 
 create or replace function public.protect_profile_identity()
 returns trigger
@@ -194,6 +202,34 @@ create policy "kike deletes group events" on public.group_events
     exists (select 1 from public.profiles where id = auth.uid() and username = 'kike' and role = 'admin')
   );
 
+drop policy if exists "members read site settings" on public.site_settings;
+create policy "members read site settings" on public.site_settings
+  for select to authenticated using (true);
+
+drop policy if exists "kike creates site settings" on public.site_settings;
+create policy "kike creates site settings" on public.site_settings
+  for insert to authenticated with check (
+    updated_by = auth.uid() and exists (
+      select 1 from public.profiles where id = auth.uid() and username = 'kike' and role = 'admin'
+    )
+  );
+
+drop policy if exists "kike updates site settings" on public.site_settings;
+create policy "kike updates site settings" on public.site_settings
+  for update to authenticated using (
+    exists (select 1 from public.profiles where id = auth.uid() and username = 'kike' and role = 'admin')
+  ) with check (
+    updated_by = auth.uid() and exists (
+      select 1 from public.profiles where id = auth.uid() and username = 'kike' and role = 'admin'
+    )
+  );
+
+drop policy if exists "kike deletes site settings" on public.site_settings;
+create policy "kike deletes site settings" on public.site_settings
+  for delete to authenticated using (
+    exists (select 1 from public.profiles where id = auth.uid() and username = 'kike' and role = 'admin')
+  );
+
 create index if not exists messages_created_at_idx on public.messages(created_at);
 create index if not exists moments_expires_at_idx on public.moments(expires_at);
 create index if not exists profile_posts_user_created_idx on public.profile_posts(legacy_id, created_at desc);
@@ -291,6 +327,13 @@ end $$;
 do $$
 begin
   alter publication supabase_realtime add table public.group_events;
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.site_settings;
 exception
   when duplicate_object then null;
 end $$;

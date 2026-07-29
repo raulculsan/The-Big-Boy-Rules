@@ -226,6 +226,19 @@
         </div>
         <div class="member-strip" id="featuredMembers"></div>
       </article>
+
+      <article class="panel spotify-panel reveal">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">BANDA SONORA DEL GRUPO</span>
+            <h3>Big Boy Playlist</h3>
+          </div>
+          <button class="text-button admin-only" id="editSpotifyButton" type="button">Vincular playlist</button>
+        </div>
+        <div id="spotifyPlayer">
+          <div class="empty-state"><strong>Todavía no hay una playlist vinculada</strong><span>Kike puede añadir un enlace público de Spotify.</span></div>
+        </div>
+      </article>
     </section>
 
     <section class="page-section" id="chat">
@@ -499,6 +512,28 @@
           <span></span>
           <button class="secondary-button" id="cancelEventEditor" type="button">Cancelar</button>
           <button class="primary-button" type="submit">Guardar evento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="spotifyEditor" aria-hidden="true">
+    <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="spotifyEditorTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">SPOTIFY</span><h2 id="spotifyEditorTitle">Vincular playlist</h2></div>
+        <button class="icon-button" id="closeSpotifyEditor" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="spotifyForm" class="profile-form">
+        <label>
+          <span>Enlace público de la playlist</span>
+          <input id="spotifyPlaylistUrl" type="url" placeholder="https://open.spotify.com/playlist/..." required>
+          <small>Abre la playlist en Spotify, pulsa Compartir y copia su enlace.</small>
+        </label>
+        <div class="form-feedback" id="spotifyFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="text-button danger-text" id="removeSpotifyButton" type="button">Quitar playlist</button>
+          <button class="secondary-button" id="cancelSpotifyEditor" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Guardar playlist</button>
         </div>
       </form>
     </div>

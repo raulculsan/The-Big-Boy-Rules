@@ -46,6 +46,9 @@ Nunca copies la clave `service_role` en la web.
   la creación, edición y eliminación de eventos a la cuenta `kike`.
 - La búsqueda superior encuentra miembros, mensajes, publicaciones, eventos y
   titulares ya cargados.
+- Los perfiles ajenos incluyen acceso directo a la conversación privada.
+- Kike puede vincular o cambiar desde Inicio la playlist pública de Spotify del
+  grupo; el resto de miembros ve el reproductor integrado.
 - El contador usa presencia por WebSocket; no deduce usuarios a partir de
   mensajes ni muestra miembros desconectados como conectados.
 - Noticias obtiene titulares actuales mediante los feeds de Google News y abre
