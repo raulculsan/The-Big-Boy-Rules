@@ -1301,7 +1301,6 @@ document.getElementById("searchButton").addEventListener("click", event => {
 });
 document.getElementById("closeSearchButton").addEventListener("click", closeGlobalSearch);
 document.getElementById("globalSearchInput").addEventListener("input", event => performSearch(event.target.value));
-document.getElementById("globalSearch").addEventListener("click", event => event.stopPropagation());
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     closeGlobalSearch();
