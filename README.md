@@ -1,43 +1,46 @@
-# The Big Boy Rules — Web
+# The Big Boy Rules
 
-Web estática y responsive para una comunidad privada.
+Comunidad privada preparada para GitHub Pages con perfiles editables, fotos de
+perfil, chat y presencia en tiempo real, y noticias actuales de España y el
+mundo.
 
-## Incluye
+## Activar las funciones compartidas
 
-- Página de inicio con manifiesto y actividad.
-- Chat funcional guardado en el navegador mediante localStorage.
-- Ocho perfiles individuales editables.
-- Sección de momentos y recuerdos.
-- Tema oscuro y claro.
-- Diseño adaptado a móvil.
+La interfaz puede abrirse sin backend para revisar el diseño y editar un perfil
+de forma local. El chat no muestra mensajes ficticios y permanece desactivado
+hasta completar esta configuración:
 
-## Uso
+1. Crea un proyecto gratuito en Supabase.
+2. Abre `SQL Editor` y ejecuta todo el contenido de `supabase-setup.sql`.
+3. En `Authentication > Users`, crea estas cuentas con la contraseña que
+   prefieras. Los correos son internos y no necesitan recibir mensajes:
 
-1. Descomprime el archivo.
-2. Abre `index.html` en Chrome, Safari, Edge o Firefox.
-3. Para personalizar nombres y perfiles, edita el array `members` de `app.js`.
-4. Para publicar la web, puedes subir la carpeta a GitHub Pages, Netlify o Vercel.
+   - `kike@bigboyrules.local`
+   - `lizzy@bigboyrules.local`
+   - `raul@bigboyrules.local`
+   - `mario@bigboyrules.local`
+   - `miguelangel@bigboyrules.local`
+   - `almudena@bigboyrules.local`
+   - `carlos@bigboyrules.local`
+   - `albertovelasco@bigboyrules.local`
+   - `caonaboalbero@bigboyrules.local`
 
-## Nota
+4. En `Project Settings > API`, copia la URL del proyecto y la clave pública
+   (`publishable` o `anon`) en `config.js`.
+5. En `Authentication > URL Configuration`, añade la URL pública de GitHub
+   Pages a `Site URL`.
 
-La versión incluida es un prototipo front-end. Para un chat real entre varios usuarios necesitará un backend y autenticación, por ejemplo Firebase o Supabase.
+Nunca copies la clave `service_role` en la web.
 
+## Funcionamiento
 
-## Sistema de usuarios
+- Cada sesión se autentica en Supabase y solo puede modificar su propio perfil.
+- Las fotos se guardan en el bucket público `avatars` con un límite de 3 MB.
+- Los mensajes se guardan en la base de datos y llegan en tiempo real.
+- El contador usa presencia por WebSocket; no deduce usuarios a partir de
+  mensajes ni muestra miembros desconectados como conectados.
+- Noticias obtiene titulares actuales mediante los feeds de Google News y abre
+  siempre la fuente original.
 
-La web incluye un sistema de acceso local preparado para GitHub Pages.
-
-Usuarios:
-- kike (administrador)
-- lizzy
-- raul
-- mario
-- miguelangel
-- almudena
-- carlos
-- albertovelasco
-- caonaboalbero
-
-Contraseña provisional para todos: `bigboy2026`.
-
-Importante: al ser una web estática, este acceso es una demostración visual y no es seguro frente a usuarios con conocimientos técnicos. Para un sistema real se debe conectar a Supabase, Firebase u otro backend.
+Sin las claves de Supabase, las credenciales provisionales de la demo local
+siguen siendo usuario en minúsculas y contraseña `bigboy2026`.
