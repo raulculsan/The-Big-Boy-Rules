@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-17" />
+  <link rel="stylesheet" href="styles.css?v=20260730-18" />
 </head>
 <body>
 
@@ -65,7 +65,7 @@
 
           <div class="demo-access">
             <strong>Credenciales provisionales</strong>
-            <span>Usuario: nombre en minúsculas · Contraseña: <b>bigboy2026</b></span>
+            <span>Usuario: nombre en minúsculas · Contraseña provisional: <b>bigboy2026</b></span>
           </div>
         </form>
       </div>
@@ -529,6 +529,31 @@
     </div>
   </div>
 
+  <div class="modal-backdrop required-password-backdrop" id="requiredPasswordChange" aria-hidden="true">
+    <div class="profile-editor-modal required-password-modal" role="dialog" aria-modal="true" aria-labelledby="requiredPasswordTitle">
+      <div class="modal-heading">
+        <div>
+          <span class="eyebrow">SEGURIDAD DE LA CUENTA</span>
+          <h2 id="requiredPasswordTitle">Crea tu propia contraseña</h2>
+        </div>
+      </div>
+      <p class="required-password-intro">Has iniciado sesión con la contraseña provisional. Para continuar, escribe una nueva contraseña y confírmala por segunda vez.</p>
+      <form id="requiredPasswordChangeForm" class="profile-form">
+        <label>
+          <span>Nueva contraseña</span>
+          <input id="requiredNewPassword" type="password" minlength="8" autocomplete="new-password" required>
+        </label>
+        <label>
+          <span>Confirma de nuevo la contraseña</span>
+          <input id="requiredNewPasswordConfirmation" type="password" minlength="8" autocomplete="new-password" required>
+        </label>
+        <small>Utiliza al menos 8 caracteres y no reutilices la contraseña provisional.</small>
+        <div class="form-feedback" id="requiredPasswordFeedback" role="status" aria-live="polite"></div>
+        <button class="primary-button required-password-submit" type="submit">Confirmar y continuar</button>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="mediaUploader" aria-hidden="true">
     <div class="profile-editor-modal media-uploader-modal" role="dialog" aria-modal="true" aria-labelledby="mediaUploaderTitle">
       <div class="modal-heading">
@@ -640,6 +665,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260730-17"></script>
+  <script src="app.js?v=20260730-18"></script>
 </body>
 </html>
