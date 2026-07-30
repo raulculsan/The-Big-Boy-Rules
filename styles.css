@@ -2958,7 +2958,11 @@ input:disabled {
   border: 1px solid var(--line);
 }
 .profile-post-card .media-frame { aspect-ratio: 1; }
-.story-card .media-frame { aspect-ratio: 9 / 14; }
+.story-card .media-frame {
+  aspect-ratio: 9 / 14;
+  display: grid;
+  place-items: center;
+}
 .media-frame { width: 100%; background: #09090b; }
 .media-view-button {
   position: relative;
@@ -2999,6 +3003,25 @@ input:disabled {
   display: block;
   object-fit: cover;
 }
+.story-card .media-frame img,
+.story-card .media-frame video {
+  object-fit: contain;
+}
+.story-card .media-frame img {
+  animation: moment-image-reveal .7s cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes moment-image-reveal {
+  from {
+    opacity: 0;
+    filter: blur(18px);
+    transform: scale(1.035);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+}
 .media-card-info { padding: 14px; }
 .media-card-info p { margin: 8px 0; line-height: 1.45; }
 .media-card-info time { color: var(--muted); font-size: .75rem; }
@@ -3029,6 +3052,26 @@ input:disabled {
   border-radius: 8px;
   background: rgba(213,111,111,.08);
   font-weight: 800;
+}
+.story-card .moment-delete-button {
+  position: absolute;
+  z-index: 4;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 8px 11px;
+  border-color: rgba(255,255,255,.32);
+  color: #fff;
+  background: rgba(145,24,24,.9);
+  box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  backdrop-filter: blur(8px);
+}
+.story-card .moment-delete-button span {
+  font-size: .7rem;
+  letter-spacing: .03em;
 }
 .story-card .delete-media-button:hover {
   color: #fff;
@@ -3112,6 +3155,21 @@ input:disabled {
   border-radius: 14px;
   box-shadow: 0 24px 80px rgba(0,0,0,.65);
   object-fit: contain;
+}
+.media-viewer.open .media-viewer-dialog img {
+  animation: moment-viewer-reveal .55s cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes moment-viewer-reveal {
+  from {
+    opacity: 0;
+    filter: blur(22px);
+    transform: scale(.975);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
 }
 .media-viewer-close {
   position: absolute;
