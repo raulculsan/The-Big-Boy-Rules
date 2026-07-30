@@ -3827,7 +3827,10 @@ body.light .global-search { background: rgba(235,232,223,.97); }
 
 /* Vista inmersiva de chats */
 body.chat-focus {
-  height: 100dvh;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: var(--chat-viewport-height, 100dvh);
   padding: 0;
   overflow: hidden;
 }
@@ -3837,12 +3840,13 @@ body.chat-focus .site-footer {
   display: none;
 }
 body.chat-focus .app {
-  min-height: 100dvh;
+  height: var(--chat-viewport-height, 100dvh);
+  min-height: 0;
   margin-left: 0;
 }
 body.chat-focus #chat.active,
 body.chat-focus #privados.active {
-  height: 100dvh;
+  height: var(--chat-viewport-height, 100dvh);
   padding: 0;
 }
 body.chat-focus #chat .chat-layout,
