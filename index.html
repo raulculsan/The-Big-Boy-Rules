@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-4" />
+  <link rel="stylesheet" href="styles.css?v=20260730-5" />
 </head>
 <body>
 
@@ -117,9 +117,6 @@
       <a class="nav-link" href="#calendario" data-section="calendario">
         <span>□</span> Calendario
       </a>
-      <a class="nav-link admin-only" href="#administracion" data-section="administracion">
-        <span>♛</span> Administración
-      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -142,6 +139,7 @@
         <h1 id="pageTitle">The Big Boy Rules</h1>
       </div>
       <div class="top-actions">
+        <button class="icon-button admin-only admin-crown-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración">♛</button>
         <button class="icon-button" id="searchButton" aria-label="Buscar">⌕</button>
         <div class="global-search" id="globalSearch" aria-hidden="true">
           <div class="search-box">
@@ -569,6 +567,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260730-4"></script>
+  <script src="app.js?v=20260730-5"></script>
 </body>
 </html>
