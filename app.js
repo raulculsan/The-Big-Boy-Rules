@@ -1544,14 +1544,19 @@ async function loadNews(force = false) {
   const cacheKey = `bb-news-${activeNewsCategory}`;
   const requestedCategory = activeNewsCategory;
   const requestToken = ++newsLoadToken;
+  let cachedNews = null;
   if (!force) {
     try {
-      const cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
-      if (cached && Date.now() - cached.savedAt < NEWS_CACHE_DURATION) {
-        lastNewsRefreshAt = cached.savedAt;
-        renderNews(cached.items, cached.feedTitle, cached.savedAt);
+      cachedNews = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
+      if (cachedNews && Date.now() - cachedNews.savedAt < NEWS_CACHE_DURATION) {
+        lastNewsRefreshAt = cachedNews.savedAt;
+        renderNews(cachedNews.items, cachedNews.feedTitle, cachedNews.savedAt);
         return;
       }
+    } catch {}
+  } else {
+    try {
+      cachedNews = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
     } catch {}
   }
   grid.innerHTML = "";
@@ -1567,11 +1572,13 @@ async function loadNews(force = false) {
     return;
   }
   try {
-    const endpoint = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}`;
-    const response = await fetch(endpoint, {cache: "no-store"});
-    if (!response.ok) throw new Error("El servicio de noticias no responde.");
-    const payload = await response.json();
-    if (payload.status !== "ok" || !payload.items?.length) throw new Error(payload.message || "No se recibieron titulares.");
+    let payload;
+    try {
+      payload = await fetchNewsPayload(feed);
+    } catch (primaryError) {
+      if (activeNewsCategory !== "deportes" || !config.news?.deportesFallbackFeed) throw primaryError;
+      payload = await fetchNewsPayload(config.news.deportesFallbackFeed);
+    }
     const items = payload.items.map(item => ({
       title: item.title, link: item.link, published: item.pubDate,
       source: extractNewsSource(item.title), image: item.thumbnail || item.enclosure?.link || ""
@@ -1583,9 +1590,23 @@ async function loadNews(force = false) {
     renderNews(items, payload.feed?.title || "Google News", savedAt);
   } catch (error) {
     if (requestToken !== newsLoadToken || requestedCategory !== activeNewsCategory) return;
+    if (cachedNews?.items?.length) {
+      renderNews(cachedNews.items, cachedNews.feedTitle, cachedNews.savedAt);
+      status.textContent = `${status.textContent} · No se pudo conectar; mostrando los últimos titulares guardados`;
+      return;
+    }
     status.textContent = `No se pudieron actualizar las noticias: ${error.message}`;
     grid.innerHTML = `<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Inténtalo de nuevo en unos minutos.</span></div>`;
   }
+}
+
+async function fetchNewsPayload(feed) {
+  const endpoint = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}`;
+  const response = await fetch(endpoint, {cache: "no-store"});
+  if (!response.ok) throw new Error("El servicio de noticias no responde.");
+  const payload = await response.json();
+  if (payload.status !== "ok" || !payload.items?.length) throw new Error(payload.message || "No se recibieron titulares.");
+  return payload;
 }
 
 function extractNewsSource(title) {
