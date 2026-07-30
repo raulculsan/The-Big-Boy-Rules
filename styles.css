@@ -3021,6 +3021,19 @@ input:disabled {
   cursor: pointer;
   font-size: .75rem;
 }
+.story-card .delete-media-button {
+  float: none;
+  margin-top: 10px;
+  padding: 7px 10px;
+  border: 1px solid rgba(213,111,111,.35);
+  border-radius: 8px;
+  background: rgba(213,111,111,.08);
+  font-weight: 800;
+}
+.story-card .delete-media-button:hover {
+  color: #fff;
+  background: rgba(190,65,65,.72);
+}
 .profile-empty,
 .moments-empty { grid-column: 1 / -1; min-height: 260px; }
 .moments-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
