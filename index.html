@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-9" />
+  <link rel="stylesheet" href="styles.css?v=20260730-10" />
 </head>
 <body>
 
@@ -455,6 +455,20 @@
             <button class="text-button danger-text" id="removeAvatarButton" type="button">Quitar foto</button>
           </div>
           <small>JPG, PNG o WebP · máximo 3 MB</small>
+          <div class="avatar-cropper" id="avatarCropper" hidden>
+            <div class="avatar-crop-stage" id="avatarCropStage">
+              <canvas id="avatarCropCanvas" width="480" height="480" aria-label="Encuadre de la foto de perfil"></canvas>
+              <span class="avatar-crop-guide" aria-hidden="true"></span>
+            </div>
+            <div class="avatar-crop-controls">
+              <label for="avatarZoom">
+                <span>Tamaño</span>
+                <input id="avatarZoom" type="range" min="1" max="3" value="1" step="0.01">
+              </label>
+              <button class="text-button" id="resetAvatarCrop" type="button">Centrar</button>
+              <small>Arrastra la foto para moverla y usa el control para acercarla.</small>
+            </div>
+          </div>
         </div>
         <label>
           <span>Nombre visible</span>
@@ -604,6 +618,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260730-9"></script>
+  <script src="app.js?v=20260730-10"></script>
 </body>
 </html>
