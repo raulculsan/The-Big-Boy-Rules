@@ -45,6 +45,7 @@ let moments = [];
 let profilePosts = [];
 let privateMessages = [];
 let groupEvents = [];
+let chatChannels = [];
 let newsItems = [];
 let siteSettings = {};
 let onlineUsers = [];
@@ -55,6 +56,7 @@ let postChannel = null;
 let privateChannel = null;
 let eventChannel = null;
 let settingsChannel = null;
+let chatChannelsRealtime = null;
 let activeNewsCategory = "deportes";
 let pendingAvatarFile = null;
 let removeAvatarRequested = false;
@@ -63,6 +65,7 @@ let mediaUploadMode = "post";
 let activeProfileId = null;
 let editingProfileId = null;
 let activePrivateMemberId = null;
+let activeChatChannelId = null;
 let calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 function escapeHtml(value = "") {
@@ -251,14 +254,16 @@ function renderMessages() {
     return;
   }
   setChatEnabled(Boolean(currentUser) && !isSuperAdmin());
-  if (!messages.length) {
+  const channelMessages = messages.filter(message => String(message.channelId || "") === String(activeChatChannelId || ""));
+  if (!channelMessages.length) {
     container.innerHTML = `<div class="empty-state"><strong>Aún no hay mensajes</strong><span>Sé la primera persona en escribir al grupo.</span></div>`;
     return;
   }
-  container.innerHTML = messages.map(message => {
+  container.innerHTML = channelMessages.map(message => {
     const member = getMember(message.member);
     const attachment = message.attachmentUrl ? renderMessageAttachment(message) : "";
-    return `<div class="message">
+    const own = message.userId === currentAuthUser?.id;
+    return `<div class="message ${own ? "own" : ""}">
       ${getAvatar(member)}
       <div><div class="message-head">
         <button class="message-author" data-profile="${message.member}">${escapeHtml(member?.name || "Miembro")}</button>
@@ -268,6 +273,32 @@ function renderMessages() {
     </div>`;
   }).join("");
   container.scrollTop = container.scrollHeight;
+}
+
+function renderChatChannels() {
+  const container = document.getElementById("chatChannels");
+  if (!container) return;
+  if (!chatChannels.length) {
+    container.innerHTML = `<span class="channel-empty">Sin secciones</span>`;
+    return;
+  }
+  if (!chatChannels.some(channel => String(channel.id) === String(activeChatChannelId))) {
+    activeChatChannelId = chatChannels[0].id;
+  }
+  const active = chatChannels.find(channel => String(channel.id) === String(activeChatChannelId));
+  document.getElementById("activeChannelName").textContent = `# ${active?.name || "general"}`;
+  container.innerHTML = chatChannels.map(channel => `
+    <button class="chat-channel ${String(channel.id) === String(activeChatChannelId) ? "active" : ""}" type="button" data-chat-channel="${channel.id}">
+      <span>#</span>${escapeHtml(channel.name)}
+      ${canManageSite() && !channel.isDefault ? `<i data-delete-channel="${channel.id}" title="Eliminar sección">×</i>` : ""}
+    </button>`).join("");
+}
+
+function selectChatChannel(id) {
+  if (!chatChannels.some(channel => String(channel.id) === String(id))) return;
+  activeChatChannelId = id;
+  renderChatChannels();
+  renderMessages();
 }
 
 function setChatEnabled(enabled) {
@@ -460,7 +491,12 @@ function renderAdminPanel() {
     <tr><td><code>@${user.username}</code></td><td><div class="table-user">${getAvatar(user, "avatar small")}<strong>${escapeHtml(user.name)}</strong></div></td>
     <td><span class="role-chip ${user.roleKey}">${user.roleKey === "admin" ? "Administrador" : "Miembro"}</span></td>
     <td><span class="account-status ${onlineUsers.some(item => Number(item.legacy_id) === user.id) ? "" : "offline"}"><i></i>${onlineUsers.some(item => Number(item.legacy_id) === user.id) ? "En línea" : "Desconectado"}</span></td>
-    <td>—</td><td>${isSuperAdmin() && user.authId ? `<button class="text-button danger" type="button" data-delete-user="${user.authId}" data-delete-user-name="${escapeHtml(user.name)}">Eliminar</button>` : "—"}</td></tr>`).join("");
+    <td>—</td><td><div class="admin-user-actions">
+      <button class="text-button" type="button" data-profile="${user.id}">Ver perfil</button>
+      ${user.id !== currentUser?.id ? `<button class="text-button" type="button" data-admin-message="${user.id}">Mensaje</button>` : ""}
+      ${isSuperAdmin() ? `<button class="text-button" type="button" data-edit-user="${user.id}">Editar</button>` : ""}
+      ${isSuperAdmin() && user.authId ? `<button class="text-button danger" type="button" data-delete-user="${user.authId}" data-delete-user-name="${escapeHtml(user.name)}">Eliminar</button>` : ""}
+    </div></td></tr>`).join("");
 }
 
 function refreshProfileSurfaces() {
@@ -514,6 +550,7 @@ async function applyUserInterface(user, authUser = null) {
   renderCalendar();
   if (backendReady && authUser) {
     await loadRemoteProfiles();
+    await loadChatChannels();
     await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()]);
     connectRealtime();
   } else {
@@ -604,7 +641,7 @@ async function loadRemoteProfiles() {
 
 async function loadMessages() {
   const {data, error} = await db.from("messages")
-    .select("id,user_id,legacy_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at")
+    .select("id,user_id,legacy_id,channel_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at")
     .order("created_at").limit(200);
   if (error) {
     document.getElementById("messages").innerHTML = `<div class="empty-state"><strong>No se pudo cargar el chat</strong><span>${escapeHtml(error.message)}</span></div>`;
@@ -617,11 +654,20 @@ async function loadMessages() {
 
 function mapMessage(item) {
   return {
-    id: item.id, userId: item.user_id, member: item.legacy_id, text: item.body,
+    id: item.id, userId: item.user_id, member: item.legacy_id, channelId: item.channel_id, text: item.body,
     attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
     createdAt: item.created_at
   };
+}
+
+async function loadChatChannels() {
+  const {data, error} = await db.from("chat_channels").select("*").order("position").order("created_at");
+  chatChannels = error ? [] : data.map(item => ({
+    id: item.id, name: item.name, isDefault: item.is_default, position: item.position
+  }));
+  renderChatChannels();
+  renderMessages();
 }
 
 function mapMedia(item) {
@@ -683,6 +729,7 @@ function connectRealtime() {
   if (privateChannel) db.removeChannel(privateChannel);
   if (eventChannel) db.removeChannel(eventChannel);
   if (settingsChannel) db.removeChannel(settingsChannel);
+  if (chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
   if (settingsChannel) db.removeChannel(settingsChannel);
   presenceChannel = db.channel("big-boy-presence", {config: {presence: {key: currentAuthUser.id}}});
   presenceChannel
@@ -728,6 +775,9 @@ function connectRealtime() {
   settingsChannel = db.channel("site-settings-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "site_settings"}, () => loadSiteSettings())
     .subscribe();
+  chatChannelsRealtime = db.channel("chat-channels-live")
+    .on("postgres_changes", {event: "*", schema: "public", table: "chat_channels"}, () => loadChatChannels())
+    .subscribe();
 }
 
 async function uploadGroupMedia(file, folder) {
@@ -744,11 +794,34 @@ async function sendMessage(text, file = null) {
   let attachmentUrl = null;
   if (file) attachmentUrl = await uploadGroupMedia(file, "chat");
   const {error} = await db.from("messages").insert({
-    user_id: currentAuthUser.id, legacy_id: currentUser.id, body: text,
+    user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: activeChatChannelId, body: text,
     attachment_url: attachmentUrl, attachment_name: file?.name || null,
     attachment_type: file?.type || null, attachment_size: file?.size || null
   });
   if (error) throw error;
+}
+
+async function createChatChannel() {
+  if (!canManageSite() || !currentAuthUser) return;
+  const value = window.prompt("Nombre de la nueva sección:");
+  if (value === null) return;
+  const name = value.trim().toLowerCase().normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
+  if (!name) return window.alert("Escribe un nombre válido.");
+  const {error} = await db.from("chat_channels").insert({
+    name, created_by: currentAuthUser.id, position: chatChannels.length
+  });
+  if (error) window.alert(error.message || "No se pudo crear la sección.");
+  else await loadChatChannels();
+}
+
+async function deleteChatChannel(id) {
+  const channel = chatChannels.find(item => String(item.id) === String(id));
+  if (!canManageSite() || !channel || channel.isDefault) return;
+  if (!window.confirm(`¿Eliminar la sección #${channel.name} y todos sus mensajes?`)) return;
+  const {error} = await db.from("chat_channels").delete().eq("id", channel.id);
+  if (error) window.alert(error.message || "No se pudo eliminar la sección.");
+  else await loadChatChannels();
 }
 
 async function sendPrivateMessage(text) {
@@ -1207,6 +1280,14 @@ document.addEventListener("click", event => {
   if (deleteMessage) deleteGroupMessage(deleteMessage.dataset.deleteMessage);
   const deleteUser = event.target.closest("[data-delete-user]");
   if (deleteUser) deleteClubUser(deleteUser.dataset.deleteUser, deleteUser.dataset.deleteUserName);
+  const editUser = event.target.closest("[data-edit-user]");
+  if (editUser) openProfileEditor(editUser.dataset.editUser);
+  const adminMessage = event.target.closest("[data-admin-message]");
+  if (adminMessage) openPrivateConversation(adminMessage.dataset.adminMessage);
+  const channelTarget = event.target.closest("[data-chat-channel]");
+  if (channelTarget && !event.target.closest("[data-delete-channel]")) selectChatChannel(channelTarget.dataset.chatChannel);
+  const deleteChannel = event.target.closest("[data-delete-channel]");
+  if (deleteChannel) deleteChatChannel(deleteChannel.dataset.deleteChannel);
   const privateTarget = event.target.closest("[data-private-member]");
   if (privateTarget) openPrivateConversation(privateTarget.dataset.privateMember);
   const eventTarget = event.target.closest("[data-event-id]");
@@ -1267,12 +1348,16 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   profilePosts = [];
   privateMessages = [];
   groupEvents = [];
+  chatChannels = [];
+  activeChatChannelId = null;
   if (presenceChannel) db.removeChannel(presenceChannel);
   if (messageChannel) db.removeChannel(messageChannel);
   if (momentChannel) db.removeChannel(momentChannel);
   if (postChannel) db.removeChannel(postChannel);
   if (privateChannel) db.removeChannel(privateChannel);
   if (eventChannel) db.removeChannel(eventChannel);
+  if (settingsChannel) db.removeChannel(settingsChannel);
+  if (chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
   showLogin();
   renderMessages();
 });
@@ -1352,6 +1437,7 @@ document.querySelectorAll("[data-news-category]").forEach(button => button.addEv
 }));
 document.getElementById("refreshNewsButton").addEventListener("click", () => loadNews(true));
 document.getElementById("attachMessageButton").addEventListener("click", () => document.getElementById("messageAttachment").click());
+document.getElementById("addChatChannelButton").addEventListener("click", createChatChannel);
 document.getElementById("messageAttachment").addEventListener("change", event => {
   pendingMessageFile = event.target.files[0] || null;
   const preview = document.getElementById("messageAttachmentPreview");

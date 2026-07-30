@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-6" />
+  <link rel="stylesheet" href="styles.css?v=20260730-7" />
 </head>
 <body>
 
@@ -242,10 +242,14 @@
     <section class="page-section" id="chat">
       <div class="chat-layout reveal">
         <article class="panel chat-panel">
+          <div class="chat-channel-bar">
+            <div class="chat-channels" id="chatChannels"></div>
+            <button class="channel-add-button admin-only" id="addChatChannelButton" type="button" title="Añadir sección">＋ Sección</button>
+          </div>
           <div class="chat-header">
             <div>
-              <span class="eyebrow">CANAL GENERAL</span>
-              <h3># big-boy-chat</h3>
+              <span class="eyebrow">CHAT DEL GRUPO</span>
+              <h3 id="activeChannelName"># general</h3>
             </div>
             <span class="online-label" id="chatOnlineStatus"><i></i> 0 conectados</span>
           </div>
@@ -600,6 +604,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260730-6"></script>
+  <script src="app.js?v=20260730-7"></script>
 </body>
 </html>
