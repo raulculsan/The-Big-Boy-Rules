@@ -247,14 +247,16 @@ function renderMediaCard(item, canDelete, kind) {
   const member = getMember(item.member);
   const media = item.mediaType === "video"
     ? `<video src="${escapeHtml(item.mediaUrl)}" controls preload="metadata"></video>`
-    : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy">`;
+    : kind === "moment"
+      ? `<button class="media-view-button" type="button" data-view-media="${escapeHtml(item.mediaUrl)}" data-view-caption="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}" loading="lazy"><span>Ver momento</span></button>`
+      : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy">`;
   return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}">
     <div class="media-frame">${media}</div>
     <div class="media-card-info">
       ${kind === "moment" ? `<button class="media-author" data-profile="${item.member}">${getAvatar(member, "avatar tiny")}<strong>${escapeHtml(member?.name || "Miembro")}</strong></button>` : ""}
       ${item.caption ? `<p>${escapeHtml(item.caption)}</p>` : ""}
       <time datetime="${escapeHtml(item.createdAt)}">${kind === "moment" ? `Caduca ${formatExpiry(item.expiresAt)}` : formatRelativeTime(item.createdAt)}</time>
-      ${canDelete ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button">Eliminar</button>` : ""}
+      ${canDelete ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar ${kind === "moment" ? "este momento" : "esta publicación"}">Eliminar</button>` : ""}
     </div>
   </article>`;
 }
@@ -1282,12 +1284,29 @@ async function deleteMedia(kind, id) {
   const collection = kind === "moment" ? moments : profilePosts;
   const item = collection.find(entry => String(entry.id) === String(id));
   if (!item || (item.userId !== currentAuthUser.id && !isSuperAdmin())) return;
+  if (!window.confirm(`¿Quieres eliminar ${kind === "moment" ? "este momento" : "esta publicación"}?`)) return;
   let query = db.from(table).delete().eq("id", item.id);
   if (!isSuperAdmin()) query = query.eq("user_id", currentAuthUser.id);
   const {error} = await query;
   if (error) return;
   if (kind === "moment") await loadMoments();
   else await loadProfilePosts();
+}
+
+function openMediaViewer(url, caption = "Momento") {
+  const viewer = document.getElementById("mediaViewer");
+  document.getElementById("mediaViewerImage").src = url;
+  document.getElementById("mediaViewerImage").alt = caption;
+  document.getElementById("mediaViewerCaption").textContent = caption;
+  viewer.classList.add("open");
+  viewer.setAttribute("aria-hidden", "false");
+}
+
+function closeMediaViewer() {
+  const viewer = document.getElementById("mediaViewer");
+  viewer.classList.remove("open");
+  viewer.setAttribute("aria-hidden", "true");
+  document.getElementById("mediaViewerImage").src = "";
 }
 
 async function deleteGroupMessage(id) {
@@ -1463,6 +1482,8 @@ document.addEventListener("click", event => {
   if (profileTarget) renderProfile(profileTarget.dataset.profile);
   const deleteMoment = event.target.closest("[data-delete-moment]");
   if (deleteMoment) deleteMedia("moment", deleteMoment.dataset.deleteMoment);
+  const viewMedia = event.target.closest("[data-view-media]");
+  if (viewMedia) openMediaViewer(viewMedia.dataset.viewMedia, viewMedia.dataset.viewCaption);
   const deletePost = event.target.closest("[data-delete-post]");
   if (deletePost) deleteMedia("post", deletePost.dataset.deletePost);
   const deleteMessage = event.target.closest("[data-delete-message]");
@@ -1774,6 +1795,13 @@ mediaCropStage.addEventListener("pointercancel", stopMediaCropDrag);
 document.getElementById("mediaUploadForm").addEventListener("submit", event => {
   event.preventDefault();
   publishMedia(event.currentTarget);
+});
+document.getElementById("closeMediaViewer").addEventListener("click", closeMediaViewer);
+document.getElementById("mediaViewer").addEventListener("click", event => {
+  if (event.target.id === "mediaViewer") closeMediaViewer();
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && document.getElementById("mediaViewer").classList.contains("open")) closeMediaViewer();
 });
 function openGlobalSearch() {
   const search = document.getElementById("globalSearch");
