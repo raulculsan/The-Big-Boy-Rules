@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-28" />
+  <link rel="stylesheet" href="styles.css?v=20260730-29" />
 </head>
 <body>
 
@@ -139,6 +139,20 @@
         <h1 id="pageTitle">The Big Boy Rules</h1>
       </div>
       <div class="top-actions">
+        <div class="notifications-wrap">
+          <button class="icon-button notification-button" id="notificationsButton" type="button" aria-label="Abrir notificaciones" aria-expanded="false" title="Notificaciones">
+            🔔<span class="notification-count" id="notificationCount" hidden>0</span>
+          </button>
+          <div class="notifications-dropdown" id="notificationsDropdown" aria-hidden="true">
+            <div class="notifications-heading">
+              <div><span class="eyebrow">ACTIVIDAD</span><strong>Notificaciones</strong></div>
+              <button id="markAllNotificationsRead" type="button">Marcar todas</button>
+            </div>
+            <div class="notifications-list" id="notificationsList">
+              <div class="empty-state compact">No tienes notificaciones.</div>
+            </div>
+          </div>
+        </div>
         <button class="icon-button admin-only admin-crown-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración">♛</button>
         <button class="icon-button" id="searchButton" aria-label="Buscar">⌕</button>
         <div class="global-search" id="globalSearch" aria-hidden="true">
@@ -670,7 +684,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260730-28"></script>
-  <script src="app.js?v=20260730-28"></script>
+  <script src="config.js?v=20260730-29"></script>
+  <script src="app.js?v=20260730-29"></script>
 </body>
 </html>

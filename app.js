@@ -48,6 +48,7 @@ let messages = [];
 let moments = [];
 let profilePosts = [];
 let mediaLikes = [];
+let notifications = [];
 let privateMessages = [];
 let groupEvents = [];
 let chatChannels = [];
@@ -59,6 +60,7 @@ let messageChannel = null;
 let momentChannel = null;
 let postChannel = null;
 let mediaLikesChannel = null;
+let notificationsChannel = null;
 let privateChannel = null;
 let eventChannel = null;
 let settingsChannel = null;
@@ -646,7 +648,7 @@ async function applyUserInterface(user, authUser = null) {
   if (backendReady && authUser) {
     await loadRemoteProfiles();
     await loadChatChannels();
-    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()]);
+    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadNotifications(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()]);
     connectRealtime();
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
@@ -661,7 +663,10 @@ function showLogin() {
   document.getElementById("loginScreen")?.classList.remove("login-hidden");
   document.getElementById("userDropdown")?.classList.remove("open");
   onlineUsers = [];
+  notifications = [];
   renderPresence();
+  renderNotifications();
+  closeNotifications();
   goTo("inicio");
 }
 
@@ -894,6 +899,78 @@ async function loadProfilePosts() {
   if (activeProfileId) renderProfile(activeProfileId);
 }
 
+function renderNotifications() {
+  const list = document.getElementById("notificationsList");
+  const badge = document.getElementById("notificationCount");
+  const markAll = document.getElementById("markAllNotificationsRead");
+  const unread = notifications.filter(item => !item.readAt).length;
+  badge.hidden = unread === 0;
+  badge.textContent = unread > 99 ? "99+" : String(unread);
+  markAll.disabled = unread === 0;
+  if (!notifications.length) {
+    list.innerHTML = `<div class="empty-state compact">No tienes notificaciones.</div>`;
+    return;
+  }
+  list.innerHTML = notifications.map(item => {
+    const actor = getMemberByAuthId(item.actorId);
+    const text = item.type === "private_message"
+      ? `${actor?.name || "Un miembro"} te ha enviado un mensaje`
+      : `${actor?.name || "Un miembro"} ha dado Me gusta a tu ${item.targetType === "moment" ? "momento" : "publicación"}`;
+    return `<button class="notification-item ${item.readAt ? "" : "unread"}" type="button" data-notification-id="${item.id}">
+      ${getAvatar(actor, "avatar tiny")}
+      <span><strong>${escapeHtml(text)}</strong>${item.excerpt ? `<small>${escapeHtml(item.excerpt)}</small>` : ""}<time datetime="${escapeHtml(item.createdAt)}">${formatRelativeTime(item.createdAt)}</time></span>
+      ${item.readAt ? "" : `<i aria-label="Sin leer"></i>`}
+    </button>`;
+  }).join("");
+}
+
+async function loadNotifications() {
+  const {data, error} = await db.from("notifications").select("*")
+    .order("created_at", {ascending: false}).limit(100);
+  notifications = error ? [] : data.map(item => ({
+    id: item.id,
+    actorId: item.actor_id,
+    type: item.type,
+    targetType: item.target_type,
+    targetId: item.target_id,
+    excerpt: item.excerpt || "",
+    readAt: item.read_at,
+    createdAt: item.created_at
+  }));
+  renderNotifications();
+}
+
+async function markNotificationsRead(id = null) {
+  if (!currentAuthUser) return;
+  let query = db.from("notifications").update({read_at: new Date().toISOString()})
+    .eq("user_id", currentAuthUser.id).is("read_at", null);
+  if (id != null) query = query.eq("id", id);
+  const {error} = await query;
+  if (!error) await loadNotifications();
+}
+
+async function openNotification(id) {
+  const item = notifications.find(notification => String(notification.id) === String(id));
+  if (!item) return;
+  if (!item.readAt) await markNotificationsRead(item.id);
+  closeNotifications();
+  if (item.type === "private_message") {
+    const actor = getMemberByAuthId(item.actorId);
+    if (actor) openPrivateConversation(actor.id);
+  } else if (item.targetType === "moment") {
+    goTo("momentos");
+  } else if (item.targetType === "post" && currentUser) {
+    renderProfile(currentUser.id);
+  }
+}
+
+function closeNotifications() {
+  const dropdown = document.getElementById("notificationsDropdown");
+  dropdown.classList.remove("open");
+  dropdown.setAttribute("aria-hidden", "true");
+  document.getElementById("notificationsButton").setAttribute("aria-expanded", "false");
+}
+
 async function loadPrivateMessages() {
   const {data, error} = await db.from("private_messages").select("*").order("created_at").limit(500);
   privateMessages = error ? [] : data.map(item => ({
@@ -963,6 +1040,9 @@ function connectRealtime() {
     .subscribe();
   mediaLikesChannel = db.channel("media-likes-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "media_likes"}, () => loadMediaLikes())
+    .subscribe();
+  notificationsChannel = db.channel(`notifications-${currentAuthUser.id}`)
+    .on("postgres_changes", {event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentAuthUser.id}`}, () => loadNotifications())
     .subscribe();
   privateChannel = db.channel(`private-messages-${currentAuthUser.id}`)
     .on("postgres_changes", {event: "*", schema: "public", table: "private_messages"}, () => loadPrivateMessages())
@@ -1777,6 +1857,8 @@ document.addEventListener("click", event => {
   if (deletePost) deleteMedia("post", deletePost.dataset.deletePost);
   const likeMedia = event.target.closest("[data-like-media]");
   if (likeMedia) toggleMediaLike(likeMedia.dataset.likeKind, likeMedia.dataset.likeMedia, likeMedia);
+  const notificationTarget = event.target.closest("[data-notification-id]");
+  if (notificationTarget) openNotification(notificationTarget.dataset.notificationId);
   const editGroupTarget = event.target.closest("[data-edit-group-message]");
   if (editGroupTarget) editGroupMessage(editGroupTarget.dataset.editGroupMessage);
   const deleteGroupTarget = event.target.closest("[data-delete-group-message]");
@@ -1843,9 +1925,28 @@ document.getElementById("requiredPasswordChangeForm").addEventListener("submit",
 });
 document.getElementById("userMenuButton").addEventListener("click", event => {
   event.stopPropagation();
+  closeNotifications();
   document.getElementById("userDropdown").classList.toggle("open");
 });
-document.addEventListener("click", () => document.getElementById("userDropdown")?.classList.remove("open"));
+document.getElementById("notificationsButton").addEventListener("click", event => {
+  event.stopPropagation();
+  document.getElementById("userDropdown")?.classList.remove("open");
+  const dropdown = document.getElementById("notificationsDropdown");
+  const open = !dropdown.classList.contains("open");
+  dropdown.classList.toggle("open", open);
+  dropdown.setAttribute("aria-hidden", String(!open));
+  event.currentTarget.setAttribute("aria-expanded", String(open));
+});
+document.getElementById("notificationsDropdown").addEventListener("click", event => {
+  event.stopPropagation();
+  const target = event.target.closest("[data-notification-id]");
+  if (target) openNotification(target.dataset.notificationId);
+});
+document.getElementById("markAllNotificationsRead").addEventListener("click", () => markNotificationsRead());
+document.addEventListener("click", () => {
+  document.getElementById("userDropdown")?.classList.remove("open");
+  closeNotifications();
+});
 document.getElementById("myProfileButton").addEventListener("click", () => {
   if (isSuperAdmin()) goTo("administracion");
   else if (currentUser) renderProfile(currentUser.id);
@@ -1860,6 +1961,7 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   moments = [];
   profilePosts = [];
   mediaLikes = [];
+  notifications = [];
   privateMessages = [];
   groupEvents = [];
   chatChannels = [];
@@ -1869,12 +1971,14 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   if (momentChannel) db.removeChannel(momentChannel);
   if (postChannel) db.removeChannel(postChannel);
   if (mediaLikesChannel) db.removeChannel(mediaLikesChannel);
+  if (notificationsChannel) db.removeChannel(notificationsChannel);
   if (privateChannel) db.removeChannel(privateChannel);
   if (eventChannel) db.removeChannel(eventChannel);
   if (settingsChannel) db.removeChannel(settingsChannel);
   if (chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
   showLogin();
   renderMessages();
+  renderNotifications();
 });
 document.getElementById("messageForm").addEventListener("submit", async event => {
   event.preventDefault();
@@ -2213,6 +2317,7 @@ renderActivity();
 renderMessages();
 renderPresence();
 renderMoments();
+renderNotifications();
 renderPrivateContacts();
 renderPrivateConversation();
 renderCalendar();
