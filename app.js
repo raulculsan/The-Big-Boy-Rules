@@ -272,15 +272,16 @@ function renderSpotify() {
   }
 }
 
-function renderMediaCard(item, canDelete, kind) {
+function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
   const member = getMember(item.member);
   const media = item.mediaType === "video"
     ? `<video src="${escapeHtml(item.mediaUrl)}" controls preload="metadata"></video>`
     : kind === "moment"
       ? `<button class="media-view-button" type="button" data-view-media="${escapeHtml(item.mediaUrl)}" data-view-caption="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}" loading="lazy"><span>Ver momento</span></button>`
       : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy">`;
-  return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}">
+  return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}"${kind === "moment" ? ` style="--story-index:${cardIndex}"` : ""}>
     ${canDelete && kind === "moment" ? `<button class="delete-media-button moment-delete-button" data-delete-moment="${item.id}" type="button" title="Eliminar este momento" aria-label="Eliminar este momento">× <span>Eliminar</span></button>` : ""}
+    ${kind === "moment" ? `<div class="story-progress" aria-hidden="true"><span></span></div>` : ""}
     <div class="media-frame">${media}</div>
     <div class="media-card-info">
       ${kind === "moment" ? `<button class="media-author" data-profile="${item.member}">${getAvatar(member, "avatar tiny")}<strong>${escapeHtml(member?.name || "Miembro")}</strong></button>` : ""}
@@ -399,8 +400,8 @@ function renderMoments() {
     grid.innerHTML = `<div class="empty-state moments-empty"><strong>Todavía no hay momentos</strong><span>Sé la primera persona en compartir una historia con el grupo.</span></div>`;
     return;
   }
-  grid.innerHTML = moments.map(item => {
-    return renderMediaCard(item, isMediaOwner(item) || isSuperAdmin(), "moment");
+  grid.innerHTML = moments.map((item, index) => {
+    return renderMediaCard(item, isMediaOwner(item) || isSuperAdmin(), "moment", index);
   }).join("");
 }
 

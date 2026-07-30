@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-25" />
+  <link rel="stylesheet" href="styles.css?v=20260730-26" />
 </head>
 <body>
 
@@ -319,16 +319,20 @@
     </section>
 
     <section class="page-section" id="momentos">
-      <div class="section-intro">
-        <div>
+      <div class="section-intro moments-hero">
+        <div class="moments-hero-copy">
           <span class="eyebrow">HISTORIAS DEL GRUPO</span>
-          <h2>Momentos de las últimas 24 horas.</h2>
+          <h2>Lo que pasa hoy,<br><em>se queda aquí.</em></h2>
+          <p>Fotos y vídeos del grupo que desaparecen automáticamente después de 24 horas.</p>
         </div>
-        <p>Sube una foto o vídeo para compartirlo con el grupo. Como una historia, desaparecerá automáticamente en 24 horas.</p>
+        <div class="moments-hero-mark" aria-hidden="true">
+          <span>24</span>
+          <small>HORAS</small>
+        </div>
       </div>
       <div class="moments-toolbar">
-        <button class="primary-button" id="addMomentButton" type="button">＋ Subir momento</button>
-        <span id="momentsStatus" class="news-status" aria-live="polite"></span>
+        <button class="primary-button moments-add-button" id="addMomentButton" type="button"><span>＋</span> Subir momento</button>
+        <span id="momentsStatus" class="news-status moments-status" aria-live="polite"></span>
       </div>
       <div class="moments-grid reveal" id="momentsGrid"></div>
     </section>
@@ -663,7 +667,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260730-25"></script>
-  <script src="app.js?v=20260730-25"></script>
+  <script src="config.js?v=20260730-26"></script>
+  <script src="app.js?v=20260730-26"></script>
 </body>
 </html>
