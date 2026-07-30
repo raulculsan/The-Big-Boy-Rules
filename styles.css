@@ -3182,9 +3182,55 @@ body.light .global-search { background: rgba(235,232,223,.97); }
 .private-contact > span { flex: 1 1 auto; min-width: 0; display: grid; gap: 3px; overflow: hidden; }
 .private-contact small { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .private-conversation { padding: 0; overflow: hidden; }
-.private-conversation .chat-header { padding: 20px; }
-.private-chat-person { display: flex; align-items: center; gap: 12px; }
+.private-conversation .chat-header {
+  min-height: 104px;
+  padding: 16px 20px;
+}
+.private-chat-person { display: flex; align-items: center; gap: 15px; }
 .private-chat-person h3 { margin: 3px 0 0; }
+.private-chat-avatar {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 74px;
+  width: 74px;
+  height: 74px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(214,166,46,.28);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #252119, #0c0c0e);
+  box-shadow: 0 9px 24px rgba(0,0,0,.3);
+}
+.private-chat-avatar.has-country-flag::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(4,4,6,.24);
+}
+.private-chat-flag {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: -2;
+  font-size: 76px;
+  line-height: 1;
+  filter: saturate(1.12);
+  transform: translate(-50%, -50%) scale(1.36);
+}
+.private-chat-avatar .avatar {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border: 2px solid rgba(255,255,255,.82);
+  box-shadow: 0 5px 18px rgba(0,0,0,.5);
+}
+.private-chat-avatar .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .private-message.own { margin-left: 16%; }
 .private-message.own > div:last-child { background: rgba(214,166,46,.08); }
 
@@ -3194,6 +3240,9 @@ body.light .global-search { background: rgba(235,232,223,.97); }
   .message.own,
   .private-message.own { margin-left: 7%; }
   .chat-channel-bar { padding-inline: 12px; }
+  .private-conversation .chat-header { min-height: 94px; padding: 13px 15px; }
+  .private-chat-avatar { flex-basis: 64px; width: 64px; height: 64px; border-radius: 15px; }
+  .private-chat-avatar .avatar { width: 49px; height: 49px; min-width: 49px; min-height: 49px; }
 }
 
 /* Calendario */
