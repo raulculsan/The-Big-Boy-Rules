@@ -20,6 +20,7 @@ let members = baseMembers.map((item, index) => ({
   role: item[3] === "admin" ? "ADMINISTRADOR" : "MIEMBRO",
   bio: item[4],
   tags: item[5],
+  countryFlag: "",
   avatarUrl: "",
   bg: `linear-gradient(145deg, ${item[6]}, #0c0c0e 68%)`
 }));
@@ -183,7 +184,7 @@ function renderProfile(memberId) {
         style="--profile-bg:${member.avatarUrl ? `url('${escapeHtml(member.avatarUrl)}')` : member.bg}"></div>
       <div class="profile-info">
         <span class="profile-number">BIG BOY ${String(member.id).padStart(2, "0")}</span>
-        <h2>${escapeHtml(member.name)}</h2>
+        <h2>${member.countryFlag ? `<span class="profile-country-flag" title="País">${escapeHtml(member.countryFlag)}</span>` : ""}${escapeHtml(member.name)}</h2>
         <div class="profile-nickname">${escapeHtml(member.nickname.toUpperCase())}</div>
         <p>${escapeHtml(member.bio)}</p>
         <div class="profile-tags">${member.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
@@ -564,7 +565,8 @@ function mergeRemoteProfile(profile, expectedAuthId = currentAuthUser?.id) {
     return {
       id: Number(profile.legacy_id), authId: profile.id, username: profile.username,
       name: profile.display_name || "Administración", nickname: "Control total",
-      roleKey: profile.role, role: "CONTROL TOTAL", bio: "", tags: [], avatarUrl: "",
+      roleKey: profile.role, role: "CONTROL TOTAL", bio: "", tags: [],
+      countryFlag: profile.country_flag || "", avatarUrl: "",
       bg: "linear-gradient(145deg, #4a3210, #0c0c0e 68%)", hidden: true
     };
   }
@@ -575,6 +577,7 @@ function mergeRemoteProfile(profile, expectedAuthId = currentAuthUser?.id) {
       name: profile.display_name || profile.username, nickname: profile.nickname || "The Big Boy",
       roleKey: profile.role, role: profile.role === "admin" ? "ADMINISTRADOR" : "MIEMBRO",
       bio: profile.bio || "", tags: Array.isArray(profile.tags) ? profile.tags : [],
+      countryFlag: profile.country_flag || "",
       avatarUrl: "", bg: "linear-gradient(145deg, #262018, #0c0c0e 68%)"
     };
     members.push(member);
@@ -585,6 +588,7 @@ function mergeRemoteProfile(profile, expectedAuthId = currentAuthUser?.id) {
     nickname: profile.nickname || member.nickname,
     bio: profile.bio || member.bio,
     tags: Array.isArray(profile.tags) ? profile.tags : member.tags,
+    countryFlag: profile.country_flag || "",
     avatarUrl: profile.avatar_url || ""
   });
   return member;
@@ -873,6 +877,7 @@ function openProfileEditor(memberId = currentUser?.id) {
   document.getElementById("profileAvatar").value = "";
   document.getElementById("profileName").value = profile.name;
   document.getElementById("profileNickname").value = profile.nickname;
+  document.getElementById("profileFlag").value = profile.countryFlag || "";
   document.getElementById("profileBio").value = profile.bio;
   document.getElementById("profileTags").value = profile.tags.join(", ");
   document.getElementById("bioCount").textContent = profile.bio.length;
@@ -927,12 +932,14 @@ async function saveProfile(form) {
       nickname: document.getElementById("profileNickname").value.trim(),
       bio: document.getElementById("profileBio").value.trim(),
       tags: document.getElementById("profileTags").value.split(",").map(tag => tag.trim()).filter(Boolean).slice(0, 6),
+      countryFlag: document.getElementById("profileFlag").value,
       avatarUrl
     };
     if (backendReady) {
       const {error} = await db.from("profiles").update({
         display_name: updates.name, nickname: updates.nickname, bio: updates.bio,
-        tags: updates.tags, avatar_url: updates.avatarUrl, updated_at: new Date().toISOString()
+        tags: updates.tags, country_flag: updates.countryFlag,
+        avatar_url: updates.avatarUrl, updated_at: new Date().toISOString()
       }).eq("id", targetAuthId);
       if (error) throw error;
     }

@@ -883,6 +883,17 @@ body.light .message p {
   font-weight: 400;
 }
 
+.profile-country-flag {
+  display: inline-block;
+  margin-right: 10px;
+  background: none;
+  color: initial;
+  font-family: "Inter", sans-serif;
+  font-size: .58em;
+  vertical-align: .16em;
+  -webkit-text-fill-color: initial;
+}
+
 .profile-nickname {
   margin: 12px 0 24px;
   color: var(--accent);
@@ -2576,7 +2587,8 @@ input:disabled {
 }
 
 .profile-form input,
-.profile-form textarea {
+.profile-form textarea,
+.profile-form select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -2592,7 +2604,8 @@ input:disabled {
 }
 
 .profile-form input:focus,
-.profile-form textarea:focus {
+.profile-form textarea:focus,
+.profile-form select:focus {
   border-color: rgba(242,183,5,.65);
 }
 

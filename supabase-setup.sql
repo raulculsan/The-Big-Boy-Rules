@@ -9,6 +9,7 @@ create table if not exists public.profiles (
   nickname text not null default 'The Big Boy',
   bio text not null default '',
   tags text[] not null default '{}',
+  country_flag text not null default '',
   avatar_url text,
   role text not null default 'member' check (role in ('superadmin', 'admin', 'member')),
   is_hidden boolean not null default false,
@@ -16,6 +17,7 @@ create table if not exists public.profiles (
 );
 
 alter table public.profiles add column if not exists is_hidden boolean not null default false;
+alter table public.profiles add column if not exists country_flag text not null default '';
 alter table public.profiles drop constraint if exists profiles_legacy_id_check;
 alter table public.profiles add constraint profiles_legacy_id_check check (legacy_id between 1 and 32767);
 alter table public.profiles drop constraint if exists profiles_role_check;
