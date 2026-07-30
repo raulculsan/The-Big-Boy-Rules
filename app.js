@@ -115,7 +115,7 @@ function persistLocalProfile(member) {
   const stored = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY) || "{}");
   stored[member.id] = {
     name: member.name, nickname: member.nickname, bio: member.bio,
-    tags: member.tags, avatarUrl: member.avatarUrl
+    tags: member.tags, countryFlag: member.countryFlag, avatarUrl: member.avatarUrl
   };
   localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(stored));
 }
@@ -138,10 +138,13 @@ function goTo(sectionId) {
 
 function renderFeatured() {
   document.getElementById("featuredMembers").innerHTML = members.slice(0, 4).map(member => `
-    <button class="member-mini-card" data-profile="${member.id}">
+    <button class="member-mini-card ${member.countryFlag ? "has-country-flag" : ""}" data-profile="${member.id}">
+      ${member.countryFlag ? `<span class="member-mini-flag" aria-hidden="true">${escapeHtml(member.countryFlag)}</span>` : ""}
       ${getAvatar(member)}
-      <strong>${escapeHtml(member.name)}</strong>
-      <small>${escapeHtml(member.nickname)}</small>
+      <span class="member-mini-copy">
+        <strong>${escapeHtml(member.name)}</strong>
+        <small>${escapeHtml(member.nickname)}</small>
+      </span>
     </button>`).join("");
 }
 
