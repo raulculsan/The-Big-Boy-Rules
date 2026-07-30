@@ -3255,6 +3255,41 @@ input:disabled {
 .media-card-info { padding: 14px; }
 .media-card-info p { margin: 8px 0; line-height: 1.45; }
 .media-card-info time { color: var(--muted); font-size: .75rem; }
+.media-like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--muted);
+  background: rgba(255,255,255,.035);
+  cursor: pointer;
+  transition: transform .2s ease, color .2s ease, border-color .2s ease, background .2s ease;
+}
+.media-like-button:hover {
+  transform: translateY(-1px);
+  color: #ef6d7a;
+  border-color: rgba(239,109,122,.45);
+}
+.media-like-button span {
+  color: #ef6d7a;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.media-like-button strong { font-size: .78rem; }
+.media-like-button small {
+  font-size: .68rem;
+  font-weight: 800;
+}
+.media-like-button.liked {
+  color: #fff;
+  border-color: rgba(239,109,122,.55);
+  background: rgba(239,109,122,.14);
+}
+.media-like-button:disabled { opacity: .55; cursor: wait; }
+.story-card .media-like-button { margin-right: 8px; }
 .media-author,
 .message-author {
   border: 0;
