@@ -578,11 +578,41 @@ body.light .sidebar {
 }
 
 .member-mini-card {
+  position: relative;
+  min-height: 145px;
+  overflow: hidden;
+  isolation: isolate;
+  text-align: left;
   border: 1px solid var(--border);
   background: var(--surface-2);
   border-radius: 14px;
   padding: 16px;
   transition: .2s;
+}
+
+.member-mini-card.has-country-flag::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(8,8,10,.9), rgba(8,8,10,.42));
+}
+
+.member-mini-flag {
+  position: absolute;
+  inset: 50% auto auto 62%;
+  z-index: -2;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  font-size: 9rem;
+  line-height: 1;
+  transform: translate(-50%, -50%) scale(1.7);
+  filter: saturate(1.15);
+}
+
+.member-mini-card .avatar,
+.member-mini-copy {
+  position: relative;
+  z-index: 1;
 }
 
 .member-mini-card:hover {
@@ -600,6 +630,8 @@ body.light .sidebar {
 .member-mini-card small {
   display: block;
 }
+
+.member-mini-card.has-country-flag small { color: rgba(255,255,255,.75); }
 
 .member-mini-card small {
   color: var(--muted);
@@ -3035,10 +3067,28 @@ body.light .global-search { background: rgba(235,232,223,.97); }
   border-top: 1px solid var(--line);
   background: transparent;
   cursor: pointer;
+  min-height: 69px;
+  overflow: hidden;
+}
+.private-contact .avatar {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  max-width: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  overflow: hidden;
+}
+.private-contact .avatar img {
+  width: 42px;
+  height: 42px;
+  max-width: 42px;
+  object-fit: cover;
 }
 .private-contact:hover,
 .private-contact.active { background: rgba(214,166,46,.09); }
-.private-contact > span { min-width: 0; display: grid; gap: 3px; }
+.private-contact > span { flex: 1 1 auto; min-width: 0; display: grid; gap: 3px; overflow: hidden; }
 .private-contact small { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .private-conversation { padding: 0; overflow: hidden; }
 .private-conversation .chat-header { padding: 20px; }
