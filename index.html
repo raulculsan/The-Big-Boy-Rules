@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-5" />
+  <link rel="stylesheet" href="styles.css?v=20260730-6" />
 </head>
 <body>
 
@@ -461,6 +461,39 @@
           <input id="profileNickname" maxlength="50" required>
         </label>
         <label>
+          <span>País</span>
+          <select id="profileFlag">
+            <option value="">Sin bandera</option>
+            <option value="🇪🇸">🇪🇸 España</option>
+            <option value="🇬🇶">🇬🇶 Guinea Ecuatorial</option>
+            <option value="🇦🇷">🇦🇷 Argentina</option>
+            <option value="🇧🇴">🇧🇴 Bolivia</option>
+            <option value="🇨🇱">🇨🇱 Chile</option>
+            <option value="🇨🇴">🇨🇴 Colombia</option>
+            <option value="🇨🇷">🇨🇷 Costa Rica</option>
+            <option value="🇨🇺">🇨🇺 Cuba</option>
+            <option value="🇩🇴">🇩🇴 República Dominicana</option>
+            <option value="🇪🇨">🇪🇨 Ecuador</option>
+            <option value="🇸🇻">🇸🇻 El Salvador</option>
+            <option value="🇬🇹">🇬🇹 Guatemala</option>
+            <option value="🇭🇳">🇭🇳 Honduras</option>
+            <option value="🇲🇽">🇲🇽 México</option>
+            <option value="🇳🇮">🇳🇮 Nicaragua</option>
+            <option value="🇵🇦">🇵🇦 Panamá</option>
+            <option value="🇵🇾">🇵🇾 Paraguay</option>
+            <option value="🇵🇪">🇵🇪 Perú</option>
+            <option value="🇵🇷">🇵🇷 Puerto Rico</option>
+            <option value="🇺🇾">🇺🇾 Uruguay</option>
+            <option value="🇻🇪">🇻🇪 Venezuela</option>
+            <option value="🇵🇹">🇵🇹 Portugal</option>
+            <option value="🇫🇷">🇫🇷 Francia</option>
+            <option value="🇮🇹">🇮🇹 Italia</option>
+            <option value="🇩🇪">🇩🇪 Alemania</option>
+            <option value="🇬🇧">🇬🇧 Reino Unido</option>
+            <option value="🇺🇸">🇺🇸 Estados Unidos</option>
+          </select>
+        </label>
+        <label>
           <span>Descripción</span>
           <textarea id="profileBio" maxlength="350" rows="5" required></textarea>
           <small><span id="bioCount">0</span>/350</small>
@@ -567,6 +600,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260730-5"></script>
+  <script src="app.js?v=20260730-6"></script>
 </body>
 </html>
