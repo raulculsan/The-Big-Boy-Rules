@@ -1567,8 +1567,7 @@ async function loadNews(force = false) {
     return;
   }
   try {
-    const refreshFeed = `${feed}${feed.includes("?") ? "&" : "?"}_bb_refresh=${Math.floor(Date.now() / NEWS_REFRESH_INTERVAL)}`;
-    const endpoint = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(refreshFeed)}`;
+    const endpoint = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}`;
     const response = await fetch(endpoint, {cache: "no-store"});
     if (!response.ok) throw new Error("El servicio de noticias no responde.");
     const payload = await response.json();
