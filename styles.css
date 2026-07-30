@@ -3876,6 +3876,15 @@ body.chat-focus #privados .messages {
   max-height: none;
 }
 body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line); }
+@media (max-width: 760px) {
+  body.chat-focus .app {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    transform: translateY(var(--chat-viewport-offset, 0px));
+  }
+}
 .private-contacts { padding: 0; overflow: hidden; }
 .private-contacts .panel-heading { padding: 22px; }
 .private-contact {

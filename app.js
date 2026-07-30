@@ -142,16 +142,16 @@ function persistLocalProfile(member) {
   localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(stored));
 }
 
-function syncMobileViewport(resetScroll = false) {
+function syncMobileViewport() {
   if (window.innerWidth > 760) {
     document.documentElement.style.removeProperty("--chat-viewport-height");
+    document.documentElement.style.removeProperty("--chat-viewport-offset");
     return;
   }
   const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight);
+  const viewportOffset = Math.round(window.visualViewport?.offsetTop || 0);
   document.documentElement.style.setProperty("--chat-viewport-height", `${viewportHeight}px`);
-  if (resetScroll && document.body.classList.contains("chat-focus")) {
-    requestAnimationFrame(() => window.scrollTo(0, 0));
-  }
+  document.documentElement.style.setProperty("--chat-viewport-offset", `${viewportOffset}px`);
 }
 
 function goTo(sectionId) {
@@ -163,7 +163,7 @@ function goTo(sectionId) {
   sections.forEach(section => section.classList.toggle("active", section.id === sectionId));
   navLinks.forEach(link => link.classList.toggle("active", link.dataset.section === sectionId));
   document.body.classList.toggle("chat-focus", openingChat);
-  syncMobileViewport(openingChat);
+  syncMobileViewport();
   const titles = {
     inicio: "The Big Boy Rules", chat: "Chat del grupo", miembros: "Miembros",
     privados: "Mensajes privados", perfil: "Perfil del miembro", momentos: "Momentos",
@@ -2037,15 +2037,16 @@ document.getElementById("privateMessageForm").addEventListener("submit", async e
   }
 });
 window.visualViewport?.addEventListener("resize", () => syncMobileViewport());
+window.visualViewport?.addEventListener("scroll", () => syncMobileViewport());
 window.addEventListener("resize", () => syncMobileViewport());
-window.addEventListener("orientationchange", () => setTimeout(() => syncMobileViewport(true), 250));
+window.addEventListener("orientationchange", () => setTimeout(() => syncMobileViewport(), 250));
 document.addEventListener("focusin", event => {
   if (event.target.closest(".message-form input")) syncMobileViewport();
 });
 document.addEventListener("focusout", event => {
   if (!event.target.closest(".message-form input")) return;
-  setTimeout(() => syncMobileViewport(true), 80);
-  setTimeout(() => syncMobileViewport(true), 350);
+  setTimeout(() => syncMobileViewport(), 80);
+  setTimeout(() => syncMobileViewport(), 350);
 });
 document.getElementById("closeProfileEditor").addEventListener("click", closeProfileEditor);
 document.getElementById("cancelProfileEditor").addEventListener("click", closeProfileEditor);
