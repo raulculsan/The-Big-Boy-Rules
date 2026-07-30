@@ -47,6 +47,7 @@ let currentAuthUser = null;
 let messages = [];
 let moments = [];
 let profilePosts = [];
+let mediaLikes = [];
 let privateMessages = [];
 let groupEvents = [];
 let chatChannels = [];
@@ -57,6 +58,7 @@ let presenceChannel = null;
 let messageChannel = null;
 let momentChannel = null;
 let postChannel = null;
+let mediaLikesChannel = null;
 let privateChannel = null;
 let eventChannel = null;
 let settingsChannel = null;
@@ -275,6 +277,8 @@ function renderSpotify() {
 
 function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
   const member = getMember(item.member);
+  const likes = getMediaLikes(kind, item.id);
+  const liked = Boolean(currentAuthUser && likes.some(like => like.userId === currentAuthUser.id));
   const media = item.mediaType === "video"
     ? `<video src="${escapeHtml(item.mediaUrl)}" controls preload="metadata"></video>`
     : kind === "moment"
@@ -288,6 +292,9 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
       ${kind === "moment" ? `<button class="media-author" data-profile="${item.member}">${getAvatar(member, "avatar tiny")}<strong>${escapeHtml(member?.name || "Miembro")}</strong></button>` : ""}
       ${item.caption ? `<p>${escapeHtml(item.caption)}</p>` : ""}
       <time datetime="${escapeHtml(item.createdAt)}">${kind === "moment" ? `Caduca ${formatExpiry(item.expiresAt)}` : formatRelativeTime(item.createdAt)}</time>
+      <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="${kind}" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
+        <span aria-hidden="true">${liked ? "♥" : "♡"}</span>${likes.length ? `<strong>${likes.length}</strong>` : ""}<small>Me gusta</small>
+      </button>
       ${canDelete && kind !== "moment" ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar esta publicación">Eliminar</button>` : ""}
     </div>
   </article>`;
@@ -639,7 +646,7 @@ async function applyUserInterface(user, authUser = null) {
   if (backendReady && authUser) {
     await loadRemoteProfiles();
     await loadChatChannels();
-    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()]);
+    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()]);
     connectRealtime();
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
@@ -831,6 +838,44 @@ function mapMedia(item) {
   };
 }
 
+function getMediaLikes(kind, mediaId) {
+  return mediaLikes.filter(like => like.kind === kind && String(like.mediaId) === String(mediaId));
+}
+
+async function loadMediaLikes() {
+  const {data, error} = await db.from("media_likes").select("id,user_id,moment_id,profile_post_id");
+  mediaLikes = error ? [] : data.map(item => ({
+    id: item.id,
+    userId: item.user_id,
+    kind: item.moment_id != null ? "moment" : "post",
+    mediaId: item.moment_id ?? item.profile_post_id
+  }));
+  renderMoments();
+  if (activeProfileId) renderProfile(activeProfileId);
+}
+
+async function toggleMediaLike(kind, mediaId, button) {
+  if (!backendReady || !currentAuthUser || !["moment", "post"].includes(kind)) return;
+  const existing = getMediaLikes(kind, mediaId).find(like => like.userId === currentAuthUser.id);
+  button.disabled = true;
+  try {
+    const query = existing
+      ? db.from("media_likes").delete().eq("id", existing.id).eq("user_id", currentAuthUser.id)
+      : db.from("media_likes").insert({
+          user_id: currentAuthUser.id,
+          moment_id: kind === "moment" ? mediaId : null,
+          profile_post_id: kind === "post" ? mediaId : null
+        });
+    const {error} = await query;
+    if (error) throw error;
+    await loadMediaLikes();
+  } catch (error) {
+    window.alert(error.message || "No se pudo guardar el Me gusta.");
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function loadMoments() {
   const {data, error} = await db.from("moments").select("*")
     .gt("expires_at", new Date().toISOString()).order("created_at", {ascending: false});
@@ -915,6 +960,9 @@ function connectRealtime() {
     .subscribe();
   postChannel = db.channel("profile-posts-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "profile_posts"}, () => loadProfilePosts())
+    .subscribe();
+  mediaLikesChannel = db.channel("media-likes-live")
+    .on("postgres_changes", {event: "*", schema: "public", table: "media_likes"}, () => loadMediaLikes())
     .subscribe();
   privateChannel = db.channel(`private-messages-${currentAuthUser.id}`)
     .on("postgres_changes", {event: "*", schema: "public", table: "private_messages"}, () => loadPrivateMessages())
@@ -1727,6 +1775,8 @@ document.addEventListener("click", event => {
   if (viewMedia) openMediaViewer(viewMedia.dataset.viewMedia, viewMedia.dataset.viewCaption);
   const deletePost = event.target.closest("[data-delete-post]");
   if (deletePost) deleteMedia("post", deletePost.dataset.deletePost);
+  const likeMedia = event.target.closest("[data-like-media]");
+  if (likeMedia) toggleMediaLike(likeMedia.dataset.likeKind, likeMedia.dataset.likeMedia, likeMedia);
   const editGroupTarget = event.target.closest("[data-edit-group-message]");
   if (editGroupTarget) editGroupMessage(editGroupTarget.dataset.editGroupMessage);
   const deleteGroupTarget = event.target.closest("[data-delete-group-message]");
@@ -1809,6 +1859,7 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   messages = [];
   moments = [];
   profilePosts = [];
+  mediaLikes = [];
   privateMessages = [];
   groupEvents = [];
   chatChannels = [];
@@ -1817,6 +1868,7 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   if (messageChannel) db.removeChannel(messageChannel);
   if (momentChannel) db.removeChannel(momentChannel);
   if (postChannel) db.removeChannel(postChannel);
+  if (mediaLikesChannel) db.removeChannel(mediaLikesChannel);
   if (privateChannel) db.removeChannel(privateChannel);
   if (eventChannel) db.removeChannel(eventChannel);
   if (settingsChannel) db.removeChannel(settingsChannel);
