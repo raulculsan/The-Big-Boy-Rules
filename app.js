@@ -387,16 +387,20 @@ function renderPrivateConversation() {
   const input = document.getElementById("privateMessageInput");
   const submit = document.querySelector("#privateMessageForm .send-button");
   if (!member) {
-    document.getElementById("privateChatHeader").innerHTML = `<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>`;
+    const emptyPrivateHeader = document.getElementById("privateChatHeader");
+    emptyPrivateHeader.classList.remove("has-country-flag");
+    emptyPrivateHeader.innerHTML = `<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>`;
     container.innerHTML = `<div class="empty-state">Selecciona un miembro para comenzar una conversación privada.</div>`;
     input.disabled = true;
     submit.disabled = true;
     return;
   }
-  document.getElementById("privateChatHeader").innerHTML = `
+  const privateHeader = document.getElementById("privateChatHeader");
+  privateHeader.classList.toggle("has-country-flag", Boolean(member.countryFlag));
+  privateHeader.innerHTML = `
+    ${member.countryFlag ? `<span class="private-chat-header-flag" aria-hidden="true">${escapeHtml(member.countryFlag)}</span>` : ""}
     <div class="private-chat-person">
-      <div class="private-chat-avatar ${member.countryFlag ? "has-country-flag" : ""}">
-        ${member.countryFlag ? `<span class="private-chat-flag" aria-hidden="true">${escapeHtml(member.countryFlag)}</span>` : ""}
+      <div class="private-chat-avatar">
         ${getAvatar(member)}
       </div>
       <div><span class="eyebrow">MENSAJE DIRECTO</span><h3>${escapeHtml(member.name)}</h3></div>
