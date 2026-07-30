@@ -197,9 +197,24 @@ create policy "members send as themselves" on public.messages
     )
   );
 
+drop policy if exists "members update own messages" on public.messages;
+create policy "members update own messages" on public.messages
+  for update to authenticated
+  using (auth.uid() = user_id)
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.profiles
+      where profiles.id = auth.uid()
+      and profiles.legacy_id = messages.legacy_id
+    )
+  );
+
 drop policy if exists "superadmin deletes messages" on public.messages;
-create policy "superadmin deletes messages" on public.messages
-  for delete to authenticated using (public.current_user_is_superadmin());
+drop policy if exists "members and admins delete messages" on public.messages;
+create policy "members and admins delete messages" on public.messages
+  for delete to authenticated
+  using (auth.uid() = user_id or public.current_user_can_manage());
 
 drop policy if exists "members read chat channels" on public.chat_channels;
 create policy "members read chat channels" on public.chat_channels
@@ -261,9 +276,21 @@ create policy "members send private messages" on public.private_messages
     and exists (select 1 from public.profiles where id = recipient_id)
   );
 
+drop policy if exists "members update own private messages" on public.private_messages;
+create policy "members update own private messages" on public.private_messages
+  for update to authenticated
+  using (auth.uid() = sender_id)
+  with check (
+    auth.uid() = sender_id
+    and sender_id <> recipient_id
+    and exists (select 1 from public.profiles where id = recipient_id)
+  );
+
 drop policy if exists "superadmin deletes private messages" on public.private_messages;
-create policy "superadmin deletes private messages" on public.private_messages
-  for delete to authenticated using (public.current_user_is_superadmin());
+drop policy if exists "members delete own private messages" on public.private_messages;
+create policy "members delete own private messages" on public.private_messages
+  for delete to authenticated
+  using (auth.uid() = sender_id or public.current_user_is_superadmin());
 
 drop policy if exists "members read group events" on public.group_events;
 create policy "members read group events" on public.group_events

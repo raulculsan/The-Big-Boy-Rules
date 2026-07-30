@@ -281,13 +281,20 @@ function renderMessages() {
     const member = getMember(message.member);
     const attachment = message.attachmentUrl ? renderMessageAttachment(message) : "";
     const own = message.userId === currentAuthUser?.id;
+    const canDelete = own || canManageSite();
     return `<div class="message ${own ? "own" : ""}">
       ${getAvatar(member)}
-      <div><div class="message-head">
-        <button class="message-author" data-profile="${message.member}">${escapeHtml(member?.name || "Miembro")}</button>
-        <time datetime="${escapeHtml(message.createdAt)}">${formatMessageDate(message.createdAt)}</time>
-      </div>${message.text ? `<p>${escapeHtml(message.text)}</p>` : ""}${attachment}
-      ${isSuperAdmin() ? `<button class="delete-media-button" data-delete-message="${message.id}" type="button">Eliminar mensaje</button>` : ""}</div>
+      <div class="message-bubble" data-message-bubble>
+        <div class="message-head">
+          <button class="message-author" data-profile="${message.member}">${escapeHtml(member?.name || "Miembro")}</button>
+          <time datetime="${escapeHtml(message.createdAt)}">${formatMessageDate(message.createdAt)}</time>
+        </div>
+        ${message.text ? `<p>${escapeHtml(message.text)}</p>` : ""}${attachment}
+        ${(own && message.text) || canDelete ? `<div class="message-actions">
+          ${own && message.text ? `<button type="button" data-edit-group-message="${message.id}">Editar</button>` : ""}
+          ${canDelete ? `<button type="button" class="danger" data-delete-group-message="${message.id}">Eliminar</button>` : ""}
+        </div>` : ""}
+      </div>
     </div>`;
   }).join("");
   container.scrollTop = container.scrollHeight;
@@ -432,7 +439,14 @@ function renderPrivateConversation() {
     const own = message.senderId === currentAuthUser?.id;
     return `<div class="message private-message ${own ? "own" : ""}">
       ${getAvatar(sender)}
-      <div><div class="message-head"><strong>${escapeHtml(sender?.name || "Miembro")}</strong><time>${formatMessageDate(message.createdAt)}</time></div><p>${escapeHtml(message.body)}</p></div>
+      <div class="message-bubble" data-message-bubble>
+        <div class="message-head"><strong>${escapeHtml(sender?.name || "Miembro")}</strong><time>${formatMessageDate(message.createdAt)}</time></div>
+        <p>${escapeHtml(message.body)}</p>
+        ${own ? `<div class="message-actions">
+          <button type="button" data-edit-private-message="${message.id}">Editar</button>
+          <button type="button" class="danger" data-delete-private-message="${message.id}">Eliminar</button>
+        </div>` : ""}
+      </div>
     </div>`;
   }).join("") : `<div class="empty-state"><strong>Sin mensajes todavía</strong><span>Esta conversación es privada entre ${escapeHtml(currentUser.name)} y ${escapeHtml(member.name)}.</span></div>`;
   input.disabled = false;
@@ -856,13 +870,8 @@ function connectRealtime() {
       }
     });
   messageChannel = db.channel("messages-live")
-    .on("postgres_changes", {event: "INSERT", schema: "public", table: "messages"}, payload => {
-      const item = payload.new;
-      if (messages.some(message => message.id === item.id)) return;
-      messages.push(mapMessage(item));
-      renderMessages();
-      renderActivity();
-    }).subscribe();
+    .on("postgres_changes", {event: "*", schema: "public", table: "messages"}, () => loadMessages())
+    .subscribe();
   momentChannel = db.channel("moments-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "moments"}, () => loadMoments())
     .subscribe();
@@ -870,7 +879,7 @@ function connectRealtime() {
     .on("postgres_changes", {event: "*", schema: "public", table: "profile_posts"}, () => loadProfilePosts())
     .subscribe();
   privateChannel = db.channel(`private-messages-${currentAuthUser.id}`)
-    .on("postgres_changes", {event: "INSERT", schema: "public", table: "private_messages"}, () => loadPrivateMessages())
+    .on("postgres_changes", {event: "*", schema: "public", table: "private_messages"}, () => loadPrivateMessages())
     .subscribe();
   eventChannel = db.channel("group-events-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "group_events"}, () => loadGroupEvents())
@@ -1395,10 +1404,52 @@ function closeMediaViewer() {
   document.getElementById("mediaViewerImage").src = "";
 }
 
+async function editGroupMessage(id) {
+  if (!backendReady || !currentAuthUser) return;
+  const message = messages.find(item => String(item.id) === String(id));
+  if (!message || message.userId !== currentAuthUser.id || !message.text) return;
+  const body = window.prompt("Edita tu mensaje:", message.text);
+  if (body == null) return;
+  const cleanBody = body.trim();
+  if (!cleanBody || cleanBody.length > 1200 || cleanBody === message.text) return;
+  const {error} = await db.from("messages").update({body: cleanBody}).eq("id", message.id).eq("user_id", currentAuthUser.id);
+  if (error) return window.alert(error.message || "No se pudo editar el mensaje.");
+  await loadMessages();
+}
+
 async function deleteGroupMessage(id) {
-  if (!isSuperAdmin() || !backendReady) return;
+  if (!backendReady || !currentAuthUser) return;
+  const message = messages.find(item => String(item.id) === String(id));
+  if (!message || (message.userId !== currentAuthUser.id && !canManageSite())) return;
+  if (!window.confirm("¿Quieres eliminar este mensaje?")) return;
   const {error} = await db.from("messages").delete().eq("id", id);
-  if (!error) await loadMessages();
+  if (error) return window.alert(error.message || "No se pudo eliminar el mensaje.");
+  await loadMessages();
+}
+
+async function editPrivateMessage(id) {
+  if (!backendReady || !currentAuthUser) return;
+  const message = privateMessages.find(item => String(item.id) === String(id));
+  if (!message || message.senderId !== currentAuthUser.id) return;
+  const body = window.prompt("Edita tu mensaje privado:", message.body);
+  if (body == null) return;
+  const cleanBody = body.trim();
+  if (!cleanBody || cleanBody.length > 1200 || cleanBody === message.body) return;
+  const {error} = await db.from("private_messages").update({body: cleanBody})
+    .eq("id", message.id).eq("sender_id", currentAuthUser.id);
+  if (error) return window.alert(error.message || "No se pudo editar el mensaje.");
+  await loadPrivateMessages();
+}
+
+async function deletePrivateMessage(id) {
+  if (!backendReady || !currentAuthUser) return;
+  const message = privateMessages.find(item => String(item.id) === String(id));
+  if (!message || message.senderId !== currentAuthUser.id) return;
+  if (!window.confirm("¿Quieres eliminar este mensaje privado?")) return;
+  const {error} = await db.from("private_messages").delete()
+    .eq("id", message.id).eq("sender_id", currentAuthUser.id);
+  if (error) return window.alert(error.message || "No se pudo eliminar el mensaje.");
+  await loadPrivateMessages();
 }
 
 async function invokeUserAdmin(action, values) {
@@ -1562,6 +1613,14 @@ function formatFileSize(bytes) {
 }
 
 document.addEventListener("click", event => {
+  const messageBubble = event.target.closest("[data-message-bubble]");
+  if (messageBubble && !event.target.closest("button,a")) {
+    const wasOpen = messageBubble.classList.contains("actions-open");
+    document.querySelectorAll("[data-message-bubble].actions-open").forEach(item => item.classList.remove("actions-open"));
+    messageBubble.classList.toggle("actions-open", !wasOpen);
+  } else if (!event.target.closest(".message-actions")) {
+    document.querySelectorAll("[data-message-bubble].actions-open").forEach(item => item.classList.remove("actions-open"));
+  }
   const goTarget = event.target.closest("[data-go]");
   if (goTarget) goTo(goTarget.dataset.go);
   const profileTarget = event.target.closest("[data-profile]");
@@ -1572,8 +1631,14 @@ document.addEventListener("click", event => {
   if (viewMedia) openMediaViewer(viewMedia.dataset.viewMedia, viewMedia.dataset.viewCaption);
   const deletePost = event.target.closest("[data-delete-post]");
   if (deletePost) deleteMedia("post", deletePost.dataset.deletePost);
-  const deleteMessage = event.target.closest("[data-delete-message]");
-  if (deleteMessage) deleteGroupMessage(deleteMessage.dataset.deleteMessage);
+  const editGroupTarget = event.target.closest("[data-edit-group-message]");
+  if (editGroupTarget) editGroupMessage(editGroupTarget.dataset.editGroupMessage);
+  const deleteGroupTarget = event.target.closest("[data-delete-group-message]");
+  if (deleteGroupTarget) deleteGroupMessage(deleteGroupTarget.dataset.deleteGroupMessage);
+  const editPrivateTarget = event.target.closest("[data-edit-private-message]");
+  if (editPrivateTarget) editPrivateMessage(editPrivateTarget.dataset.editPrivateMessage);
+  const deletePrivateTarget = event.target.closest("[data-delete-private-message]");
+  if (deletePrivateTarget) deletePrivateMessage(deletePrivateTarget.dataset.deletePrivateMessage);
   const deleteUser = event.target.closest("[data-delete-user]");
   if (deleteUser) deleteClubUser(deleteUser.dataset.deleteUser, deleteUser.dataset.deleteUserName);
   const editUser = event.target.closest("[data-edit-user]");
