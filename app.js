@@ -60,6 +60,11 @@ let chatChannelsRealtime = null;
 let activeNewsCategory = "deportes";
 let pendingAvatarFile = null;
 let removeAvatarRequested = false;
+let avatarCropImage = null;
+let avatarCropZoom = 1;
+let avatarCropOffsetX = 0;
+let avatarCropOffsetY = 0;
+let avatarCropPointer = null;
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
@@ -950,6 +955,7 @@ function openProfileEditor(memberId = currentUser?.id) {
   editingProfileId = profile.id;
   pendingAvatarFile = null;
   removeAvatarRequested = false;
+  resetAvatarCropEditor();
   document.getElementById("profileAvatar").value = "";
   document.getElementById("profileName").value = profile.name;
   document.getElementById("profileNickname").value = profile.nickname;
@@ -971,6 +977,87 @@ function closeProfileEditor() {
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
   editingProfileId = null;
+  resetAvatarCropEditor();
+}
+
+function resetAvatarCropEditor() {
+  avatarCropImage = null;
+  avatarCropZoom = 1;
+  avatarCropOffsetX = 0;
+  avatarCropOffsetY = 0;
+  avatarCropPointer = null;
+  const cropper = document.getElementById("avatarCropper");
+  const zoom = document.getElementById("avatarZoom");
+  const stage = document.getElementById("avatarCropStage");
+  if (cropper) cropper.hidden = true;
+  if (zoom) zoom.value = "1";
+  if (stage) stage.classList.remove("dragging");
+}
+
+function clampAvatarCrop() {
+  if (!avatarCropImage) return;
+  const canvas = document.getElementById("avatarCropCanvas");
+  const baseScale = Math.max(canvas.width / avatarCropImage.naturalWidth, canvas.height / avatarCropImage.naturalHeight);
+  const scale = baseScale * avatarCropZoom;
+  const maxX = Math.max(0, (avatarCropImage.naturalWidth * scale - canvas.width) / 2);
+  const maxY = Math.max(0, (avatarCropImage.naturalHeight * scale - canvas.height) / 2);
+  avatarCropOffsetX = Math.max(-maxX, Math.min(maxX, avatarCropOffsetX));
+  avatarCropOffsetY = Math.max(-maxY, Math.min(maxY, avatarCropOffsetY));
+}
+
+function drawAvatarCrop() {
+  if (!avatarCropImage) return;
+  clampAvatarCrop();
+  const canvas = document.getElementById("avatarCropCanvas");
+  const context = canvas.getContext("2d");
+  const baseScale = Math.max(canvas.width / avatarCropImage.naturalWidth, canvas.height / avatarCropImage.naturalHeight);
+  const scale = baseScale * avatarCropZoom;
+  const width = avatarCropImage.naturalWidth * scale;
+  const height = avatarCropImage.naturalHeight * scale;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(
+    avatarCropImage,
+    (canvas.width - width) / 2 + avatarCropOffsetX,
+    (canvas.height - height) / 2 + avatarCropOffsetY,
+    width,
+    height
+  );
+}
+
+function loadAvatarCrop(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      avatarCropImage = image;
+      avatarCropZoom = 1;
+      avatarCropOffsetX = 0;
+      avatarCropOffsetY = 0;
+      document.getElementById("avatarZoom").value = "1";
+      document.getElementById("avatarCropper").hidden = false;
+      drawAvatarCrop();
+      resolve();
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("No se pudo abrir la imagen seleccionada."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+function createCroppedAvatarFile() {
+  return new Promise((resolve, reject) => {
+    const canvas = document.getElementById("avatarCropCanvas");
+    canvas.toBlob(blob => {
+      if (!blob) {
+        reject(new Error("No se pudo preparar la foto."));
+        return;
+      }
+      resolve(new File([blob], "avatar.webp", {type: "image/webp"}));
+    }, "image/webp", .9);
+  });
 }
 
 async function saveProfile(form) {
@@ -992,15 +1079,15 @@ async function saveProfile(form) {
       }
       avatarUrl = "";
     } else if (pendingAvatarFile) {
-      if (pendingAvatarFile.size > 3 * 1024 * 1024) throw new Error("La imagen supera el máximo de 3 MB.");
+      const croppedAvatarFile = avatarCropImage ? await createCroppedAvatarFile() : pendingAvatarFile;
       if (backendReady) {
-        const extension = pendingAvatarFile.name.split(".").pop().toLowerCase();
+        const extension = croppedAvatarFile.name.split(".").pop().toLowerCase();
         const path = `${targetAuthId}/avatar.${extension}`;
-        const {error} = await db.storage.from("avatars").upload(path, pendingAvatarFile, {upsert: true, contentType: pendingAvatarFile.type});
+        const {error} = await db.storage.from("avatars").upload(path, croppedAvatarFile, {upsert: true, contentType: croppedAvatarFile.type});
         if (error) throw error;
         avatarUrl = `${db.storage.from("avatars").getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
       } else {
-        avatarUrl = await fileToDataUrl(pendingAvatarFile);
+        avatarUrl = await fileToDataUrl(croppedAvatarFile);
       }
     }
     const updates = {
@@ -1415,16 +1502,64 @@ document.getElementById("profileBio").addEventListener("input", event => {
 document.getElementById("profileAvatar").addEventListener("change", async event => {
   pendingAvatarFile = event.target.files[0] || null;
   if (!pendingAvatarFile) return;
+  if (pendingAvatarFile.size > 3 * 1024 * 1024) {
+    document.getElementById("profileFeedback").textContent = "La imagen supera el máximo de 3 MB.";
+    pendingAvatarFile = null;
+    event.target.value = "";
+    return;
+  }
   removeAvatarRequested = false;
-  const previewUrl = await fileToDataUrl(pendingAvatarFile);
-  const preview = document.getElementById("avatarPreview");
-  preview.classList.add("has-image");
-  preview.innerHTML = `<img src="${previewUrl}" alt="Vista previa">`;
+  document.getElementById("profileFeedback").textContent = "";
+  try {
+    await loadAvatarCrop(pendingAvatarFile);
+  } catch (error) {
+    document.getElementById("profileFeedback").textContent = error.message;
+  }
 });
+document.getElementById("avatarZoom").addEventListener("input", event => {
+  const previousZoom = avatarCropZoom;
+  avatarCropZoom = Number(event.target.value);
+  if (previousZoom) {
+    avatarCropOffsetX *= avatarCropZoom / previousZoom;
+    avatarCropOffsetY *= avatarCropZoom / previousZoom;
+  }
+  drawAvatarCrop();
+});
+document.getElementById("resetAvatarCrop").addEventListener("click", () => {
+  avatarCropZoom = 1;
+  avatarCropOffsetX = 0;
+  avatarCropOffsetY = 0;
+  document.getElementById("avatarZoom").value = "1";
+  drawAvatarCrop();
+});
+const avatarCropStage = document.getElementById("avatarCropStage");
+avatarCropStage.addEventListener("pointerdown", event => {
+  if (!avatarCropImage) return;
+  avatarCropPointer = {id: event.pointerId, x: event.clientX, y: event.clientY};
+  avatarCropStage.setPointerCapture(event.pointerId);
+  avatarCropStage.classList.add("dragging");
+});
+avatarCropStage.addEventListener("pointermove", event => {
+  if (!avatarCropPointer || avatarCropPointer.id !== event.pointerId) return;
+  const scale = document.getElementById("avatarCropCanvas").width / avatarCropStage.getBoundingClientRect().width;
+  avatarCropOffsetX += (event.clientX - avatarCropPointer.x) * scale;
+  avatarCropOffsetY += (event.clientY - avatarCropPointer.y) * scale;
+  avatarCropPointer.x = event.clientX;
+  avatarCropPointer.y = event.clientY;
+  drawAvatarCrop();
+});
+function stopAvatarCropDrag(event) {
+  if (!avatarCropPointer || avatarCropPointer.id !== event.pointerId) return;
+  avatarCropPointer = null;
+  avatarCropStage.classList.remove("dragging");
+}
+avatarCropStage.addEventListener("pointerup", stopAvatarCropDrag);
+avatarCropStage.addEventListener("pointercancel", stopAvatarCropDrag);
 document.getElementById("removeAvatarButton").addEventListener("click", () => {
   removeAvatarRequested = true;
   pendingAvatarFile = null;
   document.getElementById("profileAvatar").value = "";
+  resetAvatarCropEditor();
   const preview = document.getElementById("avatarPreview");
   preview.classList.remove("has-image");
   preview.textContent = getMember(editingProfileId)?.name?.charAt(0) || "U";
