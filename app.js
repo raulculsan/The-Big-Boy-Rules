@@ -362,7 +362,11 @@ function renderMoments() {
     grid.innerHTML = `<div class="empty-state moments-empty"><strong>Todavía no hay momentos</strong><span>Sé la primera persona en compartir una historia con el grupo.</span></div>`;
     return;
   }
-  grid.innerHTML = moments.map(item => renderMediaCard(item, item.userId === currentAuthUser?.id || isSuperAdmin(), "moment")).join("");
+  grid.innerHTML = moments.map(item => {
+    const isOwner = String(item.userId || "") === String(currentAuthUser?.id || "")
+      || Number(item.member) === Number(currentUser?.id);
+    return renderMediaCard(item, isOwner || isSuperAdmin(), "moment");
+  }).join("");
 }
 
 function renderPrivateContacts() {
@@ -1283,7 +1287,9 @@ async function deleteMedia(kind, id) {
   const table = kind === "moment" ? "moments" : "profile_posts";
   const collection = kind === "moment" ? moments : profilePosts;
   const item = collection.find(entry => String(entry.id) === String(id));
-  if (!item || (item.userId !== currentAuthUser.id && !isSuperAdmin())) return;
+  const isOwner = String(item?.userId || "") === String(currentAuthUser.id)
+    || Number(item?.member) === Number(currentUser?.id);
+  if (!item || (!isOwner && !isSuperAdmin())) return;
   if (!window.confirm(`¿Quieres eliminar ${kind === "moment" ? "este momento" : "esta publicación"}?`)) return;
   let query = db.from(table).delete().eq("id", item.id);
   if (!isSuperAdmin()) query = query.eq("user_id", currentAuthUser.id);
