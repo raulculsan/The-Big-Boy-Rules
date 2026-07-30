@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-13" />
+  <link rel="stylesheet" href="styles.css?v=20260730-14" />
 </head>
 <body>
 
@@ -546,6 +546,20 @@
           <input id="mediaUploadFile" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" hidden required>
         </label>
         <div class="media-upload-preview" id="mediaUploadPreview"></div>
+        <div class="media-cropper" id="mediaCropper" hidden>
+          <div class="media-crop-stage" id="mediaCropStage">
+            <canvas id="mediaCropCanvas" width="540" height="840" aria-label="Encuadre de la foto"></canvas>
+            <span class="media-crop-guide" aria-hidden="true"></span>
+          </div>
+          <div class="media-crop-controls">
+            <label for="mediaCropZoom">
+              <span>Tamaño</span>
+              <input id="mediaCropZoom" type="range" min="1" max="3" value="1" step="0.01">
+            </label>
+            <button class="text-button" id="resetMediaCrop" type="button">Centrar foto</button>
+            <small>Arrastra la imagen para moverla y ajusta el zoom antes de compartir.</small>
+          </div>
+        </div>
         <label>
           <span>Texto (opcional)</span>
           <textarea id="mediaUploadCaption" maxlength="300" rows="3" placeholder="Cuenta algo sobre este momento..."></textarea>
@@ -618,6 +632,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260730-12"></script>
+  <script src="app.js?v=20260730-14"></script>
 </body>
 </html>

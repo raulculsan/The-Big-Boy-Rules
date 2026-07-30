@@ -65,6 +65,11 @@ let avatarCropZoom = 1;
 let avatarCropOffsetX = 0;
 let avatarCropOffsetY = 0;
 let avatarCropPointer = null;
+let mediaCropImage = null;
+let mediaCropZoom = 1;
+let mediaCropOffsetX = 0;
+let mediaCropOffsetY = 0;
+let mediaCropPointer = null;
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
@@ -1143,6 +1148,7 @@ function openMediaUploader(mode) {
   document.getElementById("mediaUploadFile").value = "";
   document.getElementById("mediaUploadCaption").value = "";
   document.getElementById("mediaUploadPreview").innerHTML = "";
+  resetMediaCropEditor();
   document.getElementById("mediaUploadFeedback").textContent = "";
   const modal = document.getElementById("mediaUploader");
   modal.classList.add("open");
@@ -1153,6 +1159,86 @@ function closeMediaUploader() {
   const modal = document.getElementById("mediaUploader");
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
+  resetMediaCropEditor();
+}
+
+function resetMediaCropEditor() {
+  mediaCropImage = null;
+  mediaCropZoom = 1;
+  mediaCropOffsetX = 0;
+  mediaCropOffsetY = 0;
+  mediaCropPointer = null;
+  const cropper = document.getElementById("mediaCropper");
+  const stage = document.getElementById("mediaCropStage");
+  if (cropper) cropper.hidden = true;
+  if (stage) stage.classList.remove("dragging");
+  const zoom = document.getElementById("mediaCropZoom");
+  if (zoom) zoom.value = "1";
+}
+
+function configureMediaCropCanvas() {
+  const canvas = document.getElementById("mediaCropCanvas");
+  const isMoment = mediaUploadMode === "moment";
+  canvas.width = isMoment ? 540 : 720;
+  canvas.height = isMoment ? 840 : 720;
+  document.getElementById("mediaCropStage").classList.toggle("is-square", !isMoment);
+}
+
+function clampMediaCrop() {
+  if (!mediaCropImage) return;
+  const canvas = document.getElementById("mediaCropCanvas");
+  const baseScale = Math.max(canvas.width / mediaCropImage.naturalWidth, canvas.height / mediaCropImage.naturalHeight);
+  const scale = baseScale * mediaCropZoom;
+  const maxX = Math.max(0, (mediaCropImage.naturalWidth * scale - canvas.width) / 2);
+  const maxY = Math.max(0, (mediaCropImage.naturalHeight * scale - canvas.height) / 2);
+  mediaCropOffsetX = Math.max(-maxX, Math.min(maxX, mediaCropOffsetX));
+  mediaCropOffsetY = Math.max(-maxY, Math.min(maxY, mediaCropOffsetY));
+}
+
+function drawMediaCrop() {
+  if (!mediaCropImage) return;
+  clampMediaCrop();
+  const canvas = document.getElementById("mediaCropCanvas");
+  const context = canvas.getContext("2d");
+  const baseScale = Math.max(canvas.width / mediaCropImage.naturalWidth, canvas.height / mediaCropImage.naturalHeight);
+  const scale = baseScale * mediaCropZoom;
+  const width = mediaCropImage.naturalWidth * scale;
+  const height = mediaCropImage.naturalHeight * scale;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(mediaCropImage, (canvas.width - width) / 2 + mediaCropOffsetX, (canvas.height - height) / 2 + mediaCropOffsetY, width, height);
+}
+
+function loadMediaCrop(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      mediaCropImage = image;
+      mediaCropZoom = 1;
+      mediaCropOffsetX = 0;
+      mediaCropOffsetY = 0;
+      configureMediaCropCanvas();
+      document.getElementById("mediaCropZoom").value = "1";
+      document.getElementById("mediaCropper").hidden = false;
+      drawMediaCrop();
+      resolve();
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("No se pudo abrir la foto seleccionada."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+function createCroppedMediaFile() {
+  return new Promise((resolve, reject) => {
+    document.getElementById("mediaCropCanvas").toBlob(blob => {
+      if (!blob) return reject(new Error("No se pudo preparar la foto."));
+      resolve(new File([blob], "momento.webp", {type: "image/webp"}));
+    }, "image/webp", .9);
+  });
 }
 
 async function publishMedia(form) {
@@ -1165,7 +1251,8 @@ async function publishMedia(form) {
   try {
     if (!backendReady || !currentAuthUser) throw new Error("Necesitas la conexión compartida para publicar.");
     if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) throw new Error("Selecciona una imagen o vídeo compatible.");
-    const mediaUrl = await uploadGroupMedia(file, mediaUploadMode === "moment" ? "moments" : "posts");
+    const mediaFile = file.type.startsWith("image/") && mediaCropImage ? await createCroppedMediaFile() : file;
+    const mediaUrl = await uploadGroupMedia(mediaFile, mediaUploadMode === "moment" ? "moments" : "posts");
     const record = {
       user_id: currentAuthUser.id, legacy_id: currentUser.id,
       caption: document.getElementById("mediaUploadCaption").value.trim(),
@@ -1621,6 +1708,7 @@ document.getElementById("mediaUploadFile").addEventListener("change", async even
   const preview = document.getElementById("mediaUploadPreview");
   if (!file) {
     preview.innerHTML = "";
+    resetMediaCropEditor();
     return;
   }
   if (file.size > 15 * 1024 * 1024) {
@@ -1628,11 +1716,61 @@ document.getElementById("mediaUploadFile").addEventListener("change", async even
     document.getElementById("mediaUploadFeedback").textContent = "El archivo supera el máximo de 15 MB.";
     return;
   }
-  const url = URL.createObjectURL(file);
-  preview.innerHTML = file.type.startsWith("video/")
-    ? `<video src="${url}" controls></video>`
-    : `<img src="${url}" alt="Vista previa">`;
+  document.getElementById("mediaUploadFeedback").textContent = "";
+  if (file.type.startsWith("video/")) {
+    resetMediaCropEditor();
+    const url = URL.createObjectURL(file);
+    preview.innerHTML = `<video src="${url}" controls></video>`;
+  } else {
+    preview.innerHTML = "";
+    try {
+      await loadMediaCrop(file);
+    } catch (error) {
+      document.getElementById("mediaUploadFeedback").textContent = error.message;
+    }
+  }
 });
+document.getElementById("mediaCropZoom").addEventListener("input", event => {
+  const previousZoom = mediaCropZoom;
+  mediaCropZoom = Number(event.target.value);
+  if (previousZoom) {
+    mediaCropOffsetX *= mediaCropZoom / previousZoom;
+    mediaCropOffsetY *= mediaCropZoom / previousZoom;
+  }
+  drawMediaCrop();
+});
+document.getElementById("resetMediaCrop").addEventListener("click", () => {
+  mediaCropZoom = 1;
+  mediaCropOffsetX = 0;
+  mediaCropOffsetY = 0;
+  document.getElementById("mediaCropZoom").value = "1";
+  drawMediaCrop();
+});
+const mediaCropStage = document.getElementById("mediaCropStage");
+mediaCropStage.addEventListener("pointerdown", event => {
+  if (!mediaCropImage) return;
+  mediaCropPointer = {id: event.pointerId, x: event.clientX, y: event.clientY};
+  mediaCropStage.setPointerCapture(event.pointerId);
+  mediaCropStage.classList.add("dragging");
+});
+mediaCropStage.addEventListener("pointermove", event => {
+  if (!mediaCropPointer || mediaCropPointer.id !== event.pointerId) return;
+  const canvas = document.getElementById("mediaCropCanvas");
+  const scaleX = canvas.width / mediaCropStage.getBoundingClientRect().width;
+  const scaleY = canvas.height / mediaCropStage.getBoundingClientRect().height;
+  mediaCropOffsetX += (event.clientX - mediaCropPointer.x) * scaleX;
+  mediaCropOffsetY += (event.clientY - mediaCropPointer.y) * scaleY;
+  mediaCropPointer.x = event.clientX;
+  mediaCropPointer.y = event.clientY;
+  drawMediaCrop();
+});
+function stopMediaCropDrag(event) {
+  if (!mediaCropPointer || mediaCropPointer.id !== event.pointerId) return;
+  mediaCropPointer = null;
+  mediaCropStage.classList.remove("dragging");
+}
+mediaCropStage.addEventListener("pointerup", stopMediaCropDrag);
+mediaCropStage.addEventListener("pointercancel", stopMediaCropDrag);
 document.getElementById("mediaUploadForm").addEventListener("submit", event => {
   event.preventDefault();
   publishMedia(event.currentTarget);
