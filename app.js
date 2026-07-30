@@ -60,6 +60,7 @@ let removeAvatarRequested = false;
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
+let editingProfileId = null;
 let activePrivateMemberId = null;
 let calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
@@ -173,6 +174,7 @@ function renderProfile(memberId) {
   if (!member) return;
   activeProfileId = member.id;
   const canEdit = currentUser?.id === member.id;
+  const canManageProfile = canEdit || isSuperAdmin();
   const canDeletePosts = canEdit || isSuperAdmin();
   const posts = profilePosts.filter(post => post.member === member.id);
   document.getElementById("profileContent").innerHTML = `
@@ -186,9 +188,8 @@ function renderProfile(memberId) {
         <p>${escapeHtml(member.bio)}</p>
         <div class="profile-tags">${member.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
         <div class="profile-actions">
-          ${canEdit
-            ? `<button class="primary-button edit-profile-button" id="editProfileButton">Editar mi perfil</button>`
-            : `<button class="primary-button edit-profile-button" data-private-member="${member.id}">✉ Enviar mensaje</button>`}
+          ${canManageProfile ? `<button class="primary-button edit-profile-button" id="editProfileButton">${canEdit ? "Editar mi perfil" : "Editar perfil"}</button>` : ""}
+          ${!canEdit ? `<button class="secondary-button edit-profile-button" data-private-member="${member.id}">✉ Enviar mensaje</button>` : ""}
         </div>
       </div>
     </article>
@@ -202,7 +203,7 @@ function renderProfile(memberId) {
           `<div class="empty-state profile-empty"><strong>Aún no hay publicaciones</strong><span>${canEdit ? "Comparte tu primera foto para empezar tu perfil." : `${escapeHtml(member.name)} todavía no ha publicado fotos.`}</span></div>`}
       </div>
     </section>`;
-  document.getElementById("editProfileButton")?.addEventListener("click", openProfileEditor);
+  document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
   document.getElementById("addProfilePostButton")?.addEventListener("click", () => openMediaUploader("post"));
   goTo("perfil");
 }
@@ -863,20 +864,22 @@ async function removeSpotifyPlaylist() {
   }
 }
 
-function openProfileEditor() {
-  if (!currentUser) return;
+function openProfileEditor(memberId = currentUser?.id) {
+  const profile = getMember(memberId);
+  if (!profile || (profile.id !== currentUser?.id && !isSuperAdmin())) return;
+  editingProfileId = profile.id;
   pendingAvatarFile = null;
   removeAvatarRequested = false;
   document.getElementById("profileAvatar").value = "";
-  document.getElementById("profileName").value = currentUser.name;
-  document.getElementById("profileNickname").value = currentUser.nickname;
-  document.getElementById("profileBio").value = currentUser.bio;
-  document.getElementById("profileTags").value = currentUser.tags.join(", ");
-  document.getElementById("bioCount").textContent = currentUser.bio.length;
+  document.getElementById("profileName").value = profile.name;
+  document.getElementById("profileNickname").value = profile.nickname;
+  document.getElementById("profileBio").value = profile.bio;
+  document.getElementById("profileTags").value = profile.tags.join(", ");
+  document.getElementById("bioCount").textContent = profile.bio.length;
   document.getElementById("profileFeedback").textContent = "";
   const preview = document.getElementById("avatarPreview");
-  preview.classList.toggle("has-image", Boolean(currentUser.avatarUrl));
-  preview.innerHTML = currentUser.avatarUrl ? `<img src="${escapeHtml(currentUser.avatarUrl)}" alt="">` : currentUser.name.charAt(0);
+  preview.classList.toggle("has-image", Boolean(profile.avatarUrl));
+  preview.innerHTML = profile.avatarUrl ? `<img src="${escapeHtml(profile.avatarUrl)}" alt="">` : profile.name.charAt(0);
   const modal = document.getElementById("profileEditor");
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
@@ -886,20 +889,24 @@ function closeProfileEditor() {
   const modal = document.getElementById("profileEditor");
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
+  editingProfileId = null;
 }
 
 async function saveProfile(form) {
+  const profile = getMember(editingProfileId);
+  if (!profile || (profile.id !== currentUser?.id && !isSuperAdmin())) return;
   const feedback = document.getElementById("profileFeedback");
   const submit = form.querySelector("[type=submit]");
   submit.disabled = true;
   feedback.textContent = "Guardando…";
   try {
-    let avatarUrl = currentUser.avatarUrl;
+    let avatarUrl = profile.avatarUrl;
+    const targetAuthId = profile.authId || currentAuthUser?.id;
     if (removeAvatarRequested) {
-      if (backendReady && currentAuthUser) {
-        const {data} = await db.storage.from("avatars").list(currentAuthUser.id);
+      if (backendReady && targetAuthId) {
+        const {data} = await db.storage.from("avatars").list(targetAuthId);
         if (data?.length) {
-          await db.storage.from("avatars").remove(data.map(item => `${currentAuthUser.id}/${item.name}`));
+          await db.storage.from("avatars").remove(data.map(item => `${targetAuthId}/${item.name}`));
         }
       }
       avatarUrl = "";
@@ -907,7 +914,7 @@ async function saveProfile(form) {
       if (pendingAvatarFile.size > 3 * 1024 * 1024) throw new Error("La imagen supera el máximo de 3 MB.");
       if (backendReady) {
         const extension = pendingAvatarFile.name.split(".").pop().toLowerCase();
-        const path = `${currentAuthUser.id}/avatar.${extension}`;
+        const path = `${targetAuthId}/avatar.${extension}`;
         const {error} = await db.storage.from("avatars").upload(path, pendingAvatarFile, {upsert: true, contentType: pendingAvatarFile.type});
         if (error) throw error;
         avatarUrl = `${db.storage.from("avatars").getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
@@ -926,13 +933,14 @@ async function saveProfile(form) {
       const {error} = await db.from("profiles").update({
         display_name: updates.name, nickname: updates.nickname, bio: updates.bio,
         tags: updates.tags, avatar_url: updates.avatarUrl, updated_at: new Date().toISOString()
-      }).eq("id", currentAuthUser.id);
+      }).eq("id", targetAuthId);
       if (error) throw error;
     }
-    Object.assign(currentUser, updates);
-    if (!backendReady) persistLocalProfile(currentUser);
+    Object.assign(profile, updates);
+    if (profile.id === currentUser.id) Object.assign(currentUser, updates);
+    if (!backendReady) persistLocalProfile(profile);
     refreshProfileSurfaces();
-    renderProfile(currentUser.id);
+    renderProfile(profile.id);
     closeProfileEditor();
   } catch (error) {
     feedback.textContent = error.message || "No se pudo guardar el perfil.";
@@ -1050,7 +1058,14 @@ async function createClubUser(form) {
 
 async function deleteClubUser(authId, name) {
   if (!isSuperAdmin() || !authId) return;
-  if (!window.confirm(`¿Eliminar definitivamente la cuenta de ${name}?`)) return;
+  const confirmations = [
+    `¿Seguro que quieres eliminar la cuenta de ${name}?`,
+    `Segunda confirmación: se eliminarán también sus mensajes y publicaciones. ¿Continuar?`,
+    `Última confirmación: esta acción es definitiva. ¿Eliminar a ${name}?`
+  ];
+  for (const message of confirmations) {
+    if (!window.confirm(message)) return;
+  }
   try {
     await invokeUserAdmin("delete", {userId: authId});
     members = members.filter(member => member.authId !== authId);
@@ -1317,7 +1332,7 @@ document.getElementById("removeAvatarButton").addEventListener("click", () => {
   document.getElementById("profileAvatar").value = "";
   const preview = document.getElementById("avatarPreview");
   preview.classList.remove("has-image");
-  preview.textContent = currentUser?.name?.charAt(0) || "U";
+  preview.textContent = getMember(editingProfileId)?.name?.charAt(0) || "U";
 });
 document.getElementById("profileForm").addEventListener("submit", event => {
   event.preventDefault();
@@ -1394,6 +1409,7 @@ document.getElementById("searchButton").addEventListener("click", event => {
   event.stopPropagation();
   openGlobalSearch();
 });
+document.getElementById("adminPanelButton")?.addEventListener("click", () => goTo("administracion"));
 document.getElementById("closeSearchButton").addEventListener("click", closeGlobalSearch);
 document.getElementById("globalSearchInput").addEventListener("input", event => performSearch(event.target.value));
 document.addEventListener("keydown", event => {
