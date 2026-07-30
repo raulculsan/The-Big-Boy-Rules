@@ -626,6 +626,32 @@ body.light .sidebar {
   border-bottom: 1px solid var(--border);
 }
 
+.chat-channel-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 18px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,.018);
+}
+
+.chat-channels { display: flex; flex: 1; gap: 8px; }
+.chat-channel,
+.channel-add-button {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--muted);
+  background: var(--surface-3);
+  cursor: pointer;
+}
+.chat-channel.active { border-color: rgba(242,183,5,.55); color: var(--accent); background: rgba(242,183,5,.09); }
+.chat-channel span { margin-right: 4px; color: var(--accent); }
+.chat-channel i { margin-left: 8px; font-style: normal; }
+.channel-add-button { color: var(--text); }
+
 .messages {
   flex: 1;
   min-height: 460px;
@@ -640,6 +666,18 @@ body.light .sidebar {
   gap: 12px;
   margin-bottom: 23px;
 }
+
+.message.own {
+  grid-template-columns: minmax(0, 1fr) 42px;
+  margin-left: 16%;
+  text-align: right;
+}
+.message.own .avatar { grid-column: 2; grid-row: 1; }
+.message.own > div:last-child { grid-column: 1; grid-row: 1; justify-self: end; }
+.message.own .message-head { justify-content: flex-end; }
+.message.own p,
+.message.own .message-file { text-align: left; background: rgba(214,166,46,.1); border-radius: 12px; padding: 10px 13px; }
+.message.own .message-image { margin-left: auto; }
 
 .message .avatar {
   width: 42px;
@@ -3006,8 +3044,16 @@ body.light .global-search { background: rgba(235,232,223,.97); }
 .private-conversation .chat-header { padding: 20px; }
 .private-chat-person { display: flex; align-items: center; gap: 12px; }
 .private-chat-person h3 { margin: 3px 0 0; }
-.private-message.own { margin-left: 12%; }
+.private-message.own { margin-left: 16%; }
 .private-message.own > div:last-child { background: rgba(214,166,46,.08); }
+
+.admin-user-actions { display: flex; flex-wrap: wrap; gap: 5px 10px; min-width: 235px; }
+
+@media (max-width: 720px) {
+  .message.own,
+  .private-message.own { margin-left: 7%; }
+  .chat-channel-bar { padding-inline: 12px; }
+}
 
 /* Calendario */
 .calendar-toolbar,
