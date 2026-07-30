@@ -38,10 +38,12 @@ export default {
 
     const {data: caller} = await adminClient
       .from("profiles")
-      .select("role,is_hidden")
+      .select("role,is_hidden,username")
       .eq("id", user.id)
       .single();
-    if (caller?.role !== "superadmin" || caller?.is_hidden !== true) {
+    const isSuperAdmin = caller?.role === "superadmin" && caller?.is_hidden === true;
+    const isClubAdmin = caller?.role === "admin" && caller?.username === "kike";
+    if (!isSuperAdmin && !isClubAdmin) {
       return json({error: "No tienes permiso para administrar cuentas."}, 403);
     }
 
@@ -53,6 +55,7 @@ export default {
     }
 
     if (body.action === "create") {
+      if (!isSuperAdmin) return json({error: "Solo la cuenta de control puede crear usuarios."}, 403);
       const username = (body.username || "").trim().toLowerCase();
       const displayName = (body.displayName || "").trim();
       const password = body.password || "";
@@ -73,6 +76,7 @@ export default {
     }
 
     if (body.action === "delete") {
+      if (!isSuperAdmin) return json({error: "Solo la cuenta de control puede eliminar usuarios."}, 403);
       const userId = body.userId || "";
       if (!userId || userId === user.id) {
         return json({error: "No puedes eliminar esta cuenta."}, 400);
@@ -87,6 +91,36 @@ export default {
       }
       const {error} = await adminClient.auth.admin.deleteUser(userId);
       if (error) return json({error: error.message}, 400);
+      return json({ok: true});
+    }
+
+    if (body.action === "rename") {
+      const userId = body.userId || "";
+      const username = (body.username || "").trim().toLowerCase();
+      if (!userId || !/^[a-z0-9._-]{3,32}$/.test(username)) {
+        return json({error: "El usuario debe tener entre 3 y 32 caracteres válidos."}, 400);
+      }
+      if (!isSuperAdmin && userId === user.id) {
+        return json({error: "No puedes cambiar tu propio @ de administración."}, 403);
+      }
+      const {data: target} = await adminClient
+        .from("profiles")
+        .select("is_hidden")
+        .eq("id", userId)
+        .single();
+      if (!target || (target.is_hidden && !isSuperAdmin)) {
+        return json({error: "No puedes modificar esta cuenta."}, 403);
+      }
+      const {error: authUpdateError} = await adminClient.auth.admin.updateUserById(userId, {
+        email: `${username}@bigboyrules.local`,
+        email_confirm: true,
+      });
+      if (authUpdateError) return json({error: authUpdateError.message}, 400);
+      const {error: profileUpdateError} = await adminClient
+        .from("profiles")
+        .update({username, updated_at: new Date().toISOString()})
+        .eq("id", userId);
+      if (profileUpdateError) return json({error: profileUpdateError.message}, 400);
       return json({ok: true});
     }
 

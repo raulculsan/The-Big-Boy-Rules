@@ -64,6 +64,7 @@ let chatChannelsRealtime = null;
 let activeNewsCategory = "deportes";
 let lastNewsRefreshAt = 0;
 let newsLoadToken = 0;
+let pendingPrivateMessageFile = null;
 let pendingAvatarFile = null;
 let removeAvatarRequested = false;
 let avatarCropImage = null;
@@ -439,6 +440,7 @@ function renderPrivateConversation() {
   const container = document.getElementById("privateMessages");
   const input = document.getElementById("privateMessageInput");
   const submit = document.querySelector("#privateMessageForm .send-button");
+  const attach = document.getElementById("attachPrivateMessageButton");
   document.getElementById("privados").classList.toggle("conversation-open", Boolean(member));
   if (!member) {
     const emptyPrivateHeader = document.getElementById("privateChatHeader");
@@ -447,6 +449,7 @@ function renderPrivateConversation() {
     container.innerHTML = `<div class="empty-state">Selecciona un miembro para comenzar una conversación privada.</div>`;
     input.disabled = true;
     submit.disabled = true;
+    attach.disabled = true;
     return;
   }
   const privateHeader = document.getElementById("privateChatHeader");
@@ -471,7 +474,8 @@ function renderPrivateConversation() {
       ${getAvatar(sender)}
       <div class="message-bubble" data-message-bubble>
         <div class="message-head"><strong>${escapeHtml(sender?.name || "Miembro")}</strong><time>${formatMessageDate(message.createdAt)}</time></div>
-        <p>${escapeHtml(message.body)}</p>
+        ${message.body ? `<p>${escapeHtml(message.body)}</p>` : ""}
+        ${message.attachmentUrl ? renderMessageAttachment(message) : ""}
         ${own ? `<div class="message-actions">
           <button type="button" data-edit-private-message="${message.id}">Editar</button>
           <button type="button" class="danger" data-delete-private-message="${message.id}">Eliminar</button>
@@ -481,6 +485,7 @@ function renderPrivateConversation() {
   }).join("") : `<div class="empty-state"><strong>Sin mensajes todavía</strong><span>Esta conversación es privada entre ${escapeHtml(currentUser.name)} y ${escapeHtml(member.name)}.</span></div>`;
   input.disabled = false;
   submit.disabled = false;
+  attach.disabled = false;
   container.scrollTop = container.scrollHeight;
 }
 
@@ -576,7 +581,8 @@ function renderAdminPanel() {
     <td>—</td><td><div class="admin-user-actions">
       <button class="text-button" type="button" data-profile="${user.id}">Ver perfil</button>
       ${user.id !== currentUser?.id ? `<button class="text-button" type="button" data-admin-message="${user.id}">Mensaje</button>` : ""}
-      ${isSuperAdmin() ? `<button class="text-button" type="button" data-edit-user="${user.id}">Editar</button>` : ""}
+      ${canManageSite() && (isSuperAdmin() || user.id !== currentUser?.id) ? `<button class="text-button" type="button" data-rename-user="${user.id}">Cambiar @</button>` : ""}
+      ${isSuperAdmin() ? `<button class="text-button" type="button" data-edit-user="${user.id}">Editar perfil</button>` : ""}
       ${isSuperAdmin() && user.authId ? `<button class="text-button danger" type="button" data-delete-user="${user.authId}" data-delete-user-name="${escapeHtml(user.name)}">Eliminar</button>` : ""}
     </div></td></tr>`).join("");
 }
@@ -847,7 +853,9 @@ async function loadPrivateMessages() {
   const {data, error} = await db.from("private_messages").select("*").order("created_at").limit(500);
   privateMessages = error ? [] : data.map(item => ({
     id: item.id, senderId: item.sender_id, recipientId: item.recipient_id,
-    body: item.body, createdAt: item.created_at
+    body: item.body, attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
+    attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
+    createdAt: item.created_at
   }));
   renderPrivateContacts();
   renderPrivateConversation();
@@ -966,13 +974,39 @@ async function deleteChatChannel(id) {
   else await loadChatChannels();
 }
 
-async function sendPrivateMessage(text) {
+async function sendPrivateMessage(text, file = null) {
   const recipient = getMember(activePrivateMemberId);
   if (!recipient?.authId || !currentAuthUser) throw new Error("No se ha seleccionado un destinatario.");
+  let attachmentUrl = null;
+  if (file) attachmentUrl = await uploadGroupMedia(file, "private-chat");
   const {error} = await db.from("private_messages").insert({
-    sender_id: currentAuthUser.id, recipient_id: recipient.authId, body: text
+    sender_id: currentAuthUser.id, recipient_id: recipient.authId, body: text,
+    attachment_url: attachmentUrl, attachment_name: file?.name || null,
+    attachment_type: file?.type || null, attachment_size: file?.size || null
   });
   if (error) throw error;
+}
+
+async function renameClubUser(memberId) {
+  const member = getMember(memberId);
+  if (!canManageSite() || !member?.authId) return;
+  const value = window.prompt(`Nuevo @ para ${member.name}:`, member.username);
+  if (value == null) return;
+  const username = normalizeUsername(value.trim());
+  if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
+    return window.alert("El @ debe tener entre 3 y 32 caracteres: letras, números, punto, guion o guion bajo.");
+  }
+  if (username === member.username) return;
+  if (members.some(item => item.id !== member.id && normalizeUsername(item.username) === username)) {
+    return window.alert("Ese @ ya pertenece a otro usuario.");
+  }
+  try {
+    await invokeUserAdmin("rename", {userId: member.authId, username});
+    await loadProfiles();
+    window.alert(`El usuario ahora es @${username}. Deberá usar este nuevo @ al iniciar sesión.`);
+  } catch (error) {
+    window.alert(error.message || "No se pudo cambiar el @.");
+  }
 }
 
 function toLocalDateTime(value) {
@@ -1483,7 +1517,7 @@ async function deletePrivateMessage(id) {
 }
 
 async function invokeUserAdmin(action, values) {
-  if (!isSuperAdmin() || !db) throw new Error("No tienes permiso para administrar cuentas.");
+  if (!canManageSite() || !db) throw new Error("No tienes permiso para administrar cuentas.");
   const {data, error} = await db.functions.invoke("admin-users", {body: {action, ...values}});
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
@@ -1705,6 +1739,8 @@ document.addEventListener("click", event => {
   if (deleteUser) deleteClubUser(deleteUser.dataset.deleteUser, deleteUser.dataset.deleteUserName);
   const editUser = event.target.closest("[data-edit-user]");
   if (editUser) openProfileEditor(editUser.dataset.editUser);
+  const renameUser = event.target.closest("[data-rename-user]");
+  if (renameUser) renameClubUser(renameUser.dataset.renameUser);
   const adminMessage = event.target.closest("[data-admin-message]");
   if (adminMessage) openPrivateConversation(adminMessage.dataset.adminMessage);
   const channelTarget = event.target.closest("[data-chat-channel]");
@@ -1813,11 +1849,14 @@ document.getElementById("privateMessageForm").addEventListener("submit", async e
   event.preventDefault();
   const input = document.getElementById("privateMessageInput");
   const text = input.value.trim();
-  if (!text) return;
+  if (!text && !pendingPrivateMessageFile) return;
   input.disabled = true;
   try {
-    await sendPrivateMessage(text);
+    await sendPrivateMessage(text, pendingPrivateMessageFile);
     input.value = "";
+    pendingPrivateMessageFile = null;
+    document.getElementById("privateMessageAttachment").value = "";
+    document.getElementById("privateMessageAttachmentPreview").hidden = true;
     await loadPrivateMessages();
   } catch (error) {
     input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
@@ -1922,6 +1961,29 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 document.getElementById("attachMessageButton").addEventListener("click", () => document.getElementById("messageAttachment").click());
+document.getElementById("attachPrivateMessageButton").addEventListener("click", () => document.getElementById("privateMessageAttachment").click());
+document.getElementById("privateMessageAttachment").addEventListener("change", event => {
+  pendingPrivateMessageFile = event.target.files[0] || null;
+  const preview = document.getElementById("privateMessageAttachmentPreview");
+  if (!pendingPrivateMessageFile) {
+    preview.hidden = true;
+    return;
+  }
+  if (pendingPrivateMessageFile.size > 15 * 1024 * 1024) {
+    pendingPrivateMessageFile = null;
+    event.target.value = "";
+    preview.hidden = true;
+    return window.alert("El archivo supera el máximo de 15 MB.");
+  }
+  preview.innerHTML = `${escapeHtml(pendingPrivateMessageFile.name)} · ${formatFileSize(pendingPrivateMessageFile.size)} <button type="button" id="removePrivateMessageAttachment">Quitar</button>`;
+  preview.hidden = false;
+});
+document.getElementById("privateMessageAttachmentPreview").addEventListener("click", event => {
+  if (event.target.id !== "removePrivateMessageAttachment") return;
+  pendingPrivateMessageFile = null;
+  document.getElementById("privateMessageAttachment").value = "";
+  event.currentTarget.hidden = true;
+});
 document.getElementById("addChatChannelButton").addEventListener("click", createChatChannel);
 document.getElementById("messageAttachment").addEventListener("change", event => {
   pendingMessageFile = event.target.files[0] || null;

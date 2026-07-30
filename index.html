@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-26" />
+  <link rel="stylesheet" href="styles.css?v=20260730-27" />
 </head>
 <body>
 
@@ -306,9 +306,12 @@
             <div class="empty-state">Selecciona un miembro para comenzar una conversación privada.</div>
           </div>
           <form class="message-form" id="privateMessageForm">
+            <button type="button" class="attach-button" id="attachPrivateMessageButton" aria-label="Adjuntar archivo" disabled>＋</button>
+            <input id="privateMessageAttachment" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
             <input id="privateMessageInput" type="text" maxlength="1200" placeholder="Escribe un mensaje privado..." autocomplete="off" disabled>
             <button class="send-button" type="submit" disabled>Enviar</button>
           </form>
+          <div class="attachment-preview" id="privateMessageAttachmentPreview" hidden></div>
         </article>
       </div>
     </section>
@@ -667,7 +670,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260730-26"></script>
-  <script src="app.js?v=20260730-26"></script>
+  <script src="config.js?v=20260730-27"></script>
+  <script src="app.js?v=20260730-27"></script>
 </body>
 </html>
