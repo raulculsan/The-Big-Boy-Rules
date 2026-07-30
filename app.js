@@ -251,12 +251,13 @@ function renderMediaCard(item, canDelete, kind) {
       ? `<button class="media-view-button" type="button" data-view-media="${escapeHtml(item.mediaUrl)}" data-view-caption="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}" loading="lazy"><span>Ver momento</span></button>`
       : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy">`;
   return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}">
+    ${canDelete && kind === "moment" ? `<button class="delete-media-button moment-delete-button" data-delete-moment="${item.id}" type="button" title="Eliminar este momento" aria-label="Eliminar este momento">× <span>Eliminar</span></button>` : ""}
     <div class="media-frame">${media}</div>
     <div class="media-card-info">
       ${kind === "moment" ? `<button class="media-author" data-profile="${item.member}">${getAvatar(member, "avatar tiny")}<strong>${escapeHtml(member?.name || "Miembro")}</strong></button>` : ""}
       ${item.caption ? `<p>${escapeHtml(item.caption)}</p>` : ""}
       <time datetime="${escapeHtml(item.createdAt)}">${kind === "moment" ? `Caduca ${formatExpiry(item.expiresAt)}` : formatRelativeTime(item.createdAt)}</time>
-      ${canDelete ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar ${kind === "moment" ? "este momento" : "esta publicación"}">Eliminar</button>` : ""}
+      ${canDelete && kind !== "moment" ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar esta publicación">Eliminar</button>` : ""}
     </div>
   </article>`;
 }
@@ -363,24 +364,28 @@ function renderMoments() {
     return;
   }
   grid.innerHTML = moments.map(item => {
-    const isOwner = String(item.userId || "") === String(currentAuthUser?.id || "")
-      || Number(item.member) === Number(currentUser?.id);
-    return renderMediaCard(item, isOwner || isSuperAdmin(), "moment");
+    return renderMediaCard(item, isMediaOwner(item) || isSuperAdmin(), "moment");
   }).join("");
 }
 
 function renderPrivateContacts() {
   const panel = document.getElementById("privateContacts");
   if (!currentUser) return;
-  panel.innerHTML = members.filter(member => member.id !== currentUser.id).map(member => {
+  const contacts = members.filter(member => member.id !== currentUser.id).map(member => {
     const conversation = privateMessages.filter(message =>
       [message.senderId, message.recipientId].includes(member.authId));
     const latest = conversation.at(-1);
-    return `<button class="private-contact ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}">
+    return {member, latest};
+  }).sort((a, b) => {
+    const aTime = a.latest ? new Date(a.latest.createdAt).getTime() : 0;
+    const bTime = b.latest ? new Date(b.latest.createdAt).getTime() : 0;
+    return bTime - aTime || a.member.name.localeCompare(b.member.name, "es");
+  });
+  panel.innerHTML = contacts.map(({member, latest}) =>
+    `<button class="private-contact ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}">
       ${getAvatar(member)}
       <span><strong>${escapeHtml(member.name)}</strong><small>${latest ? escapeHtml(latest.body) : "Iniciar conversación"}</small></span>
-    </button>`;
-  }).join("");
+    </button>`).join("");
 }
 
 function openPrivateConversation(memberId) {
@@ -1287,8 +1292,7 @@ async function deleteMedia(kind, id) {
   const table = kind === "moment" ? "moments" : "profile_posts";
   const collection = kind === "moment" ? moments : profilePosts;
   const item = collection.find(entry => String(entry.id) === String(id));
-  const isOwner = String(item?.userId || "") === String(currentAuthUser.id)
-    || Number(item?.member) === Number(currentUser?.id);
+  const isOwner = isMediaOwner(item);
   if (!item || (!isOwner && !isSuperAdmin())) return;
   if (!window.confirm(`¿Quieres eliminar ${kind === "moment" ? "este momento" : "esta publicación"}?`)) return;
   let query = db.from(table).delete().eq("id", item.id);
@@ -1297,6 +1301,15 @@ async function deleteMedia(kind, id) {
   if (error) return;
   if (kind === "moment") await loadMoments();
   else await loadProfilePosts();
+}
+
+function isMediaOwner(item) {
+  if (!item || !currentUser) return false;
+  const mediaAuthId = String(item.userId || "").toLowerCase();
+  const sessionAuthId = String(currentAuthUser?.id || "").toLowerCase();
+  const profileAuthId = String(currentUser.authId || "").toLowerCase();
+  return Boolean(mediaAuthId && (mediaAuthId === sessionAuthId || mediaAuthId === profileAuthId))
+    || (item.member != null && String(item.member) === String(currentUser.id));
 }
 
 function openMediaViewer(url, caption = "Momento") {
