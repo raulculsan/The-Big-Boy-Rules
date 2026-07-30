@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-19" />
+  <link rel="stylesheet" href="styles.css?v=20260730-20" />
 </head>
 <body>
 
@@ -247,9 +247,12 @@
             <button class="channel-add-button admin-only" id="addChatChannelButton" type="button" title="Añadir sección">＋ Sección</button>
           </div>
           <div class="chat-header">
-            <div>
-              <span class="eyebrow">CHAT DEL GRUPO</span>
-              <h3 id="activeChannelName"># general</h3>
+            <div class="chat-header-main">
+              <button class="chat-back-button" type="button" data-chat-back aria-label="Volver atrás">←</button>
+              <div>
+                <span class="eyebrow">CHAT DEL GRUPO</span>
+                <h3 id="activeChannelName"># general</h3>
+              </div>
             </div>
             <span class="online-label" id="chatOnlineStatus"><i></i> 0 conectados</span>
           </div>
@@ -287,16 +290,12 @@
     </section>
 
     <section class="page-section" id="privados">
-      <div class="section-intro">
-        <div>
-          <span class="eyebrow">CONVERSACIONES</span>
-          <h2>Mensajes privados.</h2>
-        </div>
-        <p>Habla directamente con cualquier miembro. Solo los dos participantes pueden leer la conversación.</p>
-      </div>
       <div class="private-chat-layout">
         <aside class="panel private-contacts">
-          <div class="panel-heading"><div><span class="eyebrow">MIEMBROS</span><h3>Conversaciones</h3></div></div>
+          <div class="panel-heading private-contacts-heading">
+            <button class="chat-back-button" type="button" data-chat-back aria-label="Volver atrás">←</button>
+            <div><span class="eyebrow">MENSAJES PRIVADOS</span><h3>Conversaciones</h3></div>
+          </div>
           <div id="privateContacts"></div>
         </aside>
         <article class="panel private-conversation">
@@ -665,6 +664,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260730-19"></script>
+  <script src="app.js?v=20260730-20"></script>
 </body>
 </html>

@@ -79,6 +79,7 @@ let editingProfileId = null;
 let activePrivateMemberId = null;
 let activeChatChannelId = null;
 let calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let sectionBeforeChat = "inicio";
 
 function escapeHtml(value = "") {
   const node = document.createElement("div");
@@ -133,8 +134,14 @@ function persistLocalProfile(member) {
 }
 
 function goTo(sectionId) {
+  const currentSection = sections.find(section => section.classList.contains("active"))?.id;
+  const openingChat = sectionId === "chat" || sectionId === "privados";
+  if (openingChat && currentSection && currentSection !== "chat" && currentSection !== "privados") {
+    sectionBeforeChat = currentSection;
+  }
   sections.forEach(section => section.classList.toggle("active", section.id === sectionId));
   navLinks.forEach(link => link.classList.toggle("active", link.dataset.section === sectionId));
+  document.body.classList.toggle("chat-focus", openingChat);
   const titles = {
     inicio: "The Big Boy Rules", chat: "Chat del grupo", miembros: "Miembros",
     privados: "Mensajes privados", perfil: "Perfil del miembro", momentos: "Momentos",
@@ -146,6 +153,22 @@ function goTo(sectionId) {
   history.replaceState(null, "", `#${sectionId}`);
   if (sectionId === "noticias") loadNews(false);
   if (sectionId === "calendario") renderCalendar();
+}
+
+function exitChatView() {
+  goTo(sectionBeforeChat && sectionBeforeChat !== "chat" && sectionBeforeChat !== "privados"
+    ? sectionBeforeChat
+    : "inicio");
+}
+
+function backFromPrivateConversation() {
+  if (activePrivateMemberId != null) {
+    activePrivateMemberId = null;
+    renderPrivateContacts();
+    renderPrivateConversation();
+    return;
+  }
+  exitChatView();
 }
 
 function renderFeatured() {
@@ -411,6 +434,7 @@ function renderPrivateConversation() {
   const container = document.getElementById("privateMessages");
   const input = document.getElementById("privateMessageInput");
   const submit = document.querySelector("#privateMessageForm .send-button");
+  document.getElementById("privados").classList.toggle("conversation-open", Boolean(member));
   if (!member) {
     const emptyPrivateHeader = document.getElementById("privateChatHeader");
     emptyPrivateHeader.classList.remove("has-country-flag");
@@ -425,6 +449,7 @@ function renderPrivateConversation() {
   privateHeader.innerHTML = `
     ${member.countryFlag ? `<span class="private-chat-header-flag" aria-hidden="true">${escapeHtml(member.countryFlag)}</span>` : ""}
     <div class="private-chat-person">
+      <button class="chat-back-button private-conversation-back" type="button" data-private-back aria-label="Volver a conversaciones">←</button>
       <div class="private-chat-avatar">
         ${getAvatar(member)}
       </div>
@@ -1613,6 +1638,10 @@ function formatFileSize(bytes) {
 }
 
 document.addEventListener("click", event => {
+  const chatBack = event.target.closest("[data-chat-back]");
+  if (chatBack) exitChatView();
+  const privateBack = event.target.closest("[data-private-back]");
+  if (privateBack) backFromPrivateConversation();
   const messageBubble = event.target.closest("[data-message-bubble]");
   if (messageBubble && !event.target.closest("button,a")) {
     const wasOpen = messageBubble.classList.contains("actions-open");
