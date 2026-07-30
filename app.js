@@ -393,7 +393,15 @@ function renderPrivateConversation() {
     submit.disabled = true;
     return;
   }
-  document.getElementById("privateChatHeader").innerHTML = `<div class="private-chat-person">${getAvatar(member, "avatar small")}<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>${escapeHtml(member.name)}</h3></div></div><button class="text-button" data-profile="${member.id}">Ver perfil →</button>`;
+  document.getElementById("privateChatHeader").innerHTML = `
+    <div class="private-chat-person">
+      <div class="private-chat-avatar ${member.countryFlag ? "has-country-flag" : ""}">
+        ${member.countryFlag ? `<span class="private-chat-flag" aria-hidden="true">${escapeHtml(member.countryFlag)}</span>` : ""}
+        ${getAvatar(member)}
+      </div>
+      <div><span class="eyebrow">MENSAJE DIRECTO</span><h3>${escapeHtml(member.name)}</h3></div>
+    </div>
+    <button class="text-button" data-profile="${member.id}">Ver perfil →</button>`;
   const items = privateMessages.filter(message =>
     (message.senderId === currentAuthUser?.id && message.recipientId === member.authId)
     || (message.senderId === member.authId && message.recipientId === currentAuthUser?.id));
