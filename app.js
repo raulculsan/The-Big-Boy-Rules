@@ -35,6 +35,8 @@ const AUTH_SESSION_KEY = "bb-auth-temporary";
 const PROFILE_STORAGE_KEY = "bb-local-profiles";
 const GENERIC_PASSWORD = "bigboy2026";
 const PASSWORD_CHANGE_STORAGE_PREFIX = "bb-password-change-required-";
+const NEWS_CACHE_DURATION = 2 * 60 * 1000;
+const NEWS_REFRESH_INTERVAL = 2 * 60 * 1000;
 const pageTitle = document.getElementById("pageTitle");
 const sections = [...document.querySelectorAll(".page-section")];
 const navLinks = [...document.querySelectorAll(".nav-link")];
@@ -60,6 +62,8 @@ let eventChannel = null;
 let settingsChannel = null;
 let chatChannelsRealtime = null;
 let activeNewsCategory = "deportes";
+let lastNewsRefreshAt = 0;
+let newsLoadToken = 0;
 let pendingAvatarFile = null;
 let removeAvatarRequested = false;
 let avatarCropImage = null;
@@ -1538,11 +1542,14 @@ async function loadNews(force = false) {
   const grid = document.getElementById("newsGrid");
   const status = document.getElementById("newsStatus");
   const cacheKey = `bb-news-${activeNewsCategory}`;
+  const requestedCategory = activeNewsCategory;
+  const requestToken = ++newsLoadToken;
   if (!force) {
     try {
       const cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
-      if (cached && Date.now() - cached.savedAt < 10 * 60 * 1000) {
-        renderNews(cached.items, cached.feedTitle);
+      if (cached && Date.now() - cached.savedAt < NEWS_CACHE_DURATION) {
+        lastNewsRefreshAt = cached.savedAt;
+        renderNews(cached.items, cached.feedTitle, cached.savedAt);
         return;
       }
     } catch {}
@@ -1560,8 +1567,9 @@ async function loadNews(force = false) {
     return;
   }
   try {
-    const endpoint = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}`;
-    const response = await fetch(endpoint);
+    const refreshFeed = `${feed}${feed.includes("?") ? "&" : "?"}_bb_refresh=${Math.floor(Date.now() / NEWS_REFRESH_INTERVAL)}`;
+    const endpoint = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(refreshFeed)}`;
+    const response = await fetch(endpoint, {cache: "no-store"});
     if (!response.ok) throw new Error("El servicio de noticias no responde.");
     const payload = await response.json();
     if (payload.status !== "ok" || !payload.items?.length) throw new Error(payload.message || "No se recibieron titulares.");
@@ -1569,9 +1577,13 @@ async function loadNews(force = false) {
       title: item.title, link: item.link, published: item.pubDate,
       source: extractNewsSource(item.title), image: item.thumbnail || item.enclosure?.link || ""
     })).sort((a, b) => newsTimestamp(b.published) - newsTimestamp(a.published)).slice(0, 12);
-    sessionStorage.setItem(cacheKey, JSON.stringify({savedAt: Date.now(), items, feedTitle: payload.feed?.title || "Google News"}));
-    renderNews(items, payload.feed?.title || "Google News");
+    if (requestToken !== newsLoadToken || requestedCategory !== activeNewsCategory) return;
+    const savedAt = Date.now();
+    lastNewsRefreshAt = savedAt;
+    sessionStorage.setItem(cacheKey, JSON.stringify({savedAt, items, feedTitle: payload.feed?.title || "Google News"}));
+    renderNews(items, payload.feed?.title || "Google News", savedAt);
   } catch (error) {
+    if (requestToken !== newsLoadToken || requestedCategory !== activeNewsCategory) return;
     status.textContent = `No se pudieron actualizar las noticias: ${error.message}`;
     grid.innerHTML = `<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Inténtalo de nuevo en unos minutos.</span></div>`;
   }
@@ -1582,10 +1594,10 @@ function extractNewsSource(title) {
   return parts.length > 1 ? parts.pop() : "Medio de comunicación";
 }
 
-function renderNews(items, feedTitle) {
+function renderNews(items, feedTitle, refreshedAt = Date.now()) {
   const sortedItems = [...items].sort((a, b) => newsTimestamp(b.published) - newsTimestamp(a.published));
   newsItems = sortedItems;
-  document.getElementById("newsStatus").textContent = `Actualizado ahora · Fuente agregada: ${feedTitle}`;
+  document.getElementById("newsStatus").textContent = `Actualizado ${formatRelativeTime(refreshedAt).toLowerCase()} · Refresco automático cada 2 min · Fuente: ${feedTitle}`;
   document.getElementById("newsGrid").innerHTML = sortedItems.map((item, index) => {
     const cleanTitle = item.title.replace(new RegExp(` - ${item.source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
     const publishedTimestamp = newsTimestamp(item.published);
@@ -1878,6 +1890,16 @@ document.querySelectorAll("[data-news-category]").forEach(button => button.addEv
   loadNews(false);
 }));
 document.getElementById("refreshNewsButton").addEventListener("click", () => loadNews(true));
+setInterval(() => {
+  if (!document.hidden && document.getElementById("noticias").classList.contains("active")) loadNews(true);
+}, NEWS_REFRESH_INTERVAL);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden
+    && document.getElementById("noticias").classList.contains("active")
+    && Date.now() - lastNewsRefreshAt >= NEWS_CACHE_DURATION) {
+    loadNews(true);
+  }
+});
 document.getElementById("attachMessageButton").addEventListener("click", () => document.getElementById("messageAttachment").click());
 document.getElementById("addChatChannelButton").addEventListener("click", createChatChannel);
 document.getElementById("messageAttachment").addEventListener("change", event => {
