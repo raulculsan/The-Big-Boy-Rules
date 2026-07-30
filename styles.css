@@ -227,6 +227,19 @@ body.light .sidebar {
   height: 38px;
 }
 
+.admin-crown-button {
+  color: var(--accent);
+  border-color: rgba(214,166,46,.35);
+  background: rgba(214,166,46,.08);
+  font-size: 18px;
+}
+
+.admin-crown-button:hover {
+  border-color: rgba(214,166,46,.65);
+  background: rgba(214,166,46,.15);
+  box-shadow: 0 0 18px rgba(214,166,46,.16);
+}
+
 .app {
   margin-left: 250px;
   min-height: 100vh;
