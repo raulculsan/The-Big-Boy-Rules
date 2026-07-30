@@ -3827,9 +3827,6 @@ body.light .global-search { background: rgba(235,232,223,.97); }
 
 /* Vista inmersiva de chats */
 body.chat-focus {
-  position: fixed;
-  inset: 0;
-  width: 100%;
   height: var(--chat-viewport-height, 100dvh);
   padding: 0;
   overflow: hidden;

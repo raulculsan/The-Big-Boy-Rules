@@ -2037,7 +2037,6 @@ document.getElementById("privateMessageForm").addEventListener("submit", async e
   }
 });
 window.visualViewport?.addEventListener("resize", () => syncMobileViewport());
-window.visualViewport?.addEventListener("scroll", () => syncMobileViewport());
 window.addEventListener("resize", () => syncMobileViewport());
 window.addEventListener("orientationchange", () => setTimeout(() => syncMobileViewport(true), 250));
 document.addEventListener("focusin", event => {
