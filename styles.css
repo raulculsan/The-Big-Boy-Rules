@@ -2705,6 +2705,97 @@ input:disabled {
   font-size: 23px;
 }
 
+.avatar-cropper {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(180px, 1fr);
+  align-items: center;
+  gap: 22px;
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.avatar-cropper[hidden] {
+  display: none;
+}
+
+.avatar-crop-stage {
+  position: relative;
+  width: min(240px, 100%);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 2px solid rgba(242,183,5,.7);
+  background: #08080a;
+  box-shadow: 0 0 0 7px rgba(242,183,5,.08);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.avatar-crop-stage.dragging {
+  cursor: grabbing;
+}
+
+.avatar-crop-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-crop-guide {
+  position: absolute;
+  inset: 11%;
+  border: 1px dashed rgba(255,255,255,.55);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.avatar-crop-controls {
+  display: grid;
+  gap: 14px;
+}
+
+.avatar-crop-controls label {
+  display: grid;
+  gap: 9px;
+}
+
+.avatar-crop-controls label > span {
+  color: #d7d3c9;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+
+.avatar-crop-controls input[type="range"] {
+  padding: 0;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.avatar-crop-controls .text-button {
+  width: fit-content;
+}
+
+.avatar-crop-controls small {
+  margin: 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 620px) {
+  .avatar-cropper {
+    grid-template-columns: 1fr;
+  }
+
+  .avatar-crop-stage {
+    justify-self: center;
+  }
+}
+
 .file-button {
   width: fit-content;
   min-height: 40px;
