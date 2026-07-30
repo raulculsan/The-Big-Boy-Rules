@@ -33,6 +33,8 @@ const db = backendReady
 const AUTH_STORAGE_KEY = "bb-auth-session";
 const AUTH_SESSION_KEY = "bb-auth-temporary";
 const PROFILE_STORAGE_KEY = "bb-local-profiles";
+const GENERIC_PASSWORD = "bigboy2026";
+const PASSWORD_CHANGE_STORAGE_PREFIX = "bb-password-change-required-";
 const pageTitle = document.getElementById("pageTitle");
 const sections = [...document.querySelectorAll(".page-section")];
 const navLinks = [...document.querySelectorAll(".nav-link")];
@@ -594,6 +596,7 @@ async function applyUserInterface(user, authUser = null) {
     renderPresence();
     renderAdminPanel();
   }
+  if (passwordChangeIsRequired(authUser?.id || user.id)) openRequiredPasswordChange();
 }
 
 function showLogin() {
@@ -610,6 +613,7 @@ async function login(username, password, remember) {
     const user = members.find(item => normalizeUsername(item.username) === normalizeUsername(username) && item.password === password);
     if (!user) throw new Error("Usuario o contraseña incorrectos.");
     saveLocalSession(user, remember);
+    if (password === GENERIC_PASSWORD) requirePasswordChange(user.id);
     await applyUserInterface(user);
     return;
   }
@@ -623,7 +627,70 @@ async function login(username, password, remember) {
     await db.auth.signOut();
     throw new Error("Esta cuenta todavía no tiene un perfil del club.");
   }
+  if (password === GENERIC_PASSWORD) requirePasswordChange(data.user.id);
   await applyUserInterface(user, data.user);
+}
+
+function passwordChangeStorageKey(userId) {
+  return `${PASSWORD_CHANGE_STORAGE_PREFIX}${userId}`;
+}
+
+function requirePasswordChange(userId) {
+  if (userId != null) localStorage.setItem(passwordChangeStorageKey(userId), "true");
+}
+
+function passwordChangeIsRequired(userId) {
+  return userId != null && localStorage.getItem(passwordChangeStorageKey(userId)) === "true";
+}
+
+function openRequiredPasswordChange() {
+  const modal = document.getElementById("requiredPasswordChange");
+  const form = document.getElementById("requiredPasswordChangeForm");
+  form.reset();
+  document.getElementById("requiredPasswordFeedback").textContent = "";
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  setTimeout(() => document.getElementById("requiredNewPassword").focus(), 50);
+}
+
+async function saveRequiredPasswordChange(form) {
+  const password = document.getElementById("requiredNewPassword").value;
+  const confirmation = document.getElementById("requiredNewPasswordConfirmation").value;
+  const feedback = document.getElementById("requiredPasswordFeedback");
+  const submit = form.querySelector("[type=submit]");
+  feedback.textContent = "";
+  if (password.length < 8) {
+    feedback.textContent = "La nueva contraseña debe tener al menos 8 caracteres.";
+    return;
+  }
+  if (password !== confirmation) {
+    feedback.textContent = "Las dos contraseñas no coinciden.";
+    return;
+  }
+  if (password === GENERIC_PASSWORD) {
+    feedback.textContent = "Elige una contraseña diferente de la contraseña provisional.";
+    return;
+  }
+  submit.disabled = true;
+  feedback.textContent = "Guardando la nueva contraseña…";
+  try {
+    if (!backendReady || !currentAuthUser) {
+      if (!currentUser) throw new Error("La sesión ya no está disponible.");
+      currentUser.password = password;
+    } else {
+      const {error} = await db.auth.updateUser({password});
+      if (error) throw error;
+    }
+    const userId = currentAuthUser?.id || currentUser?.id;
+    localStorage.removeItem(passwordChangeStorageKey(userId));
+    form.reset();
+    document.getElementById("requiredPasswordChange").classList.remove("open");
+    document.getElementById("requiredPasswordChange").setAttribute("aria-hidden", "true");
+  } catch (error) {
+    feedback.textContent = error.message || "No se pudo cambiar la contraseña.";
+  } finally {
+    submit.disabled = false;
+  }
 }
 
 async function profileForAuthUser(authUser) {
@@ -1556,6 +1623,10 @@ document.getElementById("loginForm").addEventListener("submit", async event => {
 document.getElementById("togglePassword").addEventListener("click", () => {
   const field = document.getElementById("loginPassword");
   field.type = field.type === "password" ? "text" : "password";
+});
+document.getElementById("requiredPasswordChangeForm").addEventListener("submit", event => {
+  event.preventDefault();
+  saveRequiredPasswordChange(event.currentTarget);
 });
 document.getElementById("userMenuButton").addEventListener("click", event => {
   event.stopPropagation();
