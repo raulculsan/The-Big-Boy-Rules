@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-53" />
+  <link rel="stylesheet" href="styles.css?v=20260805-54" />
 </head>
 <body>
 
@@ -614,7 +614,8 @@
             <button type="button" data-media-tool="filter" aria-label="Aplicar filtros" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg></button>
             <button type="button" data-media-tool="adjust" aria-label="Encuadrar imagen" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v14a2 2 0 0 0 2 2h12M3 7h14a2 2 0 0 1 2 2v12"/></svg></button>
           </div>
-          <div class="media-crop-controls">
+        </div>
+        <div class="media-crop-controls">
             <div class="media-customization-grid">
               <label class="media-text-tool media-tool-panel" data-media-panel="text"><span>Texto sobre la foto</span><input id="mediaOverlayText" maxlength="80" placeholder="Aa · Escribe texto o @usuario"></label>
             </div>
@@ -625,7 +626,6 @@
               <label for="mediaCropZoom"><span>Tamaño</span><input id="mediaCropZoom" type="range" min="1" max="3" value="1" step="0.01"></label>
               <div class="media-adjust-actions"><button class="text-button" id="resetMediaCrop" type="button">Centrar foto</button><label class="media-original-toggle"><input id="mediaKeepOriginal" type="checkbox" checked> <span>Foto completa</span></label></div>
             </div>
-          </div>
         </div>
         <div class="form-feedback" id="mediaUploadFeedback" role="status"></div>
         <div class="modal-actions">
@@ -638,7 +638,10 @@
 
   <div class="modal-backdrop media-viewer" id="mediaViewer" aria-hidden="true">
     <div class="media-viewer-dialog" role="dialog" aria-modal="true" aria-labelledby="mediaViewerCaption">
+      <div class="moment-progress" id="momentProgress" aria-label="Progreso de historias" hidden></div>
       <button class="media-viewer-close" id="closeMediaViewer" type="button" aria-label="Cerrar imagen">×</button>
+      <button class="moment-navigation moment-navigation-previous" id="previousMoment" type="button" aria-label="Historia anterior" hidden></button>
+      <button class="moment-navigation moment-navigation-next" id="nextMoment" type="button" aria-label="Historia siguiente" hidden></button>
       <img id="mediaViewerImage" src="" alt="">
       <video id="mediaViewerVideo" controls playsinline hidden></video>
       <div class="media-viewer-caption" id="mediaViewerCaption">Momento</div>
@@ -735,7 +738,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-53"></script>
-  <script src="app.js?v=20260805-53"></script>
+  <script src="config.js?v=20260805-54"></script>
+  <script src="app.js?v=20260805-54"></script>
 </body>
 </html>

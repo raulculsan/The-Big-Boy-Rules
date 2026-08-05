@@ -107,6 +107,10 @@ let activeContentTab = "publicaciones";
 let viewportSyncFrame = null;
 let cursorFrame = null;
 let sharingMedia = null;
+let activeMomentSequence = [];
+let activeMomentIndex = -1;
+let momentAdvanceTimer = null;
+let momentSwipeStartX = null;
 const realtimeRefreshTimers = new Map();
 
 function scheduleRealtimeRefresh(key, loader, delay = 180) {
@@ -533,13 +537,23 @@ function renderMoments() {
     grid.innerHTML = `<div class="stories-empty"><strong>Sin momentos</strong><span>Sube el primero.</span></div>`;
     return;
   }
-  grid.innerHTML = moments.map((item, index) => {
-    const member = getMember(item.member);
-    return `<div class="story-bubble-item" data-media-card-kind="moment" data-media-card-id="${item.id}" style="--story-index:${index}">
-      <button class="story-bubble" type="button" data-open-moment="${item.id}" aria-label="Ver momento de ${escapeHtml(member?.name || "miembro")}">
-        <span class="story-avatar-ring">${getAvatar(member)}</span><strong>${escapeHtml(member?.name || "Miembro")}</strong>
+  const groups = new Map();
+  moments.forEach(item => {
+    const key = storyOwnerKey(item);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  });
+  grid.innerHTML = [...groups.values()].map((items, index) => {
+    items.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const firstUnseen = items.find(item => !hasViewedMoment(item.id));
+    const openingItem = firstUnseen || items[0];
+    const member = getMember(openingItem.member);
+    const hasUnseen = Boolean(firstUnseen);
+    return `<div class="story-bubble-item" data-media-card-kind="moment" data-media-card-id="${openingItem.id}" style="--story-index:${index}">
+      <button class="story-bubble" type="button" data-open-moment="${openingItem.id}" aria-label="Ver ${items.length} ${items.length === 1 ? "historia" : "historias"} de ${escapeHtml(member?.name || "miembro")}">
+        <span class="story-avatar-ring ${hasUnseen ? "unseen" : "seen"}">${getAvatar(member)}</span><strong>${escapeHtml(member?.name || "Miembro")}</strong>
+        ${items.length > 1 ? `<small class="story-count">${items.length}</small>` : ""}
       </button>
-      ${(isMediaOwner(item) || isSuperAdmin()) ? `<button class="story-bubble-delete" type="button" data-delete-moment="${item.id}" aria-label="Eliminar momento">×</button>` : ""}
     </div>`;
   }).join("");
 }
@@ -1978,6 +1992,32 @@ function isMediaOwner(item) {
     || (item.member != null && String(item.member) === String(currentUser.id));
 }
 
+function storyOwnerKey(item) {
+  return String(item?.userId || `legacy-${item?.member ?? "unknown"}`);
+}
+
+function viewedMomentsStorageKey() {
+  return `bb-viewed-moments-${currentAuthUser?.id || currentUser?.id || "guest"}`;
+}
+
+function getViewedMomentIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(viewedMomentsStorageKey()) || "[]").map(String));
+  } catch {
+    return new Set();
+  }
+}
+
+function hasViewedMoment(id) {
+  return getViewedMomentIds().has(String(id));
+}
+
+function markMomentViewed(id) {
+  const viewed = getViewedMomentIds();
+  viewed.add(String(id));
+  localStorage.setItem(viewedMomentsStorageKey(), JSON.stringify([...viewed].slice(-500)));
+}
+
 function openMediaViewer(url, caption = "Momento", mediaType = "image") {
   const viewer = document.getElementById("mediaViewer");
   const image = document.getElementById("mediaViewerImage");
@@ -1994,6 +2034,10 @@ function openMediaViewer(url, caption = "Momento", mediaType = "image") {
 }
 
 function closeMediaViewer() {
+  clearTimeout(momentAdvanceTimer);
+  momentAdvanceTimer = null;
+  activeMomentSequence = [];
+  activeMomentIndex = -1;
   const viewer = document.getElementById("mediaViewer");
   viewer.classList.remove("open");
   viewer.setAttribute("aria-hidden", "true");
@@ -2001,14 +2045,49 @@ function closeMediaViewer() {
   const video = document.getElementById("mediaViewerVideo");
   video.pause();
   video.src = "";
+  document.getElementById("momentProgress").hidden = true;
+  document.getElementById("previousMoment").hidden = true;
+  document.getElementById("nextMoment").hidden = true;
 }
 
 function openMoment(momentId) {
   const item = moments.find(moment => String(moment.id) === String(momentId));
   if (!item) return window.alert("Este momento ya no está disponible.");
+  activeMomentSequence = moments
+    .filter(moment => storyOwnerKey(moment) === storyOwnerKey(item))
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  activeMomentIndex = activeMomentSequence.findIndex(moment => String(moment.id) === String(momentId));
+  showActiveMoment();
+}
+
+function showActiveMoment() {
+  const item = activeMomentSequence[activeMomentIndex];
+  if (!item) return closeMediaViewer();
+  clearTimeout(momentAdvanceTimer);
   const member = getMember(item.member);
+  markMomentViewed(item.id);
   registerMomentView(item);
   openMediaViewer(item.mediaUrl, item.caption || `Momento de ${member?.name || "miembro"}`, item.mediaType);
+  const progress = document.getElementById("momentProgress");
+  progress.hidden = false;
+  progress.innerHTML = activeMomentSequence.map((_, index) => `<span class="${index < activeMomentIndex ? "complete" : index === activeMomentIndex ? "active" : ""}"><i></i></span>`).join("");
+  document.getElementById("previousMoment").hidden = activeMomentIndex === 0;
+  document.getElementById("nextMoment").hidden = false;
+  renderMoments();
+  if (item.mediaType !== "video") momentAdvanceTimer = setTimeout(nextMoment, 6000);
+}
+
+function nextMoment() {
+  if (!activeMomentSequence.length) return;
+  if (activeMomentIndex >= activeMomentSequence.length - 1) return closeMediaViewer();
+  activeMomentIndex += 1;
+  showActiveMoment();
+}
+
+function previousMoment() {
+  if (!activeMomentSequence.length || activeMomentIndex <= 0) return;
+  activeMomentIndex -= 1;
+  showActiveMoment();
 }
 
 function openContent(kind, id) {
@@ -2843,6 +2922,23 @@ document.getElementById("mediaUploadForm").addEventListener("submit", event => {
   publishMedia(event.currentTarget);
 });
 document.getElementById("closeMediaViewer").addEventListener("click", closeMediaViewer);
+document.getElementById("previousMoment").addEventListener("click", event => { event.stopPropagation(); previousMoment(); });
+document.getElementById("nextMoment").addEventListener("click", event => { event.stopPropagation(); nextMoment(); });
+document.getElementById("mediaViewerVideo").addEventListener("ended", () => {
+  if (activeMomentSequence.length) nextMoment();
+});
+document.querySelector("#mediaViewer .media-viewer-dialog").addEventListener("pointerdown", event => {
+  if (!activeMomentSequence.length || event.target.closest("button,video")) return;
+  momentSwipeStartX = event.clientX;
+});
+document.querySelector("#mediaViewer .media-viewer-dialog").addEventListener("pointerup", event => {
+  if (momentSwipeStartX == null || !activeMomentSequence.length) return;
+  const distance = event.clientX - momentSwipeStartX;
+  momentSwipeStartX = null;
+  if (Math.abs(distance) < 45) return;
+  if (distance < 0) nextMoment();
+  else previousMoment();
+});
 document.getElementById("mediaViewer").addEventListener("click", event => {
   if (event.target.id === "mediaViewer") closeMediaViewer();
 });
