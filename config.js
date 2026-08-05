@@ -10,17 +10,23 @@ window.BIG_BOY_CONFIG = {
     deportesFeeds: [
       "https://news.google.com/rss/search?q=f%C3%BAtbol%20OR%20LaLiga%20OR%20Champions%20OR%20fichajes&hl=es&gl=ES&ceid=ES%3Aes",
       "https://news.google.com/rss/search?q=site%3Amarca.com%20OR%20site%3Aas.com%20OR%20site%3Arelevo.com%20f%C3%BAtbol&hl=es&gl=ES&ceid=ES%3Aes",
-      "https://news.google.com/rss/search?q=%22Fabrizio%20Romano%22%20OR%20site%3Amundodeportivo.com%20OR%20site%3Asport.es&hl=es&gl=ES&ceid=ES%3Aes"
+      "https://news.google.com/rss/search?q=%22Fabrizio%20Romano%22%20OR%20site%3Amundodeportivo.com%20OR%20site%3Asport.es&hl=es&gl=ES&ceid=ES%3Aes",
+      "https://news.google.com/rss/search?q=site%3Agoal.com%2Fes%20OR%20site%3Aespn.com%2Ffutbol%20OR%20site%3Aeurosport.es%20f%C3%BAtbol&hl=es&gl=ES&ceid=ES%3Aes",
+      "https://news.google.com/rss/search?q=site%3Acope.es%2Fdeportes%20OR%20site%3Acadenaser.com%2Fdeportes%20OR%20site%3Aondacero.es%2Fdeportes&hl=es&gl=ES&ceid=ES%3Aes"
     ],
     espanaFeeds: [
       "https://news.google.com/rss/search?q=Espa%C3%B1a&hl=es&gl=ES&ceid=ES%3Aes",
       "https://news.google.com/rss/search?q=site%3Aelpais.com%20OR%20site%3Aelmundo.es%20OR%20site%3Artve.es%20Espa%C3%B1a&hl=es&gl=ES&ceid=ES%3Aes",
-      "https://news.google.com/rss/search?q=site%3Alavanguardia.com%20OR%20site%3Aabc.es%20OR%20site%3Aeldiario.es%20Espa%C3%B1a&hl=es&gl=ES&ceid=ES%3Aes"
+      "https://news.google.com/rss/search?q=site%3Alavanguardia.com%20OR%20site%3Aabc.es%20OR%20site%3Aeldiario.es%20Espa%C3%B1a&hl=es&gl=ES&ceid=ES%3Aes",
+      "https://news.google.com/rss/search?q=site%3A20minutos.es%20OR%20site%3Aelconfidencial.com%20OR%20site%3Aelespanol.com%20Espa%C3%B1a&hl=es&gl=ES&ceid=ES%3Aes",
+      "https://news.google.com/rss/search?q=site%3Apublico.es%20OR%20site%3Alarazon.es%20OR%20site%3Aeuropapress.es%20Espa%C3%B1a&hl=es&gl=ES&ceid=ES%3Aes"
     ],
     mundoFeeds: [
       "https://news.google.com/rss/search?q=Internacional&hl=es&gl=ES&ceid=ES%3Aes",
       "https://news.google.com/rss/search?q=site%3Abbc.com%2Fmundo%20OR%20site%3Aes.euronews.com%20OR%20site%3Adw.com%2Fes&hl=es&gl=ES&ceid=ES%3Aes",
-      "https://news.google.com/rss/search?q=site%3Acnnespanol.cnn.com%20OR%20site%3Afrance24.com%2Fes%20internacional&hl=es&gl=ES&ceid=ES%3Aes"
+      "https://news.google.com/rss/search?q=site%3Acnnespanol.cnn.com%20OR%20site%3Afrance24.com%2Fes%20internacional&hl=es&gl=ES&ceid=ES%3Aes",
+      "https://news.google.com/rss/search?q=site%3Areuters.com%20OR%20site%3Aapnews.com%20OR%20site%3Aefe.com%20internacional&hl=es&gl=ES&ceid=ES%3Aes",
+      "https://news.google.com/rss/search?q=site%3Aunivision.com%2Fnoticias%20OR%20site%3Atelecinco.es%2Fnoticias%2Finternacional%20mundo&hl=es&gl=ES&ceid=ES%3Aes"
     ],
     deportesFeed: "https://news.google.com/rss/search?q=f%C3%BAtbol%20OR%20%22Fabrizio%20Romano%22%20OR%20MARCA%20OR%20%22Diario%20AS%22%20OR%20%22Mundo%20Deportivo%22&hl=es&gl=ES&ceid=ES%3Aes",
     deportesFallbackFeed: "https://news.google.com/rss/search?q=f%C3%BAtbol%20OR%20LaLiga%20OR%20Champions%20OR%20fichajes%20OR%20%22selecci%C3%B3n%20espa%C3%B1ola%22&hl=es&gl=ES&ceid=ES%3Aes",

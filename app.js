@@ -2101,7 +2101,7 @@ async function loadNews(force = false) {
       if (!key || seenNews.has(key)) return false;
       seenNews.add(key);
       return true;
-    }).slice(0, 18);
+    }).slice(0, 30);
     if (requestToken !== newsLoadToken || requestedCategory !== activeNewsCategory) return;
     const savedAt = Date.now();
     lastNewsRefreshAt = savedAt;
