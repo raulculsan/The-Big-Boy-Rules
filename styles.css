@@ -3757,6 +3757,12 @@ input:disabled {
   margin-top: 34px;
   scroll-margin-top: 110px;
 }
+
+.home-news-featured {
+  margin-top: 28px;
+  border-color: rgba(231, 177, 45, .36);
+  box-shadow: 0 22px 58px rgba(0, 0, 0, .28), inset 0 1px rgba(255, 255, 255, .035);
+}
 .home-members-section .members-grid { margin-top: 22px; }
 .home-news-section {
   padding: clamp(24px, 4vw, 38px);
