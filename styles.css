@@ -1388,6 +1388,25 @@ body.standalone-app {
 .push-notification-actions { display: flex; align-items: center; gap: 7px; }
 .push-notification-actions button[hidden] { display: none; }
 
+/* El chat completo empieza después de la barra de estado de iOS, no debajo de ella. */
+@media (max-width: 760px) {
+  body.standalone-app.chat-focus .app {
+    top: var(--pwa-safe-top);
+    height: calc(var(--chat-viewport-height, 100dvh) - var(--pwa-safe-top) - var(--pwa-safe-bottom));
+    transform: translateY(var(--chat-viewport-offset, 0px));
+  }
+  body.standalone-app.chat-focus #chat.active,
+  body.standalone-app.chat-focus #privados.active {
+    height: 100%;
+  }
+  body.standalone-app.chat-focus #chat .chat-header,
+  body.standalone-app.chat-focus #privados .private-conversation .chat-header,
+  body.standalone-app.chat-focus #privados .private-contacts .panel-heading {
+    padding-top: 13px;
+  }
+  body.standalone-app.chat-focus .message-form { padding-bottom: 14px; }
+}
+
 /* En la PWA de iPhone los controles deben quedar debajo de hora, señal y batería. */
 @media (max-width: 760px) {
   body.standalone-app {
