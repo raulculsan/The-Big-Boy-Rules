@@ -50,9 +50,43 @@ const sidebar = document.getElementById("sidebar");
 const SIDEBAR_COMPACT_KEY = "bb-sidebar-compact";
 if (localStorage.getItem(SIDEBAR_COMPACT_KEY) === "1") document.body.classList.add("sidebar-compact");
 let sidebarSwipeStart = null;
+let mobileHeaderLastScrollY = Math.max(0, window.scrollY);
+let mobileHeaderFrame = null;
 
 function isMobileSidebar() {
   return window.matchMedia("(max-width: 760px)").matches;
+}
+
+function mobileHeaderMustStayVisible() {
+  return document.body.classList.contains("chat-focus")
+    || sidebar.classList.contains("open")
+    || document.querySelector(".modal-backdrop.open")
+    || document.getElementById("notificationsDropdown")?.getAttribute("aria-hidden") === "false"
+    || document.getElementById("globalSearch")?.getAttribute("aria-hidden") === "false"
+    || document.getElementById("userDropdown")?.classList.contains("open");
+}
+
+function showMobileHeader() {
+  document.body.classList.remove("mobile-header-hidden");
+}
+
+function syncMobileHeader() {
+  mobileHeaderFrame = null;
+  const currentScrollY = Math.max(0, window.scrollY);
+  if (!isMobileSidebar() || mobileHeaderMustStayVisible() || currentScrollY < 72) {
+    showMobileHeader();
+    mobileHeaderLastScrollY = currentScrollY;
+    return;
+  }
+  const movement = currentScrollY - mobileHeaderLastScrollY;
+  if (movement > 7 && currentScrollY > 120) document.body.classList.add("mobile-header-hidden");
+  else if (movement < -7) showMobileHeader();
+  mobileHeaderLastScrollY = currentScrollY;
+}
+
+function scheduleMobileHeaderSync() {
+  if (mobileHeaderFrame) return;
+  mobileHeaderFrame = requestAnimationFrame(syncMobileHeader);
 }
 
 function syncSidebarCollapseButton() {
@@ -333,6 +367,8 @@ function selectContentTab(tabName) {
 }
 
 function goTo(sectionId) {
+  showMobileHeader();
+  mobileHeaderLastScrollY = 0;
   const requestedSection = sectionId;
   const homeAnchor = sectionId === "miembros" || sectionId === "noticias" ? sectionId : null;
   if (homeAnchor) sectionId = "inicio";
@@ -3432,6 +3468,11 @@ loadNews(false);
 
 const initialSection = location.hash.replace("#", "");
 if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "calendario"].includes(initialSection)) goTo(initialSection);
+window.addEventListener("scroll", scheduleMobileHeaderSync, {passive: true});
+window.addEventListener("resize", () => {
+  showMobileHeader();
+  mobileHeaderLastScrollY = Math.max(0, window.scrollY);
+}, {passive: true});
 window.addEventListener("load", () => setTimeout(() => document.getElementById("pageLoader")?.classList.add("hidden"), 450));
 const cursorGlow = document.getElementById("cursorGlow");
 document.addEventListener("pointermove", event => {
