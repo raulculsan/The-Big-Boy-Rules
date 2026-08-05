@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#09090b"/>
+  <circle cx="256" cy="256" r="202" fill="none" stroke="#d6a62e" stroke-width="12"/>
+  <circle cx="256" cy="256" r="174" fill="none" stroke="#d6a62e" stroke-opacity=".35" stroke-width="2"/>
+  <path d="M155 170h202M155 342h202" stroke="#d6a62e" stroke-width="8" stroke-linecap="round"/>
+  <text x="256" y="292" fill="#f7f3e9" font-family="Arial, Helvetica, sans-serif" font-size="132" font-weight="900" text-anchor="middle" letter-spacing="-10">BB</text>
+  <text x="256" y="142" fill="#d6a62e" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" text-anchor="middle" letter-spacing="7">THE BIG BOY</text>
+  <text x="256" y="382" fill="#d6a62e" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700" text-anchor="middle" letter-spacing="9">RULES</text>
+</svg>
