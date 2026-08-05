@@ -1300,12 +1300,14 @@ body.light .message p {
 
 /* Portal de herramientas: hijo directo del backdrop, sin recorte en Safari iOS. */
 #mediaUploader.has-media > .media-crop-controls {
-  position: fixed !important;
-  inset: 0 !important;
+  position: absolute !important;
+  inset: auto !important;
+  top: 0 !important;
+  left: 0 !important;
   z-index: 2200 !important;
   display: block !important;
-  width: 100vw !important;
-  height: 100dvh !important;
+  width: 0 !important;
+  height: 0 !important;
   max-height: none !important;
   padding: 0 !important;
   border: 0 !important;
@@ -1314,9 +1316,15 @@ body.light .message p {
   transform: none !important;
   pointer-events: none !important;
 }
+#mediaUploader:not(.has-media) > .media-crop-controls {
+  display: none !important;
+}
 #mediaUploader.has-media > .media-crop-controls .media-tool-panel.active {
+  position: fixed !important;
+  inset: 82px 78px auto auto !important;
   z-index: 2201 !important;
   display: grid !important;
+  width: min(360px, calc(100vw - 104px)) !important;
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
@@ -1334,8 +1342,8 @@ body.light .message p {
     border-radius: 20px !important;
     background: rgba(12,12,15,.97) !important;
     box-shadow: 0 -12px 46px rgba(0,0,0,.72) !important;
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 }
 
