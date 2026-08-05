@@ -1195,17 +1195,27 @@ body.light .message p {
 
 @media (max-width: 760px) {
   .sidebar-collapse-button { display: grid; }
+  .sidebar,
   body.sidebar-compact .sidebar { width: 84px; padding: 28px 13px; }
   body.sidebar-compact .app,
   body.sidebar-compact .site-footer { margin-left: 0; }
+  .sidebar .brand,
   body.sidebar-compact .brand { justify-content: center; padding: 0 0 28px; }
+  .sidebar .brand > span:last-child,
+  .sidebar .nav-link b,
+  .sidebar .mini-user > div:last-child,
   body.sidebar-compact .brand > span:last-child,
   body.sidebar-compact .nav-link b,
   body.sidebar-compact .mini-user > div:last-child { display: none; }
+  .sidebar .nav-link,
   body.sidebar-compact .nav-link { justify-content: center; gap: 0; padding: 0; }
+  .sidebar .notification-dot,
   body.sidebar-compact .notification-dot { position: absolute; top: 9px; right: 9px; margin-left: 0; }
+  .sidebar .sidebar-footer,
   body.sidebar-compact .sidebar-footer { flex-direction: column; gap: 12px; }
+  .sidebar .sidebar-collapse-button svg,
   body.sidebar-compact .sidebar-collapse-button svg { transform: rotate(0); }
+  .sidebar .brand-mark,
   body.sidebar-compact .brand-mark { width: 42px; min-width: 42px; }
   .sidebar {
     transform: translateX(-100%);
@@ -5396,6 +5406,7 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
 .moment-progress i { display: block; width: 0; height: 100%; background: #fff; }
 .moment-progress .complete i { width: 100%; }
 .moment-progress .active i { animation: momentProgress 6s linear forwards; }
+.moment-progress.paused .active i { animation-play-state: paused; }
 @keyframes momentProgress { to { width: 100%; } }
 .moment-navigation {
   position: absolute;
