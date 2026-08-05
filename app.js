@@ -43,13 +43,38 @@ const navLinks = [...document.querySelectorAll(".nav-link")];
 const sidebar = document.getElementById("sidebar");
 const SIDEBAR_COMPACT_KEY = "bb-sidebar-compact";
 if (localStorage.getItem(SIDEBAR_COMPACT_KEY) === "1") document.body.classList.add("sidebar-compact");
+let sidebarSwipeStart = null;
+
+function isMobileSidebar() {
+  return window.matchMedia("(max-width: 760px)").matches;
+}
 
 function syncSidebarCollapseButton() {
   const compact = document.body.classList.contains("sidebar-compact");
   const button = document.getElementById("sidebarCollapseButton");
   button.setAttribute("aria-expanded", String(!compact));
-  button.setAttribute("aria-label", compact ? "Ampliar menú lateral" : "Reducir menú lateral");
-  button.title = compact ? "Ampliar menú" : "Reducir menú";
+  const mobileCompact = isMobileSidebar() && compact;
+  button.setAttribute("aria-label", mobileCompact ? "Ocultar menú lateral" : compact ? "Ampliar menú lateral" : "Reducir menú lateral");
+  button.title = mobileCompact ? "Ocultar menú" : compact ? "Ampliar menú" : "Reducir menú";
+}
+
+function setSidebarCompact(compact) {
+  document.body.classList.toggle("sidebar-compact", compact);
+  localStorage.setItem(SIDEBAR_COMPACT_KEY, compact ? "1" : "0");
+  syncSidebarCollapseButton();
+}
+
+function stepMobileSidebar(direction) {
+  const compact = document.body.classList.contains("sidebar-compact");
+  if (direction === "left") {
+    if (!compact) setSidebarCompact(true);
+    else {
+      sidebar.classList.remove("open");
+      setSidebarCompact(false);
+    }
+  } else if (compact) {
+    setSidebarCompact(false);
+  }
 }
 syncSidebarCollapseButton();
 
@@ -2509,10 +2534,26 @@ navLinks.forEach(link => link.addEventListener("click", event => {
 }));
 document.getElementById("menuButton").addEventListener("click", () => sidebar.classList.toggle("open"));
 document.getElementById("sidebarCollapseButton").addEventListener("click", () => {
-  const compact = document.body.classList.toggle("sidebar-compact");
-  localStorage.setItem(SIDEBAR_COMPACT_KEY, compact ? "1" : "0");
-  syncSidebarCollapseButton();
+  if (isMobileSidebar()) {
+    stepMobileSidebar("left");
+    return;
+  }
+  setSidebarCompact(!document.body.classList.contains("sidebar-compact"));
 });
+sidebar.addEventListener("pointerdown", event => {
+  if (!isMobileSidebar() || event.target.closest("button, a")) return;
+  sidebarSwipeStart = {id: event.pointerId, x: event.clientX, y: event.clientY};
+});
+sidebar.addEventListener("pointerup", event => {
+  if (!sidebarSwipeStart || sidebarSwipeStart.id !== event.pointerId) return;
+  const distanceX = event.clientX - sidebarSwipeStart.x;
+  const distanceY = event.clientY - sidebarSwipeStart.y;
+  sidebarSwipeStart = null;
+  if (Math.abs(distanceX) < 48 || Math.abs(distanceX) <= Math.abs(distanceY)) return;
+  stepMobileSidebar(distanceX < 0 ? "left" : "right");
+});
+sidebar.addEventListener("pointercancel", () => { sidebarSwipeStart = null; });
+window.addEventListener("resize", syncSidebarCollapseButton);
 document.getElementById("themeButton").addEventListener("click", () => {
   document.body.classList.toggle("light");
   localStorage.setItem("bb-theme", document.body.classList.contains("light") ? "light" : "dark");
