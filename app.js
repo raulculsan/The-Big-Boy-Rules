@@ -304,7 +304,8 @@ async function testPushNotifications() {
   const result = await dispatchPush("test", "self");
   if (result?.error) status.textContent = "No se pudo enviar. Vuelve a activar los avisos.";
   else if (result?.data?.delivered) status.textContent = "Prueba enviada. Debe aparecer en unos segundos.";
-  else status.textContent = "No hay una suscripción válida. Desactiva y vuelve a activar los avisos.";
+  else if (result?.data?.subscriptions) status.textContent = "Apple ha rechazado el envío. Desactiva y vuelve a activar los avisos.";
+  else status.textContent = "No hay una suscripción guardada. Desactiva y vuelve a activar los avisos.";
   button.disabled = false;
 }
 
