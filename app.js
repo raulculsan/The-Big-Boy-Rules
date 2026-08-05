@@ -48,6 +48,8 @@ const sections = [...document.querySelectorAll(".page-section")];
 const navLinks = [...document.querySelectorAll(".nav-link")];
 const sidebar = document.getElementById("sidebar");
 const SIDEBAR_COMPACT_KEY = "bb-sidebar-compact";
+const isStandaloneApp = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+document.body.classList.toggle("standalone-app", isStandaloneApp);
 if (localStorage.getItem(SIDEBAR_COMPACT_KEY) === "1") document.body.classList.add("sidebar-compact");
 let sidebarSwipeStart = null;
 let mobileHeaderLastScrollY = Math.max(0, window.scrollY);
