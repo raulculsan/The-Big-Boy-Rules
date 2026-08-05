@@ -2527,6 +2527,13 @@ body:not(.authenticated) .site-footer {
   max-height: min(520px, 68vh);
   overflow-y: auto;
 }
+.push-notification-settings { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 16px; border-bottom: 1px solid var(--line); background: rgba(214,166,46,.06); }
+.push-notification-settings > div { min-width: 0; display: grid; gap: 3px; }
+.push-notification-settings strong { font-size: 12px; }
+.push-notification-settings small { color: var(--muted); font-size: 10px; line-height: 1.35; }
+.push-notification-settings button { flex: 0 0 auto; padding: 8px 11px; border: 1px solid rgba(255,255,255,.2); border-radius: 9px; background: #0a0a0c; color: #fff; font: inherit; font-size: 10px; font-weight: 800; cursor: pointer; }
+.push-notification-settings button.enabled { border-color: #4ac782; color: #7ee8aa; }
+.push-notification-settings button:disabled { opacity: .55; cursor: wait; }
 .notification-item {
   position: relative;
   width: 100%;
