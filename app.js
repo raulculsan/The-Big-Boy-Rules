@@ -363,6 +363,7 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
     <div class="media-card-info">
       <button class="media-author" data-profile="${item.member}">${getAvatar(member, "avatar tiny")}<strong>${escapeHtml(member?.name || "Miembro")}</strong></button>
       ${item.caption ? `<p>${escapeHtml(item.caption)}</p>` : ""}
+      ${item.mentionedUserId ? `<button class="media-mention" type="button" data-profile="${getMemberByAuthId(item.mentionedUserId)?.id || ""}">@${escapeHtml(getMemberByAuthId(item.mentionedUserId)?.username || "miembro")}</button>` : ""}
       <time datetime="${escapeHtml(item.createdAt)}">${kind === "moment" ? `Caduca ${formatExpiry(item.expiresAt)}` : formatRelativeTime(item.createdAt)}</time>
       <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="${kind}" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
         <span aria-hidden="true">${liked ? "♥" : "♡"}</span>${likes.length ? `<strong>${likes.length}</strong>` : ""}<small>Me gusta</small>
@@ -1018,7 +1019,7 @@ function mapMedia(item) {
   return {
     id: item.id, userId: item.user_id, member: item.legacy_id, caption: item.caption,
     mediaUrl: item.media_url, mediaType: item.media_type, createdAt: item.created_at,
-    expiresAt: item.expires_at
+    expiresAt: item.expires_at, mentionedUserId: item.mentioned_user_id
   };
 }
 
@@ -1778,10 +1779,12 @@ function openMediaUploader(mode) {
     : "Se mostrará en tu perfil · original o personalizada · máximo 30 MB";
   document.getElementById("mediaUploadFile").value = "";
   document.getElementById("mediaUploadCaption").value = "";
+  document.getElementById("mediaMention").innerHTML = `<option value="">Nadie</option>${members.filter(member => !member.hidden && member.authId && member.id !== currentUser.id).map(member => `<option value="${escapeHtml(member.authId)}">@${escapeHtml(member.username)} · ${escapeHtml(member.name)}</option>`).join("")}`;
   document.getElementById("mediaUploadPreview").innerHTML = "";
   resetMediaCropEditor();
   document.getElementById("mediaUploadFeedback").textContent = "";
   const modal = document.getElementById("mediaUploader");
+  modal.classList.remove("has-media");
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
 }
@@ -1790,6 +1793,7 @@ function closeMediaUploader() {
   const modal = document.getElementById("mediaUploader");
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
+  modal.classList.remove("has-media");
   resetMediaCropEditor();
 }
 
@@ -1812,7 +1816,7 @@ function resetMediaCropEditor() {
   const original = document.getElementById("mediaKeepOriginal");
   if (filter) filter.value = "none";
   if (overlay) overlay.value = "";
-  if (original) original.checked = false;
+  if (original) original.checked = true;
 }
 
 function configureMediaCropCanvas() {
@@ -1826,7 +1830,7 @@ function configureMediaCropCanvas() {
 function clampMediaCrop() {
   if (!mediaCropImage) return;
   const canvas = document.getElementById("mediaCropCanvas");
-  const baseScale = Math.max(canvas.width / mediaCropImage.naturalWidth, canvas.height / mediaCropImage.naturalHeight);
+  const baseScale = Math.min(canvas.width / mediaCropImage.naturalWidth, canvas.height / mediaCropImage.naturalHeight);
   const scale = baseScale * mediaCropZoom;
   const maxX = Math.max(0, (mediaCropImage.naturalWidth * scale - canvas.width) / 2);
   const maxY = Math.max(0, (mediaCropImage.naturalHeight * scale - canvas.height) / 2);
@@ -1839,7 +1843,7 @@ function drawMediaCrop() {
   clampMediaCrop();
   const canvas = document.getElementById("mediaCropCanvas");
   const context = canvas.getContext("2d");
-  const baseScale = Math.max(canvas.width / mediaCropImage.naturalWidth, canvas.height / mediaCropImage.naturalHeight);
+  const baseScale = Math.min(canvas.width / mediaCropImage.naturalWidth, canvas.height / mediaCropImage.naturalHeight);
   const scale = baseScale * mediaCropZoom;
   const width = mediaCropImage.naturalWidth * scale;
   const height = mediaCropImage.naturalHeight * scale;
@@ -1908,6 +1912,7 @@ async function publishMedia(form) {
     const record = {
       user_id: currentAuthUser.id, legacy_id: currentUser.id,
       caption: document.getElementById("mediaUploadCaption").value.trim(),
+      mentioned_user_id: document.getElementById("mediaMention").value || null,
       media_url: mediaUrl, media_type: file.type.startsWith("video/") ? "video" : "image"
     };
     const table = mediaUploadMode === "moment" ? "moments" : "profile_posts";
@@ -2705,12 +2710,14 @@ document.getElementById("mediaUploadFile").addEventListener("change", async even
     preview.innerHTML = "";
     try {
       await loadMediaCrop(file);
+      document.getElementById("mediaUploader").classList.add("has-media");
     } catch (error) {
       document.getElementById("mediaUploadFeedback").textContent = error.message;
     }
   }
 });
 document.getElementById("mediaCropZoom").addEventListener("input", event => {
+  document.getElementById("mediaKeepOriginal").checked = false;
   const previousZoom = mediaCropZoom;
   mediaCropZoom = Number(event.target.value);
   if (previousZoom) {

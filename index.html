@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-42" />
+  <link rel="stylesheet" href="styles.css?v=20260805-43" />
 </head>
 <body>
 
@@ -607,19 +607,17 @@
               <label><span>Filtro</span><select id="mediaFilter"><option value="none">Original</option><option value="vivid">Vivo</option><option value="warm">Cálido</option><option value="cool">Frío</option><option value="mono">Blanco y negro</option><option value="vintage">Vintage</option></select></label>
               <label><span>Texto sobre la foto</span><input id="mediaOverlayText" maxlength="80" placeholder="Escribe algo..."></label>
             </div>
+            <label><span>Mencionar a una persona</span><select id="mediaMention"><option value="">Nadie</option></select></label>
+            <label><span>Descripción</span><textarea id="mediaUploadCaption" maxlength="300" rows="4" placeholder="Cuenta algo sobre este momento..."></textarea></label>
             <label for="mediaCropZoom">
               <span>Tamaño</span>
               <input id="mediaCropZoom" type="range" min="1" max="3" value="1" step="0.01">
             </label>
             <button class="text-button" id="resetMediaCrop" type="button">Centrar foto</button>
-            <label class="media-original-toggle"><input id="mediaKeepOriginal" type="checkbox"> <span>Subir en tamaño y proporción original</span></label>
+            <label class="media-original-toggle"><input id="mediaKeepOriginal" type="checkbox" checked> <span>Conservar archivo, tamaño y proporción original</span></label>
             <small>Arrastra la imagen, ajusta el zoom, aplica un filtro o añade texto antes de compartir.</small>
           </div>
         </div>
-        <label>
-          <span>Texto (opcional)</span>
-          <textarea id="mediaUploadCaption" maxlength="300" rows="3" placeholder="Cuenta algo sobre este momento..."></textarea>
-        </label>
         <div class="form-feedback" id="mediaUploadFeedback" role="status"></div>
         <div class="modal-actions">
           <button class="secondary-button" id="cancelMediaUploader" type="button">Cancelar</button>
@@ -728,7 +726,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-42"></script>
-  <script src="app.js?v=20260805-42"></script>
+  <script src="config.js?v=20260805-43"></script>
+  <script src="app.js?v=20260805-43"></script>
 </body>
 </html>
