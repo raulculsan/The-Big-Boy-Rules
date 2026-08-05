@@ -136,6 +136,7 @@ let momentAdvanceRemaining = 6000;
 let momentSwipeStartX = null;
 let momentPressStartedAt = 0;
 let suppressMomentNavigationClick = false;
+let replyingMedia = null;
 const realtimeRefreshTimers = new Map();
 
 function scheduleRealtimeRefresh(key, loader, delay = 180) {
@@ -283,7 +284,9 @@ function backFromPrivateConversation() {
 }
 
 function renderFeatured() {
-  document.getElementById("featuredMembers").innerHTML = members.slice(0, 4).map(member => `
+  const featured = document.getElementById("featuredMembers");
+  if (!featured) return;
+  featured.innerHTML = members.slice(0, 4).map(member => `
     <button class="member-mini-card ${member.countryFlag ? "has-country-flag" : ""}" data-profile="${member.id}">
       ${member.countryFlag ? `<span class="member-mini-flag" aria-hidden="true">${escapeHtml(member.countryFlag)}</span>` : ""}
       ${getAvatar(member)}
@@ -406,7 +409,7 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
         <span aria-hidden="true">${liked ? "♥" : "♡"}</span>${likes.length ? `<strong>${likes.length}</strong>` : ""}<small>Me gusta</small>
       </button>
       ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="${kind}" aria-label="Compartir en un chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg><small>Compartir</small></button>` : ""}
-      ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="${kind}">Responder</button>` : ""}
+      ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="${kind}" aria-label="Responder"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4-.9L3 21l1.7-4.6A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 12h8M8 8.5h5"/></svg><small>Responder</small></button>` : ""}
       ${kind === "moment" && isMediaOwner(item) ? `<button class="media-views-button" type="button" data-moment-viewers="${item.id}">Visualizaciones</button>` : ""}
       ${canDelete && kind !== "moment" ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar esta publicación">Eliminar</button>` : ""}
     </div>
@@ -639,7 +642,7 @@ function renderPrivateContacts() {
   panel.innerHTML = contacts.map(({member, latest}) =>
     `<button class="private-contact ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}">
       ${getAvatar(member)}
-      <span><strong>${escapeHtml(member.name)}</strong><small>${latest ? escapeHtml(latest.body) : "Iniciar conversación"}</small></span>
+      <span class="private-contact-copy"><span><strong>${escapeHtml(member.name)}</strong>${latest ? `<time datetime="${escapeHtml(latest.createdAt)}">${formatRelativeTime(latest.createdAt)}</time>` : ""}</span><small>${latest ? escapeHtml(latest.body) : "Iniciar conversación"}</small></span>
     </button>`).join("");
 }
 
@@ -858,14 +861,12 @@ function refreshProfileSurfaces() {
 }
 
 function applyUserHeader(user) {
-  ["sidebarAvatar", "topbarAvatar"].forEach(id => {
+  ["topbarAvatar"].forEach(id => {
     const node = document.getElementById(id);
     node.classList.toggle("has-image", Boolean(user.avatarUrl));
     node.innerHTML = user.avatarUrl ? `<img src="${escapeHtml(user.avatarUrl)}" alt="">` : escapeHtml(user.name.charAt(0));
   });
-  document.getElementById("sidebarUserName").textContent = user.name;
   document.getElementById("topbarUserName").textContent = user.name;
-  document.getElementById("sidebarUserRole").textContent = isSuperAdmin() ? "Control total" : user.roleKey === "admin" ? "Administrador" : "Miembro";
   document.querySelectorAll(".admin-only").forEach(node => node.style.display = canManageSite() ? "" : "none");
 }
 
@@ -2106,6 +2107,20 @@ function closeMediaViewer() {
   document.getElementById("momentOptionsMenu").hidden = true;
 }
 
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
 function openMoment(momentId) {
   const item = moments.find(moment => String(moment.id) === String(momentId));
   if (!item) return window.alert("Este momento ya no está disponible.");
@@ -2209,12 +2224,61 @@ async function registerMomentView(item) {
 
 async function replyToMedia(kind, id) {
   if (!backendReady || !currentAuthUser || isSuperAdmin()) return;
-  const body = window.prompt(`Responder a esta ${kind === "moment" ? "historia" : "publicación"}:`);
-  if (!body?.trim()) return;
-  const record = {user_id: currentAuthUser.id, body: body.trim(), moment_id: kind === "moment" ? id : null, profile_post_id: kind === "post" ? id : null};
+  const item = (kind === "moment" ? moments : profilePosts).find(entry => String(entry.id) === String(id));
+  if (!item) return;
+  replyingMedia = {kind, id, item};
+  const member = getMember(item.member);
+  document.getElementById("mediaReplyTitle").textContent = `Responder ${kind === "moment" ? "historia" : "publicación"}`;
+  document.getElementById("mediaReplyContext").innerHTML = `${item.mediaUrl ? `<img src="${escapeHtml(item.mediaUrl)}" alt="">` : ""}<div><strong>${escapeHtml(member?.name || "Miembro")}</strong><small>${escapeHtml(item.caption || (kind === "moment" ? "Historia" : "Publicación"))}</small></div>`;
+  document.getElementById("mediaReplyBody").value = "";
+  document.getElementById("mediaReplyFeedback").textContent = "";
+  openModal("mediaReplyModal");
+  setTimeout(() => document.getElementById("mediaReplyBody").focus(), 80);
+}
+
+function closeMediaReply() {
+  replyingMedia = null;
+  closeModal("mediaReplyModal");
+}
+
+async function submitMediaReply(form) {
+  if (!replyingMedia) return;
+  const body = document.getElementById("mediaReplyBody").value.trim();
+  if (!body) return;
+  const submit = form.querySelector("[type=submit]");
+  submit.disabled = true;
+  const {kind, id} = replyingMedia;
+  const record = {user_id: currentAuthUser.id, body, moment_id: kind === "moment" ? id : null, profile_post_id: kind === "post" ? id : null};
   const {error} = await db.from("media_replies").insert(record);
-  if (error) return window.alert(error.message || "No se pudo enviar la respuesta.");
-  window.alert("Respuesta enviada.");
+  submit.disabled = false;
+  if (error) return void (document.getElementById("mediaReplyFeedback").textContent = error.message || "No se pudo enviar la respuesta.");
+  closeMediaReply();
+}
+
+function openHelpModal() {
+  document.getElementById("userDropdown")?.classList.remove("open");
+  document.getElementById("helpFeedback").textContent = "";
+  openModal("helpModal");
+}
+
+function closeHelpModal() { closeModal("helpModal"); }
+
+async function submitHelpRequest(form) {
+  if (!backendReady || !currentAuthUser || !currentUser) return;
+  const admin = members.find(member => member.authId && member.id !== currentUser.id && member.roleKey === "admin" && !member.hidden);
+  const feedback = document.getElementById("helpFeedback");
+  if (!admin) return void (feedback.textContent = "No hay ningún administrador disponible en este momento.");
+  const message = document.getElementById("helpMessage").value.trim();
+  if (!message) return;
+  const submit = form.querySelector("[type=submit]");
+  submit.disabled = true;
+  const {error} = await db.from("private_messages").insert({sender_id: currentAuthUser.id, recipient_id: admin.authId, body: `[${document.getElementById("helpType").value.toUpperCase()}]\n${message}`});
+  submit.disabled = false;
+  if (error) return void (feedback.textContent = error.message || "No se pudo enviar el mensaje.");
+  document.getElementById("helpMessage").value = "";
+  closeHelpModal();
+  await loadPrivateMessages();
+  openPrivateConversation(admin.id);
 }
 
 async function showMomentViewers(id) {
@@ -2617,10 +2681,6 @@ sidebar.addEventListener("pointerup", event => {
 });
 sidebar.addEventListener("pointercancel", () => { sidebarSwipeStart = null; });
 window.addEventListener("resize", syncSidebarCollapseButton);
-document.getElementById("themeButton").addEventListener("click", () => {
-  document.body.classList.toggle("light");
-  localStorage.setItem("bb-theme", document.body.classList.contains("light") ? "light" : "dark");
-});
 document.getElementById("loginForm").addEventListener("submit", async event => {
   event.preventDefault();
   const error = document.getElementById("loginError");
@@ -2685,6 +2745,15 @@ document.getElementById("myProfileButton").addEventListener("click", () => {
   if (isSuperAdmin()) goTo("administracion");
   else if (currentUser) renderProfile(currentUser.id);
 });
+document.getElementById("helpButton").addEventListener("click", event => { event.stopPropagation(); openHelpModal(); });
+document.getElementById("closeHelpModal").addEventListener("click", closeHelpModal);
+document.getElementById("cancelHelpModal").addEventListener("click", closeHelpModal);
+document.getElementById("helpModal").addEventListener("click", event => { if (event.target.id === "helpModal") closeHelpModal(); });
+document.getElementById("helpForm").addEventListener("submit", event => { event.preventDefault(); submitHelpRequest(event.currentTarget); });
+document.getElementById("closeMediaReplyModal").addEventListener("click", closeMediaReply);
+document.getElementById("cancelMediaReply").addEventListener("click", closeMediaReply);
+document.getElementById("mediaReplyModal").addEventListener("click", event => { if (event.target.id === "mediaReplyModal") closeMediaReply(); });
+document.getElementById("mediaReplyForm").addEventListener("submit", event => { event.preventDefault(); submitMediaReply(event.currentTarget); });
 document.getElementById("logoutButton").addEventListener("click", async () => {
   if (db) await db.auth.signOut();
   localStorage.removeItem(AUTH_STORAGE_KEY);
