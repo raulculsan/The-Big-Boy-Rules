@@ -4127,7 +4127,11 @@ input:disabled {
   color: var(--text);
   background: transparent;
   touch-action: manipulation;
+  -webkit-touch-callout: none;
 }
+.story-bubble .story-avatar-ring,
+.story-bubble .avatar,
+.story-bubble img { pointer-events: none; }
 .story-add-button > span,
 .story-avatar-ring {
   width: 64px;
