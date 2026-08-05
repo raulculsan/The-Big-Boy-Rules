@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-45" />
+  <link rel="stylesheet" href="styles.css?v=20260805-46" />
 </head>
 <body>
 
@@ -607,20 +607,23 @@
             <canvas id="mediaCropCanvas" width="540" height="840" aria-label="Encuadre de la foto"></canvas>
             <span class="media-crop-guide" aria-hidden="true"></span>
           </div>
+          <div class="media-editor-toolbar" aria-label="Herramientas de edición">
+            <button type="button" data-media-tool="text" aria-label="Añadir texto" aria-expanded="false"><strong>Aa</strong></button>
+            <button type="button" data-media-tool="mention" aria-label="Mencionar a alguien" aria-expanded="false"><strong>@</strong></button>
+            <button type="button" data-media-tool="filter" aria-label="Aplicar filtros" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg></button>
+            <button type="button" data-media-tool="adjust" aria-label="Encuadrar imagen" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v14a2 2 0 0 0 2 2h12M3 7h14a2 2 0 0 1 2 2v12"/></svg></button>
+          </div>
           <div class="media-crop-controls">
             <div class="media-customization-grid">
-              <label class="media-text-tool"><span>Texto sobre la foto</span><input id="mediaOverlayText" maxlength="80" placeholder="Aa · Escribe texto o @usuario"></label>
+              <label class="media-text-tool media-tool-panel" data-media-panel="text"><span>Texto sobre la foto</span><input id="mediaOverlayText" maxlength="80" placeholder="Aa · Escribe texto o @usuario"></label>
             </div>
-            <label class="media-mention-tool"><span>@ Mencionar</span><select id="mediaMention"><option value="">Nadie</option></select></label>
+            <label class="media-mention-tool media-tool-panel" data-media-panel="mention"><span>@ Mencionar</span><select id="mediaMention"><option value="">Nadie</option></select></label>
             <label class="media-caption-tool"><span>Descripción</span><textarea id="mediaUploadCaption" maxlength="300" rows="3" placeholder="Escribe una descripción o menciona con @..."></textarea></label>
-            <div class="media-filter-tool"><span>Filtros</span><div class="media-filter-rail" role="group" aria-label="Filtros de imagen"><button class="active" type="button" data-editor-filter="none"><i></i><small>Original</small></button><button type="button" data-editor-filter="vivid"><i></i><small>Vivo</small></button><button type="button" data-editor-filter="warm"><i></i><small>Cálido</small></button><button type="button" data-editor-filter="cool"><i></i><small>Frío</small></button><button type="button" data-editor-filter="mono"><i></i><small>B&amp;N</small></button><button type="button" data-editor-filter="vintage"><i></i><small>Vintage</small></button></div><select id="mediaFilter" aria-label="Filtro" hidden><option value="none">Original</option><option value="vivid">Vivo</option><option value="warm">Cálido</option><option value="cool">Frío</option><option value="mono">Blanco y negro</option><option value="vintage">Vintage</option></select></div>
-            <label for="mediaCropZoom">
-              <span>Tamaño</span>
-              <input id="mediaCropZoom" type="range" min="1" max="3" value="1" step="0.01">
-            </label>
-            <button class="text-button" id="resetMediaCrop" type="button">Centrar foto</button>
-            <label class="media-original-toggle"><input id="mediaKeepOriginal" type="checkbox" checked> <span>Mostrar y conservar la foto completa</span></label>
-            <small>Arrastra la imagen, ajusta el zoom, aplica un filtro o añade texto antes de compartir.</small>
+            <div class="media-filter-tool media-tool-panel" data-media-panel="filter"><span>Filtros</span><div class="media-filter-rail" role="group" aria-label="Filtros de imagen"><button class="active" type="button" data-editor-filter="none"><i></i><small>Original</small></button><button type="button" data-editor-filter="vivid"><i></i><small>Vivo</small></button><button type="button" data-editor-filter="warm"><i></i><small>Cálido</small></button><button type="button" data-editor-filter="cool"><i></i><small>Frío</small></button><button type="button" data-editor-filter="mono"><i></i><small>B&amp;N</small></button><button type="button" data-editor-filter="vintage"><i></i><small>Vintage</small></button></div><select id="mediaFilter" aria-label="Filtro" hidden><option value="none">Original</option><option value="vivid">Vivo</option><option value="warm">Cálido</option><option value="cool">Frío</option><option value="mono">Blanco y negro</option><option value="vintage">Vintage</option></select></div>
+            <div class="media-adjust-tool media-tool-panel" data-media-panel="adjust">
+              <label for="mediaCropZoom"><span>Tamaño</span><input id="mediaCropZoom" type="range" min="1" max="3" value="1" step="0.01"></label>
+              <div class="media-adjust-actions"><button class="text-button" id="resetMediaCrop" type="button">Centrar foto</button><label class="media-original-toggle"><input id="mediaKeepOriginal" type="checkbox" checked> <span>Foto completa</span></label></div>
+            </div>
           </div>
         </div>
         <div class="form-feedback" id="mediaUploadFeedback" role="status"></div>
@@ -731,7 +734,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-45"></script>
-  <script src="app.js?v=20260805-45"></script>
+  <script src="config.js?v=20260805-46"></script>
+  <script src="app.js?v=20260805-46"></script>
 </body>
 </html>
