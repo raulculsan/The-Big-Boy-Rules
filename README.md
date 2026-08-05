@@ -37,7 +37,8 @@ Nunca copies la clave `service_role` en la web.
 - Cada sesión se autentica en Supabase y solo puede modificar su propio perfil.
 - Las fotos se guardan en el bucket público `avatars` con un límite de 3 MB.
 - El usuario puede quitar su avatar y volver a la inicial de su nombre.
-- Los adjuntos, historias y publicaciones se guardan en `group-media` (15 MB).
+- Los adjuntos se guardan en `group-media`; historias y publicaciones admiten originales de hasta 30 MB.
+- Ejecuta también `supabase-media-interactions.sql` para activar visualizaciones y respuestas.
 - Los mensajes y sus adjuntos llegan en tiempo real.
 - Los momentos empiezan vacíos y caducan 24 horas después de publicarse.
 - Cada perfil muestra una galería pública propia tipo Instagram.
@@ -47,7 +48,7 @@ Nunca copies la clave `service_role` en la web.
 - La cuenta de control total queda fuera de miembros, búsqueda, presencia y
   actividad. Su contraseña existe únicamente en Supabase Auth y nunca debe
   escribirse en el repositorio.
-- La función Edge `admin-users` permite que esa cuenta cree y elimine usuarios
+- La función Edge `admin-users` permite crear, eliminar y restablecer contraseñas provisionales de usuarios
   sin exponer la clave `service_role` en el navegador.
 - La búsqueda superior encuentra miembros, mensajes, publicaciones, eventos y
   titulares ya cargados.

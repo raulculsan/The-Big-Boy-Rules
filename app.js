@@ -93,6 +93,8 @@ let mediaCropZoom = 1;
 let mediaCropOffsetX = 0;
 let mediaCropOffsetY = 0;
 let mediaCropPointer = null;
+let mediaFilter = "none";
+let mediaOverlayText = "";
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
@@ -105,6 +107,15 @@ let activeContentTab = "publicaciones";
 let viewportSyncFrame = null;
 let cursorFrame = null;
 let sharingMedia = null;
+const realtimeRefreshTimers = new Map();
+
+function scheduleRealtimeRefresh(key, loader, delay = 180) {
+  clearTimeout(realtimeRefreshTimers.get(key));
+  realtimeRefreshTimers.set(key, setTimeout(() => {
+    realtimeRefreshTimers.delete(key);
+    loader();
+  }, delay));
+}
 
 function escapeHtml(value = "") {
   const node = document.createElement("div");
@@ -344,7 +355,7 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
     ? `<video src="${escapeHtml(item.mediaUrl)}" controls preload="metadata"></video>`
     : kind === "moment"
       ? `<button class="media-view-button" type="button" data-view-media="${escapeHtml(item.mediaUrl)}" data-view-caption="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}" loading="lazy" decoding="async"><span>Ver momento</span></button>`
-      : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy" decoding="async">`;
+      : `<button class="media-view-button" type="button" data-open-content-kind="post" data-open-content-id="${item.id}" aria-label="Abrir publicación"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy" decoding="async"></button>`;
   return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}" data-media-card-kind="${kind}" data-media-card-id="${item.id}"${kind === "moment" ? ` style="--story-index:${cardIndex}"` : ""}>
     ${canDelete && kind === "moment" ? `<button class="delete-media-button moment-delete-button" data-delete-moment="${item.id}" type="button" title="Eliminar este momento" aria-label="Eliminar este momento">× <span>Eliminar</span></button>` : ""}
     ${kind === "moment" ? `<div class="story-progress" aria-hidden="true"><span></span></div>` : ""}
@@ -357,6 +368,8 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
         <span aria-hidden="true">${liked ? "♥" : "♡"}</span>${likes.length ? `<strong>${likes.length}</strong>` : ""}<small>Me gusta</small>
       </button>
       ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="${kind}" aria-label="Compartir en un chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg><small>Compartir</small></button>` : ""}
+      ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="${kind}">Responder</button>` : ""}
+      ${kind === "moment" && isMediaOwner(item) ? `<button class="media-views-button" type="button" data-moment-viewers="${item.id}">Visualizaciones</button>` : ""}
       ${canDelete && kind !== "moment" ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar esta publicación">Eliminar</button>` : ""}
     </div>
   </article>`;
@@ -755,6 +768,7 @@ function renderAdminPanel() {
       <button class="text-button" type="button" data-profile="${user.id}">Ver perfil</button>
       ${user.id !== currentUser?.id ? `<button class="text-button" type="button" data-admin-message="${user.id}">Mensaje</button>` : ""}
       ${canManageSite() && (isSuperAdmin() || user.id !== currentUser?.id) ? `<button class="text-button" type="button" data-edit-user="${user.id}">Editar perfil</button>` : ""}
+      ${canManageSite() && user.authId && user.id !== currentUser?.id ? `<button class="text-button" type="button" data-reset-password="${user.authId}" data-reset-password-name="${escapeHtml(user.name)}">Nueva contraseña</button>` : ""}
       ${isSuperAdmin() && user.authId ? `<button class="text-button danger" type="button" data-delete-user="${user.authId}" data-delete-user-name="${escapeHtml(user.name)}">Eliminar</button>` : ""}
     </div></td></tr>`).join("");
 }
@@ -818,6 +832,7 @@ async function applyUserInterface(user, authUser = null) {
     renderPresence();
     renderAdminPanel();
   }
+  if (authUser?.user_metadata?.must_change_password) requirePasswordChange(authUser.id);
   if (passwordChangeIsRequired(authUser?.id || user.id)) openRequiredPasswordChange();
   if (document.getElementById("inicio")?.classList.contains("active")) loadNews(false);
 }
@@ -904,7 +919,7 @@ async function saveRequiredPasswordChange(form) {
       if (!currentUser) throw new Error("La sesión ya no está disponible.");
       currentUser.password = password;
     } else {
-      const {error} = await db.auth.updateUser({password});
+      const {error} = await db.auth.updateUser({password, data: {must_change_password: false}});
       if (error) throw error;
     }
     const userId = currentAuthUser?.id || currentUser?.id;
@@ -1144,8 +1159,8 @@ function closeNotifications() {
 }
 
 async function loadPrivateMessages() {
-  const {data, error} = await db.from("private_messages").select("*").order("created_at").limit(500);
-  privateMessages = error ? [] : data.map(item => ({
+  const {data, error} = await db.from("private_messages").select("*").order("created_at", {ascending: false}).limit(300);
+  privateMessages = error ? [] : [...data].reverse().map(item => ({
     id: item.id, senderId: item.sender_id, recipientId: item.recipient_id,
     body: item.body, attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
@@ -1203,22 +1218,22 @@ function connectRealtime() {
       }
     });
   messageChannel = db.channel("messages-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "messages"}, () => loadMessages())
+    .on("postgres_changes", {event: "*", schema: "public", table: "messages"}, () => scheduleRealtimeRefresh("messages", loadMessages))
     .subscribe();
   momentChannel = db.channel("moments-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "moments"}, () => loadMoments())
+    .on("postgres_changes", {event: "*", schema: "public", table: "moments"}, () => scheduleRealtimeRefresh("moments", loadMoments))
     .subscribe();
   postChannel = db.channel("profile-posts-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "profile_posts"}, () => loadProfilePosts())
+    .on("postgres_changes", {event: "*", schema: "public", table: "profile_posts"}, () => scheduleRealtimeRefresh("posts", loadProfilePosts))
     .subscribe();
   mediaLikesChannel = db.channel("media-likes-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "media_likes"}, () => loadMediaLikes())
+    .on("postgres_changes", {event: "*", schema: "public", table: "media_likes"}, () => scheduleRealtimeRefresh("likes", loadMediaLikes))
     .subscribe();
   notificationsChannel = db.channel(`notifications-${currentAuthUser.id}`)
-    .on("postgres_changes", {event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentAuthUser.id}`}, () => loadNotifications())
+    .on("postgres_changes", {event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentAuthUser.id}`}, () => scheduleRealtimeRefresh("notifications", loadNotifications))
     .subscribe();
   privateChannel = db.channel(`private-messages-${currentAuthUser.id}`)
-    .on("postgres_changes", {event: "*", schema: "public", table: "private_messages"}, () => loadPrivateMessages())
+    .on("postgres_changes", {event: "*", schema: "public", table: "private_messages"}, () => scheduleRealtimeRefresh("private", loadPrivateMessages))
     .subscribe();
   eventChannel = db.channel("group-events-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "group_events"}, () => loadGroupEvents())
@@ -1232,7 +1247,7 @@ function connectRealtime() {
 }
 
 async function uploadGroupMedia(file, folder) {
-  if (file.size > 15 * 1024 * 1024) throw new Error("El archivo supera el máximo de 15 MB.");
+  if (file.size > 30 * 1024 * 1024) throw new Error("El archivo supera el máximo de 30 MB.");
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const path = `${currentAuthUser.id}/${folder}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
   const {error} = await db.storage.from("group-media").upload(path, file, {contentType: file.type || "application/octet-stream"});
@@ -1759,8 +1774,8 @@ function openMediaUploader(mode) {
   document.getElementById("mediaUploaderEyebrow").textContent = isMoment ? "NUEVO MOMENTO" : "NUEVA PUBLICACIÓN";
   document.getElementById("mediaUploaderTitle").textContent = isMoment ? "Compartir una historia" : "Compartir en mi perfil";
   document.getElementById("mediaUploadHelp").textContent = isMoment
-    ? "La historia desaparecerá en 24 horas · máximo 15 MB"
-    : "Se mostrará de forma permanente en tu perfil · máximo 15 MB";
+    ? "La historia desaparecerá en 24 horas · original o personalizada · máximo 30 MB"
+    : "Se mostrará en tu perfil · original o personalizada · máximo 30 MB";
   document.getElementById("mediaUploadFile").value = "";
   document.getElementById("mediaUploadCaption").value = "";
   document.getElementById("mediaUploadPreview").innerHTML = "";
@@ -1784,12 +1799,20 @@ function resetMediaCropEditor() {
   mediaCropOffsetX = 0;
   mediaCropOffsetY = 0;
   mediaCropPointer = null;
+  mediaFilter = "none";
+  mediaOverlayText = "";
   const cropper = document.getElementById("mediaCropper");
   const stage = document.getElementById("mediaCropStage");
   if (cropper) cropper.hidden = true;
   if (stage) stage.classList.remove("dragging");
   const zoom = document.getElementById("mediaCropZoom");
   if (zoom) zoom.value = "1";
+  const filter = document.getElementById("mediaFilter");
+  const overlay = document.getElementById("mediaOverlayText");
+  const original = document.getElementById("mediaKeepOriginal");
+  if (filter) filter.value = "none";
+  if (overlay) overlay.value = "";
+  if (original) original.checked = false;
 }
 
 function configureMediaCropCanvas() {
@@ -1821,7 +1844,19 @@ function drawMediaCrop() {
   const width = mediaCropImage.naturalWidth * scale;
   const height = mediaCropImage.naturalHeight * scale;
   context.clearRect(0, 0, canvas.width, canvas.height);
+  const filters = {none: "none", vivid: "saturate(1.35) contrast(1.08)", warm: "sepia(.18) saturate(1.2)", cool: "hue-rotate(175deg) saturate(.85)", mono: "grayscale(1)", vintage: "sepia(.45) contrast(.9)"};
+  context.filter = filters[mediaFilter] || "none";
   context.drawImage(mediaCropImage, (canvas.width - width) / 2 + mediaCropOffsetX, (canvas.height - height) / 2 + mediaCropOffsetY, width, height);
+  context.filter = "none";
+  if (mediaOverlayText) {
+    context.font = `700 ${Math.max(28, canvas.width * .055)}px Inter, sans-serif`;
+    context.textAlign = "center";
+    context.lineWidth = 8;
+    context.strokeStyle = "rgba(0,0,0,.75)";
+    context.fillStyle = "white";
+    context.strokeText(mediaOverlayText, canvas.width / 2, canvas.height * .88, canvas.width * .86);
+    context.fillText(mediaOverlayText, canvas.width / 2, canvas.height * .88, canvas.width * .86);
+  }
 }
 
 function loadMediaCrop(file) {
@@ -1867,7 +1902,8 @@ async function publishMedia(form) {
   try {
     if (!backendReady || !currentAuthUser) throw new Error("Necesitas la conexión compartida para publicar.");
     if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) throw new Error("Selecciona una imagen o vídeo compatible.");
-    const mediaFile = file.type.startsWith("image/") && mediaCropImage ? await createCroppedMediaFile() : file;
+    const keepOriginal = document.getElementById("mediaKeepOriginal")?.checked && mediaFilter === "none" && !mediaOverlayText;
+    const mediaFile = file.type.startsWith("image/") && mediaCropImage && !keepOriginal ? await createCroppedMediaFile() : file;
     const mediaUrl = await uploadGroupMedia(mediaFile, mediaUploadMode === "moment" ? "moments" : "posts");
     const record = {
       user_id: currentAuthUser.id, legacy_id: currentUser.id,
@@ -1946,7 +1982,39 @@ function openMoment(momentId) {
   const item = moments.find(moment => String(moment.id) === String(momentId));
   if (!item) return window.alert("Este momento ya no está disponible.");
   const member = getMember(item.member);
+  registerMomentView(item);
   openMediaViewer(item.mediaUrl, item.caption || `Momento de ${member?.name || "miembro"}`, item.mediaType);
+}
+
+function openContent(kind, id) {
+  const item = (kind === "moment" ? moments : profilePosts).find(entry => String(entry.id) === String(id));
+  if (!item) return window.alert("Este contenido ya no está disponible.");
+  if (kind === "moment") registerMomentView(item);
+  openMediaViewer(item.mediaUrl, item.caption || (kind === "moment" ? "Momento" : "Publicación"), item.mediaType);
+}
+
+async function registerMomentView(item) {
+  if (!backendReady || !currentAuthUser || item.userId === currentAuthUser.id) return;
+  await db.from("moment_views").upsert({moment_id: item.id, viewer_id: currentAuthUser.id}, {onConflict: "moment_id,viewer_id"});
+}
+
+async function replyToMedia(kind, id) {
+  if (!backendReady || !currentAuthUser || isSuperAdmin()) return;
+  const body = window.prompt(`Responder a esta ${kind === "moment" ? "historia" : "publicación"}:`);
+  if (!body?.trim()) return;
+  const record = {user_id: currentAuthUser.id, body: body.trim(), moment_id: kind === "moment" ? id : null, profile_post_id: kind === "post" ? id : null};
+  const {error} = await db.from("media_replies").insert(record);
+  if (error) return window.alert(error.message || "No se pudo enviar la respuesta.");
+  window.alert("Respuesta enviada.");
+}
+
+async function showMomentViewers(id) {
+  const moment = moments.find(item => String(item.id) === String(id));
+  if (!moment || !isMediaOwner(moment)) return;
+  const {data, error} = await db.from("moment_views").select("viewer_id,viewed_at").eq("moment_id", id).order("viewed_at", {ascending: false}).limit(250);
+  if (error) return window.alert(error.message);
+  const names = (data || []).map(view => members.find(member => member.authId === view.viewer_id)?.name || "Miembro");
+  window.alert(names.length ? `Visto por ${names.length}:\n\n${names.join("\n")}` : "Todavía nadie ha visto este momento.");
 }
 
 async function editGroupMessage(id) {
@@ -2042,6 +2110,21 @@ async function deleteClubUser(authId, name) {
     await loadRemoteProfiles();
   } catch (error) {
     window.alert(error.message || "No se pudo eliminar la cuenta.");
+  }
+}
+
+async function resetClubUserPassword(authId, name) {
+  if (!canManageSite() || !authId) return;
+  const password = window.prompt(`Escribe la nueva contraseña provisional para ${name} (mínimo 8 caracteres):`);
+  if (password == null) return;
+  const confirmation = window.prompt("Repítela para confirmar:");
+  if (password.length < 8 || password !== confirmation) return window.alert("Las contraseñas no coinciden o son demasiado cortas.");
+  if (!window.confirm(`¿Cambiar la contraseña de ${name}? Al entrar tendrá que crear una personal.`)) return;
+  try {
+    await invokeUserAdmin("reset-password", {userId: authId, password});
+    window.alert("Contraseña provisional actualizada.");
+  } catch (error) {
+    window.alert(error.message || "No se pudo cambiar la contraseña.");
   }
 }
 
@@ -2238,6 +2321,12 @@ document.addEventListener("click", event => {
     openMoment(momentTarget.dataset.openMoment);
     return;
   }
+  const openContentTarget = event.target.closest("[data-open-content-kind]");
+  if (openContentTarget) openContent(openContentTarget.dataset.openContentKind, openContentTarget.dataset.openContentId);
+  const replyMediaTarget = event.target.closest("[data-reply-media]");
+  if (replyMediaTarget) replyToMedia(replyMediaTarget.dataset.replyKind, replyMediaTarget.dataset.replyMedia);
+  const viewersTarget = event.target.closest("[data-moment-viewers]");
+  if (viewersTarget) showMomentViewers(viewersTarget.dataset.momentViewers);
   const goTarget = event.target.closest("[data-go]");
   if (goTarget) goTo(goTarget.dataset.go);
   const profileTarget = event.target.closest("[data-profile]");
@@ -2260,6 +2349,8 @@ document.addEventListener("click", event => {
   if (deletePrivateTarget) deletePrivateMessage(deletePrivateTarget.dataset.deletePrivateMessage);
   const deleteUser = event.target.closest("[data-delete-user]");
   if (deleteUser) deleteClubUser(deleteUser.dataset.deleteUser, deleteUser.dataset.deleteUserName);
+  const resetPassword = event.target.closest("[data-reset-password]");
+  if (resetPassword) resetClubUserPassword(resetPassword.dataset.resetPassword, resetPassword.dataset.resetPasswordName);
   const editUser = event.target.closest("[data-edit-user]");
   if (editUser) openProfileEditor(editUser.dataset.editUser);
   const renameUser = event.target.closest("[data-rename-user]");
@@ -2600,9 +2691,9 @@ document.getElementById("mediaUploadFile").addEventListener("change", async even
     resetMediaCropEditor();
     return;
   }
-  if (file.size > 15 * 1024 * 1024) {
+  if (file.size > 30 * 1024 * 1024) {
     event.target.value = "";
-    document.getElementById("mediaUploadFeedback").textContent = "El archivo supera el máximo de 15 MB.";
+    document.getElementById("mediaUploadFeedback").textContent = "El archivo supera el máximo de 30 MB.";
     return;
   }
   document.getElementById("mediaUploadFeedback").textContent = "";
@@ -2628,6 +2719,8 @@ document.getElementById("mediaCropZoom").addEventListener("input", event => {
   }
   drawMediaCrop();
 });
+document.getElementById("mediaFilter").addEventListener("change", event => { mediaFilter = event.target.value; drawMediaCrop(); });
+document.getElementById("mediaOverlayText").addEventListener("input", event => { mediaOverlayText = event.target.value.trim(); drawMediaCrop(); });
 document.getElementById("resetMediaCrop").addEventListener("click", () => {
   mediaCropZoom = 1;
   mediaCropOffsetX = 0;

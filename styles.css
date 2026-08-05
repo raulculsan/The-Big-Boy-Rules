@@ -4035,6 +4035,15 @@ input:disabled {
 .media-crop-controls input[type="range"] { padding: 0; accent-color: var(--gold); cursor: pointer; }
 .media-crop-controls .text-button { width: fit-content; }
 .media-crop-controls small { color: var(--muted); line-height: 1.6; }
+.media-customization-grid { display: grid; grid-template-columns: minmax(130px, .55fr) 1fr; gap: 12px; }
+.media-customization-grid select,
+.media-customization-grid input { width: 100%; }
+.media-original-toggle { display: flex !important; grid-template-columns: auto 1fr; align-items: center; gap: 10px !important; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; }
+.media-original-toggle input { width: 18px; height: 18px; accent-color: var(--gold); }
+.media-reply-button,
+.media-views-button { border: 0; background: transparent; color: var(--text); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; padding: 8px 4px; }
+.media-views-button { color: var(--gold); }
+@media (max-width: 620px) { .media-customization-grid { grid-template-columns: 1fr; } }
 @media (max-width: 620px) {
   .media-cropper { grid-template-columns: 1fr; }
   .media-crop-stage { width: min(230px, 100%); }
