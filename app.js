@@ -172,6 +172,72 @@ function uploadLimitForFolder(folder) {
   return ["moments", "posts"].includes(folder) ? FILE_LIMITS.media : FILE_LIMITS.attachment;
 }
 
+function urlBase64ToUint8Array(value) {
+  const padding = "=".repeat((4 - value.length % 4) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  return Uint8Array.from(atob(base64), character => character.charCodeAt(0));
+}
+
+function pushSupported() {
+  return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window && Boolean(config.vapidPublicKey);
+}
+
+async function currentPushSubscription() {
+  if (!pushSupported()) return null;
+  const registration = await navigator.serviceWorker.ready;
+  return registration.pushManager.getSubscription();
+}
+
+async function syncPushNotificationState() {
+  const button = document.getElementById("pushNotificationButton");
+  const status = document.getElementById("pushNotificationStatus");
+  if (!button || !status) return;
+  if (!pushSupported()) {
+    button.disabled = true;
+    button.textContent = "No disponible";
+    status.textContent = "Instala la PWA en un dispositivo compatible.";
+    return;
+  }
+  const subscription = await currentPushSubscription();
+  button.disabled = false;
+  button.classList.toggle("enabled", Boolean(subscription));
+  button.textContent = subscription ? "Desactivar" : "Activar";
+  status.textContent = subscription ? "Recibirás mensajes, Me gusta y respuestas." : Notification.permission === "denied" ? "El permiso está bloqueado en los ajustes del dispositivo." : "Actívalos para recibir avisos aunque la aplicación esté cerrada.";
+}
+
+async function togglePushNotifications() {
+  if (!backendReady || !currentAuthUser || !pushSupported()) return syncPushNotificationState();
+  const button = document.getElementById("pushNotificationButton");
+  button.disabled = true;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const existing = await registration.pushManager.getSubscription();
+    if (existing) {
+      await db.from("push_subscriptions").delete().eq("endpoint", existing.endpoint).eq("user_id", currentAuthUser.id);
+      await existing.unsubscribe();
+    } else {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") throw new Error("No se ha concedido permiso para mostrar notificaciones.");
+      const subscription = await registration.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(config.vapidPublicKey)});
+      const serialized = subscription.toJSON();
+      const {error} = await db.from("push_subscriptions").upsert({user_id: currentAuthUser.id, endpoint: subscription.endpoint, p256dh: serialized.keys.p256dh, auth: serialized.keys.auth, user_agent: navigator.userAgent, updated_at: new Date().toISOString()}, {onConflict: "endpoint"});
+      if (error) {
+        await subscription.unsubscribe();
+        throw error;
+      }
+    }
+  } catch (error) {
+    window.alert(error.message || "No se pudieron configurar las notificaciones.");
+  } finally {
+    await syncPushNotificationState();
+  }
+}
+
+function dispatchPush(kind, entityId) {
+  if (!backendReady || !currentAuthUser || !entityId) return;
+  db.functions.invoke("push-dispatch", {body: {kind, entityId}}).catch(() => {});
+}
+
 function classifyStoryGesture(gesture, endX, endY, elapsed) {
   const distanceX = endX - gesture.x;
   const distanceY = endY - gesture.y;
@@ -941,6 +1007,7 @@ async function applyUserInterface(user, authUser = null) {
   if (authUser?.user_metadata?.must_change_password) requirePasswordChange(authUser.id);
   if (passwordChangeIsRequired(authUser?.id || user.id)) openRequiredPasswordChange();
   if (document.getElementById("inicio")?.classList.contains("active")) loadNews(false);
+  syncPushNotificationState();
 }
 
 function showLogin() {
@@ -1156,15 +1223,12 @@ async function toggleMediaLike(kind, mediaId, button) {
   const existing = getMediaLikes(kind, mediaId).find(like => like.userId === currentAuthUser.id);
   button.disabled = true;
   try {
-    const query = existing
-      ? db.from("media_likes").delete().eq("id", existing.id).eq("user_id", currentAuthUser.id)
-      : db.from("media_likes").insert({
-          user_id: currentAuthUser.id,
-          moment_id: kind === "moment" ? mediaId : null,
-          profile_post_id: kind === "post" ? mediaId : null
-        });
-    const {error} = await query;
+    let result;
+    if (existing) result = await db.from("media_likes").delete().eq("id", existing.id).eq("user_id", currentAuthUser.id);
+    else result = await db.from("media_likes").insert({user_id: currentAuthUser.id, moment_id: kind === "moment" ? mediaId : null, profile_post_id: kind === "post" ? mediaId : null}).select("id").single();
+    const {data, error} = result;
     if (error) throw error;
+    if (!existing) dispatchPush("like", data?.id);
     await loadMediaLikes();
   } catch (error) {
     window.alert(error.message || "No se pudo guardar el Me gusta.");
@@ -1365,12 +1429,13 @@ async function sendMessage(text, file = null) {
   if (!db || !currentAuthUser) return;
   let attachmentUrl = null;
   if (file) attachmentUrl = await uploadGroupMedia(file, "chat");
-  const {error} = await db.from("messages").insert({
+  const {data, error} = await db.from("messages").insert({
     user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: activeChatChannelId, body: text,
     attachment_url: attachmentUrl, attachment_name: file?.name || null,
     attachment_type: file?.type || null, attachment_size: file?.size || null
-  });
+  }).select("id").single();
   if (error) throw error;
+  dispatchPush("group_message", data.id);
 }
 
 async function createChatChannel() {
@@ -1401,12 +1466,13 @@ async function sendPrivateMessage(text, file = null) {
   if (!recipient?.authId || !currentAuthUser) throw new Error("No se ha seleccionado un destinatario.");
   let attachmentUrl = null;
   if (file) attachmentUrl = await uploadGroupMedia(file, "private-chat");
-  const {error} = await db.from("private_messages").insert({
+  const {data, error} = await db.from("private_messages").insert({
     sender_id: currentAuthUser.id, recipient_id: recipient.authId, body: text,
     attachment_url: attachmentUrl, attachment_name: file?.name || null,
     attachment_type: file?.type || null, attachment_size: file?.size || null
-  });
+  }).select("id").single();
   if (error) throw error;
+  dispatchPush("private_message", data.id);
 }
 
 function updateShareDestinations() {
@@ -2282,9 +2348,10 @@ async function submitMediaReply(form) {
   submit.disabled = true;
   const {kind, id} = replyingMedia;
   const record = {user_id: currentAuthUser.id, body, moment_id: kind === "moment" ? id : null, profile_post_id: kind === "post" ? id : null};
-  const {error} = await db.from("media_replies").insert(record);
+  const {data, error} = await db.from("media_replies").insert(record).select("id").single();
   submit.disabled = false;
   if (error) return void (document.getElementById("mediaReplyFeedback").textContent = error.message || "No se pudo enviar la respuesta.");
+  dispatchPush("reply", data.id);
   closeMediaReply();
 }
 
@@ -2753,6 +2820,10 @@ document.getElementById("notificationsButton").addEventListener("click", event =
   dropdown.classList.toggle("open", open);
   dropdown.setAttribute("aria-hidden", String(!open));
   event.currentTarget.setAttribute("aria-expanded", String(open));
+});
+document.getElementById("pushNotificationButton").addEventListener("click", event => {
+  event.stopPropagation();
+  togglePushNotifications();
 });
 document.getElementById("shareDestinationType").addEventListener("change", updateShareDestinations);
 document.getElementById("closeShareMediaModal").addEventListener("click", closeShareMedia);
