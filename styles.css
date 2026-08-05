@@ -1320,6 +1320,22 @@ body.light .message p {
   }
 }
 
+/* Cabecera inteligente para móvil y PWA: libera espacio al bajar y vuelve al subir. */
+@media (max-width: 760px) {
+  .topbar {
+    transition: transform .24s cubic-bezier(.22, 1, .36, 1), box-shadow .24s ease;
+    will-change: transform;
+  }
+  body.mobile-header-hidden:not(.chat-focus) .topbar {
+    transform: translate3d(0, calc(-100% - 2px), 0);
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  .topbar { transition: none; }
+}
+
 /* Portal de herramientas: hijo directo del backdrop, sin recorte en Safari iOS. */
 #mediaUploader.has-media > .media-crop-controls {
   position: absolute !important;
