@@ -4263,7 +4263,13 @@ input:disabled {
   display: grid;
   justify-items: center;
   gap: 12px;
+  touch-action: none;
+  transform: translateY(var(--story-drag-y, 0));
+  opacity: var(--story-drag-opacity, 1);
 }
+.media-viewer-dialog.swiping-down { transition: none; }
+.media-viewer-dialog.dismissed-down { transition: transform .18s ease-in, opacity .18s ease-in; }
+.media-viewer-dialog:not(.swiping-down):not(.dismissed-down) { transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .2s ease; }
 .media-viewer-dialog img {
   display: block;
   max-width: 100%;

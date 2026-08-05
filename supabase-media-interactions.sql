@@ -49,8 +49,8 @@ create index if not exists media_likes_user_idx on public.media_likes(user_id);
 create index if not exists moments_created_at_idx on public.moments(created_at desc);
 create index if not exists profile_posts_created_at_idx on public.profile_posts(created_at desc);
 
--- Permite originales de alta resolución de hasta 30 MB.
-update storage.buckets set file_size_limit = 31457280 where id = 'group-media';
+-- Permite originales y vídeos de alta resolución de hasta 100 MB.
+update storage.buckets set file_size_limit = 104857600 where id = 'group-media';
 
 do $$ begin
   alter publication supabase_realtime add table public.media_replies;
