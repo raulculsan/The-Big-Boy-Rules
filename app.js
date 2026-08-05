@@ -2458,12 +2458,6 @@ function formatFileSize(bytes) {
 }
 
 document.addEventListener("click", event => {
-  const passiveImage = event.target.closest(".avatar img, .profile-visual, .media-view-button img, .story-bubble img");
-  if (passiveImage) {
-    event.preventDefault();
-    event.stopPropagation();
-    return;
-  }
   const chatBack = event.target.closest("[data-chat-back]");
   if (chatBack) exitChatView();
   const privateBack = event.target.closest("[data-private-back]");
