@@ -101,7 +101,7 @@ let activePrivateMemberId = null;
 let activeChatChannelId = null;
 let calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let sectionBeforeChat = "inicio";
-let activeContentTab = "momentos";
+let activeContentTab = "publicaciones";
 let viewportSyncFrame = null;
 let cursorFrame = null;
 let sharingMedia = null;
@@ -181,14 +181,15 @@ function selectContentTab(tabName) {
     button.classList.toggle("active", active);
     button.setAttribute("aria-selected", String(active));
   });
-  document.querySelectorAll("[data-content-panel]").forEach(panel => {
-    panel.hidden = panel.dataset.contentPanel !== activeContentTab;
-  });
-  if (activeContentTab === "momentos") renderMoments();
-  else renderPublications();
+  document.querySelectorAll("[data-content-panel]").forEach(panel => { panel.hidden = false; });
+  renderMoments();
+  renderPublications();
 }
 
 function goTo(sectionId) {
+  const requestedSection = sectionId;
+  const homeAnchor = sectionId === "miembros" || sectionId === "noticias" ? sectionId : null;
+  if (homeAnchor) sectionId = "inicio";
   if (sectionId === "momentos" || sectionId === "publicaciones") {
     activeContentTab = sectionId;
     sectionId = "contenido";
@@ -204,14 +205,15 @@ function goTo(sectionId) {
   syncMobileViewport();
   const titles = {
     inicio: "The Big Boy Rules", chat: "Chats", miembros: "Miembros",
-    privados: "Mensajes privados", perfil: "Perfil del miembro", contenido: "Momentos y publicaciones",
+    privados: "Mensajes privados", perfil: "Perfil del miembro", contenido: "Publicaciones",
     noticias: "Noticias", calendario: "Calendario", administracion: "Administración"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
   sidebar.classList.remove("open");
-  window.scrollTo({top: 0, behavior: "smooth"});
-  history.replaceState(null, "", `#${sectionId}`);
-  if (sectionId === "noticias") loadNews(false);
+  if (homeAnchor) requestAnimationFrame(() => document.getElementById(homeAnchor)?.scrollIntoView({behavior: "smooth", block: "start"}));
+  else window.scrollTo({top: 0, behavior: "smooth"});
+  history.replaceState(null, "", `#${homeAnchor || sectionId}`);
+  if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
   if (sectionId === "calendario") renderCalendar();
   if (sectionId === "contenido") selectContentTab(activeContentTab);
 }
@@ -264,12 +266,17 @@ function renderMembers() {
   document.getElementById("membersGrid").innerHTML = members.map(member => `
     <article class="member-card ${member.avatarUrl ? "with-photo" : ""}"
       style="--member-bg:${member.avatarUrl ? `url('${escapeHtml(member.avatarUrl)}')` : member.bg}"
-      data-number="${String(member.id).padStart(2, "0")}">
+      data-member-username="${escapeHtml(member.username)}" data-number="${String(memberDisplayNumber(member)).padStart(2, "0")}">
       <span class="member-role">${member.role}</span>
       <h3>${escapeHtml(member.name)}</h3>
       <p>${escapeHtml(member.nickname)}</p>
       <button data-profile="${member.id}">Ver perfil →</button>
     </article>`).join("");
+}
+
+function memberDisplayNumber(member) {
+  const visibleIndex = members.filter(item => !item.hidden).findIndex(item => item.id === member.id);
+  return visibleIndex >= 0 ? visibleIndex + 1 : member.id;
 }
 
 function renderProfile(memberId) {
@@ -285,7 +292,7 @@ function renderProfile(memberId) {
       <div class="profile-visual ${member.avatarUrl ? "has-photo" : ""}"
         style="--profile-bg:${member.avatarUrl ? `url('${escapeHtml(member.avatarUrl)}')` : member.bg}"></div>
       <div class="profile-info">
-        <span class="profile-number">BIG BOY ${String(member.id).padStart(2, "0")}</span>
+        <span class="profile-number">BIG BOY ${String(memberDisplayNumber(member)).padStart(2, "0")}</span>
         <h2>${member.countryFlag ? `<span class="profile-country-flag" title="País">${escapeHtml(member.countryFlag)}</span>` : ""}${escapeHtml(member.name)}</h2>
         <div class="profile-nickname">${escapeHtml(member.nickname.toUpperCase())}</div>
         <p>${escapeHtml(member.bio)}</p>
@@ -447,6 +454,9 @@ function renderPresence() {
 }
 
 function renderMessageAttachment(message) {
+  if (message.attachmentType === "text/news-link") {
+    return `<a class="message-news-link" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener noreferrer"><span>NOTICIA</span><strong>${escapeHtml(message.attachmentName || "Abrir noticia")}</strong><small>Leer en la fuente →</small></a>`;
+  }
   const sharedMedia = getSharedMediaReference(message);
   if (message.attachmentType?.startsWith("image/")) {
     if (sharedMedia) {
@@ -498,11 +508,17 @@ function renderMoments() {
   const status = document.getElementById("momentsStatus");
   status.textContent = moments.length ? `${moments.length} ${moments.length === 1 ? "historia activa" : "historias activas"}` : "";
   if (!moments.length) {
-    grid.innerHTML = `<div class="empty-state moments-empty"><strong>Todavía no hay momentos</strong><span>Sé la primera persona en compartir una historia con el grupo.</span></div>`;
+    grid.innerHTML = `<div class="stories-empty"><strong>Sin momentos</strong><span>Sube el primero.</span></div>`;
     return;
   }
   grid.innerHTML = moments.map((item, index) => {
-    return renderMediaCard(item, isMediaOwner(item) || isSuperAdmin(), "moment", index);
+    const member = getMember(item.member);
+    return `<div class="story-bubble-item" data-media-card-kind="moment" data-media-card-id="${item.id}" style="--story-index:${index}">
+      <button class="story-bubble" type="button" data-open-moment="${item.id}" aria-label="Ver momento de ${escapeHtml(member?.name || "miembro")}">
+        <span class="story-avatar-ring">${getAvatar(member)}</span><strong>${escapeHtml(member?.name || "Miembro")}</strong>
+      </button>
+      ${(isMediaOwner(item) || isSuperAdmin()) ? `<button class="story-bubble-delete" type="button" data-delete-moment="${item.id}" aria-label="Eliminar momento">×</button>` : ""}
+    </div>`;
   }).join("");
 }
 
@@ -803,6 +819,7 @@ async function applyUserInterface(user, authUser = null) {
     renderAdminPanel();
   }
   if (passwordChangeIsRequired(authUser?.id || user.id)) openRequiredPasswordChange();
+  if (document.getElementById("inicio")?.classList.contains("active")) loadNews(false);
 }
 
 function showLogin() {
@@ -1301,6 +1318,19 @@ function openShareMedia(kind, id) {
   modal.setAttribute("aria-hidden", "false");
 }
 
+function openShareNews(index) {
+  const item = newsItems[Number(index)];
+  if (!item || !currentAuthUser || isSuperAdmin()) return;
+  sharingMedia = {...item, kind: "news", id: String(index)};
+  document.getElementById("shareDestinationType").value = "group";
+  document.getElementById("shareMediaFeedback").textContent = "";
+  document.getElementById("shareMediaPreview").innerHTML = `<div class="share-news-preview"><span>${escapeHtml(item.source)}</span><strong>${escapeHtml(item.cleanTitle || item.title)}</strong><small>${formatNewsDate(item.published)}</small></div>`;
+  updateShareDestinations();
+  const modal = document.getElementById("shareMediaModal");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
 function closeShareMedia() {
   sharingMedia = null;
   const modal = document.getElementById("shareMediaModal");
@@ -1315,9 +1345,12 @@ async function shareMediaToChat(form) {
   const feedback = document.getElementById("shareMediaFeedback");
   const destinationType = document.getElementById("shareDestinationType").value;
   const destination = document.getElementById("shareDestination").value;
-  const label = sharingMedia.kind === "moment" ? "momento" : "publicación";
-  const body = `Ha compartido un ${label}${sharingMedia.caption ? `: ${sharingMedia.caption}` : "."}`;
-  const attachmentType = sharingMedia.mediaType === "video" ? "video/mp4" : "image/jpeg";
+  const isNews = sharingMedia.kind === "news";
+  const label = sharingMedia.kind === "moment" ? "momento" : sharingMedia.kind === "post" ? "publicación" : "noticia";
+  const body = isNews ? `Noticia compartida: ${sharingMedia.cleanTitle || sharingMedia.title}` : `Ha compartido un ${label}${sharingMedia.caption ? `: ${sharingMedia.caption}` : "."}`;
+  const attachmentType = isNews ? "text/news-link" : sharingMedia.mediaType === "video" ? "video/mp4" : "image/jpeg";
+  const attachmentUrl = isNews ? sharingMedia.link : sharingMedia.mediaUrl;
+  const attachmentName = isNews ? sharingMedia.source : `bb-share:${sharingMedia.kind}:${sharingMedia.id}`;
   submit.disabled = true;
   feedback.textContent = "Compartiendo…";
   try {
@@ -1326,7 +1359,7 @@ async function shareMediaToChat(form) {
       if (!channel) throw new Error("Selecciona un canal válido.");
       const {error} = await db.from("messages").insert({
         user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: channel.id, body,
-        attachment_url: sharingMedia.mediaUrl, attachment_name: `bb-share:${sharingMedia.kind}:${sharingMedia.id}`,
+        attachment_url: attachmentUrl, attachment_name: attachmentName,
         attachment_type: attachmentType, attachment_size: null
       });
       if (error) throw error;
@@ -1339,7 +1372,7 @@ async function shareMediaToChat(form) {
       if (!member?.authId) throw new Error("Selecciona un miembro válido.");
       const {error} = await db.from("private_messages").insert({
         sender_id: currentAuthUser.id, recipient_id: member.authId, body,
-        attachment_url: sharingMedia.mediaUrl, attachment_name: `bb-share:${sharingMedia.kind}:${sharingMedia.id}`,
+        attachment_url: attachmentUrl, attachment_name: attachmentName,
         attachment_type: attachmentType, attachment_size: null
       });
       if (error) throw error;
@@ -1884,10 +1917,16 @@ function isMediaOwner(item) {
     || (item.member != null && String(item.member) === String(currentUser.id));
 }
 
-function openMediaViewer(url, caption = "Momento") {
+function openMediaViewer(url, caption = "Momento", mediaType = "image") {
   const viewer = document.getElementById("mediaViewer");
-  document.getElementById("mediaViewerImage").src = url;
-  document.getElementById("mediaViewerImage").alt = caption;
+  const image = document.getElementById("mediaViewerImage");
+  const video = document.getElementById("mediaViewerVideo");
+  const isVideo = mediaType === "video";
+  image.hidden = isVideo;
+  video.hidden = !isVideo;
+  image.src = isVideo ? "" : url;
+  image.alt = caption;
+  video.src = isVideo ? url : "";
   document.getElementById("mediaViewerCaption").textContent = caption;
   viewer.classList.add("open");
   viewer.setAttribute("aria-hidden", "false");
@@ -1898,6 +1937,16 @@ function closeMediaViewer() {
   viewer.classList.remove("open");
   viewer.setAttribute("aria-hidden", "true");
   document.getElementById("mediaViewerImage").src = "";
+  const video = document.getElementById("mediaViewerVideo");
+  video.pause();
+  video.src = "";
+}
+
+function openMoment(momentId) {
+  const item = moments.find(moment => String(moment.id) === String(momentId));
+  if (!item) return window.alert("Este momento ya no está disponible.");
+  const member = getMember(item.member);
+  openMediaViewer(item.mediaUrl, item.caption || `Momento de ${member?.name || "miembro"}`, item.mediaType);
 }
 
 async function editGroupMessage(id) {
@@ -2029,32 +2078,36 @@ async function loadNews(force = false) {
   grid.innerHTML = "";
   status.textContent = "Cargando titulares desde fuentes reales…";
   const feeds = {
-    deportes: config.news?.deportesFeed,
-    espana: config.news?.espanaFeed,
-    mundo: config.news?.mundoFeed
+    deportes: config.news?.deportesFeeds || [config.news?.deportesFeed, config.news?.deportesFallbackFeed],
+    espana: config.news?.espanaFeeds || [config.news?.espanaFeed],
+    mundo: config.news?.mundoFeeds || [config.news?.mundoFeed]
   };
-  const feed = feeds[activeNewsCategory];
-  if (!feed) {
+  const feedList = [...new Set((feeds[activeNewsCategory] || []).filter(Boolean))];
+  if (!feedList.length) {
     status.textContent = "No hay una fuente configurada para esta categoría.";
     return;
   }
   try {
-    let payload;
-    try {
-      payload = await fetchNewsPayload(feed);
-    } catch (primaryError) {
-      if (activeNewsCategory !== "deportes" || !config.news?.deportesFallbackFeed) throw primaryError;
-      payload = await fetchNewsPayload(config.news.deportesFallbackFeed);
-    }
-    const items = payload.items.map(item => ({
+    const responses = await Promise.allSettled(feedList.map(fetchNewsPayload));
+    const payloads = responses.filter(result => result.status === "fulfilled").map(result => result.value);
+    if (!payloads.length) throw responses.find(result => result.status === "rejected")?.reason || new Error("No se recibieron titulares.");
+    const combined = payloads.flatMap(payload => payload.items.map(item => ({
       title: item.title, link: item.link, published: item.pubDate,
       source: extractNewsSource(item.title), image: item.thumbnail || item.enclosure?.link || ""
-    })).sort((a, b) => newsTimestamp(b.published) - newsTimestamp(a.published)).slice(0, 12);
+    })));
+    const seenNews = new Set();
+    const items = combined.sort((a, b) => newsTimestamp(b.published) - newsTimestamp(a.published)).filter(item => {
+      const key = normalizeUsername(item.title.replace(/\s+-\s+[^-]+$/, ""));
+      if (!key || seenNews.has(key)) return false;
+      seenNews.add(key);
+      return true;
+    }).slice(0, 18);
     if (requestToken !== newsLoadToken || requestedCategory !== activeNewsCategory) return;
     const savedAt = Date.now();
     lastNewsRefreshAt = savedAt;
-    sessionStorage.setItem(cacheKey, JSON.stringify({savedAt, items, feedTitle: payload.feed?.title || "Google News"}));
-    renderNews(items, payload.feed?.title || "Google News", savedAt);
+    const feedTitle = `${payloads.length} fuentes de actualidad`;
+    sessionStorage.setItem(cacheKey, JSON.stringify({savedAt, items, feedTitle}));
+    renderNews(items, feedTitle, savedAt);
   } catch (error) {
     if (requestToken !== newsLoadToken || requestedCategory !== activeNewsCategory) return;
     if (cachedNews?.items?.length) {
@@ -2084,15 +2137,17 @@ function extractNewsSource(title) {
 function renderNews(items, feedTitle, refreshedAt = Date.now()) {
   const sortedItems = [...items].sort((a, b) => newsTimestamp(b.published) - newsTimestamp(a.published));
   newsItems = sortedItems;
-  document.getElementById("newsStatus").textContent = `Actualizado ${formatRelativeTime(refreshedAt).toLowerCase()} · Refresco automático cada 2 min · Fuente: ${feedTitle}`;
+  const sourceCount = new Set(sortedItems.map(item => item.source)).size;
+  document.getElementById("newsStatus").textContent = `Actualizado ${formatRelativeTime(refreshedAt).toLowerCase()} · Refresco automático cada 2 min · ${sourceCount} medios · ${feedTitle}`;
   document.getElementById("newsGrid").innerHTML = sortedItems.map((item, index) => {
     const cleanTitle = item.title.replace(new RegExp(` - ${item.source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
+    item.cleanTitle = cleanTitle;
     const publishedTimestamp = newsTimestamp(item.published);
     const publishedDateTime = publishedTimestamp ? new Date(publishedTimestamp).toISOString() : "";
     return `<article class="news-card ${index === 0 ? "featured" : ""}">
       <div class="news-card-meta"><span>${escapeHtml(item.source)}</span><time${publishedDateTime ? ` datetime="${publishedDateTime}"` : ""}>${formatNewsDate(item.published)}</time></div>
       <h3>${escapeHtml(cleanTitle)}</h3>
-      <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Leer en la fuente →</a>
+      <div class="news-card-actions"><a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Leer en la fuente →</a>${!isSuperAdmin() ? `<button class="media-share-button news-share-button" type="button" data-share-news="${index}" aria-label="Compartir noticia"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg><small>Compartir</small></button>` : ""}</div>
     </article>`;
   }).join("");
 }
@@ -2163,11 +2218,24 @@ document.addEventListener("click", event => {
     openShareMedia(shareMediaTarget.dataset.shareKind, shareMediaTarget.dataset.shareMedia);
     return;
   }
+  const shareNewsTarget = event.target.closest("[data-share-news]");
+  if (shareNewsTarget) {
+    event.preventDefault();
+    event.stopPropagation();
+    openShareNews(shareNewsTarget.dataset.shareNews);
+    return;
+  }
   const sharedMediaTarget = event.target.closest("[data-open-shared-kind]");
   if (sharedMediaTarget) {
     event.preventDefault();
     event.stopPropagation();
     openSharedMedia(sharedMediaTarget.dataset.openSharedKind, sharedMediaTarget.dataset.openSharedId);
+    return;
+  }
+  const momentTarget = event.target.closest("[data-open-moment]");
+  if (momentTarget) {
+    event.preventDefault();
+    openMoment(momentTarget.dataset.openMoment);
     return;
   }
   const goTarget = event.target.closest("[data-go]");
@@ -2462,11 +2530,11 @@ document.querySelectorAll("[data-news-category]").forEach(button => button.addEv
 }));
 document.getElementById("refreshNewsButton").addEventListener("click", () => loadNews(true));
 setInterval(() => {
-  if (!document.hidden && document.getElementById("noticias").classList.contains("active")) loadNews(true);
+  if (!document.hidden && document.getElementById("inicio").classList.contains("active")) loadNews(true);
 }, NEWS_REFRESH_INTERVAL);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden
-    && document.getElementById("noticias").classList.contains("active")
+    && document.getElementById("inicio").classList.contains("active")
     && Date.now() - lastNewsRefreshAt >= NEWS_CACHE_DURATION) {
     loadNews(true);
   }
