@@ -581,6 +581,32 @@ function renderMoments() {
       </button>
     </div>`;
   }).join("");
+  grid.querySelectorAll("[data-open-moment]").forEach(button => {
+    let press = null;
+    let ignoreClick = false;
+    button.addEventListener("pointerdown", event => {
+      press = {x: event.clientX, y: event.clientY, at: Date.now()};
+    });
+    button.addEventListener("pointerup", event => {
+      if (!press) return;
+      const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y);
+      ignoreClick = Date.now() - press.at >= 300 || moved > 14;
+      press = null;
+    });
+    button.addEventListener("pointercancel", () => {
+      press = null;
+      ignoreClick = true;
+    });
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (ignoreClick) {
+        ignoreClick = false;
+        return;
+      }
+      openMoment(button.dataset.openMoment);
+    });
+  });
 }
 
 function renderPublications() {
