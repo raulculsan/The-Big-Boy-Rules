@@ -93,6 +93,7 @@ let sectionBeforeChat = "inicio";
 let activeContentTab = "momentos";
 let viewportSyncFrame = null;
 let cursorFrame = null;
+let sharingMedia = null;
 
 function escapeHtml(value = "") {
   const node = document.createElement("div");
@@ -337,6 +338,7 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
       <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="${kind}" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
         <span aria-hidden="true">${liked ? "♥" : "♡"}</span>${likes.length ? `<strong>${likes.length}</strong>` : ""}<small>Me gusta</small>
       </button>
+      ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="${kind}" aria-label="Compartir en un chat"><span aria-hidden="true">↗</span><small>Compartir</small></button>` : ""}
       ${canDelete && kind !== "moment" ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar esta publicación">Eliminar</button>` : ""}
     </div>
   </article>`;
@@ -436,6 +438,9 @@ function renderPresence() {
 function renderMessageAttachment(message) {
   if (message.attachmentType?.startsWith("image/")) {
     return `<a class="message-image" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(message.attachmentUrl)}" alt="${escapeHtml(message.attachmentName || "Imagen adjunta")}" loading="lazy"></a>`;
+  }
+  if (message.attachmentType?.startsWith("video/")) {
+    return `<video class="message-video" src="${escapeHtml(message.attachmentUrl)}" controls preload="metadata"></video>`;
   }
   return `<a class="message-file" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener" download>
     <span>↧</span><div><strong>${escapeHtml(message.attachmentName || "Archivo adjunto")}</strong><small>${formatFileSize(message.attachmentSize)}</small></div>
@@ -661,6 +666,7 @@ function renderAdminPanel() {
       <button class="text-button" type="button" data-profile="${user.id}">Ver perfil</button>
       ${user.id !== currentUser?.id ? `<button class="text-button" type="button" data-admin-message="${user.id}">Mensaje</button>` : ""}
       ${canManageSite() && (isSuperAdmin() || user.id !== currentUser?.id) ? `<button class="text-button" type="button" data-rename-user="${user.id}">Cambiar @</button>` : ""}
+      ${canManageSite() && user.authId && !user.hidden && user.id !== currentUser?.id ? `<button class="text-button" type="button" data-change-role="${user.id}">${user.roleKey === "admin" ? "Hacer miembro" : "Hacer administrador"}</button>` : ""}
       ${isSuperAdmin() ? `<button class="text-button" type="button" data-edit-user="${user.id}">Editar perfil</button>` : ""}
       ${isSuperAdmin() && user.authId ? `<button class="text-button danger" type="button" data-delete-user="${user.authId}" data-delete-user-name="${escapeHtml(user.name)}">Eliminar</button>` : ""}
     </div></td></tr>`).join("");
@@ -1194,6 +1200,89 @@ async function sendPrivateMessage(text, file = null) {
   if (error) throw error;
 }
 
+function updateShareDestinations() {
+  const type = document.getElementById("shareDestinationType").value;
+  const select = document.getElementById("shareDestination");
+  document.getElementById("shareDestinationLabel").textContent = type === "group" ? "Canal del grupo" : "Miembro";
+  if (type === "group") {
+    select.innerHTML = chatChannels.map(channel => `<option value="${channel.id}"># ${escapeHtml(channel.name)}</option>`).join("");
+  } else {
+    select.innerHTML = members.filter(member => member.id !== currentUser?.id && member.authId && !member.hidden)
+      .map(member => `<option value="${member.id}">${escapeHtml(member.name)} · @${escapeHtml(member.username)}</option>`).join("");
+  }
+  select.disabled = !select.options.length;
+  document.querySelector("#shareMediaForm [type=submit]").disabled = !select.options.length;
+}
+
+function openShareMedia(kind, id) {
+  const collection = kind === "moment" ? moments : profilePosts;
+  const item = collection.find(media => String(media.id) === String(id));
+  if (!item || !currentAuthUser || isSuperAdmin()) return;
+  sharingMedia = {...item, kind};
+  document.getElementById("shareDestinationType").value = "group";
+  document.getElementById("shareMediaFeedback").textContent = "";
+  document.getElementById("shareMediaPreview").innerHTML = item.mediaType === "video"
+    ? `<video src="${escapeHtml(item.mediaUrl)}" controls preload="metadata"></video>`
+    : `<img src="${escapeHtml(item.mediaUrl)}" alt="Vista previa" decoding="async">`;
+  updateShareDestinations();
+  const modal = document.getElementById("shareMediaModal");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeShareMedia() {
+  sharingMedia = null;
+  const modal = document.getElementById("shareMediaModal");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  document.getElementById("shareMediaPreview").innerHTML = "";
+}
+
+async function shareMediaToChat(form) {
+  if (!sharingMedia || !currentAuthUser || !currentUser) return;
+  const submit = form.querySelector("[type=submit]");
+  const feedback = document.getElementById("shareMediaFeedback");
+  const destinationType = document.getElementById("shareDestinationType").value;
+  const destination = document.getElementById("shareDestination").value;
+  const label = sharingMedia.kind === "moment" ? "momento" : "publicación";
+  const body = `Ha compartido un ${label}${sharingMedia.caption ? `: ${sharingMedia.caption}` : "."}`;
+  const attachmentType = sharingMedia.mediaType === "video" ? "video/mp4" : "image/jpeg";
+  submit.disabled = true;
+  feedback.textContent = "Compartiendo…";
+  try {
+    if (destinationType === "group") {
+      const channel = chatChannels.find(item => String(item.id) === String(destination));
+      if (!channel) throw new Error("Selecciona un canal válido.");
+      const {error} = await db.from("messages").insert({
+        user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: channel.id, body,
+        attachment_url: sharingMedia.mediaUrl, attachment_name: `${label} compartido`,
+        attachment_type: attachmentType, attachment_size: null
+      });
+      if (error) throw error;
+      closeShareMedia();
+      activeChatChannelId = channel.id;
+      await loadMessages();
+      goTo("chat");
+    } else {
+      const member = getMember(destination);
+      if (!member?.authId) throw new Error("Selecciona un miembro válido.");
+      const {error} = await db.from("private_messages").insert({
+        sender_id: currentAuthUser.id, recipient_id: member.authId, body,
+        attachment_url: sharingMedia.mediaUrl, attachment_name: `${label} compartido`,
+        attachment_type: attachmentType, attachment_size: null
+      });
+      if (error) throw error;
+      closeShareMedia();
+      await loadPrivateMessages();
+      openPrivateConversation(member.id);
+    }
+  } catch (error) {
+    feedback.textContent = error.message || "No se pudo compartir el contenido.";
+  } finally {
+    submit.disabled = false;
+  }
+}
+
 async function renameClubUser(memberId) {
   const member = getMember(memberId);
   if (!canManageSite() || !member?.authId) return;
@@ -1209,10 +1298,26 @@ async function renameClubUser(memberId) {
   }
   try {
     await invokeUserAdmin("rename", {userId: member.authId, username});
-    await loadProfiles();
+    await loadRemoteProfiles();
     window.alert(`El usuario ahora es @${username}. Deberá usar este nuevo @ al iniciar sesión.`);
   } catch (error) {
     window.alert(error.message || "No se pudo cambiar el @.");
+  }
+}
+
+async function changeClubUserRole(memberId) {
+  const member = getMember(memberId);
+  if (!canManageSite() || !member?.authId || member.hidden || member.id === currentUser?.id) return;
+  const nextRole = member.roleKey === "admin" ? "member" : "admin";
+  const nextLabel = nextRole === "admin" ? "administrador" : "miembro";
+  if (!window.confirm(`¿Cambiar el rango de ${member.name} a ${nextLabel}?`)) return;
+  try {
+    const {error} = await db.rpc("set_club_member_role", {target_user_id: member.authId, new_role: nextRole});
+    if (error) throw error;
+    await loadRemoteProfiles();
+    window.alert(`${member.name} ahora tiene rango de ${nextLabel}.`);
+  } catch (error) {
+    window.alert(error.message || "No se pudo cambiar el rango.");
   }
 }
 
@@ -1955,6 +2060,13 @@ document.addEventListener("click", event => {
     toggleMediaLike(likeMedia.dataset.likeKind, likeMedia.dataset.likeMedia, likeMedia);
     return;
   }
+  const shareMediaTarget = event.target.closest("[data-share-media]");
+  if (shareMediaTarget) {
+    event.preventDefault();
+    event.stopPropagation();
+    openShareMedia(shareMediaTarget.dataset.shareKind, shareMediaTarget.dataset.shareMedia);
+    return;
+  }
   const goTarget = event.target.closest("[data-go]");
   if (goTarget) goTo(goTarget.dataset.go);
   const profileTarget = event.target.closest("[data-profile]");
@@ -1981,6 +2093,8 @@ document.addEventListener("click", event => {
   if (editUser) openProfileEditor(editUser.dataset.editUser);
   const renameUser = event.target.closest("[data-rename-user]");
   if (renameUser) renameClubUser(renameUser.dataset.renameUser);
+  const changeRole = event.target.closest("[data-change-role]");
+  if (changeRole) changeClubUserRole(changeRole.dataset.changeRole);
   const adminMessage = event.target.closest("[data-admin-message]");
   if (adminMessage) openPrivateConversation(adminMessage.dataset.adminMessage);
   const channelTarget = event.target.closest("[data-chat-channel]");
@@ -2044,6 +2158,16 @@ document.getElementById("notificationsButton").addEventListener("click", event =
   dropdown.classList.toggle("open", open);
   dropdown.setAttribute("aria-hidden", String(!open));
   event.currentTarget.setAttribute("aria-expanded", String(open));
+});
+document.getElementById("shareDestinationType").addEventListener("change", updateShareDestinations);
+document.getElementById("closeShareMediaModal").addEventListener("click", closeShareMedia);
+document.getElementById("cancelShareMedia").addEventListener("click", closeShareMedia);
+document.getElementById("shareMediaModal").addEventListener("click", event => {
+  if (event.target.id === "shareMediaModal") closeShareMedia();
+});
+document.getElementById("shareMediaForm").addEventListener("submit", event => {
+  event.preventDefault();
+  shareMediaToChat(event.currentTarget);
 });
 document.getElementById("notificationsDropdown").addEventListener("click", event => {
   event.stopPropagation();
