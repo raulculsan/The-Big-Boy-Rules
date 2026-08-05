@@ -2792,8 +2792,17 @@ document.querySelectorAll("[data-media-tool]").forEach(button => button.addEvent
 document.querySelectorAll("[data-editor-filter]").forEach(button => button.addEventListener("click", () => {
   mediaFilter = button.dataset.editorFilter;
   document.getElementById("mediaFilter").value = mediaFilter;
-  document.querySelectorAll("[data-editor-filter]").forEach(item => item.classList.toggle("active", item === button));
-  drawMediaCrop();
+  document.querySelectorAll("[data-editor-filter]").forEach(item => {
+    const selected = item === button;
+    item.classList.toggle("active", selected);
+    item.setAttribute("aria-pressed", String(selected));
+  });
+  requestAnimationFrame(() => {
+    drawMediaCrop();
+    const canvas = document.getElementById("mediaCropCanvas");
+    canvas.classList.remove("filter-previewing");
+    requestAnimationFrame(() => canvas.classList.add("filter-previewing"));
+  });
 }));
 document.getElementById("resetMediaCrop").addEventListener("click", () => {
   mediaCropZoom = 1;
