@@ -1885,6 +1885,8 @@ function loadMediaCrop(file) {
       configureMediaCropCanvas();
       document.getElementById("mediaCropZoom").value = "1";
       document.getElementById("mediaCropper").hidden = false;
+      const form = document.getElementById("mediaUploadForm");
+      form.scrollTop = 0;
       drawMediaCrop();
       resolve();
     };
@@ -2633,6 +2635,20 @@ document.querySelectorAll("[data-news-category]").forEach(button => button.addEv
   document.querySelectorAll("[data-news-category]").forEach(item => item.classList.toggle("active", item === button));
   loadNews(false);
 }));
+function setNewsCollapsed(collapsed) {
+  const section = document.getElementById("noticias");
+  const button = document.getElementById("toggleNewsButton");
+  const content = document.getElementById("newsCollapsible");
+  if (!section || !button || !content) return;
+  section.classList.toggle("is-collapsed", collapsed);
+  content.hidden = collapsed;
+  button.setAttribute("aria-expanded", String(!collapsed));
+  button.querySelector("span").textContent = collapsed ? "Ver noticias" : "Ocultar noticias";
+}
+document.getElementById("toggleNewsButton").addEventListener("click", () => {
+  setNewsCollapsed(!document.getElementById("noticias").classList.contains("is-collapsed"));
+});
+if (window.matchMedia("(max-width: 760px)").matches) setNewsCollapsed(true);
 document.getElementById("refreshNewsButton").addEventListener("click", () => loadNews(true));
 setInterval(() => {
   if (!document.hidden && document.getElementById("inicio").classList.contains("active")) loadNews(true);
@@ -2719,7 +2735,9 @@ document.getElementById("mediaUploadFile").addEventListener("change", async even
     preview.innerHTML = "";
     try {
       await loadMediaCrop(file);
-      document.getElementById("mediaUploader").classList.add("has-media");
+      const uploader = document.getElementById("mediaUploader");
+      uploader.classList.add("has-media");
+      document.getElementById("mediaUploadForm").scrollTo({top: 0, behavior: "instant"});
     } catch (error) {
       document.getElementById("mediaUploadFeedback").textContent = error.message;
     }
