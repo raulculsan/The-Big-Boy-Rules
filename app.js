@@ -48,6 +48,7 @@ let messages = [];
 let moments = [];
 let profilePosts = [];
 let mediaLikes = [];
+let mediaLikesIndex = new Map();
 let notifications = [];
 let privateMessages = [];
 let groupEvents = [];
@@ -89,6 +90,9 @@ let activePrivateMemberId = null;
 let activeChatChannelId = null;
 let calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let sectionBeforeChat = "inicio";
+let activeContentTab = "momentos";
+let viewportSyncFrame = null;
+let cursorFrame = null;
 
 function escapeHtml(value = "") {
   const node = document.createElement("div");
@@ -119,7 +123,7 @@ function getMemberByAuthId(id) {
 
 function getAvatar(member, className = "avatar") {
   if (member?.avatarUrl) {
-    return `<div class="${className} has-image"><img src="${escapeHtml(member.avatarUrl)}" alt="Foto de ${escapeHtml(member.name)}"></div>`;
+    return `<div class="${className} has-image"><img src="${escapeHtml(member.avatarUrl)}" alt="Foto de ${escapeHtml(member.name)}" decoding="async"></div>`;
   }
   return `<div class="${className}">${escapeHtml(member?.name?.charAt(0).toUpperCase() || "U")}</div>`;
 }
@@ -143,18 +147,40 @@ function persistLocalProfile(member) {
 }
 
 function syncMobileViewport() {
-  if (window.innerWidth > 760) {
-    document.documentElement.style.removeProperty("--chat-viewport-height");
-    document.documentElement.style.removeProperty("--chat-viewport-offset");
-    return;
-  }
-  const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight);
-  const viewportOffset = Math.round(window.visualViewport?.offsetTop || 0);
-  document.documentElement.style.setProperty("--chat-viewport-height", `${viewportHeight}px`);
-  document.documentElement.style.setProperty("--chat-viewport-offset", `${viewportOffset}px`);
+  if (viewportSyncFrame) return;
+  viewportSyncFrame = requestAnimationFrame(() => {
+    viewportSyncFrame = null;
+    if (window.innerWidth > 760) {
+      document.documentElement.style.removeProperty("--chat-viewport-height");
+      document.documentElement.style.removeProperty("--chat-viewport-offset");
+      return;
+    }
+    const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight);
+    const viewportOffset = Math.round(window.visualViewport?.offsetTop || 0);
+    document.documentElement.style.setProperty("--chat-viewport-height", `${viewportHeight}px`);
+    document.documentElement.style.setProperty("--chat-viewport-offset", `${viewportOffset}px`);
+  });
+}
+
+function selectContentTab(tabName) {
+  activeContentTab = tabName === "publicaciones" ? "publicaciones" : "momentos";
+  document.querySelectorAll("[data-content-tab]").forEach(button => {
+    const active = button.dataset.contentTab === activeContentTab;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  document.querySelectorAll("[data-content-panel]").forEach(panel => {
+    panel.hidden = panel.dataset.contentPanel !== activeContentTab;
+  });
+  if (activeContentTab === "momentos") renderMoments();
+  else renderPublications();
 }
 
 function goTo(sectionId) {
+  if (sectionId === "momentos" || sectionId === "publicaciones") {
+    activeContentTab = sectionId;
+    sectionId = "contenido";
+  }
   const currentSection = sections.find(section => section.classList.contains("active"))?.id;
   const openingChat = sectionId === "chat" || sectionId === "privados";
   if (openingChat && currentSection && currentSection !== "chat" && currentSection !== "privados") {
@@ -166,8 +192,8 @@ function goTo(sectionId) {
   syncMobileViewport();
   const titles = {
     inicio: "The Big Boy Rules", chat: "Chats", miembros: "Miembros",
-    privados: "Mensajes privados", perfil: "Perfil del miembro", momentos: "Momentos",
-    publicaciones: "Publicaciones", noticias: "Noticias", calendario: "Calendario", administracion: "Administración"
+    privados: "Mensajes privados", perfil: "Perfil del miembro", contenido: "Momentos y publicaciones",
+    noticias: "Noticias", calendario: "Calendario", administracion: "Administración"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
   sidebar.classList.remove("open");
@@ -175,6 +201,7 @@ function goTo(sectionId) {
   history.replaceState(null, "", `#${sectionId}`);
   if (sectionId === "noticias") loadNews(false);
   if (sectionId === "calendario") renderCalendar();
+  if (sectionId === "contenido") selectContentTab(activeContentTab);
 }
 
 function exitChatView() {
@@ -297,8 +324,8 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
   const media = item.mediaType === "video"
     ? `<video src="${escapeHtml(item.mediaUrl)}" controls preload="metadata"></video>`
     : kind === "moment"
-      ? `<button class="media-view-button" type="button" data-view-media="${escapeHtml(item.mediaUrl)}" data-view-caption="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}" loading="lazy"><span>Ver momento</span></button>`
-      : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy">`;
+      ? `<button class="media-view-button" type="button" data-view-media="${escapeHtml(item.mediaUrl)}" data-view-caption="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}" loading="lazy" decoding="async"><span>Ver momento</span></button>`
+      : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy" decoding="async">`;
   return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}"${kind === "moment" ? ` style="--story-index:${cardIndex}"` : ""}>
     ${canDelete && kind === "moment" ? `<button class="delete-media-button moment-delete-button" data-delete-moment="${item.id}" type="button" title="Eliminar este momento" aria-label="Eliminar este momento">× <span>Eliminar</span></button>` : ""}
     ${kind === "moment" ? `<div class="story-progress" aria-hidden="true"><span></span></div>` : ""}
@@ -594,7 +621,7 @@ function performSearch(query) {
     results.push({type: "Chat", title: message.text, detail: member?.name || "Miembro", section: "chat"});
   });
   profilePosts.filter(post => normalizeUsername(post.caption).includes(term)).slice(0, 6).forEach(post => {
-    results.push({type: "Publicación", title: post.caption || "Foto", detail: getMember(post.member)?.name || "", profile: post.member});
+    results.push({type: "Publicación", title: post.caption || "Foto", detail: getMember(post.member)?.name || "", section: "publicaciones"});
   });
   groupEvents.filter(event => normalizeUsername(`${event.title} ${event.description} ${event.location}`).includes(term)).forEach(event => {
     results.push({type: "Evento", title: event.title, detail: formatEventDate(event.startsAt), section: "calendario"});
@@ -887,7 +914,7 @@ function mapMedia(item) {
 }
 
 function getMediaLikes(kind, mediaId) {
-  return mediaLikes.filter(like => like.kind === kind && String(like.mediaId) === String(mediaId));
+  return mediaLikesIndex.get(`${kind}:${mediaId}`) || [];
 }
 
 async function loadMediaLikes() {
@@ -898,9 +925,15 @@ async function loadMediaLikes() {
     kind: item.moment_id != null ? "moment" : "post",
     mediaId: item.moment_id ?? item.profile_post_id
   }));
-  renderMoments();
-  renderPublications();
-  if (activeProfileId) renderProfile(activeProfileId);
+  mediaLikesIndex = new Map();
+  mediaLikes.forEach(like => {
+    const key = `${like.kind}:${like.mediaId}`;
+    const indexed = mediaLikesIndex.get(key) || [];
+    indexed.push(like);
+    mediaLikesIndex.set(key, indexed);
+  });
+  if (document.getElementById("contenido")?.classList.contains("active")) selectContentTab(activeContentTab);
+  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
 }
 
 async function toggleMediaLike(kind, mediaId, button) {
@@ -934,14 +967,14 @@ async function loadMoments() {
   } else {
     moments = data.map(mapMedia);
   }
-  renderMoments();
+  if (document.getElementById("contenido")?.classList.contains("active") && activeContentTab === "momentos") renderMoments();
 }
 
 async function loadProfilePosts() {
   const {data, error} = await db.from("profile_posts").select("*").order("created_at", {ascending: false});
   profilePosts = error ? [] : data.map(mapMedia);
-  renderPublications();
-  if (activeProfileId) renderProfile(activeProfileId);
+  if (document.getElementById("contenido")?.classList.contains("active") && activeContentTab === "publicaciones") renderPublications();
+  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
 }
 
 function renderNotifications() {
@@ -1004,8 +1037,8 @@ async function openNotification(id) {
     if (actor) openPrivateConversation(actor.id);
   } else if (item.targetType === "moment") {
     goTo("momentos");
-  } else if (item.targetType === "post" && currentUser) {
-    renderProfile(currentUser.id);
+  } else if (item.targetType === "post") {
+    goTo("publicaciones");
   }
 }
 
@@ -1616,7 +1649,7 @@ async function publishMedia(form) {
       goTo("momentos");
     } else {
       await loadProfilePosts();
-      renderProfile(currentUser.id);
+      goTo("publicaciones");
     }
   } catch (error) {
     feedback.textContent = error.message || "No se pudo publicar el archivo.";
@@ -2036,6 +2069,7 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   moments = [];
   profilePosts = [];
   mediaLikes = [];
+  mediaLikesIndex = new Map();
   notifications = [];
   privateMessages = [];
   groupEvents = [];
@@ -2374,6 +2408,9 @@ document.getElementById("addBirthdayButton").addEventListener("click", event => 
 });
 document.getElementById("eventType").addEventListener("change", updateEventEditorType);
 document.getElementById("addPublicationButton").addEventListener("click", () => openMediaUploader("post"));
+document.querySelectorAll("[data-content-tab]").forEach(button => {
+  button.addEventListener("click", () => selectContentTab(button.dataset.contentTab));
+});
 document.getElementById("closeEventEditor").addEventListener("click", closeEventEditor);
 document.getElementById("cancelEventEditor").addEventListener("click", closeEventEditor);
 document.getElementById("eventEditor").addEventListener("click", event => {
@@ -2408,7 +2445,7 @@ renderMoments();
 renderActivity();
 renderMessages();
 renderPresence();
-renderMoments();
+renderPublications();
 renderNotifications();
 renderPrivateContacts();
 renderPrivateConversation();
@@ -2432,14 +2469,17 @@ loadNews(false);
 })();
 
 const initialSection = location.hash.replace("#", "");
-if (["inicio", "chat", "privados", "miembros", "momentos", "noticias", "calendario"].includes(initialSection)) goTo(initialSection);
+if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "calendario"].includes(initialSection)) goTo(initialSection);
 window.addEventListener("load", () => setTimeout(() => document.getElementById("pageLoader")?.classList.add("hidden"), 450));
 const cursorGlow = document.getElementById("cursorGlow");
 document.addEventListener("pointermove", event => {
-  if (!cursorGlow) return;
-  cursorGlow.style.left = `${event.clientX}px`;
-  cursorGlow.style.top = `${event.clientY}px`;
-});
+  if (!cursorGlow || cursorFrame || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  const {clientX, clientY} = event;
+  cursorFrame = requestAnimationFrame(() => {
+    cursorGlow.style.transform = `translate3d(${clientX - 150}px, ${clientY - 150}px, 0)`;
+    cursorFrame = null;
+  });
+}, {passive: true});
 const revealObserver = new IntersectionObserver(entries => entries.forEach(entry => {
   if (entry.isIntersecting) {
     entry.target.classList.add("visible");

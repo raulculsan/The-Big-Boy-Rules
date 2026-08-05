@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-34" />
+  <link rel="stylesheet" href="styles.css?v=20260805-35" />
 </head>
 <body>
 
@@ -101,11 +101,8 @@
       <a class="nav-link" href="#miembros" data-section="miembros">
         <span>♟</span> Miembros
       </a>
-      <a class="nav-link" href="#momentos" data-section="momentos">
-        <span>▦</span> Momentos
-      </a>
-      <a class="nav-link" href="#publicaciones" data-section="publicaciones">
-        <span>▤</span> Publicaciones
+      <a class="nav-link" href="#contenido" data-section="contenido">
+        <span>▦</span> Momentos y publicaciones
       </a>
       <a class="nav-link" href="#noticias" data-section="noticias">
         <span>◫</span> Noticias
@@ -339,37 +336,34 @@
       <div id="profileContent"></div>
     </section>
 
-    <section class="page-section" id="momentos">
-      <div class="section-intro moments-hero">
-        <div class="moments-hero-copy">
-          <span class="eyebrow">HISTORIAS DEL GRUPO</span>
-          <h2>Lo que pasa hoy,<br><em>se queda aquí.</em></h2>
-          <p>Fotos y vídeos del grupo que desaparecen automáticamente después de 24 horas.</p>
+    <section class="page-section" id="contenido">
+      <div class="content-type-tabs" role="tablist" aria-label="Contenido del grupo">
+        <button class="active" type="button" role="tab" aria-selected="true" data-content-tab="momentos">Momentos</button>
+        <button type="button" role="tab" aria-selected="false" data-content-tab="publicaciones">Publicaciones</button>
+      </div>
+      <div data-content-panel="momentos">
+        <div class="section-intro moments-hero">
+          <div class="moments-hero-copy">
+            <span class="eyebrow">HISTORIAS DEL GRUPO</span>
+            <h2>Lo que pasa hoy,<br><em>se queda aquí.</em></h2>
+            <p>Fotos y vídeos del grupo que desaparecen automáticamente después de 24 horas.</p>
+          </div>
+          <div class="moments-hero-mark" aria-hidden="true"><span>24</span><small>HORAS</small></div>
         </div>
-        <div class="moments-hero-mark" aria-hidden="true">
-          <span>24</span>
-          <small>HORAS</small>
+        <div class="moments-toolbar">
+          <button class="primary-button moments-add-button" id="addMomentButton" type="button"><span>＋</span> Subir momento</button>
+          <span id="momentsStatus" class="news-status moments-status" aria-live="polite"></span>
         </div>
+        <div class="moments-grid reveal" id="momentsGrid"></div>
       </div>
-      <div class="moments-toolbar">
-        <button class="primary-button moments-add-button" id="addMomentButton" type="button"><span>＋</span> Subir momento</button>
-        <span id="momentsStatus" class="news-status moments-status" aria-live="polite"></span>
-      </div>
-      <div class="moments-grid reveal" id="momentsGrid"></div>
-    </section>
-
-    <section class="page-section" id="publicaciones">
-      <div class="section-intro publications-hero">
-        <div>
-          <span class="eyebrow">EL MURO DEL GRUPO</span>
-          <h2>Publicaciones.</h2>
+      <div data-content-panel="publicaciones" hidden>
+        <div class="section-intro publications-hero">
+          <div><span class="eyebrow">EL MURO DEL GRUPO</span><h2>Publicaciones.</h2></div>
+          <p>Las fotos que cada miembro comparte en su perfil aparecen aquí, ordenadas de más recientes a más antiguas.</p>
         </div>
-        <p>Las fotos que cada miembro comparte en su perfil aparecen aquí, ordenadas de más recientes a más antiguas.</p>
+        <div class="publications-toolbar"><button class="primary-button" id="addPublicationButton" type="button">＋ Nueva publicación</button></div>
+        <div class="publications-feed reveal" id="publicationsFeed"></div>
       </div>
-      <div class="publications-toolbar">
-        <button class="primary-button" id="addPublicationButton" type="button">＋ Nueva publicación</button>
-      </div>
-      <div class="publications-feed reveal" id="publicationsFeed"></div>
     </section>
 
     <section class="page-section" id="noticias">
@@ -707,7 +701,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-34"></script>
-  <script src="app.js?v=20260805-34"></script>
+  <script src="config.js?v=20260805-35"></script>
+  <script src="app.js?v=20260805-35"></script>
 </body>
 </html>
