@@ -338,7 +338,7 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
     : kind === "moment"
       ? `<button class="media-view-button" type="button" data-view-media="${escapeHtml(item.mediaUrl)}" data-view-caption="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}" loading="lazy" decoding="async"><span>Ver momento</span></button>`
       : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy" decoding="async">`;
-  return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}"${kind === "moment" ? ` style="--story-index:${cardIndex}"` : ""}>
+  return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}" data-media-card-kind="${kind}" data-media-card-id="${item.id}"${kind === "moment" ? ` style="--story-index:${cardIndex}"` : ""}>
     ${canDelete && kind === "moment" ? `<button class="delete-media-button moment-delete-button" data-delete-moment="${item.id}" type="button" title="Eliminar este momento" aria-label="Eliminar este momento">× <span>Eliminar</span></button>` : ""}
     ${kind === "moment" ? `<div class="story-progress" aria-hidden="true"><span></span></div>` : ""}
     <div class="media-frame">${media}</div>
@@ -349,7 +349,7 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
       <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="${kind}" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
         <span aria-hidden="true">${liked ? "♥" : "♡"}</span>${likes.length ? `<strong>${likes.length}</strong>` : ""}<small>Me gusta</small>
       </button>
-      ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="${kind}" aria-label="Compartir en un chat"><span aria-hidden="true">↗</span><small>Compartir</small></button>` : ""}
+      ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="${kind}" aria-label="Compartir en un chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg><small>Compartir</small></button>` : ""}
       ${canDelete && kind !== "moment" ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar esta publicación">Eliminar</button>` : ""}
     </div>
   </article>`;
@@ -447,15 +447,50 @@ function renderPresence() {
 }
 
 function renderMessageAttachment(message) {
+  const sharedMedia = getSharedMediaReference(message);
   if (message.attachmentType?.startsWith("image/")) {
+    if (sharedMedia) {
+      return `<button class="message-image shared-message-media" type="button" data-open-shared-kind="${sharedMedia.kind}" data-open-shared-id="${sharedMedia.id}" aria-label="Abrir ${sharedMedia.kind === "moment" ? "momento" : "publicación"} original"><img src="${escapeHtml(message.attachmentUrl)}" alt="${sharedMedia.kind === "moment" ? "Momento compartido" : "Publicación compartida"}" loading="lazy"><span>Ver original →</span></button>`;
+    }
     return `<a class="message-image" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(message.attachmentUrl)}" alt="${escapeHtml(message.attachmentName || "Imagen adjunta")}" loading="lazy"></a>`;
   }
   if (message.attachmentType?.startsWith("video/")) {
+    if (sharedMedia) {
+      return `<button class="shared-message-media shared-message-video" type="button" data-open-shared-kind="${sharedMedia.kind}" data-open-shared-id="${sharedMedia.id}" aria-label="Abrir ${sharedMedia.kind === "moment" ? "momento" : "publicación"} original"><video src="${escapeHtml(message.attachmentUrl)}" muted playsinline preload="metadata"></video><span>Ver original →</span></button>`;
+    }
     return `<video class="message-video" src="${escapeHtml(message.attachmentUrl)}" controls preload="metadata"></video>`;
   }
   return `<a class="message-file" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener" download>
     <span>↧</span><div><strong>${escapeHtml(message.attachmentName || "Archivo adjunto")}</strong><small>${formatFileSize(message.attachmentSize)}</small></div>
   </a>`;
+}
+
+function getSharedMediaReference(message) {
+  const encoded = String(message.attachmentName || "").match(/^bb-share:(moment|post):(.+)$/);
+  if (encoded) return {kind: encoded[1], id: encoded[2]};
+  const moment = moments.find(item => item.mediaUrl === message.attachmentUrl);
+  if (moment) return {kind: "moment", id: String(moment.id)};
+  const post = profilePosts.find(item => item.mediaUrl === message.attachmentUrl);
+  return post ? {kind: "post", id: String(post.id)} : null;
+}
+
+function openSharedMedia(kind, id) {
+  const collection = kind === "moment" ? moments : profilePosts;
+  const item = collection.find(media => String(media.id) === String(id));
+  if (!item) {
+    window.alert(kind === "moment" ? "Este momento ya no está disponible." : "Esta publicación ya no está disponible.");
+    return;
+  }
+  goTo("contenido");
+  selectContentTab(kind === "moment" ? "momentos" : "publicaciones");
+  requestAnimationFrame(() => {
+    const card = [...document.querySelectorAll("[data-media-card-kind][data-media-card-id]")]
+      .find(node => node.dataset.mediaCardKind === kind && String(node.dataset.mediaCardId) === String(id));
+    if (!card) return;
+    card.classList.add("shared-media-highlight");
+    card.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
+    window.setTimeout(() => card.classList.remove("shared-media-highlight"), 2200);
+  });
 }
 
 function renderMoments() {
@@ -1291,7 +1326,7 @@ async function shareMediaToChat(form) {
       if (!channel) throw new Error("Selecciona un canal válido.");
       const {error} = await db.from("messages").insert({
         user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: channel.id, body,
-        attachment_url: sharingMedia.mediaUrl, attachment_name: `${label} compartido`,
+        attachment_url: sharingMedia.mediaUrl, attachment_name: `bb-share:${sharingMedia.kind}:${sharingMedia.id}`,
         attachment_type: attachmentType, attachment_size: null
       });
       if (error) throw error;
@@ -1304,7 +1339,7 @@ async function shareMediaToChat(form) {
       if (!member?.authId) throw new Error("Selecciona un miembro válido.");
       const {error} = await db.from("private_messages").insert({
         sender_id: currentAuthUser.id, recipient_id: member.authId, body,
-        attachment_url: sharingMedia.mediaUrl, attachment_name: `${label} compartido`,
+        attachment_url: sharingMedia.mediaUrl, attachment_name: `bb-share:${sharingMedia.kind}:${sharingMedia.id}`,
         attachment_type: attachmentType, attachment_size: null
       });
       if (error) throw error;
@@ -2126,6 +2161,13 @@ document.addEventListener("click", event => {
     event.preventDefault();
     event.stopPropagation();
     openShareMedia(shareMediaTarget.dataset.shareKind, shareMediaTarget.dataset.shareMedia);
+    return;
+  }
+  const sharedMediaTarget = event.target.closest("[data-open-shared-kind]");
+  if (sharedMediaTarget) {
+    event.preventDefault();
+    event.stopPropagation();
+    openSharedMedia(sharedMediaTarget.dataset.openSharedKind, sharedMediaTarget.dataset.openSharedId);
     return;
   }
   const goTarget = event.target.closest("[data-go]");
