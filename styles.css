@@ -1316,6 +1316,46 @@ body.light .message p {
   transform: none !important;
   pointer-events: none !important;
 }
+
+/* Portal mínimo: reemplaza por completo el antiguo panel lateral. */
+#mediaUploader > .media-tool-portal {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 2200 !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  pointer-events: none !important;
+}
+#mediaUploader:not(.has-media) > .media-tool-portal { display: none !important; }
+#mediaUploader > .media-tool-portal .media-tool-panel { display: none !important; }
+#mediaUploader.has-media > .media-tool-portal .media-tool-panel.active {
+  position: fixed !important;
+  inset: 82px 78px auto auto !important;
+  z-index: 2201 !important;
+  display: grid !important;
+  width: min(360px, calc(100vw - 104px)) !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+@media (max-width: 760px) {
+  #mediaUploader.has-media > .media-tool-portal .media-tool-panel.active {
+    inset: auto 8px 126px !important;
+    width: auto !important;
+    min-height: 76px;
+    max-height: min(46dvh, 390px) !important;
+    padding: 17px !important;
+    overflow: auto !important;
+    border: 1px solid rgba(255,255,255,.22) !important;
+    border-radius: 20px !important;
+    background: rgba(12,12,15,.97) !important;
+    box-shadow: 0 -12px 46px rgba(0,0,0,.72) !important;
+  }
+}
 #mediaUploader:not(.has-media) > .media-crop-controls {
   display: none !important;
 }
