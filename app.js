@@ -1824,6 +1824,11 @@ function resetMediaCropEditor() {
   const original = document.getElementById("mediaKeepOriginal");
   if (filter) filter.value = "none";
   document.querySelectorAll("[data-editor-filter]").forEach(button => button.classList.toggle("active", button.dataset.editorFilter === "none"));
+  document.querySelectorAll("[data-media-tool]").forEach(button => {
+    button.classList.remove("active");
+    button.setAttribute("aria-expanded", "false");
+  });
+  document.querySelectorAll("[data-media-panel]").forEach(panel => panel.classList.remove("active"));
   if (overlay) overlay.value = "";
   if (original) original.checked = true;
 }
@@ -2755,6 +2760,23 @@ document.getElementById("mediaCropZoom").addEventListener("input", event => {
 });
 document.getElementById("mediaFilter").addEventListener("change", event => { mediaFilter = event.target.value; drawMediaCrop(); });
 document.getElementById("mediaOverlayText").addEventListener("input", event => { mediaOverlayText = event.target.value.trim(); drawMediaCrop(); });
+function toggleMediaTool(toolName) {
+  const targetPanel = document.querySelector(`[data-media-panel="${toolName}"]`);
+  const targetButton = document.querySelector(`[data-media-tool="${toolName}"]`);
+  const willOpen = targetPanel && !targetPanel.classList.contains("active");
+  document.querySelectorAll("[data-media-panel]").forEach(panel => panel.classList.remove("active"));
+  document.querySelectorAll("[data-media-tool]").forEach(button => {
+    button.classList.remove("active");
+    button.setAttribute("aria-expanded", "false");
+  });
+  if (!willOpen) return;
+  targetPanel.classList.add("active");
+  targetButton.classList.add("active");
+  targetButton.setAttribute("aria-expanded", "true");
+  const field = targetPanel.querySelector("input:not([type=range]):not([type=checkbox]), textarea, select");
+  if (field) requestAnimationFrame(() => field.focus({preventScroll: true}));
+}
+document.querySelectorAll("[data-media-tool]").forEach(button => button.addEventListener("click", () => toggleMediaTool(button.dataset.mediaTool)));
 document.querySelectorAll("[data-editor-filter]").forEach(button => button.addEventListener("click", () => {
   mediaFilter = button.dataset.editorFilter;
   document.getElementById("mediaFilter").value = mediaFilter;
