@@ -20,7 +20,7 @@ export default {
     const {data: {user}} = await admin.auth.getUser(authorization.replace(/^Bearer\s+/i, ""));
     if (!user) return json({error: "Sesión no válida."}, 401);
     const {kind, entityId} = await request.json();
-    if (!["group_message", "private_message", "like", "reply", "test"].includes(kind) || !entityId) return json({error: "Petición no válida."}, 400);
+    if (!["group_message", "private_message", "like", "reply", "media_created", "test"].includes(kind) || !entityId) return json({error: "Petición no válida."}, 400);
 
     const {data: actor} = await admin.from("profiles").select("display_name").eq("id", user.id).single();
     const actorName = actor?.display_name || "Un miembro";
@@ -49,6 +49,23 @@ export default {
       title = `Mensaje privado de ${actorName}`;
       body = message.body || "Te ha enviado un archivo.";
       targetUrl = "./#privados";
+    } else if (kind === "media_created") {
+      let media = null;
+      let mediaKind = "post";
+      const {data: moment} = await admin.from("moments").select("user_id,caption").eq("id", entityId).maybeSingle();
+      if (moment) {
+        media = moment;
+        mediaKind = "moment";
+      } else {
+        const {data: post} = await admin.from("profile_posts").select("user_id,caption").eq("id", entityId).maybeSingle();
+        media = post;
+      }
+      if (!media || media.user_id !== user.id) return json({error: "Acción no autorizada."}, 403);
+      const {data: profiles} = await admin.from("profiles").select("id").eq("is_hidden", false).neq("id", user.id);
+      recipients = (profiles || []).map(item => item.id);
+      title = mediaKind === "moment" ? `${actorName} ha subido una historia` : `${actorName} ha publicado algo nuevo`;
+      body = media.caption || (mediaKind === "moment" ? "Toca para ver la nueva historia." : "Toca para ver la publicación.");
+      targetUrl = mediaKind === "moment" ? "./#momentos" : "./#publicaciones";
     } else if (kind === "like") {
       const {data: like} = await admin.from("media_likes").select("user_id,moment_id,profile_post_id").eq("id", entityId).single();
       if (!like || like.user_id !== user.id) return json({error: "Acción no autorizada."}, 403);

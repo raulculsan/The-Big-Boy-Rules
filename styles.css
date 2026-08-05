@@ -2647,6 +2647,8 @@ body:not(.authenticated) .site-footer {
   font-weight: 800;
 }
 .notifications-heading button:disabled { opacity: .35; cursor: default; }
+.notifications-heading-actions { display: flex !important; align-items: center; gap: 10px; }
+.notifications-heading-actions button.danger { color: #ff8e8e; }
 .notifications-list {
   max-height: min(520px, 68vh);
   overflow-y: auto;
@@ -2661,13 +2663,17 @@ body:not(.authenticated) .site-footer {
 .notification-item {
   position: relative;
   width: 100%;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+}
+.notification-open {
+  width: 100%;
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) 8px;
   align-items: start;
   gap: 11px;
-  padding: 14px 15px;
+  padding: 14px 44px 14px 15px;
   border: 0;
-  border-bottom: 1px solid var(--line);
   color: var(--text);
   text-align: left;
   background: transparent;
@@ -2675,23 +2681,47 @@ body:not(.authenticated) .site-footer {
 }
 .notification-item:hover { background: rgba(214,166,46,.06); }
 .notification-item.unread { background: rgba(214,166,46,.09); }
-.notification-item > span { display: grid; gap: 4px; min-width: 0; }
-.notification-item strong { line-height: 1.35; font-size: .76rem; }
-.notification-item small {
+.notification-open > span { display: grid; gap: 4px; min-width: 0; }
+.notification-open strong { line-height: 1.35; font-size: .76rem; }
+.notification-open small {
   overflow: hidden;
   color: var(--muted);
   font-size: .7rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.notification-item time { color: #858178; font-size: .62rem; }
-.notification-item > i {
+.notification-open time { color: #858178; font-size: .62rem; }
+.notification-open > i {
   width: 7px;
   height: 7px;
   margin-top: 5px;
   border-radius: 50%;
   background: var(--gold);
   box-shadow: 0 0 0 4px rgba(214,166,46,.1);
+}
+.notification-delete {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 50%;
+  color: #aaa;
+  background: rgba(0,0,0,.28);
+  transform: translateY(-50%);
+  font-size: 18px;
+  line-height: 1;
+}
+.notification-delete:hover { color: #fff; border-color: #ff8e8e; background: rgba(130,25,25,.38); }
+
+@media (max-width: 760px) {
+  .notifications-heading { align-items: flex-start; padding: 15px 14px; }
+  .notifications-heading-actions { gap: 6px; }
+  .notifications-heading-actions button { padding: 6px 4px; font-size: .62rem; }
+  .notification-open { padding: 13px 44px 13px 12px; }
+  .notification-delete { right: 8px; width: 30px; height: 30px; }
 }
 
 .profile-button b {

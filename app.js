@@ -1335,10 +1335,12 @@ function renderNotifications() {
   const list = document.getElementById("notificationsList");
   const badge = document.getElementById("notificationCount");
   const markAll = document.getElementById("markAllNotificationsRead");
+  const clearAll = document.getElementById("clearAllNotifications");
   const unread = notifications.filter(item => !item.readAt).length;
   badge.hidden = unread === 0;
   badge.textContent = unread > 99 ? "99+" : String(unread);
   markAll.disabled = unread === 0;
+  clearAll.disabled = notifications.length === 0;
   if (!notifications.length) {
     list.innerHTML = `<div class="empty-state compact">No tienes notificaciones.</div>`;
     return;
@@ -1347,12 +1349,17 @@ function renderNotifications() {
     const actor = getMemberByAuthId(item.actorId);
     const text = item.type === "private_message"
       ? `${actor?.name || "Un miembro"} te ha enviado un mensaje`
+      : item.type === "media_created"
+        ? `${actor?.name || "Un miembro"} ha subido ${item.targetType === "moment" ? "una historia" : "una publicación"}`
       : `${actor?.name || "Un miembro"} ha dado Me gusta a tu ${item.targetType === "moment" ? "momento" : "publicación"}`;
-    return `<button class="notification-item ${item.readAt ? "" : "unread"}" type="button" data-notification-id="${item.id}">
-      ${getAvatar(actor, "avatar tiny")}
-      <span><strong>${escapeHtml(text)}</strong>${item.excerpt ? `<small>${escapeHtml(item.excerpt)}</small>` : ""}<time datetime="${escapeHtml(item.createdAt)}">${formatRelativeTime(item.createdAt)}</time></span>
-      ${item.readAt ? "" : `<i aria-label="Sin leer"></i>`}
-    </button>`;
+    return `<article class="notification-item ${item.readAt ? "" : "unread"}">
+      <button class="notification-open" type="button" data-notification-id="${item.id}">
+        ${getAvatar(actor, "avatar tiny")}
+        <span><strong>${escapeHtml(text)}</strong>${item.excerpt ? `<small>${escapeHtml(item.excerpt)}</small>` : ""}<time datetime="${escapeHtml(item.createdAt)}">${formatRelativeTime(item.createdAt)}</time></span>
+        ${item.readAt ? "" : `<i aria-label="Sin leer"></i>`}
+      </button>
+      <button class="notification-delete" type="button" data-delete-notification="${item.id}" aria-label="Eliminar notificación" title="Eliminar">×</button>
+    </article>`;
   }).join("");
 }
 
@@ -1381,6 +1388,14 @@ async function markNotificationsRead(id = null) {
   if (!error) await loadNotifications();
 }
 
+async function deleteNotifications(id = null) {
+  if (!currentAuthUser) return;
+  let query = db.from("notifications").delete().eq("user_id", currentAuthUser.id);
+  if (id != null) query = query.eq("id", id);
+  const {error} = await query;
+  if (!error) await loadNotifications();
+}
+
 async function openNotification(id) {
   const item = notifications.find(notification => String(notification.id) === String(id));
   if (!item) return;
@@ -1391,6 +1406,7 @@ async function openNotification(id) {
     if (actor) openPrivateConversation(actor.id);
   } else if (item.targetType === "moment") {
     goTo("momentos");
+    if (item.type === "media_created") setTimeout(() => openMoment(item.targetId), 120);
   } else if (item.targetType === "post") {
     goTo("publicaciones");
   }
@@ -2174,8 +2190,9 @@ async function publishMedia(form) {
       media_url: mediaUrl, media_type: file.type.startsWith("video/") ? "video" : "image"
     };
     const table = mediaUploadMode === "moment" ? "moments" : "profile_posts";
-    const {error} = await db.from(table).insert(record);
+    const {data, error} = await db.from(table).insert(record).select("id").single();
     if (error) throw error;
+    dispatchPush("media_created", data.id);
     closeMediaUploader();
     if (mediaUploadMode === "moment") {
       await loadMoments();
@@ -2916,10 +2933,19 @@ document.getElementById("shareMediaForm").addEventListener("submit", event => {
 });
 document.getElementById("notificationsDropdown").addEventListener("click", event => {
   event.stopPropagation();
+  const deleteTarget = event.target.closest("[data-delete-notification]");
+  if (deleteTarget) {
+    deleteNotifications(deleteTarget.dataset.deleteNotification);
+    return;
+  }
   const target = event.target.closest("[data-notification-id]");
   if (target) openNotification(target.dataset.notificationId);
 });
 document.getElementById("markAllNotificationsRead").addEventListener("click", () => markNotificationsRead());
+document.getElementById("clearAllNotifications").addEventListener("click", event => {
+  event.stopPropagation();
+  if (notifications.length && window.confirm("¿Quieres limpiar todas las notificaciones?")) deleteNotifications();
+});
 document.addEventListener("click", () => {
   document.getElementById("userDropdown")?.classList.remove("open");
   closeNotifications();
@@ -3117,7 +3143,7 @@ function setNewsCollapsed(collapsed) {
 document.getElementById("toggleNewsButton").addEventListener("click", () => {
   setNewsCollapsed(!document.getElementById("noticias").classList.contains("is-collapsed"));
 });
-if (window.matchMedia("(max-width: 760px)").matches) setNewsCollapsed(true);
+setNewsCollapsed(false);
 document.getElementById("refreshNewsButton").addEventListener("click", () => loadNews(true));
 setInterval(() => {
   if (!document.hidden && document.getElementById("inicio").classList.contains("active")) loadNews(true);
