@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-39" />
+  <link rel="stylesheet" href="styles.css?v=20260805-40" />
 </head>
 <body>
 
@@ -101,14 +101,8 @@
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M8 16H5l-3 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v1M9 10h10a3 3 0 0 1 3 3v8l-3-3H9a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3Z"/></svg></span><b>Chats</b>
         <i class="notification-dot"></i>
       </a>
-      <a class="nav-link" href="#miembros" data-section="miembros" title="Miembros">
-        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><b>Miembros</b>
-      </a>
-      <a class="nav-link" href="#contenido" data-section="contenido" title="Momentos y publicaciones">
-        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span><b>Momentos y publicaciones</b>
-      </a>
-      <a class="nav-link" href="#noticias" data-section="noticias" title="Noticias">
-        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4H8v16a2 2 0 0 1-4 0V6H2v14a2 2 0 0 0 2 2Z"/><path d="M12 8h6M12 12h6M12 16h6"/></svg></span><b>Noticias</b>
+      <a class="nav-link" href="#contenido" data-section="contenido" title="Publicaciones">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span><b>Publicaciones</b>
       </a>
       <a class="nav-link" href="#calendario" data-section="calendario" title="Calendario">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></span><b>Calendario</b>
@@ -235,6 +229,31 @@
         <div class="member-strip" id="featuredMembers"></div>
       </article>
 
+      <section class="home-members-section reveal" id="miembros">
+        <div class="section-intro">
+          <div><span class="eyebrow">THE CREW</span><h2>Cada Big Boy tiene su historia.</h2></div>
+          <p>Selecciona cualquier perfil para ver su presentación, apodo, papel en el grupo y mejores momentos.</p>
+        </div>
+        <div class="members-grid" id="membersGrid"></div>
+      </section>
+
+      <section class="home-news-section reveal" id="noticias">
+        <div class="section-intro">
+          <div><span class="eyebrow">ACTUALIDAD EN DIRECTO</span><h2>Deportes, España y el mundo.</h2></div>
+          <p>Titulares recientes de medios reales que puedes leer en su fuente o compartir directamente con el grupo.</p>
+        </div>
+        <div class="news-toolbar">
+          <div class="news-tabs" role="tablist" aria-label="Categorías de noticias">
+            <button class="news-tab active" type="button" data-news-category="deportes">Deportes</button>
+            <button class="news-tab" type="button" data-news-category="espana">España</button>
+            <button class="news-tab" type="button" data-news-category="mundo">Mundo</button>
+          </div>
+          <button class="secondary-button news-refresh" id="refreshNewsButton" type="button">Actualizar</button>
+        </div>
+        <div class="news-status" id="newsStatus" aria-live="polite">Cargando noticias reales…</div>
+        <div class="news-grid" id="newsGrid"></div>
+      </section>
+
       <article class="panel spotify-panel reveal">
         <div class="panel-heading">
           <div>
@@ -292,17 +311,6 @@
       </div>
     </section>
 
-    <section class="page-section" id="miembros">
-      <div class="section-intro">
-        <div>
-          <span class="eyebrow">THE CREW</span>
-          <h2>Cada Big Boy tiene su historia.</h2>
-        </div>
-        <p>Selecciona cualquier perfil para ver su presentación, apodo, papel en el grupo y mejores momentos.</p>
-      </div>
-      <div class="members-grid reveal" id="membersGrid"></div>
-    </section>
-
     <section class="page-section" id="privados">
       <div class="private-chat-layout">
         <aside class="panel private-contacts">
@@ -340,26 +348,14 @@
     </section>
 
     <section class="page-section" id="contenido">
-      <div class="content-type-tabs" role="tablist" aria-label="Contenido del grupo">
-        <button class="active" type="button" role="tab" aria-selected="true" data-content-tab="momentos">Momentos</button>
-        <button type="button" role="tab" aria-selected="false" data-content-tab="publicaciones">Publicaciones</button>
-      </div>
-      <div data-content-panel="momentos">
-        <div class="section-intro moments-hero">
-          <div class="moments-hero-copy">
-            <span class="eyebrow">HISTORIAS DEL GRUPO</span>
-            <h2>Lo que pasa hoy,<br><em>se queda aquí.</em></h2>
-            <p>Fotos y vídeos del grupo que desaparecen automáticamente después de 24 horas.</p>
-          </div>
-          <div class="moments-hero-mark" aria-hidden="true"><span>24</span><small>HORAS</small></div>
+      <div class="stories-section" data-content-panel="momentos">
+        <div class="stories-heading"><div><span class="eyebrow">MOMENTOS · 24 HORAS</span><h3>Historias del grupo</h3></div><span id="momentsStatus" class="news-status moments-status" aria-live="polite"></span></div>
+        <div class="stories-row">
+          <button class="story-add-button" id="addMomentButton" type="button"><span>＋</span><small>Tu momento</small></button>
+          <div class="moments-grid stories-strip" id="momentsGrid"></div>
         </div>
-        <div class="moments-toolbar">
-          <button class="primary-button moments-add-button" id="addMomentButton" type="button"><span>＋</span> Subir momento</button>
-          <span id="momentsStatus" class="news-status moments-status" aria-live="polite"></span>
-        </div>
-        <div class="moments-grid reveal" id="momentsGrid"></div>
       </div>
-      <div data-content-panel="publicaciones" hidden>
+      <div data-content-panel="publicaciones">
         <div class="section-intro publications-hero">
           <div><span class="eyebrow">EL MURO DEL GRUPO</span><h2>Publicaciones.</h2></div>
           <p>Las fotos que cada miembro comparte en su perfil aparecen aquí, ordenadas de más recientes a más antiguas.</p>
@@ -367,26 +363,6 @@
         <div class="publications-toolbar"><button class="primary-button" id="addPublicationButton" type="button">＋ Nueva publicación</button></div>
         <div class="publications-feed reveal" id="publicationsFeed"></div>
       </div>
-    </section>
-
-    <section class="page-section" id="noticias">
-      <div class="section-intro">
-        <div>
-          <span class="eyebrow">ACTUALIDAD EN DIRECTO</span>
-          <h2>Deportes, España y el mundo.</h2>
-        </div>
-        <p>Titulares obtenidos de medios reales. Cada noticia enlaza a su fuente original y muestra su hora de publicación.</p>
-      </div>
-      <div class="news-toolbar">
-        <div class="news-tabs" role="tablist" aria-label="Categorías de noticias">
-          <button class="news-tab active" type="button" data-news-category="deportes">Deportes</button>
-          <button class="news-tab" type="button" data-news-category="espana">España</button>
-          <button class="news-tab" type="button" data-news-category="mundo">Mundo</button>
-        </div>
-        <button class="secondary-button news-refresh" id="refreshNewsButton" type="button">Actualizar</button>
-      </div>
-      <div class="news-status" id="newsStatus" aria-live="polite">Cargando noticias reales…</div>
-      <div class="news-grid reveal" id="newsGrid"></div>
     </section>
 
     <section class="page-section" id="calendario">
@@ -652,6 +628,7 @@
     <div class="media-viewer-dialog" role="dialog" aria-modal="true" aria-labelledby="mediaViewerCaption">
       <button class="media-viewer-close" id="closeMediaViewer" type="button" aria-label="Cerrar imagen">×</button>
       <img id="mediaViewerImage" src="" alt="">
+      <video id="mediaViewerVideo" controls playsinline hidden></video>
       <div class="media-viewer-caption" id="mediaViewerCaption">Momento</div>
     </div>
   </div>
@@ -746,7 +723,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-39"></script>
-  <script src="app.js?v=20260805-39"></script>
+  <script src="config.js?v=20260805-40"></script>
+  <script src="app.js?v=20260805-40"></script>
 </body>
 </html>
