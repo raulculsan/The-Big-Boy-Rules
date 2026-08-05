@@ -2786,7 +2786,9 @@ function toggleMediaTool(toolName) {
   targetButton.classList.add("active");
   targetButton.setAttribute("aria-expanded", "true");
   const field = targetPanel.querySelector("input:not([type=range]):not([type=checkbox]), textarea, select");
-  if (field) requestAnimationFrame(() => field.focus({preventScroll: true}));
+  if (field && !window.matchMedia("(max-width: 760px)").matches) {
+    requestAnimationFrame(() => field.focus({preventScroll: true}));
+  }
 }
 document.querySelectorAll("[data-media-tool]").forEach(button => button.addEventListener("click", () => toggleMediaTool(button.dataset.mediaTool)));
 document.querySelectorAll("[data-editor-filter]").forEach(button => button.addEventListener("click", () => {
