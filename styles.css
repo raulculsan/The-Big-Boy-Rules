@@ -45,6 +45,15 @@ button, input {
   font: inherit;
 }
 
+.avatar img,
+.profile-visual,
+.media-view-button img,
+.story-bubble img {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
 button {
   cursor: pointer;
 }
