@@ -1320,6 +1320,74 @@ body.light .message p {
   }
 }
 
+/* Zonas seguras globales de la PWA: ningún panel queda bajo la isla dinámica ni el indicador inferior. */
+body.standalone-app {
+  --pwa-safe-top: env(safe-area-inset-top, 0px);
+  --pwa-safe-right: env(safe-area-inset-right, 0px);
+  --pwa-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --pwa-safe-left: env(safe-area-inset-left, 0px);
+}
+
+@media (max-width: 760px) {
+  body.standalone-app .page-section {
+    padding-right: calc(16px + var(--pwa-safe-right));
+    padding-bottom: calc(45px + var(--pwa-safe-bottom));
+    padding-left: calc(16px + var(--pwa-safe-left));
+  }
+  body.standalone-app .sidebar {
+    height: 100dvh;
+    padding-top: calc(18px + var(--pwa-safe-top));
+    padding-right: calc(13px + var(--pwa-safe-right));
+    padding-bottom: calc(18px + var(--pwa-safe-bottom));
+    padding-left: calc(13px + var(--pwa-safe-left));
+    box-sizing: border-box;
+  }
+  body.standalone-app .site-footer {
+    padding-right: calc(22px + var(--pwa-safe-right));
+    padding-bottom: calc(22px + var(--pwa-safe-bottom));
+    padding-left: calc(22px + var(--pwa-safe-left));
+  }
+  body.standalone-app .login-screen {
+    padding: calc(20px + var(--pwa-safe-top)) calc(18px + var(--pwa-safe-right)) calc(20px + var(--pwa-safe-bottom)) calc(18px + var(--pwa-safe-left));
+  }
+  body.standalone-app .global-search {
+    padding: calc(var(--pwa-safe-top) + 22px) calc(var(--pwa-safe-right) + 16px) calc(var(--pwa-safe-bottom) + 22px) calc(var(--pwa-safe-left) + 16px);
+  }
+  body.standalone-app .modal-backdrop:not(.media-viewer):not(#mediaUploader) {
+    padding: calc(var(--pwa-safe-top) + 12px) calc(var(--pwa-safe-right) + 12px) calc(var(--pwa-safe-bottom) + 12px) calc(var(--pwa-safe-left) + 12px);
+  }
+  body.standalone-app .modal-backdrop:not(.media-viewer):not(#mediaUploader) .profile-editor-modal {
+    max-height: calc(100dvh - var(--pwa-safe-top) - var(--pwa-safe-bottom) - 24px);
+  }
+  body.standalone-app.chat-focus #chat .chat-header,
+  body.standalone-app.chat-focus #privados .private-conversation .chat-header,
+  body.standalone-app.chat-focus #privados .private-contacts .panel-heading {
+    padding-top: calc(13px + var(--pwa-safe-top));
+  }
+  body.standalone-app.chat-focus .message-form {
+    padding-bottom: calc(14px + var(--pwa-safe-bottom));
+  }
+  body.standalone-app .media-viewer-close,
+  body.standalone-app .moment-options-button { top: calc(var(--pwa-safe-top) + 12px); }
+  body.standalone-app .moment-options-menu { top: calc(var(--pwa-safe-top) + 62px); }
+  body.standalone-app #mediaUploader.has-media .media-crop-stage {
+    top: calc(54px + var(--pwa-safe-top));
+    bottom: calc(126px + var(--pwa-safe-bottom));
+  }
+  body.standalone-app #mediaUploader.has-media .media-editor-toolbar {
+    bottom: calc(66px + var(--pwa-safe-bottom));
+  }
+  body.standalone-app #mediaUploader .media-tool-panel.active {
+    bottom: calc(126px + var(--pwa-safe-bottom));
+  }
+  body.standalone-app #mediaUploader.has-media .modal-actions {
+    bottom: calc(8px + var(--pwa-safe-bottom));
+  }
+}
+
+.push-notification-actions { display: flex; align-items: center; gap: 7px; }
+.push-notification-actions button[hidden] { display: none; }
+
 /* En la PWA de iPhone los controles deben quedar debajo de hora, señal y batería. */
 @media (max-width: 760px) {
   body.standalone-app {
