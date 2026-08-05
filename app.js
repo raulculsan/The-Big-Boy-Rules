@@ -2869,12 +2869,15 @@ function toggleMediaTool(toolName) {
     requestAnimationFrame(() => field.focus({preventScroll: true}));
   }
 }
-// Mantiene las hojas de herramientas fuera de los contenedores con overflow/transform.
-// Safari iOS puede recortar elementos fixed si permanecen dentro de esos ancestros.
-const mediaControlsPortal = document.querySelector("#mediaUploader .media-crop-controls");
-if (mediaControlsPortal?.parentElement !== document.getElementById("mediaUploader")) {
-  document.getElementById("mediaUploader").appendChild(mediaControlsPortal);
-}
+// Extrae solo los paneles interactivos. El antiguo contenedor lateral no debe
+// participar en el layout móvil ni crear una segunda columna vacía.
+const mediaControlsContainer = document.querySelector("#mediaUploader .media-crop-controls");
+const mediaToolPortal = document.createElement("div");
+mediaToolPortal.className = "media-tool-portal";
+mediaToolPortal.setAttribute("aria-live", "polite");
+mediaControlsContainer?.querySelectorAll("[data-media-panel]").forEach(panel => mediaToolPortal.appendChild(panel));
+mediaControlsContainer?.remove();
+document.getElementById("mediaUploader").appendChild(mediaToolPortal);
 document.querySelectorAll("[data-media-tool]").forEach(button => button.addEventListener("click", () => toggleMediaTool(button.dataset.mediaTool)));
 document.querySelectorAll("[data-editor-filter]").forEach(button => button.addEventListener("click", () => {
   mediaFilter = button.dataset.editorFilter;
