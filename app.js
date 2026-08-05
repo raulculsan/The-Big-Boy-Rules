@@ -580,14 +580,15 @@ function renderCalendar() {
   const days = new Date(year, month + 1, 0).getDate();
   const todayKey = dateKey(new Date());
   let cells = ["L", "M", "X", "J", "V", "S", "D"].map(day => `<div class="calendar-weekday">${day}</div>`).join("");
-  cells += Array.from({length: firstWeekday}, () => `<div class="calendar-day outside"></div>`).join("");
+  cells += Array.from({length: firstWeekday}, () => `<div class="calendar-day outside" aria-hidden="true"></div>`).join("");
   for (let day = 1; day <= days; day += 1) {
     const date = new Date(year, month, day);
     const events = groupEvents.filter(event => eventOccursOn(event, date));
-    cells += `<div class="calendar-day ${dateKey(date) === todayKey ? "today" : ""}">
-      <span>${day}</span>${events.slice(0, 3).map(event => `<button data-event-id="${event.id}" title="${escapeHtml(event.title)}">${escapeHtml(event.title)}</button>`).join("")}
+    const calendarKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    cells += `<button class="calendar-day ${dateKey(date) === todayKey ? "today" : ""}" type="button" data-calendar-date="${calendarKey}" aria-label="Ver ${day} de ${calendarDate.toLocaleDateString("es-ES", {month: "long"})}">
+      <span>${day}</span>${events.slice(0, 3).map(event => `<i class="calendar-event-pill ${event.eventType === "birthday" ? "birthday" : ""}" title="${escapeHtml(event.title)}">${event.eventType === "birthday" ? "🎂 " : ""}${escapeHtml(event.title)}</i>`).join("")}
       ${events.length > 3 ? `<small>+${events.length - 3} más</small>` : ""}
-    </div>`;
+    </button>`;
   }
   document.getElementById("calendarGrid").innerHTML = cells;
   const monthEvents = groupEvents.filter(event => {
@@ -601,6 +602,32 @@ function renderCalendar() {
       ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
       ${canEditCalendarEvent(event) ? `<button class="text-button" data-event-id="${event.id}">Editar</button>` : ""}
     </article>`).join("") : `<div class="empty-state compact">No hay eventos este mes.</div>`;
+}
+
+function openCalendarDay(dateValue) {
+  const [year, month, day] = String(dateValue).split("-").map(Number);
+  if (!year || !month || !day) return;
+  const selectedDate = new Date(year, month - 1, day);
+  const events = groupEvents.filter(event => eventOccursOn(event, selectedDate));
+  document.getElementById("calendarDayTitle").textContent = selectedDate.toLocaleDateString("es-ES", {weekday: "long", day: "numeric", month: "long", year: "numeric"});
+  document.getElementById("calendarDayDetailList").innerHTML = events.length ? events.map(event => `
+    <article class="calendar-day-detail-card ${event.eventType === "birthday" ? "birthday" : ""}">
+      <div class="calendar-day-detail-time">${event.eventType === "birthday" ? "🎂 Todo el día" : formatEventDate(event.startsAt)}</div>
+      <h3>${escapeHtml(event.title)}</h3>
+      ${event.eventType !== "birthday" && event.endsAt ? `<p class="calendar-day-detail-duration">Hasta ${new Date(event.endsAt).toLocaleString("es-ES", {hour: "2-digit", minute: "2-digit"})}</p>` : ""}
+      ${event.location ? `<p>⌖ ${escapeHtml(event.location)}</p>` : ""}
+      ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
+      ${canEditCalendarEvent(event) ? `<button class="secondary-button" type="button" data-event-id="${event.id}">Editar</button>` : ""}
+    </article>`).join("") : `<div class="empty-state compact"><strong>No hay nada programado</strong><span>Este día no tiene eventos ni cumpleaños.</span></div>`;
+  const modal = document.getElementById("calendarDayModal");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeCalendarDayModal() {
+  const modal = document.getElementById("calendarDayModal");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
 }
 
 function eventOccursOn(event, date) {
@@ -1340,6 +1367,7 @@ function toLocalDateTime(value) {
 function updateEventEditorType() {
   const birthday = document.getElementById("eventType").value === "birthday";
   document.getElementById("birthdayDateField").hidden = !birthday;
+  document.getElementById("birthdayAllDayNote").hidden = !birthday;
   document.getElementById("eventDateFields").hidden = birthday;
   document.getElementById("eventStartsAt").required = !birthday;
   document.getElementById("birthdayDate").required = birthday;
@@ -1351,7 +1379,8 @@ function openEventEditor(eventId = null, requestedType = "event") {
   const eventType = event?.eventType || requestedType;
   if (event && !canEditCalendarEvent(event)) return;
   if (!event && eventType !== "birthday" && !canManageSite()) return;
-  document.getElementById("eventEditorTitle").textContent = event ? "Editar evento" : "Nuevo evento";
+  closeCalendarDayModal();
+  document.getElementById("eventEditorTitle").textContent = eventType === "birthday" ? (event ? "Editar cumpleaños" : "Añadir cumpleaños") : (event ? "Editar evento" : "Nuevo evento");
   document.getElementById("eventId").value = event?.id || "";
   document.getElementById("eventTitle").value = event?.title || "";
   document.getElementById("eventDescription").value = event?.description || "";
@@ -2137,6 +2166,8 @@ document.addEventListener("click", event => {
   if (privateTarget) openPrivateConversation(privateTarget.dataset.privateMember);
   const eventTarget = event.target.closest("[data-event-id]");
   if (eventTarget) openEventEditor(eventTarget.dataset.eventId);
+  const calendarDayTarget = event.target.closest("[data-calendar-date]");
+  if (calendarDayTarget) openCalendarDay(calendarDayTarget.dataset.calendarDate);
   const searchSection = event.target.closest("[data-search-section]");
   if (searchSection) goTo(searchSection.dataset.searchSection);
   const searchUrl = event.target.closest("[data-search-url]");
@@ -2552,6 +2583,7 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     closeGlobalSearch();
     closeEventEditor();
+    closeCalendarDayModal();
     closeSpotifyEditor();
   }
 });
@@ -2576,6 +2608,10 @@ document.getElementById("closeEventEditor").addEventListener("click", closeEvent
 document.getElementById("cancelEventEditor").addEventListener("click", closeEventEditor);
 document.getElementById("eventEditor").addEventListener("click", event => {
   if (event.target.id === "eventEditor") closeEventEditor();
+});
+document.getElementById("closeCalendarDayModal").addEventListener("click", closeCalendarDayModal);
+document.getElementById("calendarDayModal").addEventListener("click", event => {
+  if (event.target.id === "calendarDayModal") closeCalendarDayModal();
 });
 document.getElementById("eventForm").addEventListener("submit", event => {
   event.preventDefault();

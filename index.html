@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-37" />
+  <link rel="stylesheet" href="styles.css?v=20260805-38" />
 </head>
 <body>
 
@@ -675,6 +675,16 @@
     </div>
   </div>
 
+  <div class="modal-backdrop calendar-day-modal-backdrop" id="calendarDayModal" aria-hidden="true">
+    <div class="profile-editor-modal calendar-day-modal" role="dialog" aria-modal="true" aria-labelledby="calendarDayTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">AGENDA DEL DÍA</span><h2 id="calendarDayTitle">Eventos</h2></div>
+        <button class="icon-button" id="closeCalendarDayModal" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <div class="calendar-day-detail-list" id="calendarDayDetailList"></div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="eventEditor" aria-hidden="true">
     <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="eventEditorTitle">
       <div class="modal-heading">
@@ -687,6 +697,7 @@
         <label><span>Título</span><input id="eventTitle" maxlength="80" required></label>
         <label><span>Descripción</span><textarea id="eventDescription" maxlength="500" rows="4"></textarea></label>
         <label id="birthdayDateField" hidden><span>Fecha de cumpleaños</span><input id="birthdayDate" type="date"></label>
+        <div class="birthday-all-day-note" id="birthdayAllDayNote" hidden><span>🎂</span><div><strong>Durará todo el día</strong><small>El cumpleaños se repetirá cada año y no necesita hora de inicio ni de finalización.</small></div></div>
         <div class="event-date-fields" id="eventDateFields">
           <label><span>Comienza</span><input id="eventStartsAt" type="datetime-local" required></label>
           <label><span>Termina</span><input id="eventEndsAt" type="datetime-local"></label>
@@ -735,7 +746,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-37"></script>
-  <script src="app.js?v=20260805-37"></script>
+  <script src="config.js?v=20260805-38"></script>
+  <script src="app.js?v=20260805-38"></script>
 </body>
 </html>
