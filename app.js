@@ -37,6 +37,12 @@ const GENERIC_PASSWORD = "bigboy2026";
 const PASSWORD_CHANGE_STORAGE_PREFIX = "bb-password-change-required-";
 const NEWS_CACHE_DURATION = 2 * 60 * 1000;
 const NEWS_REFRESH_INTERVAL = 2 * 60 * 1000;
+const MEGABYTE = 1024 * 1024;
+const FILE_LIMITS = Object.freeze({
+  attachment: 50 * MEGABYTE,
+  media: 100 * MEGABYTE
+});
+const STORY_GESTURE = Object.freeze({horizontalThreshold: 45, dismissThreshold: 90, holdDelay: 250});
 const pageTitle = document.getElementById("pageTitle");
 const sections = [...document.querySelectorAll(".page-section")];
 const navLinks = [...document.querySelectorAll(".nav-link")];
@@ -133,7 +139,7 @@ let activeMomentIndex = -1;
 let momentAdvanceTimer = null;
 let momentAdvanceDeadline = 0;
 let momentAdvanceRemaining = 6000;
-let momentSwipeStartX = null;
+let momentGesture = null;
 let momentPressStartedAt = 0;
 let suppressMomentNavigationClick = false;
 let replyingMedia = null;
@@ -151,6 +157,31 @@ function escapeHtml(value = "") {
   const node = document.createElement("div");
   node.textContent = value;
   return node.innerHTML;
+}
+
+function formatLimit(limit) {
+  return `${Math.round(limit / MEGABYTE)} MB`;
+}
+
+function validateFileSize(file, limit) {
+  if (!file || file.size <= limit) return;
+  throw new Error(`El archivo supera el máximo de ${formatLimit(limit)}.`);
+}
+
+function uploadLimitForFolder(folder) {
+  return ["moments", "posts"].includes(folder) ? FILE_LIMITS.media : FILE_LIMITS.attachment;
+}
+
+function classifyStoryGesture(gesture, endX, endY, elapsed) {
+  const distanceX = endX - gesture.x;
+  const distanceY = endY - gesture.y;
+  if (distanceY >= STORY_GESTURE.dismissThreshold && distanceY > Math.abs(distanceX) * 1.1) {
+    return {action: "dismiss"};
+  }
+  if (Math.abs(distanceX) >= STORY_GESTURE.horizontalThreshold) {
+    return {action: distanceX < 0 ? "next" : "previous"};
+  }
+  return {action: "release", held: elapsed >= STORY_GESTURE.holdDelay};
 }
 
 function normalizeUsername(value = "") {
@@ -1322,7 +1353,7 @@ function connectRealtime() {
 }
 
 async function uploadGroupMedia(file, folder) {
-  if (file.size > 30 * 1024 * 1024) throw new Error("El archivo supera el máximo de 30 MB.");
+  validateFileSize(file, uploadLimitForFolder(folder));
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const path = `${currentAuthUser.id}/${folder}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
   const {error} = await db.storage.from("group-media").upload(path, file, {contentType: file.type || "application/octet-stream"});
@@ -1849,8 +1880,8 @@ function openMediaUploader(mode) {
   document.getElementById("mediaUploaderEyebrow").textContent = isMoment ? "NUEVO MOMENTO" : "NUEVA PUBLICACIÓN";
   document.getElementById("mediaUploaderTitle").textContent = isMoment ? "Compartir una historia" : "Compartir en mi perfil";
   document.getElementById("mediaUploadHelp").textContent = isMoment
-    ? "La historia desaparecerá en 24 horas · original o personalizada · máximo 30 MB"
-    : "Se mostrará en tu perfil · original o personalizada · máximo 30 MB";
+    ? `La historia desaparecerá en 24 horas · original o personalizada · máximo ${formatLimit(FILE_LIMITS.media)}`
+    : `Se mostrará en tu perfil · original o personalizada · máximo ${formatLimit(FILE_LIMITS.media)}`;
   document.getElementById("mediaUploadFile").value = "";
   document.getElementById("mediaUploadCaption").value = "";
   document.getElementById("mediaMention").innerHTML = `<option value="">Nadie</option>${members.filter(member => !member.hidden && member.authId && member.id !== currentUser.id).map(member => `<option value="${escapeHtml(member.authId)}">@${escapeHtml(member.username)} · ${escapeHtml(member.name)}</option>`).join("")}`;
@@ -2092,6 +2123,7 @@ function closeMediaViewer() {
   momentAdvanceRemaining = 6000;
   activeMomentSequence = [];
   activeMomentIndex = -1;
+  suppressMomentNavigationClick = false;
   const viewer = document.getElementById("mediaViewer");
   viewer.classList.remove("open");
   viewer.setAttribute("aria-hidden", "true");
@@ -2105,6 +2137,7 @@ function closeMediaViewer() {
   document.getElementById("momentOptionsButton").hidden = true;
   document.getElementById("momentOptionsButton").setAttribute("aria-expanded", "false");
   document.getElementById("momentOptionsMenu").hidden = true;
+  if (typeof clearMomentGesture === "function") clearMomentGesture();
 }
 
 function openModal(id) {
@@ -2955,11 +2988,11 @@ document.getElementById("privateMessageAttachment").addEventListener("change", e
     preview.hidden = true;
     return;
   }
-  if (pendingPrivateMessageFile.size > 15 * 1024 * 1024) {
+  if (pendingPrivateMessageFile.size > FILE_LIMITS.attachment) {
     pendingPrivateMessageFile = null;
     event.target.value = "";
     preview.hidden = true;
-    return window.alert("El archivo supera el máximo de 15 MB.");
+    return window.alert(`El archivo supera el máximo de ${formatLimit(FILE_LIMITS.attachment)}.`);
   }
   preview.innerHTML = `${escapeHtml(pendingPrivateMessageFile.name)} · ${formatFileSize(pendingPrivateMessageFile.size)} <button type="button" id="removePrivateMessageAttachment">Quitar</button>`;
   preview.hidden = false;
@@ -2978,11 +3011,11 @@ document.getElementById("messageAttachment").addEventListener("change", event =>
     preview.hidden = true;
     return;
   }
-  if (pendingMessageFile.size > 15 * 1024 * 1024) {
+  if (pendingMessageFile.size > FILE_LIMITS.attachment) {
     event.target.value = "";
     pendingMessageFile = null;
     preview.hidden = false;
-    preview.innerHTML = `<span>El archivo supera el máximo de 15 MB.</span>`;
+    preview.innerHTML = `<span>El archivo supera el máximo de ${formatLimit(FILE_LIMITS.attachment)}.</span>`;
     return;
   }
   preview.hidden = false;
@@ -3010,9 +3043,9 @@ document.getElementById("mediaUploadFile").addEventListener("change", async even
     resetMediaCropEditor();
     return;
   }
-  if (file.size > 30 * 1024 * 1024) {
+  if (file.size > FILE_LIMITS.media) {
     event.target.value = "";
-    document.getElementById("mediaUploadFeedback").textContent = "El archivo supera el máximo de 30 MB.";
+    document.getElementById("mediaUploadFeedback").textContent = `El archivo supera el máximo de ${formatLimit(FILE_LIMITS.media)}.`;
     return;
   }
   document.getElementById("mediaUploadFeedback").textContent = "";
@@ -3152,29 +3185,68 @@ document.getElementById("nextMoment").addEventListener("click", event => {
 document.getElementById("mediaViewerVideo").addEventListener("ended", () => {
   if (activeMomentSequence.length) nextMoment();
 });
-document.querySelector("#mediaViewer .media-viewer-dialog").addEventListener("pointerdown", event => {
+const storyViewerDialog = document.querySelector("#mediaViewer .media-viewer-dialog");
+
+function clearMomentGesture(keepVisual = false) {
+  momentGesture = null;
+  momentPressStartedAt = 0;
+  if (keepVisual) return;
+  storyViewerDialog.classList.remove("swiping-down", "dismissed-down");
+  storyViewerDialog.style.removeProperty("--story-drag-y");
+  storyViewerDialog.style.removeProperty("--story-drag-opacity");
+}
+
+function dismissMomentDown() {
+  storyViewerDialog.classList.add("dismissed-down");
+  storyViewerDialog.style.setProperty("--story-drag-y", "100dvh");
+  storyViewerDialog.style.setProperty("--story-drag-opacity", "0");
+  suppressMomentNavigationClick = true;
+  clearTimeout(momentAdvanceTimer);
+  setTimeout(() => {
+    closeMediaViewer();
+    clearMomentGesture();
+  }, 180);
+}
+
+storyViewerDialog.addEventListener("pointerdown", event => {
   if (!activeMomentSequence.length || event.target.closest("button:not(.moment-navigation),video")) return;
-  momentSwipeStartX = event.clientX;
+  momentGesture = {id: event.pointerId, x: event.clientX, y: event.clientY};
   momentPressStartedAt = Date.now();
+  storyViewerDialog.setPointerCapture?.(event.pointerId);
   pauseActiveMoment();
 });
-document.querySelector("#mediaViewer .media-viewer-dialog").addEventListener("pointerup", event => {
-  if (momentSwipeStartX == null || !activeMomentSequence.length) return;
-  const distance = event.clientX - momentSwipeStartX;
-  const heldLongEnough = Date.now() - momentPressStartedAt >= 250;
-  momentSwipeStartX = null;
-  momentPressStartedAt = 0;
-  if (Math.abs(distance) < 45) {
-    suppressMomentNavigationClick = heldLongEnough;
+
+storyViewerDialog.addEventListener("pointermove", event => {
+  if (!momentGesture || momentGesture.id !== event.pointerId || !activeMomentSequence.length) return;
+  const distanceY = Math.max(0, event.clientY - momentGesture.y);
+  const distanceX = Math.abs(event.clientX - momentGesture.x);
+  if (distanceY < 8 || distanceY <= distanceX) return;
+  event.preventDefault();
+  storyViewerDialog.classList.add("swiping-down");
+  storyViewerDialog.style.setProperty("--story-drag-y", `${distanceY}px`);
+  storyViewerDialog.style.setProperty("--story-drag-opacity", String(Math.max(.35, 1 - distanceY / 420)));
+});
+
+storyViewerDialog.addEventListener("pointerup", event => {
+  if (!momentGesture || momentGesture.id !== event.pointerId || !activeMomentSequence.length) return;
+  const result = classifyStoryGesture(momentGesture, event.clientX, event.clientY, Date.now() - momentPressStartedAt);
+  if (result.action === "dismiss") {
+    clearMomentGesture(true);
+    dismissMomentDown();
+    return;
+  }
+  clearMomentGesture();
+  if (result.action === "release") {
+    suppressMomentNavigationClick = result.held;
     resumeActiveMoment();
     return;
   }
-  if (distance < 0) nextMoment();
+  if (result.action === "next") nextMoment();
   else previousMoment();
 });
-document.querySelector("#mediaViewer .media-viewer-dialog").addEventListener("pointercancel", () => {
-  momentSwipeStartX = null;
-  momentPressStartedAt = 0;
+
+storyViewerDialog.addEventListener("pointercancel", () => {
+  clearMomentGesture();
   resumeActiveMoment();
 });
 document.getElementById("mediaViewer").addEventListener("click", event => {

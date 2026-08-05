@@ -533,7 +533,7 @@ create policy "members delete own avatar" on storage.objects
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
-  'group-media', 'group-media', true, 15728640,
+  'group-media', 'group-media', true, 104857600,
   array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm',
         'application/pdf', 'text/plain', 'application/zip',
         'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
