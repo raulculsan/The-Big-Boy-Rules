@@ -4126,6 +4126,7 @@ input:disabled {
   border: 0;
   color: var(--text);
   background: transparent;
+  touch-action: manipulation;
 }
 .story-add-button > span,
 .story-avatar-ring {
