@@ -1298,6 +1298,47 @@ body.light .message p {
   }
 }
 
+/* Portal de herramientas: hijo directo del backdrop, sin recorte en Safari iOS. */
+#mediaUploader.has-media > .media-crop-controls {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2200 !important;
+  display: block !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  transform: none !important;
+  pointer-events: none !important;
+}
+#mediaUploader.has-media > .media-crop-controls .media-tool-panel.active {
+  z-index: 2201 !important;
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+@media (max-width: 760px) {
+  #mediaUploader.has-media > .media-crop-controls .media-tool-panel.active {
+    position: fixed !important;
+    inset: auto 8px 126px !important;
+    width: auto !important;
+    min-height: 76px;
+    max-height: min(46dvh, 390px) !important;
+    padding: 17px !important;
+    overflow: auto !important;
+    border: 1px solid rgba(255,255,255,.22) !important;
+    border-radius: 20px !important;
+    background: rgba(12,12,15,.97) !important;
+    box-shadow: 0 -12px 46px rgba(0,0,0,.72) !important;
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+  }
+}
+
 /* Herramientas estilo Instagram, integradas sobre el propio lienzo */
 #mediaUploader .media-cropper { position: relative; display: block; }
 #mediaUploader .media-crop-stage { height: 100dvh; width: 100%; padding: 0 12px; }

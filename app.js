@@ -2869,6 +2869,12 @@ function toggleMediaTool(toolName) {
     requestAnimationFrame(() => field.focus({preventScroll: true}));
   }
 }
+// Mantiene las hojas de herramientas fuera de los contenedores con overflow/transform.
+// Safari iOS puede recortar elementos fixed si permanecen dentro de esos ancestros.
+const mediaControlsPortal = document.querySelector("#mediaUploader .media-crop-controls");
+if (mediaControlsPortal?.parentElement !== document.getElementById("mediaUploader")) {
+  document.getElementById("mediaUploader").appendChild(mediaControlsPortal);
+}
 document.querySelectorAll("[data-media-tool]").forEach(button => button.addEventListener("click", () => toggleMediaTool(button.dataset.mediaTool)));
 document.querySelectorAll("[data-editor-filter]").forEach(button => button.addEventListener("click", () => {
   mediaFilter = button.dataset.editorFilter;
