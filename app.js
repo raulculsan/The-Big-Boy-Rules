@@ -51,6 +51,8 @@ const SIDEBAR_COMPACT_KEY = "bb-sidebar-compact";
 if (localStorage.getItem(SIDEBAR_COMPACT_KEY) === "1") document.body.classList.add("sidebar-compact");
 let sidebarSwipeStart = null;
 let mobileHeaderLastScrollY = Math.max(0, window.scrollY);
+let mobileHeaderScrollAnchor = mobileHeaderLastScrollY;
+let mobileHeaderDirection = null;
 let mobileHeaderFrame = null;
 
 function isMobileSidebar() {
@@ -76,11 +78,26 @@ function syncMobileHeader() {
   if (!isMobileSidebar() || mobileHeaderMustStayVisible() || currentScrollY < 72) {
     showMobileHeader();
     mobileHeaderLastScrollY = currentScrollY;
+    mobileHeaderScrollAnchor = currentScrollY;
+    mobileHeaderDirection = null;
     return;
   }
   const movement = currentScrollY - mobileHeaderLastScrollY;
-  if (movement > 7 && currentScrollY > 120) document.body.classList.add("mobile-header-hidden");
-  else if (movement < -7) showMobileHeader();
+  if (movement > 2) {
+    if (mobileHeaderDirection !== "down") {
+      mobileHeaderDirection = "down";
+      mobileHeaderScrollAnchor = mobileHeaderLastScrollY;
+    }
+    if (currentScrollY > 120 && currentScrollY - mobileHeaderScrollAnchor > 64) {
+      document.body.classList.add("mobile-header-hidden");
+    }
+  } else if (movement < -2) {
+    if (mobileHeaderDirection !== "up") {
+      mobileHeaderDirection = "up";
+      mobileHeaderScrollAnchor = mobileHeaderLastScrollY;
+    }
+    if (mobileHeaderScrollAnchor - currentScrollY > 18) showMobileHeader();
+  }
   mobileHeaderLastScrollY = currentScrollY;
 }
 
@@ -369,6 +386,8 @@ function selectContentTab(tabName) {
 function goTo(sectionId) {
   showMobileHeader();
   mobileHeaderLastScrollY = 0;
+  mobileHeaderScrollAnchor = 0;
+  mobileHeaderDirection = null;
   const requestedSection = sectionId;
   const homeAnchor = sectionId === "miembros" || sectionId === "noticias" ? sectionId : null;
   if (homeAnchor) sectionId = "inicio";
@@ -3470,8 +3489,10 @@ const initialSection = location.hash.replace("#", "");
 if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "calendario"].includes(initialSection)) goTo(initialSection);
 window.addEventListener("scroll", scheduleMobileHeaderSync, {passive: true});
 window.addEventListener("resize", () => {
-  showMobileHeader();
+  if (!isMobileSidebar()) showMobileHeader();
   mobileHeaderLastScrollY = Math.max(0, window.scrollY);
+  mobileHeaderScrollAnchor = mobileHeaderLastScrollY;
+  mobileHeaderDirection = null;
 }, {passive: true});
 window.addEventListener("load", () => setTimeout(() => document.getElementById("pageLoader")?.classList.add("hidden"), 450));
 const cursorGlow = document.getElementById("cursorGlow");
