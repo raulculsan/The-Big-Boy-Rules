@@ -5001,6 +5001,10 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
 /* Editor por herramientas: pantalla independiente inspirada en historias */
 #mediaDropzone[hidden],
 #mediaUploadPreview[hidden] { display: none !important; }
+#mediaUploader:not(.has-media) .media-upload-preview:empty,
+#mediaUploader:not(.has-media) .media-cropper,
+#mediaUploader:not(.has-media) .form-feedback:empty,
+#mediaUploader:not(.has-media) .modal-actions { display: none !important; }
 #mediaUploader.has-media {
   position: fixed;
   inset: 0;
