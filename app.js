@@ -128,6 +128,14 @@ function normalizeUsername(value = "") {
     .replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
 }
 
+function resolveMediaMention() {
+  const selected = document.getElementById("mediaMention")?.value;
+  if (selected) return selected;
+  const searchable = `${document.getElementById("mediaOverlayText")?.value || ""} ${document.getElementById("mediaUploadCaption")?.value || ""}`;
+  const username = searchable.match(/(?:^|\s)@([a-zA-Z0-9._-]{3,32})/)?.[1];
+  return username ? members.find(member => normalizeUsername(member.username) === normalizeUsername(username))?.authId || null : null;
+}
+
 function isSuperAdmin() {
   return currentUser?.roleKey === "superadmin" && currentUser?.hidden === true;
 }
@@ -1815,6 +1823,7 @@ function resetMediaCropEditor() {
   const overlay = document.getElementById("mediaOverlayText");
   const original = document.getElementById("mediaKeepOriginal");
   if (filter) filter.value = "none";
+  document.querySelectorAll("[data-editor-filter]").forEach(button => button.classList.toggle("active", button.dataset.editorFilter === "none"));
   if (overlay) overlay.value = "";
   if (original) original.checked = true;
 }
@@ -1912,7 +1921,7 @@ async function publishMedia(form) {
     const record = {
       user_id: currentAuthUser.id, legacy_id: currentUser.id,
       caption: document.getElementById("mediaUploadCaption").value.trim(),
-      mentioned_user_id: document.getElementById("mediaMention").value || null,
+      mentioned_user_id: resolveMediaMention(),
       media_url: mediaUrl, media_type: file.type.startsWith("video/") ? "video" : "image"
     };
     const table = mediaUploadMode === "moment" ? "moments" : "profile_posts";
@@ -2728,6 +2737,12 @@ document.getElementById("mediaCropZoom").addEventListener("input", event => {
 });
 document.getElementById("mediaFilter").addEventListener("change", event => { mediaFilter = event.target.value; drawMediaCrop(); });
 document.getElementById("mediaOverlayText").addEventListener("input", event => { mediaOverlayText = event.target.value.trim(); drawMediaCrop(); });
+document.querySelectorAll("[data-editor-filter]").forEach(button => button.addEventListener("click", () => {
+  mediaFilter = button.dataset.editorFilter;
+  document.getElementById("mediaFilter").value = mediaFilter;
+  document.querySelectorAll("[data-editor-filter]").forEach(item => item.classList.toggle("active", item === button));
+  drawMediaCrop();
+}));
 document.getElementById("resetMediaCrop").addEventListener("click", () => {
   mediaCropZoom = 1;
   mediaCropOffsetX = 0;

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-43" />
+  <link rel="stylesheet" href="styles.css?v=20260805-44" />
 </head>
 <body>
 
@@ -604,17 +604,17 @@
           </div>
           <div class="media-crop-controls">
             <div class="media-customization-grid">
-              <label><span>Filtro</span><select id="mediaFilter"><option value="none">Original</option><option value="vivid">Vivo</option><option value="warm">Cálido</option><option value="cool">Frío</option><option value="mono">Blanco y negro</option><option value="vintage">Vintage</option></select></label>
-              <label><span>Texto sobre la foto</span><input id="mediaOverlayText" maxlength="80" placeholder="Escribe algo..."></label>
+              <label class="media-text-tool"><span>Texto sobre la foto</span><input id="mediaOverlayText" maxlength="80" placeholder="Aa · Escribe texto o @usuario"></label>
             </div>
-            <label><span>Mencionar a una persona</span><select id="mediaMention"><option value="">Nadie</option></select></label>
-            <label><span>Descripción</span><textarea id="mediaUploadCaption" maxlength="300" rows="4" placeholder="Cuenta algo sobre este momento..."></textarea></label>
+            <label class="media-mention-tool"><span>@ Mencionar</span><select id="mediaMention"><option value="">Nadie</option></select></label>
+            <label class="media-caption-tool"><span>Descripción</span><textarea id="mediaUploadCaption" maxlength="300" rows="3" placeholder="Escribe una descripción o menciona con @..."></textarea></label>
+            <div class="media-filter-tool"><span>Filtros</span><div class="media-filter-rail" role="group" aria-label="Filtros de imagen"><button class="active" type="button" data-editor-filter="none"><i></i><small>Original</small></button><button type="button" data-editor-filter="vivid"><i></i><small>Vivo</small></button><button type="button" data-editor-filter="warm"><i></i><small>Cálido</small></button><button type="button" data-editor-filter="cool"><i></i><small>Frío</small></button><button type="button" data-editor-filter="mono"><i></i><small>B&amp;N</small></button><button type="button" data-editor-filter="vintage"><i></i><small>Vintage</small></button></div><select id="mediaFilter" aria-label="Filtro" hidden><option value="none">Original</option><option value="vivid">Vivo</option><option value="warm">Cálido</option><option value="cool">Frío</option><option value="mono">Blanco y negro</option><option value="vintage">Vintage</option></select></div>
             <label for="mediaCropZoom">
               <span>Tamaño</span>
               <input id="mediaCropZoom" type="range" min="1" max="3" value="1" step="0.01">
             </label>
             <button class="text-button" id="resetMediaCrop" type="button">Centrar foto</button>
-            <label class="media-original-toggle"><input id="mediaKeepOriginal" type="checkbox" checked> <span>Conservar archivo, tamaño y proporción original</span></label>
+            <label class="media-original-toggle"><input id="mediaKeepOriginal" type="checkbox" checked> <span>Mostrar y conservar la foto completa</span></label>
             <small>Arrastra la imagen, ajusta el zoom, aplica un filtro o añade texto antes de compartir.</small>
           </div>
         </div>
@@ -726,7 +726,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-43"></script>
-  <script src="app.js?v=20260805-43"></script>
+  <script src="config.js?v=20260805-44"></script>
+  <script src="app.js?v=20260805-44"></script>
 </body>
 </html>
