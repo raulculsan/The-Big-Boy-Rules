@@ -5427,4 +5427,29 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
   .media-viewer-dialog { width: 100vw; max-height: 100dvh; min-height: 100dvh; align-content: center; }
   .media-viewer-dialog img,
   .media-viewer-dialog video { max-width: 100vw; max-height: calc(100dvh - 72px); border-radius: 0; }
+  .media-viewer-close {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    left: 14px;
+    right: auto;
+    z-index: 2410;
+  }
+  .moment-options-button {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    right: 14px;
+    z-index: 2411;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 9px 6px;
+    touch-action: manipulation;
+  }
+  .moment-options-button[hidden] { display: none !important; }
+  .moment-options-menu {
+    position: fixed;
+    top: calc(max(12px, env(safe-area-inset-top)) + 50px);
+    right: 14px;
+    z-index: 2412;
+  }
 }
