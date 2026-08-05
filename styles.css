@@ -1322,13 +1322,22 @@ body.light .message p {
 
 /* En la PWA de iPhone los controles deben quedar debajo de hora, señal y batería. */
 @media (max-width: 760px) {
+  body.standalone-app {
+    --pwa-safe-top: env(safe-area-inset-top, 0px);
+  }
   body.standalone-app .topbar {
-    height: calc(58px + env(safe-area-inset-top));
-    padding-top: env(safe-area-inset-top);
+    height: calc(58px + var(--pwa-safe-top));
+    padding-top: var(--pwa-safe-top);
     box-sizing: border-box;
   }
   body.standalone-app .notifications-dropdown {
-    top: calc(62px + env(safe-area-inset-top));
+    top: calc(62px + var(--pwa-safe-top));
+  }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  body.standalone-app {
+    --pwa-safe-top: max(env(safe-area-inset-top, 0px), 58px);
   }
 }
 
