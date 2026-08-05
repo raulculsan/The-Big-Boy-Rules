@@ -1789,6 +1789,8 @@ function openMediaUploader(mode) {
   document.getElementById("mediaUploadCaption").value = "";
   document.getElementById("mediaMention").innerHTML = `<option value="">Nadie</option>${members.filter(member => !member.hidden && member.authId && member.id !== currentUser.id).map(member => `<option value="${escapeHtml(member.authId)}">@${escapeHtml(member.username)} · ${escapeHtml(member.name)}</option>`).join("")}`;
   document.getElementById("mediaUploadPreview").innerHTML = "";
+  document.getElementById("mediaDropzone").hidden = false;
+  document.getElementById("mediaUploadPreview").hidden = false;
   resetMediaCropEditor();
   document.getElementById("mediaUploadFeedback").textContent = "";
   const modal = document.getElementById("mediaUploader");
@@ -1802,6 +1804,8 @@ function closeMediaUploader() {
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
   modal.classList.remove("has-media");
+  document.getElementById("mediaDropzone").hidden = false;
+  document.getElementById("mediaUploadPreview").hidden = false;
   resetMediaCropEditor();
 }
 
@@ -2723,6 +2727,9 @@ document.getElementById("mediaUploadFile").addEventListener("change", async even
   const preview = document.getElementById("mediaUploadPreview");
   if (!file) {
     preview.innerHTML = "";
+    document.getElementById("mediaDropzone").hidden = false;
+    preview.hidden = false;
+    document.getElementById("mediaUploader").classList.remove("has-media");
     resetMediaCropEditor();
     return;
   }
@@ -2738,12 +2745,17 @@ document.getElementById("mediaUploadFile").addEventListener("change", async even
     preview.innerHTML = `<video src="${url}" controls></video>`;
   } else {
     preview.innerHTML = "";
+    document.getElementById("mediaDropzone").hidden = true;
+    preview.hidden = true;
+    const uploader = document.getElementById("mediaUploader");
+    uploader.classList.add("has-media");
     try {
       await loadMediaCrop(file);
-      const uploader = document.getElementById("mediaUploader");
-      uploader.classList.add("has-media");
       document.getElementById("mediaUploadForm").scrollTo({top: 0, behavior: "instant"});
     } catch (error) {
+      uploader.classList.remove("has-media");
+      document.getElementById("mediaDropzone").hidden = false;
+      preview.hidden = false;
       document.getElementById("mediaUploadFeedback").textContent = error.message;
     }
   }
