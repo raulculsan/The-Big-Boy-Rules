@@ -124,6 +124,22 @@ export default {
       return json({ok: true});
     }
 
+    if (body.action === "reset-password") {
+      const userId = body.userId || "";
+      const password = body.password || "";
+      if (!userId || userId === user.id || password.length < 8 || password.length > 128) {
+        return json({error: "Revisa el usuario y usa una contraseña de 8 a 128 caracteres."}, 400);
+      }
+      const {data: target} = await adminClient.from("profiles").select("is_hidden").eq("id", userId).single();
+      if (!target || target.is_hidden) return json({error: "No puedes modificar esta cuenta."}, 403);
+      const {error} = await adminClient.auth.admin.updateUserById(userId, {
+        password,
+        user_metadata: {must_change_password: true},
+      });
+      if (error) return json({error: error.message}, 400);
+      return json({ok: true});
+    }
+
     return json({error: "Acción no válida."}, 400);
   },
 };

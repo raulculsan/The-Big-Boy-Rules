@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-41" />
+  <link rel="stylesheet" href="styles.css?v=20260805-42" />
 </head>
 <body>
 
@@ -593,7 +593,7 @@
         <label class="media-dropzone" for="mediaUploadFile">
           <span>＋</span>
           <strong>Selecciona una foto o vídeo</strong>
-          <small id="mediaUploadHelp">JPG, PNG, WebP o MP4 · máximo 15 MB</small>
+          <small id="mediaUploadHelp">JPG, PNG, WebP o MP4 · máximo 30 MB</small>
           <input id="mediaUploadFile" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" hidden required>
         </label>
         <div class="media-upload-preview" id="mediaUploadPreview"></div>
@@ -603,12 +603,17 @@
             <span class="media-crop-guide" aria-hidden="true"></span>
           </div>
           <div class="media-crop-controls">
+            <div class="media-customization-grid">
+              <label><span>Filtro</span><select id="mediaFilter"><option value="none">Original</option><option value="vivid">Vivo</option><option value="warm">Cálido</option><option value="cool">Frío</option><option value="mono">Blanco y negro</option><option value="vintage">Vintage</option></select></label>
+              <label><span>Texto sobre la foto</span><input id="mediaOverlayText" maxlength="80" placeholder="Escribe algo..."></label>
+            </div>
             <label for="mediaCropZoom">
               <span>Tamaño</span>
               <input id="mediaCropZoom" type="range" min="1" max="3" value="1" step="0.01">
             </label>
             <button class="text-button" id="resetMediaCrop" type="button">Centrar foto</button>
-            <small>Arrastra la imagen para moverla y ajusta el zoom antes de compartir.</small>
+            <label class="media-original-toggle"><input id="mediaKeepOriginal" type="checkbox"> <span>Subir en tamaño y proporción original</span></label>
+            <small>Arrastra la imagen, ajusta el zoom, aplica un filtro o añade texto antes de compartir.</small>
           </div>
         </div>
         <label>
@@ -723,7 +728,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-41"></script>
-  <script src="app.js?v=20260805-41"></script>
+  <script src="config.js?v=20260805-42"></script>
+  <script src="app.js?v=20260805-42"></script>
 </body>
 </html>
