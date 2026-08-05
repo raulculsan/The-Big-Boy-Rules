@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-67" />
+  <link rel="stylesheet" href="styles.css?v=20260805-68" />
 </head>
 <body>
 
@@ -109,16 +109,6 @@
       </a>
     </nav>
 
-    <div class="sidebar-footer">
-      <div class="mini-user">
-        <div class="avatar small" id="sidebarAvatar">K</div>
-        <div>
-          <strong id="sidebarUserName">Usuario</strong>
-          <small id="sidebarUserRole">Miembro</small>
-        </div>
-      </div>
-      <button id="themeButton" class="icon-button" title="Cambiar tema">◐</button>
-    </div>
   </aside>
 
   <main class="app">
@@ -163,6 +153,7 @@
           </button>
           <div class="user-dropdown" id="userDropdown">
             <button id="myProfileButton">Mi perfil</button>
+            <button id="helpButton">Ayuda y sugerencias</button>
             <button id="logoutButton" class="logout-option">Cerrar sesión</button>
           </div>
         </div>
@@ -239,17 +230,6 @@
           </ol>
         </article>
       </div>
-
-      <article class="panel featured-members reveal">
-        <div class="panel-heading">
-          <div>
-            <span class="eyebrow">EL EQUIPO</span>
-            <h3>Miembros destacados</h3>
-          </div>
-          <button class="text-button" data-go="miembros">Ver todos →</button>
-        </div>
-        <div class="member-strip" id="featuredMembers"></div>
-      </article>
 
       <section class="home-members-section reveal" id="miembros">
         <div class="section-intro">
@@ -671,6 +651,43 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="mediaReplyModal" aria-hidden="true">
+    <div class="profile-editor-modal compact-dialog reply-dialog" role="dialog" aria-modal="true" aria-labelledby="mediaReplyTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">CONVERSACIÓN</span><h2 id="mediaReplyTitle">Responder</h2></div>
+        <button class="icon-button" id="closeMediaReplyModal" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="mediaReplyForm" class="profile-form">
+        <div class="reply-context" id="mediaReplyContext"></div>
+        <label><span>Tu respuesta</span><textarea id="mediaReplyBody" maxlength="500" rows="4" placeholder="Escribe una respuesta..." required></textarea></label>
+        <div class="form-feedback" id="mediaReplyFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelMediaReply" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Enviar respuesta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="helpModal" aria-hidden="true">
+    <div class="profile-editor-modal compact-dialog help-dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">CONTACTO PRIVADO</span><h2 id="helpTitle">Ayuda y sugerencias</h2></div>
+        <button class="icon-button" id="closeHelpModal" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="helpForm" class="profile-form">
+        <p class="help-intro">Tu mensaje llegará directamente a la administración y podrás continuar la conversación por chat privado.</p>
+        <label><span>Motivo</span><select id="helpType"><option value="Ayuda">Necesito ayuda</option><option value="Sugerencia">Quiero hacer una sugerencia</option><option value="Queja">Quiero comunicar una queja</option></select></label>
+        <label><span>Mensaje</span><textarea id="helpMessage" maxlength="1200" rows="5" placeholder="Cuéntanos qué ha ocurrido o qué te gustaría mejorar..." required></textarea></label>
+        <div class="form-feedback" id="helpFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelHelpModal" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Enviar a administración</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-backdrop calendar-day-modal-backdrop" id="calendarDayModal" aria-hidden="true">
     <div class="profile-editor-modal calendar-day-modal" role="dialog" aria-modal="true" aria-labelledby="calendarDayTitle">
       <div class="modal-heading">
@@ -743,6 +760,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260805-67"></script>
+  <script src="app.js?v=20260805-68"></script>
 </body>
 </html>
