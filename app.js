@@ -243,10 +243,12 @@ async function currentPushSubscription() {
 
 async function syncPushNotificationState() {
   const button = document.getElementById("pushNotificationButton");
+  const testButton = document.getElementById("pushNotificationTestButton");
   const status = document.getElementById("pushNotificationStatus");
   if (!button || !status) return;
   if (!pushSupported()) {
     button.disabled = true;
+    if (testButton) testButton.hidden = true;
     button.textContent = "No disponible";
     status.textContent = "Instala la PWA en un dispositivo compatible.";
     return;
@@ -254,6 +256,7 @@ async function syncPushNotificationState() {
   const subscription = await currentPushSubscription();
   button.disabled = false;
   button.classList.toggle("enabled", Boolean(subscription));
+  if (testButton) testButton.hidden = !subscription;
   button.textContent = subscription ? "Desactivar" : "Activar";
   status.textContent = subscription ? "Recibirás mensajes, Me gusta y respuestas." : Notification.permission === "denied" ? "El permiso está bloqueado en los ajustes del dispositivo." : "Actívalos para recibir avisos aunque la aplicación esté cerrada.";
 }
@@ -286,9 +289,23 @@ async function togglePushNotifications() {
   }
 }
 
-function dispatchPush(kind, entityId) {
+async function dispatchPush(kind, entityId) {
   if (!backendReady || !currentAuthUser || !entityId) return;
-  db.functions.invoke("push-dispatch", {body: {kind, entityId}}).catch(() => {});
+  const {data, error} = await db.functions.invoke("push-dispatch", {body: {kind, entityId}});
+  if (error) console.warn("No se pudo enviar la notificación push", error);
+  return {data, error};
+}
+
+async function testPushNotifications() {
+  const button = document.getElementById("pushNotificationTestButton");
+  const status = document.getElementById("pushNotificationStatus");
+  button.disabled = true;
+  status.textContent = "Enviando notificación de prueba…";
+  const result = await dispatchPush("test", "self");
+  if (result?.error) status.textContent = "No se pudo enviar. Vuelve a activar los avisos.";
+  else if (result?.data?.delivered) status.textContent = "Prueba enviada. Debe aparecer en unos segundos.";
+  else status.textContent = "No hay una suscripción válida. Desactiva y vuelve a activar los avisos.";
+  button.disabled = false;
 }
 
 function classifyStoryGesture(gesture, endX, endY, elapsed) {
@@ -2881,6 +2898,10 @@ document.getElementById("notificationsButton").addEventListener("click", event =
 document.getElementById("pushNotificationButton").addEventListener("click", event => {
   event.stopPropagation();
   togglePushNotifications();
+});
+document.getElementById("pushNotificationTestButton").addEventListener("click", event => {
+  event.stopPropagation();
+  testPushNotifications();
 });
 document.getElementById("shareDestinationType").addEventListener("change", updateShareDestinations);
 document.getElementById("closeShareMediaModal").addEventListener("click", closeShareMedia);
