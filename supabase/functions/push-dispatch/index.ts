@@ -1,9 +1,22 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {createClient} from "npm:@supabase/supabase-js@2.57.4";
-import webpush from "npm:web-push@3.6.7";
+import * as webpush from "jsr:@negrel/webpush@0.5.0";
 
 const corsHeaders = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS"};
 const json = (body: Record<string, unknown>, status = 200) => Response.json(body, {status, headers: {...corsHeaders, "content-type": "application/json; charset=utf-8"}});
+
+function importRawVapidKeys(publicKey: string, privateKey: string) {
+  const decode = (value: string) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=")), character => character.charCodeAt(0));
+  const encode = (value: Uint8Array) => btoa(String.fromCharCode(...value)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  const point = decode(publicKey);
+  if (point.length !== 65 || point[0] !== 4) throw new Error("La clave pública VAPID no es válida.");
+  const x = encode(point.slice(1, 33));
+  const y = encode(point.slice(33, 65));
+  return webpush.importVapidKeys({
+    publicKey: {kty: "EC", crv: "P-256", x, y, ext: true, key_ops: ["verify"]},
+    privateKey: {kty: "EC", crv: "P-256", x, y, d: privateKey, ext: true, key_ops: ["sign"]},
+  }, {extractable: false});
+}
 
 export default {
   async fetch(request: Request): Promise<Response> {
@@ -20,7 +33,7 @@ export default {
     const {data: {user}} = await admin.auth.getUser(authorization.replace(/^Bearer\s+/i, ""));
     if (!user) return json({error: "Sesión no válida."}, 401);
     const {kind, entityId} = await request.json();
-    if (!["group_message", "private_message", "like", "reply"].includes(kind) || !entityId) return json({error: "Petición no válida."}, 400);
+    if (!["group_message", "private_message", "like", "reply", "test"].includes(kind) || !entityId) return json({error: "Petición no válida."}, 400);
 
     const {data: actor} = await admin.from("profiles").select("display_name").eq("id", user.id).single();
     const actorName = actor?.display_name || "Un miembro";
@@ -29,7 +42,12 @@ export default {
     let body = "Tienes una notificación nueva.";
     let targetUrl = "./";
 
-    if (kind === "group_message") {
+    if (kind === "test") {
+      recipients = [user.id];
+      title = "Notificaciones activadas";
+      body = "Los avisos de The Big Boy Rules funcionan correctamente.";
+      targetUrl = "./#inicio";
+    } else if (kind === "group_message") {
       const {data: message} = await admin.from("messages").select("user_id,body").eq("id", entityId).single();
       if (!message || message.user_id !== user.id) return json({error: "Acción no autorizada."}, 403);
       const {data: profiles} = await admin.from("profiles").select("id").eq("is_hidden", false).neq("id", user.id);
@@ -69,16 +87,18 @@ export default {
     recipients = [...new Set(recipients.filter(Boolean))];
     if (!recipients.length) return json({ok: true, delivered: 0});
     const {data: subscriptions} = await admin.from("push_subscriptions").select("*").in("user_id", recipients);
-    webpush.setVapidDetails("mailto:admin@bigboyrules.local", publicKey, privateKey);
+    const vapidKeys = await importRawVapidKeys(publicKey, privateKey);
+    const applicationServer = await webpush.ApplicationServer.new({contactInformation: "mailto:admin@bigboyrules.local", vapidKeys});
     const payload = JSON.stringify({title, body: String(body).slice(0, 180), url: targetUrl, tag: `${kind}-${entityId}`});
     let delivered = 0;
     await Promise.all((subscriptions || []).map(async subscription => {
       try {
-        await webpush.sendNotification({endpoint: subscription.endpoint, keys: {p256dh: subscription.p256dh, auth: subscription.auth}}, payload);
+        const subscriber = applicationServer.subscribe({endpoint: subscription.endpoint, keys: {p256dh: subscription.p256dh, auth: subscription.auth}});
+        await subscriber.pushTextMessage(payload, {});
         delivered += 1;
       } catch (error) {
-        const statusCode = (error as { statusCode?: number })?.statusCode;
-        if ([404, 410].includes(statusCode || 0)) await admin.from("push_subscriptions").delete().eq("id", subscription.id);
+        if (error instanceof webpush.PushMessageError && error.isGone()) await admin.from("push_subscriptions").delete().eq("id", subscription.id);
+        else console.error("No se pudo enviar una notificación push", error);
       }
     }));
     return json({ok: true, delivered});
