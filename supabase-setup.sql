@@ -306,8 +306,8 @@ create policy "members read profiles" on public.profiles
 drop policy if exists "members update own profile" on public.profiles;
 create policy "members update own profile" on public.profiles
   for update to authenticated
-  using (auth.uid() = id or public.current_user_is_superadmin())
-  with check (auth.uid() = id or public.current_user_is_superadmin());
+  using (auth.uid() = id or public.current_user_can_manage())
+  with check (auth.uid() = id or public.current_user_can_manage());
 
 drop policy if exists "members read messages" on public.messages;
 create policy "members read messages" on public.messages
@@ -508,7 +508,7 @@ create policy "members upload own avatar" on storage.objects
   for insert to authenticated
   with check (
     bucket_id = 'avatars'
-    and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_is_superadmin())
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_can_manage())
   );
 
 drop policy if exists "members update own avatar" on storage.objects;
@@ -516,11 +516,11 @@ create policy "members update own avatar" on storage.objects
   for update to authenticated
   using (
     bucket_id = 'avatars'
-    and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_is_superadmin())
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_can_manage())
   )
   with check (
     bucket_id = 'avatars'
-    and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_is_superadmin())
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_can_manage())
   );
 
 drop policy if exists "members delete own avatar" on storage.objects;
@@ -528,7 +528,7 @@ create policy "members delete own avatar" on storage.objects
   for delete to authenticated
   using (
     bucket_id = 'avatars'
-    and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_is_superadmin())
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_can_manage())
   );
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

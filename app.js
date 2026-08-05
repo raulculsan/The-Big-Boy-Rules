@@ -41,6 +41,17 @@ const pageTitle = document.getElementById("pageTitle");
 const sections = [...document.querySelectorAll(".page-section")];
 const navLinks = [...document.querySelectorAll(".nav-link")];
 const sidebar = document.getElementById("sidebar");
+const SIDEBAR_COMPACT_KEY = "bb-sidebar-compact";
+if (localStorage.getItem(SIDEBAR_COMPACT_KEY) === "1") document.body.classList.add("sidebar-compact");
+
+function syncSidebarCollapseButton() {
+  const compact = document.body.classList.contains("sidebar-compact");
+  const button = document.getElementById("sidebarCollapseButton");
+  button.setAttribute("aria-expanded", String(!compact));
+  button.setAttribute("aria-label", compact ? "Ampliar menú lateral" : "Reducir menú lateral");
+  button.title = compact ? "Ampliar menú" : "Reducir menú";
+}
+syncSidebarCollapseButton();
 
 let currentUser = null;
 let currentAuthUser = null;
@@ -665,9 +676,7 @@ function renderAdminPanel() {
     <td>—</td><td><div class="admin-user-actions">
       <button class="text-button" type="button" data-profile="${user.id}">Ver perfil</button>
       ${user.id !== currentUser?.id ? `<button class="text-button" type="button" data-admin-message="${user.id}">Mensaje</button>` : ""}
-      ${canManageSite() && (isSuperAdmin() || user.id !== currentUser?.id) ? `<button class="text-button" type="button" data-rename-user="${user.id}">Cambiar @</button>` : ""}
-      ${canManageSite() && user.authId && !user.hidden && user.id !== currentUser?.id ? `<button class="text-button" type="button" data-change-role="${user.id}">${user.roleKey === "admin" ? "Hacer miembro" : "Hacer administrador"}</button>` : ""}
-      ${isSuperAdmin() ? `<button class="text-button" type="button" data-edit-user="${user.id}">Editar perfil</button>` : ""}
+      ${canManageSite() && (isSuperAdmin() || user.id !== currentUser?.id) ? `<button class="text-button" type="button" data-edit-user="${user.id}">Editar perfil</button>` : ""}
       ${isSuperAdmin() && user.authId ? `<button class="text-button danger" type="button" data-delete-user="${user.authId}" data-delete-user-name="${escapeHtml(user.name)}">Eliminar</button>` : ""}
     </div></td></tr>`).join("");
 }
@@ -1455,13 +1464,19 @@ async function removeSpotifyPlaylist() {
 
 function openProfileEditor(memberId = currentUser?.id) {
   const profile = getMember(memberId);
-  if (!profile || (profile.id !== currentUser?.id && !isSuperAdmin())) return;
+  if (!profile || (profile.id !== currentUser?.id && !canManageSite())) return;
   editingProfileId = profile.id;
   pendingAvatarFile = null;
   removeAvatarRequested = false;
   resetAvatarCropEditor();
   document.getElementById("profileAvatar").value = "";
   document.getElementById("profileName").value = profile.name;
+  const managingAnotherUser = canManageSite() && profile.id !== currentUser?.id;
+  document.querySelector("#profileEditor .eyebrow").textContent = managingAnotherUser ? "ADMINISTRACIÓN" : "MI PERFIL";
+  document.getElementById("profileEditorTitle").textContent = managingAnotherUser ? `Editar a ${profile.name}` : "Editar perfil";
+  document.getElementById("adminProfileFields").hidden = !managingAnotherUser;
+  document.getElementById("profileUsername").value = profile.username;
+  document.getElementById("profileRole").value = profile.roleKey === "admin" ? "admin" : "member";
   document.getElementById("profileNickname").value = profile.nickname;
   document.getElementById("profileFlag").value = profile.countryFlag || "";
   document.getElementById("profileBio").value = profile.bio;
@@ -1566,12 +1581,29 @@ function createCroppedAvatarFile() {
 
 async function saveProfile(form) {
   const profile = getMember(editingProfileId);
-  if (!profile || (profile.id !== currentUser?.id && !isSuperAdmin())) return;
+  if (!profile || (profile.id !== currentUser?.id && !canManageSite())) return;
   const feedback = document.getElementById("profileFeedback");
   const submit = form.querySelector("[type=submit]");
   submit.disabled = true;
   feedback.textContent = "Guardando…";
   try {
+    const managingAnotherUser = canManageSite() && profile.id !== currentUser?.id;
+    if (managingAnotherUser) {
+      const username = normalizeUsername(document.getElementById("profileUsername").value.trim());
+      const requestedRole = document.getElementById("profileRole").value;
+      if (!/^[a-z0-9._-]{3,32}$/.test(username)) throw new Error("El @ debe tener entre 3 y 32 caracteres válidos.");
+      if (members.some(item => item.id !== profile.id && normalizeUsername(item.username) === username)) throw new Error("Ese @ ya pertenece a otro usuario.");
+      if (username !== profile.username) {
+        await invokeUserAdmin("rename", {userId: profile.authId, username});
+        profile.username = username;
+      }
+      if (requestedRole !== profile.roleKey) {
+        const {error: roleError} = await db.rpc("set_club_member_role", {target_user_id: profile.authId, new_role: requestedRole});
+        if (roleError) throw roleError;
+        profile.roleKey = requestedRole;
+        profile.role = requestedRole === "admin" ? "ADMINISTRADOR" : "MIEMBRO";
+      }
+    }
     let avatarUrl = profile.avatarUrl;
     const targetAuthId = profile.authId || currentAuthUser?.id;
     if (removeAvatarRequested) {
@@ -2115,6 +2147,11 @@ navLinks.forEach(link => link.addEventListener("click", event => {
   goTo(link.dataset.section);
 }));
 document.getElementById("menuButton").addEventListener("click", () => sidebar.classList.toggle("open"));
+document.getElementById("sidebarCollapseButton").addEventListener("click", () => {
+  const compact = document.body.classList.toggle("sidebar-compact");
+  localStorage.setItem(SIDEBAR_COMPACT_KEY, compact ? "1" : "0");
+  syncSidebarCollapseButton();
+});
 document.getElementById("themeButton").addEventListener("click", () => {
   document.body.classList.toggle("light");
   localStorage.setItem("bb-theme", document.body.classList.contains("light") ? "light" : "dark");
