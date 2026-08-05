@@ -1,11 +1,11 @@
-const CACHE_NAME = "big-boy-rules-v70";
+const CACHE_NAME = "big-boy-rules-v71";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260805-70",
-  "./app.js?v=20260805-70",
+  "./styles.css?v=20260805-71",
+  "./app.js?v=20260805-71",
   "./config.js?v=20260805-59",
-  "./manifest.webmanifest?v=20260805-70",
+  "./manifest.webmanifest?v=20260805-71",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -54,4 +54,27 @@ self.addEventListener("fetch", event => {
       return response;
     }))
   );
+});
+
+self.addEventListener("push", event => {
+  let payload = {};
+  try { payload = event.data?.json() || {}; } catch { payload = {body: event.data?.text() || "Tienes una notificación nueva."}; }
+  event.waitUntil(self.registration.showNotification(payload.title || "The Big Boy Rules", {
+    body: payload.body || "Tienes una notificación nueva.",
+    icon: "./icons/icon-192.png",
+    badge: "./icons/icon-192.png",
+    tag: payload.tag || "big-boy-notification",
+    renotify: true,
+    data: {url: payload.url || "./"}
+  }));
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const targetUrl = new URL(event.notification.data?.url || "./", self.registration.scope).href;
+  event.waitUntil(clients.matchAll({type: "window", includeUncontrolled: true}).then(openClients => {
+    const existing = openClients.find(client => new URL(client.url).origin === new URL(targetUrl).origin);
+    if (existing) return existing.navigate(targetUrl).then(client => client?.focus());
+    return clients.openWindow(targetUrl);
+  }));
 });
