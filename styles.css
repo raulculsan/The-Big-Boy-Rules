@@ -5131,11 +5131,40 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
 
 @media (max-width: 760px) {
   #mediaUploader.has-media .media-uploader-modal { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
-  #mediaUploader.has-media .media-crop-stage { top: 54px; bottom: 148px; padding: 8px 68px 8px 8px; }
-  #mediaUploader.has-media .media-editor-toolbar { position: fixed; z-index: 1016; top: 68px; right: 10px; gap: 10px; pointer-events: auto; touch-action: manipulation; }
-  #mediaUploader.has-media .media-editor-toolbar button { width: 46px; height: 46px; }
+  #mediaUploader.has-media .media-crop-stage { top: 54px; bottom: 126px; padding: 8px; }
+  #mediaUploader.has-media .media-editor-toolbar {
+    position: fixed;
+    z-index: 1016;
+    inset: auto 8px 66px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+    padding: 7px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 18px;
+    background: rgba(8,8,10,.88);
+    box-shadow: 0 12px 34px rgba(0,0,0,.36);
+    backdrop-filter: blur(18px);
+    pointer-events: auto;
+    touch-action: manipulation;
+  }
+  #mediaUploader.has-media .media-editor-toolbar button { width: 100%; height: 44px; border-radius: 13px; }
   #mediaUploader.has-media .media-crop-controls { pointer-events: auto; }
-  #mediaUploader .media-tool-panel.active { position: fixed; z-index: 1015; top: 68px; right: 66px; width: calc(100vw - 78px); max-height: min(52dvh, 430px); overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; touch-action: pan-y; }
+  #mediaUploader .media-tool-panel.active {
+    position: fixed;
+    z-index: 1017;
+    inset: auto 8px 126px;
+    width: auto;
+    max-height: min(46dvh, 390px);
+    padding: 17px;
+    overflow-y: auto;
+    border-radius: 20px;
+    box-shadow: 0 -10px 40px rgba(0,0,0,.5);
+    overscroll-behavior: contain;
+    pointer-events: auto;
+    touch-action: pan-y;
+    animation: mobileToolSheetIn .2s ease-out;
+  }
   #mediaUploader .media-tool-panel.active input,
   #mediaUploader .media-tool-panel.active textarea,
   #mediaUploader .media-tool-panel.active select,
@@ -5146,6 +5175,11 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
   #mediaUploader.has-media .modal-actions { left: 10px; right: 10px; bottom: 8px; }
   #mediaUploader.has-media .modal-actions .primary-button { width: 100%; min-height: 50px; }
   #mediaUploader.has-media .form-feedback { left: 14px; right: 14px; bottom: 124px; text-align: center; }
+}
+
+@keyframes mobileToolSheetIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 #mediaCropCanvas.filter-previewing { animation: filterPreviewPulse .22s ease-out; }
