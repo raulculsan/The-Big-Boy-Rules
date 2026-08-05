@@ -1320,6 +1320,18 @@ body.light .message p {
   }
 }
 
+/* En la PWA de iPhone los controles deben quedar debajo de hora, señal y batería. */
+@media (max-width: 760px) {
+  body.standalone-app .topbar {
+    height: calc(58px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    box-sizing: border-box;
+  }
+  body.standalone-app .notifications-dropdown {
+    top: calc(62px + env(safe-area-inset-top));
+  }
+}
+
 /* Cabecera inteligente para móvil y PWA: libera espacio al bajar y vuelve al subir. */
 @media (max-width: 760px) {
   .topbar {
