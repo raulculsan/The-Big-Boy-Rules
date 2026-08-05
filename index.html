@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260730-32" />
+  <link rel="stylesheet" href="styles.css?v=20260805-33" />
 </head>
 <body>
 
@@ -63,10 +63,6 @@
           <div class="login-error" id="loginError" role="alert"></div>
           <button class="login-submit" type="submit">Entrar al club <span>→</span></button>
 
-          <div class="demo-access">
-            <strong>Credenciales provisionales</strong>
-            <span>Usuario: nombre en minúsculas · Contraseña provisional: <b>bigboy2026</b></span>
-          </div>
         </form>
       </div>
     </div>
@@ -99,17 +95,17 @@
         <span>⌂</span> Inicio
       </a>
       <a class="nav-link" href="#chat" data-section="chat">
-        <span>◉</span> Chat del grupo
+        <span>◉</span> Chats
         <i class="notification-dot"></i>
-      </a>
-      <a class="nav-link" href="#privados" data-section="privados">
-        <span>✉</span> Mensajes privados
       </a>
       <a class="nav-link" href="#miembros" data-section="miembros">
         <span>♟</span> Miembros
       </a>
       <a class="nav-link" href="#momentos" data-section="momentos">
         <span>▦</span> Momentos
+      </a>
+      <a class="nav-link" href="#publicaciones" data-section="publicaciones">
+        <span>▤</span> Publicaciones
       </a>
       <a class="nav-link" href="#noticias" data-section="noticias">
         <span>◫</span> Noticias
@@ -256,6 +252,10 @@
     <section class="page-section" id="chat">
       <div class="chat-layout reveal">
         <article class="panel chat-panel">
+          <div class="chat-type-tabs" aria-label="Tipos de chat">
+            <button class="active" type="button" data-go="chat">Grupo</button>
+            <button type="button" data-go="privados">Privados</button>
+          </div>
           <div class="chat-channel-bar">
             <div class="chat-channels" id="chatChannels"></div>
             <button class="channel-add-button admin-only" id="addChatChannelButton" type="button" title="Añadir sección">＋ Sección</button>
@@ -306,6 +306,10 @@
     <section class="page-section" id="privados">
       <div class="private-chat-layout">
         <aside class="panel private-contacts">
+          <div class="chat-type-tabs" aria-label="Tipos de chat">
+            <button type="button" data-go="chat">Grupo</button>
+            <button class="active" type="button" data-go="privados">Privados</button>
+          </div>
           <div class="panel-heading private-contacts-heading">
             <button class="chat-back-button" type="button" data-chat-back aria-label="Volver atrás">←</button>
             <div><span class="eyebrow">MENSAJES PRIVADOS</span><h3>Conversaciones</h3></div>
@@ -354,6 +358,20 @@
       <div class="moments-grid reveal" id="momentsGrid"></div>
     </section>
 
+    <section class="page-section" id="publicaciones">
+      <div class="section-intro publications-hero">
+        <div>
+          <span class="eyebrow">EL MURO DEL GRUPO</span>
+          <h2>Publicaciones.</h2>
+        </div>
+        <p>Las fotos que cada miembro comparte en su perfil aparecen aquí, ordenadas de más recientes a más antiguas.</p>
+      </div>
+      <div class="publications-toolbar">
+        <button class="primary-button" id="addPublicationButton" type="button">＋ Nueva publicación</button>
+      </div>
+      <div class="publications-feed reveal" id="publicationsFeed"></div>
+    </section>
+
     <section class="page-section" id="noticias">
       <div class="section-intro">
         <div>
@@ -380,7 +398,7 @@
           <span class="eyebrow">AGENDA DEL GRUPO</span>
           <h2>Calendario de eventos.</h2>
         </div>
-        <p>Todos los miembros pueden consultar los planes. La administración puede crear, modificar o eliminar eventos.</p>
+        <p>Todos pueden añadir su cumpleaños. La administración también puede crear, modificar o eliminar eventos del grupo.</p>
       </div>
       <div class="calendar-toolbar">
         <div class="calendar-navigation">
@@ -388,7 +406,10 @@
           <h3 id="calendarMonthTitle"></h3>
           <button class="icon-button" id="nextMonthButton" type="button" aria-label="Mes siguiente">→</button>
         </div>
-        <button class="primary-button admin-only" id="addEventButton" type="button">＋ Nuevo evento</button>
+        <div class="calendar-actions">
+          <button class="secondary-button" id="addBirthdayButton" type="button">🎂 Añadir mi cumpleaños</button>
+          <button class="primary-button admin-only" id="addEventButton" type="button">＋ Nuevo evento</button>
+        </div>
       </div>
       <div class="calendar-layout">
         <div class="panel calendar-grid" id="calendarGrid"></div>
@@ -634,9 +655,11 @@
       </div>
       <form id="eventForm" class="profile-form">
         <input id="eventId" type="hidden">
+        <label id="eventTypeField"><span>Tipo</span><select id="eventType"><option value="event">Evento del grupo</option><option value="birthday">Cumpleaños</option></select></label>
         <label><span>Título</span><input id="eventTitle" maxlength="80" required></label>
         <label><span>Descripción</span><textarea id="eventDescription" maxlength="500" rows="4"></textarea></label>
-        <div class="event-date-fields">
+        <label id="birthdayDateField" hidden><span>Fecha de cumpleaños</span><input id="birthdayDate" type="date"></label>
+        <div class="event-date-fields" id="eventDateFields">
           <label><span>Comienza</span><input id="eventStartsAt" type="datetime-local" required></label>
           <label><span>Termina</span><input id="eventEndsAt" type="datetime-local"></label>
         </div>
@@ -684,7 +707,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260730-32"></script>
-  <script src="app.js?v=20260730-32"></script>
+  <script src="config.js?v=20260805-33"></script>
+  <script src="app.js?v=20260805-33"></script>
 </body>
 </html>

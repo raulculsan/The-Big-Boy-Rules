@@ -161,13 +161,13 @@ function goTo(sectionId) {
     sectionBeforeChat = currentSection;
   }
   sections.forEach(section => section.classList.toggle("active", section.id === sectionId));
-  navLinks.forEach(link => link.classList.toggle("active", link.dataset.section === sectionId));
+  navLinks.forEach(link => link.classList.toggle("active", link.dataset.section === (sectionId === "privados" ? "chat" : sectionId)));
   document.body.classList.toggle("chat-focus", openingChat);
   syncMobileViewport();
   const titles = {
-    inicio: "The Big Boy Rules", chat: "Chat del grupo", miembros: "Miembros",
+    inicio: "The Big Boy Rules", chat: "Chats", miembros: "Miembros",
     privados: "Mensajes privados", perfil: "Perfil del miembro", momentos: "Momentos",
-    noticias: "Noticias", calendario: "Calendario", administracion: "Administración"
+    publicaciones: "Publicaciones", noticias: "Noticias", calendario: "Calendario", administracion: "Administración"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
   sidebar.classList.remove("open");
@@ -304,7 +304,7 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
     ${kind === "moment" ? `<div class="story-progress" aria-hidden="true"><span></span></div>` : ""}
     <div class="media-frame">${media}</div>
     <div class="media-card-info">
-      ${kind === "moment" ? `<button class="media-author" data-profile="${item.member}">${getAvatar(member, "avatar tiny")}<strong>${escapeHtml(member?.name || "Miembro")}</strong></button>` : ""}
+      <button class="media-author" data-profile="${item.member}">${getAvatar(member, "avatar tiny")}<strong>${escapeHtml(member?.name || "Miembro")}</strong></button>
       ${item.caption ? `<p>${escapeHtml(item.caption)}</p>` : ""}
       <time datetime="${escapeHtml(item.createdAt)}">${kind === "moment" ? `Caduca ${formatExpiry(item.expiresAt)}` : formatRelativeTime(item.createdAt)}</time>
       <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="${kind}" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
@@ -428,6 +428,20 @@ function renderMoments() {
   }).join("");
 }
 
+function renderPublications() {
+  const feed = document.getElementById("publicationsFeed");
+  if (!feed) return;
+  if (!profilePosts.length) {
+    feed.innerHTML = `<div class="empty-state publications-empty"><strong>Todavía no hay publicaciones</strong><span>Comparte una foto desde aquí o desde tu perfil.</span></div>`;
+    return;
+  }
+  feed.innerHTML = profilePosts.map(item => renderMediaCard(
+    item,
+    isMediaOwner(item) || isSuperAdmin(),
+    "post"
+  )).join("");
+}
+
 function renderPrivateContacts() {
   const panel = document.getElementById("privateContacts");
   if (!currentUser) return;
@@ -522,7 +536,7 @@ function renderCalendar() {
   cells += Array.from({length: firstWeekday}, () => `<div class="calendar-day outside"></div>`).join("");
   for (let day = 1; day <= days; day += 1) {
     const date = new Date(year, month, day);
-    const events = groupEvents.filter(event => dateKey(new Date(event.startsAt)) === dateKey(date));
+    const events = groupEvents.filter(event => eventOccursOn(event, date));
     cells += `<div class="calendar-day ${dateKey(date) === todayKey ? "today" : ""}">
       <span>${day}</span>${events.slice(0, 3).map(event => `<button data-event-id="${event.id}" title="${escapeHtml(event.title)}">${escapeHtml(event.title)}</button>`).join("")}
       ${events.length > 3 ? `<small>+${events.length - 3} más</small>` : ""}
@@ -531,15 +545,27 @@ function renderCalendar() {
   document.getElementById("calendarGrid").innerHTML = cells;
   const monthEvents = groupEvents.filter(event => {
     const date = new Date(event.startsAt);
-    return date.getFullYear() === year && date.getMonth() === month;
-  });
+    return date.getMonth() === month && (event.eventType === "birthday" || date.getFullYear() === year);
+  }).sort((a, b) => new Date(a.startsAt).getDate() - new Date(b.startsAt).getDate());
   document.getElementById("calendarEventList").innerHTML = monthEvents.length ? monthEvents.map(event => `
     <article class="calendar-event-card">
-      <time>${formatEventDate(event.startsAt)}</time><h4>${escapeHtml(event.title)}</h4>
+      <time>${event.eventType === "birthday" ? `🎂 ${new Date(event.startsAt).toLocaleDateString("es-ES", {day: "numeric", month: "long"})}` : formatEventDate(event.startsAt)}</time><h4>${escapeHtml(event.title)}</h4>
       ${event.location ? `<p>⌖ ${escapeHtml(event.location)}</p>` : ""}
       ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
-      ${canManageSite() ? `<button class="text-button" data-event-id="${event.id}">Editar</button>` : ""}
+      ${canEditCalendarEvent(event) ? `<button class="text-button" data-event-id="${event.id}">Editar</button>` : ""}
     </article>`).join("") : `<div class="empty-state compact">No hay eventos este mes.</div>`;
+}
+
+function eventOccursOn(event, date) {
+  const starts = new Date(event.startsAt);
+  if (event.eventType === "birthday") {
+    return starts.getMonth() === date.getMonth() && starts.getDate() === date.getDate();
+  }
+  return dateKey(starts) === dateKey(date);
+}
+
+function canEditCalendarEvent(event) {
+  return Boolean(event && (canManageSite() || event.eventType === "birthday" && event.createdBy === currentAuthUser?.id));
 }
 
 function dateKey(date) {
@@ -869,6 +895,7 @@ async function loadMediaLikes() {
     mediaId: item.moment_id ?? item.profile_post_id
   }));
   renderMoments();
+  renderPublications();
   if (activeProfileId) renderProfile(activeProfileId);
 }
 
@@ -909,6 +936,7 @@ async function loadMoments() {
 async function loadProfilePosts() {
   const {data, error} = await db.from("profile_posts").select("*").order("created_at", {ascending: false});
   profilePosts = error ? [] : data.map(mapMedia);
+  renderPublications();
   if (activeProfileId) renderProfile(activeProfileId);
 }
 
@@ -1000,7 +1028,8 @@ async function loadGroupEvents() {
   const {data, error} = await db.from("group_events").select("*").order("starts_at");
   groupEvents = error ? [] : data.map(item => ({
     id: item.id, title: item.title, description: item.description, startsAt: item.starts_at,
-    endsAt: item.ends_at, location: item.location, createdBy: item.created_by
+    endsAt: item.ends_at, location: item.location, createdBy: item.created_by,
+    eventType: item.event_type || "event", annual: Boolean(item.annual)
   }));
   renderCalendar();
 }
@@ -1157,9 +1186,20 @@ function toLocalDateTime(value) {
   return local.toISOString().slice(0, 16);
 }
 
-function openEventEditor(eventId = null) {
-  if (!canManageSite()) return;
+function updateEventEditorType() {
+  const birthday = document.getElementById("eventType").value === "birthday";
+  document.getElementById("birthdayDateField").hidden = !birthday;
+  document.getElementById("eventDateFields").hidden = birthday;
+  document.getElementById("eventStartsAt").required = !birthday;
+  document.getElementById("birthdayDate").required = birthday;
+  document.getElementById("eventLocation").closest("label").hidden = birthday;
+}
+
+function openEventEditor(eventId = null, requestedType = "event") {
   const event = groupEvents.find(item => String(item.id) === String(eventId));
+  const eventType = event?.eventType || requestedType;
+  if (event && !canEditCalendarEvent(event)) return;
+  if (!event && eventType !== "birthday" && !canManageSite()) return;
   document.getElementById("eventEditorTitle").textContent = event ? "Editar evento" : "Nuevo evento";
   document.getElementById("eventId").value = event?.id || "";
   document.getElementById("eventTitle").value = event?.title || "";
@@ -1167,8 +1207,16 @@ function openEventEditor(eventId = null) {
   document.getElementById("eventStartsAt").value = toLocalDateTime(event?.startsAt || new Date(Date.now() + 3600000));
   document.getElementById("eventEndsAt").value = toLocalDateTime(event?.endsAt);
   document.getElementById("eventLocation").value = event?.location || "";
+  document.getElementById("eventType").value = eventType;
+  document.getElementById("eventType").disabled = Boolean(event) || !canManageSite();
+  document.getElementById("eventTypeField").hidden = !canManageSite() && eventType === "birthday";
+  document.getElementById("birthdayDate").value = eventType === "birthday" && event ? new Date(event.startsAt).toISOString().slice(0, 10) : "";
+  if (!event && eventType === "birthday") {
+    document.getElementById("eventTitle").value = `Cumpleaños de ${currentUser?.name || "miembro"}`;
+  }
+  updateEventEditorType();
   document.getElementById("eventFeedback").textContent = "";
-  document.getElementById("deleteEventButton").hidden = !event;
+  document.getElementById("deleteEventButton").hidden = !event || !canEditCalendarEvent(event);
   const modal = document.getElementById("eventEditor");
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
@@ -1187,12 +1235,16 @@ async function saveEvent(form) {
   feedback.textContent = "Guardando…";
   try {
     const id = document.getElementById("eventId").value;
+    const eventType = document.getElementById("eventType").value;
+    const birthdayValue = document.getElementById("birthdayDate").value;
+    const birthdayStartsAt = birthdayValue ? new Date(`${birthdayValue}T12:00:00`).toISOString() : null;
     const values = {
       title: document.getElementById("eventTitle").value.trim(),
       description: document.getElementById("eventDescription").value.trim(),
-      starts_at: new Date(document.getElementById("eventStartsAt").value).toISOString(),
-      ends_at: document.getElementById("eventEndsAt").value ? new Date(document.getElementById("eventEndsAt").value).toISOString() : null,
-      location: document.getElementById("eventLocation").value.trim(),
+      starts_at: eventType === "birthday" ? birthdayStartsAt : new Date(document.getElementById("eventStartsAt").value).toISOString(),
+      ends_at: eventType === "birthday" ? null : document.getElementById("eventEndsAt").value ? new Date(document.getElementById("eventEndsAt").value).toISOString() : null,
+      location: eventType === "birthday" ? "" : document.getElementById("eventLocation").value.trim(),
+      event_type: eventType, annual: eventType === "birthday",
       created_by: currentAuthUser.id, updated_at: new Date().toISOString()
     };
     const query = id ? db.from("group_events").update(values).eq("id", id) : db.from("group_events").insert(values);
@@ -1209,7 +1261,8 @@ async function saveEvent(form) {
 
 async function deleteEvent() {
   const id = document.getElementById("eventId").value;
-  if (!id || !canManageSite()) return;
+  const event = groupEvents.find(item => String(item.id) === String(id));
+  if (!id || !canEditCalendarEvent(event)) return;
   const {error} = await db.from("group_events").delete().eq("id", id);
   if (!error) {
     closeEventEditor();
@@ -1858,6 +1911,13 @@ document.addEventListener("click", event => {
   } else if (!event.target.closest(".message-actions")) {
     document.querySelectorAll("[data-message-bubble].actions-open").forEach(item => item.classList.remove("actions-open"));
   }
+  const likeMedia = event.target.closest("[data-like-media]");
+  if (likeMedia) {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleMediaLike(likeMedia.dataset.likeKind, likeMedia.dataset.likeMedia, likeMedia);
+    return;
+  }
   const goTarget = event.target.closest("[data-go]");
   if (goTarget) goTo(goTarget.dataset.go);
   const profileTarget = event.target.closest("[data-profile]");
@@ -1868,8 +1928,6 @@ document.addEventListener("click", event => {
   if (viewMedia) openMediaViewer(viewMedia.dataset.viewMedia, viewMedia.dataset.viewCaption);
   const deletePost = event.target.closest("[data-delete-post]");
   if (deletePost) deleteMedia("post", deletePost.dataset.deletePost);
-  const likeMedia = event.target.closest("[data-like-media]");
-  if (likeMedia) toggleMediaLike(likeMedia.dataset.likeKind, likeMedia.dataset.likeMedia, likeMedia);
   const notificationTarget = event.target.closest("[data-notification-id]");
   if (notificationTarget) openNotification(notificationTarget.dataset.notificationId);
   const editGroupTarget = event.target.closest("[data-edit-group-message]");
@@ -2307,6 +2365,9 @@ document.getElementById("nextMonthButton").addEventListener("click", () => {
   renderCalendar();
 });
 document.getElementById("addEventButton").addEventListener("click", () => openEventEditor());
+document.getElementById("addBirthdayButton").addEventListener("click", () => openEventEditor(null, "birthday"));
+document.getElementById("eventType").addEventListener("change", updateEventEditorType);
+document.getElementById("addPublicationButton").addEventListener("click", () => openMediaUploader("post"));
 document.getElementById("closeEventEditor").addEventListener("click", closeEventEditor);
 document.getElementById("cancelEventEditor").addEventListener("click", closeEventEditor);
 document.getElementById("eventEditor").addEventListener("click", event => {
