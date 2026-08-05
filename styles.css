@@ -1319,6 +1319,21 @@ body.light .message p {
 #mediaUploader:not(.has-media) > .media-crop-controls {
   display: none !important;
 }
+
+/* El editor es una pantalla propia: ningún ancestro debe desenfocar sus hijos. */
+#mediaUploader,
+#mediaUploader *,
+#mediaUploader.has-media > .media-crop-controls {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+#mediaUploader,
+#mediaUploader .media-uploader-modal,
+#mediaUploader .profile-form,
+#mediaUploader .media-cropper,
+#mediaUploader > .media-crop-controls {
+  filter: none !important;
+}
 #mediaUploader.has-media > .media-crop-controls .media-tool-panel.active {
   position: fixed !important;
   inset: 82px 78px auto auto !important;
