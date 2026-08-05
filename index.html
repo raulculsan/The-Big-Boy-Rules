@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-44" />
+  <link rel="stylesheet" href="styles.css?v=20260805-45" />
 </head>
 <body>
 
@@ -197,18 +197,23 @@
       <section class="home-news-section home-news-featured reveal" id="noticias">
         <div class="section-intro">
           <div><span class="eyebrow">ACTUALIDAD EN DIRECTO</span><h2>Noticias de última hora.</h2></div>
-          <p>Deportes, España y el mundo, reunidos desde numerosos medios reales y ordenados de más reciente a más antiguo.</p>
-        </div>
-        <div class="news-toolbar">
-          <div class="news-tabs" role="tablist" aria-label="Categorías de noticias">
-            <button class="news-tab active" type="button" data-news-category="deportes">Deportes</button>
-            <button class="news-tab" type="button" data-news-category="espana">España</button>
-            <button class="news-tab" type="button" data-news-category="mundo">Mundo</button>
+          <div class="news-intro-actions">
+            <p>Deportes, España y el mundo, reunidos desde numerosos medios reales y ordenados de más reciente a más antiguo.</p>
+            <button class="news-collapse-button" id="toggleNewsButton" type="button" aria-expanded="true" aria-controls="newsCollapsible"><span>Ocultar noticias</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
           </div>
-          <button class="secondary-button news-refresh" id="refreshNewsButton" type="button">Actualizar ahora</button>
         </div>
-        <div class="news-status" id="newsStatus" aria-live="polite">Cargando noticias reales…</div>
-        <div class="news-grid" id="newsGrid"></div>
+        <div class="news-collapsible" id="newsCollapsible">
+          <div class="news-toolbar">
+            <div class="news-tabs" role="tablist" aria-label="Categorías de noticias">
+              <button class="news-tab active" type="button" data-news-category="deportes">Deportes</button>
+              <button class="news-tab" type="button" data-news-category="espana">España</button>
+              <button class="news-tab" type="button" data-news-category="mundo">Mundo</button>
+            </div>
+            <button class="secondary-button news-refresh" id="refreshNewsButton" type="button">Actualizar ahora</button>
+          </div>
+          <div class="news-status" id="newsStatus" aria-live="polite">Cargando noticias reales…</div>
+          <div class="news-grid" id="newsGrid"></div>
+        </div>
       </section>
 
       <div class="dashboard-grid reveal">
@@ -726,7 +731,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-44"></script>
-  <script src="app.js?v=20260805-44"></script>
+  <script src="config.js?v=20260805-45"></script>
+  <script src="app.js?v=20260805-45"></script>
 </body>
 </html>
