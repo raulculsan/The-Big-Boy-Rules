@@ -4402,8 +4402,22 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
 .calendar-day {
   min-height: 112px;
   padding: 9px;
+  color: var(--text);
+  text-align: left;
   border-top: 1px solid var(--line);
+  border-right: 0;
+  border-bottom: 0;
   border-left: 1px solid var(--line);
+  background: transparent;
+  font: inherit;
+  transition: background .2s ease, box-shadow .2s ease;
+}
+.calendar-day:not(.outside):hover,
+.calendar-day:not(.outside):focus-visible {
+  z-index: 1;
+  outline: none;
+  background: rgba(214,166,46,.09);
+  box-shadow: inset 0 0 0 1px rgba(214,166,46,.28);
 }
 .calendar-day:nth-child(7n + 1) { border-left: 0; }
 .calendar-day.outside { opacity: .25; }
@@ -4416,7 +4430,7 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
   font-size: .78rem;
 }
 .calendar-day.today > span { color: #111; background: var(--gold); border-radius: 50%; }
-.calendar-day button {
+.calendar-event-pill {
   display: block;
   width: 100%;
   margin: 3px 0;
@@ -4426,12 +4440,12 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border: 0;
   border-left: 2px solid var(--gold);
   background: rgba(214,166,46,.1);
-  cursor: pointer;
   font-size: .68rem;
+  font-style: normal;
 }
+.calendar-event-pill.birthday { border-left-color: #ef8fb2; background: rgba(239,143,178,.11); }
 .calendar-day small { color: var(--muted); font-size: .65rem; }
 .event-list-panel { padding: 22px; }
 .calendar-event-card { padding: 16px 0; border-bottom: 1px solid var(--line); }
@@ -4439,7 +4453,42 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
 .calendar-event-card h4 { margin: 7px 0; font-size: 1rem; }
 .calendar-event-card p { margin: 5px 0; color: var(--muted); line-height: 1.45; font-size: .82rem; }
 .event-date-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.event-date-fields[hidden],
+.profile-form label[hidden] { display: none !important; }
 .event-modal-actions { display: grid; grid-template-columns: auto 1fr auto auto; }
+.birthday-all-day-note {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  border: 1px solid rgba(239,143,178,.28);
+  border-radius: 13px;
+  background: rgba(239,143,178,.08);
+}
+.birthday-all-day-note[hidden] { display: none; }
+.birthday-all-day-note > span { font-size: 1.7rem; }
+.birthday-all-day-note strong,
+.birthday-all-day-note small { display: block; }
+.birthday-all-day-note small { margin-top: 4px; color: var(--muted); line-height: 1.4; }
+.calendar-day-modal { width: min(680px, 100%); }
+.calendar-day-modal .modal-heading h2 { text-transform: capitalize; }
+.calendar-day-detail-list { display: grid; gap: 14px; max-height: min(65vh, 650px); overflow-y: auto; }
+.calendar-day-detail-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255,255,255,.035);
+}
+.calendar-day-detail-card.birthday {
+  border-color: rgba(239,143,178,.3);
+  background: linear-gradient(135deg, rgba(239,143,178,.12), rgba(255,255,255,.025));
+}
+.calendar-day-detail-time { color: var(--gold); font-size: .72rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.calendar-day-detail-card.birthday .calendar-day-detail-time { color: #f2a7c2; }
+.calendar-day-detail-card h3 { margin: 8px 0 12px; font-family: "Anton"; font-size: 1.6rem; font-weight: 400; }
+.calendar-day-detail-card p { margin: 7px 0; color: var(--muted); line-height: 1.5; }
+.calendar-day-detail-card .secondary-button { margin-top: 13px; }
+.calendar-day-detail-duration { color: var(--text) !important; font-weight: 700; }
 
 .spotify-panel { margin-top: 22px; }
 .spotify-panel iframe {
@@ -4479,7 +4528,7 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
   }
   .calendar-grid { padding: 4px; }
   .calendar-day { min-height: 76px; padding: 4px; }
-  .calendar-day button { font-size: 0; min-height: 8px; }
+  .calendar-event-pill { min-height: 8px; padding: 0; font-size: 0; }
   .calendar-day > span { width: 22px; height: 22px; }
   .event-date-fields { grid-template-columns: 1fr; }
 }
