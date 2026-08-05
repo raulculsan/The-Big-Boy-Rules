@@ -5067,6 +5067,8 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
   background: rgba(10,10,12,.72);
   box-shadow: 0 6px 22px rgba(0,0,0,.25);
   backdrop-filter: blur(12px);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .media-editor-toolbar button:hover,
 .media-editor-toolbar button.active { color: #111; border-color: var(--gold); background: var(--gold); }
@@ -5130,9 +5132,16 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
 @media (max-width: 760px) {
   #mediaUploader.has-media .media-uploader-modal { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
   #mediaUploader.has-media .media-crop-stage { top: 54px; bottom: 148px; padding: 8px 68px 8px 8px; }
-  #mediaUploader.has-media .media-editor-toolbar { top: 68px; right: 10px; gap: 10px; }
+  #mediaUploader.has-media .media-editor-toolbar { position: fixed; z-index: 1016; top: 68px; right: 10px; gap: 10px; pointer-events: auto; touch-action: manipulation; }
   #mediaUploader.has-media .media-editor-toolbar button { width: 46px; height: 46px; }
-  #mediaUploader .media-tool-panel.active { top: 68px; right: 66px; width: calc(100vw - 78px); max-height: 52dvh; overflow-y: auto; }
+  #mediaUploader.has-media .media-crop-controls { pointer-events: auto; }
+  #mediaUploader .media-tool-panel.active { position: fixed; z-index: 1015; top: 68px; right: 66px; width: calc(100vw - 78px); max-height: min(52dvh, 430px); overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; touch-action: pan-y; }
+  #mediaUploader .media-tool-panel.active input,
+  #mediaUploader .media-tool-panel.active textarea,
+  #mediaUploader .media-tool-panel.active select,
+  #mediaUploader .media-tool-panel.active button { pointer-events: auto; touch-action: manipulation; }
+  #mediaUploader .media-filter-rail,
+  #mediaUploader .media-tool-panel.active input[type="range"] { touch-action: pan-x; }
   #mediaUploader.has-media .media-caption-tool textarea { min-height: 88px; max-height: 150px; }
   #mediaUploader.has-media .modal-actions { left: 10px; right: 10px; bottom: 8px; }
   #mediaUploader.has-media .modal-actions .primary-button { width: 100%; min-height: 50px; }
