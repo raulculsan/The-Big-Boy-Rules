@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#09090b"/>
+  <circle cx="256" cy="256" r="176" fill="none" stroke="#d6a62e" stroke-width="12"/>
+  <path d="M174 187h164M174 325h164" stroke="#d6a62e" stroke-width="7" stroke-linecap="round"/>
+  <text x="256" y="290" fill="#f7f3e9" font-family="Arial, Helvetica, sans-serif" font-size="116" font-weight="900" text-anchor="middle" letter-spacing="-9">BB</text>
+</svg>
