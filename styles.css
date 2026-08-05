@@ -3444,6 +3444,42 @@ input:disabled {
 .profile-empty,
 .moments-empty { grid-column: 1 / -1; min-height: 260px; }
 .moments-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.story-card .media-frame img,
+.story-card .media-frame video {
+  object-fit: contain !important;
+  object-position: center;
+}
+
+.chat-type-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,.025);
+}
+.chat-type-tabs button {
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+.chat-type-tabs button.active { color: #111; background: var(--accent); }
+
+.publications-toolbar { display: flex; justify-content: flex-end; margin: -8px 0 22px; }
+.publications-feed {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
+}
+.publications-feed .profile-post-card { border-radius: 18px; }
+.publications-feed .profile-post-card .media-frame { aspect-ratio: 1; }
+.publications-empty { grid-column: 1 / -1; }
+.calendar-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .attachment-preview {
   padding: 10px 16px;
   border-top: 1px solid var(--line);
