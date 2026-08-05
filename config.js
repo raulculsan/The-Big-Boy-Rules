@@ -6,6 +6,7 @@
 window.BIG_BOY_CONFIG = {
   supabaseUrl: "https://nfvggpgeypkkqceivkaq.supabase.co",
   supabasePublishableKey: "sb_publishable_76a6wcA_Ow12tT9r_OlvWQ_MN7ALhfX",
+  vapidPublicKey: "BDPUEks5WwoHzFot4PsY-Qq63eR6EHorVnlW45hDud-QJ6WkrAmgJclPrJHAHG7UAOlYhFAGN_qtWtKz0aNp0EQ",
   news: {
     deportesFeeds: [
       "https://news.google.com/rss/search?q=f%C3%BAtbol%20OR%20LaLiga%20OR%20Champions%20OR%20fichajes&hl=es&gl=ES&ceid=ES%3Aes",
