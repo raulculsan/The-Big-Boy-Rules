@@ -1203,7 +1203,7 @@ body.light .message p {
 }
 
 @media (max-width: 760px) {
-  .sidebar-collapse-button { display: grid; }
+  .sidebar-collapse-button { display: none; }
   .sidebar,
   body.sidebar-compact .sidebar { width: 84px; padding: 28px 13px; }
   body.sidebar-compact .app,
