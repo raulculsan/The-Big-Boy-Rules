@@ -2048,6 +2048,9 @@ function closeMediaViewer() {
   document.getElementById("momentProgress").hidden = true;
   document.getElementById("previousMoment").hidden = true;
   document.getElementById("nextMoment").hidden = true;
+  document.getElementById("momentOptionsButton").hidden = true;
+  document.getElementById("momentOptionsButton").setAttribute("aria-expanded", "false");
+  document.getElementById("momentOptionsMenu").hidden = true;
 }
 
 function openMoment(momentId) {
@@ -2073,6 +2076,10 @@ function showActiveMoment() {
   progress.innerHTML = activeMomentSequence.map((_, index) => `<span class="${index < activeMomentIndex ? "complete" : index === activeMomentIndex ? "active" : ""}"><i></i></span>`).join("");
   document.getElementById("previousMoment").hidden = activeMomentIndex === 0;
   document.getElementById("nextMoment").hidden = false;
+  const canDeleteMoment = isMediaOwner(item) || isSuperAdmin();
+  document.getElementById("momentOptionsButton").hidden = !canDeleteMoment;
+  document.getElementById("momentOptionsButton").setAttribute("aria-expanded", "false");
+  document.getElementById("momentOptionsMenu").hidden = true;
   renderMoments();
   if (item.mediaType !== "video") momentAdvanceTimer = setTimeout(nextMoment, 6000);
 }
@@ -2088,6 +2095,24 @@ function previousMoment() {
   if (!activeMomentSequence.length || activeMomentIndex <= 0) return;
   activeMomentIndex -= 1;
   showActiveMoment();
+}
+
+async function deleteActiveMoment() {
+  const item = activeMomentSequence[activeMomentIndex];
+  if (!item || (!isMediaOwner(item) && !isSuperAdmin()) || !backendReady || !currentAuthUser) return;
+  if (!window.confirm("¿Quieres eliminar esta historia?")) return;
+  let query = db.from("moments").delete().eq("id", item.id);
+  if (!isSuperAdmin()) query = query.eq("user_id", currentAuthUser.id);
+  const {error} = await query;
+  if (error) return window.alert(error.message || "No se pudo eliminar la historia.");
+  activeMomentSequence.splice(activeMomentIndex, 1);
+  moments = moments.filter(moment => String(moment.id) !== String(item.id));
+  if (!activeMomentSequence.length) closeMediaViewer();
+  else {
+    activeMomentIndex = Math.min(activeMomentIndex, activeMomentSequence.length - 1);
+    showActiveMoment();
+  }
+  await loadMoments();
 }
 
 function openContent(kind, id) {
@@ -2931,6 +2956,16 @@ document.getElementById("mediaUploadForm").addEventListener("submit", event => {
   publishMedia(event.currentTarget);
 });
 document.getElementById("closeMediaViewer").addEventListener("click", closeMediaViewer);
+document.getElementById("momentOptionsButton").addEventListener("click", event => {
+  event.stopPropagation();
+  const menu = document.getElementById("momentOptionsMenu");
+  menu.hidden = !menu.hidden;
+  event.currentTarget.setAttribute("aria-expanded", String(!menu.hidden));
+});
+document.getElementById("deleteViewedMoment").addEventListener("click", event => {
+  event.stopPropagation();
+  deleteActiveMoment();
+});
 document.getElementById("previousMoment").addEventListener("click", event => { event.stopPropagation(); previousMoment(); });
 document.getElementById("nextMoment").addEventListener("click", event => { event.stopPropagation(); nextMoment(); });
 document.getElementById("mediaViewerVideo").addEventListener("ended", () => {
