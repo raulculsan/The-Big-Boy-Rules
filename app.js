@@ -65,15 +65,11 @@ function setSidebarCompact(compact) {
 }
 
 function stepMobileSidebar(direction) {
-  const compact = document.body.classList.contains("sidebar-compact");
   if (direction === "left") {
-    if (!compact) setSidebarCompact(true);
-    else {
-      sidebar.classList.remove("open");
-      setSidebarCompact(false);
-    }
-  } else if (compact) {
-    setSidebarCompact(false);
+    sidebar.classList.remove("open");
+  } else {
+    setSidebarCompact(true);
+    sidebar.classList.add("open");
   }
 }
 syncSidebarCollapseButton();
@@ -135,7 +131,11 @@ let sharingMedia = null;
 let activeMomentSequence = [];
 let activeMomentIndex = -1;
 let momentAdvanceTimer = null;
+let momentAdvanceDeadline = 0;
+let momentAdvanceRemaining = 6000;
 let momentSwipeStartX = null;
+let momentPressStartedAt = 0;
+let suppressMomentNavigationClick = false;
 const realtimeRefreshTimers = new Map();
 
 function scheduleRealtimeRefresh(key, loader, delay = 180) {
@@ -2061,6 +2061,8 @@ function openMediaViewer(url, caption = "Momento", mediaType = "image") {
 function closeMediaViewer() {
   clearTimeout(momentAdvanceTimer);
   momentAdvanceTimer = null;
+  momentAdvanceDeadline = 0;
+  momentAdvanceRemaining = 6000;
   activeMomentSequence = [];
   activeMomentIndex = -1;
   const viewer = document.getElementById("mediaViewer");
@@ -2092,11 +2094,15 @@ function showActiveMoment() {
   const item = activeMomentSequence[activeMomentIndex];
   if (!item) return closeMediaViewer();
   clearTimeout(momentAdvanceTimer);
+  momentAdvanceTimer = null;
+  momentAdvanceDeadline = 0;
+  momentAdvanceRemaining = 6000;
   const member = getMember(item.member);
   markMomentViewed(item.id);
   registerMomentView(item);
   openMediaViewer(item.mediaUrl, item.caption || `Momento de ${member?.name || "miembro"}`, item.mediaType);
   const progress = document.getElementById("momentProgress");
+  progress.classList.remove("paused");
   progress.hidden = false;
   progress.innerHTML = activeMomentSequence.map((_, index) => `<span class="${index < activeMomentIndex ? "complete" : index === activeMomentIndex ? "active" : ""}"><i></i></span>`).join("");
   document.getElementById("previousMoment").hidden = activeMomentIndex === 0;
@@ -2106,7 +2112,30 @@ function showActiveMoment() {
   document.getElementById("momentOptionsButton").setAttribute("aria-expanded", "false");
   document.getElementById("momentOptionsMenu").hidden = true;
   renderMoments();
-  if (item.mediaType !== "video") momentAdvanceTimer = setTimeout(nextMoment, 6000);
+  if (item.mediaType !== "video") scheduleMomentAdvance();
+}
+
+function scheduleMomentAdvance(delay = momentAdvanceRemaining) {
+  clearTimeout(momentAdvanceTimer);
+  momentAdvanceRemaining = Math.max(80, delay);
+  momentAdvanceDeadline = Date.now() + momentAdvanceRemaining;
+  momentAdvanceTimer = setTimeout(nextMoment, momentAdvanceRemaining);
+}
+
+function pauseActiveMoment() {
+  const item = activeMomentSequence[activeMomentIndex];
+  if (!item || item.mediaType === "video" || !momentAdvanceTimer) return;
+  momentAdvanceRemaining = Math.max(80, momentAdvanceDeadline - Date.now());
+  clearTimeout(momentAdvanceTimer);
+  momentAdvanceTimer = null;
+  document.getElementById("momentProgress").classList.add("paused");
+}
+
+function resumeActiveMoment() {
+  const item = activeMomentSequence[activeMomentIndex];
+  if (!item || item.mediaType === "video" || momentAdvanceTimer) return;
+  document.getElementById("momentProgress").classList.remove("paused");
+  scheduleMomentAdvance();
 }
 
 function nextMoment() {
@@ -2532,10 +2561,13 @@ navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
   goTo(link.dataset.section);
 }));
-document.getElementById("menuButton").addEventListener("click", () => sidebar.classList.toggle("open"));
+document.getElementById("menuButton").addEventListener("click", () => {
+  if (isMobileSidebar()) setSidebarCompact(true);
+  sidebar.classList.toggle("open");
+});
 document.getElementById("sidebarCollapseButton").addEventListener("click", () => {
   if (isMobileSidebar()) {
-    stepMobileSidebar("left");
+    sidebar.classList.remove("open");
     return;
   }
   setSidebarCompact(!document.body.classList.contains("sidebar-compact"));
@@ -3007,22 +3039,43 @@ document.getElementById("deleteViewedMoment").addEventListener("click", event =>
   event.stopPropagation();
   deleteActiveMoment();
 });
-document.getElementById("previousMoment").addEventListener("click", event => { event.stopPropagation(); previousMoment(); });
-document.getElementById("nextMoment").addEventListener("click", event => { event.stopPropagation(); nextMoment(); });
+document.getElementById("previousMoment").addEventListener("click", event => {
+  event.stopPropagation();
+  if (suppressMomentNavigationClick) return void (suppressMomentNavigationClick = false);
+  previousMoment();
+});
+document.getElementById("nextMoment").addEventListener("click", event => {
+  event.stopPropagation();
+  if (suppressMomentNavigationClick) return void (suppressMomentNavigationClick = false);
+  nextMoment();
+});
 document.getElementById("mediaViewerVideo").addEventListener("ended", () => {
   if (activeMomentSequence.length) nextMoment();
 });
 document.querySelector("#mediaViewer .media-viewer-dialog").addEventListener("pointerdown", event => {
-  if (!activeMomentSequence.length || event.target.closest("button,video")) return;
+  if (!activeMomentSequence.length || event.target.closest("button:not(.moment-navigation),video")) return;
   momentSwipeStartX = event.clientX;
+  momentPressStartedAt = Date.now();
+  pauseActiveMoment();
 });
 document.querySelector("#mediaViewer .media-viewer-dialog").addEventListener("pointerup", event => {
   if (momentSwipeStartX == null || !activeMomentSequence.length) return;
   const distance = event.clientX - momentSwipeStartX;
+  const heldLongEnough = Date.now() - momentPressStartedAt >= 250;
   momentSwipeStartX = null;
-  if (Math.abs(distance) < 45) return;
+  momentPressStartedAt = 0;
+  if (Math.abs(distance) < 45) {
+    suppressMomentNavigationClick = heldLongEnough;
+    resumeActiveMoment();
+    return;
+  }
   if (distance < 0) nextMoment();
   else previousMoment();
+});
+document.querySelector("#mediaViewer .media-viewer-dialog").addEventListener("pointercancel", () => {
+  momentSwipeStartX = null;
+  momentPressStartedAt = 0;
+  resumeActiveMoment();
 });
 document.getElementById("mediaViewer").addEventListener("click", event => {
   if (event.target.id === "mediaViewer") closeMediaViewer();
