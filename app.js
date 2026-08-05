@@ -2571,6 +2571,11 @@ document.getElementById("menuButton").addEventListener("click", () => {
   if (isMobileSidebar()) setSidebarCompact(true);
   sidebar.classList.toggle("open");
 });
+document.addEventListener("pointerdown", event => {
+  if (!isMobileSidebar() || !sidebar.classList.contains("open")) return;
+  if (event.target.closest("#sidebar, #menuButton")) return;
+  sidebar.classList.remove("open");
+});
 document.getElementById("sidebarCollapseButton").addEventListener("click", () => {
   if (isMobileSidebar()) {
     sidebar.classList.remove("open");
