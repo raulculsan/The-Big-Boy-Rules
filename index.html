@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260805-35" />
+  <link rel="stylesheet" href="styles.css?v=20260805-36" />
 </head>
 <body>
 
@@ -133,8 +133,8 @@
       </div>
       <div class="top-actions">
         <div class="notifications-wrap">
-          <button class="icon-button notification-button" id="notificationsButton" type="button" aria-label="Abrir notificaciones" aria-expanded="false" title="Notificaciones">
-            🔔<span class="notification-count" id="notificationCount" hidden>0</span>
+          <button class="icon-button notification-button monochrome-top-button" id="notificationsButton" type="button" aria-label="Abrir notificaciones" aria-expanded="false" title="Notificaciones">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="notification-count" id="notificationCount" hidden>0</span>
           </button>
           <div class="notifications-dropdown" id="notificationsDropdown" aria-hidden="true">
             <div class="notifications-heading">
@@ -146,7 +146,7 @@
             </div>
           </div>
         </div>
-        <button class="icon-button admin-only admin-crown-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración">♛</button>
+        <button class="icon-button admin-only admin-crown-button monochrome-top-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración">♛</button>
         <button class="icon-button" id="searchButton" aria-label="Buscar">⌕</button>
         <div class="global-search" id="globalSearch" aria-hidden="true">
           <div class="search-box">
@@ -641,6 +641,25 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="shareMediaModal" aria-hidden="true">
+    <div class="profile-editor-modal share-media-modal" role="dialog" aria-modal="true" aria-labelledby="shareMediaTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">COMPARTIR EN UN CHAT</span><h2 id="shareMediaTitle">Compartir contenido</h2></div>
+        <button class="icon-button" id="closeShareMediaModal" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="shareMediaForm" class="profile-form">
+        <label><span>Enviar a</span><select id="shareDestinationType"><option value="group">Chat grupal</option><option value="private">Chat privado</option></select></label>
+        <label><span id="shareDestinationLabel">Canal del grupo</span><select id="shareDestination" required></select></label>
+        <div class="share-media-preview" id="shareMediaPreview"></div>
+        <div class="form-feedback" id="shareMediaFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelShareMedia" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Compartir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="eventEditor" aria-hidden="true">
     <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="eventEditorTitle">
       <div class="modal-heading">
@@ -701,7 +720,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260805-35"></script>
-  <script src="app.js?v=20260805-35"></script>
+  <script src="config.js?v=20260805-36"></script>
+  <script src="app.js?v=20260805-36"></script>
 </body>
 </html>
