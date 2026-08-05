@@ -529,6 +529,10 @@ function renderCalendar() {
   const year = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
   document.getElementById("calendarMonthTitle").textContent = calendarDate.toLocaleDateString("es-ES", {month: "long", year: "numeric"});
+  const ownBirthday = groupEvents.find(event => event.eventType === "birthday" && event.createdBy === currentAuthUser?.id);
+  const birthdayButton = document.getElementById("addBirthdayButton");
+  birthdayButton.dataset.birthdayEventId = ownBirthday?.id || "";
+  birthdayButton.textContent = ownBirthday ? "🎂 Editar mi cumpleaños" : "🎂 Añadir mi cumpleaños";
   const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
   const days = new Date(year, month + 1, 0).getDate();
   const todayKey = dateKey(new Date());
@@ -2365,7 +2369,9 @@ document.getElementById("nextMonthButton").addEventListener("click", () => {
   renderCalendar();
 });
 document.getElementById("addEventButton").addEventListener("click", () => openEventEditor());
-document.getElementById("addBirthdayButton").addEventListener("click", () => openEventEditor(null, "birthday"));
+document.getElementById("addBirthdayButton").addEventListener("click", event => {
+  openEventEditor(event.currentTarget.dataset.birthdayEventId || null, "birthday");
+});
 document.getElementById("eventType").addEventListener("change", updateEventEditorType);
 document.getElementById("addPublicationButton").addEventListener("click", () => openMediaUploader("post"));
 document.getElementById("closeEventEditor").addEventListener("click", closeEventEditor);
