@@ -162,6 +162,9 @@ let activeContentTab = "publicaciones";
 let viewportSyncFrame = null;
 let mobileViewportBaseline = window.innerHeight;
 let cursorFrame = null;
+let profileQuickMenuPressTimer = null;
+let profileQuickMenuPointer = null;
+let suppressProfileTabClick = false;
 let sharingMedia = null;
 let activeMomentSequence = [];
 let activeMomentIndex = -1;
@@ -395,6 +398,7 @@ function selectContentTab(tabName) {
 }
 
 function goTo(sectionId) {
+  closeProfileQuickMenu();
   showMobileHeader();
   mobileHeaderLastScrollY = 0;
   mobileHeaderScrollAnchor = 0;
@@ -435,6 +439,27 @@ function goTo(sectionId) {
   if (sectionId === "buscar") renderCalendar();
   if (sectionId === "contenido") selectContentTab(activeContentTab);
   if (sectionId === "ayuda" && currentUser) loadHelpCenter();
+}
+
+function openProfileQuickMenu() {
+  if (!currentUser) return;
+  const menu = document.getElementById("profileQuickMenu");
+  menu.hidden = false;
+  menu.setAttribute("aria-hidden", "false");
+  requestAnimationFrame(() => menu.classList.add("open"));
+  document.querySelector(".profile-tab")?.setAttribute("aria-expanded", "true");
+  navigator.vibrate?.(12);
+}
+
+function closeProfileQuickMenu() {
+  const menu = document.getElementById("profileQuickMenu");
+  if (!menu || menu.hidden) return;
+  menu.classList.remove("open");
+  menu.setAttribute("aria-hidden", "true");
+  document.querySelector(".profile-tab")?.setAttribute("aria-expanded", "false");
+  setTimeout(() => {
+    if (!menu.classList.contains("open")) menu.hidden = true;
+  }, 160);
 }
 
 function exitChatView() {
@@ -546,17 +571,6 @@ function renderProfile(memberId) {
         </div>
       </div>
     </article>
-    ${isOwnProfile ? `<section class="profile-account-panel">
-      <div class="profile-account-heading">
-        <div><span class="eyebrow">MI CUENTA</span><h3>Opciones y soporte</h3></div>
-        <p>Gestiona tu cuenta y contacta con la administración desde aquí.</p>
-      </div>
-      <div class="profile-account-actions">
-        ${canManageSite() ? `<button class="profile-account-button" id="profileAdminButton" type="button"><span aria-hidden="true">♛</span><strong>Administración</strong><small>Gestionar el club</small></button>` : ""}
-        <button class="profile-account-button" id="profileHelpButton" type="button"><span aria-hidden="true">?</span><strong>Ayuda y sugerencias</strong><small>Enviar una consulta, queja o idea</small></button>
-        <button class="profile-account-button danger" id="profileLogoutButton" type="button"><span aria-hidden="true">↪</span><strong>Cerrar sesión</strong><small>Salir de esta cuenta</small></button>
-      </div>
-    </section>` : ""}
     <section class="profile-stories">
       <div class="profile-feed-heading">
         <div><span class="eyebrow">HISTORIAS ACTIVAS</span><h3>${memberMoments.length} ${memberMoments.length === 1 ? "historia" : "historias"}</h3></div>
@@ -585,9 +599,6 @@ function renderProfile(memberId) {
   document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
   document.getElementById("addProfileMomentButton")?.addEventListener("click", () => openMediaUploader("moment"));
   document.getElementById("addProfilePostButton")?.addEventListener("click", () => openMediaUploader("post"));
-  document.getElementById("profileAdminButton")?.addEventListener("click", () => goTo("administracion"));
-  document.getElementById("profileHelpButton")?.addEventListener("click", () => goTo("ayuda"));
-  document.getElementById("profileLogoutButton")?.addEventListener("click", logoutCurrentUser);
   goTo("perfil");
 }
 
@@ -656,13 +667,13 @@ function renderMessages() {
     const attachment = message.attachmentUrl ? renderMessageAttachment(message) : "";
     const own = message.userId === currentAuthUser?.id;
     const canDelete = own || canManageSite();
-    return `<div class="message ${own ? "own" : ""}">
-      ${getAvatar(member)}
+    return `<div class="message ${own ? "own own-message" : ""}">
+      ${own ? "" : getAvatar(member)}
       <div class="message-bubble" data-message-bubble>
-        <div class="message-head">
+        ${own ? "" : `<div class="message-head">
           <button class="message-author" data-profile="${message.member}">${escapeHtml(member?.name || "Miembro")}</button>
           <time datetime="${escapeHtml(message.createdAt)}">${formatMessageDate(message.createdAt)}</time>
-        </div>
+        </div>`}
         ${message.text ? `<p>${escapeHtml(message.text)}</p>` : ""}${attachment}
         ${(own && message.text) || canDelete ? `<div class="message-actions">
           ${own && message.text ? `<button type="button" data-edit-group-message="${message.id}">Editar</button>` : ""}
@@ -757,11 +768,65 @@ function renderMessageAttachment(message) {
     return `<video class="message-video" src="${escapeHtml(message.attachmentUrl)}" controls preload="metadata"></video>`;
   }
   if (message.attachmentType?.startsWith("audio/")) {
-    return `<div class="message-audio"><span aria-hidden="true">♫</span><audio src="${escapeHtml(message.attachmentUrl)}" controls preload="metadata"></audio></div>`;
+    return renderVoiceNote(message.attachmentUrl);
   }
   return `<a class="message-file" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener" download>
     <span>↧</span><div><strong>${escapeHtml(message.attachmentName || "Archivo adjunto")}</strong><small>${formatFileSize(message.attachmentSize)}</small></div>
   </a>`;
+}
+
+function voiceWaveformBars() {
+  const heights = [8, 13, 19, 11, 25, 16, 29, 20, 12, 24, 34, 18, 27, 15, 31, 21, 12, 25, 17, 10, 22, 14, 9, 18];
+  return heights.map(height => `<i style="--bar-height:${height}px"></i>`).join("");
+}
+
+function renderVoiceNote(url) {
+  const bars = voiceWaveformBars();
+  return `<div class="voice-note" data-voice-note style="--voice-progress:0%">
+    <button class="voice-note-toggle" type="button" data-voice-toggle aria-label="Reproducir nota de voz">
+      <svg class="voice-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 9 5-9 5Z"/></svg>
+      <svg class="voice-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7v10M15 7v10"/></svg>
+    </button>
+    <div class="voice-note-main">
+      <div class="voice-waveform-shell">
+        <span class="voice-waveform voice-waveform-base" aria-hidden="true">${bars}</span>
+        <span class="voice-waveform voice-waveform-progress" aria-hidden="true">${bars}</span>
+        <input class="voice-note-seek" data-voice-seek type="range" min="0" max="0" value="0" step="0.01" aria-label="Posición de la nota de voz">
+      </div>
+      <div class="voice-note-time"><span data-voice-elapsed>0:00</span><span data-voice-duration>--:--</span></div>
+    </div>
+    <span class="voice-note-info" aria-hidden="true">i</span>
+    <audio src="${escapeHtml(url)}" preload="metadata"></audio>
+  </div>`;
+}
+
+function syncVoiceNotePlayer(audio) {
+  const player = audio.closest("[data-voice-note]");
+  if (!player) return;
+  const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+  const elapsed = Math.min(audio.currentTime || 0, duration || audio.currentTime || 0);
+  const seek = player.querySelector("[data-voice-seek]");
+  seek.max = String(duration || 0);
+  seek.value = String(elapsed);
+  player.querySelector("[data-voice-elapsed]").textContent = formatAudioClock(elapsed);
+  player.querySelector("[data-voice-duration]").textContent = formatAudioClock(duration);
+  player.style.setProperty("--voice-progress", `${duration ? (elapsed / duration) * 100 : 0}%`);
+  player.classList.toggle("is-playing", !audio.paused && !audio.ended);
+  player.querySelector("[data-voice-toggle]").setAttribute("aria-label", audio.paused ? "Reproducir nota de voz" : "Pausar nota de voz");
+}
+
+function toggleVoiceNote(button) {
+  const audio = button.closest("[data-voice-note]")?.querySelector("audio");
+  if (!audio) return;
+  if (audio.paused) {
+    document.querySelectorAll("[data-voice-note] audio").forEach(other => {
+      if (other !== audio) other.pause();
+    });
+    audio.play().catch(() => {});
+  } else {
+    audio.pause();
+  }
+  syncVoiceNotePlayer(audio);
 }
 
 function getSharedMediaReference(message) {
@@ -950,10 +1015,10 @@ function renderPrivateConversation() {
   container.innerHTML = items.length ? items.map(message => {
     const sender = getMemberByAuthId(message.senderId);
     const own = message.senderId === currentAuthUser?.id;
-    return `<div class="message private-message ${own ? "own" : ""}">
-      ${getAvatar(sender)}
+    return `<div class="message private-message ${own ? "own own-message" : ""}">
+      ${own ? "" : getAvatar(sender)}
       <div class="message-bubble" data-message-bubble>
-        <div class="message-head"><strong>${escapeHtml(sender?.name || "Miembro")}</strong><time>${formatMessageDate(message.createdAt)}</time></div>
+        ${own ? "" : `<div class="message-head"><strong>${escapeHtml(sender?.name || "Miembro")}</strong><time>${formatMessageDate(message.createdAt)}</time></div>`}
         ${message.body ? `<p>${escapeHtml(message.body)}</p>` : ""}
         ${message.attachmentUrl ? renderMessageAttachment(message) : ""}
         ${own ? `<div class="message-actions">
@@ -1180,6 +1245,7 @@ async function applyUserInterface(user, authUser = null) {
 }
 
 function showLogin() {
+  closeProfileQuickMenu();
   document.body.classList.remove("authenticated");
   document.getElementById("loginScreen")?.classList.remove("login-hidden");
   onlineUsers = [];
@@ -1705,6 +1771,7 @@ function clearPendingChatFile(kind) {
   context.cameraInput.value = "";
   context.preview.hidden = true;
   context.preview.innerHTML = "";
+  context.preview.classList.remove("voice-attachment-preview");
   if (attachmentPreviewUrls[kind]) URL.revokeObjectURL(attachmentPreviewUrls[kind]);
   attachmentPreviewUrls[kind] = "";
   syncComposerState(kind);
@@ -1724,10 +1791,13 @@ function renderChatAttachmentPreview(kind) {
   const audio = isAudio
     ? (() => {
         attachmentPreviewUrls[kind] = URL.createObjectURL(file);
-        return `<audio src="${escapeHtml(attachmentPreviewUrls[kind])}" controls preload="metadata"></audio>`;
+        return renderVoiceNote(attachmentPreviewUrls[kind]);
       })()
     : "";
-  preview.innerHTML = `<div class="attachment-preview-content"><span>${isAudio ? "Nota de voz" : "Adjunto"}: <strong>${escapeHtml(file.name)}</strong> · ${formatFileSize(file.size)}</span>${audio}</div><button type="button" data-clear-chat-attachment="${kind}">Quitar</button>`;
+  preview.classList.toggle("voice-attachment-preview", isAudio);
+  preview.innerHTML = isAudio
+    ? `<div class="attachment-preview-content"><small>LISTA PARA ENVIAR · ${formatFileSize(file.size)}</small>${audio}</div><button class="voice-preview-remove" type="button" data-clear-chat-attachment="${kind}" aria-label="Descartar nota de voz">×</button>`
+    : `<div class="attachment-preview-content"><span>Adjunto: <strong>${escapeHtml(file.name)}</strong> · ${formatFileSize(file.size)}</span></div><button type="button" data-clear-chat-attachment="${kind}">Quitar</button>`;
   preview.hidden = false;
 }
 
@@ -1743,19 +1813,59 @@ function recordingFileExtension(mimeType) {
   return "webm";
 }
 
-function updateRecordingUi(kind, recording, seconds = 0) {
+function formatAudioClock(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "--:--";
+  const rounded = Math.floor(seconds);
+  return `${Math.floor(rounded / 60)}:${String(rounded % 60).padStart(2, "0")}`;
+}
+
+function recordingElapsedSeconds(session) {
+  const end = session.pausedAt || Date.now();
+  return Math.max(0, Math.floor((end - session.startedAt - session.pausedTotal) / 1000));
+}
+
+function updateRecordingUi(kind, recording, seconds = 0, paused = false) {
   const privateChat = kind === "private";
   const button = document.getElementById(privateChat ? "recordPrivateAudioButton" : "recordGroupAudioButton");
   const time = document.getElementById(privateChat ? "privateRecordingTime" : "groupRecordingTime");
+  const wave = document.getElementById(privateChat ? "privateRecordingWave" : "groupRecordingWave");
+  const pause = document.getElementById(privateChat ? "pausePrivateAudioButton" : "pauseGroupAudioButton");
+  const cancel = document.getElementById(privateChat ? "cancelPrivateAudioButton" : "cancelGroupAudioButton");
   const form = document.getElementById(privateChat ? "privateMessageForm" : "messageForm");
-  const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
-  const remainder = String(seconds % 60).padStart(2, "0");
   button.classList.toggle("recording", recording);
-  button.setAttribute("aria-label", recording ? "Finalizar nota de voz" : "Grabar nota de voz");
-  button.title = recording ? "Pulsa para finalizar" : "Grabar nota de voz";
+  button.setAttribute("aria-label", recording ? "Enviar nota de voz" : "Grabar nota de voz");
+  button.title = recording ? "Enviar nota de voz" : "Grabar nota de voz";
   time.hidden = !recording;
-  time.textContent = `${minutes}:${remainder}`;
+  wave.hidden = !recording;
+  pause.hidden = !recording;
+  cancel.hidden = !recording;
+  time.textContent = formatAudioClock(seconds);
+  pause.setAttribute("aria-label", paused ? "Continuar grabación" : "Pausar grabación");
+  pause.title = paused ? "Continuar" : "Pausar";
   form.classList.toggle("is-recording", recording);
+  form.classList.toggle("is-recording-paused", recording && paused);
+}
+
+function pauseAudioRecording(kind) {
+  const session = activeAudioRecording;
+  if (!session || session.kind !== kind) return;
+  if (session.recorder.state === "recording") {
+    session.recorder.pause();
+    session.pausedAt = Date.now();
+  } else if (session.recorder.state === "paused") {
+    session.recorder.resume();
+    session.pausedTotal += Date.now() - session.pausedAt;
+    session.pausedAt = 0;
+  }
+  updateRecordingUi(kind, true, recordingElapsedSeconds(session), session.recorder.state === "paused");
+}
+
+function cancelAudioRecording(kind) {
+  const session = activeAudioRecording;
+  if (!session || session.kind !== kind) return;
+  session.cancelled = true;
+  session.sendOnStop = false;
+  if (session.recorder.state !== "inactive") session.recorder.stop();
 }
 
 async function toggleAudioRecording(kind) {
@@ -1764,6 +1874,7 @@ async function toggleAudioRecording(kind) {
       window.alert("Termina la grabación actual antes de iniciar otra.");
       return;
     }
+    activeAudioRecording.sendOnStop = true;
     if (activeAudioRecording.recorder.state !== "inactive") activeAudioRecording.recorder.stop();
     return;
   }
@@ -1787,7 +1898,7 @@ async function toggleAudioRecording(kind) {
     window.alert("No se pudo iniciar la grabación de audio en este dispositivo.");
     return;
   }
-  const session = {kind, recorder, stream, chunks: [], startedAt: Date.now(), timer: null};
+  const session = {kind, recorder, stream, chunks: [], startedAt: Date.now(), pausedAt: 0, pausedTotal: 0, timer: null, sendOnStop: false};
   activeAudioRecording = session;
   recorder.addEventListener("dataavailable", event => {
     if (event.data?.size) session.chunks.push(event.data);
@@ -1802,6 +1913,7 @@ async function toggleAudioRecording(kind) {
     const blob = new Blob(session.chunks, {type: resolvedType});
     const filename = `nota-de-voz-${new Date().toISOString().replace(/[:.]/g, "-")}.${recordingFileExtension(resolvedType)}`;
     setPendingChatFile(kind, new File([blob], filename, {type: resolvedType, lastModified: Date.now()}));
+    if (session.sendOnStop) requestAnimationFrame(() => document.getElementById(kind === "private" ? "privateMessageForm" : "messageForm")?.requestSubmit());
   }, {once: true});
   recorder.addEventListener("error", () => {
     clearInterval(session.timer);
@@ -1810,10 +1922,11 @@ async function toggleAudioRecording(kind) {
     if (activeAudioRecording === session) activeAudioRecording = null;
     window.alert("La grabación se ha interrumpido. Inténtalo de nuevo.");
   }, {once: true});
+  clearPendingChatFile(kind);
   recorder.start(250);
   updateRecordingUi(kind, true, 0);
   session.timer = setInterval(() => {
-    updateRecordingUi(kind, true, Math.floor((Date.now() - session.startedAt) / 1000));
+    updateRecordingUi(kind, true, recordingElapsedSeconds(session), recorder.state === "paused");
   }, 1000);
 }
 
@@ -3242,6 +3355,66 @@ document.addEventListener("click", event => {
   const searchUrl = event.target.closest("[data-search-url]");
   if (profileTarget || searchSection || searchUrl) closeGlobalSearch();
 });
+
+document.addEventListener("click", event => {
+  const voiceToggle = event.target.closest("[data-voice-toggle]");
+  if (voiceToggle) toggleVoiceNote(voiceToggle);
+  if (!event.target.closest("#profileQuickMenu, .profile-tab")) closeProfileQuickMenu();
+});
+document.addEventListener("input", event => {
+  const seek = event.target.closest("[data-voice-seek]");
+  if (!seek) return;
+  const audio = seek.closest("[data-voice-note]")?.querySelector("audio");
+  if (!audio || !Number.isFinite(audio.duration)) return;
+  audio.currentTime = Number(seek.value);
+  syncVoiceNotePlayer(audio);
+});
+["loadedmetadata", "durationchange", "timeupdate", "play", "pause", "ended"].forEach(type => {
+  document.addEventListener(type, event => {
+    if (event.target.matches?.("[data-voice-note] audio")) syncVoiceNotePlayer(event.target);
+  }, true);
+});
+
+const profileTab = document.querySelector(".profile-tab");
+function clearProfileQuickMenuPress() {
+  clearTimeout(profileQuickMenuPressTimer);
+  profileQuickMenuPressTimer = null;
+  profileQuickMenuPointer = null;
+}
+profileTab.addEventListener("pointerdown", event => {
+  if (event.button !== 0 || !currentUser) return;
+  profileQuickMenuPointer = {id: event.pointerId, x: event.clientX, y: event.clientY};
+  profileQuickMenuPressTimer = setTimeout(() => {
+    suppressProfileTabClick = true;
+    openProfileQuickMenu();
+  }, 480);
+});
+profileTab.addEventListener("pointermove", event => {
+  if (!profileQuickMenuPointer || profileQuickMenuPointer.id !== event.pointerId) return;
+  if (Math.hypot(event.clientX - profileQuickMenuPointer.x, event.clientY - profileQuickMenuPointer.y) > 12) clearProfileQuickMenuPress();
+});
+["pointerup", "pointercancel", "pointerleave"].forEach(type => profileTab.addEventListener(type, clearProfileQuickMenuPress));
+profileTab.addEventListener("contextmenu", event => {
+  event.preventDefault();
+  openProfileQuickMenu();
+});
+profileTab.addEventListener("click", event => {
+  if (!suppressProfileTabClick) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  suppressProfileTabClick = false;
+}, true);
+document.getElementById("quickHelpButton").addEventListener("click", () => {
+  closeProfileQuickMenu();
+  goTo("ayuda");
+});
+document.getElementById("quickLogoutButton").addEventListener("click", () => {
+  closeProfileQuickMenu();
+  logoutCurrentUser();
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeProfileQuickMenu();
+});
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
   if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
@@ -3340,6 +3513,7 @@ document.getElementById("mediaReplyForm").addEventListener("submit", event => { 
 document.getElementById("messageForm").addEventListener("submit", async event => {
   event.preventDefault();
   if (activeAudioRecording?.kind === "group") {
+    activeAudioRecording.sendOnStop = true;
     activeAudioRecording.recorder.stop();
     return;
   }
@@ -3363,6 +3537,7 @@ document.getElementById("messageForm").addEventListener("submit", async event =>
 document.getElementById("privateMessageForm").addEventListener("submit", async event => {
   event.preventDefault();
   if (activeAudioRecording?.kind === "private") {
+    activeAudioRecording.sendOnStop = true;
     activeAudioRecording.recorder.stop();
     return;
   }
@@ -3514,6 +3689,10 @@ document.getElementById("captureMessageCameraButton").addEventListener("click", 
 document.getElementById("capturePrivateMessageCameraButton").addEventListener("click", () => document.getElementById("privateMessageCameraAttachment").click());
 document.getElementById("recordGroupAudioButton").addEventListener("click", () => toggleAudioRecording("group"));
 document.getElementById("recordPrivateAudioButton").addEventListener("click", () => toggleAudioRecording("private"));
+document.getElementById("pauseGroupAudioButton").addEventListener("click", () => pauseAudioRecording("group"));
+document.getElementById("pausePrivateAudioButton").addEventListener("click", () => pauseAudioRecording("private"));
+document.getElementById("cancelGroupAudioButton").addEventListener("click", () => cancelAudioRecording("group"));
+document.getElementById("cancelPrivateAudioButton").addEventListener("click", () => cancelAudioRecording("private"));
 document.getElementById("privateMessageAttachment").addEventListener("change", event => setPendingChatFile("private", event.target.files[0] || null));
 document.getElementById("privateMessageMediaAttachment").addEventListener("change", event => setPendingChatFile("private", event.target.files[0] || null));
 document.getElementById("privateMessageCameraAttachment").addEventListener("change", event => setPendingChatFile("private", event.target.files[0] || null));
