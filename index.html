@@ -9,13 +9,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
   <title>The Big Boy Rules</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260814-80" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260814-81" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260814-80" />
+  <link rel="stylesheet" href="styles.css?v=20260814-81" />
 </head>
 <body>
 
@@ -88,39 +88,8 @@
     </div>
   </div>
 
-  <aside class="sidebar" id="sidebar">
-    <button class="sidebar-collapse-button" id="sidebarCollapseButton" type="button" aria-label="Reducir menú lateral" aria-expanded="true" title="Reducir menú">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-    </button>
-    <a class="brand" href="#inicio" aria-label="Inicio">
-      <span class="brand-mark">BB</span>
-      <span>
-        <strong>THE BIG BOY</strong>
-        <small>RULES</small>
-      </span>
-    </a>
-
-    <nav class="main-nav">
-      <a class="nav-link active" href="#inicio" data-section="inicio" title="Inicio">
-        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v10h-6v-6H9v6H3Z"/></svg></span><b>Inicio</b>
-      </a>
-      <a class="nav-link" href="#chat" data-section="chat" title="Chats">
-        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M8 16H5l-3 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v1M9 10h10a3 3 0 0 1 3 3v8l-3-3H9a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3Z"/></svg></span><b>Chats</b>
-        <i class="notification-dot"></i>
-      </a>
-      <a class="nav-link" href="#contenido" data-section="contenido" title="Publicaciones">
-        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span><b>Publicaciones</b>
-      </a>
-      <a class="nav-link" href="#calendario" data-section="calendario" title="Calendario">
-        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></span><b>Calendario</b>
-      </a>
-    </nav>
-
-  </aside>
-
   <main class="app">
     <header class="topbar">
-      <button class="menu-button" id="menuButton">☰</button>
       <div>
         <span class="eyebrow">COMUNIDAD PRIVADA</span>
         <h1 id="pageTitle">The Big Boy Rules</h1>
@@ -145,17 +114,6 @@
           </div>
         </div>
         <button class="icon-button admin-only admin-crown-button monochrome-top-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración">♛</button>
-        <button class="icon-button" id="searchButton" aria-label="Buscar">⌕</button>
-        <div class="global-search" id="globalSearch" aria-hidden="true">
-          <div class="search-box">
-            <span>⌕</span>
-            <input id="globalSearchInput" type="search" placeholder="Buscar miembros, mensajes, publicaciones..." autocomplete="off">
-            <button id="closeSearchButton" type="button" aria-label="Cerrar búsqueda">×</button>
-          </div>
-          <div class="search-results" id="searchResults">
-            <div class="empty-state compact">Empieza a escribir para buscar en el club.</div>
-          </div>
-        </div>
         <div class="user-menu-wrap">
           <button class="profile-button" id="userMenuButton">
             <div class="avatar small" id="topbarAvatar">U</div>
@@ -171,7 +129,7 @@
       </div>
     </header>
 
-    <section class="page-section active" id="inicio">
+    <section class="page-section" id="inicio">
       <div class="hero-card reveal">
         <div class="hero-lines" aria-hidden="true">
           <span></span><span></span><span></span>
@@ -343,7 +301,7 @@
       <div id="profileContent"></div>
     </section>
 
-    <section class="page-section" id="contenido">
+    <section class="page-section active" id="contenido">
       <div class="stories-section" data-content-panel="momentos">
         <div class="stories-heading"><div><span class="eyebrow">MOMENTOS · 24 HORAS</span><h3>Historias del grupo</h3></div><span id="momentsStatus" class="news-status moments-status" aria-live="polite"></span></div>
         <div class="stories-row">
@@ -361,7 +319,21 @@
       </div>
     </section>
 
-    <section class="page-section" id="calendario">
+    <section class="page-section search-calendar-page" id="buscar">
+      <div class="search-hub">
+        <div class="section-intro search-hub-heading">
+          <div><span class="eyebrow">ENCUENTRA LO QUE BUSCAS</span><h2>Buscar en el club.</h2></div>
+          <p>Miembros, mensajes, publicaciones, noticias y eventos, todo desde un mismo lugar.</p>
+        </div>
+        <div class="search-hub-box">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="globalSearchInput" type="search" placeholder="Buscar miembros, mensajes, publicaciones..." autocomplete="off">
+        </div>
+        <div class="search-results search-hub-results" id="searchResults">
+          <div class="empty-state compact">Empieza a escribir para buscar en el club.</div>
+        </div>
+      </div>
+      <div class="calendar-divider"><span></span><strong>CALENDARIO</strong><span></span></div>
       <div class="section-intro">
         <div>
           <span class="eyebrow">AGENDA DEL GRUPO</span>
@@ -492,6 +464,24 @@
     </section>
 
   </main>
+
+  <nav class="floating-tab-bar" id="floatingTabBar" aria-label="Navegación principal">
+    <a class="app-tab active" href="#contenido" data-section="contenido" aria-label="Inicio" title="Inicio">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v10h-6v-6H9v6H3Z"/></svg><span>Inicio</span>
+    </a>
+    <a class="app-tab" href="#inicio" data-section="inicio" aria-label="Club" title="Club">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V8l8-4 8 4v12M8 20v-7h8v7M3 20h18"/></svg><span>Club</span>
+    </a>
+    <a class="app-tab" href="#chat" data-section="chat" aria-label="Mensajes" title="Mensajes">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4-.9L3 21l1.7-4.6A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 9h8M8 13h5"/></svg><i class="tab-alert" id="chatTabAlert" aria-hidden="true" hidden></i><span>Chats</span>
+    </a>
+    <a class="app-tab" href="#buscar" data-section="buscar" aria-label="Buscar y calendario" title="Buscar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Buscar</span>
+    </a>
+    <a class="app-tab profile-tab" href="#perfil" data-section="perfil" aria-label="Mi perfil" title="Mi perfil">
+      <span class="tab-avatar avatar" id="bottomNavAvatar">U</span><span>Perfil</span>
+    </a>
+  </nav>
 
   <div class="modal-backdrop" id="profileEditor" aria-hidden="true">
     <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditorTitle">
@@ -800,7 +790,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260814-80"></script>
+  <script src="app.js?v=20260814-81"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

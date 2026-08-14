@@ -45,13 +45,9 @@ const FILE_LIMITS = Object.freeze({
 const STORY_GESTURE = Object.freeze({horizontalThreshold: 45, dismissThreshold: 90, holdDelay: 250});
 const pageTitle = document.getElementById("pageTitle");
 const sections = [...document.querySelectorAll(".page-section")];
-const navLinks = [...document.querySelectorAll(".nav-link")];
-const sidebar = document.getElementById("sidebar");
-const SIDEBAR_COMPACT_KEY = "bb-sidebar-compact";
+const navLinks = [...document.querySelectorAll(".app-tab")];
 const isStandaloneApp = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 document.body.classList.toggle("standalone-app", isStandaloneApp);
-if (localStorage.getItem(SIDEBAR_COMPACT_KEY) === "1") document.body.classList.add("sidebar-compact");
-let sidebarSwipeStart = null;
 let mobileHeaderLastScrollY = Math.max(0, window.scrollY);
 let mobileHeaderScrollAnchor = mobileHeaderLastScrollY;
 let mobileHeaderDirection = null;
@@ -63,10 +59,8 @@ function isMobileSidebar() {
 
 function mobileHeaderMustStayVisible() {
   return document.body.classList.contains("chat-focus")
-    || sidebar.classList.contains("open")
     || document.querySelector(".modal-backdrop.open")
     || document.getElementById("notificationsDropdown")?.getAttribute("aria-hidden") === "false"
-    || document.getElementById("globalSearch")?.getAttribute("aria-hidden") === "false"
     || document.getElementById("userDropdown")?.classList.contains("open");
 }
 
@@ -107,31 +101,6 @@ function scheduleMobileHeaderSync() {
   if (mobileHeaderFrame) return;
   mobileHeaderFrame = requestAnimationFrame(syncMobileHeader);
 }
-
-function syncSidebarCollapseButton() {
-  const compact = document.body.classList.contains("sidebar-compact");
-  const button = document.getElementById("sidebarCollapseButton");
-  button.setAttribute("aria-expanded", String(!compact));
-  const mobileCompact = isMobileSidebar() && compact;
-  button.setAttribute("aria-label", mobileCompact ? "Ocultar menú lateral" : compact ? "Ampliar menú lateral" : "Reducir menú lateral");
-  button.title = mobileCompact ? "Ocultar menú" : compact ? "Ampliar menú" : "Reducir menú";
-}
-
-function setSidebarCompact(compact) {
-  document.body.classList.toggle("sidebar-compact", compact);
-  localStorage.setItem(SIDEBAR_COMPACT_KEY, compact ? "1" : "0");
-  syncSidebarCollapseButton();
-}
-
-function stepMobileSidebar(direction) {
-  if (direction === "left") {
-    sidebar.classList.remove("open");
-  } else {
-    setSidebarCompact(true);
-    sidebar.classList.add("open");
-  }
-}
-syncSidebarCollapseButton();
 
 let currentUser = null;
 let currentAuthUser = null;
@@ -414,6 +383,7 @@ function goTo(sectionId) {
   mobileHeaderScrollAnchor = 0;
   mobileHeaderDirection = null;
   const requestedSection = sectionId;
+  if (sectionId === "calendario") sectionId = "buscar";
   const homeAnchor = sectionId === "miembros" || sectionId === "noticias" ? sectionId : null;
   if (homeAnchor) sectionId = "inicio";
   if (sectionId === "momentos" || sectionId === "publicaciones") {
@@ -426,21 +396,25 @@ function goTo(sectionId) {
     sectionBeforeChat = currentSection;
   }
   sections.forEach(section => section.classList.toggle("active", section.id === sectionId));
-  navLinks.forEach(link => link.classList.toggle("active", link.dataset.section === (sectionId === "privados" ? "chat" : sectionId)));
+  const navigationSection = sectionId === "privados" ? "chat" : sectionId;
+  navLinks.forEach(link => {
+    const active = link.dataset.section === navigationSection;
+    link.classList.toggle("active", active);
+    link.setAttribute("aria-current", active ? "page" : "false");
+  });
   document.body.classList.toggle("chat-focus", openingChat);
   syncMobileViewport();
   const titles = {
-    inicio: "The Big Boy Rules", chat: "Chats", miembros: "Miembros",
-    privados: "Mensajes privados", perfil: "Perfil del miembro", contenido: "Publicaciones",
-    noticias: "Noticias", calendario: "Calendario", administracion: "Administración", ayuda: "Ayuda y sugerencias"
+    inicio: "El Club", chat: "Mensajes", miembros: "Miembros",
+    privados: "Mensajes privados", perfil: "Perfil", contenido: "Para ti",
+    noticias: "Noticias", buscar: "Buscar", administracion: "Administración", ayuda: "Ayuda y sugerencias"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
-  sidebar.classList.remove("open");
   if (homeAnchor) requestAnimationFrame(() => document.getElementById(homeAnchor)?.scrollIntoView({behavior: "smooth", block: "start"}));
   else window.scrollTo({top: 0, behavior: "smooth"});
   history.replaceState(null, "", `#${homeAnchor || sectionId}`);
   if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
-  if (sectionId === "calendario") renderCalendar();
+  if (sectionId === "buscar") renderCalendar();
   if (sectionId === "contenido") selectContentTab(activeContentTab);
   if (sectionId === "ayuda" && currentUser) loadHelpCenter();
 }
@@ -516,6 +490,8 @@ function renderProfile(memberId) {
   const canManageProfile = canEdit || isSuperAdmin();
   const canDeletePosts = canEdit || isSuperAdmin();
   const posts = profilePosts.filter(post => post.member === member.id);
+  const memberMoments = moments.filter(moment => moment.member === member.id);
+  document.querySelector("#perfil .back-button").hidden = canEdit;
   document.getElementById("profileContent").innerHTML = `
     <article class="profile-hero">
       <div class="profile-visual ${member.avatarUrl ? "has-photo" : ""}"
@@ -532,6 +508,21 @@ function renderProfile(memberId) {
         </div>
       </div>
     </article>
+    <section class="profile-stories">
+      <div class="profile-feed-heading">
+        <div><span class="eyebrow">HISTORIAS ACTIVAS</span><h3>${memberMoments.length} ${memberMoments.length === 1 ? "historia" : "historias"}</h3></div>
+        ${canEdit ? `<button class="secondary-button" id="addProfileMomentButton" type="button">＋ Nueva historia</button>` : ""}
+      </div>
+      <div class="profile-stories-strip">
+        ${memberMoments.length ? memberMoments.map(moment => `
+          <button class="profile-story-tile" type="button" data-open-moment="${moment.id}" aria-label="Abrir historia">
+            <span class="profile-story-media">${moment.mediaType === "video"
+              ? `<video src="${escapeHtml(moment.mediaUrl)}" muted playsinline preload="metadata"></video>`
+              : `<img src="${escapeHtml(moment.mediaUrl)}" alt="" loading="lazy" decoding="async">`}</span>
+            <small>${formatRelativeTime(moment.createdAt)}</small>
+          </button>`).join("") : `<div class="empty-state compact profile-stories-empty"><strong>Sin historias activas</strong><span>${canEdit ? "Comparte una historia desde tu perfil." : `${escapeHtml(member.name)} no tiene historias activas.`}</span></div>`}
+      </div>
+    </section>
     <section class="profile-feed">
       <div class="profile-feed-heading">
         <div><span class="eyebrow">PUBLICACIONES</span><h3>${posts.length} ${posts.length === 1 ? "publicación" : "publicaciones"}</h3></div>
@@ -543,6 +534,7 @@ function renderProfile(memberId) {
       </div>
     </section>`;
   document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
+  document.getElementById("addProfileMomentButton")?.addEventListener("click", () => openMediaUploader("moment"));
   document.getElementById("addProfilePostButton")?.addEventListener("click", () => openMediaUploader("post"));
   goTo("perfil");
 }
@@ -986,7 +978,7 @@ function performSearch(query) {
     results.push({type: "Publicación", title: post.caption || "Foto", detail: getMember(post.member)?.name || "", section: "publicaciones"});
   });
   groupEvents.filter(event => normalizeUsername(`${event.title} ${event.description} ${event.location}`).includes(term)).forEach(event => {
-    results.push({type: "Evento", title: event.title, detail: formatEventDate(event.startsAt), section: "calendario"});
+    results.push({type: "Evento", title: event.title, detail: formatEventDate(event.startsAt), section: "buscar"});
   });
   newsItems.filter(item => normalizeUsername(`${item.title} ${item.source}`).includes(term)).slice(0, 6).forEach(item => {
     results.push({type: "Noticia", title: item.title, detail: item.source, url: item.link});
@@ -1039,8 +1031,9 @@ function refreshProfileSurfaces() {
 }
 
 function applyUserHeader(user) {
-  ["topbarAvatar"].forEach(id => {
+  ["topbarAvatar", "bottomNavAvatar"].forEach(id => {
     const node = document.getElementById(id);
+    if (!node) return;
     node.classList.toggle("has-image", Boolean(user.avatarUrl));
     node.innerHTML = user.avatarUrl ? `<img src="${escapeHtml(user.avatarUrl)}" alt="">` : escapeHtml(user.name.charAt(0));
   });
@@ -1088,6 +1081,8 @@ async function applyUserInterface(user, authUser = null) {
   if (authUser?.user_metadata?.must_change_password) requirePasswordChange(authUser.id);
   if (passwordChangeIsRequired(authUser?.id || user.id)) openRequiredPasswordChange();
   if (document.getElementById("inicio")?.classList.contains("active")) loadNews(false);
+  if (location.hash === "#perfil") renderProfile(currentUser.id);
+  window.scrollTo({top: 0, behavior: "auto"});
   syncPushNotificationState();
 }
 
@@ -1100,7 +1095,7 @@ function showLogin() {
   renderPresence();
   renderNotifications();
   closeNotifications();
-  goTo("inicio");
+  goTo("contenido");
 }
 
 async function login(username, password, remember) {
@@ -1345,6 +1340,8 @@ function renderNotifications() {
   const markAll = document.getElementById("markAllNotificationsRead");
   const clearAll = document.getElementById("clearAllNotifications");
   const unread = notifications.filter(item => !item.readAt).length;
+  const chatTabAlert = document.getElementById("chatTabAlert");
+  if (chatTabAlert) chatTabAlert.hidden = !notifications.some(item => !item.readAt && item.type === "private_message");
   badge.hidden = unread === 0;
   badge.textContent = unread > 99 ? "99+" : String(unread);
   markAll.disabled = unread === 0;
@@ -2955,38 +2952,9 @@ document.addEventListener("click", event => {
 });
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
-  goTo(link.dataset.section);
+  if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
+  else goTo(link.dataset.section);
 }));
-document.getElementById("menuButton").addEventListener("click", () => {
-  if (isMobileSidebar()) setSidebarCompact(true);
-  sidebar.classList.toggle("open");
-});
-document.addEventListener("pointerdown", event => {
-  if (!isMobileSidebar() || !sidebar.classList.contains("open")) return;
-  if (event.target.closest("#sidebar, #menuButton")) return;
-  sidebar.classList.remove("open");
-});
-document.getElementById("sidebarCollapseButton").addEventListener("click", () => {
-  if (isMobileSidebar()) {
-    sidebar.classList.remove("open");
-    return;
-  }
-  setSidebarCompact(!document.body.classList.contains("sidebar-compact"));
-});
-sidebar.addEventListener("pointerdown", event => {
-  if (!isMobileSidebar() || event.target.closest("button, a")) return;
-  sidebarSwipeStart = {id: event.pointerId, x: event.clientX, y: event.clientY};
-});
-sidebar.addEventListener("pointerup", event => {
-  if (!sidebarSwipeStart || sidebarSwipeStart.id !== event.pointerId) return;
-  const distanceX = event.clientX - sidebarSwipeStart.x;
-  const distanceY = event.clientY - sidebarSwipeStart.y;
-  sidebarSwipeStart = null;
-  if (Math.abs(distanceX) < 48 || Math.abs(distanceX) <= Math.abs(distanceY)) return;
-  stepMobileSidebar(distanceX < 0 ? "left" : "right");
-});
-sidebar.addEventListener("pointercancel", () => { sidebarSwipeStart = null; });
-window.addEventListener("resize", syncSidebarCollapseButton);
 document.getElementById("loginForm").addEventListener("submit", async event => {
   event.preventDefault();
   const error = document.getElementById("loginError");
@@ -3566,22 +3534,13 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape" && document.getElementById("mediaViewer").classList.contains("open")) closeMediaViewer();
 });
 function openGlobalSearch() {
-  const search = document.getElementById("globalSearch");
-  search.classList.add("open");
-  search.setAttribute("aria-hidden", "false");
+  goTo("buscar");
   document.getElementById("globalSearchInput").focus();
 }
 function closeGlobalSearch() {
-  const search = document.getElementById("globalSearch");
-  search.classList.remove("open");
-  search.setAttribute("aria-hidden", "true");
+  document.getElementById("globalSearchInput")?.blur();
 }
-document.getElementById("searchButton").addEventListener("click", event => {
-  event.stopPropagation();
-  openGlobalSearch();
-});
 document.getElementById("adminPanelButton")?.addEventListener("click", () => goTo("administracion"));
-document.getElementById("closeSearchButton").addEventListener("click", closeGlobalSearch);
 document.getElementById("globalSearchInput").addEventListener("input", event => performSearch(event.target.value));
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
@@ -3671,7 +3630,10 @@ loadNews(false);
 })();
 
 const initialSection = location.hash.replace("#", "");
-if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "calendario", "ayuda"].includes(initialSection)) goTo(initialSection);
+if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "buscar", "calendario", "perfil", "ayuda"].includes(initialSection)) {
+  if (initialSection === "perfil" && currentUser) renderProfile(currentUser.id);
+  else goTo(initialSection);
+}
 window.addEventListener("scroll", scheduleMobileHeaderSync, {passive: true});
 window.addEventListener("resize", () => {
   if (!isMobileSidebar()) showMobileHeader();
