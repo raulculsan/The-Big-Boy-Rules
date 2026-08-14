@@ -1355,11 +1355,14 @@ function renderNotifications() {
   }
   list.innerHTML = notifications.map(item => {
     const actor = getMemberByAuthId(item.actorId);
+    const actorName = actor?.name || "Un miembro";
     const text = item.type === "private_message"
-      ? `${actor?.name || "Un miembro"} te ha enviado un mensaje`
+      ? `${actorName} te ha enviado un mensaje`
       : item.type === "media_created"
-        ? `${actor?.name || "Un miembro"} ha subido ${item.targetType === "moment" ? "una historia" : "una publicación"}`
-      : `${actor?.name || "Un miembro"} ha dado Me gusta a tu ${item.targetType === "moment" ? "momento" : "publicación"}`;
+        ? `${actorName} ha subido ${item.targetType === "moment" ? "una historia" : "una publicación"}`
+        : item.type === "reply"
+          ? `${actorName} ha respondido a tu ${item.targetType === "moment" ? "historia" : "publicación"}`
+          : `${actorName} ha dado Me gusta a tu ${item.targetType === "moment" ? "historia" : "publicación"}`;
     return `<article class="notification-item ${item.readAt ? "" : "unread"}">
       <button class="notification-open" type="button" data-notification-id="${item.id}">
         ${getAvatar(actor, "avatar tiny")}
@@ -1414,7 +1417,7 @@ async function openNotification(id) {
     if (actor) openPrivateConversation(actor.id);
   } else if (item.targetType === "moment") {
     goTo("momentos");
-    if (item.type === "media_created") setTimeout(() => openMoment(item.targetId), 120);
+    if (["media_created", "reply", "like"].includes(item.type)) setTimeout(() => openMoment(item.targetId), 120);
   } else if (item.targetType === "post") {
     goTo("publicaciones");
   }
@@ -2205,7 +2208,7 @@ async function publishMedia(form) {
     const table = mediaUploadMode === "moment" ? "moments" : "profile_posts";
     const {data, error} = await db.from(table).insert(record).select("id").single();
     if (error) throw error;
-    dispatchPush("media_created", data.id);
+    dispatchPush("media_created", `${mediaUploadMode}:${data.id}`);
     closeMediaUploader();
     if (mediaUploadMode === "moment") {
       await loadMoments();

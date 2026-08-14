@@ -1,11 +1,11 @@
-const CACHE_NAME = "big-boy-rules-v79";
+const CACHE_NAME = "big-boy-rules-v80";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260814-79",
-  "./app.js?v=20260814-79",
+  "./styles.css?v=20260814-80",
+  "./app.js?v=20260814-80",
   "./config.js?v=20260805-59",
-  "./manifest.webmanifest?v=20260814-79",
+  "./manifest.webmanifest?v=20260814-80",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -61,7 +61,7 @@ self.addEventListener("push", event => {
   try { payload = event.data?.json() || {}; } catch { payload = {body: event.data?.text() || "Tienes una notificación nueva."}; }
   event.waitUntil(self.registration.showNotification(payload.title || "The Big Boy Rules", {
     body: payload.body || "Tienes una notificación nueva.",
-    icon: "./icons/icon-192.png",
+    icon: payload.icon || "./icons/icon-192.png",
     badge: "./icons/icon-192.png",
     tag: payload.tag || "big-boy-notification",
     renotify: true,

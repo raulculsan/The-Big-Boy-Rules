@@ -1,7 +1,7 @@
 alter table public.notifications drop constraint if exists notifications_type_check;
 alter table public.notifications
   add constraint notifications_type_check
-  check (type in ('private_message', 'like', 'media_created'));
+  check (type in ('private_message', 'like', 'reply', 'media_created'));
 
 create or replace function public.notify_media_created()
 returns trigger
