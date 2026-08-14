@@ -144,6 +144,8 @@ let notifications = [];
 let privateMessages = [];
 let groupEvents = [];
 let chatChannels = [];
+let helpRequests = [];
+let helpMessages = [];
 let newsItems = [];
 let siteSettings = {};
 let onlineUsers = [];
@@ -157,7 +159,10 @@ let privateChannel = null;
 let eventChannel = null;
 let settingsChannel = null;
 let chatChannelsRealtime = null;
+let helpRealtime = null;
 let activeNewsCategory = "deportes";
+let activeHelpRequestId = null;
+let activeHelpFilter = "all";
 let lastNewsRefreshAt = 0;
 let newsLoadToken = 0;
 let pendingPrivateMessageFile = null;
@@ -427,7 +432,7 @@ function goTo(sectionId) {
   const titles = {
     inicio: "The Big Boy Rules", chat: "Chats", miembros: "Miembros",
     privados: "Mensajes privados", perfil: "Perfil del miembro", contenido: "Publicaciones",
-    noticias: "Noticias", calendario: "Calendario", administracion: "Administración"
+    noticias: "Noticias", calendario: "Calendario", administracion: "Administración", ayuda: "Ayuda y sugerencias"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
   sidebar.classList.remove("open");
@@ -437,6 +442,7 @@ function goTo(sectionId) {
   if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
   if (sectionId === "calendario") renderCalendar();
   if (sectionId === "contenido") selectContentTab(activeContentTab);
+  if (sectionId === "ayuda" && currentUser) loadHelpCenter();
 }
 
 function exitChatView() {
@@ -1072,7 +1078,7 @@ async function applyUserInterface(user, authUser = null) {
   if (backendReady && authUser) {
     await loadRemoteProfiles();
     await loadChatChannels();
-    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadNotifications(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()]);
+    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadNotifications(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings(), loadHelpCenter()]);
     connectRealtime();
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
@@ -1213,6 +1219,8 @@ function mergeRemoteProfile(profile, expectedAuthId = currentAuthUser?.id) {
   }
   Object.assign(member, {
     authId: profile.id,
+    roleKey: profile.role,
+    role: profile.role === "admin" ? "ADMINISTRADOR" : profile.role === "superadmin" ? "CONTROL TOTAL" : "MIEMBRO",
     name: profile.display_name || member.name,
     nickname: profile.nickname || member.nickname,
     bio: profile.bio || member.bio,
@@ -1456,6 +1464,7 @@ function connectRealtime() {
   if (eventChannel) db.removeChannel(eventChannel);
   if (settingsChannel) db.removeChannel(settingsChannel);
   if (chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
+  if (helpRealtime) db.removeChannel(helpRealtime);
   if (settingsChannel) db.removeChannel(settingsChannel);
   presenceChannel = db.channel("big-boy-presence", {config: {presence: {key: currentAuthUser.id}}});
   presenceChannel
@@ -1504,6 +1513,10 @@ function connectRealtime() {
     .subscribe();
   chatChannelsRealtime = db.channel("chat-channels-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "chat_channels"}, () => loadChatChannels())
+    .subscribe();
+  helpRealtime = db.channel("help-center-live")
+    .on("postgres_changes", {event: "*", schema: "public", table: "help_requests"}, () => scheduleRealtimeRefresh("help", loadHelpCenter))
+    .on("postgres_changes", {event: "*", schema: "public", table: "help_messages"}, () => scheduleRealtimeRefresh("help", loadHelpCenter))
     .subscribe();
 }
 
@@ -2447,30 +2460,143 @@ async function submitMediaReply(form) {
   closeMediaReply();
 }
 
-function openHelpModal() {
-  document.getElementById("userDropdown")?.classList.remove("open");
-  document.getElementById("helpFeedback").textContent = "";
-  openModal("helpModal");
+const HELP_STATUS = Object.freeze({
+  new: {label: "Nueva", className: "new"},
+  in_progress: {label: "En proceso", className: "in-progress"},
+  answered: {label: "Respondida", className: "answered"},
+});
+const HELP_TYPES = Object.freeze({help: "Ayuda", suggestion: "Sugerencia", complaint: "Queja"});
+
+function helpStatus(status) {
+  return HELP_STATUS[status] || HELP_STATUS.new;
 }
 
-function closeHelpModal() { closeModal("helpModal"); }
+async function loadHelpCenter() {
+  if (!backendReady || !currentAuthUser) return;
+  const [requestResult, messageResult] = await Promise.all([
+    db.from("help_requests").select("*").order("updated_at", {ascending: false}).limit(250),
+    db.from("help_messages").select("*").order("created_at").limit(1000),
+  ]);
+  if (requestResult.error || messageResult.error) {
+    const list = document.getElementById("helpRequestList");
+    if (list) list.innerHTML = `<div class="empty-state compact"><strong>No se pudo abrir Ayuda</strong><span>${escapeHtml(requestResult.error?.message || messageResult.error?.message || "Inténtalo de nuevo.")}</span></div>`;
+    return;
+  }
+  helpRequests = (requestResult.data || []).map(item => ({
+    id: item.id, userId: item.user_id, type: item.request_type, status: item.status,
+    handledBy: item.handled_by, createdAt: item.created_at, updatedAt: item.updated_at,
+  }));
+  helpMessages = (messageResult.data || []).map(item => ({
+    id: item.id, requestId: item.request_id, senderId: item.sender_id,
+    body: item.body, createdAt: item.created_at,
+  }));
+  if (activeHelpRequestId && !helpRequests.some(item => String(item.id) === String(activeHelpRequestId))) activeHelpRequestId = null;
+  renderHelpCenter();
+}
+
+function renderHelpCenter() {
+  const list = document.getElementById("helpRequestList");
+  if (!list) return;
+  const isAdmin = canManageSite();
+  document.getElementById("helpCenterTitle").textContent = isAdmin ? "Bandeja de administración." : "Ayuda y sugerencias.";
+  document.getElementById("helpCenterDescription").textContent = isAdmin
+    ? "Todas las peticiones del club llegan aquí. Respóndelas y actualiza su estado sin mezclarlas con los mensajes privados."
+    : "Crea una petición privada para el equipo de administración y sigue aquí todas sus respuestas.";
+  document.getElementById("helpInboxEyebrow").textContent = isAdmin ? "TODAS LAS PETICIONES" : "MIS PETICIONES";
+  document.getElementById("helpRequestCount").textContent = String(helpRequests.length);
+
+  const filtered = activeHelpFilter === "all" ? helpRequests : helpRequests.filter(item => item.status === activeHelpFilter);
+  list.innerHTML = filtered.length ? filtered.map(item => {
+    const status = helpStatus(item.status);
+    const author = getMemberByAuthId(item.userId);
+    const latest = [...helpMessages].reverse().find(message => String(message.requestId) === String(item.id));
+    return `<button class="help-request-card ${String(activeHelpRequestId) === String(item.id) ? "active" : ""}" type="button" data-help-request="${item.id}">
+      <span class="help-request-card-top"><b>${escapeHtml(HELP_TYPES[item.type] || "Ayuda")} · #${item.id}</b><i class="help-status-badge ${status.className}">${status.label}</i></span>
+      ${isAdmin ? `<strong>${escapeHtml(author?.name || "Miembro")}</strong>` : ""}
+      <small>${escapeHtml(latest?.body || "Petición creada")}</small>
+      <time datetime="${escapeHtml(item.updatedAt)}">${formatRelativeTime(item.updatedAt)}</time>
+    </button>`;
+  }).join("") : `<div class="empty-state compact">No hay peticiones en este estado.</div>`;
+
+  const active = helpRequests.find(item => String(item.id) === String(activeHelpRequestId));
+  const conversation = document.getElementById("helpConversation");
+  const empty = document.getElementById("helpConversationEmpty");
+  conversation.hidden = !active;
+  empty.hidden = Boolean(active);
+  if (!active) return;
+
+  const status = helpStatus(active.status);
+  const author = getMemberByAuthId(active.userId);
+  document.getElementById("helpConversationMeta").textContent = `PETICIÓN #${active.id} · ${HELP_TYPES[active.type] || "AYUDA"}`;
+  document.getElementById("helpConversationTitle").textContent = isAdmin ? author?.name || "Miembro" : HELP_TYPES[active.type] || "Ayuda";
+  document.getElementById("helpConversationAuthor").textContent = isAdmin ? `@${author?.username || "usuario"}` : "Conversación privada con administración";
+  const adminStatus = document.getElementById("helpAdminStatus");
+  adminStatus.hidden = !isAdmin;
+  document.getElementById("helpRequestStatus").value = active.status;
+  const memberStatus = document.getElementById("helpMemberStatus");
+  memberStatus.hidden = isAdmin;
+  memberStatus.className = `help-status-badge ${status.className}`;
+  memberStatus.textContent = status.label;
+
+  const messages = helpMessages.filter(message => String(message.requestId) === String(active.id));
+  const messageList = document.getElementById("helpMessageList");
+  messageList.innerHTML = messages.map(message => {
+    const sender = getMemberByAuthId(message.senderId);
+    const own = message.senderId === currentAuthUser?.id;
+    const senderIsAdmin = sender?.roleKey === "admin" || sender?.roleKey === "superadmin";
+    return `<article class="help-message ${own ? "own" : ""} ${senderIsAdmin ? "from-admin" : ""}">
+      ${getAvatar(sender, "avatar tiny")}<div><span><strong>${escapeHtml(sender?.name || (senderIsAdmin ? "Administración" : "Miembro"))}</strong><time datetime="${escapeHtml(message.createdAt)}">${formatMessageDate(message.createdAt)}</time></span><p>${escapeHtml(message.body).replace(/\n/g, "<br>")}</p></div>
+    </article>`;
+  }).join("");
+  requestAnimationFrame(() => { messageList.scrollTop = messageList.scrollHeight; });
+}
 
 async function submitHelpRequest(form) {
-  if (!backendReady || !currentAuthUser || !currentUser) return;
-  const admin = members.find(member => member.authId && member.id !== currentUser.id && member.roleKey === "admin" && !member.hidden);
-  const feedback = document.getElementById("helpFeedback");
-  if (!admin) return void (feedback.textContent = "No hay ningún administrador disponible en este momento.");
-  const message = document.getElementById("helpMessage").value.trim();
+  if (!backendReady || !currentAuthUser) return;
+  const message = document.getElementById("helpRequestMessage").value.trim();
+  const type = document.getElementById("helpRequestType").value;
+  const feedback = document.getElementById("helpRequestFeedback");
   if (!message) return;
   const submit = form.querySelector("[type=submit]");
   submit.disabled = true;
-  const {error} = await db.from("private_messages").insert({sender_id: currentAuthUser.id, recipient_id: admin.authId, body: `[${document.getElementById("helpType").value.toUpperCase()}]\n${message}`});
+  feedback.textContent = "Enviando petición…";
+  try {
+    const {data: requestId, error} = await db.rpc("create_help_request", {new_type: type, initial_body: message});
+    if (error) throw error;
+    form.reset();
+    feedback.textContent = "Petición enviada a todos los administradores.";
+    activeHelpRequestId = requestId;
+    activeHelpFilter = "all";
+    document.querySelectorAll("[data-help-filter]").forEach(button => button.classList.toggle("active", button.dataset.helpFilter === "all"));
+    await loadHelpCenter();
+  } catch (error) {
+    feedback.textContent = error.message || "No se pudo enviar la petición.";
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+async function submitHelpReply(form) {
+  const body = document.getElementById("helpReplyMessage").value.trim();
+  const feedback = document.getElementById("helpReplyFeedback");
+  if (!body || !activeHelpRequestId || !currentAuthUser) return;
+  const submit = form.querySelector("[type=submit]");
+  submit.disabled = true;
+  feedback.textContent = "Enviando…";
+  const {error} = await db.from("help_messages").insert({request_id: activeHelpRequestId, sender_id: currentAuthUser.id, body});
   submit.disabled = false;
-  if (error) return void (feedback.textContent = error.message || "No se pudo enviar el mensaje.");
-  document.getElementById("helpMessage").value = "";
-  closeHelpModal();
-  await loadPrivateMessages();
-  openPrivateConversation(admin.id);
+  if (error) return void (feedback.textContent = error.message || "No se pudo enviar la respuesta.");
+  form.reset();
+  feedback.textContent = "";
+  await loadHelpCenter();
+}
+
+async function updateHelpRequestStatus(status) {
+  if (!canManageSite() || !activeHelpRequestId || !HELP_STATUS[status]) return;
+  const values = {status, handled_by: status === "new" ? null : currentAuthUser.id, updated_at: new Date().toISOString()};
+  const {error} = await db.from("help_requests").update(values).eq("id", activeHelpRequestId);
+  if (error) return window.alert(error.message || "No se pudo cambiar el estado.");
+  await loadHelpCenter();
 }
 
 async function showMomentViewers(id) {
@@ -2625,24 +2751,18 @@ async function loadNews(force = false) {
   }
   grid.innerHTML = "";
   status.textContent = "Cargando titulares desde fuentes reales…";
-  const feeds = {
-    deportes: config.news?.deportesFeeds || [config.news?.deportesFeed, config.news?.deportesFallbackFeed],
-    espana: config.news?.espanaFeeds || [config.news?.espanaFeed],
-    mundo: config.news?.mundoFeeds || [config.news?.mundoFeed]
-  };
-  const feedList = [...new Set((feeds[activeNewsCategory] || []).filter(Boolean))];
-  if (!feedList.length) {
-    status.textContent = "No hay una fuente configurada para esta categoría.";
+  if (!backendReady || !db || !currentAuthUser) {
+    status.textContent = "Las noticias se cargarán al iniciar sesión.";
     return;
   }
   try {
-    const responses = await Promise.allSettled(feedList.map(fetchNewsPayload));
-    const payloads = responses.filter(result => result.status === "fulfilled").map(result => result.value);
-    if (!payloads.length) throw responses.find(result => result.status === "rejected")?.reason || new Error("No se recibieron titulares.");
-    const combined = payloads.flatMap(payload => payload.items.map(item => ({
-      title: item.title, link: item.link, published: item.pubDate,
-      source: extractNewsSource(item.title), image: item.thumbnail || item.enclosure?.link || ""
-    })));
+    const {data, error} = await db.functions.invoke("news-feed", {body: {category: activeNewsCategory}});
+    if (error) throw new Error(error.context?.body?.error || error.message || "El servicio de noticias no responde.");
+    if (!data?.items?.length) throw new Error(data?.error || "No se recibieron titulares.");
+    const combined = data.items.map(item => ({
+      title: item.title, link: item.link, published: item.published,
+      source: item.source || extractNewsSource(item.title), image: item.image || ""
+    }));
     const seenNews = new Set();
     const items = combined.sort((a, b) => newsTimestamp(b.published) - newsTimestamp(a.published)).filter(item => {
       const key = normalizeUsername(item.title.replace(/\s+-\s+[^-]+$/, ""));
@@ -2653,7 +2773,7 @@ async function loadNews(force = false) {
     if (requestToken !== newsLoadToken || requestedCategory !== activeNewsCategory) return;
     const savedAt = Date.now();
     lastNewsRefreshAt = savedAt;
-    const feedTitle = `${payloads.length} fuentes de actualidad`;
+    const feedTitle = `${data.sources || 1} fuentes de actualidad`;
     sessionStorage.setItem(cacheKey, JSON.stringify({savedAt, items, feedTitle}));
     renderNews(items, feedTitle, savedAt);
   } catch (error) {
@@ -2666,15 +2786,6 @@ async function loadNews(force = false) {
     status.textContent = `No se pudieron actualizar las noticias: ${error.message}`;
     grid.innerHTML = `<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Inténtalo de nuevo en unos minutos.</span></div>`;
   }
-}
-
-async function fetchNewsPayload(feed) {
-  const endpoint = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}`;
-  const response = await fetch(endpoint, {cache: "no-store"});
-  if (!response.ok) throw new Error("El servicio de noticias no responde.");
-  const payload = await response.json();
-  if (payload.status !== "ok" || !payload.items?.length) throw new Error(payload.message || "No se recibieron titulares.");
-  return payload;
 }
 
 function extractNewsSource(title) {
@@ -2954,11 +3065,27 @@ document.getElementById("myProfileButton").addEventListener("click", () => {
   if (isSuperAdmin()) goTo("administracion");
   else if (currentUser) renderProfile(currentUser.id);
 });
-document.getElementById("helpButton").addEventListener("click", event => { event.stopPropagation(); openHelpModal(); });
-document.getElementById("closeHelpModal").addEventListener("click", closeHelpModal);
-document.getElementById("cancelHelpModal").addEventListener("click", closeHelpModal);
-document.getElementById("helpModal").addEventListener("click", event => { if (event.target.id === "helpModal") closeHelpModal(); });
-document.getElementById("helpForm").addEventListener("submit", event => { event.preventDefault(); submitHelpRequest(event.currentTarget); });
+document.getElementById("helpButton").addEventListener("click", event => {
+  event.stopPropagation();
+  document.getElementById("userDropdown")?.classList.remove("open");
+  goTo("ayuda");
+});
+document.getElementById("helpRequestForm").addEventListener("submit", event => { event.preventDefault(); submitHelpRequest(event.currentTarget); });
+document.getElementById("helpReplyForm").addEventListener("submit", event => { event.preventDefault(); submitHelpReply(event.currentTarget); });
+document.getElementById("helpRequestStatus").addEventListener("change", event => updateHelpRequestStatus(event.target.value));
+document.getElementById("helpStatusTabs").addEventListener("click", event => {
+  const button = event.target.closest("[data-help-filter]");
+  if (!button) return;
+  activeHelpFilter = button.dataset.helpFilter;
+  document.querySelectorAll("[data-help-filter]").forEach(item => item.classList.toggle("active", item === button));
+  renderHelpCenter();
+});
+document.getElementById("helpRequestList").addEventListener("click", event => {
+  const request = event.target.closest("[data-help-request]");
+  if (!request) return;
+  activeHelpRequestId = request.dataset.helpRequest;
+  renderHelpCenter();
+});
 document.getElementById("closeMediaReplyModal").addEventListener("click", closeMediaReply);
 document.getElementById("cancelMediaReply").addEventListener("click", closeMediaReply);
 document.getElementById("mediaReplyModal").addEventListener("click", event => { if (event.target.id === "mediaReplyModal") closeMediaReply(); });
@@ -2978,6 +3105,9 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   privateMessages = [];
   groupEvents = [];
   chatChannels = [];
+  helpRequests = [];
+  helpMessages = [];
+  activeHelpRequestId = null;
   activeChatChannelId = null;
   if (presenceChannel) db.removeChannel(presenceChannel);
   if (messageChannel) db.removeChannel(messageChannel);
@@ -2989,6 +3119,7 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   if (eventChannel) db.removeChannel(eventChannel);
   if (settingsChannel) db.removeChannel(settingsChannel);
   if (chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
+  if (helpRealtime) db.removeChannel(helpRealtime);
   showLogin();
   renderMessages();
   renderNotifications();
@@ -3518,6 +3649,7 @@ renderPrivateContacts();
 renderPrivateConversation();
 renderCalendar();
 renderSpotify();
+renderHelpCenter();
 loadNews(false);
 
 (async function restoreSession() {
@@ -3536,7 +3668,7 @@ loadNews(false);
 })();
 
 const initialSection = location.hash.replace("#", "");
-if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "calendario"].includes(initialSection)) goTo(initialSection);
+if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "calendario", "ayuda"].includes(initialSection)) goTo(initialSection);
 window.addEventListener("scroll", scheduleMobileHeaderSync, {passive: true});
 window.addEventListener("resize", () => {
   if (!isMobileSidebar()) showMobileHeader();

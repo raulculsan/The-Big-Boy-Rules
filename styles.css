@@ -4960,9 +4960,110 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
 .reply-context div { min-width: 0; display: grid; gap: 5px; }
 .reply-context small { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .help-intro { margin: 0; padding: 14px 16px; border-left: 3px solid var(--gold); border-radius: 0 10px 10px 0; background: rgba(214,166,46,.08); color: var(--muted); line-height: 1.55; }
+
+/* Centro de ayuda independiente */
+.admin-heading-actions { max-width: 560px; display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+.admin-heading-actions p { margin: 0; }
+.help-center-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+.help-requests-panel,
+.help-conversation-panel { min-height: 660px; overflow: hidden; }
+.help-requests-panel { display: flex; flex-direction: column; padding: 0; }
+.help-create-form { display: grid; gap: 14px; padding: 24px; border-bottom: 1px solid var(--line); background: linear-gradient(145deg, rgba(214,166,46,.09), transparent 60%); }
+.help-create-form .panel-heading { margin: 0; }
+.help-create-form h3,
+.help-inbox-heading h3,
+.help-conversation-header h3 { margin: 4px 0 0; }
+.help-create-form label { display: grid; gap: 7px; color: var(--muted); font-size: .72rem; font-weight: 800; }
+.help-create-form select,
+.help-create-form textarea,
+.help-reply-form textarea,
+.help-admin-status select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  background: #09090b;
+  font: inherit;
+  outline: none;
+}
+.help-create-form select,
+.help-admin-status select { min-height: 44px; padding: 0 12px; }
+.help-create-form textarea,
+.help-reply-form textarea { resize: vertical; padding: 13px 14px; line-height: 1.5; }
+.help-create-form select:focus,
+.help-create-form textarea:focus,
+.help-reply-form textarea:focus,
+.help-admin-status select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(214,166,46,.11); }
+.help-inbox-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 22px 22px 12px; }
+.help-request-count { min-width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: #171208; background: var(--accent); font-size: .75rem; font-weight: 900; }
+.help-status-tabs { display: grid; grid-template-columns: repeat(4, minmax(max-content, 1fr)); gap: 5px; margin: 0 18px 14px; padding: 4px; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #08080a; }
+.help-status-tabs button { min-height: 36px; padding: 7px 9px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font: inherit; font-size: .66rem; font-weight: 800; white-space: nowrap; }
+.help-status-tabs button.active { color: #171208; background: var(--accent); }
+.help-request-list { min-height: 0; display: grid; align-content: start; gap: 8px; padding: 0 14px 18px; overflow-y: auto; }
+.help-request-card { width: 100%; display: grid; gap: 7px; padding: 14px; border: 1px solid transparent; border-radius: 13px; color: var(--text); background: rgba(255,255,255,.035); text-align: left; font: inherit; }
+.help-request-card:hover { border-color: rgba(214,166,46,.35); background: rgba(214,166,46,.07); }
+.help-request-card.active { border-color: var(--gold); background: rgba(214,166,46,.12); box-shadow: inset 3px 0 var(--gold); }
+.help-request-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.help-request-card b { font-size: .72rem; }
+.help-request-card > strong { font-size: .82rem; }
+.help-request-card small { overflow: hidden; color: var(--muted); font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
+.help-request-card time { color: var(--muted); font-size: .62rem; }
+.help-status-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 25px; padding: 5px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: .62rem; font-style: normal; font-weight: 900; white-space: nowrap; }
+.help-status-badge.new { color: #f0b937; background: rgba(240,185,55,.08); }
+.help-status-badge.in-progress { color: #63a7ff; background: rgba(99,167,255,.08); }
+.help-status-badge.answered { color: #57d98b; background: rgba(87,217,139,.08); }
+.help-conversation-panel { display: grid; padding: 0; background: radial-gradient(circle at 80% 0, rgba(214,166,46,.08), transparent 34%), var(--surface); }
+.help-conversation-empty { place-self: center; display: grid; gap: 8px; padding: 28px; color: var(--muted); text-align: center; }
+.help-conversation-empty strong { color: var(--text); font-size: 1.05rem; }
+.help-conversation { min-height: 0; display: grid; grid-template-rows: auto minmax(260px, 1fr) auto auto; }
+.help-conversation[hidden] { display: none; }
+.help-conversation-header { min-height: 90px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 19px 22px; border-bottom: 1px solid var(--line); background: rgba(5,5,7,.78); }
+.help-conversation-header small { display: block; margin-top: 4px; color: var(--muted); }
+.help-admin-status { min-width: 150px; display: grid; gap: 5px; color: var(--muted); font-size: .65rem; font-weight: 800; }
+.help-admin-status[hidden],
+.help-status-badge[hidden] { display: none; }
+.help-message-list { min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 22px; overflow-y: auto; }
+.help-message { max-width: min(78%, 680px); display: flex; align-items: flex-end; gap: 9px; }
+.help-message.own { align-self: flex-end; flex-direction: row-reverse; }
+.help-message > div { min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 15px 15px 15px 4px; background: #101013; }
+.help-message.own > div { border-color: rgba(214,166,46,.3); border-radius: 15px 15px 4px; background: rgba(214,166,46,.14); }
+.help-message.from-admin:not(.own) > div { border-color: rgba(87,217,139,.28); }
+.help-message > div > span { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.help-message strong { font-size: .7rem; }
+.help-message time { color: var(--muted); font-size: .58rem; white-space: nowrap; }
+.help-message p { margin: 7px 0 0; overflow-wrap: anywhere; font-size: .84rem; line-height: 1.55; }
+.help-reply-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 16px 18px; border-top: 1px solid var(--line); background: #09090b; }
+.help-reply-form textarea { min-height: 48px; max-height: 140px; resize: none; }
+.help-reply-form + .form-feedback { min-height: 0; margin: 0; padding: 0 20px 12px; background: #09090b; }
+
+@media (max-width: 900px) {
+  .help-center-layout { grid-template-columns: 1fr; }
+  .help-requests-panel,
+  .help-conversation-panel { min-height: auto; }
+  .help-request-list { max-height: 370px; }
+  .help-conversation-panel { min-height: 560px; }
+}
+
 @media (max-width: 620px) {
   .compact-dialog { width: calc(100vw - 24px); max-height: calc(100dvh - 28px); }
   .media-reply-button { min-height: 40px; padding-inline: 12px; }
+  .admin-heading-actions { width: 100%; align-items: stretch; flex-direction: column; }
+  .help-center-intro { align-items: flex-start; }
+  .help-create-form { padding: 19px 16px; }
+  .help-status-tabs { grid-template-columns: repeat(4, max-content); }
+  .help-conversation-panel { min-height: 520px; }
+  .help-conversation-header { align-items: flex-start; flex-direction: column; padding: 16px; }
+  .help-admin-status { width: 100%; }
+  .help-message-list { padding: 16px 12px; }
+  .help-message { max-width: 92%; }
+  .help-message .avatar { display: none; }
+  .help-reply-form { grid-template-columns: 1fr; padding: 12px; }
+  .help-reply-form button { width: 100%; }
 }
 .private-conversation { padding: 0; overflow: hidden; }
 .private-conversation .chat-header {
