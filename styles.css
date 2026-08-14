@@ -6925,28 +6925,39 @@ body.chat-keyboard-open.chat-focus .attachment-preview { padding-block: 7px; }
 }
 
 /* Cámara de historias: vista independiente, sin paneles de la aplicación. */
-body.story-camera-open { overflow: hidden; overscroll-behavior: none; }
+body.story-camera-open {
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #000;
+}
+body.story-camera-open > :not(#storyCamera) { visibility: hidden !important; }
 .story-camera {
   position: fixed;
-  inset: 0;
-  z-index: 1400;
-  width: 100vw;
+  top: var(--story-viewport-top, 0px);
+  right: auto;
+  bottom: auto;
+  left: var(--story-viewport-left, 0px);
+  z-index: 2147483647;
+  width: var(--story-viewport-width, 100vw);
   height: 100vh;
-  height: 100dvh;
+  height: var(--story-viewport-height, 100dvh);
   display: none;
   place-items: stretch center;
   overflow: hidden;
   color: #fff;
   background: #000;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .story-camera.open { display: grid; }
 .story-camera-shell {
   position: relative;
   isolation: isolate;
-  width: min(100vw, 560px);
+  width: 100%;
   max-width: none;
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
   background: radial-gradient(circle at 50% 40%, #24262a, #08090a 64%);
@@ -7131,20 +7142,27 @@ body.story-camera-open { overflow: hidden; overscroll-behavior: none; }
   background: #000;
 }
 
-@media (min-width: 761px) {
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) {
   .story-camera { background: radial-gradient(circle at center, #15171a, #020303 72%); }
-  .story-camera-shell { border-inline: 1px solid rgba(255,255,255,.1); box-shadow: 0 0 80px rgba(0,0,0,.8); }
+  .story-camera-shell {
+    width: min(100%, 560px);
+    border-inline: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 0 80px rgba(0,0,0,.8);
+  }
+}
+
+body.standalone-app .story-camera-shell {
+  width: 100%;
+  border: 0;
+  box-shadow: none;
 }
 
 @media (max-width: 760px) {
-  .story-camera,
   .story-camera-shell {
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-    min-width: 100vw;
-    min-height: 100dvh;
+    width: 100%;
+    height: 100%;
+    min-width: 100%;
+    min-height: 100%;
     max-width: none;
     border: 0;
     border-radius: 0;

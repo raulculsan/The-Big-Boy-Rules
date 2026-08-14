@@ -374,6 +374,17 @@ function syncMobileViewport() {
   if (viewportSyncFrame) return;
   viewportSyncFrame = requestAnimationFrame(() => {
     viewportSyncFrame = null;
+    const visualViewport = window.visualViewport;
+    const storyCameraOpen = document.getElementById("storyCamera")?.classList.contains("open");
+    if (storyCameraOpen) {
+      document.documentElement.style.setProperty("--story-viewport-width", `${Math.ceil(visualViewport?.width || window.innerWidth)}px`);
+      document.documentElement.style.setProperty("--story-viewport-height", `${Math.ceil(visualViewport?.height || window.innerHeight)}px`);
+      document.documentElement.style.setProperty("--story-viewport-left", `${Math.floor(visualViewport?.offsetLeft || 0)}px`);
+      document.documentElement.style.setProperty("--story-viewport-top", `${Math.floor(visualViewport?.offsetTop || 0)}px`);
+    } else {
+      ["--story-viewport-width", "--story-viewport-height", "--story-viewport-left", "--story-viewport-top"]
+        .forEach(property => document.documentElement.style.removeProperty(property));
+    }
     if (window.innerWidth > 760) {
       document.documentElement.style.removeProperty("--chat-viewport-height");
       document.documentElement.style.removeProperty("--chat-viewport-offset");
@@ -2568,6 +2579,7 @@ function openStoryCamera(mode = "moment") {
   camera.classList.add("open");
   camera.setAttribute("aria-hidden", "false");
   document.body.classList.add("story-camera-open");
+  syncMobileViewport();
   document.getElementById("storyGalleryInput").value = "";
   resetStoryRecordingState();
   startStoryCamera();
@@ -2585,6 +2597,7 @@ function closeStoryCamera() {
   camera.classList.remove("open");
   camera.setAttribute("aria-hidden", "true");
   document.body.classList.remove("story-camera-open");
+  syncMobileViewport();
   setStoryCameraStatus();
 }
 
