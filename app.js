@@ -60,8 +60,7 @@ function isMobileSidebar() {
 function mobileHeaderMustStayVisible() {
   return document.body.classList.contains("chat-focus")
     || document.querySelector(".modal-backdrop.open")
-    || document.getElementById("notificationsDropdown")?.getAttribute("aria-hidden") === "false"
-    || document.getElementById("userDropdown")?.classList.contains("open");
+    || document.getElementById("notificationsDropdown")?.getAttribute("aria-hidden") === "false";
 }
 
 function showMobileHeader() {
@@ -373,8 +372,18 @@ function selectContentTab(tabName) {
     button.setAttribute("aria-selected", String(active));
   });
   document.querySelectorAll("[data-content-panel]").forEach(panel => { panel.hidden = false; });
-  renderMoments();
-  renderPublications();
+  const momentsGrid = document.getElementById("momentsGrid");
+  const publicationsFeed = document.getElementById("publicationsFeed");
+  const momentSignature = moments.map(item => `${item.id}:${getMediaLikes("moment", item.id).length}`).join("|");
+  const postSignature = profilePosts.map(item => `${item.id}:${getMediaLikes("post", item.id).length}`).join("|");
+  if (momentsGrid?.dataset.renderSignature !== momentSignature) {
+    renderMoments();
+    momentsGrid.dataset.renderSignature = momentSignature;
+  }
+  if (publicationsFeed?.dataset.renderSignature !== postSignature) {
+    renderPublications();
+    publicationsFeed.dataset.renderSignature = postSignature;
+  }
 }
 
 function goTo(sectionId) {
@@ -411,7 +420,7 @@ function goTo(sectionId) {
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
   if (homeAnchor) requestAnimationFrame(() => document.getElementById(homeAnchor)?.scrollIntoView({behavior: "smooth", block: "start"}));
-  else window.scrollTo({top: 0, behavior: "smooth"});
+  else window.scrollTo({top: 0, behavior: "auto"});
   history.replaceState(null, "", `#${homeAnchor || sectionId}`);
   if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
   if (sectionId === "buscar") renderCalendar();
@@ -483,21 +492,23 @@ function memberDisplayNumber(member) {
 }
 
 function renderProfile(memberId) {
-  const member = getMember(memberId);
+  const member = getMember(memberId)
+    || (Number(currentUser?.id) === Number(memberId) ? currentUser : null);
   if (!member) return;
   activeProfileId = member.id;
-  const canEdit = currentUser?.id === member.id;
-  const canManageProfile = canEdit || isSuperAdmin();
+  const isOwnProfile = currentUser?.id === member.id;
+  const canEdit = isOwnProfile && !member.hidden;
+  const canManageProfile = !member.hidden && (canEdit || isSuperAdmin());
   const canDeletePosts = canEdit || isSuperAdmin();
   const posts = profilePosts.filter(post => post.member === member.id);
   const memberMoments = moments.filter(moment => moment.member === member.id);
-  document.querySelector("#perfil .back-button").hidden = canEdit;
+  document.querySelector("#perfil .back-button").hidden = isOwnProfile;
   document.getElementById("profileContent").innerHTML = `
     <article class="profile-hero">
       <div class="profile-visual ${member.avatarUrl ? "has-photo" : ""}"
         style="--profile-bg:${member.avatarUrl ? `url('${escapeHtml(member.avatarUrl)}')` : member.bg}"></div>
       <div class="profile-info">
-        <span class="profile-number">BIG BOY ${String(memberDisplayNumber(member)).padStart(2, "0")}</span>
+        <span class="profile-number">${member.hidden ? "ADMINISTRACIÓN" : `BIG BOY ${String(memberDisplayNumber(member)).padStart(2, "0")}`}</span>
         <h2>${member.countryFlag ? `<span class="profile-country-flag" title="País">${escapeHtml(member.countryFlag)}</span>` : ""}${escapeHtml(member.name)}</h2>
         <div class="profile-nickname">${escapeHtml(member.nickname.toUpperCase())}</div>
         <p>${escapeHtml(member.bio)}</p>
@@ -508,6 +519,17 @@ function renderProfile(memberId) {
         </div>
       </div>
     </article>
+    ${isOwnProfile ? `<section class="profile-account-panel">
+      <div class="profile-account-heading">
+        <div><span class="eyebrow">MI CUENTA</span><h3>Opciones y soporte</h3></div>
+        <p>Gestiona tu cuenta y contacta con la administración desde aquí.</p>
+      </div>
+      <div class="profile-account-actions">
+        ${canManageSite() ? `<button class="profile-account-button" id="profileAdminButton" type="button"><span aria-hidden="true">♛</span><strong>Administración</strong><small>Gestionar el club</small></button>` : ""}
+        <button class="profile-account-button" id="profileHelpButton" type="button"><span aria-hidden="true">?</span><strong>Ayuda y sugerencias</strong><small>Enviar una consulta, queja o idea</small></button>
+        <button class="profile-account-button danger" id="profileLogoutButton" type="button"><span aria-hidden="true">↪</span><strong>Cerrar sesión</strong><small>Salir de esta cuenta</small></button>
+      </div>
+    </section>` : ""}
     <section class="profile-stories">
       <div class="profile-feed-heading">
         <div><span class="eyebrow">HISTORIAS ACTIVAS</span><h3>${memberMoments.length} ${memberMoments.length === 1 ? "historia" : "historias"}</h3></div>
@@ -536,6 +558,9 @@ function renderProfile(memberId) {
   document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
   document.getElementById("addProfileMomentButton")?.addEventListener("click", () => openMediaUploader("moment"));
   document.getElementById("addProfilePostButton")?.addEventListener("click", () => openMediaUploader("post"));
+  document.getElementById("profileAdminButton")?.addEventListener("click", () => goTo("administracion"));
+  document.getElementById("profileHelpButton")?.addEventListener("click", () => goTo("ayuda"));
+  document.getElementById("profileLogoutButton")?.addEventListener("click", logoutCurrentUser);
   goTo("perfil");
 }
 
@@ -1031,13 +1056,12 @@ function refreshProfileSurfaces() {
 }
 
 function applyUserHeader(user) {
-  ["topbarAvatar", "bottomNavAvatar"].forEach(id => {
+  ["bottomNavAvatar"].forEach(id => {
     const node = document.getElementById(id);
     if (!node) return;
     node.classList.toggle("has-image", Boolean(user.avatarUrl));
     node.innerHTML = user.avatarUrl ? `<img src="${escapeHtml(user.avatarUrl)}" alt="">` : escapeHtml(user.name.charAt(0));
   });
-  document.getElementById("topbarUserName").textContent = user.name;
   document.querySelectorAll(".admin-only").forEach(node => node.style.display = canManageSite() ? "" : "none");
 }
 
@@ -1089,13 +1113,47 @@ async function applyUserInterface(user, authUser = null) {
 function showLogin() {
   document.body.classList.remove("authenticated");
   document.getElementById("loginScreen")?.classList.remove("login-hidden");
-  document.getElementById("userDropdown")?.classList.remove("open");
   onlineUsers = [];
   notifications = [];
   renderPresence();
   renderNotifications();
   closeNotifications();
   goTo("contenido");
+}
+
+async function logoutCurrentUser() {
+  if (db) await db.auth.signOut();
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  currentUser = null;
+  currentAuthUser = null;
+  messages = [];
+  moments = [];
+  profilePosts = [];
+  mediaLikes = [];
+  mediaLikesIndex = new Map();
+  notifications = [];
+  privateMessages = [];
+  groupEvents = [];
+  chatChannels = [];
+  helpRequests = [];
+  helpMessages = [];
+  activeHelpRequestId = null;
+  activeChatChannelId = null;
+  if (db && presenceChannel) db.removeChannel(presenceChannel);
+  if (db && messageChannel) db.removeChannel(messageChannel);
+  if (db && momentChannel) db.removeChannel(momentChannel);
+  if (db && postChannel) db.removeChannel(postChannel);
+  if (db && mediaLikesChannel) db.removeChannel(mediaLikesChannel);
+  if (db && notificationsChannel) db.removeChannel(notificationsChannel);
+  if (db && privateChannel) db.removeChannel(privateChannel);
+  if (db && eventChannel) db.removeChannel(eventChannel);
+  if (db && settingsChannel) db.removeChannel(settingsChannel);
+  if (db && chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
+  if (db && helpRealtime) db.removeChannel(helpRealtime);
+  showLogin();
+  renderMessages();
+  renderNotifications();
 }
 
 async function login(username, password, remember) {
@@ -2981,14 +3039,8 @@ document.getElementById("requiredPasswordChangeForm").addEventListener("submit",
   event.preventDefault();
   saveRequiredPasswordChange(event.currentTarget);
 });
-document.getElementById("userMenuButton").addEventListener("click", event => {
-  event.stopPropagation();
-  closeNotifications();
-  document.getElementById("userDropdown").classList.toggle("open");
-});
 document.getElementById("notificationsButton").addEventListener("click", event => {
   event.stopPropagation();
-  document.getElementById("userDropdown")?.classList.remove("open");
   const dropdown = document.getElementById("notificationsDropdown");
   const open = !dropdown.classList.contains("open");
   dropdown.classList.toggle("open", open);
@@ -3029,17 +3081,7 @@ document.getElementById("clearAllNotifications").addEventListener("click", event
   if (notifications.length && window.confirm("¿Quieres limpiar todas las notificaciones?")) deleteNotifications();
 });
 document.addEventListener("click", () => {
-  document.getElementById("userDropdown")?.classList.remove("open");
   closeNotifications();
-});
-document.getElementById("myProfileButton").addEventListener("click", () => {
-  if (isSuperAdmin()) goTo("administracion");
-  else if (currentUser) renderProfile(currentUser.id);
-});
-document.getElementById("helpButton").addEventListener("click", event => {
-  event.stopPropagation();
-  document.getElementById("userDropdown")?.classList.remove("open");
-  goTo("ayuda");
 });
 document.getElementById("helpRequestForm").addEventListener("submit", event => { event.preventDefault(); submitHelpRequest(event.currentTarget); });
 document.getElementById("helpReplyForm").addEventListener("submit", event => { event.preventDefault(); submitHelpReply(event.currentTarget); });
@@ -3061,40 +3103,6 @@ document.getElementById("closeMediaReplyModal").addEventListener("click", closeM
 document.getElementById("cancelMediaReply").addEventListener("click", closeMediaReply);
 document.getElementById("mediaReplyModal").addEventListener("click", event => { if (event.target.id === "mediaReplyModal") closeMediaReply(); });
 document.getElementById("mediaReplyForm").addEventListener("submit", event => { event.preventDefault(); submitMediaReply(event.currentTarget); });
-document.getElementById("logoutButton").addEventListener("click", async () => {
-  if (db) await db.auth.signOut();
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-  sessionStorage.removeItem(AUTH_SESSION_KEY);
-  currentUser = null;
-  currentAuthUser = null;
-  messages = [];
-  moments = [];
-  profilePosts = [];
-  mediaLikes = [];
-  mediaLikesIndex = new Map();
-  notifications = [];
-  privateMessages = [];
-  groupEvents = [];
-  chatChannels = [];
-  helpRequests = [];
-  helpMessages = [];
-  activeHelpRequestId = null;
-  activeChatChannelId = null;
-  if (presenceChannel) db.removeChannel(presenceChannel);
-  if (messageChannel) db.removeChannel(messageChannel);
-  if (momentChannel) db.removeChannel(momentChannel);
-  if (postChannel) db.removeChannel(postChannel);
-  if (mediaLikesChannel) db.removeChannel(mediaLikesChannel);
-  if (notificationsChannel) db.removeChannel(notificationsChannel);
-  if (privateChannel) db.removeChannel(privateChannel);
-  if (eventChannel) db.removeChannel(eventChannel);
-  if (settingsChannel) db.removeChannel(settingsChannel);
-  if (chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
-  if (helpRealtime) db.removeChannel(helpRealtime);
-  showLogin();
-  renderMessages();
-  renderNotifications();
-});
 document.getElementById("messageForm").addEventListener("submit", async event => {
   event.preventDefault();
   const input = document.getElementById("messageInput");
