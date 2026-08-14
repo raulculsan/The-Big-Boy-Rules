@@ -48,6 +48,20 @@ Nunca copies la clave `service_role` en la web.
 - La cuenta de control total queda fuera de miembros, búsqueda, presencia y
   actividad. Su contraseña existe únicamente en Supabase Auth y nunca debe
   escribirse en el repositorio.
+- Cada miembro puede asociar un correo privado de recuperación sin sustituir su
+  acceso por `@usuario`. Ejecuta `supabase-account-email.sql`, despliega la Edge
+  Function `account-email` y configura estos secretos en `Edge Functions > Secrets`:
+  `ACCOUNT_EMAIL_SMTP_USER` (el Gmail del club), `ACCOUNT_EMAIL_SMTP_PASSWORD`
+  (una contraseña de aplicación de Google),
+  `ACCOUNT_EMAIL_OTP_SECRET` (valor aleatorio de al menos 32 caracteres) y
+  `APP_ORIGIN=https://raulculsan.github.io`. La cuenta de Google debe tener
+  verificación en dos pasos y la contraseña de aplicación nunca debe incluirse
+  en el repositorio. Los códigos duran 10 minutos, admiten cinco intentos y solo
+  se guardan como HMAC; los correos no son accesibles desde la API pública. El
+  aviso se activa automáticamente cuando los dos secretos SMTP están configurados.
+  Por defecto se usa Gmail (`smtp.gmail.com`, puerto 465) y el remitente se
+  muestra como `The Big Boy Rules`; host, puerto y remitente pueden personalizarse
+  con `ACCOUNT_EMAIL_SMTP_HOST`, `ACCOUNT_EMAIL_SMTP_PORT` y `ACCOUNT_EMAIL_FROM`.
 - La función Edge `admin-users` permite crear, eliminar y restablecer contraseñas provisionales de usuarios
   sin exponer la clave `service_role` en el navegador.
 - La búsqueda superior encuentra miembros, mensajes, publicaciones, eventos y

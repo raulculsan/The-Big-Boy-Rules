@@ -6330,6 +6330,10 @@ body.chat-focus #privados.active {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.profile-account-actions:has(.profile-account-button:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .profile-account-button {
   min-width: 0;
   display: grid;
@@ -6374,4 +6378,167 @@ body.chat-focus #privados.active {
   .profile-account-actions,
   .profile-account-actions:has(.profile-account-button:nth-child(2):last-child) { grid-template-columns: 1fr; }
   .profile-account-button { min-height: 72px; }
+}
+
+/* Menú de cuenta mediante pulsación prolongada sobre Perfil. */
+.profile-tab {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.profile-quick-menu {
+  position: fixed;
+  z-index: 140;
+  right: max(20px, calc(50vw - 340px));
+  bottom: 116px;
+  width: min(310px, calc(100vw - 28px));
+  display: none;
+  overflow: hidden;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 20px;
+  color: var(--text);
+  background: rgba(8,8,10,.985);
+  box-shadow: 0 24px 60px rgba(0,0,0,.68), inset 0 1px rgba(255,255,255,.06);
+}
+
+.profile-quick-menu.open {
+  display: block;
+  animation: profileQuickMenuIn .16s ease-out;
+}
+
+@keyframes profileQuickMenuIn {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.profile-quick-menu::after {
+  content: "";
+  position: absolute;
+  right: 35px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  border-right: 1px solid rgba(255,255,255,.14);
+  border-bottom: 1px solid rgba(255,255,255,.14);
+  background: #08080a;
+  transform: rotate(45deg);
+}
+
+.profile-quick-menu-heading {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.profile-quick-menu-heading strong { font-size: .78rem; text-transform: uppercase; letter-spacing: .11em; }
+.profile-quick-menu-heading small { color: var(--muted); font-size: .67rem; }
+
+.profile-quick-menu > button {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 38px minmax(0,1fr);
+  align-items: center;
+  gap: 11px;
+  padding: 11px 10px;
+  border: 0;
+  border-radius: 13px;
+  color: var(--text);
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.profile-quick-menu > button:hover,
+.profile-quick-menu > button:focus-visible { background: rgba(255,255,255,.075); outline: none; }
+.profile-quick-menu > button > span { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.12); border-radius: 11px; color: var(--gold); background: #111216; font-weight: 900; }
+.profile-quick-menu > button > div { min-width: 0; display: grid; gap: 3px; }
+.profile-quick-menu > button strong { font-size: .8rem; }
+.profile-quick-menu > button small { overflow: hidden; color: var(--muted); font-size: .67rem; text-overflow: ellipsis; white-space: nowrap; }
+.profile-quick-menu > button.danger > span,
+.profile-quick-menu > button.danger strong { color: #ff7979; }
+
+.email-association-dialog { width: min(560px, calc(100vw - 28px)); }
+
+.email-security-note {
+  display: grid;
+  grid-template-columns: 48px minmax(0,1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid rgba(77,211,132,.22);
+  border-radius: 16px;
+  background: rgba(34,104,67,.12);
+}
+
+.email-security-note > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #61dc92;
+  background: rgba(73,205,126,.12);
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.email-security-note strong { display: block; margin-bottom: 4px; }
+.email-security-note p,
+.email-code-copy p { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.55; }
+.email-association-form[hidden],
+.email-verified-state[hidden] { display: none; }
+
+.email-code-copy {
+  display: grid;
+  grid-template-columns: 46px minmax(0,1fr);
+  gap: 13px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.email-code-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(214,166,46,.28);
+  border-radius: 50%;
+  color: var(--gold);
+  background: rgba(214,166,46,.1);
+}
+
+.email-code-input {
+  min-height: 64px;
+  font-size: 1.7rem !important;
+  font-weight: 800;
+  letter-spacing: .34em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.email-verified-state { padding: 12px 4px 2px; text-align: center; }
+.email-verified-state > span { width: 64px; height: 64px; display: grid; place-items: center; margin: 0 auto 15px; border-radius: 50%; color: #08170e; background: #5cdb8e; font-size: 1.8rem; font-weight: 900; box-shadow: 0 0 30px rgba(92,219,142,.22); }
+.email-verified-state h3 { margin: 0 0 8px; font-size: 1.45rem; }
+.email-verified-state p { margin: 0 0 22px; color: var(--muted); }
+
+@media (max-width: 760px) {
+  .profile-quick-menu {
+    right: 12px;
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    width: calc(100vw - 24px);
+    border-radius: 20px;
+  }
+  .profile-quick-menu::after { right: 31px; }
+  .email-association-modal { align-items: end; padding: 10px; }
+  .email-association-dialog { width: 100%; max-height: calc(100dvh - max(20px, env(safe-area-inset-top))); overflow-y: auto; border-radius: 24px 24px 18px 18px; }
+  .email-association-dialog .modal-heading h2 { font-size: clamp(2rem, 10vw, 3rem); }
+  .email-security-note { grid-template-columns: 42px minmax(0,1fr); padding: 13px; }
+  .email-security-note > span { width: 42px; height: 42px; }
+  .email-association-dialog .modal-actions { grid-template-columns: 1fr 1fr; }
 }

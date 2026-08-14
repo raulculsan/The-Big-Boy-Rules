@@ -9,13 +9,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
   <title>The Big Boy Rules</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260814-82" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260814-83" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260814-82" />
+  <link rel="stylesheet" href="styles.css?v=20260814-83" />
 </head>
 <body>
 
@@ -466,10 +466,63 @@
     <a class="app-tab" href="#buscar" data-section="buscar" aria-label="Buscar y calendario" title="Buscar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Buscar</span>
     </a>
-    <a class="app-tab profile-tab" href="#perfil" data-section="perfil" aria-label="Mi perfil" title="Mi perfil">
+    <a class="app-tab profile-tab" href="#perfil" data-section="perfil" aria-label="Mi perfil" aria-haspopup="menu" aria-expanded="false" title="Mi perfil">
       <span class="tab-avatar avatar" id="bottomNavAvatar">U</span><span>Perfil</span>
     </a>
   </nav>
+
+  <div class="profile-quick-menu" id="profileQuickMenu" role="menu" aria-hidden="true">
+    <div class="profile-quick-menu-heading"><strong>Cuenta</strong><small>Mantén pulsado Perfil para abrir estas opciones</small></div>
+    <button id="profileQuickEmail" type="button" role="menuitem"><span aria-hidden="true">✉</span><div><strong>Correo de recuperación</strong><small id="profileQuickEmailStatus">Asociar un correo seguro</small></div></button>
+    <button id="profileQuickHelp" type="button" role="menuitem"><span aria-hidden="true">?</span><div><strong>Ayuda y sugerencias</strong><small>Consultas, quejas o ideas</small></div></button>
+    <button id="profileQuickLogout" class="danger" type="button" role="menuitem"><span aria-hidden="true">↪</span><div><strong>Cerrar sesión</strong><small>Salir de esta cuenta</small></div></button>
+  </div>
+
+  <div class="modal-backdrop email-association-modal" id="emailAssociationModal" aria-hidden="true">
+    <div class="profile-editor-modal email-association-dialog" role="dialog" aria-modal="true" aria-labelledby="emailAssociationTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">SEGURIDAD DE LA CUENTA</span><h2 id="emailAssociationTitle">Asocia tu correo</h2></div>
+        <button class="icon-button" id="closeEmailAssociation" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <div class="email-security-note">
+        <span aria-hidden="true">⌁</span>
+        <div><strong>Tu email será privado</strong><p>Solo se utilizará para verificar tu identidad y permitir que recuperes tu contraseña. Ningún miembro podrá verlo.</p></div>
+      </div>
+      <form class="profile-form email-association-form" id="emailRequestForm">
+        <label>
+          <span>Correo de recuperación</span>
+          <input id="accountEmailInput" type="email" maxlength="254" autocomplete="email" placeholder="tuemail@ejemplo.com" required>
+          <small>Te enviaremos un código de seis cifras. No modificará tu @ ni tu forma de iniciar sesión.</small>
+        </label>
+        <div class="form-feedback" id="emailRequestFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="skipEmailAssociation" type="button">Ahora no</button>
+          <button class="primary-button" type="submit">Enviar código</button>
+        </div>
+      </form>
+      <form class="profile-form email-association-form" id="emailVerifyForm" hidden>
+        <div class="email-code-copy"><span class="email-code-icon" aria-hidden="true">✉</span><div><strong>Revisa tu bandeja de entrada</strong><p>Introduce el código enviado a <b id="emailVerificationTarget"></b>. Caduca en 10 minutos.</p></div></div>
+        <label>
+          <span>Código de verificación</span>
+          <input class="email-code-input" id="accountEmailCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required>
+        </label>
+        <div class="form-feedback" id="emailVerifyFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="changeAccountEmail" type="button">Cambiar correo</button>
+          <button class="primary-button" type="submit">Verificar correo</button>
+        </div>
+      </form>
+      <div class="email-verified-state" id="emailVerifiedState" hidden>
+        <span aria-hidden="true">✓</span>
+        <h3>Correo verificado</h3>
+        <p>Tu cuenta está protegida con <strong id="verifiedAccountEmail"></strong>.</p>
+        <div class="modal-actions">
+          <button class="secondary-button" id="changeVerifiedEmail" type="button">Cambiar correo</button>
+          <button class="primary-button" id="finishEmailAssociation" type="button">Listo</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-backdrop" id="profileEditor" aria-hidden="true">
     <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditorTitle">
@@ -778,7 +831,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260814-82"></script>
+  <script src="app.js?v=20260814-83"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

@@ -35,6 +35,8 @@ const AUTH_SESSION_KEY = "bb-auth-temporary";
 const PROFILE_STORAGE_KEY = "bb-local-profiles";
 const GENERIC_PASSWORD = "bigboy2026";
 const PASSWORD_CHANGE_STORAGE_PREFIX = "bb-password-change-required-";
+const EMAIL_NOTICE_SESSION_PREFIX = "bb-email-notice-dismissed-";
+const PROFILE_LONG_PRESS_MS = 520;
 const NEWS_CACHE_DURATION = 2 * 60 * 1000;
 const NEWS_REFRESH_INTERVAL = 2 * 60 * 1000;
 const MEGABYTE = 1024 * 1024;
@@ -169,6 +171,12 @@ let momentGesture = null;
 let momentPressStartedAt = 0;
 let suppressMomentNavigationClick = false;
 let replyingMedia = null;
+let accountEmailStatus = {loaded: false, available: false, hasEmail: false, maskedEmail: ""};
+let pendingAccountEmail = "";
+let changingAccountEmail = false;
+let profileLongPressTimer = null;
+let profileLongPressStart = null;
+let profileClickSuppressedUntil = 0;
 const realtimeRefreshTimers = new Map();
 
 function scheduleRealtimeRefresh(key, loader, delay = 180) {
@@ -428,6 +436,225 @@ function goTo(sectionId) {
   if (sectionId === "ayuda" && currentUser) loadHelpCenter();
 }
 
+function openProfileQuickMenu() {
+  if (!currentUser) return;
+  closeNotifications();
+  const menu = document.getElementById("profileQuickMenu");
+  const profileTab = document.querySelector('.app-tab[data-section="perfil"]');
+  menu.classList.add("open");
+  menu.setAttribute("aria-hidden", "false");
+  profileTab?.setAttribute("aria-expanded", "true");
+  updateAccountEmailSurfaces();
+}
+
+function closeProfileQuickMenu() {
+  const menu = document.getElementById("profileQuickMenu");
+  const profileTab = document.querySelector('.app-tab[data-section="perfil"]');
+  menu?.classList.remove("open");
+  menu?.setAttribute("aria-hidden", "true");
+  profileTab?.setAttribute("aria-expanded", "false");
+}
+
+function beginProfileLongPress(event) {
+  if (!currentUser || (event.button != null && event.button !== 0)) return;
+  clearTimeout(profileLongPressTimer);
+  profileLongPressStart = {x: event.clientX, y: event.clientY};
+  profileLongPressTimer = setTimeout(() => {
+    profileClickSuppressedUntil = Date.now() + 1000;
+    profileLongPressTimer = null;
+    navigator.vibrate?.(12);
+    openProfileQuickMenu();
+  }, PROFILE_LONG_PRESS_MS);
+}
+
+function trackProfileLongPress(event) {
+  if (!profileLongPressStart || !profileLongPressTimer) return;
+  if (Math.hypot(event.clientX - profileLongPressStart.x, event.clientY - profileLongPressStart.y) > 12) {
+    cancelProfileLongPress();
+  }
+}
+
+function cancelProfileLongPress() {
+  clearTimeout(profileLongPressTimer);
+  profileLongPressTimer = null;
+  profileLongPressStart = null;
+}
+
+function emailNoticeStorageKey() {
+  return `${EMAIL_NOTICE_SESSION_PREFIX}${currentAuthUser?.id || currentUser?.id || "guest"}`;
+}
+
+function updateAccountEmailSurfaces() {
+  const status = document.getElementById("profileQuickEmailStatus");
+  if (!status) return;
+  status.textContent = accountEmailStatus.hasEmail
+    ? `Verificado · ${accountEmailStatus.maskedEmail}`
+    : accountEmailStatus.loaded && !accountEmailStatus.available
+      ? "Activación pendiente"
+      : "Asociar un correo seguro";
+}
+
+function renderAccountEmailModal() {
+  const requestForm = document.getElementById("emailRequestForm");
+  const verifyForm = document.getElementById("emailVerifyForm");
+  const verifiedState = document.getElementById("emailVerifiedState");
+  const showingVerified = accountEmailStatus.hasEmail && !pendingAccountEmail && !changingAccountEmail;
+  requestForm.hidden = showingVerified || Boolean(pendingAccountEmail);
+  verifyForm.hidden = !pendingAccountEmail;
+  verifiedState.hidden = !showingVerified;
+  if (showingVerified) {
+    document.getElementById("verifiedAccountEmail").textContent = accountEmailStatus.maskedEmail;
+  }
+  if (pendingAccountEmail) {
+    document.getElementById("emailVerificationTarget").textContent = pendingAccountEmail;
+  }
+}
+
+function openEmailAssociationModal({dismissibleNotice = false} = {}) {
+  if (!backendReady || !currentAuthUser) {
+    window.alert("La vinculación segura de correo necesita una sesión conectada al servidor.");
+    return;
+  }
+  if (accountEmailStatus.loaded && !accountEmailStatus.available) {
+    window.alert("El envío seguro de correos se está terminando de configurar.");
+    return;
+  }
+  closeProfileQuickMenu();
+  const modal = document.getElementById("emailAssociationModal");
+  modal.dataset.dismissibleNotice = String(dismissibleNotice);
+  document.getElementById("emailRequestFeedback").textContent = accountEmailStatus.loaded ? "" : "Comprobando la protección de tu cuenta…";
+  document.getElementById("emailVerifyFeedback").textContent = "";
+  renderAccountEmailModal();
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  if (!accountEmailStatus.loaded) {
+    loadAccountEmailStatus().then(status => {
+      if (status && !status.available) {
+        closeEmailAssociationModal({rememberDismissal: false});
+        window.alert("El envío seguro de correos se está terminando de configurar.");
+        return;
+      }
+      renderAccountEmailModal();
+      document.getElementById("emailRequestFeedback").textContent = "";
+    });
+  }
+  setTimeout(() => {
+    const target = pendingAccountEmail ? document.getElementById("accountEmailCode") : document.getElementById("accountEmailInput");
+    if (!accountEmailStatus.hasEmail || pendingAccountEmail) target?.focus();
+  }, 80);
+}
+
+function closeEmailAssociationModal({rememberDismissal = true} = {}) {
+  const modal = document.getElementById("emailAssociationModal");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  changingAccountEmail = false;
+  pendingAccountEmail = "";
+  if (rememberDismissal && !accountEmailStatus.hasEmail && currentUser) {
+    sessionStorage.setItem(emailNoticeStorageKey(), "true");
+  }
+}
+
+async function invokeAccountEmail(action, payload = {}) {
+  if (!db || !currentAuthUser) throw new Error("La sesión ya no está disponible.");
+  const {data, error} = await db.functions.invoke("account-email", {body: {action, ...payload}});
+  if (error) {
+    let message = error.message || "No se pudo contactar con el servicio de correo.";
+    try {
+      const details = await error.context?.json();
+      if (details?.error) message = details.error;
+    } catch {}
+    throw new Error(message);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data || {};
+}
+
+async function loadAccountEmailStatus({showNotice = false} = {}) {
+  if (!backendReady || !currentAuthUser) return null;
+  try {
+    const data = await invokeAccountEmail("status");
+    accountEmailStatus = {
+      loaded: true,
+      available: Boolean(data.deliveryConfigured),
+      hasEmail: Boolean(data.hasEmail),
+      maskedEmail: data.maskedEmail || "",
+    };
+    updateAccountEmailSurfaces();
+    if (showNotice
+      && !accountEmailStatus.hasEmail
+      && accountEmailStatus.available
+      && !sessionStorage.getItem(emailNoticeStorageKey())
+      && !document.getElementById("requiredPasswordChange")?.classList.contains("open")) {
+      openEmailAssociationModal({dismissibleNotice: true});
+    }
+    return accountEmailStatus;
+  } catch (error) {
+    accountEmailStatus = {loaded: false, available: false, hasEmail: false, maskedEmail: ""};
+    updateAccountEmailSurfaces();
+    if (document.getElementById("emailAssociationModal")?.classList.contains("open")) {
+      document.getElementById("emailRequestFeedback").textContent = error.message;
+    }
+    return null;
+  }
+}
+
+async function requestAccountEmailCode(form) {
+  const email = document.getElementById("accountEmailInput").value.trim().toLowerCase();
+  const feedback = document.getElementById("emailRequestFeedback");
+  const submit = form.querySelector('[type="submit"]');
+  feedback.textContent = "Enviando código…";
+  submit.disabled = true;
+  try {
+    const data = await invokeAccountEmail("request-code", {email});
+    changingAccountEmail = false;
+    pendingAccountEmail = email;
+    document.getElementById("emailVerificationTarget").textContent = data.maskedEmail || email;
+    document.getElementById("accountEmailCode").value = "";
+    feedback.textContent = "";
+    renderAccountEmailModal();
+    setTimeout(() => document.getElementById("accountEmailCode").focus(), 60);
+  } catch (error) {
+    feedback.textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+async function verifyAccountEmailCode(form) {
+  const code = document.getElementById("accountEmailCode").value.replace(/\D/g, "");
+  const feedback = document.getElementById("emailVerifyFeedback");
+  const submit = form.querySelector('[type="submit"]');
+  if (!/^\d{6}$/.test(code)) {
+    feedback.textContent = "Introduce las seis cifras del código.";
+    return;
+  }
+  feedback.textContent = "Verificando…";
+  submit.disabled = true;
+  try {
+    const data = await invokeAccountEmail("verify-code", {email: pendingAccountEmail, code});
+    accountEmailStatus = {loaded: true, available: true, hasEmail: true, maskedEmail: data.maskedEmail || pendingAccountEmail};
+    pendingAccountEmail = "";
+    changingAccountEmail = false;
+    sessionStorage.removeItem(emailNoticeStorageKey());
+    updateAccountEmailSurfaces();
+    renderAccountEmailModal();
+  } catch (error) {
+    feedback.textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+function startChangingAccountEmail() {
+  pendingAccountEmail = "";
+  changingAccountEmail = true;
+  document.getElementById("accountEmailInput").value = "";
+  document.getElementById("emailRequestFeedback").textContent = "";
+  renderAccountEmailModal();
+  setTimeout(() => document.getElementById("accountEmailInput").focus(), 60);
+}
+
 function exitChatView() {
   goTo(sectionBeforeChat && sectionBeforeChat !== "chat" && sectionBeforeChat !== "privados"
     ? sectionBeforeChat
@@ -519,15 +746,13 @@ function renderProfile(memberId) {
         </div>
       </div>
     </article>
-    ${isOwnProfile ? `<section class="profile-account-panel">
+    ${isOwnProfile && canManageSite() ? `<section class="profile-account-panel">
       <div class="profile-account-heading">
-        <div><span class="eyebrow">MI CUENTA</span><h3>Opciones y soporte</h3></div>
-        <p>Gestiona tu cuenta y contacta con la administración desde aquí.</p>
+        <div><span class="eyebrow">CONTROL DEL CLUB</span><h3>Administración</h3></div>
+        <p>Gestiona miembros, roles y contenido del club.</p>
       </div>
       <div class="profile-account-actions">
-        ${canManageSite() ? `<button class="profile-account-button" id="profileAdminButton" type="button"><span aria-hidden="true">♛</span><strong>Administración</strong><small>Gestionar el club</small></button>` : ""}
-        <button class="profile-account-button" id="profileHelpButton" type="button"><span aria-hidden="true">?</span><strong>Ayuda y sugerencias</strong><small>Enviar una consulta, queja o idea</small></button>
-        <button class="profile-account-button danger" id="profileLogoutButton" type="button"><span aria-hidden="true">↪</span><strong>Cerrar sesión</strong><small>Salir de esta cuenta</small></button>
+        <button class="profile-account-button" id="profileAdminButton" type="button"><span aria-hidden="true">♛</span><strong>Abrir administración</strong><small>Gestionar el club</small></button>
       </div>
     </section>` : ""}
     <section class="profile-stories">
@@ -559,8 +784,6 @@ function renderProfile(memberId) {
   document.getElementById("addProfileMomentButton")?.addEventListener("click", () => openMediaUploader("moment"));
   document.getElementById("addProfilePostButton")?.addEventListener("click", () => openMediaUploader("post"));
   document.getElementById("profileAdminButton")?.addEventListener("click", () => goTo("administracion"));
-  document.getElementById("profileHelpButton")?.addEventListener("click", () => goTo("ayuda"));
-  document.getElementById("profileLogoutButton")?.addEventListener("click", logoutCurrentUser);
   goTo("perfil");
 }
 
@@ -1108,6 +1331,7 @@ async function applyUserInterface(user, authUser = null) {
   if (location.hash === "#perfil") renderProfile(currentUser.id);
   window.scrollTo({top: 0, behavior: "auto"});
   syncPushNotificationState();
+  if (backendReady && authUser) setTimeout(() => loadAccountEmailStatus({showNotice: true}), 650);
 }
 
 function showLogin() {
@@ -1122,6 +1346,8 @@ function showLogin() {
 }
 
 async function logoutCurrentUser() {
+  closeProfileQuickMenu();
+  closeEmailAssociationModal({rememberDismissal: false});
   if (db) await db.auth.signOut();
   localStorage.removeItem(AUTH_STORAGE_KEY);
   sessionStorage.removeItem(AUTH_SESSION_KEY);
@@ -1140,6 +1366,9 @@ async function logoutCurrentUser() {
   helpMessages = [];
   activeHelpRequestId = null;
   activeChatChannelId = null;
+  accountEmailStatus = {loaded: false, available: false, hasEmail: false, maskedEmail: ""};
+  pendingAccountEmail = "";
+  changingAccountEmail = false;
   if (db && presenceChannel) db.removeChannel(presenceChannel);
   if (db && messageChannel) db.removeChannel(messageChannel);
   if (db && momentChannel) db.removeChannel(momentChannel);
@@ -1234,6 +1463,7 @@ async function saveRequiredPasswordChange(form) {
     form.reset();
     document.getElementById("requiredPasswordChange").classList.remove("open");
     document.getElementById("requiredPasswordChange").setAttribute("aria-hidden", "true");
+    setTimeout(() => loadAccountEmailStatus({showNotice: true}), 350);
   } catch (error) {
     feedback.textContent = error.message || "No se pudo cambiar la contraseña.";
   } finally {
@@ -3008,8 +3238,29 @@ document.addEventListener("click", event => {
   const searchUrl = event.target.closest("[data-search-url]");
   if (profileTarget || searchSection || searchUrl) closeGlobalSearch();
 });
+const profileTabLink = document.querySelector('.app-tab[data-section="perfil"]');
+profileTabLink?.addEventListener("pointerdown", beginProfileLongPress);
+profileTabLink?.addEventListener("pointermove", trackProfileLongPress);
+profileTabLink?.addEventListener("pointerup", () => {
+  cancelProfileLongPress();
+});
+profileTabLink?.addEventListener("pointercancel", cancelProfileLongPress);
+profileTabLink?.addEventListener("pointerleave", event => {
+  if (event.pointerType === "mouse") cancelProfileLongPress();
+});
+profileTabLink?.addEventListener("contextmenu", event => {
+  event.preventDefault();
+  cancelProfileLongPress();
+  openProfileQuickMenu();
+});
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
+  if (link === profileTabLink && Date.now() < profileClickSuppressedUntil) {
+    event.stopPropagation();
+    profileClickSuppressedUntil = 0;
+    return;
+  }
+  closeProfileQuickMenu();
   if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
   else goTo(link.dataset.section);
 }));
@@ -3082,6 +3333,33 @@ document.getElementById("clearAllNotifications").addEventListener("click", event
 });
 document.addEventListener("click", () => {
   closeNotifications();
+  closeProfileQuickMenu();
+});
+document.getElementById("profileQuickMenu").addEventListener("click", event => event.stopPropagation());
+document.getElementById("profileQuickEmail").addEventListener("click", () => openEmailAssociationModal());
+document.getElementById("profileQuickHelp").addEventListener("click", () => {
+  closeProfileQuickMenu();
+  goTo("ayuda");
+});
+document.getElementById("profileQuickLogout").addEventListener("click", logoutCurrentUser);
+document.getElementById("closeEmailAssociation").addEventListener("click", () => closeEmailAssociationModal());
+document.getElementById("skipEmailAssociation").addEventListener("click", () => closeEmailAssociationModal());
+document.getElementById("finishEmailAssociation").addEventListener("click", () => closeEmailAssociationModal({rememberDismissal: false}));
+document.getElementById("changeAccountEmail").addEventListener("click", startChangingAccountEmail);
+document.getElementById("changeVerifiedEmail").addEventListener("click", startChangingAccountEmail);
+document.getElementById("emailAssociationModal").addEventListener("click", event => {
+  if (event.target.id === "emailAssociationModal") closeEmailAssociationModal();
+});
+document.getElementById("emailRequestForm").addEventListener("submit", event => {
+  event.preventDefault();
+  requestAccountEmailCode(event.currentTarget);
+});
+document.getElementById("emailVerifyForm").addEventListener("submit", event => {
+  event.preventDefault();
+  verifyAccountEmailCode(event.currentTarget);
+});
+document.getElementById("accountEmailCode").addEventListener("input", event => {
+  event.target.value = event.target.value.replace(/\D/g, "").slice(0, 6);
 });
 document.getElementById("helpRequestForm").addEventListener("submit", event => { event.preventDefault(); submitHelpRequest(event.currentTarget); });
 document.getElementById("helpReplyForm").addEventListener("submit", event => { event.preventDefault(); submitHelpReply(event.currentTarget); });
@@ -3552,6 +3830,8 @@ document.getElementById("adminPanelButton")?.addEventListener("click", () => goT
 document.getElementById("globalSearchInput").addEventListener("input", event => performSearch(event.target.value));
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
+    closeProfileQuickMenu();
+    if (document.getElementById("emailAssociationModal")?.classList.contains("open")) closeEmailAssociationModal();
     closeGlobalSearch();
     closeEventEditor();
     closeCalendarDayModal();
