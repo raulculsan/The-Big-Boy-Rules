@@ -156,6 +156,14 @@ let storyCameraStream = null;
 let storyCameraFacingMode = "environment";
 let storyCameraTorchEnabled = false;
 let storyCameraOpeningToken = 0;
+let storyRecorder = null;
+let storyRecordingChunks = [];
+let storyRecordingStartedAt = 0;
+let storyRecordingTimer = null;
+let storyShutterHoldTimer = null;
+let storyShutterPointerId = null;
+let storyRecordingDiscard = false;
+let mediaUploaderBackToCamera = false;
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
@@ -2459,6 +2467,36 @@ function stopStoryCameraStream() {
   preview.srcObject = null;
 }
 
+function clearStoryRecordingTimer() {
+  if (storyRecordingTimer) window.clearInterval(storyRecordingTimer);
+  storyRecordingTimer = null;
+}
+
+function formatStoryRecordingTime(milliseconds) {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  return `${String(Math.floor(totalSeconds / 60)).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
+}
+
+function setStoryRecordingUI(recording) {
+  const camera = document.getElementById("storyCamera");
+  const indicator = document.getElementById("storyRecordingIndicator");
+  camera.classList.toggle("recording", recording);
+  indicator.hidden = !recording;
+  document.getElementById("switchStoryCamera").disabled = recording;
+  document.getElementById("toggleStoryFlash").disabled = recording;
+  document.getElementById("storyGalleryInput").disabled = recording;
+  if (!recording) document.getElementById("storyRecordingTime").textContent = "00:00";
+}
+
+function resetStoryRecordingState() {
+  if (storyShutterHoldTimer) window.clearTimeout(storyShutterHoldTimer);
+  storyShutterHoldTimer = null;
+  storyShutterPointerId = null;
+  clearStoryRecordingTimer();
+  setStoryRecordingUI(false);
+  document.getElementById("captureStoryPhoto")?.classList.remove("holding");
+}
+
 function setStoryCameraStatus(message = "", isError = false) {
   const status = document.getElementById("storyCameraStatus");
   status.textContent = message;
@@ -2484,10 +2522,13 @@ async function startStoryCamera() {
     return;
   }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {facingMode: {ideal: storyCameraFacingMode}, width: {ideal: 1920}, height: {ideal: 1080}},
-      audio: false,
-    });
+    const video = {facingMode: {ideal: storyCameraFacingMode}, width: {ideal: 1920}, height: {ideal: 1080}};
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({video, audio: {echoCancellation: true, noiseSuppression: true}});
+    } catch {
+      stream = await navigator.mediaDevices.getUserMedia({video, audio: false});
+    }
     if (token !== storyCameraOpeningToken || !document.getElementById("storyCamera").classList.contains("open")) {
       stream.getTracks().forEach(track => track.stop());
       return;
@@ -2522,11 +2563,17 @@ function openStoryCamera() {
   camera.setAttribute("aria-hidden", "false");
   document.body.classList.add("story-camera-open");
   document.getElementById("storyGalleryInput").value = "";
+  resetStoryRecordingState();
   startStoryCamera();
 }
 
 function closeStoryCamera() {
   storyCameraOpeningToken += 1;
+  if (storyRecorder && storyRecorder.state !== "inactive") {
+    storyRecordingDiscard = true;
+    storyRecorder.stop();
+  }
+  resetStoryRecordingState();
   stopStoryCameraStream();
   const camera = document.getElementById("storyCamera");
   camera.classList.remove("open");
@@ -2561,8 +2608,102 @@ async function toggleStoryFlash() {
 async function useStoryMediaFile(file) {
   if (!file) return;
   closeStoryCamera();
-  openMediaUploader("moment");
+  openMediaUploader("moment", {backToCamera: true});
   await prepareMediaUploadFile(file);
+}
+
+function supportedStoryRecordingMimeType() {
+  if (!window.MediaRecorder?.isTypeSupported) return "";
+  return ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp8,opus", "video/webm"]
+    .find(type => MediaRecorder.isTypeSupported(type)) || "";
+}
+
+function finishStoryVideoRecording() {
+  if (!storyRecorder || storyRecorder.state === "inactive") return;
+  storyRecorder.stop();
+}
+
+function startStoryVideoRecording() {
+  storyShutterHoldTimer = null;
+  if (!storyCameraStream || !window.MediaRecorder) {
+    setStoryCameraStatus("Este dispositivo no permite grabar vídeo desde la web. Puedes elegirlo desde la galería.", true);
+    document.getElementById("captureStoryPhoto").classList.remove("holding");
+    return;
+  }
+  try {
+    const mimeType = supportedStoryRecordingMimeType();
+    let recorder;
+    try {
+      recorder = new MediaRecorder(storyCameraStream, mimeType ? {mimeType, videoBitsPerSecond: 6000000} : undefined);
+    } catch {
+      recorder = new MediaRecorder(storyCameraStream, mimeType ? {mimeType} : undefined);
+    }
+    storyRecorder = recorder;
+    storyRecordingChunks = [];
+    storyRecordingDiscard = false;
+    storyRecordingStartedAt = Date.now();
+    recorder.addEventListener("dataavailable", event => {
+      if (event.data?.size) storyRecordingChunks.push(event.data);
+    });
+    recorder.addEventListener("stop", () => {
+      const discard = storyRecordingDiscard;
+      const chunks = storyRecordingChunks;
+      const recordedType = recorder.mimeType || mimeType || "video/webm";
+      storyRecorder = null;
+      storyRecordingChunks = [];
+      storyRecordingDiscard = false;
+      resetStoryRecordingState();
+      if (discard) return;
+      if (!chunks.length) {
+        setStoryCameraStatus("La grabación fue demasiado corta. Mantén pulsado un poco más.", true);
+        return;
+      }
+      const extension = recordedType.includes("mp4") ? "mp4" : "webm";
+      useStoryMediaFile(new File([new Blob(chunks, {type: recordedType})], `historia-${Date.now()}.${extension}`, {type: recordedType, lastModified: Date.now()}));
+    }, {once: true});
+    recorder.start(200);
+    setStoryRecordingUI(true);
+    document.getElementById("storyRecordingTime").textContent = "00:00";
+    storyRecordingTimer = window.setInterval(() => {
+      const elapsed = Date.now() - storyRecordingStartedAt;
+      document.getElementById("storyRecordingTime").textContent = formatStoryRecordingTime(elapsed);
+      if (elapsed >= 60000) finishStoryVideoRecording();
+    }, 200);
+  } catch (error) {
+    resetStoryRecordingState();
+    setStoryCameraStatus(error.message || "No se pudo iniciar la grabación.", true);
+  }
+}
+
+function beginStoryShutterGesture(event) {
+  if (event.currentTarget.disabled || storyRecorder) return;
+  event.preventDefault();
+  storyShutterPointerId = event.pointerId;
+  event.currentTarget.setPointerCapture?.(event.pointerId);
+  event.currentTarget.classList.add("holding");
+  storyShutterHoldTimer = window.setTimeout(startStoryVideoRecording, 320);
+}
+
+function endStoryShutterGesture(event) {
+  if (storyShutterPointerId !== event.pointerId) return;
+  event.preventDefault();
+  const wasWaitingForHold = Boolean(storyShutterHoldTimer);
+  if (storyShutterHoldTimer) window.clearTimeout(storyShutterHoldTimer);
+  storyShutterHoldTimer = null;
+  storyShutterPointerId = null;
+  event.currentTarget.classList.remove("holding");
+  if (storyRecorder?.state === "recording") finishStoryVideoRecording();
+  else if (wasWaitingForHold) captureStoryPhoto();
+}
+
+function cancelStoryShutterGesture(event) {
+  if (storyShutterPointerId !== event.pointerId) return;
+  event.preventDefault();
+  if (storyShutterHoldTimer) window.clearTimeout(storyShutterHoldTimer);
+  storyShutterHoldTimer = null;
+  storyShutterPointerId = null;
+  event.currentTarget.classList.remove("holding");
+  if (storyRecorder?.state === "recording") finishStoryVideoRecording();
 }
 
 function captureStoryPhoto() {
@@ -2584,9 +2725,10 @@ function captureStoryPhoto() {
   }, "image/jpeg", .92);
 }
 
-function openMediaUploader(mode) {
+function openMediaUploader(mode, {backToCamera = false} = {}) {
   if (!currentUser) return;
   mediaUploadMode = mode;
+  mediaUploaderBackToCamera = backToCamera;
   pendingMediaUploadFile = null;
   if (mediaPreviewObjectUrl) URL.revokeObjectURL(mediaPreviewObjectUrl);
   mediaPreviewObjectUrl = "";
@@ -2608,6 +2750,9 @@ function openMediaUploader(mode) {
   modal.classList.remove("has-media", "has-video");
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
+  const closeButton = document.getElementById("closeMediaUploader");
+  closeButton.textContent = backToCamera ? "←" : "×";
+  closeButton.setAttribute("aria-label", backToCamera ? "Volver a la cámara" : "Cerrar");
 }
 
 function closeMediaUploader() {
@@ -2620,7 +2765,14 @@ function closeMediaUploader() {
   pendingMediaUploadFile = null;
   if (mediaPreviewObjectUrl) URL.revokeObjectURL(mediaPreviewObjectUrl);
   mediaPreviewObjectUrl = "";
+  mediaUploaderBackToCamera = false;
   resetMediaCropEditor();
+}
+
+function dismissMediaUploader() {
+  const shouldReturnToCamera = mediaUploadMode === "moment" && mediaUploaderBackToCamera;
+  closeMediaUploader();
+  if (shouldReturnToCamera) openStoryCamera();
 }
 
 async function prepareMediaUploadFile(file) {
@@ -3651,9 +3803,10 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     closeProfileQuickMenu();
     if (document.getElementById("storyCamera")?.classList.contains("open")) closeStoryCamera();
+    else if (document.getElementById("mediaUploader")?.classList.contains("open")) dismissMediaUploader();
   }
 });
-window.addEventListener("pagehide", stopStoryCameraStream);
+window.addEventListener("pagehide", closeStoryCamera);
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
   if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
@@ -3941,14 +4094,17 @@ document.getElementById("messageMediaAttachment").addEventListener("change", eve
 document.getElementById("messageCameraAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("addMomentButton").addEventListener("click", openStoryCamera);
 document.getElementById("closeStoryCamera").addEventListener("click", closeStoryCamera);
-document.getElementById("captureStoryPhoto").addEventListener("click", captureStoryPhoto);
+document.getElementById("captureStoryPhoto").addEventListener("pointerdown", beginStoryShutterGesture);
+document.getElementById("captureStoryPhoto").addEventListener("pointerup", endStoryShutterGesture);
+document.getElementById("captureStoryPhoto").addEventListener("pointercancel", cancelStoryShutterGesture);
+document.getElementById("captureStoryPhoto").addEventListener("contextmenu", event => event.preventDefault());
 document.getElementById("switchStoryCamera").addEventListener("click", switchStoryCamera);
 document.getElementById("toggleStoryFlash").addEventListener("click", toggleStoryFlash);
 document.getElementById("storyGalleryInput").addEventListener("change", event => useStoryMediaFile(event.target.files[0] || null));
-document.getElementById("closeMediaUploader").addEventListener("click", closeMediaUploader);
-document.getElementById("cancelMediaUploader").addEventListener("click", closeMediaUploader);
+document.getElementById("closeMediaUploader").addEventListener("click", dismissMediaUploader);
+document.getElementById("cancelMediaUploader").addEventListener("click", dismissMediaUploader);
 document.getElementById("mediaUploader").addEventListener("click", event => {
-  if (event.target.id === "mediaUploader") closeMediaUploader();
+  if (event.target.id === "mediaUploader") dismissMediaUploader();
 });
 document.getElementById("mediaUploadFile").addEventListener("change", event => prepareMediaUploadFile(event.target.files[0] || null));
 document.getElementById("mediaCropZoom").addEventListener("input", event => {

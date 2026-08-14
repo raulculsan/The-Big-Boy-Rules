@@ -7020,6 +7020,32 @@ body.story-camera-open { overflow: hidden; overscroll-behavior: none; }
 }
 .story-camera-status[hidden] { display: none; }
 .story-camera-status.error { border-color: rgba(255,190,75,.4); color: #ffe4a8; }
+.story-recording-indicator {
+  position: absolute;
+  z-index: 5;
+  top: max(24px, calc(env(safe-area-inset-top, 0px) + 8px));
+  left: 50%;
+  min-width: 84px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 13px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(12,12,14,.68);
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: .73rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  transform: translateX(-50%);
+}
+.story-recording-indicator[hidden] { display: none; }
+.story-recording-indicator i { width: 9px; height: 9px; border-radius: 50%; background: #ff4057; box-shadow: 0 0 0 5px rgba(255,64,87,.13); animation: storyRecordingPulse 1s ease-in-out infinite; }
+@keyframes storyRecordingPulse { 50% { opacity: .42; transform: scale(.8); } }
 .story-camera-bottom {
   position: absolute;
   z-index: 4;
@@ -7063,7 +7089,14 @@ body.story-camera-open { overflow: hidden; overscroll-behavior: none; }
   touch-action: manipulation;
 }
 .story-shutter span { width: 66px; height: 66px; border-radius: 50%; background: #f5f5f5; transition: transform .1s ease, background .1s ease; }
-.story-shutter:active span { background: #d8ad38; transform: scale(.88); }
+.story-shutter:active span,
+.story-shutter.holding span { background: #ff4057; transform: scale(.88); }
+.story-camera.recording .story-shutter { border-color: rgba(255,255,255,.88); }
+.story-camera.recording .story-shutter span { width: 38px; height: 38px; border-radius: 11px; background: #ff4057; transform: none; }
+.story-camera.recording .story-camera-topbar > span,
+.story-camera.recording #toggleStoryFlash,
+.story-camera.recording .story-gallery-button,
+.story-camera.recording .story-switch-camera { pointer-events: none; opacity: .28; }
 .story-camera-mode {
   position: absolute;
   z-index: 4;
@@ -7109,6 +7142,7 @@ body.story-camera-open { overflow: hidden; overscroll-behavior: none; }
 @media (max-width: 760px) {
   .story-camera-shell { width: 100vw; height: 100dvh; min-height: 100dvh; }
   .story-camera-topbar { top: max(12px, env(safe-area-inset-top, 0px)); }
+  .story-recording-indicator { top: max(18px, calc(env(safe-area-inset-top, 0px) + 4px)); }
   .story-camera-bottom { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
   .story-camera-mode { bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
   #mediaUploader.has-media.has-video .media-upload-preview { inset: 54px 0 70px; padding: 8px; }
