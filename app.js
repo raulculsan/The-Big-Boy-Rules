@@ -165,6 +165,7 @@ let storyShutterPointerId = null;
 let storyRecordingDiscard = false;
 let mediaUploaderBackToCamera = false;
 let cameraCaptureMode = "moment";
+let storyCaptureInProgress = false;
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
@@ -2493,6 +2494,7 @@ function resetStoryRecordingState() {
   if (storyShutterHoldTimer) window.clearTimeout(storyShutterHoldTimer);
   storyShutterHoldTimer = null;
   storyShutterPointerId = null;
+  storyCaptureInProgress = false;
   clearStoryRecordingTimer();
   setStoryRecordingUI(false);
   document.getElementById("captureStoryPhoto")?.classList.remove("holding");
@@ -2682,7 +2684,7 @@ function startStoryVideoRecording() {
 }
 
 function beginStoryShutterGesture(event) {
-  if (event.currentTarget.disabled || storyRecorder) return;
+  if (event.currentTarget.disabled || storyRecorder || storyCaptureInProgress) return;
   event.preventDefault();
   storyShutterPointerId = event.pointerId;
   event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -2714,7 +2716,11 @@ function cancelStoryShutterGesture(event) {
 
 function captureStoryPhoto() {
   const preview = document.getElementById("storyCameraPreview");
-  if (!storyCameraStream || !preview.videoWidth || !preview.videoHeight) return;
+  if (storyCaptureInProgress || !storyCameraStream || !preview.videoWidth || !preview.videoHeight) return;
+  storyCaptureInProgress = true;
+  const shutter = document.getElementById("captureStoryPhoto");
+  shutter.disabled = true;
+  setStoryCameraStatus("Preparando foto…");
   const canvas = document.getElementById("storyCameraCanvas");
   const scale = Math.min(1, 2560 / Math.max(preview.videoWidth, preview.videoHeight));
   canvas.width = Math.round(preview.videoWidth * scale);
@@ -2726,7 +2732,12 @@ function captureStoryPhoto() {
   }
   context.drawImage(preview, 0, 0, canvas.width, canvas.height);
   canvas.toBlob(blob => {
-    if (!blob) return setStoryCameraStatus("No se pudo preparar la foto. Inténtalo de nuevo.", true);
+    if (!blob) {
+      storyCaptureInProgress = false;
+      shutter.disabled = false;
+      setStoryCameraStatus("No se pudo preparar la foto. Inténtalo de nuevo.", true);
+      return;
+    }
     const prefix = cameraCaptureMode === "post" ? "publicacion" : "historia";
     useStoryMediaFile(new File([blob], `${prefix}-${Date.now()}.jpg`, {type: "image/jpeg", lastModified: Date.now()}));
   }, "image/jpeg", .92);
@@ -2776,9 +2787,9 @@ function closeMediaUploader() {
   resetMediaCropEditor();
 }
 
-function dismissMediaUploader() {
+function dismissMediaUploader({returnToCamera = false} = {}) {
   const mode = mediaUploadMode;
-  const shouldReturnToCamera = mediaUploaderBackToCamera;
+  const shouldReturnToCamera = returnToCamera && mediaUploaderBackToCamera;
   closeMediaUploader();
   if (shouldReturnToCamera) openStoryCamera(mode);
 }
@@ -3811,7 +3822,7 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     closeProfileQuickMenu();
     if (document.getElementById("storyCamera")?.classList.contains("open")) closeStoryCamera();
-    else if (document.getElementById("mediaUploader")?.classList.contains("open")) dismissMediaUploader();
+    else if (document.getElementById("mediaUploader")?.classList.contains("open")) dismissMediaUploader({returnToCamera: true});
   }
 });
 window.addEventListener("pagehide", closeStoryCamera);
@@ -4109,10 +4120,10 @@ document.getElementById("captureStoryPhoto").addEventListener("contextmenu", eve
 document.getElementById("switchStoryCamera").addEventListener("click", switchStoryCamera);
 document.getElementById("toggleStoryFlash").addEventListener("click", toggleStoryFlash);
 document.getElementById("storyGalleryInput").addEventListener("change", event => useStoryMediaFile(event.target.files[0] || null));
-document.getElementById("closeMediaUploader").addEventListener("click", dismissMediaUploader);
-document.getElementById("cancelMediaUploader").addEventListener("click", dismissMediaUploader);
+document.getElementById("closeMediaUploader").addEventListener("click", () => dismissMediaUploader({returnToCamera: true}));
+document.getElementById("cancelMediaUploader").addEventListener("click", () => dismissMediaUploader({returnToCamera: true}));
 document.getElementById("mediaUploader").addEventListener("click", event => {
-  if (event.target.id === "mediaUploader") dismissMediaUploader();
+  if (event.target.id === "mediaUploader" && !event.currentTarget.classList.contains("has-media")) dismissMediaUploader();
 });
 document.getElementById("mediaUploadFile").addEventListener("change", event => prepareMediaUploadFile(event.target.files[0] || null));
 document.getElementById("mediaCropZoom").addEventListener("input", event => {
