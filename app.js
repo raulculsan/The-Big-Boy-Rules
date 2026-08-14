@@ -160,6 +160,7 @@ let calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let sectionBeforeChat = "inicio";
 let activeContentTab = "publicaciones";
 let viewportSyncFrame = null;
+let mobileViewportBaseline = window.innerHeight;
 let cursorFrame = null;
 let sharingMedia = null;
 let activeMomentSequence = [];
@@ -357,12 +358,17 @@ function syncMobileViewport() {
     if (window.innerWidth > 760) {
       document.documentElement.style.removeProperty("--chat-viewport-height");
       document.documentElement.style.removeProperty("--chat-viewport-offset");
+      document.body.classList.remove("chat-keyboard-open");
       return;
     }
     const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight);
     const viewportOffset = Math.round(window.visualViewport?.offsetTop || 0);
+    const composerFocused = Boolean(document.activeElement?.closest?.(".message-form"));
+    if (!composerFocused) mobileViewportBaseline = Math.max(window.innerHeight, viewportHeight);
+    const keyboardOpen = composerFocused && mobileViewportBaseline - viewportHeight > 120;
     document.documentElement.style.setProperty("--chat-viewport-height", `${viewportHeight}px`);
     document.documentElement.style.setProperty("--chat-viewport-offset", `${viewportOffset}px`);
+    document.body.classList.toggle("chat-keyboard-open", keyboardOpen);
   });
 }
 
@@ -701,13 +707,15 @@ function setChatEnabled(enabled) {
   const button = document.querySelector(".message-form .send-button");
   const attach = document.getElementById("attachMessageButton");
   const media = document.getElementById("attachMessageMediaButton");
+  const camera = document.getElementById("captureMessageCameraButton");
   const audio = document.getElementById("recordGroupAudioButton");
   input.disabled = !enabled;
   button.disabled = !enabled;
   attach.disabled = !enabled;
   media.disabled = !enabled;
+  camera.disabled = !enabled;
   audio.disabled = !enabled;
-  input.placeholder = enabled ? "Escribe algo al grupo..." : "El chat necesita la conexión compartida";
+  input.placeholder = enabled ? "Mensaje..." : "El chat necesita conexión";
 }
 
 function renderPresence() {
@@ -911,6 +919,7 @@ function renderPrivateConversation() {
   const submit = document.querySelector("#privateMessageForm .send-button");
   const attach = document.getElementById("attachPrivateMessageButton");
   const media = document.getElementById("attachPrivateMessageMediaButton");
+  const camera = document.getElementById("capturePrivateMessageCameraButton");
   const audio = document.getElementById("recordPrivateAudioButton");
   document.getElementById("privados").classList.toggle("conversation-open", Boolean(member));
   if (!member) {
@@ -921,6 +930,7 @@ function renderPrivateConversation() {
     submit.disabled = true;
     attach.disabled = true;
     media.disabled = true;
+    camera.disabled = true;
     audio.disabled = true;
     return;
   }
@@ -957,6 +967,7 @@ function renderPrivateConversation() {
   submit.disabled = false;
   attach.disabled = false;
   media.disabled = false;
+  camera.disabled = false;
   audio.disabled = false;
   container.scrollTop = container.scrollHeight;
 }
@@ -1657,11 +1668,19 @@ function attachmentContext(kind) {
     preview: document.getElementById(privateChat ? "privateMessageAttachmentPreview" : "messageAttachmentPreview"),
     fileInput: document.getElementById(privateChat ? "privateMessageAttachment" : "messageAttachment"),
     mediaInput: document.getElementById(privateChat ? "privateMessageMediaAttachment" : "messageMediaAttachment"),
+    cameraInput: document.getElementById(privateChat ? "privateMessageCameraAttachment" : "messageCameraAttachment"),
   };
 }
 
 function pendingChatFile(kind) {
   return kind === "private" ? pendingPrivateMessageFile : pendingMessageFile;
+}
+
+function syncComposerState(kind) {
+  const privateChat = kind === "private";
+  const form = document.getElementById(privateChat ? "privateMessageForm" : "messageForm");
+  const input = document.getElementById(privateChat ? "privateMessageInput" : "messageInput");
+  form?.classList.toggle("has-content", Boolean(input?.value.trim() || pendingChatFile(kind)));
 }
 
 function setPendingChatFile(kind, file) {
@@ -1673,6 +1692,7 @@ function setPendingChatFile(kind, file) {
   if (kind === "private") pendingPrivateMessageFile = file || null;
   else pendingMessageFile = file || null;
   renderChatAttachmentPreview(kind);
+  syncComposerState(kind);
   return true;
 }
 
@@ -1682,10 +1702,12 @@ function clearPendingChatFile(kind) {
   const context = attachmentContext(kind);
   context.fileInput.value = "";
   context.mediaInput.value = "";
+  context.cameraInput.value = "";
   context.preview.hidden = true;
   context.preview.innerHTML = "";
   if (attachmentPreviewUrls[kind]) URL.revokeObjectURL(attachmentPreviewUrls[kind]);
   attachmentPreviewUrls[kind] = "";
+  syncComposerState(kind);
 }
 
 function renderChatAttachmentPreview(kind) {
@@ -3362,6 +3384,9 @@ document.getElementById("privateMessageForm").addEventListener("submit", async e
     input.focus();
   }
 });
+[["group", "messageInput"], ["private", "privateMessageInput"]].forEach(([kind, inputId]) => {
+  document.getElementById(inputId).addEventListener("input", () => syncComposerState(kind));
+});
 window.visualViewport?.addEventListener("resize", () => syncMobileViewport());
 window.visualViewport?.addEventListener("scroll", () => syncMobileViewport());
 window.addEventListener("resize", () => syncMobileViewport());
@@ -3485,13 +3510,17 @@ document.getElementById("attachMessageButton").addEventListener("click", () => d
 document.getElementById("attachPrivateMessageButton").addEventListener("click", () => document.getElementById("privateMessageAttachment").click());
 document.getElementById("attachMessageMediaButton").addEventListener("click", () => document.getElementById("messageMediaAttachment").click());
 document.getElementById("attachPrivateMessageMediaButton").addEventListener("click", () => document.getElementById("privateMessageMediaAttachment").click());
+document.getElementById("captureMessageCameraButton").addEventListener("click", () => document.getElementById("messageCameraAttachment").click());
+document.getElementById("capturePrivateMessageCameraButton").addEventListener("click", () => document.getElementById("privateMessageCameraAttachment").click());
 document.getElementById("recordGroupAudioButton").addEventListener("click", () => toggleAudioRecording("group"));
 document.getElementById("recordPrivateAudioButton").addEventListener("click", () => toggleAudioRecording("private"));
 document.getElementById("privateMessageAttachment").addEventListener("change", event => setPendingChatFile("private", event.target.files[0] || null));
 document.getElementById("privateMessageMediaAttachment").addEventListener("change", event => setPendingChatFile("private", event.target.files[0] || null));
+document.getElementById("privateMessageCameraAttachment").addEventListener("change", event => setPendingChatFile("private", event.target.files[0] || null));
 document.getElementById("addChatChannelButton").addEventListener("click", createChatChannel);
 document.getElementById("messageAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("messageMediaAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
+document.getElementById("messageCameraAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("addMomentButton").addEventListener("click", () => openMediaUploader("moment"));
 document.getElementById("closeMediaUploader").addEventListener("click", closeMediaUploader);
 document.getElementById("cancelMediaUploader").addEventListener("click", closeMediaUploader);

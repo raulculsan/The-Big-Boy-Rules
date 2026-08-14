@@ -6671,3 +6671,107 @@ body.chat-focus #privados .chat-header { order: 1; }
   .message-audio { min-width: min(260px, 72vw); }
   .message .avatar { width: 30px; height: 30px; min-width: 30px; min-height: 30px; }
 }
+
+/* Compositor móvil nativo: una sola cápsula integrada sobre el teclado. */
+:root { color-scheme: dark; }
+
+.composer-send-button svg {
+  display: none;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 760px) {
+  body.chat-focus .message-form {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 54px;
+    margin: 6px 8px max(8px, env(safe-area-inset-bottom, 0px));
+    padding: 4px;
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.11);
+    border-radius: 29px;
+    background: #1d1e23;
+    box-shadow: 0 8px 26px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.035);
+  }
+
+  body.chat-focus .message-form input[type="text"] {
+    order: 2;
+    min-width: 62px;
+    height: 44px;
+    padding: 0 7px;
+    border: 0;
+    border-radius: 0;
+    color: #f6f6f8;
+    background: transparent;
+    box-shadow: none;
+    caret-color: #e2ad26;
+    font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  body.chat-focus .message-form input[type="text"]::placeholder { color: #9b9ca3; opacity: 1; }
+  body.chat-focus .message-form input[type="text"]:focus { border: 0; outline: 0; box-shadow: none; }
+
+  body.chat-focus .message-form .composer-tool-button,
+  body.chat-focus .message-form .attach-button,
+  body.chat-focus .message-form .send-button {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #f4f4f6;
+    background: transparent;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body.chat-focus .message-form .composer-camera-button {
+    order: 1;
+    color: #111216;
+    background: linear-gradient(145deg, #f5cf61, #c98b12);
+    box-shadow: 0 4px 14px rgba(212,158,31,.25);
+  }
+
+  body.chat-focus .message-form .composer-camera-button svg { width: 23px; height: 23px; stroke-width: 2; }
+  body.chat-focus .message-form .record-audio-button { order: 3; }
+  body.chat-focus .message-form [id*="MediaButton"] { order: 4; }
+  body.chat-focus .message-form .attach-button { order: 5; font-size: 29px; font-weight: 300; line-height: 1; }
+  body.chat-focus .message-form .composer-send-button { order: 6; display: none; color: #12100a; background: var(--gold); }
+  body.chat-focus .message-form .composer-send-button span { display: none; }
+  body.chat-focus .message-form .composer-send-button svg { display: block; }
+  body.chat-focus .message-form.has-content .composer-send-button { display: grid; }
+  body.chat-focus .message-form.has-content .attach-button { display: none; }
+  body.chat-focus .message-form .recording-time { order: 2; min-width: 0; flex: 1; padding-left: 10px; font-size: .82rem; }
+  body.chat-focus .message-form.is-recording input[type="text"] { display: none; }
+  body.chat-focus .message-form.is-recording [id*="MediaButton"],
+  body.chat-focus .message-form.is-recording .attach-button,
+  body.chat-focus .message-form.is-recording .composer-camera-button,
+  body.chat-focus .message-form.is-recording .composer-send-button { display: none; }
+
+  body.standalone-app.chat-focus .message-form { padding-bottom: 4px; }
+  body.chat-keyboard-open.chat-focus .message-form,
+  body.standalone-app.chat-keyboard-open.chat-focus .message-form {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+  }
+
+  body.standalone-app.chat-focus.chat-keyboard-open .app {
+    height: calc(var(--chat-viewport-height, 100dvh) - var(--pwa-safe-top, 0px));
+  }
+
+  body.chat-keyboard-open.chat-focus .attachment-preview { padding-block: 7px; }
+}
