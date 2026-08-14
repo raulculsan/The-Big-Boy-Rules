@@ -2483,18 +2483,38 @@ function stopStoryCameraStream() {
   storyCameraStream = null;
 }
 
+function renewStoryCameraPreview() {
+  const previous = document.getElementById("storyCameraPreview");
+  const preview = document.createElement("video");
+  preview.id = "storyCameraPreview";
+  preview.autoplay = true;
+  preview.muted = true;
+  preview.playsInline = true;
+  preview.setAttribute("autoplay", "");
+  preview.setAttribute("muted", "");
+  preview.setAttribute("playsinline", "");
+  preview.addEventListener("loadedmetadata", fitStoryCameraPreview);
+  preview.addEventListener("resize", fitStoryCameraPreview);
+  previous.replaceWith(preview);
+  return preview;
+}
+
 function fitStoryCameraPreview() {
   const preview = document.getElementById("storyCameraPreview");
   const shell = document.getElementById("cameraCaptureDialog");
   if (!preview || !shell?.classList || !document.getElementById("storyCamera")?.classList.contains("open")) return;
   const bounds = shell.getBoundingClientRect();
   if (!bounds.width || !bounds.height) return;
-  const width = `${Math.ceil(bounds.width)}px`;
-  const height = `${Math.ceil(bounds.height)}px`;
-  preview.style.setProperty("width", width, "important");
-  preview.style.setProperty("height", height, "important");
-  preview.setAttribute("width", String(Math.ceil(bounds.width)));
-  preview.setAttribute("height", String(Math.ceil(bounds.height)));
+  const sourceWidth = preview.videoWidth || bounds.width;
+  const sourceHeight = preview.videoHeight || bounds.height;
+  const sourceRatio = sourceWidth / sourceHeight;
+  const targetRatio = bounds.width / bounds.height;
+  const renderedWidth = sourceRatio > targetRatio ? bounds.height * sourceRatio : bounds.width;
+  const renderedHeight = sourceRatio > targetRatio ? bounds.height : bounds.width / sourceRatio;
+  preview.style.setProperty("width", `${Math.ceil(renderedWidth)}px`, "important");
+  preview.style.setProperty("height", `${Math.ceil(renderedHeight)}px`, "important");
+  preview.setAttribute("width", String(Math.ceil(renderedWidth)));
+  preview.setAttribute("height", String(Math.ceil(renderedHeight)));
 }
 
 function clearStoryRecordingTimer() {
@@ -2538,6 +2558,7 @@ function setStoryCameraStatus(message = "", isError = false) {
 async function startStoryCamera() {
   const token = ++storyCameraOpeningToken;
   stopStoryCameraStream();
+  const preview = renewStoryCameraPreview();
   setStoryCameraStatus("Activando cámara…");
   const shutter = document.getElementById("captureStoryPhoto");
   const switchButton = document.getElementById("switchStoryCamera");
@@ -2565,7 +2586,6 @@ async function startStoryCamera() {
       return;
     }
     storyCameraStream = stream;
-    const preview = document.getElementById("storyCameraPreview");
     preview.muted = true;
     preview.playsInline = true;
     preview.srcObject = stream;
