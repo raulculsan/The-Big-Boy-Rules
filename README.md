@@ -1,7 +1,8 @@
 # The Big Boy Rules
 
 Comunidad privada preparada para GitHub Pages con perfiles editables y galería
-personal, historias de grupo de 24 horas, chat con adjuntos, presencia en tiempo
+personal, historias de grupo de 24 horas, bandeja unificada de chats con notas
+de voz y adjuntos, presencia en tiempo
 real, mensajes privados, calendario administrado por Kike y noticias actuales.
 
 ## Activar las funciones compartidas
@@ -37,12 +38,18 @@ Nunca copies la clave `service_role` en la web.
 - Cada sesión se autentica en Supabase y solo puede modificar su propio perfil.
 - Las fotos se guardan en el bucket público `avatars` con un límite de 3 MB.
 - El usuario puede quitar su avatar y volver a la inicial de su nombre.
-- Los adjuntos se guardan en `group-media`; historias y publicaciones admiten originales de hasta 30 MB.
+- Los adjuntos se guardan en `group-media`; los chats admiten archivos de hasta
+  50 MB y las historias y publicaciones originales de hasta 100 MB. Ejecuta
+  `supabase-large-uploads.sql` para habilitar también notas de voz, audio y vídeo
+  en proyectos ya creados.
 - Ejecuta también `supabase-media-interactions.sql` para activar visualizaciones y respuestas.
 - Los mensajes y sus adjuntos llegan en tiempo real.
 - Los momentos empiezan vacíos y caducan 24 horas después de publicarse.
 - Cada perfil muestra una galería pública propia tipo Instagram.
-- Los mensajes privados solo son visibles para el remitente y el destinatario.
+- El grupo aparece como una conversación más junto a los mensajes privados; al
+  abrir un chat se oculta la navegación inferior y se conservan las categorías
+  internas del grupo. Los mensajes privados solo son visibles para el remitente
+  y el destinatario.
 - Todos pueden consultar el calendario, pero las políticas de Supabase reservan
   la creación, edición y eliminación de eventos a la administración.
 - La cuenta de control total queda fuera de miembros, búsqueda, presencia y

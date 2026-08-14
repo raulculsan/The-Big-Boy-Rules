@@ -9,13 +9,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
   <title>The Big Boy Rules</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260814-82" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260814-87" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260814-82" />
+  <link rel="stylesheet" href="styles.css?v=20260814-87" />
 </head>
 <body>
 
@@ -211,12 +211,17 @@
     </section>
 
     <section class="page-section" id="chat">
-      <div class="chat-layout reveal">
-        <article class="panel chat-panel">
-          <div class="chat-type-tabs" aria-label="Tipos de chat">
-            <button class="active" type="button" data-go="chat">Grupo</button>
-            <button type="button" data-go="privados">Privados</button>
+      <div class="messages-hub reveal">
+        <aside class="panel chat-inbox">
+          <div class="chat-inbox-heading">
+            <div><span class="eyebrow">THE BIG BOY RULES</span><h2>Mensajes</h2></div>
+            <span class="online-label" id="chatInboxOnlineStatus"><i></i> 0 conectados</span>
           </div>
+          <p class="chat-inbox-copy">El grupo y tus conversaciones privadas, todo en el mismo lugar.</p>
+          <div id="privateContacts" class="unified-chat-list"></div>
+        </aside>
+
+        <article class="panel chat-panel group-conversation">
           <div class="chat-channel-bar">
             <div class="chat-channels" id="chatChannels"></div>
             <button class="channel-add-button admin-only" id="addChatChannelButton" type="button" title="Añadir sección">＋ Sección</button>
@@ -238,34 +243,26 @@
 
           <form class="message-form" id="messageForm">
             <button type="button" class="attach-button" id="attachMessageButton" aria-label="Adjuntar archivo">＋</button>
-            <input id="messageAttachment" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <button type="button" class="composer-tool-button" id="attachMessageMediaButton" aria-label="Añadir foto o vídeo" title="Foto o vídeo">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m5 18 5-5 3 3 2-2 4 4"/></svg>
+            </button>
+            <button type="button" class="composer-tool-button record-audio-button" id="recordGroupAudioButton" aria-label="Grabar nota de voz" title="Grabar nota de voz">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
+            </button>
+            <span class="recording-time" id="groupRecordingTime" hidden>00:00</span>
+            <input id="messageAttachment" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <input id="messageMediaAttachment" type="file" accept="image/*,video/*" hidden>
             <input id="messageInput" type="text" placeholder="Escribe algo al grupo..." autocomplete="off" />
             <button class="send-button" type="submit">Enviar</button>
           </form>
           <div class="attachment-preview" id="messageAttachmentPreview" hidden></div>
         </article>
 
-        <aside class="panel online-panel">
-          <span class="eyebrow">EN LÍNEA</span>
-          <h3>Miembros</h3>
-          <div id="onlineMembers"></div>
-        </aside>
       </div>
     </section>
 
     <section class="page-section" id="privados">
       <div class="private-chat-layout">
-        <aside class="panel private-contacts">
-          <div class="chat-type-tabs" aria-label="Tipos de chat">
-            <button type="button" data-go="chat">Grupo</button>
-            <button class="active" type="button" data-go="privados">Privados</button>
-          </div>
-          <div class="panel-heading private-contacts-heading">
-            <button class="chat-back-button" type="button" data-chat-back aria-label="Volver atrás">←</button>
-            <div><span class="eyebrow">MENSAJES PRIVADOS</span><h3>Conversaciones</h3></div>
-          </div>
-          <div id="privateContacts"></div>
-        </aside>
         <article class="panel private-conversation">
           <div class="chat-header" id="privateChatHeader">
             <div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>
@@ -275,7 +272,15 @@
           </div>
           <form class="message-form" id="privateMessageForm">
             <button type="button" class="attach-button" id="attachPrivateMessageButton" aria-label="Adjuntar archivo" disabled>＋</button>
-            <input id="privateMessageAttachment" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <button type="button" class="composer-tool-button" id="attachPrivateMessageMediaButton" aria-label="Añadir foto o vídeo" title="Foto o vídeo" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m5 18 5-5 3 3 2-2 4 4"/></svg>
+            </button>
+            <button type="button" class="composer-tool-button record-audio-button" id="recordPrivateAudioButton" aria-label="Grabar nota de voz" title="Grabar nota de voz" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
+            </button>
+            <span class="recording-time" id="privateRecordingTime" hidden>00:00</span>
+            <input id="privateMessageAttachment" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <input id="privateMessageMediaAttachment" type="file" accept="image/*,video/*" hidden>
             <input id="privateMessageInput" type="text" maxlength="1200" placeholder="Escribe un mensaje privado..." autocomplete="off" disabled>
             <button class="send-button" type="submit" disabled>Enviar</button>
           </form>
@@ -778,7 +783,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260814-82"></script>
+  <script src="app.js?v=20260814-87"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

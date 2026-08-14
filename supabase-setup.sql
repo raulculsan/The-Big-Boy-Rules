@@ -283,6 +283,7 @@ begin
     new.id,
     case
       when char_length(trim(new.body)) > 0 then left(trim(new.body), 180)
+      when new.attachment_type like 'audio/%' then 'Te ha enviado una nota de voz'
       when new.attachment_url is not null then 'Te ha enviado un archivo'
       else ''
     end
@@ -674,6 +675,8 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values (
   'group-media', 'group-media', true, 104857600,
   array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm',
+        'video/quicktime', 'audio/aac', 'audio/mpeg', 'audio/mp4', 'audio/x-m4a',
+        'audio/ogg', 'audio/webm', 'audio/wav',
         'application/pdf', 'text/plain', 'application/zip',
         'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
