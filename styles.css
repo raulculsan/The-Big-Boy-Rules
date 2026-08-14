@@ -1374,6 +1374,10 @@ body.standalone-app {
     top: calc(54px + var(--pwa-safe-top));
     bottom: calc(126px + var(--pwa-safe-bottom));
   }
+  body.standalone-app #mediaUploader.has-media .modal-heading {
+    height: calc(66px + var(--pwa-safe-top));
+    padding-top: calc(10px + var(--pwa-safe-top));
+  }
   body.standalone-app #mediaUploader.has-media .media-editor-toolbar {
     bottom: calc(66px + var(--pwa-safe-bottom));
   }
@@ -5956,6 +5960,7 @@ body.chat-focus #privados .private-contacts { border-right: 1px solid var(--line
 #mediaUploader.has-media .modal-heading {
   height: 68px;
   padding: 12px 18px;
+  box-sizing: border-box;
   background: linear-gradient(#050506e8, transparent);
 }
 #mediaUploader.has-media .modal-heading > div { display: none; }
@@ -7097,19 +7102,6 @@ body.story-camera-open { overflow: hidden; overscroll-behavior: none; }
 .story-camera.recording #toggleStoryFlash,
 .story-camera.recording .story-gallery-button,
 .story-camera.recording .story-switch-camera { pointer-events: none; opacity: .28; }
-.story-camera-mode {
-  position: absolute;
-  z-index: 4;
-  left: 0;
-  right: 0;
-  bottom: calc(25px + env(safe-area-inset-bottom, 0px));
-  color: #fff;
-  font-size: .68rem;
-  font-weight: 900;
-  letter-spacing: .16em;
-  text-align: center;
-  text-shadow: 0 2px 10px #000;
-}
 
 /* Los vídeos elegidos en galería también ocupan el editor, sin un panel vacío. */
 #mediaUploader.has-media.has-video .media-cropper,
@@ -7143,7 +7135,15 @@ body.story-camera-open { overflow: hidden; overscroll-behavior: none; }
   .story-camera-shell { width: 100vw; height: 100dvh; min-height: 100dvh; }
   .story-camera-topbar { top: max(12px, env(safe-area-inset-top, 0px)); }
   .story-recording-indicator { top: max(18px, calc(env(safe-area-inset-top, 0px) + 4px)); }
-  .story-camera-bottom { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
-  .story-camera-mode { bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .story-camera-bottom { bottom: max(34px, calc(18px + env(safe-area-inset-bottom, 0px))); }
+  #mediaUploader.has-media .modal-heading {
+    height: calc(66px + env(safe-area-inset-top, 0px));
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 8px;
+  }
   #mediaUploader.has-media.has-video .media-upload-preview { inset: 54px 0 70px; padding: 8px; }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  body.standalone-app .story-camera-topbar { top: calc(var(--pwa-safe-top) + 10px); }
+  body.standalone-app .story-recording-indicator { top: calc(var(--pwa-safe-top) + 16px); }
 }

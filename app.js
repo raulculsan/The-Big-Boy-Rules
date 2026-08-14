@@ -164,6 +164,7 @@ let storyShutterHoldTimer = null;
 let storyShutterPointerId = null;
 let storyRecordingDiscard = false;
 let mediaUploaderBackToCamera = false;
+let cameraCaptureMode = "moment";
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
@@ -611,8 +612,8 @@ function renderProfile(memberId) {
       </div>
     </section>`;
   document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
-  document.getElementById("addProfileMomentButton")?.addEventListener("click", openStoryCamera);
-  document.getElementById("addProfilePostButton")?.addEventListener("click", () => openMediaUploader("post"));
+  document.getElementById("addProfileMomentButton")?.addEventListener("click", () => openStoryCamera("moment"));
+  document.getElementById("addProfilePostButton")?.addEventListener("click", () => openStoryCamera("post"));
   goTo("perfil");
 }
 
@@ -2554,11 +2555,14 @@ async function startStoryCamera() {
   }
 }
 
-function openStoryCamera() {
+function openStoryCamera(mode = "moment") {
   if (!currentUser) return;
   closeMediaUploader();
+  cameraCaptureMode = mode === "post" ? "post" : "moment";
   const camera = document.getElementById("storyCamera");
   storyCameraFacingMode = "environment";
+  document.getElementById("cameraCaptureLabel").textContent = cameraCaptureMode === "post" ? "PUBLICACIÓN" : "HISTORIA";
+  document.getElementById("cameraCaptureDialog").setAttribute("aria-label", cameraCaptureMode === "post" ? "Cámara de publicaciones" : "Cámara de historias");
   camera.classList.add("open");
   camera.setAttribute("aria-hidden", "false");
   document.body.classList.add("story-camera-open");
@@ -2607,8 +2611,9 @@ async function toggleStoryFlash() {
 
 async function useStoryMediaFile(file) {
   if (!file) return;
+  const mode = cameraCaptureMode;
   closeStoryCamera();
-  openMediaUploader("moment", {backToCamera: true});
+  openMediaUploader(mode, {backToCamera: true});
   await prepareMediaUploadFile(file);
 }
 
@@ -2659,7 +2664,8 @@ function startStoryVideoRecording() {
         return;
       }
       const extension = recordedType.includes("mp4") ? "mp4" : "webm";
-      useStoryMediaFile(new File([new Blob(chunks, {type: recordedType})], `historia-${Date.now()}.${extension}`, {type: recordedType, lastModified: Date.now()}));
+      const prefix = cameraCaptureMode === "post" ? "publicacion" : "historia";
+      useStoryMediaFile(new File([new Blob(chunks, {type: recordedType})], `${prefix}-${Date.now()}.${extension}`, {type: recordedType, lastModified: Date.now()}));
     }, {once: true});
     recorder.start(200);
     setStoryRecordingUI(true);
@@ -2721,7 +2727,8 @@ function captureStoryPhoto() {
   context.drawImage(preview, 0, 0, canvas.width, canvas.height);
   canvas.toBlob(blob => {
     if (!blob) return setStoryCameraStatus("No se pudo preparar la foto. Inténtalo de nuevo.", true);
-    useStoryMediaFile(new File([blob], `historia-${Date.now()}.jpg`, {type: "image/jpeg", lastModified: Date.now()}));
+    const prefix = cameraCaptureMode === "post" ? "publicacion" : "historia";
+    useStoryMediaFile(new File([blob], `${prefix}-${Date.now()}.jpg`, {type: "image/jpeg", lastModified: Date.now()}));
   }, "image/jpeg", .92);
 }
 
@@ -2770,9 +2777,10 @@ function closeMediaUploader() {
 }
 
 function dismissMediaUploader() {
-  const shouldReturnToCamera = mediaUploadMode === "moment" && mediaUploaderBackToCamera;
+  const mode = mediaUploadMode;
+  const shouldReturnToCamera = mediaUploaderBackToCamera;
   closeMediaUploader();
-  if (shouldReturnToCamera) openStoryCamera();
+  if (shouldReturnToCamera) openStoryCamera(mode);
 }
 
 async function prepareMediaUploadFile(file) {
@@ -4092,7 +4100,7 @@ document.getElementById("addChatChannelButton").addEventListener("click", create
 document.getElementById("messageAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("messageMediaAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("messageCameraAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
-document.getElementById("addMomentButton").addEventListener("click", openStoryCamera);
+document.getElementById("addMomentButton").addEventListener("click", () => openStoryCamera("moment"));
 document.getElementById("closeStoryCamera").addEventListener("click", closeStoryCamera);
 document.getElementById("captureStoryPhoto").addEventListener("pointerdown", beginStoryShutterGesture);
 document.getElementById("captureStoryPhoto").addEventListener("pointerup", endStoryShutterGesture);
@@ -4322,7 +4330,7 @@ document.getElementById("addBirthdayButton").addEventListener("click", event => 
   openEventEditor(event.currentTarget.dataset.birthdayEventId || null, "birthday");
 });
 document.getElementById("eventType").addEventListener("change", updateEventEditorType);
-document.getElementById("addPublicationButton").addEventListener("click", () => openMediaUploader("post"));
+document.getElementById("addPublicationButton").addEventListener("click", () => openStoryCamera("post"));
 document.querySelectorAll("[data-content-tab]").forEach(button => {
   button.addEventListener("click", () => selectContentTab(button.dataset.contentTab));
 });

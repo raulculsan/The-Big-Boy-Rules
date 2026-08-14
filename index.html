@@ -10,13 +10,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
   <title>The Big Boy Rules</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260815-91" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260815-92" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260815-91" />
+  <link rel="stylesheet" href="styles.css?v=20260815-92" />
 </head>
 <body>
 
@@ -634,13 +634,13 @@
   </div>
 
   <div class="story-camera" id="storyCamera" aria-hidden="true">
-    <div class="story-camera-shell" role="dialog" aria-modal="true" aria-label="Cámara de historias">
+    <div class="story-camera-shell" id="cameraCaptureDialog" role="dialog" aria-modal="true" aria-label="Cámara de historias">
       <video id="storyCameraPreview" autoplay muted playsinline></video>
       <canvas id="storyCameraCanvas" hidden></canvas>
       <div class="story-camera-shade" aria-hidden="true"></div>
       <div class="story-camera-topbar">
         <button class="story-camera-control" id="closeStoryCamera" type="button" aria-label="Cerrar cámara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
-        <span>HISTORIA</span>
+        <span id="cameraCaptureLabel">HISTORIA</span>
         <button class="story-camera-control" id="toggleStoryFlash" type="button" aria-label="Activar flash" aria-pressed="false" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-7 11h6l-1 9 7-12h-6Z"/></svg></button>
       </div>
       <div class="story-camera-status" id="storyCameraStatus" role="status">Activando cámara…</div>
@@ -653,7 +653,6 @@
         <button class="story-shutter" id="captureStoryPhoto" type="button" aria-label="Toca para hacer una foto o mantén pulsado para grabar"><span></span></button>
         <button class="story-switch-camera" id="switchStoryCamera" type="button" aria-label="Cambiar cámara" title="Cambiar cámara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M18.2 12A7 7 0 0 0 6.4 7.1L4 9M5.8 12a7 7 0 0 0 11.8 4.9L20 15"/></svg></button>
       </div>
-      <div class="story-camera-mode">TOCA: FOTO · MANTÉN: VÍDEO</div>
     </div>
   </div>
 
@@ -833,7 +832,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260815-91"></script>
+  <script src="app.js?v=20260815-92"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
