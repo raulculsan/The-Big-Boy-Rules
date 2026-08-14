@@ -150,6 +150,12 @@ let mediaCropOffsetY = 0;
 let mediaCropPointer = null;
 let mediaFilter = "none";
 let mediaOverlayText = "";
+let pendingMediaUploadFile = null;
+let mediaPreviewObjectUrl = "";
+let storyCameraStream = null;
+let storyCameraFacingMode = "environment";
+let storyCameraTorchEnabled = false;
+let storyCameraOpeningToken = 0;
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
@@ -597,7 +603,7 @@ function renderProfile(memberId) {
       </div>
     </section>`;
   document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
-  document.getElementById("addProfileMomentButton")?.addEventListener("click", () => openMediaUploader("moment"));
+  document.getElementById("addProfileMomentButton")?.addEventListener("click", openStoryCamera);
   document.getElementById("addProfilePostButton")?.addEventListener("click", () => openMediaUploader("post"));
   goTo("perfil");
 }
@@ -1257,6 +1263,7 @@ function showLogin() {
 }
 
 async function logoutCurrentUser() {
+  closeStoryCamera();
   if (activeAudioRecording) activeAudioRecording.cancelled = true;
   if (activeAudioRecording?.recorder.state !== "inactive") activeAudioRecording.recorder.stop();
   clearPendingChatFile("group");
@@ -2444,9 +2451,145 @@ async function saveProfile(form) {
   }
 }
 
+function stopStoryCameraStream() {
+  storyCameraStream?.getTracks().forEach(track => track.stop());
+  storyCameraStream = null;
+  const preview = document.getElementById("storyCameraPreview");
+  preview.pause();
+  preview.srcObject = null;
+}
+
+function setStoryCameraStatus(message = "", isError = false) {
+  const status = document.getElementById("storyCameraStatus");
+  status.textContent = message;
+  status.hidden = !message;
+  status.classList.toggle("error", isError);
+}
+
+async function startStoryCamera() {
+  const token = ++storyCameraOpeningToken;
+  stopStoryCameraStream();
+  setStoryCameraStatus("Activando cámara…");
+  const shutter = document.getElementById("captureStoryPhoto");
+  const switchButton = document.getElementById("switchStoryCamera");
+  const flashButton = document.getElementById("toggleStoryFlash");
+  shutter.disabled = true;
+  switchButton.disabled = true;
+  flashButton.hidden = true;
+  storyCameraTorchEnabled = false;
+  flashButton.classList.remove("active");
+  flashButton.setAttribute("aria-pressed", "false");
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setStoryCameraStatus("La cámara no está disponible aquí. Puedes elegir una foto o vídeo desde la galería.", true);
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {facingMode: {ideal: storyCameraFacingMode}, width: {ideal: 1920}, height: {ideal: 1080}},
+      audio: false,
+    });
+    if (token !== storyCameraOpeningToken || !document.getElementById("storyCamera").classList.contains("open")) {
+      stream.getTracks().forEach(track => track.stop());
+      return;
+    }
+    storyCameraStream = stream;
+    const preview = document.getElementById("storyCameraPreview");
+    preview.srcObject = stream;
+    await preview.play();
+    document.querySelector(".story-camera-shell").classList.toggle("front-camera", storyCameraFacingMode === "user");
+    shutter.disabled = false;
+    switchButton.disabled = false;
+    setStoryCameraStatus();
+    const track = stream.getVideoTracks()[0];
+    const capabilities = track?.getCapabilities?.() || {};
+    flashButton.hidden = !capabilities.torch;
+  } catch (error) {
+    if (token !== storyCameraOpeningToken) return;
+    switchButton.disabled = false;
+    const denied = error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError";
+    setStoryCameraStatus(denied
+      ? "Necesitamos permiso para usar la cámara. También puedes continuar desde la galería."
+      : "No se pudo abrir la cámara. Puedes seleccionar una foto o vídeo desde la galería.", true);
+  }
+}
+
+function openStoryCamera() {
+  if (!currentUser) return;
+  closeMediaUploader();
+  const camera = document.getElementById("storyCamera");
+  storyCameraFacingMode = "environment";
+  camera.classList.add("open");
+  camera.setAttribute("aria-hidden", "false");
+  document.body.classList.add("story-camera-open");
+  document.getElementById("storyGalleryInput").value = "";
+  startStoryCamera();
+}
+
+function closeStoryCamera() {
+  storyCameraOpeningToken += 1;
+  stopStoryCameraStream();
+  const camera = document.getElementById("storyCamera");
+  camera.classList.remove("open");
+  camera.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("story-camera-open");
+  setStoryCameraStatus();
+}
+
+async function switchStoryCamera() {
+  storyCameraFacingMode = storyCameraFacingMode === "environment" ? "user" : "environment";
+  await startStoryCamera();
+}
+
+async function toggleStoryFlash() {
+  const track = storyCameraStream?.getVideoTracks?.()[0];
+  if (!track) return;
+  const button = document.getElementById("toggleStoryFlash");
+  try {
+    storyCameraTorchEnabled = !storyCameraTorchEnabled;
+    await track.applyConstraints({advanced: [{torch: storyCameraTorchEnabled}]});
+    button.classList.toggle("active", storyCameraTorchEnabled);
+    button.setAttribute("aria-pressed", String(storyCameraTorchEnabled));
+    button.setAttribute("aria-label", storyCameraTorchEnabled ? "Desactivar flash" : "Activar flash");
+  } catch {
+    storyCameraTorchEnabled = false;
+    button.classList.remove("active");
+    button.setAttribute("aria-pressed", "false");
+    setStoryCameraStatus("El flash no está disponible con esta cámara.", true);
+  }
+}
+
+async function useStoryMediaFile(file) {
+  if (!file) return;
+  closeStoryCamera();
+  openMediaUploader("moment");
+  await prepareMediaUploadFile(file);
+}
+
+function captureStoryPhoto() {
+  const preview = document.getElementById("storyCameraPreview");
+  if (!storyCameraStream || !preview.videoWidth || !preview.videoHeight) return;
+  const canvas = document.getElementById("storyCameraCanvas");
+  const scale = Math.min(1, 2560 / Math.max(preview.videoWidth, preview.videoHeight));
+  canvas.width = Math.round(preview.videoWidth * scale);
+  canvas.height = Math.round(preview.videoHeight * scale);
+  const context = canvas.getContext("2d");
+  if (storyCameraFacingMode === "user") {
+    context.translate(canvas.width, 0);
+    context.scale(-1, 1);
+  }
+  context.drawImage(preview, 0, 0, canvas.width, canvas.height);
+  canvas.toBlob(blob => {
+    if (!blob) return setStoryCameraStatus("No se pudo preparar la foto. Inténtalo de nuevo.", true);
+    useStoryMediaFile(new File([blob], `historia-${Date.now()}.jpg`, {type: "image/jpeg", lastModified: Date.now()}));
+  }, "image/jpeg", .92);
+}
+
 function openMediaUploader(mode) {
   if (!currentUser) return;
   mediaUploadMode = mode;
+  pendingMediaUploadFile = null;
+  if (mediaPreviewObjectUrl) URL.revokeObjectURL(mediaPreviewObjectUrl);
+  mediaPreviewObjectUrl = "";
   const isMoment = mode === "moment";
   document.getElementById("mediaUploaderEyebrow").textContent = isMoment ? "NUEVO MOMENTO" : "NUEVA PUBLICACIÓN";
   document.getElementById("mediaUploaderTitle").textContent = isMoment ? "Compartir una historia" : "Compartir en mi perfil";
@@ -2462,7 +2605,7 @@ function openMediaUploader(mode) {
   resetMediaCropEditor();
   document.getElementById("mediaUploadFeedback").textContent = "";
   const modal = document.getElementById("mediaUploader");
-  modal.classList.remove("has-media");
+  modal.classList.remove("has-media", "has-video");
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
 }
@@ -2471,10 +2614,66 @@ function closeMediaUploader() {
   const modal = document.getElementById("mediaUploader");
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
-  modal.classList.remove("has-media");
+  modal.classList.remove("has-media", "has-video");
   document.getElementById("mediaDropzone").hidden = false;
   document.getElementById("mediaUploadPreview").hidden = false;
+  pendingMediaUploadFile = null;
+  if (mediaPreviewObjectUrl) URL.revokeObjectURL(mediaPreviewObjectUrl);
+  mediaPreviewObjectUrl = "";
   resetMediaCropEditor();
+}
+
+async function prepareMediaUploadFile(file) {
+  const input = document.getElementById("mediaUploadFile");
+  const preview = document.getElementById("mediaUploadPreview");
+  const dropzone = document.getElementById("mediaDropzone");
+  const uploader = document.getElementById("mediaUploader");
+  const feedback = document.getElementById("mediaUploadFeedback");
+  pendingMediaUploadFile = file || null;
+  if (mediaPreviewObjectUrl) URL.revokeObjectURL(mediaPreviewObjectUrl);
+  mediaPreviewObjectUrl = "";
+
+  if (!file) {
+    preview.innerHTML = "";
+    dropzone.hidden = false;
+    preview.hidden = false;
+    uploader.classList.remove("has-media", "has-video");
+    feedback.textContent = "";
+    resetMediaCropEditor();
+    return;
+  }
+  if (file.size > FILE_LIMITS.media) {
+    input.value = "";
+    pendingMediaUploadFile = null;
+    feedback.textContent = `El archivo supera el máximo de ${formatLimit(FILE_LIMITS.media)}.`;
+    return;
+  }
+
+  feedback.textContent = "";
+  dropzone.hidden = true;
+  uploader.classList.add("has-media");
+  if (file.type.startsWith("video/")) {
+    resetMediaCropEditor();
+    uploader.classList.add("has-video");
+    preview.hidden = false;
+    mediaPreviewObjectUrl = URL.createObjectURL(file);
+    preview.innerHTML = `<video src="${mediaPreviewObjectUrl}" controls playsinline preload="metadata"></video>`;
+    return;
+  }
+
+  uploader.classList.remove("has-video");
+  preview.innerHTML = "";
+  preview.hidden = true;
+  try {
+    await loadMediaCrop(file);
+    document.getElementById("mediaUploadForm").scrollTo({top: 0, behavior: "instant"});
+  } catch (error) {
+    pendingMediaUploadFile = null;
+    uploader.classList.remove("has-media", "has-video");
+    dropzone.hidden = false;
+    preview.hidden = false;
+    feedback.textContent = error.message || "No se pudo preparar el archivo.";
+  }
 }
 
 function resetMediaCropEditor() {
@@ -2585,7 +2784,7 @@ function createCroppedMediaFile() {
 }
 
 async function publishMedia(form) {
-  const file = document.getElementById("mediaUploadFile").files[0];
+  const file = pendingMediaUploadFile || document.getElementById("mediaUploadFile").files[0];
   const feedback = document.getElementById("mediaUploadFeedback");
   const submit = form.querySelector("[type=submit]");
   if (!file) return;
@@ -2865,6 +3064,7 @@ const HELP_STATUS = Object.freeze({
   new: {label: "Nueva", className: "new"},
   in_progress: {label: "En proceso", className: "in-progress"},
   answered: {label: "Respondida", className: "answered"},
+  closed: {label: "Cerrada", className: "closed"},
 });
 const HELP_TYPES = Object.freeze({help: "Ayuda", suggestion: "Sugerencia", complaint: "Queja"});
 
@@ -2924,16 +3124,29 @@ function renderHelpCenter() {
   const empty = document.getElementById("helpConversationEmpty");
   conversation.hidden = !active;
   empty.hidden = Boolean(active);
-  if (!active) return;
+  if (!active) {
+    document.getElementById("helpClosedNotice").hidden = true;
+    const replyForm = document.getElementById("helpReplyForm");
+    replyForm.hidden = false;
+    replyForm.querySelector("textarea").disabled = false;
+    replyForm.querySelector("button").disabled = false;
+    document.getElementById("helpRequestStatus").disabled = false;
+    document.getElementById("helpAdminStatus").classList.remove("locked");
+    return;
+  }
 
   const status = helpStatus(active.status);
+  const isClosed = active.status === "closed";
   const author = getMemberByAuthId(active.userId);
   document.getElementById("helpConversationMeta").textContent = `PETICIÓN #${active.id} · ${HELP_TYPES[active.type] || "AYUDA"}`;
   document.getElementById("helpConversationTitle").textContent = isAdmin ? author?.name || "Miembro" : HELP_TYPES[active.type] || "Ayuda";
   document.getElementById("helpConversationAuthor").textContent = isAdmin ? `@${author?.username || "usuario"}` : "Conversación privada con administración";
   const adminStatus = document.getElementById("helpAdminStatus");
   adminStatus.hidden = !isAdmin;
-  document.getElementById("helpRequestStatus").value = active.status;
+  const statusSelect = document.getElementById("helpRequestStatus");
+  statusSelect.value = active.status;
+  statusSelect.disabled = isClosed;
+  adminStatus.classList.toggle("locked", isClosed);
   const memberStatus = document.getElementById("helpMemberStatus");
   memberStatus.hidden = isAdmin;
   memberStatus.className = `help-status-badge ${status.className}`;
@@ -2949,6 +3162,12 @@ function renderHelpCenter() {
       ${getAvatar(sender, "avatar tiny")}<div><span><strong>${escapeHtml(sender?.name || (senderIsAdmin ? "Administración" : "Miembro"))}</strong><time datetime="${escapeHtml(message.createdAt)}">${formatMessageDate(message.createdAt)}</time></span><p>${escapeHtml(message.body).replace(/\n/g, "<br>")}</p></div>
     </article>`;
   }).join("");
+  document.getElementById("helpClosedNotice").hidden = !isClosed;
+  const replyForm = document.getElementById("helpReplyForm");
+  replyForm.hidden = isClosed;
+  replyForm.querySelector("textarea").disabled = isClosed;
+  replyForm.querySelector("button").disabled = isClosed;
+  document.getElementById("helpReplyFeedback").textContent = "";
   requestAnimationFrame(() => { messageList.scrollTop = messageList.scrollHeight; });
 }
 
@@ -2981,6 +3200,11 @@ async function submitHelpReply(form) {
   const body = document.getElementById("helpReplyMessage").value.trim();
   const feedback = document.getElementById("helpReplyFeedback");
   if (!body || !activeHelpRequestId || !currentAuthUser) return;
+  const active = helpRequests.find(item => String(item.id) === String(activeHelpRequestId));
+  if (active?.status === "closed") {
+    feedback.textContent = "Esta petición está cerrada y ya no admite respuestas.";
+    return;
+  }
   const submit = form.querySelector("[type=submit]");
   submit.disabled = true;
   feedback.textContent = "Enviando…";
@@ -2994,9 +3218,20 @@ async function submitHelpReply(form) {
 
 async function updateHelpRequestStatus(status) {
   if (!canManageSite() || !activeHelpRequestId || !HELP_STATUS[status]) return;
+  const active = helpRequests.find(item => String(item.id) === String(activeHelpRequestId));
+  const select = document.getElementById("helpRequestStatus");
+  if (!active || active.status === "closed") {
+    if (active) select.value = active.status;
+    return window.alert("Una petición cerrada no puede volver a abrirse ni modificarse.");
+  }
+  if (status === "closed" && !window.confirm("¿Cerrar esta petición definitivamente? Después no se podrá responder ni cambiar su estado.")) {
+    select.value = active.status;
+    return;
+  }
   const values = {status, handled_by: status === "new" ? null : currentAuthUser.id, updated_at: new Date().toISOString()};
-  const {error} = await db.from("help_requests").update(values).eq("id", activeHelpRequestId);
+  const {data, error} = await db.from("help_requests").update(values).eq("id", activeHelpRequestId).neq("status", "closed").select("id").maybeSingle();
   if (error) return window.alert(error.message || "No se pudo cambiar el estado.");
+  if (!data) return void window.alert("La petición ya estaba cerrada y no puede modificarse.");
   await loadHelpCenter();
 }
 
@@ -3413,8 +3648,12 @@ document.getElementById("quickLogoutButton").addEventListener("click", () => {
   logoutCurrentUser();
 });
 document.addEventListener("keydown", event => {
-  if (event.key === "Escape") closeProfileQuickMenu();
+  if (event.key === "Escape") {
+    closeProfileQuickMenu();
+    if (document.getElementById("storyCamera")?.classList.contains("open")) closeStoryCamera();
+  }
 });
+window.addEventListener("pagehide", stopStoryCameraStream);
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
   if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
@@ -3700,50 +3939,18 @@ document.getElementById("addChatChannelButton").addEventListener("click", create
 document.getElementById("messageAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("messageMediaAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("messageCameraAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
-document.getElementById("addMomentButton").addEventListener("click", () => openMediaUploader("moment"));
+document.getElementById("addMomentButton").addEventListener("click", openStoryCamera);
+document.getElementById("closeStoryCamera").addEventListener("click", closeStoryCamera);
+document.getElementById("captureStoryPhoto").addEventListener("click", captureStoryPhoto);
+document.getElementById("switchStoryCamera").addEventListener("click", switchStoryCamera);
+document.getElementById("toggleStoryFlash").addEventListener("click", toggleStoryFlash);
+document.getElementById("storyGalleryInput").addEventListener("change", event => useStoryMediaFile(event.target.files[0] || null));
 document.getElementById("closeMediaUploader").addEventListener("click", closeMediaUploader);
 document.getElementById("cancelMediaUploader").addEventListener("click", closeMediaUploader);
 document.getElementById("mediaUploader").addEventListener("click", event => {
   if (event.target.id === "mediaUploader") closeMediaUploader();
 });
-document.getElementById("mediaUploadFile").addEventListener("change", async event => {
-  const file = event.target.files[0];
-  const preview = document.getElementById("mediaUploadPreview");
-  if (!file) {
-    preview.innerHTML = "";
-    document.getElementById("mediaDropzone").hidden = false;
-    preview.hidden = false;
-    document.getElementById("mediaUploader").classList.remove("has-media");
-    resetMediaCropEditor();
-    return;
-  }
-  if (file.size > FILE_LIMITS.media) {
-    event.target.value = "";
-    document.getElementById("mediaUploadFeedback").textContent = `El archivo supera el máximo de ${formatLimit(FILE_LIMITS.media)}.`;
-    return;
-  }
-  document.getElementById("mediaUploadFeedback").textContent = "";
-  if (file.type.startsWith("video/")) {
-    resetMediaCropEditor();
-    const url = URL.createObjectURL(file);
-    preview.innerHTML = `<video src="${url}" controls></video>`;
-  } else {
-    preview.innerHTML = "";
-    document.getElementById("mediaDropzone").hidden = true;
-    preview.hidden = true;
-    const uploader = document.getElementById("mediaUploader");
-    uploader.classList.add("has-media");
-    try {
-      await loadMediaCrop(file);
-      document.getElementById("mediaUploadForm").scrollTo({top: 0, behavior: "instant"});
-    } catch (error) {
-      uploader.classList.remove("has-media");
-      document.getElementById("mediaDropzone").hidden = false;
-      preview.hidden = false;
-      document.getElementById("mediaUploadFeedback").textContent = error.message;
-    }
-  }
-});
+document.getElementById("mediaUploadFile").addEventListener("change", event => prepareMediaUploadFile(event.target.files[0] || null));
 document.getElementById("mediaCropZoom").addEventListener("input", event => {
   document.getElementById("mediaKeepOriginal").checked = false;
   const previousZoom = mediaCropZoom;
