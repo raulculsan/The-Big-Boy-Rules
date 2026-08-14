@@ -2670,9 +2670,20 @@ async function toggleStoryFlash() {
 async function useStoryMediaFile(file) {
   if (!file) return;
   const mode = cameraCaptureMode;
-  closeStoryCamera();
+  const cameraWasOpen = document.getElementById("storyCamera")?.classList.contains("open");
+  if (cameraWasOpen) document.body.classList.add("camera-editor-transition");
   openMediaUploader(mode, {backToCamera: true});
-  await prepareMediaUploadFile(file);
+  try {
+    await prepareMediaUploadFile(file);
+  } finally {
+    if (cameraWasOpen) {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      closeStoryCamera();
+    }
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.body.classList.remove("camera-editor-transition");
+    }));
+  }
 }
 
 function supportedStoryRecordingMimeType() {

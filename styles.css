@@ -6931,6 +6931,14 @@ body.story-camera-open {
   background: #000;
 }
 body.story-camera-open > :not(#storyCamera) { visibility: hidden !important; }
+/* Mantiene la aplicación tapada durante el fotograma que intercambia cámara y editor. */
+body.camera-editor-transition {
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #000;
+}
+body.camera-editor-transition > :not(#storyCamera):not(#mediaUploader) { visibility: hidden !important; }
+body.story-camera-open.camera-editor-transition > #mediaUploader { visibility: visible !important; }
 .story-camera {
   position: fixed;
   top: var(--story-viewport-top, 0px);
