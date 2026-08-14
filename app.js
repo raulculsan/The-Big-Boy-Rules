@@ -136,6 +136,8 @@ let activeHelpFilter = "all";
 let lastNewsRefreshAt = 0;
 let newsLoadToken = 0;
 let pendingPrivateMessageFile = null;
+let activeAudioRecording = null;
+const attachmentPreviewUrls = {group: "", private: ""};
 let pendingAvatarFile = null;
 let removeAvatarRequested = false;
 let avatarCropImage = null;
@@ -412,6 +414,7 @@ function goTo(sectionId) {
   if (openingChat && currentSection && currentSection !== "chat" && currentSection !== "privados") {
     sectionBeforeChat = currentSection;
   }
+  if (sectionId === "chat") document.getElementById("chat")?.classList.remove("conversation-open");
   sections.forEach(section => section.classList.toggle("active", section.id === sectionId));
   const navigationSection = sectionId === "privados" ? "chat" : sectionId;
   navLinks.forEach(link => {
@@ -419,7 +422,7 @@ function goTo(sectionId) {
     link.classList.toggle("active", active);
     link.setAttribute("aria-current", active ? "page" : "false");
   });
-  document.body.classList.toggle("chat-focus", openingChat);
+  document.body.classList.toggle("chat-focus", sectionId === "privados");
   syncMobileViewport();
   const titles = {
     inicio: "El Club", chat: "Mensajes", miembros: "Miembros",
@@ -656,19 +659,37 @@ function startChangingAccountEmail() {
 }
 
 function exitChatView() {
-  goTo(sectionBeforeChat && sectionBeforeChat !== "chat" && sectionBeforeChat !== "privados"
-    ? sectionBeforeChat
-    : "inicio");
+  const groupSection = document.getElementById("chat");
+  if (groupSection?.classList.contains("active") && groupSection.classList.contains("conversation-open")) {
+    groupSection.classList.remove("conversation-open");
+    document.body.classList.remove("chat-focus");
+    syncMobileViewport();
+    renderPrivateContacts();
+    history.replaceState(null, "", "#chat");
+    return;
+  }
+  goTo(sectionBeforeChat && sectionBeforeChat !== "chat" && sectionBeforeChat !== "privados" ? sectionBeforeChat : "inicio");
 }
 
 function backFromPrivateConversation() {
-  if (activePrivateMemberId != null) {
-    activePrivateMemberId = null;
-    renderPrivateContacts();
-    renderPrivateConversation();
-    return;
+  activePrivateMemberId = null;
+  renderPrivateConversation();
+  goTo("chat");
+  renderPrivateContacts();
+}
+
+function openGroupConversation(channelId = activeChatChannelId) {
+  if (channelId != null && chatChannels.some(channel => String(channel.id) === String(channelId))) {
+    activeChatChannelId = channelId;
   }
-  exitChatView();
+  goTo("chat");
+  const groupSection = document.getElementById("chat");
+  groupSection.classList.add("conversation-open");
+  document.body.classList.add("chat-focus");
+  renderChatChannels();
+  renderMessages();
+  syncMobileViewport();
+  history.replaceState(null, "", "#chat");
 }
 
 function renderFeatured() {
@@ -868,6 +889,7 @@ function renderMessages() {
     </div>`;
   }).join("");
   container.scrollTop = container.scrollHeight;
+  renderPrivateContacts();
 }
 
 function renderChatChannels() {
@@ -894,15 +916,20 @@ function selectChatChannel(id) {
   activeChatChannelId = id;
   renderChatChannels();
   renderMessages();
+  renderPrivateContacts();
 }
 
 function setChatEnabled(enabled) {
   const input = document.getElementById("messageInput");
   const button = document.querySelector(".message-form .send-button");
   const attach = document.getElementById("attachMessageButton");
+  const media = document.getElementById("attachMessageMediaButton");
+  const audio = document.getElementById("recordGroupAudioButton");
   input.disabled = !enabled;
   button.disabled = !enabled;
   attach.disabled = !enabled;
+  media.disabled = !enabled;
+  audio.disabled = !enabled;
   input.placeholder = enabled ? "Escribe algo al grupo..." : "El chat necesita la conexión compartida";
 }
 
@@ -910,8 +937,10 @@ function renderPresence() {
   const count = onlineUsers.length;
   const label = count === 1 ? "1 conectado" : `${count} conectados`;
   document.getElementById("chatOnlineStatus").innerHTML = `<i></i> ${label}`;
+  document.getElementById("chatInboxOnlineStatus").innerHTML = `<i></i> ${label}`;
   document.getElementById("heroOnlineStatus").innerHTML = `<i></i> ${count ? `${label} ahora` : "Nadie conectado"}`;
   const panel = document.getElementById("onlineMembers");
+  if (!panel) return;
   if (!count) {
     panel.innerHTML = `<div class="empty-state compact">Nadie conectado ahora.</div>`;
     return;
@@ -941,6 +970,9 @@ function renderMessageAttachment(message) {
       return `<button class="shared-message-media shared-message-video" type="button" data-open-shared-kind="${sharedMedia.kind}" data-open-shared-id="${sharedMedia.id}" aria-label="Abrir ${sharedMedia.kind === "moment" ? "momento" : "publicación"} original"><video src="${escapeHtml(message.attachmentUrl)}" muted playsinline preload="metadata"></video><span>Ver original →</span></button>`;
     }
     return `<video class="message-video" src="${escapeHtml(message.attachmentUrl)}" controls preload="metadata"></video>`;
+  }
+  if (message.attachmentType?.startsWith("audio/")) {
+    return `<div class="message-audio"><span aria-hidden="true">♫</span><audio src="${escapeHtml(message.attachmentUrl)}" controls preload="metadata"></audio></div>`;
   }
   return `<a class="message-file" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener" download>
     <span>↧</span><div><strong>${escapeHtml(message.attachmentName || "Archivo adjunto")}</strong><small>${formatFileSize(message.attachmentSize)}</small></div>
@@ -1046,7 +1078,14 @@ function renderPublications() {
 
 function renderPrivateContacts() {
   const panel = document.getElementById("privateContacts");
-  if (!currentUser) return;
+  if (!panel || !currentUser) return;
+  const latestGroupMessage = messages.at(-1);
+  const latestGroupChannel = latestGroupMessage
+    ? chatChannels.find(channel => String(channel.id) === String(latestGroupMessage.channelId))
+    : null;
+  const groupPreview = latestGroupMessage
+    ? messagePreviewText(latestGroupMessage.text, latestGroupMessage.attachmentType)
+    : "Empieza la conversación del grupo";
   const contacts = members.filter(member => member.id !== currentUser.id).map(member => {
     const conversation = privateMessages.filter(message =>
       [message.senderId, message.recipientId].includes(member.authId));
@@ -1057,11 +1096,26 @@ function renderPrivateContacts() {
     const bTime = b.latest ? new Date(b.latest.createdAt).getTime() : 0;
     return bTime - aTime || a.member.name.localeCompare(b.member.name, "es");
   });
-  panel.innerHTML = contacts.map(({member, latest}) =>
+  const groupContact = `<button class="private-contact group-chat-contact ${document.getElementById("chat")?.classList.contains("conversation-open") ? "active" : ""}" type="button" data-open-group-chat>
+    <span class="chat-group-avatar" aria-hidden="true"><b>BB</b><i></i></span>
+    <span class="private-contact-copy"><span><strong>The Big Boy Rules</strong>${latestGroupMessage ? `<time datetime="${escapeHtml(latestGroupMessage.createdAt)}">${formatRelativeTime(latestGroupMessage.createdAt)}</time>` : ""}</span><small>${latestGroupChannel ? `#${escapeHtml(latestGroupChannel.name)} · ` : ""}${escapeHtml(groupPreview)}</small></span>
+    <span class="chat-row-chevron" aria-hidden="true">›</span>
+  </button>`;
+  const privateContactsMarkup = contacts.map(({member, latest}) =>
     `<button class="private-contact ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}">
       ${getAvatar(member)}
-      <span class="private-contact-copy"><span><strong>${escapeHtml(member.name)}</strong>${latest ? `<time datetime="${escapeHtml(latest.createdAt)}">${formatRelativeTime(latest.createdAt)}</time>` : ""}</span><small>${latest ? escapeHtml(latest.body) : "Iniciar conversación"}</small></span>
+      <span class="private-contact-copy"><span><strong>${escapeHtml(member.name)}</strong>${latest ? `<time datetime="${escapeHtml(latest.createdAt)}">${formatRelativeTime(latest.createdAt)}</time>` : ""}</span><small>${latest ? escapeHtml(messagePreviewText(latest.body, latest.attachmentType)) : "Iniciar conversación"}</small></span>
+      <span class="chat-row-chevron" aria-hidden="true">›</span>
     </button>`).join("");
+  panel.innerHTML = `${groupContact}<div class="chat-list-divider"><span>Mensajes privados</span></div>${privateContactsMarkup}`;
+}
+
+function messagePreviewText(body, attachmentType) {
+  if (body?.trim()) return body.trim();
+  if (attachmentType?.startsWith("audio/")) return "Nota de voz";
+  if (attachmentType?.startsWith("image/")) return "Foto";
+  if (attachmentType?.startsWith("video/")) return "Vídeo";
+  return attachmentType ? "Archivo adjunto" : "Mensaje";
 }
 
 function openPrivateConversation(memberId) {
@@ -1079,29 +1133,30 @@ function renderPrivateConversation() {
   const input = document.getElementById("privateMessageInput");
   const submit = document.querySelector("#privateMessageForm .send-button");
   const attach = document.getElementById("attachPrivateMessageButton");
+  const media = document.getElementById("attachPrivateMessageMediaButton");
+  const audio = document.getElementById("recordPrivateAudioButton");
   document.getElementById("privados").classList.toggle("conversation-open", Boolean(member));
   if (!member) {
     const emptyPrivateHeader = document.getElementById("privateChatHeader");
-    emptyPrivateHeader.classList.remove("has-country-flag");
     emptyPrivateHeader.innerHTML = `<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>`;
     container.innerHTML = `<div class="empty-state">Selecciona un miembro para comenzar una conversación privada.</div>`;
     input.disabled = true;
     submit.disabled = true;
     attach.disabled = true;
+    media.disabled = true;
+    audio.disabled = true;
     return;
   }
   const privateHeader = document.getElementById("privateChatHeader");
-  privateHeader.classList.toggle("has-country-flag", Boolean(member.countryFlag));
   privateHeader.innerHTML = `
-    ${member.countryFlag ? `<span class="private-chat-header-flag" aria-hidden="true">${escapeHtml(member.countryFlag)}</span>` : ""}
     <div class="private-chat-person">
       <button class="chat-back-button private-conversation-back" type="button" data-private-back aria-label="Volver a conversaciones">←</button>
       <div class="private-chat-avatar">
         ${getAvatar(member)}
       </div>
-      <div><span class="eyebrow">MENSAJE DIRECTO</span><h3>${escapeHtml(member.name)}</h3></div>
+      <div><h3>${escapeHtml(member.name)}</h3><span class="chat-username">@${escapeHtml(member.username)}</span></div>
     </div>
-    <button class="text-button" data-profile="${member.id}">Ver perfil →</button>`;
+    <button class="text-button" data-profile="${member.id}">Perfil</button>`;
   const items = privateMessages.filter(message =>
     (message.senderId === currentAuthUser?.id && message.recipientId === member.authId)
     || (message.senderId === member.authId && message.recipientId === currentAuthUser?.id));
@@ -1124,6 +1179,8 @@ function renderPrivateConversation() {
   input.disabled = false;
   submit.disabled = false;
   attach.disabled = false;
+  media.disabled = false;
+  audio.disabled = false;
   container.scrollTop = container.scrollHeight;
 }
 
@@ -1332,6 +1389,7 @@ async function applyUserInterface(user, authUser = null) {
   window.scrollTo({top: 0, behavior: "auto"});
   syncPushNotificationState();
   if (backendReady && authUser) setTimeout(() => loadAccountEmailStatus({showNotice: true}), 650);
+  if (document.getElementById("privados")?.classList.contains("active") && activePrivateMemberId == null) goTo("chat");
 }
 
 function showLogin() {
@@ -1348,6 +1406,10 @@ function showLogin() {
 async function logoutCurrentUser() {
   closeProfileQuickMenu();
   closeEmailAssociationModal({rememberDismissal: false});
+  if (activeAudioRecording) activeAudioRecording.cancelled = true;
+  if (activeAudioRecording?.recorder.state !== "inactive") activeAudioRecording.recorder.stop();
+  clearPendingChatFile("group");
+  clearPendingChatFile("private");
   if (db) await db.auth.signOut();
   localStorage.removeItem(AUTH_STORAGE_KEY);
   sessionStorage.removeItem(AUTH_SESSION_KEY);
@@ -1532,6 +1594,7 @@ async function loadMessages() {
   }
   messages = data.map(mapMessage);
   renderMessages();
+  renderPrivateContacts();
   renderActivity();
 }
 
@@ -1551,6 +1614,7 @@ async function loadChatChannels() {
   }));
   renderChatChannels();
   renderMessages();
+  renderPrivateContacts();
 }
 
 function mapMedia(item) {
@@ -1817,6 +1881,150 @@ async function uploadGroupMedia(file, folder) {
   return db.storage.from("group-media").getPublicUrl(path).data.publicUrl;
 }
 
+function attachmentContext(kind) {
+  const privateChat = kind === "private";
+  return {
+    preview: document.getElementById(privateChat ? "privateMessageAttachmentPreview" : "messageAttachmentPreview"),
+    fileInput: document.getElementById(privateChat ? "privateMessageAttachment" : "messageAttachment"),
+    mediaInput: document.getElementById(privateChat ? "privateMessageMediaAttachment" : "messageMediaAttachment"),
+  };
+}
+
+function pendingChatFile(kind) {
+  return kind === "private" ? pendingPrivateMessageFile : pendingMessageFile;
+}
+
+function setPendingChatFile(kind, file) {
+  if (file && file.size > FILE_LIMITS.attachment) {
+    clearPendingChatFile(kind);
+    window.alert(`El archivo supera el máximo de ${formatLimit(FILE_LIMITS.attachment)}.`);
+    return false;
+  }
+  if (kind === "private") pendingPrivateMessageFile = file || null;
+  else pendingMessageFile = file || null;
+  renderChatAttachmentPreview(kind);
+  return true;
+}
+
+function clearPendingChatFile(kind) {
+  if (kind === "private") pendingPrivateMessageFile = null;
+  else pendingMessageFile = null;
+  const context = attachmentContext(kind);
+  context.fileInput.value = "";
+  context.mediaInput.value = "";
+  context.preview.hidden = true;
+  context.preview.innerHTML = "";
+  if (attachmentPreviewUrls[kind]) URL.revokeObjectURL(attachmentPreviewUrls[kind]);
+  attachmentPreviewUrls[kind] = "";
+}
+
+function renderChatAttachmentPreview(kind) {
+  const file = pendingChatFile(kind);
+  const {preview} = attachmentContext(kind);
+  if (attachmentPreviewUrls[kind]) URL.revokeObjectURL(attachmentPreviewUrls[kind]);
+  attachmentPreviewUrls[kind] = "";
+  if (!file) {
+    preview.hidden = true;
+    preview.innerHTML = "";
+    return;
+  }
+  const isAudio = file.type.startsWith("audio/");
+  const audio = isAudio
+    ? (() => {
+        attachmentPreviewUrls[kind] = URL.createObjectURL(file);
+        return `<audio src="${escapeHtml(attachmentPreviewUrls[kind])}" controls preload="metadata"></audio>`;
+      })()
+    : "";
+  preview.innerHTML = `<div class="attachment-preview-content"><span>${isAudio ? "Nota de voz" : "Adjunto"}: <strong>${escapeHtml(file.name)}</strong> · ${formatFileSize(file.size)}</span>${audio}</div><button type="button" data-clear-chat-attachment="${kind}">Quitar</button>`;
+  preview.hidden = false;
+}
+
+function preferredRecordingMimeType() {
+  const candidates = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus"];
+  return candidates.find(type => window.MediaRecorder?.isTypeSupported?.(type)) || "";
+}
+
+function recordingFileExtension(mimeType) {
+  if (mimeType.includes("mp4")) return "m4a";
+  if (mimeType.includes("ogg")) return "ogg";
+  if (mimeType.includes("wav")) return "wav";
+  return "webm";
+}
+
+function updateRecordingUi(kind, recording, seconds = 0) {
+  const privateChat = kind === "private";
+  const button = document.getElementById(privateChat ? "recordPrivateAudioButton" : "recordGroupAudioButton");
+  const time = document.getElementById(privateChat ? "privateRecordingTime" : "groupRecordingTime");
+  const form = document.getElementById(privateChat ? "privateMessageForm" : "messageForm");
+  const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const remainder = String(seconds % 60).padStart(2, "0");
+  button.classList.toggle("recording", recording);
+  button.setAttribute("aria-label", recording ? "Finalizar nota de voz" : "Grabar nota de voz");
+  button.title = recording ? "Pulsa para finalizar" : "Grabar nota de voz";
+  time.hidden = !recording;
+  time.textContent = `${minutes}:${remainder}`;
+  form.classList.toggle("is-recording", recording);
+}
+
+async function toggleAudioRecording(kind) {
+  if (activeAudioRecording) {
+    if (activeAudioRecording.kind !== kind) {
+      window.alert("Termina la grabación actual antes de iniciar otra.");
+      return;
+    }
+    if (activeAudioRecording.recorder.state !== "inactive") activeAudioRecording.recorder.stop();
+    return;
+  }
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    window.alert("Este dispositivo no permite grabar audio desde el navegador.");
+    return;
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({audio: true});
+  } catch {
+    window.alert("Necesitamos permiso para usar el micrófono y grabar la nota de voz.");
+    return;
+  }
+  const mimeType = preferredRecordingMimeType();
+  let recorder;
+  try {
+    recorder = new MediaRecorder(stream, mimeType ? {mimeType} : undefined);
+  } catch {
+    stream.getTracks().forEach(track => track.stop());
+    window.alert("No se pudo iniciar la grabación de audio en este dispositivo.");
+    return;
+  }
+  const session = {kind, recorder, stream, chunks: [], startedAt: Date.now(), timer: null};
+  activeAudioRecording = session;
+  recorder.addEventListener("dataavailable", event => {
+    if (event.data?.size) session.chunks.push(event.data);
+  });
+  recorder.addEventListener("stop", () => {
+    clearInterval(session.timer);
+    session.stream.getTracks().forEach(track => track.stop());
+    updateRecordingUi(kind, false);
+    if (activeAudioRecording === session) activeAudioRecording = null;
+    if (session.cancelled || !session.chunks.length) return;
+    const resolvedType = recorder.mimeType || session.chunks[0].type || mimeType || "audio/webm";
+    const blob = new Blob(session.chunks, {type: resolvedType});
+    const filename = `nota-de-voz-${new Date().toISOString().replace(/[:.]/g, "-")}.${recordingFileExtension(resolvedType)}`;
+    setPendingChatFile(kind, new File([blob], filename, {type: resolvedType, lastModified: Date.now()}));
+  }, {once: true});
+  recorder.addEventListener("error", () => {
+    clearInterval(session.timer);
+    session.stream.getTracks().forEach(track => track.stop());
+    updateRecordingUi(kind, false);
+    if (activeAudioRecording === session) activeAudioRecording = null;
+    window.alert("La grabación se ha interrumpido. Inténtalo de nuevo.");
+  }, {once: true});
+  recorder.start(250);
+  updateRecordingUi(kind, true, 0);
+  session.timer = setInterval(() => {
+    updateRecordingUi(kind, true, Math.floor((Date.now() - session.startedAt) / 1000));
+  }, 1000);
+}
+
 async function sendMessage(text, file = null) {
   if (!db || !currentAuthUser) return;
   let attachmentUrl = null;
@@ -1945,7 +2153,7 @@ async function shareMediaToChat(form) {
       closeShareMedia();
       activeChatChannelId = channel.id;
       await loadMessages();
-      goTo("chat");
+      openGroupConversation(channel.id);
     } else {
       const member = getMember(destination);
       if (!member?.authId) throw new Error("Selecciona un miembro válido.");
@@ -3229,6 +3437,10 @@ document.addEventListener("click", event => {
   if (deleteChannel) deleteChatChannel(deleteChannel.dataset.deleteChannel);
   const privateTarget = event.target.closest("[data-private-member]");
   if (privateTarget) openPrivateConversation(privateTarget.dataset.privateMember);
+  const groupChatTarget = event.target.closest("[data-open-group-chat]");
+  if (groupChatTarget) openGroupConversation();
+  const clearChatAttachment = event.target.closest("[data-clear-chat-attachment]");
+  if (clearChatAttachment) clearPendingChatFile(clearChatAttachment.dataset.clearChatAttachment);
   const eventTarget = event.target.closest("[data-event-id]");
   if (eventTarget) openEventEditor(eventTarget.dataset.eventId);
   const calendarDayTarget = event.target.closest("[data-calendar-date]");
@@ -3383,6 +3595,10 @@ document.getElementById("mediaReplyModal").addEventListener("click", event => { 
 document.getElementById("mediaReplyForm").addEventListener("submit", event => { event.preventDefault(); submitMediaReply(event.currentTarget); });
 document.getElementById("messageForm").addEventListener("submit", async event => {
   event.preventDefault();
+  if (activeAudioRecording?.kind === "group") {
+    activeAudioRecording.recorder.stop();
+    return;
+  }
   const input = document.getElementById("messageInput");
   const text = input.value.trim();
   if (!text && !pendingMessageFile) return;
@@ -3390,9 +3606,7 @@ document.getElementById("messageForm").addEventListener("submit", async event =>
   try {
     await sendMessage(text, pendingMessageFile);
     input.value = "";
-    pendingMessageFile = null;
-    document.getElementById("messageAttachment").value = "";
-    document.getElementById("messageAttachmentPreview").hidden = true;
+    clearPendingChatFile("group");
   } catch (error) {
     input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
     input.reportValidity();
@@ -3404,6 +3618,10 @@ document.getElementById("messageForm").addEventListener("submit", async event =>
 });
 document.getElementById("privateMessageForm").addEventListener("submit", async event => {
   event.preventDefault();
+  if (activeAudioRecording?.kind === "private") {
+    activeAudioRecording.recorder.stop();
+    return;
+  }
   const input = document.getElementById("privateMessageInput");
   const text = input.value.trim();
   if (!text && !pendingPrivateMessageFile) return;
@@ -3411,9 +3629,7 @@ document.getElementById("privateMessageForm").addEventListener("submit", async e
   try {
     await sendPrivateMessage(text, pendingPrivateMessageFile);
     input.value = "";
-    pendingPrivateMessageFile = null;
-    document.getElementById("privateMessageAttachment").value = "";
-    document.getElementById("privateMessageAttachmentPreview").hidden = true;
+    clearPendingChatFile("private");
     await loadPrivateMessages();
   } catch (error) {
     input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
@@ -3545,51 +3761,15 @@ document.addEventListener("visibilitychange", () => {
 });
 document.getElementById("attachMessageButton").addEventListener("click", () => document.getElementById("messageAttachment").click());
 document.getElementById("attachPrivateMessageButton").addEventListener("click", () => document.getElementById("privateMessageAttachment").click());
-document.getElementById("privateMessageAttachment").addEventListener("change", event => {
-  pendingPrivateMessageFile = event.target.files[0] || null;
-  const preview = document.getElementById("privateMessageAttachmentPreview");
-  if (!pendingPrivateMessageFile) {
-    preview.hidden = true;
-    return;
-  }
-  if (pendingPrivateMessageFile.size > FILE_LIMITS.attachment) {
-    pendingPrivateMessageFile = null;
-    event.target.value = "";
-    preview.hidden = true;
-    return window.alert(`El archivo supera el máximo de ${formatLimit(FILE_LIMITS.attachment)}.`);
-  }
-  preview.innerHTML = `${escapeHtml(pendingPrivateMessageFile.name)} · ${formatFileSize(pendingPrivateMessageFile.size)} <button type="button" id="removePrivateMessageAttachment">Quitar</button>`;
-  preview.hidden = false;
-});
-document.getElementById("privateMessageAttachmentPreview").addEventListener("click", event => {
-  if (event.target.id !== "removePrivateMessageAttachment") return;
-  pendingPrivateMessageFile = null;
-  document.getElementById("privateMessageAttachment").value = "";
-  event.currentTarget.hidden = true;
-});
+document.getElementById("attachMessageMediaButton").addEventListener("click", () => document.getElementById("messageMediaAttachment").click());
+document.getElementById("attachPrivateMessageMediaButton").addEventListener("click", () => document.getElementById("privateMessageMediaAttachment").click());
+document.getElementById("recordGroupAudioButton").addEventListener("click", () => toggleAudioRecording("group"));
+document.getElementById("recordPrivateAudioButton").addEventListener("click", () => toggleAudioRecording("private"));
+document.getElementById("privateMessageAttachment").addEventListener("change", event => setPendingChatFile("private", event.target.files[0] || null));
+document.getElementById("privateMessageMediaAttachment").addEventListener("change", event => setPendingChatFile("private", event.target.files[0] || null));
 document.getElementById("addChatChannelButton").addEventListener("click", createChatChannel);
-document.getElementById("messageAttachment").addEventListener("change", event => {
-  pendingMessageFile = event.target.files[0] || null;
-  const preview = document.getElementById("messageAttachmentPreview");
-  if (!pendingMessageFile) {
-    preview.hidden = true;
-    return;
-  }
-  if (pendingMessageFile.size > FILE_LIMITS.attachment) {
-    event.target.value = "";
-    pendingMessageFile = null;
-    preview.hidden = false;
-    preview.innerHTML = `<span>El archivo supera el máximo de ${formatLimit(FILE_LIMITS.attachment)}.</span>`;
-    return;
-  }
-  preview.hidden = false;
-  preview.innerHTML = `<span>Adjunto: <strong>${escapeHtml(pendingMessageFile.name)}</strong> · ${formatFileSize(pendingMessageFile.size)}</span><button type="button" id="clearMessageAttachment">Quitar</button>`;
-  document.getElementById("clearMessageAttachment").addEventListener("click", () => {
-    pendingMessageFile = null;
-    document.getElementById("messageAttachment").value = "";
-    preview.hidden = true;
-  });
-});
+document.getElementById("messageAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
+document.getElementById("messageMediaAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("addMomentButton").addEventListener("click", () => openMediaUploader("moment"));
 document.getElementById("closeMediaUploader").addEventListener("click", closeMediaUploader);
 document.getElementById("cancelMediaUploader").addEventListener("click", closeMediaUploader);
@@ -3917,7 +4097,8 @@ loadNews(false);
   showLogin();
 })();
 
-const initialSection = location.hash.replace("#", "");
+const requestedInitialSection = location.hash.replace("#", "");
+const initialSection = requestedInitialSection === "privados" ? "chat" : requestedInitialSection;
 if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "buscar", "calendario", "perfil", "ayuda"].includes(initialSection)) {
   if (initialSection === "perfil" && currentUser) renderProfile(currentUser.id);
   else goTo(initialSection);
