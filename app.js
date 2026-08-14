@@ -381,6 +381,7 @@ function syncMobileViewport() {
       document.documentElement.style.setProperty("--story-viewport-height", `${Math.ceil(visualViewport?.height || window.innerHeight)}px`);
       document.documentElement.style.setProperty("--story-viewport-left", `${Math.floor(visualViewport?.offsetLeft || 0)}px`);
       document.documentElement.style.setProperty("--story-viewport-top", `${Math.floor(visualViewport?.offsetTop || 0)}px`);
+      fitStoryCameraPreview();
     } else {
       ["--story-viewport-width", "--story-viewport-height", "--story-viewport-left", "--story-viewport-top"]
         .forEach(property => document.documentElement.style.removeProperty(property));
@@ -2473,11 +2474,27 @@ async function saveProfile(form) {
 }
 
 function stopStoryCameraStream() {
-  storyCameraStream?.getTracks().forEach(track => track.stop());
-  storyCameraStream = null;
   const preview = document.getElementById("storyCameraPreview");
   preview.pause();
   preview.srcObject = null;
+  preview.removeAttribute("src");
+  preview.load();
+  storyCameraStream?.getTracks().forEach(track => track.stop());
+  storyCameraStream = null;
+}
+
+function fitStoryCameraPreview() {
+  const preview = document.getElementById("storyCameraPreview");
+  const shell = document.getElementById("cameraCaptureDialog");
+  if (!preview || !shell?.classList || !document.getElementById("storyCamera")?.classList.contains("open")) return;
+  const bounds = shell.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return;
+  const width = `${Math.ceil(bounds.width)}px`;
+  const height = `${Math.ceil(bounds.height)}px`;
+  preview.style.setProperty("width", width, "important");
+  preview.style.setProperty("height", height, "important");
+  preview.setAttribute("width", String(Math.ceil(bounds.width)));
+  preview.setAttribute("height", String(Math.ceil(bounds.height)));
 }
 
 function clearStoryRecordingTimer() {
@@ -2549,8 +2566,13 @@ async function startStoryCamera() {
     }
     storyCameraStream = stream;
     const preview = document.getElementById("storyCameraPreview");
+    preview.muted = true;
+    preview.playsInline = true;
     preview.srcObject = stream;
+    fitStoryCameraPreview();
     await preview.play();
+    fitStoryCameraPreview();
+    requestAnimationFrame(fitStoryCameraPreview);
     document.querySelector(".story-camera-shell").classList.toggle("front-camera", storyCameraFacingMode === "user");
     shutter.disabled = false;
     switchButton.disabled = false;
@@ -2580,6 +2602,7 @@ function openStoryCamera(mode = "moment") {
   camera.setAttribute("aria-hidden", "false");
   document.body.classList.add("story-camera-open");
   syncMobileViewport();
+  requestAnimationFrame(fitStoryCameraPreview);
   document.getElementById("storyGalleryInput").value = "";
   resetStoryRecordingState();
   startStoryCamera();
