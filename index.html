@@ -9,13 +9,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
   <title>The Big Boy Rules</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260814-81" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260814-82" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260814-81" />
+  <link rel="stylesheet" href="styles.css?v=20260814-82" />
 </head>
 <body>
 
@@ -114,18 +114,6 @@
           </div>
         </div>
         <button class="icon-button admin-only admin-crown-button monochrome-top-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración">♛</button>
-        <div class="user-menu-wrap">
-          <button class="profile-button" id="userMenuButton">
-            <div class="avatar small" id="topbarAvatar">U</div>
-            <span id="topbarUserName">Usuario</span>
-            <b>⌄</b>
-          </button>
-          <div class="user-dropdown" id="userDropdown">
-            <button id="myProfileButton">Mi perfil</button>
-            <button id="helpButton">Ayuda y sugerencias</button>
-            <button id="logoutButton" class="logout-option">Cerrar sesión</button>
-          </div>
-        </div>
       </div>
     </header>
 
@@ -470,7 +458,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v10h-6v-6H9v6H3Z"/></svg><span>Inicio</span>
     </a>
     <a class="app-tab" href="#inicio" data-section="inicio" aria-label="Club" title="Club">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V8l8-4 8 4v12M8 20v-7h8v7M3 20h18"/></svg><span>Club</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 20v-2.2A4.8 4.8 0 0 1 8.3 13h1.4a4.8 4.8 0 0 1 4.8 4.8V20M14.5 14a4.2 4.2 0 0 1 6 3.8V20"/></svg><span>Club</span>
     </a>
     <a class="app-tab" href="#chat" data-section="chat" aria-label="Mensajes" title="Mensajes">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4-.9L3 21l1.7-4.6A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 9h8M8 13h5"/></svg><i class="tab-alert" id="chatTabAlert" aria-hidden="true" hidden></i><span>Chats</span>
@@ -790,7 +778,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260814-81"></script>
+  <script src="app.js?v=20260814-82"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
