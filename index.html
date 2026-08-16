@@ -10,13 +10,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
   <title>The Big Boy Rules</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260815-96" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260816-99" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260815-98" />
+  <link rel="stylesheet" href="styles.css?v=20260816-99" />
 </head>
 <body>
 
@@ -91,7 +91,10 @@
 
   <main class="app">
     <header class="topbar">
-      <div>
+      <button class="top-create-button" id="createMediaButton" type="button" aria-label="Crear momento o publicación" title="Crear">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <div class="topbar-title">
         <span class="eyebrow">COMUNIDAD PRIVADA</span>
         <h1 id="pageTitle">The Big Boy Rules</h1>
       </div>
@@ -230,6 +233,9 @@
           <div class="chat-header">
             <div class="chat-header-main">
               <button class="chat-back-button" type="button" data-chat-back aria-label="Volver atrás">←</button>
+              <button class="group-header-avatar" id="editGroupAvatarButton" type="button" aria-label="Foto del grupo" title="Foto del grupo">
+                <span class="chat-group-avatar" data-group-avatar aria-hidden="true"><b>BB</b><i></i></span>
+              </button>
               <div>
                 <span class="eyebrow">CHAT DEL GRUPO</span>
                 <h3 id="activeChannelName"># general</h3>
@@ -315,7 +321,6 @@
       <div class="stories-section" data-content-panel="momentos">
         <div class="stories-heading"><div><span class="eyebrow">MOMENTOS · 24 HORAS</span><h3>Historias del grupo</h3></div><span id="momentsStatus" class="news-status moments-status" aria-live="polite"></span></div>
         <div class="stories-row">
-          <button class="story-add-button" id="addMomentButton" type="button"><span>＋</span><small>Tu momento</small></button>
           <div class="moments-grid stories-strip" id="momentsGrid"></div>
         </div>
       </div>
@@ -324,7 +329,6 @@
           <div><span class="eyebrow">EL MURO DEL GRUPO</span><h2>Publicaciones.</h2></div>
           <p>Las fotos que cada miembro comparte en su perfil aparecen aquí, ordenadas de más recientes a más antiguas.</p>
         </div>
-        <div class="publications-toolbar"><button class="primary-button" id="addPublicationButton" type="button">＋ Nueva publicación</button></div>
         <div class="publications-feed reveal" id="publicationsFeed"></div>
       </div>
     </section>
@@ -653,8 +657,14 @@
         <button class="story-shutter" id="captureStoryPhoto" type="button" aria-label="Toca para hacer una foto o mantén pulsado para grabar"><span></span></button>
         <button class="story-switch-camera" id="switchStoryCamera" type="button" aria-label="Cambiar cámara" title="Cambiar cámara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M18.2 12A7 7 0 0 0 6.4 7.1L4 9M5.8 12a7 7 0 0 0 11.8 4.9L20 15"/></svg></button>
       </div>
+      <div class="story-camera-mode" role="group" aria-label="Tipo de contenido">
+        <button class="active" type="button" data-camera-mode="moment" aria-pressed="true">Momento</button>
+        <button type="button" data-camera-mode="post" aria-pressed="false">Publicación</button>
+      </div>
     </div>
   </div>
+
+  <div class="camera-transition-guard" id="cameraTransitionGuard" aria-hidden="true"><img alt=""></div>
 
   <div class="modal-backdrop" id="mediaUploader" aria-hidden="true">
     <div class="profile-editor-modal media-uploader-modal" role="dialog" aria-modal="true" aria-labelledby="mediaUploaderTitle">
@@ -799,6 +809,29 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="groupAvatarEditor" aria-hidden="true">
+    <div class="profile-editor-modal compact-dialog group-avatar-editor" role="dialog" aria-modal="true" aria-labelledby="groupAvatarEditorTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">CHAT DEL GRUPO</span><h2 id="groupAvatarEditorTitle">Foto del grupo</h2></div>
+        <button class="icon-button" id="closeGroupAvatarEditor" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="groupAvatarForm" class="profile-form">
+        <div class="group-avatar-preview" id="groupAvatarPreview"><b>BB</b></div>
+        <label class="secondary-button group-avatar-file-button">
+          Elegir una foto
+          <input id="groupAvatarInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+        </label>
+        <small class="group-avatar-help">JPG, PNG o WebP · máximo 3 MB. Se mostrará en la bandeja y la cabecera del chat.</small>
+        <div class="form-feedback" id="groupAvatarFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="text-button danger-text" id="removeGroupAvatarButton" type="button">Quitar foto</button>
+          <button class="secondary-button" id="cancelGroupAvatarEditor" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Guardar foto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="spotifyEditor" aria-hidden="true">
     <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="spotifyEditorTitle">
       <div class="modal-heading">
@@ -832,7 +865,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260815-98"></script>
+  <script src="app.js?v=20260816-99"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

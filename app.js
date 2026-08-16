@@ -166,6 +166,9 @@ let storyRecordingDiscard = false;
 let mediaUploaderBackToCamera = false;
 let cameraCaptureMode = "moment";
 let storyCaptureInProgress = false;
+let cameraTransitionGuardUrl = "";
+let pendingGroupAvatarFile = null;
+let groupAvatarPreviewUrl = "";
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
@@ -602,7 +605,6 @@ function renderProfile(memberId) {
     <section class="profile-stories">
       <div class="profile-feed-heading">
         <div><span class="eyebrow">HISTORIAS ACTIVAS</span><h3>${memberMoments.length} ${memberMoments.length === 1 ? "historia" : "historias"}</h3></div>
-        ${canEdit ? `<button class="secondary-button" id="addProfileMomentButton" type="button">＋ Nueva historia</button>` : ""}
       </div>
       <div class="profile-stories-strip">
         ${memberMoments.length ? memberMoments.map(moment => `
@@ -617,7 +619,6 @@ function renderProfile(memberId) {
     <section class="profile-feed">
       <div class="profile-feed-heading">
         <div><span class="eyebrow">PUBLICACIONES</span><h3>${posts.length} ${posts.length === 1 ? "publicación" : "publicaciones"}</h3></div>
-        ${canEdit ? `<button class="primary-button" id="addProfilePostButton" type="button">＋ Nueva publicación</button>` : ""}
       </div>
       <div class="profile-posts-grid">
         ${posts.length ? posts.map(post => renderMediaCard(post, canDeletePosts, "post")).join("") :
@@ -625,8 +626,6 @@ function renderProfile(memberId) {
       </div>
     </section>`;
   document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
-  document.getElementById("addProfileMomentButton")?.addEventListener("click", () => openStoryCamera("moment"));
-  document.getElementById("addProfilePostButton")?.addEventListener("click", () => openStoryCamera("post"));
   goTo("perfil");
 }
 
@@ -645,6 +644,30 @@ function renderSpotify() {
   } else {
     player.innerHTML = `<div class="empty-state"><strong>Todavía no hay una playlist vinculada</strong><span>La administración puede añadir un enlace público de Spotify.</span></div>`;
     document.getElementById("editSpotifyButton").textContent = "Vincular playlist";
+  }
+}
+
+function groupAvatarMarkup(className = "chat-group-avatar") {
+  const avatarUrl = siteSettings.group_avatar_url || "";
+  return `<span class="${className}" data-group-avatar aria-hidden="true">${avatarUrl
+    ? `<img src="${escapeHtml(avatarUrl)}" alt="" loading="lazy" decoding="async">`
+    : "<b>BB</b>"}<i></i></span>`;
+}
+
+function renderGroupAvatarSurfaces() {
+  document.querySelectorAll("[data-group-avatar]").forEach(node => {
+    const avatarUrl = siteSettings.group_avatar_url || "";
+    node.innerHTML = avatarUrl
+      ? `<img src="${escapeHtml(avatarUrl)}" alt="" loading="lazy" decoding="async"><i></i>`
+      : "<b>BB</b><i></i>";
+    node.classList.toggle("has-image", Boolean(avatarUrl));
+  });
+  const editButton = document.getElementById("editGroupAvatarButton");
+  if (editButton) {
+    const editable = canManageSite();
+    editButton.disabled = !editable;
+    editButton.setAttribute("aria-label", editable ? "Cambiar foto del grupo" : "Foto del grupo");
+    editButton.title = editable ? "Cambiar foto del grupo" : "Foto del grupo";
   }
 }
 
@@ -696,7 +719,7 @@ function renderMessages() {
     const own = message.userId === currentAuthUser?.id;
     const canDelete = own || canManageSite();
     return `<div class="message ${own ? "own own-message" : ""}">
-      ${own ? "" : getAvatar(member)}
+      ${own ? "" : `<button class="message-avatar-link" type="button" data-profile="${message.member}" aria-label="Ver perfil de ${escapeHtml(member?.name || "miembro")}">${getAvatar(member)}</button>`}
       <div class="message-bubble" data-message-bubble>
         ${own ? "" : `<div class="message-head">
           <button class="message-author" data-profile="${message.member}">${escapeHtml(member?.name || "Miembro")}</button>
@@ -975,7 +998,7 @@ function renderPrivateContacts() {
     return bTime - aTime || a.member.name.localeCompare(b.member.name, "es");
   });
   const groupContact = `<button class="private-contact group-chat-contact ${document.getElementById("chat")?.classList.contains("conversation-open") ? "active" : ""}" type="button" data-open-group-chat>
-    <span class="chat-group-avatar" aria-hidden="true"><b>BB</b><i></i></span>
+    ${groupAvatarMarkup()}
     <span class="private-contact-copy"><span><strong>The Big Boy Rules</strong>${latestGroupMessage ? `<time datetime="${escapeHtml(latestGroupMessage.createdAt)}">${formatRelativeTime(latestGroupMessage.createdAt)}</time>` : ""}</span><small>${latestGroupChannel ? `#${escapeHtml(latestGroupChannel.name)} · ` : ""}${escapeHtml(groupPreview)}</small></span>
     <span class="chat-row-chevron" aria-hidden="true">›</span>
   </button>`;
@@ -1031,12 +1054,11 @@ function renderPrivateConversation() {
   privateHeader.innerHTML = `
     <div class="private-chat-person">
       <button class="chat-back-button private-conversation-back" type="button" data-private-back aria-label="Volver a conversaciones">←</button>
-      <div class="private-chat-avatar">
+      <button class="private-chat-avatar" type="button" data-profile="${member.id}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
         ${getAvatar(member)}
-      </div>
+      </button>
       <div><h3>${escapeHtml(member.name)}</h3><span class="chat-username">@${escapeHtml(member.username)}</span></div>
-    </div>
-    <button class="text-button" data-profile="${member.id}">Perfil</button>`;
+    </div>`;
   const items = privateMessages.filter(message =>
     (message.senderId === currentAuthUser?.id && message.recipientId === member.authId)
     || (message.senderId === member.authId && message.recipientId === currentAuthUser?.id));
@@ -1044,7 +1066,7 @@ function renderPrivateConversation() {
     const sender = getMemberByAuthId(message.senderId);
     const own = message.senderId === currentAuthUser?.id;
     return `<div class="message private-message ${own ? "own own-message" : ""}">
-      ${own ? "" : getAvatar(sender)}
+      ${own ? "" : `<button class="message-avatar-link" type="button" data-profile="${sender?.id || ""}" aria-label="Ver perfil de ${escapeHtml(sender?.name || "miembro")}">${getAvatar(sender)}</button>`}
       <div class="message-bubble" data-message-bubble>
         ${own ? "" : `<div class="message-head"><strong>${escapeHtml(sender?.name || "Miembro")}</strong><time>${formatMessageDate(message.createdAt)}</time></div>`}
         ${message.body ? `<p>${escapeHtml(message.body)}</p>` : ""}
@@ -1224,6 +1246,7 @@ function applyUserHeader(user) {
     node.innerHTML = user.avatarUrl ? `<img src="${escapeHtml(user.avatarUrl)}" alt="">` : escapeHtml(user.name.charAt(0));
   });
   document.querySelectorAll(".admin-only").forEach(node => node.style.display = canManageSite() ? "" : "none");
+  renderGroupAvatarSurfaces();
 }
 
 function getStoredSession() {
@@ -1681,6 +1704,8 @@ async function loadSiteSettings() {
   const {data, error} = await db.from("site_settings").select("key,value");
   siteSettings = error ? {} : Object.fromEntries(data.map(item => [item.key, item.value]));
   renderSpotify();
+  renderGroupAvatarSurfaces();
+  renderPrivateContacts();
 }
 
 function connectRealtime() {
@@ -2280,6 +2305,75 @@ async function removeSpotifyPlaylist() {
   }
 }
 
+function setGroupAvatarPreview(url = "") {
+  const preview = document.getElementById("groupAvatarPreview");
+  preview.classList.toggle("has-image", Boolean(url));
+  preview.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="Vista previa de la foto del grupo">` : "<b>BB</b>";
+}
+
+function openGroupAvatarEditor() {
+  if (!canManageSite()) return;
+  pendingGroupAvatarFile = null;
+  if (groupAvatarPreviewUrl) URL.revokeObjectURL(groupAvatarPreviewUrl);
+  groupAvatarPreviewUrl = "";
+  document.getElementById("groupAvatarInput").value = "";
+  document.getElementById("groupAvatarFeedback").textContent = "";
+  document.getElementById("removeGroupAvatarButton").disabled = !siteSettings.group_avatar_url;
+  setGroupAvatarPreview(siteSettings.group_avatar_url || "");
+  const modal = document.getElementById("groupAvatarEditor");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeGroupAvatarEditor() {
+  const modal = document.getElementById("groupAvatarEditor");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  pendingGroupAvatarFile = null;
+  if (groupAvatarPreviewUrl) URL.revokeObjectURL(groupAvatarPreviewUrl);
+  groupAvatarPreviewUrl = "";
+}
+
+async function saveGroupAvatar(form) {
+  if (!canManageSite() || !currentAuthUser) return;
+  const feedback = document.getElementById("groupAvatarFeedback");
+  const submit = form.querySelector("[type=submit]");
+  if (!pendingGroupAvatarFile) {
+    feedback.textContent = "Elige una foto antes de guardar.";
+    return;
+  }
+  submit.disabled = true;
+  feedback.textContent = "Subiendo foto…";
+  try {
+    validateFileSize(pendingGroupAvatarFile, 3 * MEGABYTE);
+    const avatarUrl = await uploadGroupMedia(pendingGroupAvatarFile, "group-profile");
+    const {error} = await db.from("site_settings").upsert({
+      key: "group_avatar_url", value: avatarUrl, updated_by: currentAuthUser.id, updated_at: new Date().toISOString()
+    });
+    if (error) throw error;
+    closeGroupAvatarEditor();
+    await loadSiteSettings();
+  } catch (error) {
+    feedback.textContent = error.message || "No se pudo guardar la foto del grupo.";
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+async function removeGroupAvatar() {
+  if (!canManageSite() || !siteSettings.group_avatar_url) return;
+  if (!window.confirm("¿Quitar la foto actual del grupo?")) return;
+  const feedback = document.getElementById("groupAvatarFeedback");
+  feedback.textContent = "Quitando foto…";
+  const {error} = await db.from("site_settings").delete().eq("key", "group_avatar_url");
+  if (error) {
+    feedback.textContent = error.message || "No se pudo quitar la foto del grupo.";
+    return;
+  }
+  closeGroupAvatarEditor();
+  await loadSiteSettings();
+}
+
 function openProfileEditor(memberId = currentUser?.id) {
   const profile = getMember(memberId);
   if (!profile || (profile.id !== currentUser?.id && !canManageSite())) return;
@@ -2535,6 +2629,7 @@ function setStoryRecordingUI(recording) {
   document.getElementById("switchStoryCamera").disabled = recording;
   document.getElementById("toggleStoryFlash").disabled = recording;
   document.getElementById("storyGalleryInput").disabled = recording;
+  document.querySelectorAll("[data-camera-mode]").forEach(button => button.disabled = recording);
   if (!recording) document.getElementById("storyRecordingTime").textContent = "00:00";
 }
 
@@ -2546,6 +2641,7 @@ function resetStoryRecordingState() {
   clearStoryRecordingTimer();
   setStoryRecordingUI(false);
   document.getElementById("captureStoryPhoto")?.classList.remove("holding");
+  document.querySelectorAll("[data-camera-mode]").forEach(button => button.disabled = false);
 }
 
 function setStoryCameraStatus(message = "", isError = false) {
@@ -2610,14 +2706,24 @@ async function startStoryCamera() {
   }
 }
 
+function setCameraCaptureMode(mode = "moment") {
+  cameraCaptureMode = mode === "post" ? "post" : "moment";
+  const isPost = cameraCaptureMode === "post";
+  document.getElementById("cameraCaptureLabel").textContent = isPost ? "PUBLICACIÓN" : "MOMENTO";
+  document.getElementById("cameraCaptureDialog").setAttribute("aria-label", isPost ? "Cámara de publicaciones" : "Cámara de momentos");
+  document.querySelectorAll("[data-camera-mode]").forEach(button => {
+    const active = button.dataset.cameraMode === cameraCaptureMode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
 function openStoryCamera(mode = "moment") {
   if (!currentUser) return;
   closeMediaUploader();
-  cameraCaptureMode = mode === "post" ? "post" : "moment";
+  setCameraCaptureMode(mode);
   const camera = document.getElementById("storyCamera");
   storyCameraFacingMode = "environment";
-  document.getElementById("cameraCaptureLabel").textContent = cameraCaptureMode === "post" ? "PUBLICACIÓN" : "HISTORIA";
-  document.getElementById("cameraCaptureDialog").setAttribute("aria-label", cameraCaptureMode === "post" ? "Cámara de publicaciones" : "Cámara de historias");
   camera.classList.add("open");
   camera.setAttribute("aria-hidden", "false");
   document.body.classList.add("story-camera-open");
@@ -2667,11 +2773,39 @@ async function toggleStoryFlash() {
   }
 }
 
+async function showCameraTransitionGuard(file) {
+  const guard = document.getElementById("cameraTransitionGuard");
+  const image = guard.querySelector("img");
+  if (cameraTransitionGuardUrl) URL.revokeObjectURL(cameraTransitionGuardUrl);
+  cameraTransitionGuardUrl = "";
+  image.removeAttribute("src");
+  guard.classList.remove("has-image");
+  guard.classList.add("active");
+  if (!file?.type?.startsWith("image/")) return;
+  cameraTransitionGuardUrl = URL.createObjectURL(file);
+  image.src = cameraTransitionGuardUrl;
+  guard.classList.add("has-image");
+  try {
+    await image.decode();
+  } catch {}
+}
+
+function hideCameraTransitionGuard() {
+  const guard = document.getElementById("cameraTransitionGuard");
+  guard.classList.remove("active", "has-image");
+  guard.querySelector("img").removeAttribute("src");
+  if (cameraTransitionGuardUrl) URL.revokeObjectURL(cameraTransitionGuardUrl);
+  cameraTransitionGuardUrl = "";
+}
+
 async function useStoryMediaFile(file) {
   if (!file) return;
   const mode = cameraCaptureMode;
   const cameraWasOpen = document.getElementById("storyCamera")?.classList.contains("open");
-  if (cameraWasOpen) document.body.classList.add("camera-editor-transition");
+  if (cameraWasOpen) {
+    document.body.classList.add("camera-editor-transition");
+    await showCameraTransitionGuard(file);
+  }
   openMediaUploader(mode, {backToCamera: true});
   try {
     await prepareMediaUploadFile(file);
@@ -2680,9 +2814,10 @@ async function useStoryMediaFile(file) {
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       closeStoryCamera();
     }
-    requestAnimationFrame(() => requestAnimationFrame(() => {
+    window.setTimeout(() => {
       document.body.classList.remove("camera-editor-transition");
-    }));
+      hideCameraTransitionGuard();
+    }, 650);
   }
 }
 
@@ -2785,6 +2920,7 @@ function captureStoryPhoto() {
   const preview = document.getElementById("storyCameraPreview");
   if (storyCaptureInProgress || !storyCameraStream || !preview.videoWidth || !preview.videoHeight) return;
   storyCaptureInProgress = true;
+  document.querySelectorAll("[data-camera-mode]").forEach(button => button.disabled = true);
   const shutter = document.getElementById("captureStoryPhoto");
   shutter.disabled = true;
   setStoryCameraStatus("Preparando foto…");
@@ -3687,16 +3823,18 @@ function renderNews(items, feedTitle, refreshedAt = Date.now()) {
 
 function newsTimestamp(value) {
   if (!value) return 0;
-  const normalized = value.includes("T") ? value : value.replace(" ", "T");
-  const date = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(normalized) ? normalized : `${normalized}Z`);
-  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+  const directTimestamp = Date.parse(value);
+  if (Number.isFinite(directTimestamp)) return directTimestamp;
+  const normalized = value.includes("T") ? value : value.replace(/^(\d{4}-\d{2}-\d{2})\s+/, "$1T");
+  const fallbackTimestamp = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(normalized) ? normalized : `${normalized}Z`);
+  return Number.isFinite(fallbackTimestamp) ? fallbackTimestamp : 0;
 }
 
 function formatNewsDate(value) {
   const timestamp = newsTimestamp(value);
   if (!timestamp) return "Fecha no disponible";
   const date = new Date(timestamp);
-  return date.toLocaleString("es-ES", {day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"});
+  return date.toLocaleString("es-ES", {day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"});
 }
 
 function formatMessageDate(value) {
@@ -4178,7 +4316,7 @@ document.getElementById("addChatChannelButton").addEventListener("click", create
 document.getElementById("messageAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("messageMediaAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("messageCameraAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
-document.getElementById("addMomentButton").addEventListener("click", () => openStoryCamera("moment"));
+document.getElementById("createMediaButton").addEventListener("click", () => openStoryCamera("moment"));
 document.getElementById("closeStoryCamera").addEventListener("click", closeStoryCamera);
 document.getElementById("captureStoryPhoto").addEventListener("pointerdown", beginStoryShutterGesture);
 document.getElementById("captureStoryPhoto").addEventListener("pointerup", endStoryShutterGesture);
@@ -4186,6 +4324,10 @@ document.getElementById("captureStoryPhoto").addEventListener("pointercancel", c
 document.getElementById("captureStoryPhoto").addEventListener("contextmenu", event => event.preventDefault());
 document.getElementById("switchStoryCamera").addEventListener("click", switchStoryCamera);
 document.getElementById("toggleStoryFlash").addEventListener("click", toggleStoryFlash);
+document.querySelectorAll("[data-camera-mode]").forEach(button => button.addEventListener("click", () => {
+  if (storyRecorder || storyCaptureInProgress) return;
+  setCameraCaptureMode(button.dataset.cameraMode);
+}));
 document.getElementById("storyGalleryInput").addEventListener("change", event => useStoryMediaFile(event.target.files[0] || null));
 document.getElementById("closeMediaUploader").addEventListener("click", () => dismissMediaUploader({returnToCamera: true}));
 document.getElementById("cancelMediaUploader").addEventListener("click", () => dismissMediaUploader({returnToCamera: true}));
@@ -4393,6 +4535,7 @@ document.addEventListener("keydown", event => {
     closeEventEditor();
     closeCalendarDayModal();
     closeSpotifyEditor();
+    closeGroupAvatarEditor();
   }
 });
 document.getElementById("previousMonthButton").addEventListener("click", () => {
@@ -4408,7 +4551,6 @@ document.getElementById("addBirthdayButton").addEventListener("click", event => 
   openEventEditor(event.currentTarget.dataset.birthdayEventId || null, "birthday");
 });
 document.getElementById("eventType").addEventListener("change", updateEventEditorType);
-document.getElementById("addPublicationButton").addEventListener("click", () => openStoryCamera("post"));
 document.querySelectorAll("[data-content-tab]").forEach(button => {
   button.addEventListener("click", () => selectContentTab(button.dataset.contentTab));
 });
@@ -4441,6 +4583,33 @@ document.getElementById("spotifyForm").addEventListener("submit", event => {
   saveSpotifyPlaylist(document.getElementById("spotifyPlaylistUrl").value);
 });
 document.getElementById("removeSpotifyButton").addEventListener("click", removeSpotifyPlaylist);
+document.getElementById("editGroupAvatarButton").addEventListener("click", openGroupAvatarEditor);
+document.getElementById("closeGroupAvatarEditor").addEventListener("click", closeGroupAvatarEditor);
+document.getElementById("cancelGroupAvatarEditor").addEventListener("click", closeGroupAvatarEditor);
+document.getElementById("groupAvatarEditor").addEventListener("click", event => {
+  if (event.target.id === "groupAvatarEditor") closeGroupAvatarEditor();
+});
+document.getElementById("groupAvatarInput").addEventListener("change", event => {
+  const file = event.target.files[0] || null;
+  const feedback = document.getElementById("groupAvatarFeedback");
+  pendingGroupAvatarFile = null;
+  if (!file) return;
+  if (!file.type.startsWith("image/") || file.size > 3 * MEGABYTE) {
+    feedback.textContent = "Elige una imagen JPG, PNG o WebP de hasta 3 MB.";
+    event.target.value = "";
+    return;
+  }
+  if (groupAvatarPreviewUrl) URL.revokeObjectURL(groupAvatarPreviewUrl);
+  groupAvatarPreviewUrl = URL.createObjectURL(file);
+  pendingGroupAvatarFile = file;
+  feedback.textContent = "";
+  setGroupAvatarPreview(groupAvatarPreviewUrl);
+});
+document.getElementById("groupAvatarForm").addEventListener("submit", event => {
+  event.preventDefault();
+  saveGroupAvatar(event.currentTarget);
+});
+document.getElementById("removeGroupAvatarButton").addEventListener("click", removeGroupAvatar);
 
 applyStoredProfiles();
 if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("light");
@@ -4456,6 +4625,7 @@ renderPrivateContacts();
 renderPrivateConversation();
 renderCalendar();
 renderSpotify();
+renderGroupAvatarSurfaces();
 renderHelpCenter();
 loadNews(false);
 

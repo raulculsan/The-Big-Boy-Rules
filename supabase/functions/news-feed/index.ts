@@ -59,7 +59,7 @@ function parseFeed(xml: string) {
     return {
       title,
       link: tag(item, "link") || tag(item, "guid"),
-      published: tag(item, "pubDate") || tag(item, "published") || tag(item, "updated"),
+      published: tag(item, "pubDate") || tag(item, "dc:date") || tag(item, "published") || tag(item, "updated") || tag(item, "date"),
       source,
     };
   }).filter(item => item.title && item.link);

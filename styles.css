@@ -6937,7 +6937,7 @@ body.camera-editor-transition {
   overscroll-behavior: none;
   background: #000;
 }
-body.camera-editor-transition > :not(#storyCamera):not(#mediaUploader) { visibility: hidden !important; }
+body.camera-editor-transition > :not(#storyCamera):not(#mediaUploader):not(#cameraTransitionGuard) { visibility: hidden !important; }
 body.story-camera-open.camera-editor-transition > #mediaUploader { visibility: visible !important; }
 .story-camera {
   position: fixed;
@@ -7202,4 +7202,156 @@ body.standalone-app .story-camera-shell {
 @media (max-width: 760px) and (orientation: portrait) {
   body.standalone-app .story-camera-topbar { top: calc(var(--pwa-safe-top) + 10px); }
   body.standalone-app .story-recording-indicator { top: calc(var(--pwa-safe-top) + 16px); }
+}
+
+/* Cabecera social: crear a la izquierda, título realmente centrado y acciones a la derecha. */
+.topbar {
+  display: grid;
+  grid-template-columns: minmax(92px, 1fr) auto minmax(92px, 1fr);
+  align-items: center;
+}
+.topbar-title { min-width: 0; text-align: center; }
+.topbar-title h1 { max-width: none; }
+.top-actions { justify-self: end; margin-left: 0; }
+.top-create-button {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  justify-self: start;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.17);
+  border-radius: 50%;
+  color: #fff;
+  background: #0c0d10;
+  box-shadow: inset 0 1px rgba(255,255,255,.06);
+  cursor: pointer;
+}
+.top-create-button:hover { border-color: var(--gold); background: rgba(214,166,46,.1); }
+.top-create-button svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+
+/* Avatares de chat: la imagen es el acceso al perfil y conserva siempre su tamaño. */
+.message-avatar-link,
+.private-chat-avatar,
+.group-header-avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+}
+.message-avatar-link { align-self: flex-start; border-radius: 50%; cursor: pointer; }
+.message-avatar-link .avatar { margin: 0; }
+.private-chat-avatar { cursor: pointer; }
+.group-header-avatar { width: 48px; height: 48px; border-radius: 50%; cursor: pointer; }
+.group-header-avatar:disabled { opacity: 1; cursor: default; }
+.chat-group-avatar img,
+.group-header-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.chat-group-avatar.has-image { color: transparent; background: #111217; }
+.group-header-avatar .chat-group-avatar { width: 48px; height: 48px; min-width: 48px; min-height: 48px; }
+
+.group-avatar-editor { width: min(470px, 100%); }
+.group-avatar-preview {
+  width: 150px;
+  height: 150px;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  overflow: hidden;
+  border: 3px solid rgba(214,166,46,.65);
+  border-radius: 50%;
+  color: #12100a;
+  background: linear-gradient(145deg, #f2d06b, #b67a08);
+  box-shadow: 0 0 0 8px rgba(214,166,46,.08), 0 22px 55px rgba(0,0,0,.42);
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+}
+.group-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.group-avatar-file-button { justify-content: center; cursor: pointer; }
+.group-avatar-help { color: var(--muted); text-align: center; }
+
+/* Selector único dentro de cámara para elegir el destino de la captura. */
+.story-camera-mode {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  background: rgba(8,9,11,.68);
+  box-shadow: 0 10px 32px rgba(0,0,0,.34);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+}
+.story-camera-mode button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(255,255,255,.7);
+  background: transparent;
+  font-size: .67rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+.story-camera-mode button.active { color: #111; background: var(--gold-soft); }
+.story-camera-mode button:disabled { opacity: .42; cursor: default; }
+.story-camera-bottom { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
+
+/* Safari puede desmontar la cámara antes de componer el editor: esta capa conserva la captura. */
+.camera-transition-guard {
+  position: fixed;
+  top: var(--story-viewport-top, 0px);
+  left: var(--story-viewport-left, 0px);
+  z-index: 999;
+  width: var(--story-viewport-width, 100vw);
+  height: var(--story-viewport-height, 100dvh);
+  display: none;
+  overflow: hidden;
+  pointer-events: none;
+  background: #000;
+}
+.camera-transition-guard.active { display: block; }
+.camera-transition-guard img { width: 100%; height: 100%; display: none; object-fit: cover; }
+.camera-transition-guard.has-image img { display: block; }
+body.story-camera-open.camera-editor-transition > #cameraTransitionGuard,
+body.story-camera-open.camera-editor-transition > #mediaUploader { visibility: visible !important; }
+
+@media (max-width: 760px) {
+  body {
+    --pwa-safe-top: env(safe-area-inset-top, 0px);
+    --pwa-safe-right: env(safe-area-inset-right, 0px);
+    --pwa-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --pwa-safe-left: env(safe-area-inset-left, 0px);
+  }
+  body.authenticated .topbar {
+    height: calc(64px + var(--pwa-safe-top));
+    padding: var(--pwa-safe-top) 14px 0;
+    box-sizing: border-box;
+  }
+  .topbar { grid-template-columns: minmax(76px, 1fr) auto minmax(76px, 1fr); }
+  .topbar-title .eyebrow { display: none; }
+  .topbar-title h1 { max-width: 42vw; font-size: 19px; }
+  .top-create-button { width: 40px; height: 40px; }
+  .top-actions { gap: 5px; }
+  .story-camera-bottom { bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
+  .story-camera-mode { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .group-avatar-preview { width: 126px; height: 126px; }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  body.standalone-app { --pwa-safe-top: max(env(safe-area-inset-top, 0px), 58px); }
 }
