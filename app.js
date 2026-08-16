@@ -156,6 +156,7 @@ let storyCameraStream = null;
 let storyCameraFacingMode = "environment";
 let storyCameraTorchEnabled = false;
 let storyCameraOpeningToken = 0;
+let storyCameraEntranceTimer = null;
 let storyRecorder = null;
 let storyRecordingChunks = [];
 let storyRecordingStartedAt = 0;
@@ -733,8 +734,27 @@ function renderMessages() {
       </div>
     </div>`;
   }).join("");
-  container.scrollTop = container.scrollHeight;
+  scrollConversationToLatest(container);
   renderPrivateContacts();
+}
+
+function scrollConversationToLatest(container) {
+  if (!container) return;
+  const requestId = String((Number(container.dataset.latestScrollRequest) || 0) + 1);
+  container.dataset.latestScrollRequest = requestId;
+  const apply = () => {
+    if (container.dataset.latestScrollRequest !== requestId) return;
+    container.scrollTop = container.scrollHeight;
+  };
+  apply();
+  requestAnimationFrame(() => {
+    apply();
+    requestAnimationFrame(apply);
+  });
+  [90, 240, 520].forEach(delay => window.setTimeout(apply, delay));
+  container.querySelectorAll("img, video, audio").forEach(media => {
+    ["load", "loadedmetadata", "durationchange"].forEach(type => media.addEventListener(type, apply, {once: true}));
+  });
 }
 
 function renderChatChannels() {
@@ -1084,7 +1104,7 @@ function renderPrivateConversation() {
   media.disabled = false;
   camera.disabled = false;
   audio.disabled = false;
-  container.scrollTop = container.scrollHeight;
+  scrollConversationToLatest(container);
 }
 
 function renderCalendar() {
@@ -2726,7 +2746,16 @@ function openStoryCamera(mode = "moment") {
   storyCameraFacingMode = "environment";
   camera.classList.add("open");
   camera.setAttribute("aria-hidden", "false");
+  if (storyCameraEntranceTimer) window.clearTimeout(storyCameraEntranceTimer);
+  const animateEntrance = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.body.classList.toggle("camera-entering", animateEntrance);
   document.body.classList.add("story-camera-open");
+  if (animateEntrance) {
+    storyCameraEntranceTimer = window.setTimeout(() => {
+      document.body.classList.remove("camera-entering");
+      storyCameraEntranceTimer = null;
+    }, 460);
+  }
   syncMobileViewport();
   requestAnimationFrame(fitStoryCameraPreview);
   document.getElementById("storyGalleryInput").value = "";
@@ -2736,6 +2765,9 @@ function openStoryCamera(mode = "moment") {
 
 function closeStoryCamera() {
   storyCameraOpeningToken += 1;
+  if (storyCameraEntranceTimer) window.clearTimeout(storyCameraEntranceTimer);
+  storyCameraEntranceTimer = null;
+  document.body.classList.remove("camera-entering");
   if (storyRecorder && storyRecorder.state !== "inactive") {
     storyRecordingDiscard = true;
     storyRecorder.stop();

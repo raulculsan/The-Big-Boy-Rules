@@ -6930,7 +6930,7 @@ body.story-camera-open {
   overscroll-behavior: none;
   background: #000;
 }
-body.story-camera-open > :not(#storyCamera) { visibility: hidden !important; }
+body.story-camera-open:not(.camera-entering) > :not(#storyCamera) { visibility: hidden !important; }
 /* Mantiene la aplicación tapada durante el fotograma que intercambia cámara y editor. */
 body.camera-editor-transition {
   overflow: hidden;
@@ -7354,4 +7354,32 @@ body.story-camera-open.camera-editor-transition > #mediaUploader { visibility: v
 
 @media (max-width: 760px) and (orientation: portrait) {
   body.standalone-app { --pwa-safe-top: max(env(safe-area-inset-top, 0px), 58px); }
+}
+
+/* La creación entra como una vista nativa: la cámara empuja la pantalla actual hacia la izquierda. */
+body.story-camera-open.camera-entering > .app,
+body.story-camera-open.camera-entering > .floating-tab-bar {
+  visibility: visible !important;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: cameraPageDragLeft .44s cubic-bezier(.22,.72,.18,1) both;
+}
+body.story-camera-open.camera-entering > #storyCamera {
+  animation: cameraViewSlideIn .44s cubic-bezier(.22,.72,.18,1) both;
+}
+@keyframes cameraPageDragLeft {
+  from { transform: translate3d(0,0,0); opacity: 1; }
+  to { transform: translate3d(-24vw,0,0); opacity: .72; }
+}
+@keyframes cameraViewSlideIn {
+  from { transform: translate3d(100%,0,0); }
+  to { transform: translate3d(0,0,0); }
+}
+
+.messages { overflow-anchor: none; scroll-behavior: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.story-camera-open.camera-entering > .app,
+  body.story-camera-open.camera-entering > .floating-tab-bar,
+  body.story-camera-open.camera-entering > #storyCamera { animation: none; }
 }
