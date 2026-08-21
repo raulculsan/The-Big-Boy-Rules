@@ -220,6 +220,7 @@ let groupAvatarPreviewUrl = "";
 let pendingMessageFile = null;
 let mediaUploadMode = "post";
 let activeProfileId = null;
+let activePostViewerId = null;
 let editingProfileId = null;
 let activePrivateMemberId = null;
 let activeChatChannelId = null;
@@ -1833,6 +1834,7 @@ async function loadMediaLikes() {
   });
   if (document.getElementById("contenido")?.classList.contains("active")) selectContentTab(activeContentTab);
   if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
+  if (activePostViewerId) renderPostViewer(activePostViewerId);
 }
 
 async function toggleMediaLike(kind, mediaId, button) {
@@ -1871,6 +1873,10 @@ async function loadProfilePosts() {
   profilePosts = error ? [] : data.map(mapMedia);
   if (document.getElementById("contenido")?.classList.contains("active") && activeContentTab === "publicaciones") renderPublications();
   if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
+  if (activePostViewerId) {
+    if (profilePosts.some(item => String(item.id) === String(activePostViewerId))) renderPostViewer(activePostViewerId);
+    else closePostViewer();
+  }
 }
 
 function renderNotifications() {
@@ -3710,8 +3716,74 @@ async function deleteActiveMoment() {
 function openContent(kind, id) {
   const item = (kind === "moment" ? moments : profilePosts).find(entry => String(entry.id) === String(id));
   if (!item) return window.alert("Este contenido ya no está disponible.");
-  if (kind === "moment") registerMomentView(item);
-  openMediaViewer(item.mediaUrl, item.caption || (kind === "moment" ? "Momento" : "Publicación"), item.mediaType);
+  if (kind === "post") return openPostViewer(item.id);
+  registerMomentView(item);
+  openMediaViewer(item.mediaUrl, item.caption || "Momento", item.mediaType);
+}
+
+function renderPostViewer(postId = activePostViewerId) {
+  const item = profilePosts.find(entry => String(entry.id) === String(postId));
+  if (!item) return;
+  const member = getMember(item.member);
+  const memberName = member?.name || "Miembro";
+  const username = member?.username || normalizeUsername(memberName);
+  const likes = getMediaLikes("post", item.id);
+  const liked = Boolean(currentAuthUser && likes.some(like => like.userId === currentAuthUser.id));
+  const canDelete = isMediaOwner(item) || isSuperAdmin();
+  document.getElementById("postViewerUsername").textContent = `@${username}`;
+  document.getElementById("postViewerContent").innerHTML = `
+    <article class="post-viewer-post" data-media-card-kind="post" data-media-card-id="${item.id}">
+      <header class="post-viewer-author-row">
+        <button class="post-viewer-author" type="button" data-profile="${item.member}">
+          ${getAvatar(member, "avatar small")}
+          <span><strong>${escapeHtml(username)}</strong><small>${escapeHtml(member?.nickname || memberName)}</small></span>
+        </button>
+        <div class="feed-post-menu">
+          <button class="feed-post-menu-button" type="button" data-toggle-post-menu="viewer-${item.id}" aria-label="Opciones de la publicación" aria-expanded="false">${postOptionsIcon()}</button>
+          <div class="feed-post-menu-popover" data-post-menu="viewer-${item.id}" hidden>
+            ${!isSuperAdmin() ? `<button type="button" data-share-media="${item.id}" data-share-kind="post">Enviar por chat</button>` : ""}
+            ${canDelete ? `<button class="danger" type="button" data-delete-post="${item.id}">Eliminar publicación</button>` : ""}
+          </div>
+        </div>
+      </header>
+      <div class="post-viewer-media">${item.mediaType === "video"
+        ? `<video src="${escapeHtml(item.mediaUrl)}" controls playsinline preload="metadata"></video>`
+        : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${memberName}`)}" decoding="async">`}
+      </div>
+      <div class="post-viewer-details">
+        <div class="media-social-actions post-viewer-actions">
+          <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="post" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">${mediaActionIcon("like", liked)}<small>Me gusta</small></button>
+          ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="post" aria-label="Comentar">${mediaActionIcon("reply")}<small>Comentar</small></button>` : ""}
+          ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="post" aria-label="Enviar por chat">${mediaActionIcon("share")}<small>Enviar</small></button>` : ""}
+        </div>
+        <button class="post-viewer-likes" type="button" data-like-media="${item.id}" data-like-kind="post">${likes.length ? `${likes.length} Me gusta` : "Sé el primero en dar Me gusta"}</button>
+        ${item.caption ? `<p class="post-viewer-caption"><strong>${escapeHtml(username)}</strong><span>${escapeHtml(item.caption)}</span></p>` : ""}
+        ${item.mentionedUserId ? `<button class="media-mention" type="button" data-profile="${getMemberByAuthId(item.mentionedUserId)?.id || ""}">@${escapeHtml(getMemberByAuthId(item.mentionedUserId)?.username || "miembro")}</button>` : ""}
+        <time datetime="${escapeHtml(item.createdAt)}">${formatRelativeTime(item.createdAt)}</time>
+      </div>
+    </article>`;
+}
+
+function openPostViewer(postId) {
+  const item = profilePosts.find(entry => String(entry.id) === String(postId));
+  if (!item) return window.alert("Esta publicación ya no está disponible.");
+  activePostViewerId = item.id;
+  renderPostViewer(item.id);
+  const viewer = document.getElementById("postViewer");
+  viewer.classList.add("open");
+  viewer.setAttribute("aria-hidden", "false");
+  document.body.classList.add("post-viewer-open");
+  viewer.querySelector(".post-viewer-shell").scrollTop = 0;
+}
+
+function closePostViewer() {
+  activePostViewerId = null;
+  closePostMenus();
+  const viewer = document.getElementById("postViewer");
+  viewer.classList.remove("open");
+  viewer.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("post-viewer-open");
+  document.getElementById("postViewerContent").innerHTML = "";
 }
 
 async function registerMomentView(item) {
@@ -4261,7 +4333,10 @@ document.addEventListener("click", event => {
   const goTarget = event.target.closest("[data-go]");
   if (goTarget) goTo(goTarget.dataset.go);
   const profileTarget = event.target.closest("[data-profile]");
-  if (profileTarget) renderProfile(profileTarget.dataset.profile);
+  if (profileTarget) {
+    if (profileTarget.closest("#postViewer")) closePostViewer();
+    renderProfile(profileTarget.dataset.profile);
+  }
   const deleteMoment = event.target.closest("[data-delete-moment]");
   if (deleteMoment) deleteMedia("moment", deleteMoment.dataset.deleteMoment);
   const viewMedia = event.target.closest("[data-view-media]");
@@ -4775,6 +4850,7 @@ document.getElementById("mediaUploadForm").addEventListener("submit", event => {
   publishMedia(event.currentTarget);
 });
 document.getElementById("closeMediaViewer").addEventListener("click", closeMediaViewer);
+document.getElementById("closePostViewer").addEventListener("click", closePostViewer);
 document.getElementById("momentOptionsButton").addEventListener("click", event => {
   event.stopPropagation();
   const menu = document.getElementById("momentOptionsMenu");
@@ -4867,6 +4943,7 @@ document.getElementById("mediaViewer").addEventListener("click", event => {
 });
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && document.getElementById("mediaViewer").classList.contains("open")) closeMediaViewer();
+  else if (event.key === "Escape" && document.getElementById("postViewer").classList.contains("open")) closePostViewer();
 });
 function openGlobalSearch() {
   goTo("buscar");
