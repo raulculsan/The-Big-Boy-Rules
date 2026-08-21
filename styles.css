@@ -8007,6 +8007,7 @@ body.story-camera-open.camera-entering > #storyCamera {
 }
 
 /* Perfil social: identidad, actividad y galería en una jerarquía compacta. */
+#perfil { overflow-anchor: none; }
 #perfil .profile-hero {
   min-height: 0;
   display: grid;
@@ -8548,5 +8549,214 @@ body.post-viewer-open #shareMediaModal { z-index: 2700; }
     padding-right: calc(14px + env(safe-area-inset-right, 0px));
     padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px));
     padding-left: calc(14px + env(safe-area-inset-left, 0px));
+  }
+}
+
+/* Administración compacta: las herramientas permanecen plegadas y cada miembro abre su ficha. */
+.admin-tool-disclosure {
+  margin-bottom: 16px;
+  padding: 0;
+  overflow: hidden;
+}
+.admin-tool-disclosure > summary {
+  min-height: 74px;
+  margin: 0;
+  padding: 18px 20px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.admin-tool-disclosure > summary::-webkit-details-marker { display: none; }
+.admin-tool-disclosure > summary h3 { margin: 4px 0 0; }
+.admin-disclosure-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 50%;
+  color: #d9d9dc;
+  font-size: 1.3rem;
+  transition: transform .2s ease, background .2s ease;
+}
+.admin-tool-disclosure[open] .admin-disclosure-icon {
+  background: rgba(214,166,46,.1);
+  transform: rotate(180deg);
+}
+.admin-tool-content {
+  padding: 0 20px 22px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+.admin-users-panel { padding: 20px; }
+.admin-member-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+.admin-member-card {
+  width: 100%;
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto auto 24px;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 13px;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 15px;
+  color: var(--text);
+  background: rgba(255,255,255,.025);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.admin-member-card:hover,
+.admin-member-card:focus-visible {
+  border-color: rgba(214,166,46,.38);
+  background: rgba(214,166,46,.055);
+  outline: none;
+  transform: translateY(-1px);
+}
+.admin-member-avatar,
+.admin-member-avatar .avatar {
+  width: 46px;
+  height: 46px;
+}
+.admin-member-avatar .avatar { border: 1px solid rgba(255,255,255,.2); }
+.admin-member-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.admin-member-copy strong,
+.admin-member-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-member-copy strong { font-size: .8rem; }
+.admin-member-copy small { color: #8f9199; font-size: .65rem; }
+.admin-member-card .account-status { color: #aaaeb6; font-size: .64rem; }
+.admin-member-chevron { color: #8d9098; font-size: 1.55rem; font-weight: 300; }
+
+.profile-admin-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  background: rgba(255,255,255,.025);
+}
+.profile-admin-actions[hidden] { display: none !important; }
+.profile-admin-actions-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.profile-admin-actions-heading span {
+  color: var(--gold-soft);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+.profile-admin-actions-heading small { color: var(--muted); font-size: .62rem; }
+.profile-admin-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.profile-admin-action-grid button {
+  width: 100%;
+  min-height: 42px;
+  margin: 0;
+}
+.profile-admin-action-grid .danger {
+  color: #ff9c9c;
+  border-color: rgba(225,77,77,.3);
+  background: rgba(150,35,35,.11);
+}
+
+/* Al gestionar a otro miembro, el editor es una página independiente también en escritorio. */
+@media (min-width: 761px) {
+  #profileEditor.admin-member-editor {
+    place-items: stretch;
+    padding: 0;
+    background: #08090d;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  #profileEditor.admin-member-editor .profile-editor-modal {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    padding: 24px max(24px, calc((100vw - 840px) / 2));
+    border: 0;
+    border-radius: 0;
+    background: #08090d;
+    box-shadow: none;
+  }
+  #profileEditor.admin-member-editor .modal-heading,
+  #profileEditor.admin-member-editor .profile-form {
+    width: min(840px, 100%);
+    margin-right: auto;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  #administracion {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+  #administracion .section-intro { gap: 12px; }
+  #administracion .section-intro h2 { font-size: clamp(2rem, 12vw, 3rem); }
+  #administracion .admin-heading-actions p { display: none; }
+  #administracion .admin-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  #administracion .admin-stat-card {
+    min-width: 0;
+    padding: 13px 8px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  #administracion .admin-stat-card span { font-size: .48rem; letter-spacing: .06em; }
+  #administracion .admin-stat-card strong { margin-top: 6px; font-size: 1.55rem; }
+  #administracion .admin-stat-card small { display: none; }
+  .admin-tool-disclosure > summary { min-height: 64px; padding: 14px; }
+  .admin-tool-disclosure > summary h3 { font-size: .86rem; }
+  .admin-tool-content { padding: 0 14px 16px; }
+  .admin-users-panel { padding: 14px; }
+  .admin-users-panel .panel-heading { align-items: flex-start; }
+  .admin-users-panel .admin-badge { max-width: 145px; text-align: right; line-height: 1.35; }
+  .admin-member-list { margin-top: 13px; }
+  .admin-member-card {
+    grid-template-columns: 46px minmax(0, 1fr) auto 18px;
+    gap: 10px;
+    min-height: 68px;
+    padding: 10px;
+    border-radius: 13px;
+  }
+  .admin-member-card .account-status { display: none; }
+  .admin-member-card .role-chip { font-size: .48rem; }
+  #profileEditor .profile-admin-actions {
+    gap: 11px;
+    padding: 16px;
+    border: 0;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    border-radius: 0;
+    background: #08090d;
+  }
+  #profileEditor .profile-admin-actions-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+  #profileEditor .profile-admin-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #profileEditor .profile-admin-action-grid button {
+    min-height: 44px;
+    padding: 9px 8px;
+    border-radius: 10px;
+    font-size: .65rem;
   }
 }

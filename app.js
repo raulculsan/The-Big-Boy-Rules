@@ -477,8 +477,28 @@ function selectContentTab(tabName) {
   }
 }
 
+function resetSectionScroll(sectionId) {
+  const reset = () => {
+    window.scrollTo(0, 0);
+    if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const section = document.getElementById(sectionId);
+    if (section) section.scrollTop = 0;
+    const app = document.querySelector(".app");
+    if (app) app.scrollTop = 0;
+  };
+  reset();
+  requestAnimationFrame(() => {
+    reset();
+    requestAnimationFrame(reset);
+  });
+  if (sectionId === "perfil") window.setTimeout(reset, 180);
+}
+
 function goTo(sectionId) {
   closeProfileQuickMenu();
+  if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   showMobileHeader();
   mobileHeaderLastScrollY = 0;
   mobileHeaderScrollAnchor = 0;
@@ -513,7 +533,7 @@ function goTo(sectionId) {
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
   if (homeAnchor) requestAnimationFrame(() => document.getElementById(homeAnchor)?.scrollIntoView({behavior: "smooth", block: "start"}));
-  else window.scrollTo({top: 0, behavior: "auto"});
+  else resetSectionScroll(sectionId);
   history.replaceState(null, "", `#${homeAnchor || sectionId}`);
   if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
   if (sectionId === "buscar") renderCalendar();
@@ -1375,21 +1395,21 @@ function renderAdminPanel() {
     table.innerHTML = "";
     return;
   }
+  const visibleMembers = members.filter(member => !member.hidden);
   summary.innerHTML = `
-    <div class="admin-stat-card"><span>USUARIOS</span><strong>${members.length}</strong><small>cuentas registradas</small></div>
-    <div class="admin-stat-card"><span>ADMINISTRADORES</span><strong>${members.filter(item => item.roleKey === "admin").length}</strong><small>visibles en el club</small></div>
+    <div class="admin-stat-card"><span>USUARIOS</span><strong>${visibleMembers.length}</strong><small>cuentas registradas</small></div>
+    <div class="admin-stat-card"><span>ADMINISTRADORES</span><strong>${visibleMembers.filter(item => item.roleKey === "admin").length}</strong><small>visibles en el club</small></div>
     <div class="admin-stat-card"><span>EN LÍNEA</span><strong>${onlineUsers.length}</strong><small>presencia real ahora</small></div>`;
-  table.innerHTML = members.map(user => `
-    <tr><td><code>@${user.username}</code></td><td><div class="table-user">${getAvatar(user, "avatar small")}<strong>${escapeHtml(user.name)}</strong></div></td>
-    <td><span class="role-chip ${user.roleKey}">${user.roleKey === "admin" ? "Administrador" : "Miembro"}</span></td>
-    <td><span class="account-status ${onlineUsers.some(item => Number(item.legacy_id) === user.id) ? "" : "offline"}"><i></i>${onlineUsers.some(item => Number(item.legacy_id) === user.id) ? "En línea" : "Desconectado"}</span></td>
-    <td>—</td><td><div class="admin-user-actions">
-      <button class="text-button" type="button" data-profile="${user.id}">Ver perfil</button>
-      ${user.id !== currentUser?.id ? `<button class="text-button" type="button" data-admin-message="${user.id}">Mensaje</button>` : ""}
-      ${canManageSite() && (isSuperAdmin() || user.id !== currentUser?.id) ? `<button class="text-button" type="button" data-edit-user="${user.id}">Editar perfil</button>` : ""}
-      ${canManageSite() && user.authId && user.id !== currentUser?.id ? `<button class="text-button" type="button" data-reset-password="${user.authId}" data-reset-password-name="${escapeHtml(user.name)}">Nueva contraseña</button>` : ""}
-      ${isSuperAdmin() && user.authId ? `<button class="text-button danger" type="button" data-delete-user="${user.authId}" data-delete-user-name="${escapeHtml(user.name)}">Eliminar</button>` : ""}
-    </div></td></tr>`).join("");
+  table.innerHTML = visibleMembers.map(user => {
+    const online = onlineUsers.some(item => Number(item.legacy_id) === user.id);
+    return `<button class="admin-member-card" type="button" data-edit-user="${user.id}" aria-label="Gestionar a ${escapeHtml(user.name)}">
+      <span class="admin-member-avatar">${getAvatar(user, "avatar small")}</span>
+      <span class="admin-member-copy"><strong>${escapeHtml(user.name)}</strong><small>@${escapeHtml(user.username)}</small></span>
+      <span class="role-chip ${user.roleKey}">${user.roleKey === "admin" ? "Administrador" : "Miembro"}</span>
+      <span class="account-status ${online ? "" : "offline"}"><i></i>${online ? "En línea" : "Desconectado"}</span>
+      <span class="admin-member-chevron" aria-hidden="true">›</span>
+    </button>`;
+  }).join("");
   renderAdminAchievements();
 }
 
@@ -2698,6 +2718,11 @@ function openProfileEditor(memberId = currentUser?.id) {
   document.querySelector("#adminProfileFields .admin-profile-fields-heading span").textContent = managingAnotherUser ? "GESTIÓN DE CUENTA" : "IDENTIDAD DE LA CUENTA";
   document.querySelector("#adminProfileFields .admin-profile-fields-heading small").textContent = managingAnotherUser ? "Solo visible para administradores" : "El @ solo puede cambiarlo un administrador";
   document.getElementById("profileRole").value = profile.roleKey === "admin" ? "admin" : "member";
+  const adminActions = document.getElementById("profileAdminActions");
+  adminActions.hidden = !managingAnotherUser;
+  document.getElementById("adminMessageProfileButton").hidden = !managingAnotherUser || !profile.authId;
+  document.getElementById("adminResetProfilePasswordButton").hidden = !managingAnotherUser || !profile.authId;
+  document.getElementById("adminDeleteProfileButton").hidden = !managingAnotherUser || !profile.authId || !isSuperAdmin();
   document.getElementById("profileNickname").value = profile.nickname;
   document.getElementById("profileFlag").value = profile.countryFlag || "";
   document.getElementById("profileBio").value = profile.bio;
@@ -2708,6 +2733,7 @@ function openProfileEditor(memberId = currentUser?.id) {
   preview.classList.toggle("has-image", Boolean(profile.avatarUrl));
   preview.innerHTML = profile.avatarUrl ? `<img src="${escapeHtml(profile.avatarUrl)}" alt="">` : profile.name.charAt(0);
   const modal = document.getElementById("profileEditor");
+  modal.classList.toggle("admin-member-editor", managingAnotherUser);
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("profile-editor-open");
@@ -2716,6 +2742,7 @@ function openProfileEditor(memberId = currentUser?.id) {
 function closeProfileEditor() {
   const modal = document.getElementById("profileEditor");
   modal.classList.remove("open");
+  modal.classList.remove("admin-member-editor");
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("profile-editor-open");
   editingProfileId = null;
@@ -4697,6 +4724,29 @@ document.getElementById("removeAvatarButton").addEventListener("click", () => {
 document.getElementById("profileForm").addEventListener("submit", event => {
   event.preventDefault();
   saveProfile(event.currentTarget);
+});
+document.getElementById("adminViewProfileButton").addEventListener("click", () => {
+  const memberId = editingProfileId;
+  closeProfileEditor();
+  renderProfile(memberId);
+});
+document.getElementById("adminMessageProfileButton").addEventListener("click", () => {
+  const memberId = editingProfileId;
+  closeProfileEditor();
+  openPrivateConversation(memberId);
+});
+document.getElementById("adminResetProfilePasswordButton").addEventListener("click", () => {
+  const member = getMember(editingProfileId);
+  if (member?.authId) resetClubUserPassword(member.authId, member.name);
+});
+document.getElementById("adminDeleteProfileButton").addEventListener("click", async () => {
+  const member = getMember(editingProfileId);
+  if (!member?.authId) return;
+  await deleteClubUser(member.authId, member.name);
+  if (!getMember(member.id)) {
+    closeProfileEditor();
+    goTo("administracion");
+  }
 });
 document.querySelectorAll("[data-news-category]").forEach(button => button.addEventListener("click", () => {
   activeNewsCategory = button.dataset.newsCategory;

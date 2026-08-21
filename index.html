@@ -10,13 +10,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
   <title>The Big Boy Rules</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260822-108" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260822-109" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260822-108" />
+  <link rel="stylesheet" href="styles.css?v=20260822-109" />
 </head>
 <body>
 
@@ -386,40 +386,44 @@
 
       <div class="admin-summary" id="adminSummary"></div>
 
-      <article class="panel admin-achievements-panel admin-only">
-        <div class="panel-heading">
+      <details class="panel admin-achievements-panel admin-tool-disclosure admin-only">
+        <summary class="panel-heading">
           <div><span class="eyebrow">SISTEMA DE LOGROS</span><h3>Crear y conceder logros</h3></div>
-          <span class="admin-badge">Bronce · Plata · Oro · Platino</span>
+          <span class="admin-disclosure-icon" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="admin-tool-content">
+          <form class="achievement-create-form" id="achievementForm">
+            <div class="achievement-fields">
+              <label><span>Nombre del logro</span><input id="achievementName" maxlength="70" required placeholder="Ej. Leyenda de la temporada"></label>
+              <label><span>Rango</span><select id="achievementTier" required><option value="bronze">Bronce</option><option value="silver">Plata</option><option value="gold">Oro</option><option value="platinum">Platino</option></select></label>
+              <label><span>Emblema</span><input id="achievementIcon" maxlength="12" placeholder="🏆" inputmode="text"></label>
+              <label class="achievement-description-field"><span>Descripción</span><textarea id="achievementDescription" maxlength="240" placeholder="Explica por qué se concede este logro"></textarea></label>
+            </div>
+            <fieldset class="achievement-member-picker"><legend>Asignar ahora a</legend><div id="achievementMembers"></div></fieldset>
+            <div class="achievement-submit-row"><p class="form-feedback" id="achievementFeedback" aria-live="polite"></p><button class="primary-button" type="submit">Crear y asignar</button></div>
+          </form>
+          <div class="admin-achievements-list" id="adminAchievementsList"></div>
         </div>
-        <form class="achievement-create-form" id="achievementForm">
-          <div class="achievement-fields">
-            <label><span>Nombre del logro</span><input id="achievementName" maxlength="70" required placeholder="Ej. Leyenda de la temporada"></label>
-            <label><span>Rango</span><select id="achievementTier" required><option value="bronze">Bronce</option><option value="silver">Plata</option><option value="gold">Oro</option><option value="platinum">Platino</option></select></label>
-            <label><span>Emblema</span><input id="achievementIcon" maxlength="12" placeholder="🏆" inputmode="text"></label>
-            <label class="achievement-description-field"><span>Descripción</span><textarea id="achievementDescription" maxlength="240" placeholder="Explica por qué se concede este logro"></textarea></label>
-          </div>
-          <fieldset class="achievement-member-picker"><legend>Asignar ahora a</legend><div id="achievementMembers"></div></fieldset>
-          <div class="achievement-submit-row"><p class="form-feedback" id="achievementFeedback" aria-live="polite"></p><button class="primary-button" type="submit">Crear y asignar</button></div>
-        </form>
-        <div class="admin-achievements-list" id="adminAchievementsList"></div>
-      </article>
+      </details>
 
-      <article class="panel superadmin-tools" id="superAdminTools">
-        <div class="panel-heading">
+      <details class="panel superadmin-tools admin-tool-disclosure" id="superAdminTools">
+        <summary class="panel-heading">
           <div>
             <span class="eyebrow">CONTROL DE CUENTAS</span>
             <h3>Crear un usuario</h3>
           </div>
-          <span class="admin-badge">Acceso protegido</span>
+          <span class="admin-disclosure-icon" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="admin-tool-content">
+          <form class="admin-create-user-form" id="createUserForm">
+            <label>Usuario<input id="newUsername" name="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]+" autocomplete="off"></label>
+            <label>Nombre visible<input id="newDisplayName" name="displayName" required maxlength="60" autocomplete="off"></label>
+            <label>Contraseña temporal<input id="newUserPassword" name="password" type="password" required minlength="8" autocomplete="new-password"></label>
+            <button class="primary-button" type="submit">Crear usuario</button>
+          </form>
+          <p class="form-feedback" id="createUserFeedback" aria-live="polite"></p>
         </div>
-        <form class="admin-create-user-form" id="createUserForm">
-          <label>Usuario<input id="newUsername" name="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]+" autocomplete="off"></label>
-          <label>Nombre visible<input id="newDisplayName" name="displayName" required maxlength="60" autocomplete="off"></label>
-          <label>Contraseña temporal<input id="newUserPassword" name="password" type="password" required minlength="8" autocomplete="new-password"></label>
-          <button class="primary-button" type="submit">Crear usuario</button>
-        </form>
-        <p class="form-feedback" id="createUserFeedback" aria-live="polite"></p>
-      </article>
+      </details>
 
       <article class="panel admin-users-panel">
         <div class="panel-heading">
@@ -427,23 +431,9 @@
             <span class="eyebrow">CUENTAS REGISTRADAS</span>
             <h3>Usuarios del club</h3>
           </div>
-          <span class="admin-badge">Panel de administración</span>
+          <span class="admin-badge">Pulsa un usuario para gestionarlo</span>
         </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Usuario</th>
-                <th>Nombre</th>
-                <th>Rol</th>
-                <th>Estado</th>
-                <th>Último acceso</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="adminUsersTable"></tbody>
-          </table>
-        </div>
+        <div class="admin-member-list" id="adminUsersTable"></div>
       </article>
     </section>
 
@@ -575,6 +565,15 @@
             <select id="profileRole"><option value="member">Miembro</option><option value="admin">Administrador</option></select>
           </label>
         </div>
+        <section class="profile-admin-actions" id="profileAdminActions" hidden>
+          <div class="profile-admin-actions-heading"><span>ACCIONES DE ADMINISTRACIÓN</span><small>Gestiona esta cuenta desde aquí</small></div>
+          <div class="profile-admin-action-grid">
+            <button class="secondary-button" id="adminViewProfileButton" type="button">Ver perfil público</button>
+            <button class="secondary-button" id="adminMessageProfileButton" type="button">Enviar mensaje</button>
+            <button class="secondary-button" id="adminResetProfilePasswordButton" type="button">Cambiar contraseña</button>
+            <button class="secondary-button danger" id="adminDeleteProfileButton" type="button">Eliminar usuario</button>
+          </div>
+        </section>
         <label>
           <span>Apodo</span>
           <input id="profileNickname" maxlength="50" required>
@@ -909,7 +908,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260822-108"></script>
+  <script src="app.js?v=20260822-109"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
