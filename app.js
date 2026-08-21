@@ -754,6 +754,50 @@ function mediaActionIcon(kind, active = false) {
   return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>`;
 }
 
+function postOptionsIcon() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14M8 16h11"/></svg>`;
+}
+
+function renderFeedPostCard(item, canDelete) {
+  const member = getMember(item.member);
+  const likes = getMediaLikes("post", item.id);
+  const liked = Boolean(currentAuthUser && likes.some(like => like.userId === currentAuthUser.id));
+  const memberName = member?.name || "Miembro";
+  const username = member?.username || normalizeUsername(memberName);
+  const media = item.mediaType === "video"
+    ? `<video src="${escapeHtml(item.mediaUrl)}" controls playsinline preload="metadata"></video>`
+    : `<button class="media-view-button" type="button" data-open-content-kind="post" data-open-content-id="${item.id}" aria-label="Abrir publicación de ${escapeHtml(memberName)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${memberName}`)}" loading="lazy" decoding="async"></button>`;
+  return `<article class="profile-post-card feed-post-card" data-media-card-kind="post" data-media-card-id="${item.id}">
+    <header class="feed-post-header">
+      <button class="feed-post-author" type="button" data-profile="${item.member}" aria-label="Ver perfil de ${escapeHtml(memberName)}">
+        ${getAvatar(member, "avatar small")}
+        <span><strong>${escapeHtml(username)}</strong><small>${escapeHtml(member?.nickname || memberName)}</small></span>
+      </button>
+      <div class="feed-post-menu">
+        <button class="feed-post-menu-button" type="button" data-toggle-post-menu="${item.id}" aria-label="Opciones de la publicación" aria-expanded="false">${postOptionsIcon()}</button>
+        <div class="feed-post-menu-popover" data-post-menu="${item.id}" hidden>
+          ${!isSuperAdmin() ? `<button type="button" data-share-media="${item.id}" data-share-kind="post">Enviar por chat</button>` : ""}
+          ${canDelete ? `<button class="danger" type="button" data-delete-post="${item.id}">Eliminar publicación</button>` : ""}
+        </div>
+      </div>
+    </header>
+    <div class="media-frame feed-post-media">${media}</div>
+    <div class="media-card-info feed-post-info">
+      <div class="media-social-actions feed-post-actions">
+        <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="post" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
+          ${mediaActionIcon("like", liked)}<small>Me gusta</small>
+        </button>
+        ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="post" aria-label="Comentar">${mediaActionIcon("reply")}<small>Comentar</small></button>` : ""}
+        ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="post" aria-label="Enviar por chat">${mediaActionIcon("share")}<small>Enviar</small></button>` : ""}
+      </div>
+      <button class="feed-post-like-summary" type="button" data-like-media="${item.id}" data-like-kind="post">${likes.length ? `${likes.length} Me gusta` : "Sé el primero en dar Me gusta"}</button>
+      ${item.caption ? `<p class="feed-post-caption"><button type="button" data-profile="${item.member}">${escapeHtml(username)}</button><span>${escapeHtml(item.caption)}</span></p>` : ""}
+      ${item.mentionedUserId ? `<button class="media-mention feed-post-mention" type="button" data-profile="${getMemberByAuthId(item.mentionedUserId)?.id || ""}">@${escapeHtml(getMemberByAuthId(item.mentionedUserId)?.username || "miembro")}</button>` : ""}
+      <time class="feed-post-time" datetime="${escapeHtml(item.createdAt)}">${formatRelativeTime(item.createdAt)}</time>
+    </div>
+  </article>`;
+}
+
 function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
   const member = getMember(item.member);
   const likes = getMediaLikes(kind, item.id);
@@ -1074,10 +1118,9 @@ function renderPublications() {
     feed.innerHTML = `<div class="empty-state publications-empty"><strong>Todavía no hay publicaciones</strong><span>Comparte una foto desde aquí o desde tu perfil.</span></div>`;
     return;
   }
-  feed.innerHTML = profilePosts.map(item => renderMediaCard(
+  feed.innerHTML = profilePosts.map(item => renderFeedPostCard(
     item,
-    isMediaOwner(item) || isSuperAdmin(),
-    "post"
+    isMediaOwner(item) || isSuperAdmin()
   )).join("");
 }
 
@@ -4126,6 +4169,11 @@ function formatFileSize(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function closePostMenus() {
+  document.querySelectorAll("[data-post-menu]").forEach(menu => { menu.hidden = true; });
+  document.querySelectorAll("[data-toggle-post-menu]").forEach(button => button.setAttribute("aria-expanded", "false"));
+}
+
 document.addEventListener("click", event => {
   const chatBack = event.target.closest("[data-chat-back]");
   if (chatBack) exitChatView();
@@ -4139,6 +4187,21 @@ document.addEventListener("click", event => {
   } else if (!event.target.closest(".message-actions")) {
     document.querySelectorAll("[data-message-bubble].actions-open").forEach(item => item.classList.remove("actions-open"));
   }
+  const postMenuToggle = event.target.closest("[data-toggle-post-menu]");
+  if (postMenuToggle) {
+    event.preventDefault();
+    event.stopPropagation();
+    const menu = document.querySelector(`[data-post-menu="${postMenuToggle.dataset.togglePostMenu}"]`);
+    const shouldOpen = Boolean(menu?.hidden);
+    closePostMenus();
+    if (menu && shouldOpen) {
+      menu.hidden = false;
+      postMenuToggle.setAttribute("aria-expanded", "true");
+    }
+    return;
+  }
+  if (!event.target.closest(".feed-post-menu")) closePostMenus();
+  else if (event.target.closest(".feed-post-menu-popover button")) closePostMenus();
   const likeMedia = event.target.closest("[data-like-media]");
   if (likeMedia) {
     event.preventDefault();
