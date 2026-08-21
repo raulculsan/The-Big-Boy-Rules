@@ -233,6 +233,7 @@ let cursorFrame = null;
 let profileQuickMenuPressTimer = null;
 let profileQuickMenuPointer = null;
 let suppressProfileTabClick = false;
+let messageViewTransitioning = false;
 let sharingMedia = null;
 let activeMomentSequence = [];
 let activeMomentIndex = -1;
@@ -496,6 +497,60 @@ function resetSectionScroll(sectionId) {
   if (sectionId === "perfil") window.setTimeout(reset, 180);
 }
 
+function updateFloatingTabIndicator(sectionId) {
+  const navigationSection = sectionId === "privados" ? "chat" : sectionId;
+  const index = navLinks.findIndex(link => link.dataset.section === navigationSection);
+  if (index >= 0) document.getElementById("floatingTabBar")?.style.setProperty("--active-tab-index", String(index));
+}
+
+function messageTransitionSource() {
+  const activeSection = sections.find(section => section.classList.contains("active"));
+  if (!activeSection) return null;
+  if (activeSection.id === "chat") {
+    return activeSection.classList.contains("conversation-open")
+      ? activeSection.querySelector(".group-conversation")
+      : activeSection.querySelector(".chat-inbox");
+  }
+  if (activeSection.id === "privados") return activeSection.querySelector(".private-conversation");
+  return activeSection;
+}
+
+async function transitionMessageView(update, resolveTarget, {back = false} = {}) {
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (messageViewTransitioning || reducedMotion || typeof Element.prototype.animate !== "function") {
+    update();
+    return;
+  }
+  messageViewTransitioning = true;
+  document.body.classList.add("message-slide-transition");
+  const direction = back ? 1 : -1;
+  const source = messageTransitionSource();
+  let exitAnimation = null;
+  try {
+    if (source) {
+      exitAnimation = source.animate([
+        {transform: "translate3d(0,0,0)", opacity: 1},
+        {transform: `translate3d(${direction * 22}%,0,0)`, opacity: .38}
+      ], {duration: 155, easing: "cubic-bezier(.4,0,1,1)", fill: "forwards"});
+      await exitAnimation.finished.catch(() => {});
+      exitAnimation.cancel();
+    }
+    update();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const target = resolveTarget?.();
+    if (target) {
+      const enterAnimation = target.animate([
+        {transform: `translate3d(${back ? -100 : 100}%,0,0)`, opacity: .58},
+        {transform: "translate3d(0,0,0)", opacity: 1}
+      ], {duration: 310, easing: "cubic-bezier(.22,1,.36,1)"});
+      await enterAnimation.finished.catch(() => {});
+    }
+  } finally {
+    document.body.classList.remove("message-slide-transition");
+    messageViewTransitioning = false;
+  }
+}
+
 function goTo(sectionId) {
   closeProfileQuickMenu();
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
@@ -524,6 +579,7 @@ function goTo(sectionId) {
     link.classList.toggle("active", active);
     link.setAttribute("aria-current", active ? "page" : "false");
   });
+  updateFloatingTabIndicator(navigationSection);
   document.body.classList.toggle("chat-focus", sectionId === "privados");
   syncMobileViewport();
   const titles = {
@@ -562,38 +618,52 @@ function closeProfileQuickMenu() {
   }, 160);
 }
 
-function exitChatView() {
+async function exitChatView() {
   const groupSection = document.getElementById("chat");
   if (groupSection?.classList.contains("active") && groupSection.classList.contains("conversation-open")) {
-    groupSection.classList.remove("conversation-open");
-    document.body.classList.remove("chat-focus");
-    syncMobileViewport();
-    renderPrivateContacts();
-    history.replaceState(null, "", "#chat");
+    await transitionMessageView(() => {
+      groupSection.classList.remove("conversation-open");
+      document.body.classList.remove("chat-focus");
+      syncMobileViewport();
+      renderPrivateContacts();
+      history.replaceState(null, "", "#chat");
+    }, () => groupSection.querySelector(".chat-inbox"), {back: true});
     return;
   }
-  goTo(sectionBeforeChat && sectionBeforeChat !== "chat" && sectionBeforeChat !== "privados" ? sectionBeforeChat : "inicio");
+  const targetSection = sectionBeforeChat && sectionBeforeChat !== "chat" && sectionBeforeChat !== "privados" ? sectionBeforeChat : "inicio";
+  await transitionMessageView(() => goTo(targetSection), () => document.getElementById(targetSection), {back: true});
 }
 
-function backFromPrivateConversation() {
-  activePrivateMemberId = null;
-  renderPrivateConversation();
-  goTo("chat");
-  renderPrivateContacts();
+async function backFromPrivateConversation() {
+  await transitionMessageView(() => {
+    activePrivateMemberId = null;
+    renderPrivateConversation();
+    goTo("chat");
+    renderPrivateContacts();
+  }, () => document.querySelector("#chat .chat-inbox"), {back: true});
 }
 
-function openGroupConversation(channelId = activeChatChannelId) {
+async function openMessagesHub() {
+  await transitionMessageView(() => {
+    goTo("chat");
+    renderPrivateContacts();
+  }, () => document.querySelector("#chat .chat-inbox"));
+}
+
+async function openGroupConversation(channelId = activeChatChannelId) {
   if (channelId != null && chatChannels.some(channel => String(channel.id) === String(channelId))) {
     activeChatChannelId = channelId;
   }
-  goTo("chat");
   const groupSection = document.getElementById("chat");
-  groupSection.classList.add("conversation-open");
-  document.body.classList.add("chat-focus");
-  renderChatChannels();
-  renderMessages();
-  syncMobileViewport();
-  history.replaceState(null, "", "#chat");
+  await transitionMessageView(() => {
+    goTo("chat");
+    groupSection.classList.add("conversation-open");
+    document.body.classList.add("chat-focus");
+    renderChatChannels();
+    renderMessages();
+    syncMobileViewport();
+    history.replaceState(null, "", "#chat");
+  }, () => groupSection.querySelector(".group-conversation"));
 }
 
 function renderFeatured() {
@@ -1203,13 +1273,15 @@ function messagePreviewText(body, attachmentType) {
   return attachmentType ? "Archivo adjunto" : "Mensaje";
 }
 
-function openPrivateConversation(memberId) {
+async function openPrivateConversation(memberId) {
   const member = getMember(memberId);
   if (!member || member.id === currentUser?.id) return;
-  activePrivateMemberId = member.id;
-  renderPrivateContacts();
-  renderPrivateConversation();
-  goTo("privados");
+  await transitionMessageView(() => {
+    activePrivateMemberId = member.id;
+    renderPrivateContacts();
+    renderPrivateConversation();
+    goTo("privados");
+  }, () => document.querySelector("#privados .private-conversation"));
 }
 
 function renderPrivateConversation() {
@@ -4493,7 +4565,8 @@ document.addEventListener("keydown", event => {
 window.addEventListener("pagehide", closeStoryCamera);
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
-  if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
+  if (link.dataset.section === "chat") openMessagesHub();
+  else if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
   else goTo(link.dataset.section);
 }));
 document.getElementById("loginForm").addEventListener("submit", async event => {

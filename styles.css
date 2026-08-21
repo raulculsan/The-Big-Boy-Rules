@@ -1320,6 +1320,58 @@ body.light .message p {
   }
 }
 
+/* Navegación inferior: la selección se desplaza físicamente entre pestañas. */
+.floating-tab-bar {
+  --tab-shell-padding: 8px;
+  --active-tab-index: 0;
+  isolation: isolate;
+}
+.floating-tab-bar::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: var(--tab-shell-padding);
+  bottom: var(--tab-shell-padding);
+  left: var(--tab-shell-padding);
+  width: calc((100% - (var(--tab-shell-padding) * 2)) / 5);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(255,255,255,.14), rgba(214,166,46,.12));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.035);
+  transform: translate3d(calc(var(--active-tab-index) * 100%), 0, 0);
+  transition: transform .36s cubic-bezier(.22,1,.36,1), width .22s ease, inset .22s ease;
+  pointer-events: none;
+}
+.floating-tab-bar .app-tab { z-index: 1; }
+.floating-tab-bar .app-tab.active {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Las miniaturas del perfil respetan el encuadre original completo. */
+#perfil .profile-posts-grid .media-frame,
+#perfil .profile-posts-grid .media-view-button { background: #030407; }
+#perfil .profile-posts-grid .media-frame img,
+#perfil .profile-posts-grid .media-frame video {
+  object-fit: contain !important;
+  object-position: center;
+  background: #030407;
+}
+
+/* Transición de página y conversación en Mensajes. */
+body.message-slide-transition { overflow-x: hidden; }
+body.message-slide-transition .page-section.active { animation: none; }
+body.message-slide-transition .floating-tab-bar { pointer-events: none; }
+
+@media (max-width: 760px) {
+  .floating-tab-bar { --tab-shell-padding: 6px; }
+  body.mobile-header-hidden:not(.chat-focus) .floating-tab-bar { --tab-shell-padding: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-tab-bar::before { transition: none; }
+}
+
 /* Foto del grupo: editor independiente con el mismo patrón de navegación del perfil. */
 body.group-avatar-editor-open { overflow: hidden; }
 body.group-avatar-editor-open .floating-tab-bar { visibility: hidden; }
