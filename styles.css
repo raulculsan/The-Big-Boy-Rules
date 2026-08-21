@@ -1320,6 +1320,241 @@ body.light .message p {
   }
 }
 
+/* Edición de perfil: pantalla dedicada en móvil, diálogo compacto en escritorio. */
+body.profile-editor-open { overflow: hidden; }
+body.profile-editor-open .floating-tab-bar { visibility: hidden; }
+.profile-editor-back svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 760px) {
+  #profileEditor,
+  body.standalone-app #profileEditor {
+    z-index: 2650;
+    display: block;
+    padding: 0;
+    overflow: hidden;
+    background: #08090d;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  #profileEditor .profile-editor-modal,
+  body.standalone-app #profileEditor .profile-editor-modal {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: #08090d;
+    box-shadow: none;
+    overscroll-behavior: contain;
+    transform: translate3d(100%, 0, 0);
+    transition: transform .26s cubic-bezier(.22, 1, .36, 1);
+  }
+  #profileEditor.open .profile-editor-modal,
+  body.standalone-app #profileEditor.open .profile-editor-modal {
+    transform: translate3d(0, 0, 0);
+  }
+  #profileEditor .modal-heading {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    min-height: calc(64px + env(safe-area-inset-top, 0px));
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    align-items: center;
+    margin: 0;
+    padding: max(8px, env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) 8px calc(12px + env(safe-area-inset-left, 0px));
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    background: rgba(8,9,13,.98);
+  }
+  #profileEditor .modal-heading > div {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    text-align: center;
+  }
+  #profileEditor .modal-heading .eyebrow { display: none; }
+  #profileEditor .modal-heading h2 {
+    margin: 0;
+    overflow: hidden;
+    color: #f5f5f7;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 850;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #profileEditor .profile-editor-back {
+    grid-column: 1;
+    grid-row: 1;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 50%;
+    color: #f6f6f7;
+    background: #25282e;
+  }
+  #profileEditor .profile-form {
+    display: block;
+    padding: 0 0 calc(92px + env(safe-area-inset-bottom, 0px));
+  }
+  #profileEditor .avatar-editor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 28px 18px 24px;
+    border: 0;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    border-radius: 0;
+    background: #08090d;
+  }
+  #profileEditor .avatar-editor .avatar-preview {
+    width: 116px;
+    height: 116px;
+    flex: 0 0 116px;
+    border: 2px solid rgba(255,255,255,.18);
+    color: #fff;
+    background: linear-gradient(145deg, #d8ad3f, #906b0a);
+    box-shadow: 0 0 0 4px #08090d, 0 0 0 5px rgba(255,255,255,.13);
+    font-size: 2.4rem;
+  }
+  #profileEditor .avatar-actions {
+    justify-content: center;
+    gap: 16px;
+  }
+  #profileEditor .avatar-actions .file-button,
+  #profileEditor .avatar-actions .text-button {
+    min-height: 34px;
+    padding: 5px 7px;
+    border: 0;
+    color: #8aa5ff;
+    background: transparent;
+    box-shadow: none;
+    font-size: .75rem;
+    font-weight: 800;
+  }
+  #profileEditor .avatar-actions .danger-text { color: #bdc0c8; }
+  #profileEditor .avatar-editor > small {
+    margin: -4px 0 0;
+    color: #747780;
+    font-size: .58rem;
+  }
+  #profileEditor .avatar-cropper {
+    width: min(100%, 360px);
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 18px;
+    margin-top: 8px;
+    padding-top: 20px;
+  }
+  #profileEditor .avatar-cropper[hidden] { display: none; }
+  #profileEditor .avatar-crop-stage { width: min(230px, 70vw); }
+  #profileEditor .avatar-crop-controls { width: 100%; }
+  #profileEditor .profile-form > label,
+  #profileEditor .admin-profile-fields > label {
+    min-height: 64px;
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+    margin: 0;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  #profileEditor .profile-form > label > span,
+  #profileEditor .admin-profile-fields > label > span {
+    grid-column: 1;
+    margin: 0;
+    color: #f1f1f3;
+    font-size: .74rem;
+    font-weight: 650;
+  }
+  #profileEditor .profile-form input,
+  #profileEditor .profile-form textarea,
+  #profileEditor .profile-form select {
+    grid-column: 2;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 0;
+    border: 0;
+    border-radius: 0;
+    color: #ececef;
+    background: transparent;
+    box-shadow: none;
+    font-size: .76rem;
+  }
+  #profileEditor .profile-form input:focus,
+  #profileEditor .profile-form textarea:focus,
+  #profileEditor .profile-form select:focus {
+    border: 0;
+    box-shadow: inset 0 -1px #8aa5ff;
+  }
+  #profileEditor .profile-form input:disabled {
+    opacity: 1;
+    color: #9b9ea7;
+    -webkit-text-fill-color: #9b9ea7;
+  }
+  #profileEditor .profile-form textarea {
+    min-height: 70px;
+    resize: none;
+  }
+  #profileEditor .profile-form > label > small,
+  #profileEditor .admin-profile-fields > label > small {
+    grid-column: 2;
+    margin: -5px 0 5px;
+    color: #777a84;
+    font-size: .55rem;
+    line-height: 1.35;
+  }
+  #profileEditor .admin-profile-fields {
+    display: block;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  #profileEditor .admin-profile-fields[hidden] { display: none; }
+  #profileEditor .admin-profile-fields-heading { display: none; }
+  #profileEditor .form-feedback {
+    min-height: 24px;
+    padding: 8px 16px 0;
+    font-size: .65rem;
+  }
+  #profileEditor .modal-actions {
+    position: sticky;
+    z-index: 18;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-top: 8px;
+    padding: 10px calc(14px + env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) calc(14px + env(safe-area-inset-left, 0px));
+    border-top: 1px solid rgba(255,255,255,.09);
+    background: rgba(8,9,13,.98);
+  }
+  #profileEditor #cancelProfileEditor { display: none; }
+  #profileEditor .modal-actions .primary-button {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 12px;
+  }
+}
+
 /* Zonas seguras globales de la PWA: ningún panel queda bajo la isla dinámica ni el indicador inferior. */
 body.standalone-app {
   --pwa-safe-top: env(safe-area-inset-top, 0px);

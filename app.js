@@ -2688,8 +2688,15 @@ function openProfileEditor(memberId = currentUser?.id) {
   const managingAnotherUser = canManageSite() && profile.id !== currentUser?.id;
   document.querySelector("#profileEditor .eyebrow").textContent = managingAnotherUser ? "ADMINISTRACIÓN" : "MI PERFIL";
   document.getElementById("profileEditorTitle").textContent = managingAnotherUser ? `Editar a ${profile.name}` : "Editar perfil";
-  document.getElementById("adminProfileFields").hidden = !managingAnotherUser;
+  document.getElementById("adminProfileFields").hidden = false;
   document.getElementById("profileUsername").value = profile.username;
+  document.getElementById("profileUsername").disabled = !managingAnotherUser;
+  document.getElementById("profileUsernameHelp").textContent = managingAnotherUser
+    ? "Entre 3 y 32 caracteres; letras, números, punto, guion o guion bajo."
+    : "El @ solo puede cambiarlo un administrador.";
+  document.getElementById("profileRoleField").hidden = !managingAnotherUser;
+  document.querySelector("#adminProfileFields .admin-profile-fields-heading span").textContent = managingAnotherUser ? "GESTIÓN DE CUENTA" : "IDENTIDAD DE LA CUENTA";
+  document.querySelector("#adminProfileFields .admin-profile-fields-heading small").textContent = managingAnotherUser ? "Solo visible para administradores" : "El @ solo puede cambiarlo un administrador";
   document.getElementById("profileRole").value = profile.roleKey === "admin" ? "admin" : "member";
   document.getElementById("profileNickname").value = profile.nickname;
   document.getElementById("profileFlag").value = profile.countryFlag || "";
@@ -2703,12 +2710,14 @@ function openProfileEditor(memberId = currentUser?.id) {
   const modal = document.getElementById("profileEditor");
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("profile-editor-open");
 }
 
 function closeProfileEditor() {
   const modal = document.getElementById("profileEditor");
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("profile-editor-open");
   editingProfileId = null;
   resetAvatarCropEditor();
 }
