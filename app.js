@@ -643,13 +643,6 @@ async function backFromPrivateConversation() {
   }, () => document.querySelector("#chat .chat-inbox"), {back: true});
 }
 
-async function openMessagesHub() {
-  await transitionMessageView(() => {
-    goTo("chat");
-    renderPrivateContacts();
-  }, () => document.querySelector("#chat .chat-inbox"));
-}
-
 async function openGroupConversation(channelId = activeChatChannelId) {
   if (channelId != null && chatChannels.some(channel => String(channel.id) === String(channelId))) {
     activeChatChannelId = channelId;
@@ -4565,8 +4558,7 @@ document.addEventListener("keydown", event => {
 window.addEventListener("pagehide", closeStoryCamera);
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
-  if (link.dataset.section === "chat") openMessagesHub();
-  else if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
+  if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
   else goTo(link.dataset.section);
 }));
 document.getElementById("loginForm").addEventListener("submit", async event => {
