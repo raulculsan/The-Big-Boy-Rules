@@ -1320,6 +1320,159 @@ body.light .message p {
   }
 }
 
+/* Foto del grupo: editor independiente con el mismo patrón de navegación del perfil. */
+body.group-avatar-editor-open { overflow: hidden; }
+body.group-avatar-editor-open .floating-tab-bar { visibility: hidden; }
+#groupAvatarEditor,
+body.standalone-app #groupAvatarEditor {
+  z-index: 2660;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  background: #08090d;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+#groupAvatarEditor .group-avatar-editor,
+body.standalone-app #groupAvatarEditor .group-avatar-editor {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #08090d;
+  box-shadow: none;
+  transform: translate3d(32px, 0, 0);
+  transition: transform .25s cubic-bezier(.22, 1, .36, 1);
+}
+#groupAvatarEditor.open .group-avatar-editor,
+body.standalone-app #groupAvatarEditor.open .group-avatar-editor { transform: translate3d(0, 0, 0); }
+#groupAvatarEditor .modal-heading {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 10px max(22px, calc((100vw - 760px) / 2));
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: rgba(8,9,13,.98);
+}
+#groupAvatarEditor .modal-heading > div {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  text-align: center;
+}
+#groupAvatarEditor .modal-heading .eyebrow { display: none; }
+#groupAvatarEditor .modal-heading h2 {
+  margin: 0;
+  overflow: hidden;
+  color: #f5f5f7;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#groupAvatarEditor .profile-editor-back {
+  grid-column: 1;
+  grid-row: 1;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  color: #f6f6f7;
+  background: #25282e;
+}
+#groupAvatarEditor .group-avatar-page-form {
+  width: min(560px, calc(100% - 36px));
+  min-height: calc(100dvh - 72px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 18px;
+  margin: 0 auto;
+  padding: 42px 0 max(32px, env(safe-area-inset-bottom, 0px));
+}
+#groupAvatarEditor .group-avatar-preview {
+  width: 184px;
+  height: 184px;
+  flex: 0 0 184px;
+  margin: 0 auto 8px;
+  border: 2px solid rgba(255,255,255,.2);
+  box-shadow: 0 0 0 6px #08090d, 0 0 0 7px rgba(255,255,255,.13), 0 24px 58px rgba(0,0,0,.42);
+}
+#groupAvatarEditor .group-avatar-file-button {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-radius: 12px;
+}
+#groupAvatarEditor .group-avatar-help {
+  color: #858891;
+  font-size: .66rem;
+  line-height: 1.5;
+}
+#groupAvatarEditor .form-feedback {
+  width: 100%;
+  min-height: 20px;
+  margin: 0;
+  text-align: center;
+}
+#groupAvatarEditor .modal-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 2px 0 0;
+}
+#groupAvatarEditor .modal-actions button { width: 100%; min-height: 46px; margin: 0; }
+#groupAvatarEditor #cancelGroupAvatarEditor { display: none; }
+#groupAvatarEditor #removeGroupAvatarButton {
+  color: #ff9c9c;
+  border: 1px solid rgba(225,77,77,.28);
+  border-radius: 12px;
+  background: rgba(150,35,35,.1);
+}
+
+@media (max-width: 760px) {
+  #groupAvatarEditor .modal-heading {
+    min-height: calc(64px + env(safe-area-inset-top, 0px));
+    padding: max(8px, env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) 8px calc(12px + env(safe-area-inset-left, 0px));
+  }
+  #groupAvatarEditor .profile-editor-back { width: 42px; height: 42px; }
+  #groupAvatarEditor .group-avatar-page-form {
+    width: min(100% - 32px, 430px);
+    min-height: calc(100dvh - 64px - env(safe-area-inset-top, 0px));
+    justify-content: flex-start;
+    padding-top: clamp(42px, 9vh, 76px);
+  }
+  #groupAvatarEditor .group-avatar-preview {
+    width: 148px;
+    height: 148px;
+    flex-basis: 148px;
+  }
+  #groupAvatarEditor .modal-actions {
+    margin-top: auto;
+    padding-top: 12px;
+  }
+}
+
 /* Edición de perfil: pantalla dedicada en móvil, diálogo compacto en escritorio. */
 body.profile-editor-open { overflow: hidden; }
 body.profile-editor-open .floating-tab-bar { visibility: hidden; }

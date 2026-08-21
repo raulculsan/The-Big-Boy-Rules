@@ -2645,12 +2645,14 @@ function openGroupAvatarEditor() {
   const modal = document.getElementById("groupAvatarEditor");
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("group-avatar-editor-open");
 }
 
 function closeGroupAvatarEditor() {
   const modal = document.getElementById("groupAvatarEditor");
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("group-avatar-editor-open");
   pendingGroupAvatarFile = null;
   if (groupAvatarPreviewUrl) URL.revokeObjectURL(groupAvatarPreviewUrl);
   groupAvatarPreviewUrl = "";
