@@ -24,12 +24,32 @@ let members = baseMembers.map((item, index) => ({
   avatarUrl: "",
   bg: `linear-gradient(145deg, ${item[6]}, #0c0c0e 68%)`
 }));
+let membersById = new Map();
+let membersByAuthId = new Map();
+
+function rebuildMemberIndexes() {
+  membersById = new Map(members.map(member => [Number(member.id), member]));
+  membersByAuthId = new Map(members.filter(member => member.authId).map(member => [member.authId, member]));
+}
+
+rebuildMemberIndexes();
 
 const config = window.BIG_BOY_CONFIG || {};
 const backendReady = Boolean(config.supabaseUrl && config.supabasePublishableKey && window.supabase);
 const db = backendReady
   ? window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey)
   : null;
+
+if (backendReady) {
+  const backendOrigin = new URL(config.supabaseUrl).origin;
+  ["preconnect", "dns-prefetch"].forEach(rel => {
+    const link = document.createElement("link");
+    link.rel = rel;
+    link.href = backendOrigin;
+    if (rel === "preconnect") link.crossOrigin = "anonymous";
+    document.head.appendChild(link);
+  });
+}
 const AUTH_STORAGE_KEY = "bb-auth-session";
 const AUTH_SESSION_KEY = "bb-auth-temporary";
 const PROFILE_STORAGE_KEY = "bb-local-profiles";
@@ -244,7 +264,25 @@ let momentGesture = null;
 let momentPressStartedAt = 0;
 let suppressMomentNavigationClick = false;
 let replyingMedia = null;
+let achievementsLoaded = false;
+let helpCenterLoaded = false;
+let achievementsLoading = false;
+let helpCenterLoading = false;
 const realtimeRefreshTimers = new Map();
+const pendingMediaLikes = new Set();
+
+function runWhenIdle(callback, timeout = 1200) {
+  if ("requestIdleCallback" in window) return window.requestIdleCallback(callback, {timeout});
+  return window.setTimeout(callback, Math.min(timeout, 300));
+}
+
+function debounce(callback, delay = 90) {
+  let timer = null;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = window.setTimeout(() => callback(...args), delay);
+  };
+}
 
 function scheduleRealtimeRefresh(key, loader, delay = 180) {
   clearTimeout(realtimeRefreshTimers.get(key));
@@ -254,10 +292,10 @@ function scheduleRealtimeRefresh(key, loader, delay = 180) {
   }, delay));
 }
 
+const HTML_ENTITIES = Object.freeze({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"});
+
 function escapeHtml(value = "") {
-  const node = document.createElement("div");
-  node.textContent = value;
-  return node.innerHTML;
+  return (value == null ? "" : String(value)).replace(/[&<>"']/g, character => HTML_ENTITIES[character]);
 }
 
 function formatLimit(limit) {
@@ -391,16 +429,16 @@ function canManageSite() {
 }
 
 function getMember(id) {
-  return members.find(member => member.id === Number(id));
+  return membersById.get(Number(id));
 }
 
 function getMemberByAuthId(id) {
-  return members.find(member => member.authId === id);
+  return membersByAuthId.get(id);
 }
 
 function getAvatar(member, className = "avatar") {
   if (member?.avatarUrl) {
-    return `<div class="${className} has-image"><img src="${escapeHtml(member.avatarUrl)}" alt="Foto de ${escapeHtml(member.name)}" decoding="async"></div>`;
+    return `<div class="${className} has-image"><img src="${escapeHtml(member.avatarUrl)}" alt="Foto de ${escapeHtml(member.name)}" loading="lazy" decoding="async"></div>`;
   }
   return `<div class="${className}">${escapeHtml(member?.name?.charAt(0).toUpperCase() || "U")}</div>`;
 }
@@ -409,6 +447,7 @@ function applyStoredProfiles() {
   try {
     const stored = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY) || "{}");
     members = members.map(member => ({...member, ...(stored[member.id] || {})}));
+    rebuildMemberIndexes();
   } catch {
     localStorage.removeItem(PROFILE_STORAGE_KEY);
   }
@@ -595,6 +634,7 @@ function goTo(sectionId) {
   if (sectionId === "buscar") renderCalendar();
   if (sectionId === "contenido") selectContentTab(activeContentTab);
   if (sectionId === "ayuda" && currentUser) loadHelpCenter();
+  if (["perfil", "administracion"].includes(sectionId) && currentUser && !achievementsLoaded) loadAchievements();
 }
 
 function openProfileQuickMenu() {
@@ -858,15 +898,15 @@ function postOptionsIcon() {
   return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14M8 16h11"/></svg>`;
 }
 
-function renderFeedPostCard(item, canDelete) {
+function renderFeedPostCard(item, canDelete, cardIndex = 0) {
   const member = getMember(item.member);
   const likes = getMediaLikes("post", item.id);
   const liked = Boolean(currentAuthUser && likes.some(like => like.userId === currentAuthUser.id));
   const memberName = member?.name || "Miembro";
   const username = member?.username || normalizeUsername(memberName);
   const media = item.mediaType === "video"
-    ? `<video src="${escapeHtml(item.mediaUrl)}" controls playsinline preload="metadata"></video>`
-    : `<button class="media-view-button" type="button" data-open-content-kind="post" data-open-content-id="${item.id}" aria-label="Abrir publicación de ${escapeHtml(memberName)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${memberName}`)}" loading="lazy" decoding="async"></button>`;
+    ? `<video src="${escapeHtml(item.mediaUrl)}" controls playsinline preload="${cardIndex === 0 ? "metadata" : "none"}"></video>`
+    : `<button class="media-view-button" type="button" data-open-content-kind="post" data-open-content-id="${item.id}" aria-label="Abrir publicación de ${escapeHtml(memberName)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${memberName}`)}" loading="${cardIndex === 0 ? "eager" : "lazy"}" decoding="async"${cardIndex === 0 ? ` fetchpriority="high"` : ""}></button>`;
   return `<article class="profile-post-card feed-post-card" data-media-card-kind="post" data-media-card-id="${item.id}">
     <header class="feed-post-header">
       <button class="feed-post-author" type="button" data-profile="${item.member}" aria-label="Ver perfil de ${escapeHtml(memberName)}">
@@ -963,7 +1003,6 @@ function renderMessages() {
     </div>`;
   }).join("");
   scrollConversationToLatest(container);
-  renderPrivateContacts();
 }
 
 function scrollConversationToLatest(container) {
@@ -1162,6 +1201,7 @@ function renderMoments() {
   status.textContent = moments.length ? `${moments.length} ${moments.length === 1 ? "historia activa" : "historias activas"}` : "";
   if (!moments.length) {
     grid.innerHTML = `<div class="stories-empty"><strong>Sin momentos</strong><span>Sube el primero.</span></div>`;
+    grid.dataset.renderSignature = "";
     return;
   }
   const groups = new Map();
@@ -1209,6 +1249,7 @@ function renderMoments() {
       openMoment(button.dataset.openMoment);
     });
   });
+  grid.dataset.renderSignature = moments.map(item => `${item.id}:${getMediaLikes("moment", item.id).length}`).join("|");
 }
 
 function renderPublications() {
@@ -1216,12 +1257,15 @@ function renderPublications() {
   if (!feed) return;
   if (!profilePosts.length) {
     feed.innerHTML = `<div class="empty-state publications-empty"><strong>Todavía no hay publicaciones</strong><span>Comparte una foto desde aquí o desde tu perfil.</span></div>`;
+    feed.dataset.renderSignature = "";
     return;
   }
-  feed.innerHTML = profilePosts.map(item => renderFeedPostCard(
+  feed.innerHTML = profilePosts.map((item, index) => renderFeedPostCard(
     item,
-    isMediaOwner(item) || isSuperAdmin()
+    isMediaOwner(item) || isSuperAdmin(),
+    index
   )).join("");
+  feed.dataset.renderSignature = profilePosts.map(item => `${item.id}:${getMediaLikes("post", item.id).length}`).join("|");
 }
 
 function renderPrivateContacts() {
@@ -1234,12 +1278,16 @@ function renderPrivateContacts() {
   const groupPreview = latestGroupMessage
     ? messagePreviewText(latestGroupMessage.text, latestGroupMessage.attachmentType)
     : "Empieza la conversación del grupo";
-  const contacts = members.filter(member => member.id !== currentUser.id).map(member => {
-    const conversation = privateMessages.filter(message =>
-      [message.senderId, message.recipientId].includes(member.authId));
-    const latest = conversation.at(-1);
-    return {member, latest};
-  }).sort((a, b) => {
+  const latestByMember = new Map();
+  privateMessages.forEach(message => {
+    const otherAuthId = message.senderId === currentAuthUser?.id ? message.recipientId
+      : message.recipientId === currentAuthUser?.id ? message.senderId : null;
+    if (otherAuthId) latestByMember.set(otherAuthId, message);
+  });
+  const contacts = members.filter(member => member.id !== currentUser.id).map(member => ({
+    member,
+    latest: latestByMember.get(member.authId)
+  })).sort((a, b) => {
     const aTime = a.latest ? new Date(a.latest.createdAt).getTime() : 0;
     const bTime = b.latest ? new Date(b.latest.createdAt).getTime() : 0;
     return bTime - aTime || a.member.name.localeCompare(b.member.name, "es");
@@ -1510,12 +1558,14 @@ function renderAdminAchievements() {
 }
 
 async function loadAchievements() {
-  if (!backendReady || !currentAuthUser) return;
+  if (!backendReady || !currentAuthUser || achievementsLoading) return;
+  achievementsLoading = true;
   const [definitionsResult, awardsResult] = await Promise.all([
     db.from("achievements").select("id,name,description,tier,icon,created_by,created_at").order("created_at", {ascending: false}),
     db.from("achievement_awards").select("id,achievement_id,user_id,awarded_by,awarded_at").order("awarded_at", {ascending: false}),
   ]);
   const feedback = document.getElementById("achievementFeedback");
+  achievementsLoaded = true;
   if (definitionsResult.error || awardsResult.error) {
     achievements = [];
     achievementAwards = [];
@@ -1533,6 +1583,7 @@ async function loadAchievements() {
   }
   renderAdminAchievements();
   if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
+  achievementsLoading = false;
 }
 
 async function createAchievement(form) {
@@ -1647,11 +1698,19 @@ async function applyUserInterface(user, authUser = null) {
   renderPrivateContacts();
   renderPrivateConversation();
   renderCalendar();
+  renderMoments();
+  renderPublications();
+  renderNotifications();
+  renderSpotify();
+  renderHelpCenter();
+  renderAdminAchievements();
   if (backendReady && authUser) {
-    await loadRemoteProfiles();
-    await loadChatChannels();
-    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadNotifications(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings(), loadHelpCenter(), loadAchievements()]);
+    await Promise.all([loadRemoteProfiles(), loadChatChannels()]);
+    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadNotifications(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()]);
     connectRealtime();
+    runWhenIdle(() => {
+      if (currentAuthUser && !achievementsLoaded) loadAchievements();
+    });
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
     renderPresence();
@@ -1702,6 +1761,10 @@ async function logoutCurrentUser() {
   helpMessages = [];
   achievements = [];
   achievementAwards = [];
+  achievementsLoaded = false;
+  helpCenterLoaded = false;
+  achievementsLoading = false;
+  helpCenterLoading = false;
   activeHelpRequestId = null;
   activeChatChannelId = null;
   if (db && presenceChannel) db.removeChannel(presenceChannel);
@@ -1846,6 +1909,8 @@ function mergeRemoteProfile(profile, expectedAuthId = currentAuthUser?.id) {
     countryFlag: profile.country_flag || "",
     avatarUrl: profile.avatar_url || ""
   });
+  membersById.set(Number(member.id), member);
+  if (member.authId) membersByAuthId.set(member.authId, member);
   return member;
 }
 
@@ -1853,6 +1918,7 @@ async function loadRemoteProfiles() {
   const {data, error} = await db.from("profiles").select("*").order("legacy_id");
   if (error) return;
   data.forEach(mergeRemoteProfile);
+  rebuildMemberIndexes();
   if (!currentUser.hidden) currentUser = getMember(currentUser.id);
   refreshProfileSurfaces();
 }
@@ -1866,6 +1932,10 @@ async function loadMessages() {
     return;
   }
   messages = data.map(mapMessage);
+  refreshGroupMessageSurfaces();
+}
+
+function refreshGroupMessageSurfaces() {
   renderMessages();
   renderPrivateContacts();
   renderActivity();
@@ -1878,6 +1948,25 @@ function mapMessage(item) {
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
     createdAt: item.created_at
   };
+}
+
+function applyRealtimeChange(collection, payload, mapper) {
+  const record = payload.new && Object.keys(payload.new).length ? payload.new : payload.old;
+  const id = record?.id;
+  if (id == null) return collection;
+  if (payload.eventType === "DELETE") return collection.filter(item => String(item.id) !== String(id));
+  const mapped = mapper(record);
+  const index = collection.findIndex(item => String(item.id) === String(id));
+  if (index < 0) return [...collection, mapped];
+  const updated = collection.slice();
+  updated[index] = mapped;
+  return updated;
+}
+
+function handleRealtimeMessage(payload) {
+  messages = applyRealtimeChange(messages, payload, mapMessage)
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  refreshGroupMessageSurfaces();
 }
 
 async function loadChatChannels() {
@@ -1898,18 +1987,48 @@ function mapMedia(item) {
   };
 }
 
+function refreshMomentSurfaces() {
+  if (document.getElementById("contenido")?.classList.contains("active") && activeContentTab === "momentos") renderMoments();
+  else document.getElementById("momentsGrid")?.removeAttribute("data-render-signature");
+  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
+}
+
+function refreshPostSurfaces() {
+  if (document.getElementById("contenido")?.classList.contains("active") && activeContentTab === "publicaciones") renderPublications();
+  else document.getElementById("publicationsFeed")?.removeAttribute("data-render-signature");
+  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
+  if (!activePostViewerId) return;
+  if (profilePosts.some(item => String(item.id) === String(activePostViewerId))) renderPostViewer(activePostViewerId);
+  else closePostViewer();
+}
+
+function handleRealtimeMoment(payload) {
+  moments = applyRealtimeChange(moments, payload, mapMedia)
+    .filter(item => !item.expiresAt || new Date(item.expiresAt) > new Date())
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  refreshMomentSurfaces();
+}
+
+function handleRealtimePost(payload) {
+  profilePosts = applyRealtimeChange(profilePosts, payload, mapMedia)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  refreshPostSurfaces();
+}
+
 function getMediaLikes(kind, mediaId) {
   return mediaLikesIndex.get(`${kind}:${mediaId}`) || [];
 }
 
-async function loadMediaLikes() {
-  const {data, error} = await db.from("media_likes").select("id,user_id,moment_id,profile_post_id");
-  mediaLikes = error ? [] : data.map(item => ({
+function mapMediaLike(item) {
+  return {
     id: item.id,
     userId: item.user_id,
     kind: item.moment_id != null ? "moment" : "post",
     mediaId: item.moment_id ?? item.profile_post_id
-  }));
+  };
+}
+
+function rebuildMediaLikesIndex() {
   mediaLikesIndex = new Map();
   mediaLikes.forEach(like => {
     const key = `${like.kind}:${like.mediaId}`;
@@ -1917,27 +2036,104 @@ async function loadMediaLikes() {
     indexed.push(like);
     mediaLikesIndex.set(key, indexed);
   });
-  if (document.getElementById("contenido")?.classList.contains("active")) selectContentTab(activeContentTab);
-  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
-  if (activePostViewerId) renderPostViewer(activePostViewerId);
 }
 
-async function toggleMediaLike(kind, mediaId, button) {
+function syncMediaLikeControls(kind, mediaId) {
+  const likes = getMediaLikes(kind, mediaId);
+  const liked = Boolean(currentAuthUser && likes.some(like => like.userId === currentAuthUser.id));
+  const pending = pendingMediaLikes.has(`${kind}:${mediaId}`);
+  const escapedId = window.CSS?.escape ? CSS.escape(String(mediaId)) : String(mediaId).replace(/["\\]/g, "\\$&");
+  document.querySelectorAll(`[data-like-kind="${kind}"][data-like-media="${escapedId}"]`).forEach(control => {
+    control.disabled = pending;
+    control.setAttribute("aria-pressed", String(liked));
+    control.setAttribute("aria-label", liked ? "Quitar Me gusta" : "Dar Me gusta");
+    if (control.matches(".feed-post-like-summary, .post-viewer-likes")) {
+      control.textContent = likes.length ? `${likes.length} Me gusta` : "Sé el primero en dar Me gusta";
+      return;
+    }
+    if (!control.classList.contains("media-like-button")) return;
+    control.classList.toggle("liked", liked);
+    const icon = control.querySelector("svg");
+    if (icon) icon.outerHTML = mediaActionIcon("like", liked);
+    const inlineCount = [...control.children].find(child => child.tagName === "STRONG");
+    const shouldShowInlineCount = Boolean(control.closest("[data-media-card-kind]") && !control.closest(".feed-post-card, .post-viewer-post"));
+    if (shouldShowInlineCount && likes.length) {
+      const count = inlineCount || document.createElement("strong");
+      count.textContent = String(likes.length);
+      if (!inlineCount) control.querySelector("small")?.before(count);
+    } else {
+      inlineCount?.remove();
+    }
+  });
+}
+
+function syncContentLikeSignatures() {
+  const momentsGrid = document.getElementById("momentsGrid");
+  const publicationsFeed = document.getElementById("publicationsFeed");
+  if (momentsGrid?.dataset.renderSignature != null) momentsGrid.dataset.renderSignature = moments.map(item => `${item.id}:${getMediaLikes("moment", item.id).length}`).join("|");
+  if (publicationsFeed?.dataset.renderSignature != null) publicationsFeed.dataset.renderSignature = profilePosts.map(item => `${item.id}:${getMediaLikes("post", item.id).length}`).join("|");
+}
+
+async function loadMediaLikes() {
+  const {data, error} = await db.from("media_likes").select("id,user_id,moment_id,profile_post_id");
+  if (error) return;
+  const previousKeys = new Set(mediaLikes.map(like => `${like.kind}:${like.mediaId}`));
+  mediaLikes = data.map(mapMediaLike);
+  rebuildMediaLikesIndex();
+  mediaLikes.forEach(like => previousKeys.add(`${like.kind}:${like.mediaId}`));
+  previousKeys.forEach(key => {
+    const separator = key.indexOf(":");
+    syncMediaLikeControls(key.slice(0, separator), key.slice(separator + 1));
+  });
+  syncContentLikeSignatures();
+}
+
+function handleRealtimeMediaLike(payload) {
+  const record = payload.new && Object.keys(payload.new).length ? payload.new : payload.old;
+  const previous = mediaLikes.find(like => String(like.id) === String(record?.id));
+  const mapped = payload.eventType === "DELETE" ? previous : record?.id != null ? mapMediaLike(record) : null;
+  if (mapped && payload.eventType === "INSERT") {
+    mediaLikes = mediaLikes.filter(like => !(like.userId === mapped.userId && like.kind === mapped.kind && String(like.mediaId) === String(mapped.mediaId)));
+  }
+  mediaLikes = applyRealtimeChange(mediaLikes, payload, mapMediaLike);
+  rebuildMediaLikesIndex();
+  const affected = mapped || previous;
+  if (affected) syncMediaLikeControls(affected.kind, affected.mediaId);
+  syncContentLikeSignatures();
+}
+
+async function toggleMediaLike(kind, mediaId) {
   if (!backendReady || !currentAuthUser || !["moment", "post"].includes(kind)) return;
+  const key = `${kind}:${mediaId}`;
+  if (pendingMediaLikes.has(key)) return;
   const existing = getMediaLikes(kind, mediaId).find(like => like.userId === currentAuthUser.id);
-  button.disabled = true;
+  const previousLikes = mediaLikes.slice();
+  pendingMediaLikes.add(key);
+  if (existing) mediaLikes = mediaLikes.filter(like => like !== existing);
+  else mediaLikes.push({id: `optimistic-${key}`, userId: currentAuthUser.id, kind, mediaId});
+  rebuildMediaLikesIndex();
+  syncMediaLikeControls(kind, mediaId);
+  syncContentLikeSignatures();
   try {
     let result;
     if (existing) result = await db.from("media_likes").delete().eq("id", existing.id).eq("user_id", currentAuthUser.id);
     else result = await db.from("media_likes").insert({user_id: currentAuthUser.id, moment_id: kind === "moment" ? mediaId : null, profile_post_id: kind === "post" ? mediaId : null}).select("id").single();
     const {data, error} = result;
     if (error) throw error;
-    if (!existing) dispatchPush("like", data?.id);
-    await loadMediaLikes();
+    if (!existing) {
+      const optimistic = mediaLikes.find(like => like.id === `optimistic-${key}`);
+      if (optimistic && data?.id) optimistic.id = data.id;
+      dispatchPush("like", data?.id);
+    }
   } catch (error) {
+    mediaLikes = previousLikes;
+    rebuildMediaLikesIndex();
+    syncMediaLikeControls(kind, mediaId);
+    syncContentLikeSignatures();
     window.alert(error.message || "No se pudo guardar el Me gusta.");
   } finally {
-    button.disabled = false;
+    pendingMediaLikes.delete(key);
+    syncMediaLikeControls(kind, mediaId);
   }
 }
 
@@ -1950,18 +2146,13 @@ async function loadMoments() {
   } else {
     moments = data.map(mapMedia);
   }
-  if (document.getElementById("contenido")?.classList.contains("active") && activeContentTab === "momentos") renderMoments();
+  refreshMomentSurfaces();
 }
 
 async function loadProfilePosts() {
   const {data, error} = await db.from("profile_posts").select("*").order("created_at", {ascending: false});
   profilePosts = error ? [] : data.map(mapMedia);
-  if (document.getElementById("contenido")?.classList.contains("active") && activeContentTab === "publicaciones") renderPublications();
-  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
-  if (activePostViewerId) {
-    if (profilePosts.some(item => String(item.id) === String(activePostViewerId))) renderPostViewer(activePostViewerId);
-    else closePostViewer();
-  }
+  refreshPostSurfaces();
 }
 
 function renderNotifications() {
@@ -2004,7 +2195,12 @@ function renderNotifications() {
 async function loadNotifications() {
   const {data, error} = await db.from("notifications").select("*")
     .order("created_at", {ascending: false}).limit(100);
-  notifications = error ? [] : data.map(item => ({
+  notifications = error ? [] : data.map(mapNotification);
+  renderNotifications();
+}
+
+function mapNotification(item) {
+  return {
     id: item.id,
     actorId: item.actor_id,
     type: item.type,
@@ -2013,25 +2209,44 @@ async function loadNotifications() {
     excerpt: item.excerpt || "",
     readAt: item.read_at,
     createdAt: item.created_at
-  }));
+  };
+}
+
+function handleRealtimeNotification(payload) {
+  notifications = applyRealtimeChange(notifications, payload, mapNotification)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 100);
   renderNotifications();
 }
 
 async function markNotificationsRead(id = null) {
   if (!currentAuthUser) return;
-  let query = db.from("notifications").update({read_at: new Date().toISOString()})
+  const previous = notifications.map(item => ({...item}));
+  const readAt = new Date().toISOString();
+  notifications = notifications.map(item => id == null || String(item.id) === String(id) ? {...item, readAt: item.readAt || readAt} : item);
+  renderNotifications();
+  let query = db.from("notifications").update({read_at: readAt})
     .eq("user_id", currentAuthUser.id).is("read_at", null);
   if (id != null) query = query.eq("id", id);
   const {error} = await query;
-  if (!error) await loadNotifications();
+  if (error) {
+    notifications = previous;
+    renderNotifications();
+  }
 }
 
 async function deleteNotifications(id = null) {
   if (!currentAuthUser) return;
+  const previous = notifications;
+  notifications = id == null ? [] : notifications.filter(item => String(item.id) !== String(id));
+  renderNotifications();
   let query = db.from("notifications").delete().eq("user_id", currentAuthUser.id);
   if (id != null) query = query.eq("id", id);
   const {error} = await query;
-  if (!error) await loadNotifications();
+  if (error) {
+    notifications = previous;
+    renderNotifications();
+  }
 }
 
 async function openNotification(id) {
@@ -2059,14 +2274,28 @@ function closeNotifications() {
 
 async function loadPrivateMessages() {
   const {data, error} = await db.from("private_messages").select("*").order("created_at", {ascending: false}).limit(300);
-  privateMessages = error ? [] : [...data].reverse().map(item => ({
+  privateMessages = error ? [] : [...data].reverse().map(mapPrivateMessage);
+  refreshPrivateMessageSurfaces();
+}
+
+function refreshPrivateMessageSurfaces() {
+  renderPrivateContacts();
+  renderPrivateConversation();
+}
+
+function mapPrivateMessage(item) {
+  return {
     id: item.id, senderId: item.sender_id, recipientId: item.recipient_id,
     body: item.body, attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
     createdAt: item.created_at
-  }));
-  renderPrivateContacts();
-  renderPrivateConversation();
+  };
+}
+
+function handleRealtimePrivateMessage(payload) {
+  privateMessages = applyRealtimeChange(privateMessages, payload, mapPrivateMessage)
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  refreshPrivateMessageSurfaces();
 }
 
 async function loadGroupEvents() {
@@ -2092,13 +2321,14 @@ function connectRealtime() {
   if (messageChannel) db.removeChannel(messageChannel);
   if (momentChannel) db.removeChannel(momentChannel);
   if (postChannel) db.removeChannel(postChannel);
+  if (mediaLikesChannel) db.removeChannel(mediaLikesChannel);
+  if (notificationsChannel) db.removeChannel(notificationsChannel);
   if (privateChannel) db.removeChannel(privateChannel);
   if (eventChannel) db.removeChannel(eventChannel);
   if (settingsChannel) db.removeChannel(settingsChannel);
   if (chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
   if (helpRealtime) db.removeChannel(helpRealtime);
   if (achievementsRealtime) db.removeChannel(achievementsRealtime);
-  if (settingsChannel) db.removeChannel(settingsChannel);
   presenceChannel = db.channel("big-boy-presence", {config: {presence: {key: currentAuthUser.id}}});
   presenceChannel
     .on("presence", {event: "sync"}, () => {
@@ -2121,39 +2351,47 @@ function connectRealtime() {
       }
     });
   messageChannel = db.channel("messages-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "messages"}, () => scheduleRealtimeRefresh("messages", loadMessages))
+    .on("postgres_changes", {event: "*", schema: "public", table: "messages"}, handleRealtimeMessage)
     .subscribe();
   momentChannel = db.channel("moments-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "moments"}, () => scheduleRealtimeRefresh("moments", loadMoments))
+    .on("postgres_changes", {event: "*", schema: "public", table: "moments"}, handleRealtimeMoment)
     .subscribe();
   postChannel = db.channel("profile-posts-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "profile_posts"}, () => scheduleRealtimeRefresh("posts", loadProfilePosts))
+    .on("postgres_changes", {event: "*", schema: "public", table: "profile_posts"}, handleRealtimePost)
     .subscribe();
   mediaLikesChannel = db.channel("media-likes-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "media_likes"}, () => scheduleRealtimeRefresh("likes", loadMediaLikes))
+    .on("postgres_changes", {event: "*", schema: "public", table: "media_likes"}, handleRealtimeMediaLike)
     .subscribe();
   notificationsChannel = db.channel(`notifications-${currentAuthUser.id}`)
-    .on("postgres_changes", {event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentAuthUser.id}`}, () => scheduleRealtimeRefresh("notifications", loadNotifications))
+    .on("postgres_changes", {event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentAuthUser.id}`}, handleRealtimeNotification)
     .subscribe();
   privateChannel = db.channel(`private-messages-${currentAuthUser.id}`)
-    .on("postgres_changes", {event: "*", schema: "public", table: "private_messages"}, () => scheduleRealtimeRefresh("private", loadPrivateMessages))
+    .on("postgres_changes", {event: "*", schema: "public", table: "private_messages"}, handleRealtimePrivateMessage)
     .subscribe();
   eventChannel = db.channel("group-events-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "group_events"}, () => loadGroupEvents())
+    .on("postgres_changes", {event: "*", schema: "public", table: "group_events"}, () => scheduleRealtimeRefresh("events", loadGroupEvents))
     .subscribe();
   settingsChannel = db.channel("site-settings-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "site_settings"}, () => loadSiteSettings())
+    .on("postgres_changes", {event: "*", schema: "public", table: "site_settings"}, () => scheduleRealtimeRefresh("settings", loadSiteSettings))
     .subscribe();
   chatChannelsRealtime = db.channel("chat-channels-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "chat_channels"}, () => loadChatChannels())
+    .on("postgres_changes", {event: "*", schema: "public", table: "chat_channels"}, () => scheduleRealtimeRefresh("chat-channels", loadChatChannels))
     .subscribe();
   helpRealtime = db.channel("help-center-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "help_requests"}, () => scheduleRealtimeRefresh("help", loadHelpCenter))
-    .on("postgres_changes", {event: "*", schema: "public", table: "help_messages"}, () => scheduleRealtimeRefresh("help", loadHelpCenter))
+    .on("postgres_changes", {event: "*", schema: "public", table: "help_requests"}, () => {
+      if (helpCenterLoaded || document.getElementById("ayuda")?.classList.contains("active")) scheduleRealtimeRefresh("help", loadHelpCenter);
+    })
+    .on("postgres_changes", {event: "*", schema: "public", table: "help_messages"}, () => {
+      if (helpCenterLoaded || document.getElementById("ayuda")?.classList.contains("active")) scheduleRealtimeRefresh("help", loadHelpCenter);
+    })
     .subscribe();
   achievementsRealtime = db.channel("achievements-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "achievements"}, () => scheduleRealtimeRefresh("achievements", loadAchievements))
-    .on("postgres_changes", {event: "*", schema: "public", table: "achievement_awards"}, () => scheduleRealtimeRefresh("achievement-awards", loadAchievements))
+    .on("postgres_changes", {event: "*", schema: "public", table: "achievements"}, () => {
+      if (achievementsLoaded) scheduleRealtimeRefresh("achievements", loadAchievements);
+    })
+    .on("postgres_changes", {event: "*", schema: "public", table: "achievement_awards"}, () => {
+      if (achievementsLoaded) scheduleRealtimeRefresh("achievement-awards", loadAchievements);
+    })
     .subscribe();
 }
 
@@ -2161,7 +2399,10 @@ async function uploadGroupMedia(file, folder) {
   validateFileSize(file, uploadLimitForFolder(folder));
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const path = `${currentAuthUser.id}/${folder}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
-  const {error} = await db.storage.from("group-media").upload(path, file, {contentType: file.type || "application/octet-stream"});
+  const {error} = await db.storage.from("group-media").upload(path, file, {
+    contentType: file.type || "application/octet-stream",
+    cacheControl: "31536000"
+  });
   if (error) throw error;
   return db.storage.from("group-media").getPublicUrl(path).data.publicUrl;
 }
@@ -2379,9 +2620,10 @@ async function sendMessage(text, file = null) {
     user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: activeChatChannelId, body: text,
     attachment_url: attachmentUrl, attachment_name: file?.name || null,
     attachment_type: file?.type || null, attachment_size: file?.size || null
-  }).select("id").single();
+  }).select("id,user_id,legacy_id,channel_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
   if (error) throw error;
   dispatchPush("group_message", data.id);
+  return mapMessage(data);
 }
 
 async function createChatChannel() {
@@ -2416,9 +2658,10 @@ async function sendPrivateMessage(text, file = null) {
     sender_id: currentAuthUser.id, recipient_id: recipient.authId, body: text,
     attachment_url: attachmentUrl, attachment_name: file?.name || null,
     attachment_type: file?.type || null, attachment_size: file?.size || null
-  }).select("id").single();
+  }).select("id,sender_id,recipient_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
   if (error) throw error;
   dispatchPush("private_message", data.id);
+  return mapPrivateMessage(data);
 }
 
 function updateShareDestinations() {
@@ -2490,71 +2733,33 @@ async function shareMediaToChat(form) {
     if (destinationType === "group") {
       const channel = chatChannels.find(item => String(item.id) === String(destination));
       if (!channel) throw new Error("Selecciona un canal válido.");
-      const {error} = await db.from("messages").insert({
+      const {data, error} = await db.from("messages").insert({
         user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: channel.id, body,
         attachment_url: attachmentUrl, attachment_name: attachmentName,
         attachment_type: attachmentType, attachment_size: null
-      });
+      }).select("id,user_id,legacy_id,channel_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
       if (error) throw error;
+      if (!messages.some(message => String(message.id) === String(data.id))) messages.push(mapMessage(data));
       closeShareMedia();
       activeChatChannelId = channel.id;
-      await loadMessages();
       openGroupConversation(channel.id);
     } else {
       const member = getMember(destination);
       if (!member?.authId) throw new Error("Selecciona un miembro válido.");
-      const {error} = await db.from("private_messages").insert({
+      const {data, error} = await db.from("private_messages").insert({
         sender_id: currentAuthUser.id, recipient_id: member.authId, body,
         attachment_url: attachmentUrl, attachment_name: attachmentName,
         attachment_type: attachmentType, attachment_size: null
-      });
+      }).select("id,sender_id,recipient_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
       if (error) throw error;
+      if (!privateMessages.some(message => String(message.id) === String(data.id))) privateMessages.push(mapPrivateMessage(data));
       closeShareMedia();
-      await loadPrivateMessages();
       openPrivateConversation(member.id);
     }
   } catch (error) {
     feedback.textContent = error.message || "No se pudo compartir el contenido.";
   } finally {
     submit.disabled = false;
-  }
-}
-
-async function renameClubUser(memberId) {
-  const member = getMember(memberId);
-  if (!canManageSite() || !member?.authId) return;
-  const value = window.prompt(`Nuevo @ para ${member.name}:`, member.username);
-  if (value == null) return;
-  const username = normalizeUsername(value.trim());
-  if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
-    return window.alert("El @ debe tener entre 3 y 32 caracteres: letras, números, punto, guion o guion bajo.");
-  }
-  if (username === member.username) return;
-  if (members.some(item => item.id !== member.id && normalizeUsername(item.username) === username)) {
-    return window.alert("Ese @ ya pertenece a otro usuario.");
-  }
-  try {
-    await invokeUserAdmin("rename", {userId: member.authId, username});
-    await loadRemoteProfiles();
-    window.alert(`El usuario ahora es @${username}. Deberá usar este nuevo @ al iniciar sesión.`);
-  } catch (error) {
-    window.alert(error.message || "No se pudo cambiar el @.");
-  }
-}
-
-async function changeClubUserRole(memberId) {
-  const member = getMember(memberId);
-  if (!canManageSite() || !member?.authId || member.hidden || member.id === currentUser?.id) return;
-  const nextRole = member.roleKey === "admin" ? "member" : "admin";
-  const nextLabel = nextRole === "admin" ? "administrador" : "miembro";
-  if (!window.confirm(`¿Cambiar el rango de ${member.name} a ${nextLabel}?`)) return;
-  try {
-    const {error} = await db.rpc("set_club_member_role", {target_user_id: member.authId, new_role: nextRole});
-    if (error) throw error;
-    await loadRemoteProfiles();
-    window.alert(`${member.name} ahora tiene rango de ${nextLabel}.`);
-  } catch (error) {
-    window.alert(error.message || "No se pudo cambiar el rango.");
   }
 }
 
@@ -2936,7 +3141,11 @@ async function saveProfile(form) {
       if (backendReady) {
         const extension = croppedAvatarFile.name.split(".").pop().toLowerCase();
         const path = `${targetAuthId}/avatar.${extension}`;
-        const {error} = await db.storage.from("avatars").upload(path, croppedAvatarFile, {upsert: true, contentType: croppedAvatarFile.type});
+        const {error} = await db.storage.from("avatars").upload(path, croppedAvatarFile, {
+          upsert: true,
+          contentType: croppedAvatarFile.type,
+          cacheControl: "86400"
+        });
         if (error) throw error;
         avatarUrl = `${db.storage.from("avatars").getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
       } else {
@@ -3605,15 +3814,15 @@ async function publishMedia(form) {
       media_url: mediaUrl, media_type: file.type.startsWith("video/") ? "video" : "image"
     };
     const table = mediaUploadMode === "moment" ? "moments" : "profile_posts";
-    const {data, error} = await db.from(table).insert(record).select("id").single();
+    const {data, error} = await db.from(table).insert(record).select("*").single();
     if (error) throw error;
     dispatchPush("media_created", `${mediaUploadMode}:${data.id}`);
     closeMediaUploader();
     if (mediaUploadMode === "moment") {
-      await loadMoments();
+      if (!moments.some(item => String(item.id) === String(data.id))) moments.unshift(mapMedia(data));
       goTo("momentos");
     } else {
-      await loadProfilePosts();
+      if (!profilePosts.some(item => String(item.id) === String(data.id))) profilePosts.unshift(mapMedia(data));
       goTo("publicaciones");
     }
   } catch (error) {
@@ -3635,8 +3844,13 @@ async function deleteMedia(kind, id) {
   if (!isSuperAdmin()) query = query.eq("user_id", currentAuthUser.id);
   const {error} = await query;
   if (error) return;
-  if (kind === "moment") await loadMoments();
-  else await loadProfilePosts();
+  if (kind === "moment") {
+    moments = moments.filter(entry => String(entry.id) !== String(item.id));
+    refreshMomentSurfaces();
+  } else {
+    profilePosts = profilePosts.filter(entry => String(entry.id) !== String(item.id));
+    refreshPostSurfaces();
+  }
 }
 
 function isMediaOwner(item) {
@@ -3813,7 +4027,7 @@ async function deleteActiveMoment() {
     activeMomentIndex = Math.min(activeMomentIndex, activeMomentSequence.length - 1);
     showActiveMoment();
   }
-  await loadMoments();
+  refreshMomentSurfaces();
 }
 
 function openContent(kind, id) {
@@ -3941,7 +4155,8 @@ function helpStatus(status) {
 }
 
 async function loadHelpCenter() {
-  if (!backendReady || !currentAuthUser) return;
+  if (!backendReady || !currentAuthUser || helpCenterLoading) return;
+  helpCenterLoading = true;
   const [requestResult, messageResult] = await Promise.all([
     db.from("help_requests").select("*").order("updated_at", {ascending: false}).limit(250),
     db.from("help_messages").select("*").order("created_at").limit(1000),
@@ -3949,8 +4164,10 @@ async function loadHelpCenter() {
   if (requestResult.error || messageResult.error) {
     const list = document.getElementById("helpRequestList");
     if (list) list.innerHTML = `<div class="empty-state compact"><strong>No se pudo abrir Ayuda</strong><span>${escapeHtml(requestResult.error?.message || messageResult.error?.message || "Inténtalo de nuevo.")}</span></div>`;
+    helpCenterLoading = false;
     return;
   }
+  helpCenterLoaded = true;
   const visibleRequests = canManageSite()
     ? (requestResult.data || [])
     : (requestResult.data || []).filter(item => item.user_id === currentAuthUser.id);
@@ -3965,6 +4182,7 @@ async function loadHelpCenter() {
   }));
   if (activeHelpRequestId && !helpRequests.some(item => String(item.id) === String(activeHelpRequestId))) activeHelpRequestId = null;
   renderHelpCenter();
+  helpCenterLoading = false;
 }
 
 function renderHelpCenter() {
@@ -4112,7 +4330,7 @@ async function showMomentViewers(id) {
   if (!moment || !isMediaOwner(moment)) return;
   const {data, error} = await db.from("moment_views").select("viewer_id,viewed_at").eq("moment_id", id).order("viewed_at", {ascending: false}).limit(250);
   if (error) return window.alert(error.message);
-  const names = (data || []).map(view => members.find(member => member.authId === view.viewer_id)?.name || "Miembro");
+  const names = (data || []).map(view => getMemberByAuthId(view.viewer_id)?.name || "Miembro");
   window.alert(names.length ? `Visto por ${names.length}:\n\n${names.join("\n")}` : "Todavía nadie ha visto este momento.");
 }
 
@@ -4126,7 +4344,8 @@ async function editGroupMessage(id) {
   if (!cleanBody || cleanBody.length > 1200 || cleanBody === message.text) return;
   const {error} = await db.from("messages").update({body: cleanBody}).eq("id", message.id).eq("user_id", currentAuthUser.id);
   if (error) return window.alert(error.message || "No se pudo editar el mensaje.");
-  await loadMessages();
+  message.text = cleanBody;
+  refreshGroupMessageSurfaces();
 }
 
 async function deleteGroupMessage(id) {
@@ -4136,7 +4355,8 @@ async function deleteGroupMessage(id) {
   if (!window.confirm("¿Quieres eliminar este mensaje?")) return;
   const {error} = await db.from("messages").delete().eq("id", id);
   if (error) return window.alert(error.message || "No se pudo eliminar el mensaje.");
-  await loadMessages();
+  messages = messages.filter(item => String(item.id) !== String(id));
+  refreshGroupMessageSurfaces();
 }
 
 async function editPrivateMessage(id) {
@@ -4150,7 +4370,8 @@ async function editPrivateMessage(id) {
   const {error} = await db.from("private_messages").update({body: cleanBody})
     .eq("id", message.id).eq("sender_id", currentAuthUser.id);
   if (error) return window.alert(error.message || "No se pudo editar el mensaje.");
-  await loadPrivateMessages();
+  message.body = cleanBody;
+  refreshPrivateMessageSurfaces();
 }
 
 async function deletePrivateMessage(id) {
@@ -4161,7 +4382,8 @@ async function deletePrivateMessage(id) {
   const {error} = await db.from("private_messages").delete()
     .eq("id", message.id).eq("sender_id", currentAuthUser.id);
   if (error) return window.alert(error.message || "No se pudo eliminar el mensaje.");
-  await loadPrivateMessages();
+  privateMessages = privateMessages.filter(item => String(item.id) !== String(id));
+  refreshPrivateMessageSurfaces();
 }
 
 async function invokeUserAdmin(action, values) {
@@ -4206,6 +4428,7 @@ async function deleteClubUser(authId, name) {
   try {
     await invokeUserAdmin("delete", {userId: authId});
     members = members.filter(member => member.authId !== authId);
+    rebuildMemberIndexes();
     await loadRemoteProfiles();
   } catch (error) {
     window.alert(error.message || "No se pudo eliminar la cuenta.");
@@ -4397,7 +4620,7 @@ document.addEventListener("click", event => {
   if (likeMedia) {
     event.preventDefault();
     event.stopPropagation();
-    toggleMediaLike(likeMedia.dataset.likeKind, likeMedia.dataset.likeMedia, likeMedia);
+    toggleMediaLike(likeMedia.dataset.likeKind, likeMedia.dataset.likeMedia);
     return;
   }
   const shareMediaTarget = event.target.closest("[data-share-media]");
@@ -4456,18 +4679,8 @@ document.addEventListener("click", event => {
   if (editPrivateTarget) editPrivateMessage(editPrivateTarget.dataset.editPrivateMessage);
   const deletePrivateTarget = event.target.closest("[data-delete-private-message]");
   if (deletePrivateTarget) deletePrivateMessage(deletePrivateTarget.dataset.deletePrivateMessage);
-  const deleteUser = event.target.closest("[data-delete-user]");
-  if (deleteUser) deleteClubUser(deleteUser.dataset.deleteUser, deleteUser.dataset.deleteUserName);
-  const resetPassword = event.target.closest("[data-reset-password]");
-  if (resetPassword) resetClubUserPassword(resetPassword.dataset.resetPassword, resetPassword.dataset.resetPasswordName);
   const editUser = event.target.closest("[data-edit-user]");
   if (editUser) openProfileEditor(editUser.dataset.editUser);
-  const renameUser = event.target.closest("[data-rename-user]");
-  if (renameUser) renameClubUser(renameUser.dataset.renameUser);
-  const changeRole = event.target.closest("[data-change-role]");
-  if (changeRole) changeClubUserRole(changeRole.dataset.changeRole);
-  const adminMessage = event.target.closest("[data-admin-message]");
-  if (adminMessage) openPrivateConversation(adminMessage.dataset.adminMessage);
   const manageAchievement = event.target.closest("[data-manage-achievement]");
   if (manageAchievement) openAchievementAssignments(manageAchievement.dataset.manageAchievement);
   const removeAchievement = event.target.closest("[data-delete-achievement]");
@@ -4663,7 +4876,11 @@ document.getElementById("messageForm").addEventListener("submit", async event =>
   if (!text && !pendingMessageFile) return;
   input.disabled = true;
   try {
-    await sendMessage(text, pendingMessageFile);
+    const sentMessage = await sendMessage(text, pendingMessageFile);
+    if (sentMessage && !messages.some(message => String(message.id) === String(sentMessage.id))) {
+      messages.push(sentMessage);
+      refreshGroupMessageSurfaces();
+    }
     input.value = "";
     clearPendingChatFile("group");
   } catch (error) {
@@ -4687,10 +4904,13 @@ document.getElementById("privateMessageForm").addEventListener("submit", async e
   if (!text && !pendingPrivateMessageFile) return;
   input.disabled = true;
   try {
-    await sendPrivateMessage(text, pendingPrivateMessageFile);
+    const sentMessage = await sendPrivateMessage(text, pendingPrivateMessageFile);
+    if (sentMessage && !privateMessages.some(message => String(message.id) === String(sentMessage.id))) {
+      privateMessages.push(sentMessage);
+      refreshPrivateMessageSurfaces();
+    }
     input.value = "";
     clearPendingChatFile("private");
-    await loadPrivateMessages();
   } catch (error) {
     input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
     input.reportValidity();
@@ -5071,15 +5291,12 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape" && document.getElementById("mediaViewer").classList.contains("open")) closeMediaViewer();
   else if (event.key === "Escape" && document.getElementById("postViewer").classList.contains("open")) closePostViewer();
 });
-function openGlobalSearch() {
-  goTo("buscar");
-  document.getElementById("globalSearchInput").focus();
-}
 function closeGlobalSearch() {
   document.getElementById("globalSearchInput")?.blur();
 }
 document.getElementById("adminPanelButton")?.addEventListener("click", () => goTo("administracion"));
-document.getElementById("globalSearchInput").addEventListener("input", event => performSearch(event.target.value));
+const performSearchDebounced = debounce(value => performSearch(value));
+document.getElementById("globalSearchInput").addEventListener("input", event => performSearchDebounced(event.target.value));
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     closeGlobalSearch();
@@ -5178,22 +5395,6 @@ document.getElementById("removeGroupAvatarButton").addEventListener("click", rem
 
 applyStoredProfiles();
 if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("light");
-renderFeatured();
-renderMembers();
-renderMoments();
-renderActivity();
-renderMessages();
-renderPresence();
-renderPublications();
-renderNotifications();
-renderPrivateContacts();
-renderPrivateConversation();
-renderCalendar();
-renderSpotify();
-renderGroupAvatarSurfaces();
-renderHelpCenter();
-renderAdminAchievements();
-loadNews(false);
 
 (async function restoreSession() {
   if (backendReady) {
@@ -5223,7 +5424,7 @@ window.addEventListener("resize", () => {
   mobileHeaderScrollAnchor = mobileHeaderLastScrollY;
   mobileHeaderDirection = null;
 }, {passive: true});
-window.addEventListener("load", () => setTimeout(() => document.getElementById("pageLoader")?.classList.add("hidden"), 450));
+requestAnimationFrame(() => setTimeout(() => document.getElementById("pageLoader")?.classList.add("hidden"), 120));
 const cursorGlow = document.getElementById("cursorGlow");
 document.addEventListener("pointermove", event => {
   if (!cursorGlow || cursorFrame || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;

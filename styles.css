@@ -387,7 +387,7 @@ body.sidebar-compact .brand-mark { width: 42px; min-width: 42px; }
 .page-section {
   display: none;
   padding: 36px 44px 60px;
-  animation: fade .3s ease;
+  animation: fade .18s ease-out;
 }
 
 .page-section.active {
@@ -397,6 +397,13 @@ body.sidebar-compact .brand-mark { width: 42px; min-width: 42px; }
 @keyframes fade {
   from {opacity: 0; transform: translateY(8px)}
   to {opacity: 1; transform: none}
+}
+
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .hero-card,
