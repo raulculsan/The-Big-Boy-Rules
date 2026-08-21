@@ -35,12 +35,19 @@ const AUTH_SESSION_KEY = "bb-auth-temporary";
 const PROFILE_STORAGE_KEY = "bb-local-profiles";
 const GENERIC_PASSWORD = "bigboy2026";
 const PASSWORD_CHANGE_STORAGE_PREFIX = "bb-password-change-required-";
+const MEDIA_PERMISSION_STORAGE_KEY = "bb-media-permissions";
 const NEWS_CACHE_DURATION = 2 * 60 * 1000;
 const NEWS_REFRESH_INTERVAL = 2 * 60 * 1000;
 const MEGABYTE = 1024 * 1024;
 const FILE_LIMITS = Object.freeze({
   attachment: 50 * MEGABYTE,
   media: 100 * MEGABYTE
+});
+const ACHIEVEMENT_TIERS = Object.freeze({
+  bronze: {label: "Bronce", symbol: "◆"},
+  silver: {label: "Plata", symbol: "✦"},
+  gold: {label: "Oro", symbol: "★"},
+  platinum: {label: "Platino", symbol: "✧"},
 });
 const STORY_GESTURE = Object.freeze({horizontalThreshold: 45, dismissThreshold: 90, holdDelay: 250});
 const pageTitle = document.getElementById("pageTitle");
@@ -101,6 +108,40 @@ function scheduleMobileHeaderSync() {
   mobileHeaderFrame = requestAnimationFrame(syncMobileHeader);
 }
 
+function readMediaPermissionMemory() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MEDIA_PERMISSION_STORAGE_KEY) || "{}");
+    return {
+      camera: ["granted", "denied"].includes(saved.camera) ? saved.camera : "prompt",
+      microphone: ["granted", "denied"].includes(saved.microphone) ? saved.microphone : "prompt",
+    };
+  } catch {
+    return {camera: "prompt", microphone: "prompt"};
+  }
+}
+
+function rememberMediaPermission(kind, state) {
+  if (!["camera", "microphone"].includes(kind) || !["granted", "denied", "prompt"].includes(state)) return;
+  mediaPermissionMemory = {...mediaPermissionMemory, [kind]: state};
+  localStorage.setItem(MEDIA_PERMISSION_STORAGE_KEY, JSON.stringify(mediaPermissionMemory));
+}
+
+async function refreshMediaPermission(kind) {
+  if (!navigator.permissions?.query) return mediaPermissionMemory[kind] || "prompt";
+  try {
+    const permission = await navigator.permissions.query({name: kind});
+    rememberMediaPermission(kind, permission.state);
+    permission.addEventListener?.("change", () => rememberMediaPermission(kind, permission.state), {once: true});
+    return permission.state;
+  } catch {
+    return mediaPermissionMemory[kind] || "prompt";
+  }
+}
+
+function mediaPermissionWasRemembered(kind) {
+  return mediaPermissionMemory[kind] === "granted";
+}
+
 let currentUser = null;
 let currentAuthUser = null;
 let messages = [];
@@ -114,6 +155,8 @@ let groupEvents = [];
 let chatChannels = [];
 let helpRequests = [];
 let helpMessages = [];
+let achievements = [];
+let achievementAwards = [];
 let newsItems = [];
 let siteSettings = {};
 let onlineUsers = [];
@@ -128,13 +171,17 @@ let eventChannel = null;
 let settingsChannel = null;
 let chatChannelsRealtime = null;
 let helpRealtime = null;
+let achievementsRealtime = null;
 let activeNewsCategory = "deportes";
 let activeHelpRequestId = null;
 let activeHelpFilter = "all";
+let editingAchievementId = null;
 let lastNewsRefreshAt = 0;
 let newsLoadToken = 0;
 let pendingPrivateMessageFile = null;
 let activeAudioRecording = null;
+let mediaPermissionMemory = readMediaPermissionMemory();
+void Promise.all([refreshMediaPermission("camera"), refreshMediaPermission("microphone")]);
 const attachmentPreviewUrls = {group: "", private: ""};
 let pendingAvatarFile = null;
 let removeAvatarRequested = false;
@@ -575,6 +622,34 @@ function memberDisplayNumber(member) {
   return visibleIndex >= 0 ? visibleIndex + 1 : member.id;
 }
 
+function achievementTier(tier) {
+  return ACHIEVEMENT_TIERS[tier] || ACHIEVEMENT_TIERS.bronze;
+}
+
+function achievementsForMember(member) {
+  if (!member?.authId) return [];
+  const assignedIds = new Set(achievementAwards.filter(award => award.userId === member.authId).map(award => String(award.achievementId)));
+  return achievements.filter(achievement => assignedIds.has(String(achievement.id)));
+}
+
+function renderMemberAchievements(member) {
+  const assigned = achievementsForMember(member);
+  return `<section class="profile-achievements">
+    <div class="profile-feed-heading">
+      <div><span class="eyebrow">SALA DE TROFEOS</span><h3>${assigned.length} ${assigned.length === 1 ? "logro" : "logros"}</h3></div>
+    </div>
+    <div class="achievement-showcase">
+      ${assigned.length ? assigned.map(achievement => {
+        const tier = achievementTier(achievement.tier);
+        return `<article class="achievement-card tier-${achievement.tier}">
+          <span class="achievement-emblem" aria-hidden="true">${escapeHtml(achievement.icon || tier.symbol)}</span>
+          <div><small>${escapeHtml(tier.label)}</small><strong>${escapeHtml(achievement.name)}</strong><p>${escapeHtml(achievement.description || "Logro concedido por la administración del club.")}</p></div>
+        </article>`;
+      }).join("") : `<div class="empty-state compact achievement-empty"><strong>Aún no hay logros</strong><span>Los logros concedidos por la administración aparecerán aquí.</span></div>`}
+    </div>
+  </section>`;
+}
+
 function renderProfile(memberId) {
   const member = getMember(memberId)
     || (Number(currentUser?.id) === Number(memberId) ? currentUser : null);
@@ -603,6 +678,7 @@ function renderProfile(memberId) {
         </div>
       </div>
     </article>
+    ${renderMemberAchievements(member)}
     <section class="profile-stories">
       <div class="profile-feed-heading">
         <div><span class="eyebrow">HISTORIAS ACTIVAS</span><h3>${memberMoments.length} ${memberMoments.length === 1 ? "historia" : "historias"}</h3></div>
@@ -672,6 +748,12 @@ function renderGroupAvatarSurfaces() {
   }
 }
 
+function mediaActionIcon(kind, active = false) {
+  if (kind === "like") return `<svg viewBox="0 0 24 24" aria-hidden="true"${active ? ` class="filled"` : ""}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"/></svg>`;
+  if (kind === "reply") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8Z"/></svg>`;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>`;
+}
+
 function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
   const member = getMember(item.member);
   const likes = getMediaLikes(kind, item.id);
@@ -690,11 +772,13 @@ function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
       ${item.caption ? `<p>${escapeHtml(item.caption)}</p>` : ""}
       ${item.mentionedUserId ? `<button class="media-mention" type="button" data-profile="${getMemberByAuthId(item.mentionedUserId)?.id || ""}">@${escapeHtml(getMemberByAuthId(item.mentionedUserId)?.username || "miembro")}</button>` : ""}
       <time datetime="${escapeHtml(item.createdAt)}">${kind === "moment" ? `Caduca ${formatExpiry(item.expiresAt)}` : formatRelativeTime(item.createdAt)}</time>
-      <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="${kind}" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
-        <span aria-hidden="true">${liked ? "♥" : "♡"}</span>${likes.length ? `<strong>${likes.length}</strong>` : ""}<small>Me gusta</small>
-      </button>
-      ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="${kind}" aria-label="Compartir en un chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg><small>Compartir</small></button>` : ""}
-      ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="${kind}" aria-label="Responder"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4-.9L3 21l1.7-4.6A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 12h8M8 8.5h5"/></svg><small>Responder</small></button>` : ""}
+      <div class="media-social-actions">
+        <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="${kind}" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
+          ${mediaActionIcon("like", liked)}${likes.length ? `<strong>${likes.length}</strong>` : ""}<small>Me gusta</small>
+        </button>
+        ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="${kind}" aria-label="Comentar">${mediaActionIcon("reply")}<small>Comentar</small></button>` : ""}
+        ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="${kind}" aria-label="Enviar por chat">${mediaActionIcon("share")}<small>Enviar</small></button>` : ""}
+      </div>
       ${kind === "moment" && isMediaOwner(item) ? `<button class="media-views-button" type="button" data-moment-viewers="${item.id}">Visualizaciones</button>` : ""}
       ${canDelete && kind !== "moment" ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar esta publicación">Eliminar</button>` : ""}
     </div>
@@ -1246,6 +1330,128 @@ function renderAdminPanel() {
       ${canManageSite() && user.authId && user.id !== currentUser?.id ? `<button class="text-button" type="button" data-reset-password="${user.authId}" data-reset-password-name="${escapeHtml(user.name)}">Nueva contraseña</button>` : ""}
       ${isSuperAdmin() && user.authId ? `<button class="text-button danger" type="button" data-delete-user="${user.authId}" data-delete-user-name="${escapeHtml(user.name)}">Eliminar</button>` : ""}
     </div></td></tr>`).join("");
+  renderAdminAchievements();
+}
+
+function achievementMemberOptions(selectedIds = new Set(), inputName = "achievementMembers") {
+  const eligibleMembers = members.filter(member => !member.hidden && member.authId);
+  return eligibleMembers.length ? eligibleMembers.map(member => `
+    <label class="achievement-member-option">
+      <input type="checkbox" name="${escapeHtml(inputName)}" value="${escapeHtml(member.authId)}" ${selectedIds.has(member.authId) ? "checked" : ""}>
+      ${getAvatar(member, "avatar tiny")}<span><strong>${escapeHtml(member.name)}</strong><small>@${escapeHtml(member.username)}</small></span>
+    </label>`).join("") : `<div class="empty-state compact">No hay perfiles vinculados disponibles.</div>`;
+}
+
+function renderAdminAchievements() {
+  const membersContainer = document.getElementById("achievementMembers");
+  const list = document.getElementById("adminAchievementsList");
+  if (!membersContainer || !list) return;
+  if (!canManageSite()) {
+    membersContainer.innerHTML = "";
+    list.innerHTML = "";
+    return;
+  }
+  membersContainer.innerHTML = achievementMemberOptions();
+  list.innerHTML = achievements.length ? achievements.map(achievement => {
+    const tier = achievementTier(achievement.tier);
+    const recipients = achievementAwards.filter(award => String(award.achievementId) === String(achievement.id))
+      .map(award => getMemberByAuthId(award.userId)).filter(Boolean);
+    return `<article class="admin-achievement-card tier-${achievement.tier}">
+      <span class="achievement-emblem" aria-hidden="true">${escapeHtml(achievement.icon || tier.symbol)}</span>
+      <div class="admin-achievement-copy"><span>${escapeHtml(tier.label)}</span><strong>${escapeHtml(achievement.name)}</strong><p>${escapeHtml(achievement.description || "Sin descripción")}</p><small>${recipients.length ? recipients.map(member => escapeHtml(member.name)).join(" · ") : "Sin asignar"}</small></div>
+      <div class="admin-achievement-actions"><button class="secondary-button" type="button" data-manage-achievement="${achievement.id}">Asignar</button><button class="text-button danger" type="button" data-delete-achievement="${achievement.id}" data-delete-achievement-name="${escapeHtml(achievement.name)}">Eliminar</button></div>
+    </article>`;
+  }).join("") : `<div class="empty-state compact"><strong>Crea el primer logro</strong><span>Podrás asignarlo a uno o varios miembros en el mismo paso.</span></div>`;
+}
+
+async function loadAchievements() {
+  if (!backendReady || !currentAuthUser) return;
+  const [definitionsResult, awardsResult] = await Promise.all([
+    db.from("achievements").select("id,name,description,tier,icon,created_by,created_at").order("created_at", {ascending: false}),
+    db.from("achievement_awards").select("id,achievement_id,user_id,awarded_by,awarded_at").order("awarded_at", {ascending: false}),
+  ]);
+  const feedback = document.getElementById("achievementFeedback");
+  if (definitionsResult.error || awardsResult.error) {
+    achievements = [];
+    achievementAwards = [];
+    if (feedback && canManageSite()) feedback.textContent = "Falta activar el módulo de logros en Supabase con supabase-achievements.sql.";
+  } else {
+    achievements = (definitionsResult.data || []).map(item => ({
+      id: item.id, name: item.name, description: item.description || "", tier: item.tier,
+      icon: item.icon || "", createdBy: item.created_by, createdAt: item.created_at,
+    }));
+    achievementAwards = (awardsResult.data || []).map(item => ({
+      id: item.id, achievementId: item.achievement_id, userId: item.user_id,
+      awardedBy: item.awarded_by, awardedAt: item.awarded_at,
+    }));
+    if (feedback) feedback.textContent = "";
+  }
+  renderAdminAchievements();
+  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
+}
+
+async function createAchievement(form) {
+  if (!canManageSite() || !currentAuthUser) return;
+  const feedback = document.getElementById("achievementFeedback");
+  const submit = form.querySelector("[type=submit]");
+  const targetUserIds = [...form.querySelectorAll('input[name="achievementMembers"]:checked')].map(input => input.value);
+  if (!targetUserIds.length) return void (feedback.textContent = "Selecciona al menos un miembro para asignar el logro.");
+  submit.disabled = true;
+  feedback.textContent = "Creando y asignando logro…";
+  const {error} = await db.rpc("create_achievement_with_awards", {
+    new_name: document.getElementById("achievementName").value.trim(),
+    new_description: document.getElementById("achievementDescription").value.trim(),
+    new_tier: document.getElementById("achievementTier").value,
+    new_icon: document.getElementById("achievementIcon").value.trim() || null,
+    target_user_ids: targetUserIds,
+  });
+  submit.disabled = false;
+  if (error) return void (feedback.textContent = error.message || "No se pudo crear el logro.");
+  form.reset();
+  feedback.textContent = "Logro creado y asignado correctamente.";
+  await loadAchievements();
+}
+
+function openAchievementAssignments(id) {
+  if (!canManageSite()) return;
+  const achievement = achievements.find(item => String(item.id) === String(id));
+  if (!achievement) return;
+  editingAchievementId = achievement.id;
+  const selectedIds = new Set(achievementAwards.filter(award => String(award.achievementId) === String(id)).map(award => award.userId));
+  document.getElementById("achievementAssignmentTitle").textContent = achievement.name;
+  document.getElementById("achievementAssignmentMembers").innerHTML = achievementMemberOptions(selectedIds, "achievementAssignmentMembers");
+  document.getElementById("achievementAssignmentFeedback").textContent = "";
+  const modal = document.getElementById("achievementAssignmentModal");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeAchievementAssignments() {
+  editingAchievementId = null;
+  const modal = document.getElementById("achievementAssignmentModal");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function saveAchievementAssignments(form) {
+  if (!canManageSite() || !editingAchievementId) return;
+  const feedback = document.getElementById("achievementAssignmentFeedback");
+  const submit = form.querySelector("[type=submit]");
+  const targetUserIds = [...form.querySelectorAll('input[name="achievementAssignmentMembers"]:checked')].map(input => input.value);
+  submit.disabled = true;
+  feedback.textContent = "Guardando asignaciones…";
+  const {error} = await db.rpc("set_achievement_awards", {target_achievement_id: editingAchievementId, target_user_ids: targetUserIds});
+  submit.disabled = false;
+  if (error) return void (feedback.textContent = error.message || "No se pudieron guardar las asignaciones.");
+  closeAchievementAssignments();
+  await loadAchievements();
+}
+
+async function deleteAchievement(id, name) {
+  if (!canManageSite() || !window.confirm(`¿Eliminar el logro “${name}” y todas sus asignaciones?`)) return;
+  const {error} = await db.from("achievements").delete().eq("id", id);
+  if (error) return window.alert(error.message || "No se pudo eliminar el logro.");
+  await loadAchievements();
 }
 
 function refreshProfileSurfaces() {
@@ -1299,7 +1505,7 @@ async function applyUserInterface(user, authUser = null) {
   if (backendReady && authUser) {
     await loadRemoteProfiles();
     await loadChatChannels();
-    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadNotifications(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings(), loadHelpCenter()]);
+    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadNotifications(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings(), loadHelpCenter(), loadAchievements()]);
     connectRealtime();
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
@@ -1349,6 +1555,8 @@ async function logoutCurrentUser() {
   chatChannels = [];
   helpRequests = [];
   helpMessages = [];
+  achievements = [];
+  achievementAwards = [];
   activeHelpRequestId = null;
   activeChatChannelId = null;
   if (db && presenceChannel) db.removeChannel(presenceChannel);
@@ -1362,6 +1570,7 @@ async function logoutCurrentUser() {
   if (db && settingsChannel) db.removeChannel(settingsChannel);
   if (db && chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
   if (db && helpRealtime) db.removeChannel(helpRealtime);
+  if (db && achievementsRealtime) db.removeChannel(achievementsRealtime);
   showLogin();
   renderMessages();
   renderNotifications();
@@ -1738,6 +1947,7 @@ function connectRealtime() {
   if (settingsChannel) db.removeChannel(settingsChannel);
   if (chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
   if (helpRealtime) db.removeChannel(helpRealtime);
+  if (achievementsRealtime) db.removeChannel(achievementsRealtime);
   if (settingsChannel) db.removeChannel(settingsChannel);
   presenceChannel = db.channel("big-boy-presence", {config: {presence: {key: currentAuthUser.id}}});
   presenceChannel
@@ -1790,6 +2000,10 @@ function connectRealtime() {
   helpRealtime = db.channel("help-center-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "help_requests"}, () => scheduleRealtimeRefresh("help", loadHelpCenter))
     .on("postgres_changes", {event: "*", schema: "public", table: "help_messages"}, () => scheduleRealtimeRefresh("help", loadHelpCenter))
+    .subscribe();
+  achievementsRealtime = db.channel("achievements-live")
+    .on("postgres_changes", {event: "*", schema: "public", table: "achievements"}, () => scheduleRealtimeRefresh("achievements", loadAchievements))
+    .on("postgres_changes", {event: "*", schema: "public", table: "achievement_awards"}, () => scheduleRealtimeRefresh("achievement-awards", loadAchievements))
     .subscribe();
 }
 
@@ -1958,8 +2172,11 @@ async function toggleAudioRecording(kind) {
   }
   let stream;
   try {
+    await refreshMediaPermission("microphone");
     stream = await navigator.mediaDevices.getUserMedia({audio: true});
-  } catch {
+    rememberMediaPermission("microphone", "granted");
+  } catch (error) {
+    if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") rememberMediaPermission("microphone", "denied");
     window.alert("Necesitamos permiso para usar el micrófono y grabar la nota de voz.");
     return;
   }
@@ -2675,7 +2892,9 @@ async function startStoryCamera() {
   const token = ++storyCameraOpeningToken;
   stopStoryCameraStream();
   const preview = renewStoryCameraPreview();
-  setStoryCameraStatus("Activando cámara…");
+  await refreshMediaPermission("camera");
+  await refreshMediaPermission("microphone");
+  setStoryCameraStatus(mediaPermissionWasRemembered("camera") ? "Abriendo cámara autorizada…" : "Activando cámara…");
   const shutter = document.getElementById("captureStoryPhoto");
   const switchButton = document.getElementById("switchStoryCamera");
   const flashButton = document.getElementById("toggleStoryFlash");
@@ -2694,8 +2913,17 @@ async function startStoryCamera() {
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({video, audio: {echoCancellation: true, noiseSuppression: true}});
-    } catch {
-      stream = await navigator.mediaDevices.getUserMedia({video, audio: false});
+      rememberMediaPermission("camera", "granted");
+      rememberMediaPermission("microphone", "granted");
+    } catch (combinedError) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({video, audio: false});
+        rememberMediaPermission("camera", "granted");
+        if (combinedError?.name === "NotAllowedError" || combinedError?.name === "PermissionDeniedError") rememberMediaPermission("microphone", "denied");
+      } catch (cameraError) {
+        if (cameraError?.name === "NotAllowedError" || cameraError?.name === "PermissionDeniedError") rememberMediaPermission("camera", "denied");
+        throw cameraError;
+      }
     }
     if (token !== storyCameraOpeningToken || !document.getElementById("storyCamera").classList.contains("open")) {
       stream.getTracks().forEach(track => track.stop());
@@ -3489,11 +3717,15 @@ async function loadHelpCenter() {
     if (list) list.innerHTML = `<div class="empty-state compact"><strong>No se pudo abrir Ayuda</strong><span>${escapeHtml(requestResult.error?.message || messageResult.error?.message || "Inténtalo de nuevo.")}</span></div>`;
     return;
   }
-  helpRequests = (requestResult.data || []).map(item => ({
+  const visibleRequests = canManageSite()
+    ? (requestResult.data || [])
+    : (requestResult.data || []).filter(item => item.user_id === currentAuthUser.id);
+  helpRequests = visibleRequests.map(item => ({
     id: item.id, userId: item.user_id, type: item.request_type, status: item.status,
     handledBy: item.handled_by, createdAt: item.created_at, updatedAt: item.updated_at,
   }));
-  helpMessages = (messageResult.data || []).map(item => ({
+  const visibleRequestIds = new Set(helpRequests.map(item => String(item.id)));
+  helpMessages = (messageResult.data || []).filter(item => visibleRequestIds.has(String(item.request_id))).map(item => ({
     id: item.id, requestId: item.request_id, senderId: item.sender_id,
     body: item.body, createdAt: item.created_at,
   }));
@@ -3979,6 +4211,10 @@ document.addEventListener("click", event => {
   if (changeRole) changeClubUserRole(changeRole.dataset.changeRole);
   const adminMessage = event.target.closest("[data-admin-message]");
   if (adminMessage) openPrivateConversation(adminMessage.dataset.adminMessage);
+  const manageAchievement = event.target.closest("[data-manage-achievement]");
+  if (manageAchievement) openAchievementAssignments(manageAchievement.dataset.manageAchievement);
+  const removeAchievement = event.target.closest("[data-delete-achievement]");
+  if (removeAchievement) deleteAchievement(removeAchievement.dataset.deleteAchievement, removeAchievement.dataset.deleteAchievementName);
   const channelTarget = event.target.closest("[data-chat-channel]");
   if (channelTarget && !event.target.closest("[data-delete-channel]")) selectChatChannel(channelTarget.dataset.chatChannel);
   const deleteChannel = event.target.closest("[data-delete-channel]");
@@ -4323,6 +4559,7 @@ setInterval(() => {
   if (!document.hidden && document.getElementById("inicio").classList.contains("active")) loadNews(true);
 }, NEWS_REFRESH_INTERVAL);
 document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) void Promise.all([refreshMediaPermission("camera"), refreshMediaPermission("microphone")]);
   if (!document.hidden
     && document.getElementById("inicio").classList.contains("active")
     && Date.now() - lastNewsRefreshAt >= NEWS_CACHE_DURATION) {
@@ -4568,6 +4805,7 @@ document.addEventListener("keydown", event => {
     closeCalendarDayModal();
     closeSpotifyEditor();
     closeGroupAvatarEditor();
+    closeAchievementAssignments();
   }
 });
 document.getElementById("previousMonthButton").addEventListener("click", () => {
@@ -4603,6 +4841,19 @@ document.getElementById("deleteEventButton").addEventListener("click", deleteEve
 document.getElementById("createUserForm")?.addEventListener("submit", event => {
   event.preventDefault();
   createClubUser(event.currentTarget);
+});
+document.getElementById("achievementForm")?.addEventListener("submit", event => {
+  event.preventDefault();
+  createAchievement(event.currentTarget);
+});
+document.getElementById("closeAchievementAssignment")?.addEventListener("click", closeAchievementAssignments);
+document.getElementById("cancelAchievementAssignment")?.addEventListener("click", closeAchievementAssignments);
+document.getElementById("achievementAssignmentModal")?.addEventListener("click", event => {
+  if (event.target.id === "achievementAssignmentModal") closeAchievementAssignments();
+});
+document.getElementById("achievementAssignmentForm")?.addEventListener("submit", event => {
+  event.preventDefault();
+  saveAchievementAssignments(event.currentTarget);
 });
 document.getElementById("editSpotifyButton").addEventListener("click", openSpotifyEditor);
 document.getElementById("closeSpotifyEditor").addEventListener("click", closeSpotifyEditor);
@@ -4659,6 +4910,7 @@ renderCalendar();
 renderSpotify();
 renderGroupAvatarSurfaces();
 renderHelpCenter();
+renderAdminAchievements();
 loadNews(false);
 
 (async function restoreSession() {

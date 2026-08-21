@@ -10,13 +10,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
   <title>The Big Boy Rules</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260816-100" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260821-101" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260816-100" />
+  <link rel="stylesheet" href="styles.css?v=20260821-101" />
 </head>
 <body>
 
@@ -385,6 +385,24 @@
       </div>
 
       <div class="admin-summary" id="adminSummary"></div>
+
+      <article class="panel admin-achievements-panel admin-only">
+        <div class="panel-heading">
+          <div><span class="eyebrow">SISTEMA DE LOGROS</span><h3>Crear y conceder logros</h3></div>
+          <span class="admin-badge">Bronce · Plata · Oro · Platino</span>
+        </div>
+        <form class="achievement-create-form" id="achievementForm">
+          <div class="achievement-fields">
+            <label><span>Nombre del logro</span><input id="achievementName" maxlength="70" required placeholder="Ej. Leyenda de la temporada"></label>
+            <label><span>Rango</span><select id="achievementTier" required><option value="bronze">Bronce</option><option value="silver">Plata</option><option value="gold">Oro</option><option value="platinum">Platino</option></select></label>
+            <label><span>Emblema</span><input id="achievementIcon" maxlength="12" placeholder="🏆" inputmode="text"></label>
+            <label class="achievement-description-field"><span>Descripción</span><textarea id="achievementDescription" maxlength="240" placeholder="Explica por qué se concede este logro"></textarea></label>
+          </div>
+          <fieldset class="achievement-member-picker"><legend>Asignar ahora a</legend><div id="achievementMembers"></div></fieldset>
+          <div class="achievement-submit-row"><p class="form-feedback" id="achievementFeedback" aria-live="polite"></p><button class="primary-button" type="submit">Crear y asignar</button></div>
+        </form>
+        <div class="admin-achievements-list" id="adminAchievementsList"></div>
+      </article>
 
       <article class="panel superadmin-tools" id="superAdminTools">
         <div class="panel-heading">
@@ -832,6 +850,20 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="achievementAssignmentModal" aria-hidden="true">
+    <div class="profile-editor-modal compact-dialog achievement-assignment-modal" role="dialog" aria-modal="true" aria-labelledby="achievementAssignmentTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">ASIGNAR LOGRO</span><h2 id="achievementAssignmentTitle">Logro</h2></div>
+        <button class="icon-button" id="closeAchievementAssignment" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="achievementAssignmentForm" class="profile-form">
+        <fieldset class="achievement-member-picker"><legend>Miembros que tendrán este logro</legend><div id="achievementAssignmentMembers"></div></fieldset>
+        <div class="form-feedback" id="achievementAssignmentFeedback" role="status"></div>
+        <div class="modal-actions"><button class="secondary-button" id="cancelAchievementAssignment" type="button">Cancelar</button><button class="primary-button" type="submit">Guardar asignaciones</button></div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="spotifyEditor" aria-hidden="true">
     <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="spotifyEditorTitle">
       <div class="modal-heading">
@@ -865,7 +897,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260816-100"></script>
+  <script src="app.js?v=20260821-101"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

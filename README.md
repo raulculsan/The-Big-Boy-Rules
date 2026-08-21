@@ -43,6 +43,9 @@ Nunca copies la clave `service_role` en la web.
   `supabase-large-uploads.sql` para habilitar también notas de voz, audio y vídeo
   en proyectos ya creados.
 - Ejecuta también `supabase-media-interactions.sql` para activar visualizaciones y respuestas.
+- En proyectos ya creados, ejecuta `supabase-achievements.sql` para activar el
+  sistema de logros y reforzar la privacidad de los tickets. Los administradores
+  podrán crear logros por rango y asignarlos a varios miembros.
 - Los mensajes y sus adjuntos llegan en tiempo real.
 - Los momentos empiezan vacíos y caducan 24 horas después de publicarse.
 - Cada perfil muestra una galería pública propia tipo Instagram.
