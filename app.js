@@ -661,14 +661,28 @@ function renderProfile(memberId) {
   const canDeletePosts = canEdit || isSuperAdmin();
   const posts = profilePosts.filter(post => post.member === member.id);
   const memberMoments = moments.filter(moment => moment.member === member.id);
+  const memberAchievements = achievementsForMember(member);
   document.querySelector("#perfil .back-button").hidden = isOwnProfile;
   document.getElementById("profileContent").innerHTML = `
     <article class="profile-hero">
-      <div class="profile-visual ${member.avatarUrl ? "has-photo" : ""}"
-        style="--profile-bg:${member.avatarUrl ? `url('${escapeHtml(member.avatarUrl)}')` : member.bg}"></div>
+      <header class="profile-social-heading">
+        <strong>@${escapeHtml(member.username || member.name)}</strong>
+        <small>${escapeHtml(member.role || "Miembro del club")}</small>
+      </header>
+      <div class="profile-overview">
+        <div class="profile-visual ${member.avatarUrl ? "has-photo" : ""}"
+          style="--profile-bg:${member.avatarUrl ? `url('${escapeHtml(member.avatarUrl)}')` : member.bg}">
+          <span class="profile-avatar-initial" aria-hidden="true">${escapeHtml(member.name?.charAt(0).toUpperCase() || "U")}</span>
+        </div>
+        <div class="profile-stats" aria-label="Resumen del perfil">
+          <div><strong>${posts.length}</strong><small>${posts.length === 1 ? "publicación" : "publicaciones"}</small></div>
+          <div><strong>${memberMoments.length}</strong><small>${memberMoments.length === 1 ? "historia" : "historias"}</small></div>
+          <div><strong>${memberAchievements.length}</strong><small>${memberAchievements.length === 1 ? "logro" : "logros"}</small></div>
+        </div>
+      </div>
       <div class="profile-info">
         <span class="profile-number">${member.hidden ? "ADMINISTRACIÓN" : `BIG BOY ${String(memberDisplayNumber(member)).padStart(2, "0")}`}</span>
-        <h2>${member.countryFlag ? `<span class="profile-country-flag" title="País">${escapeHtml(member.countryFlag)}</span>` : ""}${escapeHtml(member.name)}</h2>
+        <h2>${escapeHtml(member.name)}</h2>
         <div class="profile-nickname">${escapeHtml(member.nickname.toUpperCase())}</div>
         <p>${escapeHtml(member.bio)}</p>
         <div class="profile-tags">${member.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
@@ -678,21 +692,22 @@ function renderProfile(memberId) {
         </div>
       </div>
     </article>
-    ${renderMemberAchievements(member)}
     <section class="profile-stories">
       <div class="profile-feed-heading">
         <div><span class="eyebrow">HISTORIAS ACTIVAS</span><h3>${memberMoments.length} ${memberMoments.length === 1 ? "historia" : "historias"}</h3></div>
       </div>
       <div class="profile-stories-strip">
+        ${canEdit ? `<button class="profile-story-tile profile-story-add" id="profileAddStoryButton" type="button" aria-label="Subir una historia"><span class="profile-story-media"><b>+</b></span><small>Nueva</small></button>` : ""}
         ${memberMoments.length ? memberMoments.map(moment => `
           <button class="profile-story-tile" type="button" data-open-moment="${moment.id}" aria-label="Abrir historia">
             <span class="profile-story-media">${moment.mediaType === "video"
               ? `<video src="${escapeHtml(moment.mediaUrl)}" muted playsinline preload="metadata"></video>`
               : `<img src="${escapeHtml(moment.mediaUrl)}" alt="" loading="lazy" decoding="async">`}</span>
             <small>${formatRelativeTime(moment.createdAt)}</small>
-          </button>`).join("") : `<div class="empty-state compact profile-stories-empty"><strong>Sin historias activas</strong><span>${canEdit ? "Comparte una historia desde tu perfil." : `${escapeHtml(member.name)} no tiene historias activas.`}</span></div>`}
+          </button>`).join("") : canEdit ? "" : `<div class="empty-state compact profile-stories-empty"><strong>Sin historias activas</strong><span>${escapeHtml(member.name)} no tiene historias activas.</span></div>`}
       </div>
     </section>
+    ${renderMemberAchievements(member)}
     <section class="profile-feed">
       <div class="profile-feed-heading">
         <div><span class="eyebrow">PUBLICACIONES</span><h3>${posts.length} ${posts.length === 1 ? "publicación" : "publicaciones"}</h3></div>
@@ -703,6 +718,7 @@ function renderProfile(memberId) {
       </div>
     </section>`;
   document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
+  document.getElementById("profileAddStoryButton")?.addEventListener("click", () => openStoryCamera("moment"));
   goTo("perfil");
 }
 
