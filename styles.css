@@ -7769,13 +7769,4 @@ body.story-camera-open.camera-entering > #storyCamera {
   .feed-post-info .feed-post-actions { gap: 11px; }
   .feed-post-info .feed-post-actions svg { width: 26px; height: 26px; }
 
-  /* La navegación reaparece al subir, pero no tapa las fotos al recorrer el feed. */
-  body:has(#contenido.active).mobile-header-hidden .floating-tab-bar {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(calc(100% + 28px));
-  }
-  body:has(#contenido.active) .floating-tab-bar {
-    transition: transform .22s ease, opacity .18s ease;
-  }
 }
