@@ -8374,8 +8374,8 @@ body.story-camera-open.camera-entering > #storyCamera {
   .floating-tab-bar .app-tab,
   .floating-tab-bar .app-tab svg,
   .floating-tab-bar .tab-avatar {
-    transition: left .22s ease, width .22s ease, min-height .22s ease,
-      padding .22s ease, border-radius .22s ease, transform .22s ease;
+    transition: left .14s ease, width .14s ease, min-height .14s ease,
+      padding .14s ease, border-radius .14s ease, transform .14s ease;
   }
   body.mobile-header-hidden:not(.chat-focus) .floating-tab-bar {
     left: 20px;
