@@ -540,55 +540,24 @@ function updateFloatingTabIndicator(sectionId) {
   if (index >= 0) document.getElementById("floatingTabBar")?.style.setProperty("--active-tab-index", String(index));
 }
 
-function messageTransitionSource() {
-  const activeSection = sections.find(section => section.classList.contains("active"));
-  if (!activeSection) return null;
-  if (activeSection.id === "chat") {
-    return activeSection.classList.contains("conversation-open")
-      ? activeSection.querySelector(".group-conversation")
-      : activeSection.querySelector(".chat-inbox");
-  }
-  if (activeSection.id === "privados") return activeSection.querySelector(".private-conversation");
-  return activeSection;
-}
-
-async function transitionMessageView(update, resolveTarget, {back = false} = {}) {
+async function transitionMessageView(update, {back = false} = {}) {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (messageViewTransitioning || reducedMotion || typeof Element.prototype.animate !== "function") {
+  if (messageViewTransitioning || reducedMotion) {
     update();
     return;
   }
   messageViewTransitioning = true;
   document.body.classList.add("message-slide-transition");
-  const direction = back ? 1 : -1;
-  const source = messageTransitionSource();
-  let exitAnimation = null;
-  let enterAnimation = null;
+  document.documentElement.dataset.messageTransition = back ? "back" : "forward";
   try {
-    if (source) {
-      source.style.willChange = "transform";
-      exitAnimation = source.animate([
-        {transform: "translate3d(0,0,0)"},
-        {transform: `translate3d(${direction * 14}%,0,0)`}
-      ], {duration: 105, easing: "cubic-bezier(.4,0,1,1)", fill: "both"});
-      await exitAnimation.finished.catch(() => {});
+    if (typeof document.startViewTransition === "function") {
+      const transition = document.startViewTransition(() => update());
+      await transition.finished.catch(() => {});
+      return;
     }
     update();
-    const target = resolveTarget?.();
-    if (target) {
-      target.style.willChange = "transform";
-      enterAnimation = target.animate([
-        {transform: `translate3d(${back ? -100 : 100}%,0,0)`},
-        {transform: "translate3d(0,0,0)"}
-      ], {duration: 215, easing: "cubic-bezier(.22,1,.36,1)", fill: "both"});
-      await enterAnimation.finished.catch(() => {});
-    }
   } finally {
-    exitAnimation?.cancel();
-    enterAnimation?.cancel();
-    if (source) source.style.willChange = "";
-    const target = resolveTarget?.();
-    if (target) target.style.willChange = "";
+    delete document.documentElement.dataset.messageTransition;
     document.body.classList.remove("message-slide-transition");
     messageViewTransitioning = false;
   }
@@ -684,11 +653,11 @@ async function exitChatView() {
       syncMobileViewport();
       renderPrivateContacts();
       history.replaceState(null, "", "#chat");
-    }, () => groupSection.querySelector(".chat-inbox"), {back: true});
+    }, {back: true});
     return;
   }
   const targetSection = sectionBeforeChat && sectionBeforeChat !== "chat" && sectionBeforeChat !== "privados" ? sectionBeforeChat : "inicio";
-  await transitionMessageView(() => goTo(targetSection), () => document.getElementById(targetSection), {back: true});
+  await transitionMessageView(() => goTo(targetSection), {back: true});
 }
 
 async function backFromPrivateConversation() {
@@ -697,7 +666,7 @@ async function backFromPrivateConversation() {
     renderPrivateConversation();
     goTo("chat");
     renderPrivateContacts();
-  }, () => document.querySelector("#chat .chat-inbox"), {back: true});
+  }, {back: true});
 }
 
 async function openGroupConversation(channelId = activeChatChannelId) {
@@ -713,7 +682,7 @@ async function openGroupConversation(channelId = activeChatChannelId) {
     renderMessages();
     syncMobileViewport();
     history.replaceState(null, "", "#chat");
-  }, () => groupSection.querySelector(".group-conversation"));
+  });
 }
 
 function renderFeatured() {
@@ -1339,7 +1308,7 @@ async function openPrivateConversation(memberId) {
     renderPrivateContacts();
     renderPrivateConversation();
     goTo("privados");
-  }, () => document.querySelector("#privados .private-conversation"));
+  });
 }
 
 function renderPrivateConversation() {
