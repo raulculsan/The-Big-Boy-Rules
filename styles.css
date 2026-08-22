@@ -1346,7 +1346,7 @@ body.light .message p {
   background: linear-gradient(145deg, rgba(255,255,255,.14), rgba(214,166,46,.12));
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.035);
   transform: translate3d(calc(var(--active-tab-index) * 100%), 0, 0);
-  transition: transform .36s cubic-bezier(.22,1,.36,1), width .22s ease, inset .22s ease;
+  transition: transform .16s cubic-bezier(.22,1,.36,1), width .14s ease, inset .14s ease;
   pointer-events: none;
 }
 .floating-tab-bar .app-tab { z-index: 1; }
@@ -1369,6 +1369,40 @@ body.light .message p {
 body.message-slide-transition { overflow-x: hidden; }
 body.message-slide-transition .page-section.active { animation: none; }
 body.message-slide-transition .floating-tab-bar { pointer-events: none; }
+body.message-slide-transition .chat-inbox,
+body.message-slide-transition .group-conversation,
+body.message-slide-transition .private-conversation {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+body.tab-switching .page-section.active { animation: none; }
+
+.search-hub-results .search-result.member-search-result {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+.search-hub-results .search-result.member-search-result .avatar.small {
+  width: 46px;
+  height: 46px;
+  flex-basis: 46px;
+}
+.search-hub-results .search-result.member-search-result .search-result-copy {
+  grid-row: auto;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: inherit;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.search-hub-results .search-result.member-search-result .search-result-copy strong,
+.search-hub-results .search-result.member-search-result .search-result-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 @media (max-width: 760px) {
   .floating-tab-bar { --tab-shell-padding: 6px; }
@@ -1933,7 +1967,7 @@ body:not(.authenticated) .floating-tab-bar {
   border-radius: 21px;
   color: #a4a4ad;
   text-decoration: none;
-  transition: color .2s ease, background .2s ease, transform .2s ease;
+  transition: color .12s ease, background .12s ease, transform .12s ease;
 }
 
 .app-tab svg {

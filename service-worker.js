@@ -1,11 +1,11 @@
-const CACHE_NAME = "big-boy-rules-v113";
+const CACHE_NAME = "big-boy-rules-v114";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260822-113",
-  "./app.js?v=20260822-113",
+  "./styles.css?v=20260822-114",
+  "./app.js?v=20260822-114",
   "./config.js?v=20260805-59",
-  "./manifest.webmanifest?v=20260822-113",
+  "./manifest.webmanifest?v=20260822-114",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

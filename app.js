@@ -248,6 +248,8 @@ let calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let sectionBeforeChat = "inicio";
 let activeContentTab = "publicaciones";
 let viewportSyncFrame = null;
+let navigationFrame = null;
+let navigationWorkTimer = null;
 let mobileViewportBaseline = window.innerHeight;
 let cursorFrame = null;
 let profileQuickMenuPressTimer = null;
@@ -529,11 +531,7 @@ function resetSectionScroll(sectionId) {
     if (app) app.scrollTop = 0;
   };
   reset();
-  requestAnimationFrame(() => {
-    reset();
-    requestAnimationFrame(reset);
-  });
-  if (sectionId === "perfil") window.setTimeout(reset, 180);
+  if (sectionId === "perfil") requestAnimationFrame(reset);
 }
 
 function updateFloatingTabIndicator(sectionId) {
@@ -565,26 +563,32 @@ async function transitionMessageView(update, resolveTarget, {back = false} = {})
   const direction = back ? 1 : -1;
   const source = messageTransitionSource();
   let exitAnimation = null;
+  let enterAnimation = null;
   try {
     if (source) {
+      source.style.willChange = "transform";
       exitAnimation = source.animate([
-        {transform: "translate3d(0,0,0)", opacity: 1},
-        {transform: `translate3d(${direction * 22}%,0,0)`, opacity: .38}
-      ], {duration: 155, easing: "cubic-bezier(.4,0,1,1)", fill: "forwards"});
+        {transform: "translate3d(0,0,0)"},
+        {transform: `translate3d(${direction * 14}%,0,0)`}
+      ], {duration: 105, easing: "cubic-bezier(.4,0,1,1)", fill: "both"});
       await exitAnimation.finished.catch(() => {});
-      exitAnimation.cancel();
     }
     update();
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const target = resolveTarget?.();
     if (target) {
-      const enterAnimation = target.animate([
-        {transform: `translate3d(${back ? -100 : 100}%,0,0)`, opacity: .58},
-        {transform: "translate3d(0,0,0)", opacity: 1}
-      ], {duration: 310, easing: "cubic-bezier(.22,1,.36,1)"});
+      target.style.willChange = "transform";
+      enterAnimation = target.animate([
+        {transform: `translate3d(${back ? -100 : 100}%,0,0)`},
+        {transform: "translate3d(0,0,0)"}
+      ], {duration: 215, easing: "cubic-bezier(.22,1,.36,1)", fill: "both"});
       await enterAnimation.finished.catch(() => {});
     }
   } finally {
+    exitAnimation?.cancel();
+    enterAnimation?.cancel();
+    if (source) source.style.willChange = "";
+    const target = resolveTarget?.();
+    if (target) target.style.willChange = "";
     document.body.classList.remove("message-slide-transition");
     messageViewTransitioning = false;
   }
@@ -606,11 +610,15 @@ function goTo(sectionId) {
     sectionId = "contenido";
   }
   const currentSection = sections.find(section => section.classList.contains("active"))?.id;
+  const switchingSection = currentSection !== sectionId;
   const openingChat = sectionId === "chat" || sectionId === "privados";
   if (openingChat && currentSection && currentSection !== "chat" && currentSection !== "privados") {
     sectionBeforeChat = currentSection;
   }
   if (sectionId === "chat") document.getElementById("chat")?.classList.remove("conversation-open");
+  if (switchingSection && !document.body.classList.contains("message-slide-transition")) {
+    document.body.classList.add("tab-switching");
+  }
   sections.forEach(section => section.classList.toggle("active", section.id === sectionId));
   const navigationSection = sectionId === "privados" ? "chat" : sectionId;
   navLinks.forEach(link => {
@@ -630,11 +638,20 @@ function goTo(sectionId) {
   if (homeAnchor) requestAnimationFrame(() => document.getElementById(homeAnchor)?.scrollIntoView({behavior: "smooth", block: "start"}));
   else resetSectionScroll(sectionId);
   history.replaceState(null, "", `#${homeAnchor || sectionId}`);
-  if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
-  if (sectionId === "buscar") renderCalendar();
-  if (sectionId === "contenido") selectContentTab(activeContentTab);
-  if (sectionId === "ayuda" && currentUser) loadHelpCenter();
-  if (["perfil", "administracion"].includes(sectionId) && currentUser && !achievementsLoaded) loadAchievements();
+  cancelAnimationFrame(navigationFrame);
+  clearTimeout(navigationWorkTimer);
+  navigationFrame = requestAnimationFrame(() => {
+    navigationFrame = null;
+    document.body.classList.remove("tab-switching");
+    navigationWorkTimer = window.setTimeout(() => {
+      navigationWorkTimer = null;
+      if (!document.getElementById(sectionId)?.classList.contains("active")) return;
+      if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
+      if (sectionId === "contenido") selectContentTab(activeContentTab);
+      if (sectionId === "ayuda" && currentUser) loadHelpCenter();
+      if (["perfil", "administracion"].includes(sectionId) && currentUser && !achievementsLoaded) loadAchievements();
+    }, 0);
+  });
 }
 
 function openProfileQuickMenu() {
@@ -774,7 +791,7 @@ function renderMemberAchievements(member) {
   </section>`;
 }
 
-function renderProfile(memberId) {
+function renderProfile(memberId, navigate = true) {
   const member = getMember(memberId)
     || (Number(currentUser?.id) === Number(memberId) ? currentUser : null);
   if (!member) return;
@@ -843,7 +860,7 @@ function renderProfile(memberId) {
     </section>`;
   document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
   document.getElementById("profileAddStoryButton")?.addEventListener("click", () => openStoryCamera("moment"));
-  goTo("perfil");
+  if (navigate) goTo("perfil");
 }
 
 function spotifyEmbedUrl(value = "") {
@@ -1468,33 +1485,21 @@ function formatEventDate(value) {
 
 function performSearch(query) {
   const term = normalizeUsername(query);
-  const results = [];
   if (!term) {
-    document.getElementById("searchResults").innerHTML = `<div class="empty-state compact">Empieza a escribir para buscar en el club.</div>`;
+    document.getElementById("searchResults").innerHTML = `<div class="empty-state compact">Escribe un nombre o un @ para buscar miembros.</div>`;
     return;
   }
-  members.filter(member => normalizeUsername(`${member.name} ${member.username} ${member.nickname} ${member.bio} ${member.tags.join(" ")}`).includes(term))
-    .forEach(member => results.push({type: "Miembro", title: member.name, detail: member.nickname, profile: member.id}));
-  messages.filter(message => normalizeUsername(message.text).includes(term)).slice(-6).forEach(message => {
-    const member = getMember(message.member);
-    results.push({type: "Chat", title: message.text, detail: member?.name || "Miembro", section: "chat"});
-  });
-  profilePosts.filter(post => normalizeUsername(post.caption).includes(term)).slice(0, 6).forEach(post => {
-    results.push({type: "Publicación", title: post.caption || "Foto", detail: getMember(post.member)?.name || "", section: "publicaciones"});
-  });
-  groupEvents.filter(event => normalizeUsername(`${event.title} ${event.description} ${event.location}`).includes(term)).forEach(event => {
-    results.push({type: "Evento", title: event.title, detail: formatEventDate(event.startsAt), section: "buscar"});
-  });
-  newsItems.filter(item => normalizeUsername(`${item.title} ${item.source}`).includes(term)).slice(0, 6).forEach(item => {
-    results.push({type: "Noticia", title: item.title, detail: item.source, url: item.link});
-  });
-  document.getElementById("searchResults").innerHTML = results.length ? results.slice(0, 20).map(result => {
-    const content = `<span>${result.type}</span><strong>${escapeHtml(result.title)}</strong><small>${escapeHtml(result.detail)}</small><b aria-hidden="true">→</b>`;
-    if (result.url) {
-      return `<a class="search-result" href="${escapeHtml(result.url)}" target="_blank" rel="noopener noreferrer" data-search-url>${content}</a>`;
-    }
-    return `<button type="button" class="search-result" ${result.profile ? `data-profile="${result.profile}"` : `data-search-section="${result.section}"`}>${content}</button>`;
-  }).join("") : `<div class="empty-state compact">No hay resultados para “${escapeHtml(query)}”.</div>`;
+  const results = members
+    .filter(member => !member.hidden && normalizeUsername(`${member.name} ${member.username} ${member.nickname}`).includes(term))
+    .slice(0, 20);
+  document.getElementById("searchResults").innerHTML = results.length ? results.map(member => {
+    const detail = `@${member.username}${member.nickname ? ` · ${member.nickname}` : ""}`;
+    return `<button type="button" class="search-result member-search-result" data-profile="${member.id}">
+      ${getAvatar(member, "avatar small")}
+      <span class="search-result-copy"><strong>${escapeHtml(member.name)}</strong><small>${escapeHtml(detail)}</small></span>
+      <b aria-hidden="true">→</b>
+    </button>`;
+  }).join("") : `<div class="empty-state compact">No hay miembros para “${escapeHtml(query)}”.</div>`;
 }
 
 function renderAdminPanel() {
@@ -4661,7 +4666,11 @@ document.addEventListener("click", event => {
   const profileTarget = event.target.closest("[data-profile]");
   if (profileTarget) {
     if (profileTarget.closest("#postViewer")) closePostViewer();
-    renderProfile(profileTarget.dataset.profile);
+    const profileId = profileTarget.dataset.profile;
+    goTo("perfil");
+    requestAnimationFrame(() => window.setTimeout(() => {
+      if (document.getElementById("perfil")?.classList.contains("active")) renderProfile(profileId, false);
+    }, 0));
   }
   const deleteMoment = event.target.closest("[data-delete-moment]");
   if (deleteMoment) deleteMedia("moment", deleteMoment.dataset.deleteMoment);
@@ -4699,10 +4708,7 @@ document.addEventListener("click", event => {
   if (eventTarget) openEventEditor(eventTarget.dataset.eventId);
   const calendarDayTarget = event.target.closest("[data-calendar-date]");
   if (calendarDayTarget) openCalendarDay(calendarDayTarget.dataset.calendarDate);
-  const searchSection = event.target.closest("[data-search-section]");
-  if (searchSection) goTo(searchSection.dataset.searchSection);
-  const searchUrl = event.target.closest("[data-search-url]");
-  if (profileTarget || searchSection || searchUrl) closeGlobalSearch();
+  if (profileTarget) closeGlobalSearch();
 });
 
 document.addEventListener("click", event => {
@@ -4771,8 +4777,13 @@ document.addEventListener("keydown", event => {
 window.addEventListener("pagehide", closeStoryCamera);
 navLinks.forEach(link => link.addEventListener("click", event => {
   event.preventDefault();
-  if (link.dataset.section === "perfil" && currentUser) renderProfile(currentUser.id);
-  else goTo(link.dataset.section);
+  const targetSection = link.dataset.section;
+  goTo(targetSection);
+  if (targetSection === "perfil" && currentUser && activeProfileId !== currentUser.id) {
+    requestAnimationFrame(() => window.setTimeout(() => {
+      if (document.getElementById("perfil")?.classList.contains("active")) renderProfile(currentUser.id, false);
+    }, 0));
+  }
 }));
 document.getElementById("loginForm").addEventListener("submit", async event => {
   event.preventDefault();
