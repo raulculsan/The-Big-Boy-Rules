@@ -736,6 +736,24 @@ function achievementTier(tier) {
   return ACHIEVEMENT_TIERS[tier] || ACHIEVEMENT_TIERS.bronze;
 }
 
+function achievementTrophyIcon(tier, customIcon = "") {
+  const stars = tier === "platinum" ? 3 : tier === "gold" ? 2 : 1;
+  const starMarkup = Array.from({length: stars}, (_, index) => {
+    const x = 12 + (index - (stars - 1) / 2) * 5;
+    return `<circle cx="${x}" cy="11" r="1.05" class="achievement-trophy-star"/>`;
+  }).join("");
+  const customMark = customIcon
+    ? `<i class="achievement-custom-mark">${escapeHtml(String(customIcon).slice(0, 3))}</i>`
+    : "";
+  return `<span class="achievement-trophy" data-tier="${escapeHtml(tier)}">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 4h8v5.4a4 4 0 0 1-8 0Z"/>
+      <path d="M8 6H5.5v1.6A3.4 3.4 0 0 0 9 11M16 6h2.5v1.6A3.4 3.4 0 0 1 15 11M12 13.4V17M8.7 20h6.6M10 17h4v3"/>
+      ${starMarkup}
+    </svg>${customMark}
+  </span>`;
+}
+
 function achievementsForMember(member) {
   if (!member?.authId) return [];
   const assignedIds = new Set(achievementAwards.filter(award => award.userId === member.authId).map(award => String(award.achievementId)));
@@ -752,7 +770,7 @@ function renderMemberAchievements(member) {
       ${assigned.length ? assigned.map(achievement => {
         const tier = achievementTier(achievement.tier);
         return `<article class="achievement-card tier-${achievement.tier}">
-          <span class="achievement-emblem" aria-hidden="true">${escapeHtml(achievement.icon || tier.symbol)}</span>
+          <span class="achievement-emblem" aria-hidden="true">${achievementTrophyIcon(achievement.tier, achievement.icon)}</span>
           <div><small>${escapeHtml(tier.label)}</small><strong>${escapeHtml(achievement.name)}</strong><p>${escapeHtml(achievement.description || "Logro concedido por la administración del club.")}</p></div>
         </article>`;
       }).join("") : `<div class="empty-state compact achievement-empty"><strong>Aún no hay logros</strong><span>Los logros concedidos por la administración aparecerán aquí.</span></div>`}
@@ -1524,7 +1542,7 @@ function renderAdminAchievements() {
     const recipients = achievementAwards.filter(award => String(award.achievementId) === String(achievement.id))
       .map(award => getMemberByAuthId(award.userId)).filter(Boolean);
     return `<article class="admin-achievement-card tier-${achievement.tier}">
-      <span class="achievement-emblem" aria-hidden="true">${escapeHtml(achievement.icon || tier.symbol)}</span>
+      <span class="achievement-emblem" aria-hidden="true">${achievementTrophyIcon(achievement.tier, achievement.icon)}</span>
       <div class="admin-achievement-copy"><span>${escapeHtml(tier.label)}</span><strong>${escapeHtml(achievement.name)}</strong><p>${escapeHtml(achievement.description || "Sin descripción")}</p><small>${recipients.length ? recipients.map(member => escapeHtml(member.name)).join(" · ") : "Sin asignar"}</small></div>
       <div class="admin-achievement-actions"><button class="secondary-button" type="button" data-manage-achievement="${achievement.id}">Asignar</button><button class="text-button danger" type="button" data-delete-achievement="${achievement.id}" data-delete-achievement-name="${escapeHtml(achievement.name)}">Eliminar</button></div>
     </article>`;
