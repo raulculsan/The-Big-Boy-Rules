@@ -1,11 +1,11 @@
-const CACHE_NAME = "big-boy-rules-v118";
+const CACHE_NAME = "big-boy-rules-v119";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260829-118",
-  "./app.js?v=20260829-118",
+  "./styles.css?v=20260829-119",
+  "./app.js?v=20260829-119",
   "./config.js?v=20260805-59",
-  "./manifest.webmanifest?v=20260829-118",
+  "./manifest.webmanifest?v=20260829-119",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -41,6 +41,21 @@ self.addEventListener("fetch", event => {
           return response;
         })
         .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
+  if (["script", "style", "manifest"].includes(request.destination)) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
