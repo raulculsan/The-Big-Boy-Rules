@@ -42,7 +42,7 @@ export default {
       .eq("id", user.id)
       .single();
     const isSuperAdmin = caller?.role === "superadmin" && caller?.is_hidden === true;
-    const isClubAdmin = caller?.role === "admin" && caller?.username === "kike";
+    const isClubAdmin = caller?.role === "admin" && caller?.is_hidden === false;
     if (!isSuperAdmin && !isClubAdmin) {
       return json({error: "No tienes permiso para administrar cuentas."}, 403);
     }
@@ -55,7 +55,7 @@ export default {
     }
 
     if (body.action === "create") {
-      if (!isSuperAdmin) return json({error: "Solo la cuenta de control puede crear usuarios."}, 403);
+      if (!isSuperAdmin && !isClubAdmin) return json({error: "Solo los administradores pueden crear usuarios."}, 403);
       const username = (body.username || "").trim().toLowerCase();
       const displayName = (body.displayName || "").trim();
       const password = body.password || "";
@@ -72,6 +72,15 @@ export default {
         user_metadata: {display_name: displayName},
       });
       if (error) return json({error: error.message}, 400);
+      const {data: createdProfile, error: profileReadError} = await adminClient
+        .from("profiles")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      if (profileReadError || !createdProfile) {
+        await adminClient.auth.admin.deleteUser(data.user.id);
+        return json({error: profileReadError?.message || "La cuenta se creó, pero no se pudo crear su perfil. Revisa el trigger de alta de perfiles."}, 500);
+      }
       return json({ok: true, userId: data.user.id});
     }
 
@@ -105,22 +114,25 @@ export default {
       }
       const {data: target} = await adminClient
         .from("profiles")
-        .select("is_hidden")
+        .select("is_hidden,username")
         .eq("id", userId)
         .single();
       if (!target || (target.is_hidden && !isSuperAdmin)) {
         return json({error: "No puedes modificar esta cuenta."}, 403);
       }
-      const {error: authUpdateError} = await adminClient.auth.admin.updateUserById(userId, {
-        email: `${username}@bigboyrules.local`,
-        email_confirm: true,
-      });
-      if (authUpdateError) return json({error: authUpdateError.message}, 400);
       const {error: profileUpdateError} = await adminClient
         .from("profiles")
         .update({username, updated_at: new Date().toISOString()})
         .eq("id", userId);
       if (profileUpdateError) return json({error: profileUpdateError.message}, 400);
+      const {error: authUpdateError} = await adminClient.auth.admin.updateUserById(userId, {
+        email: `${username}@bigboyrules.local`,
+        email_confirm: true,
+      });
+      if (authUpdateError) {
+        await adminClient.from("profiles").update({username: target.username, updated_at: new Date().toISOString()}).eq("id", userId);
+        return json({error: authUpdateError.message}, 400);
+      }
       return json({ok: true});
     }
 

@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20260829-119" />
+  <link rel="stylesheet" href="chat.css?v=20261006-120" />
 </head>
 <body>
 
@@ -217,13 +218,22 @@
 
     <section class="page-section" id="chat">
       <div class="messages-hub reveal">
-        <aside class="panel chat-inbox">
-          <div class="chat-inbox-heading">
-            <div><span class="eyebrow">THE BIG BOY RULES</span><h2>Mensajes</h2></div>
-            <span class="online-label" id="chatInboxOnlineStatus"><i></i> 0 conectados</span>
+        <aside class="panel chat-inbox" data-filter="all">
+          <div class="inbox-tools">
+            <label class="inbox-search" for="inboxSearchInput">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="inboxSearchInput" type="search" placeholder="Buscar conversación" aria-label="Buscar conversación o miembro" autocomplete="off">
+            </label>
+            <div class="inbox-filters" role="group" aria-label="Filtrar conversaciones">
+              <button type="button" data-inbox-filter="all" aria-pressed="true">Todos</button>
+              <button type="button" data-inbox-filter="unread" aria-pressed="false">No leídos</button>
+              <button type="button" data-inbox-filter="favorites" aria-pressed="false">Favoritos</button>
+              <button type="button" data-inbox-filter="groups" aria-pressed="false">Grupos</button>
+              <button type="button" data-inbox-filter="new" aria-pressed="false">Nuevo chat</button>
+            </div>
           </div>
-          <p class="chat-inbox-copy">El grupo y tus conversaciones privadas, todo en el mismo lugar.</p>
           <div id="privateContacts" class="unified-chat-list"></div>
+          <p class="inbox-empty" id="inboxEmpty" role="status" hidden></p>
         </aside>
 
         <article class="panel chat-panel group-conversation">
@@ -909,7 +919,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20260829-119"></script>
+  <script src="app.js?v=20261006-120"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

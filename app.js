@@ -53,6 +53,7 @@ if (backendReady) {
 const AUTH_STORAGE_KEY = "bb-auth-session";
 const AUTH_SESSION_KEY = "bb-auth-temporary";
 const PROFILE_STORAGE_KEY = "bb-local-profiles";
+const CHAT_FAVORITES_STORAGE_KEY = "bb-chat-favorites";
 const GENERIC_PASSWORD = "bigboy2026";
 const PASSWORD_CHANGE_STORAGE_PREFIX = "bb-password-change-required-";
 const MEDIA_PERMISSION_STORAGE_KEY = "bb-media-permissions";
@@ -597,6 +598,7 @@ function goTo(sectionId) {
   });
   updateFloatingTabIndicator(navigationSection);
   document.body.classList.toggle("chat-focus", sectionId === "privados");
+  document.body.classList.toggle("chat-inbox-view", sectionId === "chat");
   syncMobileViewport();
   const titles = {
     inicio: "El Club", chat: "Mensajes", miembros: "Miembros",
@@ -1272,6 +1274,60 @@ function renderPublications() {
   feed.dataset.renderSignature = profilePosts.map(item => `${item.id}:${getMediaLikes("post", item.id).length}`).join("|");
 }
 
+function formatInboxTime(value, now = new Date()) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"});
+  if (date.toDateString() === yesterday.toDateString()) return "Ayer";
+  return date.toLocaleDateString("es-ES", {day: "numeric", month: "short"});
+}
+
+function normalizeInboxSearch(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es").trim();
+}
+
+function filterInboxContacts() {
+  const inbox = document.querySelector(".chat-inbox");
+  if (!inbox) return;
+  const mode = inbox.dataset.filter || "all";
+  const query = normalizeInboxSearch(document.getElementById("inboxSearchInput").value);
+  let visible = 0;
+  inbox.querySelectorAll(".private-contact").forEach(contact => {
+    const matchesMode = mode === "new" ? !contact.hasAttribute("data-open-group-chat")
+      : mode === "unread" ? Number(contact.dataset.unread) > 0
+      : mode === "favorites" ? contact.dataset.favorite === "true"
+      : mode === "groups" ? contact.dataset.kind === "group"
+      : contact.dataset.conversation === "true" || Boolean(query);
+    contact.hidden = !(matchesMode && normalizeInboxSearch(contact.dataset.search).includes(query));
+    if (!contact.hidden) visible++;
+  });
+  inbox.querySelectorAll("[data-inbox-filter]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.inboxFilter === mode)));
+  const empty = document.getElementById("inboxEmpty");
+  empty.hidden = visible > 0;
+  empty.textContent = query ? "No hay coincidencias. Prueba con otro nombre."
+    : mode === "unread" ? "Estás al día. No tienes mensajes sin leer."
+    : mode === "favorites" ? "Aún no tienes chats favoritos. Márcalos con la estrella."
+    : mode === "groups" ? "No hay grupos para mostrar."
+    : mode === "new" ? "No hay miembros que coincidan con tu búsqueda." : "Todavía no hay conversaciones.";
+}
+
+document.getElementById("inboxSearchInput").addEventListener("input", filterInboxContacts);
+document.querySelectorAll("[data-inbox-filter]").forEach(button => button.addEventListener("click", () => {
+  document.querySelector(".chat-inbox").dataset.filter = button.dataset.inboxFilter;
+  const input = document.getElementById("inboxSearchInput");
+  input.placeholder = button.dataset.inboxFilter === "new" ? "Buscar miembro para chatear" : "Buscar conversación";
+  filterInboxContacts();
+  if (button.dataset.inboxFilter === "new") input.focus({preventScroll: true});
+}));
+
+document.addEventListener("keydown", event => {
+  const favorite = event.target.closest?.("[data-toggle-favorite]");
+  if (!favorite || (event.key !== "Enter" && event.key !== " ")) return;
+  event.preventDefault();
+  favorite.click();
+});
+
 function renderPrivateContacts() {
   const panel = document.getElementById("privateContacts");
   if (!panel || !currentUser) return;
@@ -1283,11 +1339,18 @@ function renderPrivateContacts() {
     ? messagePreviewText(latestGroupMessage.text, latestGroupMessage.attachmentType)
     : "Empieza la conversación del grupo";
   const latestByMember = new Map();
+  const unreadByMember = new Map();
+  notifications.forEach(item => {
+    if (item.type === "private_message" && !item.readAt) unreadByMember.set(item.actorId, (unreadByMember.get(item.actorId) || 0) + 1);
+  });
   privateMessages.forEach(message => {
     const otherAuthId = message.senderId === currentAuthUser?.id ? message.recipientId
       : message.recipientId === currentAuthUser?.id ? message.senderId : null;
     if (otherAuthId) latestByMember.set(otherAuthId, message);
   });
+  let storedFavorites = {};
+  try { storedFavorites = JSON.parse(localStorage.getItem(CHAT_FAVORITES_STORAGE_KEY) || "{}"); } catch {}
+  const userFavorites = new Set(Array.isArray(storedFavorites[currentAuthUser?.id]) ? storedFavorites[currentAuthUser.id].map(String) : []);
   const contacts = members.filter(member => member.id !== currentUser.id).map(member => ({
     member,
     latest: latestByMember.get(member.authId)
@@ -1296,18 +1359,23 @@ function renderPrivateContacts() {
     const bTime = b.latest ? new Date(b.latest.createdAt).getTime() : 0;
     return bTime - aTime || a.member.name.localeCompare(b.member.name, "es");
   });
-  const groupContact = `<button class="private-contact group-chat-contact ${document.getElementById("chat")?.classList.contains("conversation-open") ? "active" : ""}" type="button" data-open-group-chat>
+  const groupContact = `<button class="private-contact group-chat-contact ${document.getElementById("chat")?.classList.contains("conversation-open") ? "active" : ""}" type="button" data-open-group-chat data-kind="group" data-favorite="${userFavorites.has("group")}" data-search="Bigboys The Big Boy Rules grupo" data-conversation="true" data-unread="0">
     ${groupAvatarMarkup()}
-    <span class="private-contact-copy"><span><strong>The Big Boy Rules</strong>${latestGroupMessage ? `<time datetime="${escapeHtml(latestGroupMessage.createdAt)}">${formatRelativeTime(latestGroupMessage.createdAt)}</time>` : ""}</span><small>${latestGroupChannel ? `#${escapeHtml(latestGroupChannel.name)} · ` : ""}${escapeHtml(groupPreview)}</small></span>
-    <span class="chat-row-chevron" aria-hidden="true">›</span>
+    <span class="private-contact-copy"><span><strong>Bigboys</strong>${latestGroupMessage ? `<time datetime="${escapeHtml(latestGroupMessage.createdAt)}">${formatInboxTime(latestGroupMessage.createdAt)}</time>` : ""}</span><small>${latestGroupChannel ? `#${escapeHtml(latestGroupChannel.name)} · ` : ""}${escapeHtml(groupPreview)}</small></span>
+    <span class="inbox-contact-actions"><span class="inbox-group-label">Grupo</span><span class="inbox-favorite ${userFavorites.has("group") ? "active" : ""}" role="button" tabindex="0" data-toggle-favorite="group" aria-label="${userFavorites.has("group") ? "Quitar grupo de favoritos" : "Añadir grupo a favoritos"}" aria-pressed="${userFavorites.has("group")}">★</span></span>
   </button>`;
-  const privateContactsMarkup = contacts.map(({member, latest}) =>
-    `<button class="private-contact ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}">
+  const privateContactsMarkup = contacts.map(({member, latest}) => {
+    const unread = unreadByMember.get(member.authId) || 0;
+    const favorite = userFavorites.has(String(member.authId));
+    return `<button type="button" class="private-contact ${unread ? "has-unread" : ""} ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}" data-kind="private" data-favorite="${favorite}" data-search="${escapeHtml(`${member.name} ${member.username || ""}`)}" data-conversation="${Boolean(latest) || unread > 0}" data-unread="${unread}">
       ${getAvatar(member)}
-      <span class="private-contact-copy"><span><strong>${escapeHtml(member.name)}</strong>${latest ? `<time datetime="${escapeHtml(latest.createdAt)}">${formatRelativeTime(latest.createdAt)}</time>` : ""}</span><small>${latest ? escapeHtml(messagePreviewText(latest.body, latest.attachmentType)) : "Iniciar conversación"}</small></span>
-      <span class="chat-row-chevron" aria-hidden="true">›</span>
-    </button>`).join("");
-  panel.innerHTML = `${groupContact}<div class="chat-list-divider"><span>Mensajes privados</span></div>${privateContactsMarkup}`;
+      <span class="private-contact-copy"><span><strong>${escapeHtml(member.name)}</strong>${latest ? `<time datetime="${escapeHtml(latest.createdAt)}">${formatInboxTime(latest.createdAt)}</time>` : ""}</span><small>${latest ? `${latest.senderId === currentAuthUser?.id ? "Tú: " : ""}${escapeHtml(messagePreviewText(latest.body, latest.attachmentType))}` : "Iniciar conversación"}</small></span>
+      <span class="inbox-favorite ${favorite ? "active" : ""}" role="button" tabindex="0" data-toggle-favorite="${escapeHtml(member.authId || "")}" aria-label="${favorite ? "Quitar chat de favoritos" : "Añadir chat a favoritos"}" aria-pressed="${favorite}">★</span>
+      ${unread ? `<span class="inbox-unread-count" aria-label="${unread} avisos sin leer">${unread > 99 ? "99+" : unread}</span>` : ""}
+    </button>`;
+  }).join("");
+  panel.innerHTML = `${groupContact}${privateContactsMarkup}`;
+  filterInboxContacts();
 }
 
 function messagePreviewText(body, attachmentType) {
@@ -4381,7 +4449,16 @@ async function deletePrivateMessage(id) {
 async function invokeUserAdmin(action, values) {
   if (!canManageSite() || !db) throw new Error("No tienes permiso para administrar cuentas.");
   const {data, error} = await db.functions.invoke("admin-users", {body: {action, ...values}});
-  if (error) throw error;
+  if (error) {
+    let detail = error.context?.error || error.message;
+    try {
+      if (typeof error.context?.json === "function") {
+        const payload = await error.context.json();
+        detail = payload?.error || detail;
+      }
+    } catch {}
+    throw new Error(detail || "No se pudo completar la operación. Comprueba que la función admin-users esté desplegada.");
+  }
   if (data?.error) throw new Error(data.error);
   return data;
 }
@@ -4648,6 +4725,22 @@ document.addEventListener("click", event => {
   if (replyMediaTarget) replyToMedia(replyMediaTarget.dataset.replyKind, replyMediaTarget.dataset.replyMedia);
   const viewersTarget = event.target.closest("[data-moment-viewers]");
   if (viewersTarget) showMomentViewers(viewersTarget.dataset.momentViewers);
+  const favorite = event.target.closest("[data-toggle-favorite]");
+  if (favorite) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const authId = currentAuthUser?.id;
+    const targetId = favorite.dataset.toggleFavorite;
+    if (!authId || !targetId) return;
+    let stored = {};
+    try { stored = JSON.parse(localStorage.getItem(CHAT_FAVORITES_STORAGE_KEY) || "{}"); } catch {}
+    const next = new Set(Array.isArray(stored[authId]) ? stored[authId].map(String) : []);
+    if (next.has(targetId)) next.delete(targetId); else next.add(targetId);
+    stored[authId] = [...next];
+    localStorage.setItem(CHAT_FAVORITES_STORAGE_KEY, JSON.stringify(stored));
+    renderPrivateContacts();
+    return;
+  }
   const goTarget = event.target.closest("[data-go]");
   if (goTarget) goTo(goTarget.dataset.go);
   const profileTarget = event.target.closest("[data-profile]");
