@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="medal" x1="16" y1="10" x2="48" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8DC83"/>
+      <stop offset=".52" stop-color="#E6B93F"/>
+      <stop offset="1" stop-color="#9F6C0F"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#E6B93F" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <circle cx="32" cy="32" r="29" fill="#0D0F12" stroke="#FFFFFF" stroke-opacity=".09" stroke-width="2"/>
+  <g filter="url(#glow)" stroke="url(#medal)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 15h20v11c0 7-4 12-10 12s-10-5-10-12V15Z" stroke-width="3.4"/>
+    <path d="M22 20h-6v4c0 6 4 10 9 10M42 20h6v4c0 6-4 10-9 10" stroke-width="3.4"/>
+    <path d="M32 38v8M24.5 52h15M28 46h8v6" stroke-width="3.4"/>
+    <path d="M28.2 22v9.3M28.2 22h4.3c2.3 0 3.8 1.2 3.8 3 0 1.4-.8 2.3-2.1 2.7 1.7.3 2.7 1.4 2.7 3 0 2-1.6 3.4-4.2 3.4h-4.5" stroke-width="2.8"/>
+    <path d="M28.2 27.6h4.2" stroke-width="2.8"/>
+  </g>
+  <path d="M22 17.5h20" stroke="#F8DC83" stroke-opacity=".7" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

@@ -160,13 +160,13 @@ body.native-keyboard-layout.authenticated.chat-focus.chat-keyboard-open .message
 .inbox-filters { overflow-x: auto; scrollbar-width: none; white-space: nowrap; gap: 18px; }
 .inbox-filters::-webkit-scrollbar { display: none; }
 body.authenticated .chat-inbox .inbox-filters { touch-action: pan-x; }
-.inbox-contact-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: 0 0 auto; }
 .inbox-group-label { color: var(--club-muted); font-size: 10px; }
-.inbox-favorite { display: grid; width: 32px; height: 40px; place-items: center; flex: 0 0 32px; color: #747984; font-size: 17px; cursor: pointer; }
-.inbox-favorite.active { color: var(--club-gold); }
-.inbox-favorite:focus-visible { outline: 2px solid var(--club-gold); outline-offset: -2px; border-radius: 8px; }
-.private-contact > .inbox-favorite { margin-left: auto; }
 .private-contact > .inbox-unread-count { flex: 0 0 auto; }
+.inbox-context-menu { position: fixed; z-index: 3000; min-width: 216px; padding: 5px; border: 1px solid rgba(255,255,255,.12); border-radius: 13px; background: #20242a; box-shadow: 0 14px 38px rgba(0,0,0,.42); }
+.inbox-context-menu[hidden] { display: none; }
+.inbox-context-menu button { display: block; width: 100%; min-height: 46px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; color: #f4f4f6; text-align: left; font-size: 14px; font-weight: 550; }
+.inbox-context-menu button:active { background: rgba(255,255,255,.08); }
+body.authenticated .chat-inbox .private-contact { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: pan-y; }
 .inbox-filters [aria-pressed="true"] { color: var(--club-gold); }
 .inbox-filters [aria-pressed="true"]::after { content: ""; position: absolute; left: 2px; bottom: 1px; width: 28px; height: 2px; border-radius: 2px; background: var(--club-gold); }
 .inbox-empty { padding: 40px 24px; text-align: center; color: var(--club-muted); font-size: 14px; line-height: 1.6; }
@@ -212,7 +212,7 @@ body.authenticated.chat-focus .message-form { border-color: #30363f; background:
 body.authenticated.chat-focus .message-form .composer-camera-button { background: transparent; color: #c5cad2; }
 body.authenticated.chat-focus .message-form .composer-send-button { background: var(--club-gold); color: var(--club-paper); box-shadow: none; }
 body.authenticated.chat-focus .message-form input { font-size: 16px; caret-color: var(--club-gold); }
-.inbox-filters button:focus-visible, .private-contact:focus-visible { outline: 2px solid var(--club-gold); outline-offset: 3px; }
+.inbox-filters button:focus-visible, .private-contact:focus-visible, .inbox-context-menu button:focus-visible { outline: 2px solid var(--club-gold); outline-offset: 3px; }
 @media (max-width: 380px) {
   .inbox-tools { padding-inline: 16px; }
   body.authenticated .chat-inbox .unified-chat-list { padding-inline: 16px; }

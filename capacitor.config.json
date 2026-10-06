@@ -1,0 +1,16 @@
+{
+  "appId": "com.raulculsan.thebigboyrules",
+  "appName": "The Big Boy Rules",
+  "webDir": "www",
+  "backgroundColor": "#08090c",
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "Keyboard": {
+      "resize": "none",
+      "style": "DARK",
+      "autoBackdropColor": "auto"
+    }
+  }
+}

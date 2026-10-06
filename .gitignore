@@ -1,0 +1,11 @@
+node_modules/
+www/
+.DS_Store
+* 2.xml
+* 3.xml
+* 4.xml
+vendor/* 2.*
+vendor/* 3.*
+vendor/* 4.*
+vendor/* 5.*
+icons/cards/* 2.png

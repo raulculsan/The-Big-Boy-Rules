@@ -1,12 +1,85 @@
-const CACHE_NAME = "big-boy-rules-v120";
+const CACHE_NAME = "big-boy-rules-v165";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20260829-119",
-  "./chat.css?v=20261006-120",
-  "./app.js?v=20261006-120",
+  "./styles.css?v=20261006-157",
+  "./club.css?v=20261006-157",
+  "./achievement-admin.css?v=20260903-135",
+  "./achievement-progress.js?v=20260908-156",
+  "./achievement-admin.js?v=20260908-156",
+  "./chat.css?v=20261006-157",
+  "./chat-keyboard.js?v=20260902-129",
+  "./vendor/capacitor.js?v=8.5.0",
+  "./chat-motion.js?v=20260902-128",
+  "./club-model.js?v=20260902-126",
+  "./tab-navigation.js?v=20260903-130",
+  "./app.js?v=20261006-157",
+  "./daily-packs.js?v=20260903-139",
+  "./packs.css?v=20260905-154",
+  "./card-collection.js?v=20261007-165",
+  "./collection-motion.js?v=20261007-163",
+  "./icons/cards/card-touch.json?v=20260905-153",
+  "./icons/cards/card-touch-special.json?v=20260905-153",
+  "./icons/cards/card-touch-legendary.json?v=20260905-153",
+  "./icons/cards/card-touch-retro.json?v=20261007-163",
+  "./icons/cards/pack-opening.json?v=20260904-150",
+  "./icons/cards/jose-enrique-fernandez-cruz-comun-86-v4.png",
+  "./icons/cards/jose-enrique-fernandez-cruz-normal-86-reverso-v1.png",
+  "./icons/cards/miguel-angel-jimenez-sanchez-comun-83-v4.png",
+  "./icons/cards/miguel-angel-jimenez-sanchez-normal-83-reverso-v1.png",
+  "./icons/cards/lizzy-machado-yong-comun-81-v1.png",
+  "./icons/cards/lizzy-machado-yong-comun-81-reverso-v1.png",
+  "./icons/cards/raul-culsan-gonzalez-comun-83-v4.png",
+  "./icons/cards/raul-culsan-gonzalez-normal-83-reverso-v2.png",
+  "./icons/cards/mario-salvatierra-medina-comun-81-v1.png",
+  "./icons/cards/mario-salvatierra-medina-comun-81-reverso-v1.png",
+  "./icons/cards/almudena-de-diego-matilla-comun-84-v1.png",
+  "./icons/cards/almudena-de-diego-matilla-comun-84-reverso-v1.png",
+  "./icons/cards/caonabo-alberto-comun-82-v4.png",
+  "./icons/cards/caonabo-alberto-normal-82-reverso-v1.png",
+  "./icons/cards/alberto-velasco-comun-79-v4.png",
+  "./icons/cards/alberto-velasco-normal-79-reverso-v1.png",
+  "./icons/cards/carlos-gonzalez-motos-comun-82-v4.png",
+  "./icons/cards/carlos-gonzalez-motos-normal-82-reverso-v3.png",
+  "./icons/cards/felipe-hp-comun-80-v4.png",
+  "./icons/cards/felipe-hp-normal-80-reverso-v1.png",
+  "./icons/cards/daniel-gonzalez-motos-comun-80-v4.png",
+  "./icons/cards/daniel-gonzalez-motos-normal-80-reverso-v1.png",
+  "./icons/cards/borox-legendaria-v3.png",
+  "./icons/cards/borox-legendaria-reverso-v3.png",
+  "./icons/cards/luca-de-tena-especial-v1.png",
+  "./icons/cards/luca-de-tena-especial-reverso-v1.png",
+  "./icons/cards/abelias-comun-v1.png",
+  "./icons/cards/abelias-comun-reverso-v1.png",
+  "./icons/cards/castellana-legendaria-v1.png",
+  "./icons/cards/castellana-legendaria-reverso-v1.png",
+  "./icons/cards/borox-legendaria-v4.png",
+  "./icons/cards/borox-legendaria-v5.png",
+  "./icons/cards/castellana-legendaria-v2.png",
+  "./icons/cards/carabanchel-legendaria-v1.png",
+  "./icons/cards/juan-manuel-perez-saldana-retro-90-v1.png",
+  "./icons/cards/mesena-retro-v1.png",
+  "./icons/cards/contrato-de-trabajo-comun-v1.png",
+  "./icons/cards/lata-de-red-bull-comun-v1.png",
+  "./icons/cards/locker-luca-de-tena-legendario-v1.png",
+  "./icons/cards/reverso-retro-unificado-v1.png",
+  "./icons/cards/reverso-comun-unificado-v1.png",
+  "./icons/cards/reverso-especial-unificado-v1.png",
+  "./icons/cards/reverso-legendario-unificado-v1.png",
+  "./icons/cards/sobre-los-nuestros-v1.png?v=20260903-139",
+  "./trophy-motion.js?v=20260904-150",
+  "./trophy-unlock.js?v=20260903-138",
+  "./vendor/lottie-light.min.js?v=5.13.0",
+  ...["bronze", "silver", "gold", "platinum"].flatMap(tier => [
+    `./icons/trophies/${tier}.svg?v=20260903-132`,
+    `./icons/trophies/${tier}.json?v=20260903-132`,
+    `./icons/trophies/${tier}-unlock.json?v=20260903-138`
+  ]),
+  "./vendor/supabase.js?v=20260901-125",
+  "./vendor/fonts/anton-latin.woff2",
+  "./vendor/fonts/inter-latin.woff2",
   "./config.js?v=20260805-59",
-  "./manifest.webmanifest?v=20260829-119",
+  "./manifest.webmanifest?v=20260901-125",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -46,7 +119,7 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  if (["script", "style", "manifest"].includes(request.destination)) {
+  if (["script", "style", "font", "manifest"].includes(request.destination)) {
     event.respondWith(
       fetch(request)
         .then(response => {
@@ -63,7 +136,7 @@ self.addEventListener("fetch", event => {
 
   event.respondWith(
     caches.match(request).then(cached => cached || fetch(request).then(response => {
-      if (response.ok && ["script", "style", "image", "manifest"].includes(request.destination)) {
+      if (response.ok && ["script", "style", "font", "image", "manifest"].includes(request.destination)) {
         const copy = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
       }

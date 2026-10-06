@@ -1,5 +1,6 @@
 -- Ejecuta este archivo completo en Supabase > SQL Editor.
 -- Después crea las nueve cuentas indicadas en README.md desde Authentication > Users.
+-- Para progresos automáticos, ejecuta después supabase-achievement-progress.sql (ver LOGROS-AUTOMATICOS.md).
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -747,6 +748,13 @@ create policy "members delete own group media" on storage.objects
     bucket_id = 'group-media'
     and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_is_superadmin())
   );
+
+do $$
+begin
+  alter publication supabase_realtime add table public.profiles;
+exception
+  when duplicate_object then null;
+end $$;
 
 do $$
 begin

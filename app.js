@@ -37,7 +37,13 @@ rebuildMemberIndexes();
 const config = window.BIG_BOY_CONFIG || {};
 const backendReady = Boolean(config.supabaseUrl && config.supabasePublishableKey && window.supabase);
 const db = backendReady
-  ? window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey)
+  ? window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storage: window.localStorage,
+      },
+    })
   : null;
 
 if (backendReady) {
@@ -52,6 +58,7 @@ if (backendReady) {
 }
 const AUTH_STORAGE_KEY = "bb-auth-session";
 const AUTH_SESSION_KEY = "bb-auth-temporary";
+const AUTH_PROFILE_CACHE_KEY = "bb-auth-profile";
 const PROFILE_STORAGE_KEY = "bb-local-profiles";
 const CHAT_FAVORITES_STORAGE_KEY = "bb-chat-favorites";
 const GENERIC_PASSWORD = "bigboy2026";
@@ -61,8 +68,7 @@ const NEWS_CACHE_DURATION = 2 * 60 * 1000;
 const NEWS_REFRESH_INTERVAL = 2 * 60 * 1000;
 const MEGABYTE = 1024 * 1024;
 const FILE_LIMITS = Object.freeze({
-  attachment: 50 * MEGABYTE,
-  media: 100 * MEGABYTE
+  attachment: 50 * MEGABYTE
 });
 const ACHIEVEMENT_TIERS = Object.freeze({
   bronze: {label: "Bronce", symbol: "◆"},
@@ -70,11 +76,17 @@ const ACHIEVEMENT_TIERS = Object.freeze({
   gold: {label: "Oro", symbol: "★"},
   platinum: {label: "Platino", symbol: "✧"},
 });
-const STORY_GESTURE = Object.freeze({horizontalThreshold: 45, dismissThreshold: 90, holdDelay: 250});
+const CHAT_BACK_GESTURE = Object.freeze({
+  activationDistance: 8,
+  triggerDistance: 92,
+  completionRatio: .28,
+  velocityThreshold: .42,
+  maxVerticalDistance: 56,
+});
 const pageTitle = document.getElementById("pageTitle");
 const sections = [...document.querySelectorAll(".page-section")];
 const navLinks = [...document.querySelectorAll(".app-tab")];
-const isStandaloneApp = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const isStandaloneApp = window.__bigboysNativeKeyboardLayout === true || window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 document.body.classList.toggle("standalone-app", isStandaloneApp);
 let mobileHeaderLastScrollY = Math.max(0, window.scrollY);
 let mobileHeaderScrollAnchor = mobileHeaderLastScrollY;
@@ -95,9 +107,15 @@ function showMobileHeader() {
   document.body.classList.remove("mobile-header-hidden");
 }
 
+function activePageScrollY() {
+  // Mobile sections own their scroll; the document remains stationary behind the dock.
+  const page = sections.find(section => section.classList.contains("active"));
+  return Math.max(0, isMobileSidebar() ? page?.scrollTop || 0 : window.scrollY);
+}
+
 function syncMobileHeader() {
   mobileHeaderFrame = null;
-  const currentScrollY = Math.max(0, window.scrollY);
+  const currentScrollY = activePageScrollY();
   if (!isMobileSidebar() || mobileHeaderMustStayVisible() || currentScrollY < 72) {
     showMobileHeader();
     mobileHeaderLastScrollY = currentScrollY;
@@ -166,10 +184,6 @@ function mediaPermissionWasRemembered(kind) {
 let currentUser = null;
 let currentAuthUser = null;
 let messages = [];
-let moments = [];
-let profilePosts = [];
-let mediaLikes = [];
-let mediaLikesIndex = new Map();
 let notifications = [];
 let privateMessages = [];
 let groupEvents = [];
@@ -178,14 +192,14 @@ let helpRequests = [];
 let helpMessages = [];
 let achievements = [];
 let achievementAwards = [];
+let achievementProgress = [];
+let achievementProgressStatus = "loading";
+let achievementProgressUserId = null;
 let newsItems = [];
 let siteSettings = {};
 let onlineUsers = [];
 let presenceChannel = null;
 let messageChannel = null;
-let momentChannel = null;
-let postChannel = null;
-let mediaLikesChannel = null;
 let notificationsChannel = null;
 let privateChannel = null;
 let eventChannel = null;
@@ -193,10 +207,10 @@ let settingsChannel = null;
 let chatChannelsRealtime = null;
 let helpRealtime = null;
 let achievementsRealtime = null;
+let profilesRealtime = null;
 let activeNewsCategory = "deportes";
 let activeHelpRequestId = null;
 let activeHelpFilter = "all";
-let editingAchievementId = null;
 let lastNewsRefreshAt = 0;
 let newsLoadToken = 0;
 let pendingPrivateMessageFile = null;
@@ -211,67 +225,44 @@ let avatarCropZoom = 1;
 let avatarCropOffsetX = 0;
 let avatarCropOffsetY = 0;
 let avatarCropPointer = null;
-let mediaCropImage = null;
-let mediaCropZoom = 1;
-let mediaCropOffsetX = 0;
-let mediaCropOffsetY = 0;
-let mediaCropPointer = null;
-let mediaFilter = "none";
-let mediaOverlayText = "";
-let pendingMediaUploadFile = null;
-let mediaPreviewObjectUrl = "";
-let storyCameraStream = null;
-let storyCameraFacingMode = "environment";
-let storyCameraTorchEnabled = false;
-let storyCameraOpeningToken = 0;
-let storyCameraEntranceTimer = null;
-let storyRecorder = null;
-let storyRecordingChunks = [];
-let storyRecordingStartedAt = 0;
-let storyRecordingTimer = null;
-let storyShutterHoldTimer = null;
-let storyShutterPointerId = null;
-let storyRecordingDiscard = false;
-let mediaUploaderBackToCamera = false;
-let cameraCaptureMode = "moment";
-let storyCaptureInProgress = false;
-let cameraTransitionGuardUrl = "";
 let pendingGroupAvatarFile = null;
 let groupAvatarPreviewUrl = "";
+let inboxHoldTimer = 0;
+let inboxHoldPointer = null;
+let suppressInboxRowClick = false;
 let pendingMessageFile = null;
-let mediaUploadMode = "post";
 let activeProfileId = null;
-let activePostViewerId = null;
 let editingProfileId = null;
 let activePrivateMemberId = null;
 let activeChatChannelId = null;
 let calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let sectionBeforeChat = "inicio";
-let activeContentTab = "publicaciones";
 let viewportSyncFrame = null;
+let chatKeyboard = null;
 let navigationFrame = null;
 let navigationWorkTimer = null;
+let navigationGeneration = 0;
+let profileRender = null;
 let mobileViewportBaseline = window.innerHeight;
 let cursorFrame = null;
-let profileQuickMenuPressTimer = null;
-let profileQuickMenuPointer = null;
-let suppressProfileTabClick = false;
 let messageViewTransitioning = false;
+let activeChatMotionScene = null;
+let chatBackGesture = null;
+let suppressChatGestureClick = false;
 let sharingMedia = null;
-let activeMomentSequence = [];
-let activeMomentIndex = -1;
-let momentAdvanceTimer = null;
-let momentAdvanceDeadline = 0;
-let momentAdvanceRemaining = 6000;
-let momentGesture = null;
-let momentPressStartedAt = 0;
-let suppressMomentNavigationClick = false;
-let replyingMedia = null;
 let achievementsLoaded = false;
 let helpCenterLoaded = false;
 let achievementsLoading = false;
+let achievementsRequest = null;
 let helpCenterLoading = false;
 const realtimeRefreshTimers = new Map();
+let initialLaunchCompleted = false;
+
+function completeInitialLaunch() {
+  if (initialLaunchCompleted) return;
+  initialLaunchCompleted = true;
+  requestAnimationFrame(() => document.getElementById("pageLoader")?.classList.add("hidden"));
+}
 const pendingMediaLikes = new Set();
 
 function runWhenIdle(callback, timeout = 1200) {
@@ -310,8 +301,8 @@ function validateFileSize(file, limit) {
   throw new Error(`El archivo supera el máximo de ${formatLimit(limit)}.`);
 }
 
-function uploadLimitForFolder(folder) {
-  return ["moments", "posts"].includes(folder) ? FILE_LIMITS.media : FILE_LIMITS.attachment;
+function uploadLimitForFolder() {
+  return FILE_LIMITS.attachment;
 }
 
 function urlBase64ToUint8Array(value) {
@@ -398,29 +389,9 @@ async function testPushNotifications() {
   button.disabled = false;
 }
 
-function classifyStoryGesture(gesture, endX, endY, elapsed) {
-  const distanceX = endX - gesture.x;
-  const distanceY = endY - gesture.y;
-  if (distanceY >= STORY_GESTURE.dismissThreshold && distanceY > Math.abs(distanceX) * 1.1) {
-    return {action: "dismiss"};
-  }
-  if (Math.abs(distanceX) >= STORY_GESTURE.horizontalThreshold) {
-    return {action: distanceX < 0 ? "next" : "previous"};
-  }
-  return {action: "release", held: elapsed >= STORY_GESTURE.holdDelay};
-}
-
 function normalizeUsername(value = "") {
   return value.trim().toLowerCase().normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
-}
-
-function resolveMediaMention() {
-  const selected = document.getElementById("mediaMention")?.value;
-  if (selected) return selected;
-  const searchable = `${document.getElementById("mediaOverlayText")?.value || ""} ${document.getElementById("mediaUploadCaption")?.value || ""}`;
-  const username = searchable.match(/(?:^|\s)@([a-zA-Z0-9._-]{3,32})/)?.[1];
-  return username ? members.find(member => normalizeUsername(member.username) === normalizeUsername(username))?.authId || null : null;
 }
 
 function isSuperAdmin() {
@@ -441,10 +412,22 @@ function getMemberByAuthId(id) {
 
 function getAvatar(member, className = "avatar") {
   if (member?.avatarUrl) {
-    return `<div class="${className} has-image"><img src="${escapeHtml(member.avatarUrl)}" alt="Foto de ${escapeHtml(member.name)}" loading="lazy" decoding="async"></div>`;
+    const initial = escapeHtml(member?.name?.charAt(0).toUpperCase() || "U");
+    return `<div class="${className} has-image" data-avatar><span class="avatar-fallback" aria-hidden="true">${initial}</span><img src="${escapeHtml(member.avatarUrl)}" alt="Foto de ${escapeHtml(member.name)}" loading="lazy" decoding="async"></div>`;
   }
   return `<div class="${className}">${escapeHtml(member?.name?.charAt(0).toUpperCase() || "U")}</div>`;
 }
+
+// Public profile URLs can outlive their backing Storage object. Fall back to
+// initials in every member surface instead of exposing the browser's broken-image glyph.
+document.addEventListener("error", event => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement)) return;
+  const container = image.closest("[data-avatar]") || (image.hasAttribute("data-avatar-image") ? image.parentElement : null);
+  if (!container) return;
+  image.remove();
+  container.classList.remove("has-image");
+}, true);
 
 function applyStoredProfiles() {
   try {
@@ -470,17 +453,6 @@ function syncMobileViewport() {
   viewportSyncFrame = requestAnimationFrame(() => {
     viewportSyncFrame = null;
     const visualViewport = window.visualViewport;
-    const storyCameraOpen = document.getElementById("storyCamera")?.classList.contains("open");
-    if (storyCameraOpen) {
-      document.documentElement.style.setProperty("--story-viewport-width", `${Math.ceil(visualViewport?.width || window.innerWidth)}px`);
-      document.documentElement.style.setProperty("--story-viewport-height", `${Math.ceil(visualViewport?.height || window.innerHeight)}px`);
-      document.documentElement.style.setProperty("--story-viewport-left", `${Math.floor(visualViewport?.offsetLeft || 0)}px`);
-      document.documentElement.style.setProperty("--story-viewport-top", `${Math.floor(visualViewport?.offsetTop || 0)}px`);
-      fitStoryCameraPreview();
-    } else {
-      ["--story-viewport-width", "--story-viewport-height", "--story-viewport-left", "--story-viewport-top"]
-        .forEach(property => document.documentElement.style.removeProperty(property));
-    }
     if (window.innerWidth > 760) {
       document.documentElement.style.removeProperty("--chat-viewport-height");
       document.documentElement.style.removeProperty("--chat-viewport-offset");
@@ -491,94 +463,74 @@ function syncMobileViewport() {
     const viewportOffset = Math.round(window.visualViewport?.offsetTop || 0);
     const composerFocused = Boolean(document.activeElement?.closest?.(".message-form"));
     if (!composerFocused) mobileViewportBaseline = Math.max(window.innerHeight, viewportHeight);
-    const keyboardOpen = composerFocused && mobileViewportBaseline - viewportHeight > 120;
-    document.documentElement.style.setProperty("--chat-viewport-height", `${viewportHeight}px`);
-    document.documentElement.style.setProperty("--chat-viewport-offset", `${viewportOffset}px`);
-    document.body.classList.toggle("chat-keyboard-open", keyboardOpen);
+    const viewport = ChatKeyboard.viewport({height: viewportHeight, offset: viewportOffset,
+      baseline: mobileViewportBaseline, focused: composerFocused,
+      nativeLayout: chatKeyboard?.nativeLayout, nativeVisible: chatKeyboard?.keyboardVisible});
+    document.documentElement.style.setProperty("--chat-viewport-height", `${viewport.height}px`);
+    document.documentElement.style.setProperty("--chat-viewport-offset", `${viewport.offset}px`);
+    document.body.classList.toggle("chat-keyboard-open", viewport.open);
   });
-}
-
-function selectContentTab(tabName) {
-  activeContentTab = tabName === "publicaciones" ? "publicaciones" : "momentos";
-  document.querySelectorAll("[data-content-tab]").forEach(button => {
-    const active = button.dataset.contentTab === activeContentTab;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-selected", String(active));
-  });
-  document.querySelectorAll("[data-content-panel]").forEach(panel => { panel.hidden = false; });
-  const momentsGrid = document.getElementById("momentsGrid");
-  const publicationsFeed = document.getElementById("publicationsFeed");
-  const momentSignature = moments.map(item => `${item.id}:${getMediaLikes("moment", item.id).length}`).join("|");
-  const postSignature = profilePosts.map(item => `${item.id}:${getMediaLikes("post", item.id).length}`).join("|");
-  if (momentsGrid?.dataset.renderSignature !== momentSignature) {
-    renderMoments();
-    momentsGrid.dataset.renderSignature = momentSignature;
-  }
-  if (publicationsFeed?.dataset.renderSignature !== postSignature) {
-    renderPublications();
-    publicationsFeed.dataset.renderSignature = postSignature;
-  }
 }
 
 function resetSectionScroll(sectionId) {
-  const reset = () => {
-    window.scrollTo(0, 0);
-    if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    const section = document.getElementById(sectionId);
-    if (section) section.scrollTop = 0;
-    const app = document.querySelector(".app");
-    if (app) app.scrollTop = 0;
-  };
-  reset();
-  if (sectionId === "perfil") requestAnimationFrame(reset);
+  // Cancel any smooth scroll from the previous page before the next frame is painted.
+  window.scrollTo({top: 0, left: 0, behavior: "instant"});
+  document.getElementById(sectionId)?.scrollTo({top: 0, left: 0, behavior: "instant"});
+  document.querySelector(".app")?.scrollTo({top: 0, left: 0, behavior: "instant"});
 }
 
 function updateFloatingTabIndicator(sectionId) {
-  const navigationSection = sectionId === "privados" ? "chat" : sectionId;
+  const navigationSection = sectionId === "privados" ? "chat" : sectionId === "sobres" ? "inicio" : sectionId;
   const index = navLinks.findIndex(link => link.dataset.section === navigationSection);
-  if (index >= 0) document.getElementById("floatingTabBar")?.style.setProperty("--active-tab-index", String(index));
+  if (index < 0) return;
+  const tabBar = document.getElementById("floatingTabBar");
+  tabBar?.style.setProperty("--active-tab-offset", `${index * 100}%`);
 }
 
 async function transitionMessageView(update, {back = false} = {}) {
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (messageViewTransitioning || reducedMotion) {
-    update();
-    return;
-  }
+  if (messageViewTransitioning) return;
   messageViewTransitioning = true;
-  document.body.classList.add("message-slide-transition");
-  document.documentElement.dataset.messageTransition = back ? "back" : "forward";
+  let scene = null;
   try {
-    if (typeof document.startViewTransition === "function") {
-      const transition = document.startViewTransition(() => update());
-      await transition.finished.catch(() => {});
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const fromInbox = document.body.classList.contains("chat-inbox-view") && !document.body.classList.contains("chat-focus");
+    if (!isMobileSidebar() || reducedMotion || (!back && !fromInbox)) {
+      update();
       return;
     }
-    update();
+    // Compose the destination synchronously, then animate the live panel over the same inbox.
+    if (!back) update();
+    const panel = document.querySelector("#privados.active.conversation-open .private-conversation, #chat.active.conversation-open .group-conversation");
+    scene = prepareChatBackScene(panel, {entering: !back});
+    if (!scene) {
+      if (back) update();
+      return;
+    }
+    scene.panel.classList.add("chat-back-button-exit");
+    await settleChatBackScene(scene, back ? scene.width : 0);
+    if (back) update();
   } finally {
-    delete document.documentElement.dataset.messageTransition;
-    document.body.classList.remove("message-slide-transition");
+    cleanupChatBackScene(scene);
     messageViewTransitioning = false;
   }
 }
 
 function goTo(sectionId) {
-  closeProfileQuickMenu();
+  if (["admin-logros", "crear-logro", "asignar-logro"].includes(sectionId) && !canManageSite()) sectionId = "inicio";
+  const generation = ++navigationGeneration;
+  cancelAnimationFrame(navigationFrame);
+  clearTimeout(navigationWorkTimer);
+  closeProfileQuickMenu({immediate: true});
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   showMobileHeader();
   mobileHeaderLastScrollY = 0;
   mobileHeaderScrollAnchor = 0;
   mobileHeaderDirection = null;
   const requestedSection = sectionId;
-  if (sectionId === "calendario") sectionId = "buscar";
+  if (sectionId === "buscar") sectionId = "calendario";
   const homeAnchor = sectionId === "miembros" || sectionId === "noticias" ? sectionId : null;
   if (homeAnchor) sectionId = "inicio";
-  if (sectionId === "momentos" || sectionId === "publicaciones") {
-    activeContentTab = sectionId;
-    sectionId = "contenido";
-  }
+  if (["contenido", "momentos", "publicaciones"].includes(sectionId)) sectionId = "inicio";
   const currentSection = sections.find(section => section.classList.contains("active"))?.id;
   const switchingSection = currentSection !== sectionId;
   const openingChat = sectionId === "chat" || sectionId === "privados";
@@ -589,8 +541,11 @@ function goTo(sectionId) {
   if (switchingSection && !document.body.classList.contains("message-slide-transition")) {
     document.body.classList.add("tab-switching");
   }
-  sections.forEach(section => section.classList.toggle("active", section.id === sectionId));
-  const navigationSection = sectionId === "privados" ? "chat" : sectionId;
+  sections.forEach(section => {
+    section.classList.toggle("active", section.id === sectionId);
+    section.inert = section.id !== sectionId;
+  });
+  const navigationSection = sectionId === "privados" ? "chat" : sectionId === "sobres" ? "inicio" : sectionId;
   navLinks.forEach(link => {
     const active = link.dataset.section === navigationSection;
     link.classList.toggle("active", active);
@@ -599,29 +554,38 @@ function goTo(sectionId) {
   updateFloatingTabIndicator(navigationSection);
   document.body.classList.toggle("chat-focus", sectionId === "privados");
   document.body.classList.toggle("chat-inbox-view", sectionId === "chat");
+  document.body.classList.toggle("achievement-management-open", ["admin-logros", "crear-logro", "asignar-logro"].includes(sectionId));
+  if (sectionId === "admin-logros") renderAdminAchievements();
+  syncChatInboxAccessibility();
   syncMobileViewport();
   const titles = {
     inicio: "El Club", chat: "Mensajes", miembros: "Miembros",
-    privados: "Mensajes privados", perfil: "Perfil", contenido: "Para ti",
-    noticias: "Noticias", buscar: "Buscar", administracion: "Administración", ayuda: "Ayuda y sugerencias"
+    privados: "Mensajes privados", perfil: "Perfil", calendario: "Calendario",
+    noticias: "Noticias", administracion: "Administración", ayuda: "Ayuda y sugerencias", sobres: "Colección",
+    "admin-logros": "Logros del club", "crear-logro": "Crear un logro", "asignar-logro": "Asignar logro"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
-  if (homeAnchor) requestAnimationFrame(() => document.getElementById(homeAnchor)?.scrollIntoView({behavior: "smooth", block: "start"}));
-  else resetSectionScroll(sectionId);
-  history.replaceState(null, "", `#${homeAnchor || sectionId}`);
-  cancelAnimationFrame(navigationFrame);
-  clearTimeout(navigationWorkTimer);
+  resetSectionScroll(sectionId);
   navigationFrame = requestAnimationFrame(() => {
+    if (generation !== navigationGeneration) return;
     navigationFrame = null;
     document.body.classList.remove("tab-switching");
+    if (homeAnchor) document.getElementById(homeAnchor)?.scrollIntoView({behavior: "smooth", block: "start"});
     navigationWorkTimer = window.setTimeout(() => {
+      if (generation !== navigationGeneration) return;
       navigationWorkTimer = null;
-      if (!document.getElementById(sectionId)?.classList.contains("active")) return;
+      // Coalesce URL/background work, not taps (Safari limits rapid history writes).
+      try {
+        history.replaceState(null, "", `#${homeAnchor || sectionId}`);
+      } catch (error) {
+        // A WebKit history quota must never stop rendering or refreshing the tab.
+        if (error.name !== "SecurityError") throw error;
+      }
       if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
-      if (sectionId === "contenido") selectContentTab(activeContentTab);
       if (sectionId === "ayuda" && currentUser) loadHelpCenter();
-      if (["perfil", "administracion"].includes(sectionId) && currentUser && !achievementsLoaded) loadAchievements();
-    }, 0);
+      if (sectionId === "sobres" && currentUser) globalThis.DailyPacks?.refresh(true);
+      if (["perfil", "administracion", "admin-logros", "crear-logro", "asignar-logro"].includes(sectionId) && currentUser && !achievementsLoaded) loadAchievements();
+    }, 120);
   });
 }
 
@@ -630,45 +594,259 @@ function openProfileQuickMenu() {
   const menu = document.getElementById("profileQuickMenu");
   menu.hidden = false;
   menu.setAttribute("aria-hidden", "false");
-  requestAnimationFrame(() => menu.classList.add("open"));
+  requestAnimationFrame(() => { if (!menu.hidden) menu.classList.add("open"); });
   document.querySelector(".profile-tab")?.setAttribute("aria-expanded", "true");
   navigator.vibrate?.(12);
 }
 
-function closeProfileQuickMenu() {
+function closeProfileQuickMenu({immediate = false} = {}) {
   const menu = document.getElementById("profileQuickMenu");
   if (!menu || menu.hidden) return;
   menu.classList.remove("open");
   menu.setAttribute("aria-hidden", "true");
   document.querySelector(".profile-tab")?.setAttribute("aria-expanded", "false");
+  if (immediate) {
+    menu.hidden = true;
+    return;
+  }
   setTimeout(() => {
     if (!menu.classList.contains("open")) menu.hidden = true;
   }, 160);
 }
 
-async function exitChatView() {
+async function exitChatView({animate = true} = {}) {
   const groupSection = document.getElementById("chat");
   if (groupSection?.classList.contains("active") && groupSection.classList.contains("conversation-open")) {
-    await transitionMessageView(() => {
-      groupSection.classList.remove("conversation-open");
-      document.body.classList.remove("chat-focus");
-      syncMobileViewport();
-      renderPrivateContacts();
-      history.replaceState(null, "", "#chat");
-    }, {back: true});
+    const update = showGroupChatInbox;
+    if (animate) await transitionMessageView(update, {back: true});
+    else update();
     return;
   }
   const targetSection = sectionBeforeChat && sectionBeforeChat !== "chat" && sectionBeforeChat !== "privados" ? sectionBeforeChat : "inicio";
-  await transitionMessageView(() => goTo(targetSection), {back: true});
+  if (animate) await transitionMessageView(() => goTo(targetSection), {back: true});
+  else goTo(targetSection);
 }
 
-async function backFromPrivateConversation() {
-  await transitionMessageView(() => {
-    activePrivateMemberId = null;
-    renderPrivateConversation();
-    goTo("chat");
-    renderPrivateContacts();
-  }, {back: true});
+async function backFromPrivateConversation({animate = true} = {}) {
+  const update = showPrivateChatInbox;
+  if (animate) await transitionMessageView(update, {back: true});
+  else update();
+}
+
+function showGroupChatInbox() {
+  const groupSection = document.getElementById("chat");
+  groupSection?.classList.remove("conversation-open");
+  document.body.classList.remove("chat-focus");
+  syncChatInboxAccessibility();
+  syncMobileViewport();
+  document.querySelectorAll("#privateContacts .private-contact.active").forEach(contact => contact.classList.remove("active"));
+  history.replaceState(null, "", "#chat");
+}
+
+function showPrivateChatInbox() {
+  activePrivateMemberId = null;
+  renderPrivateConversation();
+  goTo("chat");
+  document.querySelectorAll("#privateContacts .private-contact.active").forEach(contact => contact.classList.remove("active"));
+}
+
+function restoreGroupConversation(channelId) {
+  if (channelId != null) activeChatChannelId = channelId;
+  const groupSection = document.getElementById("chat");
+  goTo("chat");
+  groupSection?.classList.add("conversation-open");
+  document.body.classList.add("chat-focus");
+  syncChatInboxAccessibility();
+  renderChatChannels();
+  renderMessages();
+  syncMobileViewport();
+  history.replaceState(null, "", "#chat");
+}
+
+function restorePrivateConversation(memberId) {
+  activePrivateMemberId = memberId;
+  renderPrivateContacts();
+  renderPrivateConversation();
+  goTo("privados");
+}
+
+function syncChatInboxAccessibility() {
+  const inbox = document.querySelector("#chat .chat-inbox");
+  if (inbox) inbox.inert = document.body.classList.contains("chat-focus");
+}
+
+function prepareChatBackScene(panel, {entering = false} = {}) {
+  if (!panel) return null;
+  const width = Math.max(1, Math.round(panel.getBoundingClientRect().width || window.innerWidth));
+  const preview = document.querySelector("#chat .chat-inbox");
+  const kind = panel.closest("#privados") ? "private" : "group";
+  if (!preview || !width) return null;
+  document.body.classList.add("chat-back-transition-active");
+  panel.classList.add("chat-back-live-panel");
+  const scene = {panel, preview, kind, width, offset: 0, animations: []};
+  activeChatMotionScene = scene;
+  updateChatBackScene(scene, entering ? width : 0);
+  return scene;
+}
+
+function updateChatBackScene(scene, offset) {
+  if (!scene?.panel) return;
+  const {offset: clamped, listOffset} = ChatMotion.position(offset, scene.width);
+  scene.offset = clamped;
+  scene.panel.style.setProperty("--chat-back-offset", `${clamped}px`);
+  scene.preview.style.setProperty("--chat-back-list-offset", `${listOffset}px`);
+}
+
+function cleanupChatBackScene(scene) {
+  if (!scene) return;
+  scene.animations.forEach(animation => animation.cancel());
+  scene.panel?.classList.remove("chat-back-live-panel", "chat-back-button-exit");
+  scene.panel?.style.removeProperty("--chat-back-offset");
+  scene.preview?.style.removeProperty("--chat-back-list-offset");
+  if (activeChatMotionScene === scene) {
+    activeChatMotionScene = null;
+    document.body.classList.remove("chat-back-transition-active");
+  }
+}
+
+async function settleChatBackScene(scene, targetOffset) {
+  if (!scene?.panel) return;
+  const from = ChatMotion.position(scene.offset, scene.width);
+  const to = ChatMotion.position(targetOffset, scene.width);
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const duration = ChatMotion.duration(Math.abs(to.offset - from.offset), scene.width, reduced);
+  updateChatBackScene(scene, to.offset);
+  if (!duration || !scene.panel.animate) return;
+  const options = {duration, easing: ChatMotion.easing, fill: "both"};
+  scene.animations = [
+    scene.panel.animate([
+      {transform: `translate3d(${from.offset}px,0,0)`},
+      {transform: `translate3d(${to.offset}px,0,0)`}
+    ], options),
+    scene.preview.animate([
+      {transform: `translate3d(${from.listOffset}px,0,0)`},
+      {transform: `translate3d(${to.listOffset}px,0,0)`}
+    ], options)
+  ];
+  try {
+    await Promise.all(scene.animations.map(animation => animation.finished.catch(() => {})));
+  } finally {
+    scene.animations.forEach(animation => animation.cancel());
+    scene.animations = [];
+  }
+}
+
+function completeChatBackDestination(kind) {
+  if (kind === "private") showPrivateChatInbox();
+  else showGroupChatInbox();
+}
+
+function resetChatBackGesture({settle = false} = {}) {
+  const gesture = chatBackGesture;
+  chatBackGesture = null;
+  if (!gesture) return;
+  if (gesture.panel.hasPointerCapture?.(gesture.pointerId)) gesture.panel.releasePointerCapture(gesture.pointerId);
+  if (gesture.frame) cancelAnimationFrame(gesture.frame);
+  if (!gesture.scene) return;
+  if (!settle) {
+    cleanupChatBackScene(gesture.scene);
+    messageViewTransitioning = false;
+    return;
+  }
+  void settleChatBackScene(gesture.scene, 0).finally(() => {
+    cleanupChatBackScene(gesture.scene);
+    messageViewTransitioning = false;
+  });
+}
+
+function startChatBackGesture(event) {
+  if (!isMobileSidebar() || event.pointerType === "mouse" || event.isPrimary === false || messageViewTransitioning || chatBackGesture) return;
+  if (event.target.closest(".message-form, button, a, input, textarea, select, audio, video, [contenteditable='true']")) return;
+  const panel = event.target.closest("#privados.active.conversation-open .private-conversation, #chat.active.conversation-open .group-conversation");
+  if (!panel || !event.target.closest(".messages, .chat-header")) return;
+  chatBackGesture = {
+    pointerId: event.pointerId,
+    panel,
+    sourcePanel: panel,
+    kind: panel.closest("#privados") ? "private" : "group",
+    memberId: activePrivateMemberId,
+    channelId: activeChatChannelId,
+    startX: event.clientX,
+    startY: event.clientY,
+    lastX: event.clientX,
+    lastTime: event.timeStamp || performance.now(),
+    velocityX: 0,
+    deltaX: 0,
+    deltaY: 0,
+    tracking: false,
+    scene: null,
+    frame: null,
+    pendingOffset: 0,
+  };
+  try { panel.setPointerCapture?.(event.pointerId); } catch { /* Pointer may already have been cancelled by the OS. */ }
+}
+
+function moveChatBackGesture(event) {
+  const gesture = chatBackGesture;
+  if (!gesture || gesture.pointerId !== event.pointerId) return;
+  const now = event.timeStamp || performance.now();
+  const elapsed = Math.max(1, now - gesture.lastTime);
+  gesture.velocityX = (event.clientX - gesture.lastX) / elapsed;
+  gesture.lastX = event.clientX;
+  gesture.lastTime = now;
+  gesture.deltaX = event.clientX - gesture.startX;
+  gesture.deltaY = event.clientY - gesture.startY;
+  if (!gesture.tracking) {
+    if (Math.abs(gesture.deltaY) > CHAT_BACK_GESTURE.maxVerticalDistance || gesture.deltaX < -18) {
+      resetChatBackGesture();
+      return;
+    }
+    if (gesture.deltaX < CHAT_BACK_GESTURE.activationDistance || Math.abs(gesture.deltaX) <= Math.abs(gesture.deltaY) * 1.12) return;
+    gesture.tracking = true;
+    gesture.scene = prepareChatBackScene(gesture.sourcePanel);
+    if (!gesture.scene) {
+      resetChatBackGesture();
+      return;
+    }
+    messageViewTransitioning = true;
+  }
+  if (event.cancelable) event.preventDefault();
+  gesture.pendingOffset = Math.max(0, gesture.deltaX);
+  if (!gesture.frame) {
+    gesture.frame = requestAnimationFrame(() => {
+      gesture.frame = null;
+      if (chatBackGesture === gesture) updateChatBackScene(gesture.scene, gesture.pendingOffset);
+    });
+  }
+}
+
+async function finishChatBackGesture(event) {
+  const gesture = chatBackGesture;
+  if (!gesture || gesture.pointerId !== event.pointerId) return;
+  if (gesture.frame) {
+    cancelAnimationFrame(gesture.frame);
+    gesture.frame = null;
+    if (gesture.scene) updateChatBackScene(gesture.scene, gesture.pendingOffset);
+  }
+  const completionDistance = Math.min(CHAT_BACK_GESTURE.triggerDistance, gesture.scene?.width * CHAT_BACK_GESTURE.completionRatio || CHAT_BACK_GESTURE.triggerDistance);
+  const shouldComplete = gesture.tracking
+    && Math.abs(gesture.deltaY) <= CHAT_BACK_GESTURE.maxVerticalDistance
+    && (gesture.deltaX >= completionDistance || gesture.velocityX >= CHAT_BACK_GESTURE.velocityThreshold);
+  if (!shouldComplete) {
+    resetChatBackGesture({settle: gesture.tracking});
+    return;
+  }
+  chatBackGesture = null;
+  if (gesture.panel.hasPointerCapture?.(gesture.pointerId)) gesture.panel.releasePointerCapture(gesture.pointerId);
+  suppressChatGestureClick = true;
+  try {
+    await settleChatBackScene(gesture.scene, gesture.scene.width);
+    completeChatBackDestination(gesture.scene.kind);
+  } finally {
+    cleanupChatBackScene(gesture.scene);
+    messageViewTransitioning = false;
+    window.setTimeout(() => { suppressChatGestureClick = false; }, 80);
+  }
 }
 
 async function openGroupConversation(channelId = activeChatChannelId) {
@@ -680,6 +858,7 @@ async function openGroupConversation(channelId = activeChatChannelId) {
     goTo("chat");
     groupSection.classList.add("conversation-open");
     document.body.classList.add("chat-focus");
+    syncChatInboxAccessibility();
     renderChatChannels();
     renderMessages();
     syncMobileViewport();
@@ -701,32 +880,12 @@ function renderFeatured() {
     </button>`).join("");
 }
 
-function renderActivity() {
-  const list = document.getElementById("activityList");
-  if (!messages.length) {
-    list.innerHTML = `<div class="empty-state">Todavía no hay actividad real en el chat.</div>`;
-    return;
-  }
-  list.innerHTML = messages.slice(-4).reverse().map(message => {
-    const member = getMember(message.member);
-    return `<div class="activity-item">
-      ${getAvatar(member, "avatar small")}
-      <div class="activity-text"><strong>${escapeHtml(member?.name || "Miembro")}</strong><p>ha enviado un mensaje en el chat.</p></div>
-      <span class="activity-time">${formatRelativeTime(message.createdAt)}</span>
-    </div>`;
-  }).join("");
-}
-
 function renderMembers() {
-  document.getElementById("membersGrid").innerHTML = members.map(member => `
-    <article class="member-card ${member.avatarUrl ? "with-photo" : ""}"
-      style="--member-bg:${member.avatarUrl ? `url('${escapeHtml(member.avatarUrl)}')` : member.bg}"
-      data-member-username="${escapeHtml(member.username)}" data-number="${String(memberDisplayNumber(member)).padStart(2, "0")}">
-      <span class="member-role">${member.role}</span>
-      <h3>${escapeHtml(member.name)}</h3>
-      <p>${escapeHtml(member.nickname)}</p>
-      <button data-profile="${member.id}">Ver perfil →</button>
-    </article>`).join("");
+  document.getElementById("membersGrid").innerHTML = members.filter(member => !member.hidden).map(member => `
+    <button class="club-member" type="button" data-profile="${member.id}">
+      ${getAvatar(member)}
+      <span><strong>${escapeHtml(member.name)}</strong><small>@${escapeHtml(member.username)}</small></span>
+    </button>`).join("");
 }
 
 function memberDisplayNumber(member) {
@@ -739,20 +898,12 @@ function achievementTier(tier) {
 }
 
 function achievementTrophyIcon(tier, customIcon = "") {
-  const stars = tier === "platinum" ? 3 : tier === "gold" ? 2 : 1;
-  const starMarkup = Array.from({length: stars}, (_, index) => {
-    const x = 12 + (index - (stars - 1) / 2) * 5;
-    return `<circle cx="${x}" cy="11" r="1.05" class="achievement-trophy-star"/>`;
-  }).join("");
+  const assetTier = Object.hasOwn(ACHIEVEMENT_TIERS, tier) ? tier : "bronze";
   const customMark = customIcon
     ? `<i class="achievement-custom-mark">${escapeHtml(String(customIcon).slice(0, 3))}</i>`
     : "";
-  return `<span class="achievement-trophy" data-tier="${escapeHtml(tier)}">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 4h8v5.4a4 4 0 0 1-8 0Z"/>
-      <path d="M8 6H5.5v1.6A3.4 3.4 0 0 0 9 11M16 6h2.5v1.6A3.4 3.4 0 0 1 15 11M12 13.4V17M8.7 20h6.6M10 17h4v3"/>
-      ${starMarkup}
-    </svg>${customMark}
+  return `<span class="achievement-trophy" data-tier="${assetTier}">
+    <img src="icons/trophies/${assetTier}.svg?v=20260903-132" width="512" height="512" alt="" decoding="async" draggable="false">${customMark}
   </span>`;
 }
 
@@ -765,90 +916,173 @@ function achievementsForMember(member) {
 function renderMemberAchievements(member) {
   const assigned = achievementsForMember(member);
   return `<section class="profile-achievements">
-    <div class="profile-feed-heading">
-      <div><span class="eyebrow">SALA DE TROFEOS</span><h3>${assigned.length} ${assigned.length === 1 ? "logro" : "logros"}</h3></div>
-    </div>
+    <div class="profile-feed-heading"><div><h3>Tu vitrina</h3></div><span class="club-profile-achievement-summary"><span class="club-profile-earned"><strong>${assigned.length}</strong> ${assigned.length === 1 ? "logro" : "logros"}</span>${renderAchievementChallengeTrigger(member)}</span></div>
+    <p class="club-vitrine-caption">Cada logro cuenta una historia.</p>
     <div class="achievement-showcase">
       ${assigned.length ? assigned.map(achievement => {
         const tier = achievementTier(achievement.tier);
-        return `<article class="achievement-card tier-${achievement.tier}">
+        return `<button type="button" class="achievement-card tier-${escapeHtml(achievement.tier)}" data-open-achievement="${escapeHtml(achievement.id)}" aria-label="Ver logro: ${escapeHtml(achievement.name)}">
           <span class="achievement-emblem" aria-hidden="true">${achievementTrophyIcon(achievement.tier, achievement.icon)}</span>
-          <div><small>${escapeHtml(tier.label)}</small><strong>${escapeHtml(achievement.name)}</strong><p>${escapeHtml(achievement.description || "Logro concedido por la administración del club.")}</p></div>
-        </article>`;
-      }).join("") : `<div class="empty-state compact achievement-empty"><strong>Aún no hay logros</strong><span>Los logros concedidos por la administración aparecerán aquí.</span></div>`}
+          <span class="achievement-card-copy"><small>${escapeHtml(tier.label)}</small><strong>${escapeHtml(achievement.name)}</strong></span>
+        </button>`;
+      }).join("") : `<div class="empty-state compact achievement-empty"><strong>${achievementsLoading ? "Preparando los trofeos…" : "Tu próxima historia empieza aquí"}</strong><span>Los logros conseguidos aparecerán en este espacio.</span></div>`}
     </div>
   </section>`;
 }
 
+let activeAchievementId = null;
+let achievementReturnFocus = null;
+
+function renderPersonalAchievementProgress(achievement) {
+  if (!achievement.rule) return "";
+  const objective = AchievementProgress.objective(achievement.rule);
+  const ownData = achievementProgressUserId === currentAuthUser?.id && achievementProgressStatus === "ready";
+  if (!ownData) return `<span class="achievement-personal-progress"><span class="achievement-progress-objective">${escapeHtml(objective)}</span><small>Tu progreso no está disponible ahora. Se actualizará al recuperar la conexión.</small></span>`;
+  const record = achievementProgress.find(item => String(item.achievementId) === String(achievement.id));
+  const state = AchievementProgress.progress(achievement.rule, record);
+  if (!state) return "";
+  return `<span class="achievement-personal-progress"><span class="achievement-progress-objective">${escapeHtml(objective)}</span>
+    <span class="achievement-progress-count"><strong>${state.complete ? "Objetivo completado" : "Tu progreso"}</strong><span>${state.value} / ${state.target} · ${state.percent}%</span></span>
+    <progress max="${state.target}" value="${state.value}" aria-label="Tu progreso: ${escapeHtml(achievement.name)}"></progress>
+  </span>`;
+}
+
+function renderPendingAchievements(member) {
+  if (!currentAuthUser || member.authId !== currentAuthUser.id || member.hidden) return "";
+  if (achievementProgressStatus === "unavailable") return ""; // Legacy installations keep manual trophies.
+  const pending = AchievementProgress.orderedPending(achievements, achievementAwards, achievementProgress, currentAuthUser.id);
+  return `<section class="achievement-challenges" aria-labelledby="achievementChallengesPanelTitle">
+    <div class="achievement-challenges-intro"><span class="eyebrow">PASO A PASO</span><h3 id="achievementChallengesPanelTitle">Tus próximos logros</h3><p class="achievement-private-note">Ordenados desde el que tienes más cerca. Este progreso solo lo ves tú.</p></div>
+    ${achievementProgressStatus !== "ready" ? `<p class="achievement-private-note" role="status">${achievementProgressStatus === "loading" ? "Cargando tus objetivos…" : "No se ha podido actualizar tu progreso. Inténtalo de nuevo."}</p><button type="button" class="secondary-button" data-reload-achievements>Actualizar progreso</button>` : ""}
+    <div class="achievement-challenge-list">${pending.length ? pending.map(achievement => `<button type="button" class="achievement-challenge tier-${escapeHtml(achievement.tier)}" data-open-achievement="${escapeHtml(achievement.id)}" aria-label="Ver objetivo: ${escapeHtml(achievement.name)}">
+      <span class="achievement-challenge-art" aria-hidden="true">${achievementTrophyIcon(achievement.tier, achievement.icon)}</span>
+      <span class="achievement-challenge-copy"><small>${escapeHtml(achievementTier(achievement.tier).label)}</small><strong>${escapeHtml(achievement.name)}</strong>${renderPersonalAchievementProgress(achievement)}</span>
+    </button>`).join("") : achievementProgressStatus === "ready" ? `<div class="achievement-challenges-complete"><strong>Todo conquistado</strong><span>Has conseguido todos los objetivos disponibles.</span></div>` : ""}</div>
+  </section>`;
+}
+
+function renderAchievementChallengeTrigger(member) {
+  if (!currentAuthUser || member.authId !== currentAuthUser.id || member.hidden || achievementProgressStatus === "unavailable") return "";
+  const count = AchievementProgress.pending(achievements, achievementAwards, currentAuthUser.id).length;
+  return `<button type="button" class="achievement-challenges-trigger" data-open-achievement-challenges aria-label="Ver tus próximos logros${count ? `: ${count} pendientes` : ""}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+    ${count ? `<span>${count > 99 ? "99+" : count}</span>` : ""}
+  </button>`;
+}
+
+let achievementChallengesReturnFocus = null;
+function renderAchievementChallengesDialog() {
+  const member = currentUser ? getMember(currentUser.id) || currentUser : null;
+  const content = document.getElementById("achievementChallengesContent");
+  if (member && content) content.innerHTML = renderPendingAchievements(member);
+}
+function openAchievementChallenges() {
+  if (!currentUser) return;
+  achievementChallengesReturnFocus = document.activeElement;
+  renderAchievementChallengesDialog();
+  const dialog = document.getElementById("achievementChallengesDialog");
+  if (!dialog.open) dialog.showModal();
+  document.body.classList.add("achievement-challenges-open");
+  document.getElementById("closeAchievementChallenges").focus({preventScroll:true});
+}
+function closeAchievementChallenges(restoreFocus = true) {
+  const dialog = document.getElementById("achievementChallengesDialog");
+  if (dialog.open) dialog.close();
+  document.body.classList.remove("achievement-challenges-open");
+  const focus = achievementChallengesReturnFocus;
+  achievementChallengesReturnFocus = null;
+  if (restoreFocus && focus?.isConnected) focus.focus({preventScroll:true});
+}
+
+function renderAchievementDetail() {
+  if (!activeAchievementId) return;
+  const achievement = achievements.find(item => String(item.id) === activeAchievementId);
+  if (!achievement) { closeAchievementDetail(); return; }
+  const {owners, total, percent} = ClubModel.achievementOwnership(achievement.id, members, achievementAwards);
+  const tier = achievementTier(achievement.tier);
+  const earned = achievementAwards.some(award => String(award.achievementId) === String(achievement.id) && award.userId === (currentAuthUser?.id || currentUser?.authId));
+  const content = document.getElementById("achievementDetailContent");
+  const visualKey = JSON.stringify([achievement.id, achievement.tier, achievement.icon]);
+  const previousVisual = content.querySelector(".achievement-detail-visual");
+  content.innerHTML = `
+    <div class="achievement-detail-visual" data-visual-key="${escapeHtml(visualKey)}">
+      <div class="achievement-detail-art tier-${escapeHtml(achievement.tier)}" data-motion-state="static" aria-hidden="true">
+        ${achievementTrophyIcon(achievement.tier, achievement.icon)}<div class="trophy-lottie"></div>
+      </div>
+      <button type="button" class="trophy-replay" aria-label="Repetir animación del trofeo">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 8V3m0 5h-5M20 8a8 8 0 1 0 0 8"/></svg><span>Repetir animación</span>
+      </button>
+    </div>
+    <span class="achievement-detail-tier">${escapeHtml(tier.label)} · ${earned ? "Conseguido" : "Logro del club"}</span>
+    <h2 id="achievementDetailTitle">${escapeHtml(achievement.name)}</h2>
+    <p id="achievementDetailDescription">${escapeHtml(achievement.description || "Un reconocimiento concedido por la administración del club.")}</p>
+    ${renderPersonalAchievementProgress(achievement)}
+    <div class="achievement-rarity"><strong>${total ? new Intl.NumberFormat("es-ES", {maximumFractionDigits: 1}).format(percent) + "%" : "—"}</strong><span>de los miembros del club</span>
+      <progress max="100" value="${percent}" aria-label="Porcentaje de miembros con este logro"></progress>
+      <small>${total ? `${owners} de ${total} miembros activos lo han conseguido` : "Aún no hay un censo de miembros disponible"}</small>
+    </div>`;
+  // Ownership/description updates must not restart an already playing trophy.
+  if (previousVisual?.dataset.visualKey === visualKey) {
+    content.querySelector(".achievement-detail-visual").replaceWith(previousVisual);
+  } else {
+    TrophyMotion.mount(content.querySelector(".achievement-detail-art"), Object.hasOwn(ACHIEVEMENT_TIERS, achievement.tier) ? achievement.tier : "bronze", content.querySelector(".trophy-replay"));
+  }
+}
+function openAchievementDetail(id, returnFocus = document.activeElement) {
+  activeAchievementId = String(id);
+  achievementReturnFocus = returnFocus;
+  renderAchievementDetail();
+  if (!activeAchievementId) return;
+  const dialog = document.getElementById("achievementDetail");
+  if (!dialog.open) dialog.showModal();
+  document.body.classList.add("achievement-detail-open");
+  document.getElementById("closeAchievementDetail").focus({preventScroll: true});
+}
+function closeAchievementDetail() {
+  document.getElementById("achievementDetail").close();
+}
+function finishAchievementDetail() {
+  TrophyMotion.destroy();
+  document.getElementById("achievementDetailContent").replaceChildren();
+  activeAchievementId = null;
+  document.body.classList.remove("achievement-detail-open");
+  const focus = achievementReturnFocus;
+  achievementReturnFocus = null;
+  if (focus?.isConnected) focus.focus({preventScroll: true});
+}
+
 function renderProfile(memberId, navigate = true) {
-  const member = getMember(memberId)
-    || (Number(currentUser?.id) === Number(memberId) ? currentUser : null);
+  const member = getMember(memberId) || (Number(currentUser?.id) === Number(memberId) ? currentUser : null);
   if (!member) return;
   activeProfileId = member.id;
   const isOwnProfile = currentUser?.id === member.id;
   const canEdit = isOwnProfile && !member.hidden;
   const canManageProfile = !member.hidden && (canEdit || isSuperAdmin());
-  const canDeletePosts = canEdit || isSuperAdmin();
-  const posts = profilePosts.filter(post => post.member === member.id);
-  const memberMoments = moments.filter(moment => moment.member === member.id);
-  const memberAchievements = achievementsForMember(member);
   document.querySelector("#perfil .back-button").hidden = isOwnProfile;
-  document.getElementById("profileContent").innerHTML = `
-    <article class="profile-hero">
-      <header class="profile-social-heading">
-        <strong>@${escapeHtml(member.username || member.name)}</strong>
-        <small>${escapeHtml(member.role || "Miembro del club")}</small>
-      </header>
-      <div class="profile-overview">
-        <div class="profile-visual ${member.avatarUrl ? "has-photo" : ""}"
-          style="--profile-bg:${member.avatarUrl ? `url('${escapeHtml(member.avatarUrl)}')` : member.bg}">
-          <span class="profile-avatar-initial" aria-hidden="true">${escapeHtml(member.name?.charAt(0).toUpperCase() || "U")}</span>
-        </div>
-        <div class="profile-stats" aria-label="Resumen del perfil">
-          <div><strong>${posts.length}</strong><small>${posts.length === 1 ? "publicación" : "publicaciones"}</small></div>
-          <div><strong>${memberMoments.length}</strong><small>${memberMoments.length === 1 ? "historia" : "historias"}</small></div>
-          <div><strong>${memberAchievements.length}</strong><small>${memberAchievements.length === 1 ? "logro" : "logros"}</small></div>
-        </div>
+  const markup = `
+    <article class="club-profile">
+      <div class="club-profile-topline"><span class="eyebrow">MIEMBRO DEL CLUB</span><span class="club-member-number">${member.hidden ? "ADMIN" : `N.º ${String(memberDisplayNumber(member)).padStart(2, "0")}`}</span></div>
+      <div class="club-profile-identity">
+        ${getAvatar(member, "avatar club-profile-avatar")}
+        <div><span class="club-profile-handle">@${escapeHtml(member.username || member.name)}</span><h2>${escapeHtml(member.name)}</h2><span class="club-profile-role">${escapeHtml(member.role || "Miembro")}</span></div>
       </div>
-      <div class="profile-info">
-        <span class="profile-number">${member.hidden ? "ADMINISTRACIÓN" : `BIG BOY ${String(memberDisplayNumber(member)).padStart(2, "0")}`}</span>
-        <h2>${escapeHtml(member.name)}</h2>
-        <div class="profile-nickname">${escapeHtml(member.nickname.toUpperCase())}</div>
-        <p>${escapeHtml(member.bio)}</p>
-        <div class="profile-tags">${member.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
+      ${member.nickname ? `<p class="club-profile-nickname">${escapeHtml(member.nickname)}</p>` : ""}
+      ${member.bio ? `<p class="club-profile-bio">${escapeHtml(member.bio)}</p>` : ""}
+      <div class="profile-tags">${(member.tags || []).map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
+      <div class="club-profile-bottom">
         <div class="profile-actions">
-          ${canManageProfile ? `<button class="primary-button edit-profile-button" id="editProfileButton">${canEdit ? "Editar mi perfil" : "Editar perfil"}</button>` : ""}
-          ${!canEdit ? `<button class="secondary-button edit-profile-button" data-private-member="${member.id}">✉ Enviar mensaje</button>` : ""}
+          ${canManageProfile ? `<button class="secondary-button" id="editProfileButton" type="button">${canEdit ? "Editar perfil" : "Gestionar perfil"}</button>` : ""}
+          ${!isOwnProfile ? `<button class="primary-button" data-private-member="${member.id}" type="button">Enviar mensaje</button>` : ""}
         </div>
       </div>
     </article>
-    <section class="profile-stories">
-      <div class="profile-feed-heading">
-        <div><span class="eyebrow">HISTORIAS ACTIVAS</span><h3>${memberMoments.length} ${memberMoments.length === 1 ? "historia" : "historias"}</h3></div>
-      </div>
-      <div class="profile-stories-strip">
-        ${canEdit ? `<button class="profile-story-tile profile-story-add" id="profileAddStoryButton" type="button" aria-label="Subir una historia"><span class="profile-story-media"><b>+</b></span><small>Nueva</small></button>` : ""}
-        ${memberMoments.length ? memberMoments.map(moment => `
-          <button class="profile-story-tile" type="button" data-open-moment="${moment.id}" aria-label="Abrir historia">
-            <span class="profile-story-media">${moment.mediaType === "video"
-              ? `<video src="${escapeHtml(moment.mediaUrl)}" muted playsinline preload="metadata"></video>`
-              : `<img src="${escapeHtml(moment.mediaUrl)}" alt="" loading="lazy" decoding="async">`}</span>
-            <small>${formatRelativeTime(moment.createdAt)}</small>
-          </button>`).join("") : canEdit ? "" : `<div class="empty-state compact profile-stories-empty"><strong>Sin historias activas</strong><span>${escapeHtml(member.name)} no tiene historias activas.</span></div>`}
-      </div>
-    </section>
-    ${renderMemberAchievements(member)}
-    <section class="profile-feed">
-      <div class="profile-feed-heading">
-        <div><span class="eyebrow">PUBLICACIONES</span><h3>${posts.length} ${posts.length === 1 ? "publicación" : "publicaciones"}</h3></div>
-      </div>
-      <div class="profile-posts-grid">
-        ${posts.length ? posts.map(post => renderMediaCard(post, canDeletePosts, "post")).join("") :
-          `<div class="empty-state profile-empty"><strong>Aún no hay publicaciones</strong><span>${canEdit ? "Comparte tu primera foto para empezar tu perfil." : `${escapeHtml(member.name)} todavía no ha publicado fotos.`}</span></div>`}
-      </div>
-    </section>`;
-  document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
-  document.getElementById("profileAddStoryButton")?.addEventListener("click", () => openStoryCamera("moment"));
+    ${renderMemberAchievements(member)}`;
+  // Preserve decoded avatars, achievement nodes and listeners until data changes.
+  if (profileRender?.id !== member.id || profileRender.markup !== markup) {
+    document.getElementById("profileContent").innerHTML = markup;
+    profileRender = {id: member.id, markup};
+    document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
+  }
   if (navigate) goTo("perfil");
 }
 
@@ -861,11 +1095,13 @@ function renderSpotify() {
   const url = siteSettings.spotify_playlist || "";
   const embed = spotifyEmbedUrl(url);
   const player = document.getElementById("spotifyPlayer");
+  if (player.dataset.embed === embed) return;
+  player.dataset.embed = embed;
   if (embed) {
     player.innerHTML = `<iframe src="${escapeHtml(embed)}" title="Playlist de The Big Boy Rules en Spotify" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
     document.getElementById("editSpotifyButton").textContent = "Cambiar playlist";
   } else {
-    player.innerHTML = `<div class="empty-state"><strong>Todavía no hay una playlist vinculada</strong><span>La administración puede añadir un enlace público de Spotify.</span></div>`;
+    player.innerHTML = `<div class="empty-state"><strong>La música está por llegar.</strong><span>Aquí sonará la playlist del club.</span></div>`;
     document.getElementById("editSpotifyButton").textContent = "Vincular playlist";
   }
 }
@@ -892,87 +1128,6 @@ function renderGroupAvatarSurfaces() {
     editButton.setAttribute("aria-label", editable ? "Cambiar foto del grupo" : "Foto del grupo");
     editButton.title = editable ? "Cambiar foto del grupo" : "Foto del grupo";
   }
-}
-
-function mediaActionIcon(kind, active = false) {
-  if (kind === "like") return `<svg viewBox="0 0 24 24" aria-hidden="true"${active ? ` class="filled"` : ""}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"/></svg>`;
-  if (kind === "reply") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5a8.5 8.5 0 0 1 4.7-7.6A8.38 8.38 0 0 1 12.5 3H13a8.48 8.48 0 0 1 8 8Z"/></svg>`;
-  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>`;
-}
-
-function postOptionsIcon() {
-  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14M8 16h11"/></svg>`;
-}
-
-function renderFeedPostCard(item, canDelete, cardIndex = 0) {
-  const member = getMember(item.member);
-  const likes = getMediaLikes("post", item.id);
-  const liked = Boolean(currentAuthUser && likes.some(like => like.userId === currentAuthUser.id));
-  const memberName = member?.name || "Miembro";
-  const username = member?.username || normalizeUsername(memberName);
-  const media = item.mediaType === "video"
-    ? `<video src="${escapeHtml(item.mediaUrl)}" controls playsinline preload="${cardIndex === 0 ? "metadata" : "none"}"></video>`
-    : `<button class="media-view-button" type="button" data-open-content-kind="post" data-open-content-id="${item.id}" aria-label="Abrir publicación de ${escapeHtml(memberName)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${memberName}`)}" loading="${cardIndex === 0 ? "eager" : "lazy"}" decoding="async"${cardIndex === 0 ? ` fetchpriority="high"` : ""}></button>`;
-  return `<article class="profile-post-card feed-post-card" data-media-card-kind="post" data-media-card-id="${item.id}">
-    <header class="feed-post-header">
-      <button class="feed-post-author" type="button" data-profile="${item.member}" aria-label="Ver perfil de ${escapeHtml(memberName)}">
-        ${getAvatar(member, "avatar small")}
-        <span><strong>${escapeHtml(username)}</strong><small>${escapeHtml(member?.nickname || memberName)}</small></span>
-      </button>
-      <div class="feed-post-menu">
-        <button class="feed-post-menu-button" type="button" data-toggle-post-menu="${item.id}" aria-label="Opciones de la publicación" aria-expanded="false">${postOptionsIcon()}</button>
-        <div class="feed-post-menu-popover" data-post-menu="${item.id}" hidden>
-          ${!isSuperAdmin() ? `<button type="button" data-share-media="${item.id}" data-share-kind="post">Enviar por chat</button>` : ""}
-          ${canDelete ? `<button class="danger" type="button" data-delete-post="${item.id}">Eliminar publicación</button>` : ""}
-        </div>
-      </div>
-    </header>
-    <div class="media-frame feed-post-media">${media}</div>
-    <div class="media-card-info feed-post-info">
-      <div class="media-social-actions feed-post-actions">
-        <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="post" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
-          ${mediaActionIcon("like", liked)}<small>Me gusta</small>
-        </button>
-        ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="post" aria-label="Comentar">${mediaActionIcon("reply")}<small>Comentar</small></button>` : ""}
-        ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="post" aria-label="Enviar por chat">${mediaActionIcon("share")}<small>Enviar</small></button>` : ""}
-      </div>
-      <button class="feed-post-like-summary" type="button" data-like-media="${item.id}" data-like-kind="post">${likes.length ? `${likes.length} Me gusta` : "Sé el primero en dar Me gusta"}</button>
-      ${item.caption ? `<p class="feed-post-caption"><button type="button" data-profile="${item.member}">${escapeHtml(username)}</button><span>${escapeHtml(item.caption)}</span></p>` : ""}
-      ${item.mentionedUserId ? `<button class="media-mention feed-post-mention" type="button" data-profile="${getMemberByAuthId(item.mentionedUserId)?.id || ""}">@${escapeHtml(getMemberByAuthId(item.mentionedUserId)?.username || "miembro")}</button>` : ""}
-      <time class="feed-post-time" datetime="${escapeHtml(item.createdAt)}">${formatRelativeTime(item.createdAt)}</time>
-    </div>
-  </article>`;
-}
-
-function renderMediaCard(item, canDelete, kind, cardIndex = 0) {
-  const member = getMember(item.member);
-  const likes = getMediaLikes(kind, item.id);
-  const liked = Boolean(currentAuthUser && likes.some(like => like.userId === currentAuthUser.id));
-  const media = item.mediaType === "video"
-    ? `<video src="${escapeHtml(item.mediaUrl)}" controls preload="metadata"></video>`
-    : kind === "moment"
-      ? `<button class="media-view-button" type="button" data-view-media="${escapeHtml(item.mediaUrl)}" data-view-caption="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Momento de ${member?.name || "miembro"}`)}" loading="lazy" decoding="async"><span>Ver momento</span></button>`
-      : `<button class="media-view-button" type="button" data-open-content-kind="post" data-open-content-id="${item.id}" aria-label="Abrir publicación"><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${member?.name || "miembro"}`)}" loading="lazy" decoding="async"></button>`;
-  return `<article class="${kind === "moment" ? "story-card" : "profile-post-card"}" data-media-card-kind="${kind}" data-media-card-id="${item.id}"${kind === "moment" ? ` style="--story-index:${cardIndex}"` : ""}>
-    ${canDelete && kind === "moment" ? `<button class="delete-media-button moment-delete-button" data-delete-moment="${item.id}" type="button" title="Eliminar este momento" aria-label="Eliminar este momento">× <span>Eliminar</span></button>` : ""}
-    ${kind === "moment" ? `<div class="story-progress" aria-hidden="true"><span></span></div>` : ""}
-    <div class="media-frame">${media}</div>
-    <div class="media-card-info">
-      <button class="media-author" data-profile="${item.member}">${getAvatar(member, "avatar tiny")}<strong>${escapeHtml(member?.name || "Miembro")}</strong></button>
-      ${item.caption ? `<p>${escapeHtml(item.caption)}</p>` : ""}
-      ${item.mentionedUserId ? `<button class="media-mention" type="button" data-profile="${getMemberByAuthId(item.mentionedUserId)?.id || ""}">@${escapeHtml(getMemberByAuthId(item.mentionedUserId)?.username || "miembro")}</button>` : ""}
-      <time datetime="${escapeHtml(item.createdAt)}">${kind === "moment" ? `Caduca ${formatExpiry(item.expiresAt)}` : formatRelativeTime(item.createdAt)}</time>
-      <div class="media-social-actions">
-        <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="${kind}" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">
-          ${mediaActionIcon("like", liked)}${likes.length ? `<strong>${likes.length}</strong>` : ""}<small>Me gusta</small>
-        </button>
-        ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="${kind}" aria-label="Comentar">${mediaActionIcon("reply")}<small>Comentar</small></button>` : ""}
-        ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="${kind}" aria-label="Enviar por chat">${mediaActionIcon("share")}<small>Enviar</small></button>` : ""}
-      </div>
-      ${kind === "moment" && isMediaOwner(item) ? `<button class="media-views-button" type="button" data-moment-viewers="${item.id}">Visualizaciones</button>` : ""}
-      ${canDelete && kind !== "moment" ? `<button class="delete-media-button" data-delete-${kind}="${item.id}" type="button" title="Eliminar esta publicación">Eliminar</button>` : ""}
-    </div>
-  </article>`;
 }
 
 function renderMessages() {
@@ -1077,7 +1232,6 @@ function renderPresence() {
   const count = onlineUsers.length;
   const label = count === 1 ? "1 conectado" : `${count} conectados`;
   document.getElementById("chatOnlineStatus").innerHTML = `<i></i> ${label}`;
-  document.getElementById("chatInboxOnlineStatus").innerHTML = `<i></i> ${label}`;
   document.getElementById("heroOnlineStatus").innerHTML = `<i></i> ${count ? `${label} ahora` : "Nadie conectado"}`;
   const panel = document.getElementById("onlineMembers");
   if (!panel) return;
@@ -1099,16 +1253,11 @@ function renderMessageAttachment(message) {
     return `<a class="message-news-link" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener noreferrer"><span>NOTICIA</span><strong>${escapeHtml(message.attachmentName || "Abrir noticia")}</strong><small>Leer en la fuente →</small></a>`;
   }
   const sharedMedia = getSharedMediaReference(message);
+  if (sharedMedia) return `<span class="retired-content">Contenido compartido ya no disponible</span>`;
   if (message.attachmentType?.startsWith("image/")) {
-    if (sharedMedia) {
-      return `<button class="message-image shared-message-media" type="button" data-open-shared-kind="${sharedMedia.kind}" data-open-shared-id="${sharedMedia.id}" aria-label="Abrir ${sharedMedia.kind === "moment" ? "momento" : "publicación"} original"><img src="${escapeHtml(message.attachmentUrl)}" alt="${sharedMedia.kind === "moment" ? "Momento compartido" : "Publicación compartida"}" loading="lazy"><span>Ver original →</span></button>`;
-    }
     return `<a class="message-image" href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(message.attachmentUrl)}" alt="${escapeHtml(message.attachmentName || "Imagen adjunta")}" loading="lazy"></a>`;
   }
   if (message.attachmentType?.startsWith("video/")) {
-    if (sharedMedia) {
-      return `<button class="shared-message-media shared-message-video" type="button" data-open-shared-kind="${sharedMedia.kind}" data-open-shared-id="${sharedMedia.id}" aria-label="Abrir ${sharedMedia.kind === "moment" ? "momento" : "publicación"} original"><video src="${escapeHtml(message.attachmentUrl)}" muted playsinline preload="metadata"></video><span>Ver original →</span></button>`;
-    }
     return `<video class="message-video" src="${escapeHtml(message.attachmentUrl)}" controls preload="metadata"></video>`;
   }
   if (message.attachmentType?.startsWith("audio/")) {
@@ -1175,103 +1324,7 @@ function toggleVoiceNote(button) {
 
 function getSharedMediaReference(message) {
   const encoded = String(message.attachmentName || "").match(/^bb-share:(moment|post):(.+)$/);
-  if (encoded) return {kind: encoded[1], id: encoded[2]};
-  const moment = moments.find(item => item.mediaUrl === message.attachmentUrl);
-  if (moment) return {kind: "moment", id: String(moment.id)};
-  const post = profilePosts.find(item => item.mediaUrl === message.attachmentUrl);
-  return post ? {kind: "post", id: String(post.id)} : null;
-}
-
-function openSharedMedia(kind, id) {
-  const collection = kind === "moment" ? moments : profilePosts;
-  const item = collection.find(media => String(media.id) === String(id));
-  if (!item) {
-    window.alert(kind === "moment" ? "Este momento ya no está disponible." : "Esta publicación ya no está disponible.");
-    return;
-  }
-  goTo("contenido");
-  selectContentTab(kind === "moment" ? "momentos" : "publicaciones");
-  requestAnimationFrame(() => {
-    const card = [...document.querySelectorAll("[data-media-card-kind][data-media-card-id]")]
-      .find(node => node.dataset.mediaCardKind === kind && String(node.dataset.mediaCardId) === String(id));
-    if (!card) return;
-    card.classList.add("shared-media-highlight");
-    card.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
-    window.setTimeout(() => card.classList.remove("shared-media-highlight"), 2200);
-  });
-}
-
-function renderMoments() {
-  const grid = document.getElementById("momentsGrid");
-  const status = document.getElementById("momentsStatus");
-  status.textContent = moments.length ? `${moments.length} ${moments.length === 1 ? "historia activa" : "historias activas"}` : "";
-  if (!moments.length) {
-    grid.innerHTML = `<div class="stories-empty"><strong>Sin momentos</strong><span>Sube el primero.</span></div>`;
-    grid.dataset.renderSignature = "";
-    return;
-  }
-  const groups = new Map();
-  moments.forEach(item => {
-    const key = storyOwnerKey(item);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(item);
-  });
-  grid.innerHTML = [...groups.values()].map((items, index) => {
-    items.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    const firstUnseen = items.find(item => !hasViewedMoment(item.id));
-    const openingItem = firstUnseen || items[0];
-    const member = getMember(openingItem.member);
-    const hasUnseen = Boolean(firstUnseen);
-    return `<div class="story-bubble-item" data-media-card-kind="moment" data-media-card-id="${openingItem.id}" style="--story-index:${index}">
-      <button class="story-bubble" type="button" data-open-moment="${openingItem.id}" aria-label="Ver ${items.length} ${items.length === 1 ? "historia" : "historias"} de ${escapeHtml(member?.name || "miembro")}">
-        <span class="story-avatar-ring ${hasUnseen ? "unseen" : "seen"}">${getAvatar(member)}</span><strong>${escapeHtml(member?.name || "Miembro")}</strong>
-        ${items.length > 1 ? `<small class="story-count">${items.length}</small>` : ""}
-      </button>
-    </div>`;
-  }).join("");
-  grid.querySelectorAll("[data-open-moment]").forEach(button => {
-    let press = null;
-    let ignoreClick = false;
-    button.addEventListener("pointerdown", event => {
-      press = {x: event.clientX, y: event.clientY, at: Date.now()};
-    });
-    button.addEventListener("pointerup", event => {
-      if (!press) return;
-      const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y);
-      ignoreClick = Date.now() - press.at >= 300 || moved > 14;
-      press = null;
-    });
-    button.addEventListener("pointercancel", () => {
-      press = null;
-      ignoreClick = true;
-    });
-    button.addEventListener("click", event => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (ignoreClick) {
-        ignoreClick = false;
-        return;
-      }
-      openMoment(button.dataset.openMoment);
-    });
-  });
-  grid.dataset.renderSignature = moments.map(item => `${item.id}:${getMediaLikes("moment", item.id).length}`).join("|");
-}
-
-function renderPublications() {
-  const feed = document.getElementById("publicationsFeed");
-  if (!feed) return;
-  if (!profilePosts.length) {
-    feed.innerHTML = `<div class="empty-state publications-empty"><strong>Todavía no hay publicaciones</strong><span>Comparte una foto desde aquí o desde tu perfil.</span></div>`;
-    feed.dataset.renderSignature = "";
-    return;
-  }
-  feed.innerHTML = profilePosts.map((item, index) => renderFeedPostCard(
-    item,
-    isMediaOwner(item) || isSuperAdmin(),
-    index
-  )).join("");
-  feed.dataset.renderSignature = profilePosts.map(item => `${item.id}:${getMediaLikes("post", item.id).length}`).join("|");
+  return encoded ? {kind: encoded[1], id: encoded[2]} : null;
 }
 
 function formatInboxTime(value, now = new Date()) {
@@ -1321,11 +1374,89 @@ document.querySelectorAll("[data-inbox-filter]").forEach(button => button.addEve
   if (button.dataset.inboxFilter === "new") input.focus({preventScroll: true});
 }));
 
-document.addEventListener("keydown", event => {
-  const favorite = event.target.closest?.("[data-toggle-favorite]");
-  if (!favorite || (event.key !== "Enter" && event.key !== " ")) return;
+function closeInboxContextMenu() {
+  const menu = document.getElementById("inboxContextMenu");
+  if (menu && menu.parentElement !== document.body) document.body.append(menu);
+  if (menu) menu.hidden = true;
+}
+
+function showInboxContextMenu(contact, x, y) {
+  if (!contact?.isConnected) return;
+  const menu = document.getElementById("inboxContextMenu");
+  const action = document.getElementById("inboxFavoriteAction");
+  if (!menu || !action) return;
+  const rect = contact.getBoundingClientRect();
+  const favoriteId = contact.dataset.favoriteId;
+  if (!favoriteId) return;
+  menu.dataset.favoriteId = favoriteId;
+  action.textContent = contact.dataset.favorite === "true" ? "Quitar de favoritos" : "Añadir a favoritos";
+  menu.hidden = false;
+  const width = menu.offsetWidth || 224;
+  const height = menu.offsetHeight || 56;
+  const left = Math.max(12, Math.min(window.innerWidth - width - 12, x || rect.right - width));
+  const top = Math.max(12, Math.min(window.innerHeight - height - 12, y || rect.bottom + 4));
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  suppressInboxRowClick = true;
+  window.setTimeout(() => { suppressInboxRowClick = false; }, 900);
+}
+
+document.addEventListener("pointerdown", event => {
+  if (event.target.closest?.("#inboxContextMenu")) return;
+  closeInboxContextMenu();
+  const contact = event.target.closest?.(".chat-inbox .private-contact");
+  if (!contact) return;
+  clearTimeout(inboxHoldTimer);
+  inboxHoldPointer = {id: event.pointerId, x: event.clientX, y: event.clientY, contact};
+  inboxHoldTimer = window.setTimeout(() => {
+    showInboxContextMenu(contact, event.clientX, event.clientY);
+    inboxHoldPointer = null;
+  }, 480);
+}, {passive: true});
+
+document.addEventListener("pointermove", event => {
+  if (!inboxHoldPointer || inboxHoldPointer.id !== event.pointerId) return;
+  if (Math.hypot(event.clientX - inboxHoldPointer.x, event.clientY - inboxHoldPointer.y) > 12) {
+    clearTimeout(inboxHoldTimer);
+    inboxHoldPointer = null;
+  }
+}, {passive: true});
+
+function cancelInboxHold(event) {
+  if (event && inboxHoldPointer && inboxHoldPointer.id !== event.pointerId) return;
+  clearTimeout(inboxHoldTimer);
+  inboxHoldPointer = null;
+}
+document.addEventListener("pointerup", cancelInboxHold, {passive: true});
+document.addEventListener("pointercancel", cancelInboxHold, {passive: true});
+document.addEventListener("contextmenu", event => {
+  const contact = event.target.closest?.(".chat-inbox .private-contact");
+  if (!contact) return;
   event.preventDefault();
-  favorite.click();
+  showInboxContextMenu(contact, event.clientX, event.clientY);
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeInboxContextMenu();
+  if (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10")) return;
+  const contact = event.target.closest?.(".chat-inbox .private-contact");
+  if (!contact) return;
+  event.preventDefault();
+  const rect = contact.getBoundingClientRect();
+  showInboxContextMenu(contact, rect.right, rect.bottom + 4);
+});
+document.getElementById("inboxFavoriteAction")?.addEventListener("click", () => {
+  const menu = document.getElementById("inboxContextMenu");
+  const authId = currentAuthUser?.id;
+  const targetId = menu?.dataset.favoriteId;
+  if (!authId || !targetId) return;
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem(CHAT_FAVORITES_STORAGE_KEY) || "{}"); } catch {}
+  const next = new Set(Array.isArray(stored[authId]) ? stored[authId].map(String) : []);
+  if (next.has(targetId)) next.delete(targetId); else next.add(targetId);
+  stored[authId] = [...next];
+  localStorage.setItem(CHAT_FAVORITES_STORAGE_KEY, JSON.stringify(stored));
+  closeInboxContextMenu();
+  renderPrivateContacts();
 });
 
 function renderPrivateContacts() {
@@ -1359,18 +1490,17 @@ function renderPrivateContacts() {
     const bTime = b.latest ? new Date(b.latest.createdAt).getTime() : 0;
     return bTime - aTime || a.member.name.localeCompare(b.member.name, "es");
   });
-  const groupContact = `<button class="private-contact group-chat-contact ${document.getElementById("chat")?.classList.contains("conversation-open") ? "active" : ""}" type="button" data-open-group-chat data-kind="group" data-favorite="${userFavorites.has("group")}" data-search="Bigboys The Big Boy Rules grupo" data-conversation="true" data-unread="0">
+  const groupContact = `<button class="private-contact group-chat-contact ${document.getElementById("chat")?.classList.contains("conversation-open") ? "active" : ""}" type="button" data-open-group-chat data-kind="group" data-favorite-id="group" data-favorite="${userFavorites.has("group")}" data-search="Bigboys The Big Boy Rules grupo" data-conversation="true" data-unread="0" aria-description="Mantén pulsado para gestionar favoritos">
     ${groupAvatarMarkup()}
     <span class="private-contact-copy"><span><strong>Bigboys</strong>${latestGroupMessage ? `<time datetime="${escapeHtml(latestGroupMessage.createdAt)}">${formatInboxTime(latestGroupMessage.createdAt)}</time>` : ""}</span><small>${latestGroupChannel ? `#${escapeHtml(latestGroupChannel.name)} · ` : ""}${escapeHtml(groupPreview)}</small></span>
-    <span class="inbox-contact-actions"><span class="inbox-group-label">Grupo</span><span class="inbox-favorite ${userFavorites.has("group") ? "active" : ""}" role="button" tabindex="0" data-toggle-favorite="group" aria-label="${userFavorites.has("group") ? "Quitar grupo de favoritos" : "Añadir grupo a favoritos"}" aria-pressed="${userFavorites.has("group")}">★</span></span>
+    <span class="inbox-group-label">Grupo</span>
   </button>`;
   const privateContactsMarkup = contacts.map(({member, latest}) => {
     const unread = unreadByMember.get(member.authId) || 0;
     const favorite = userFavorites.has(String(member.authId));
-    return `<button type="button" class="private-contact ${unread ? "has-unread" : ""} ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}" data-kind="private" data-favorite="${favorite}" data-search="${escapeHtml(`${member.name} ${member.username || ""}`)}" data-conversation="${Boolean(latest) || unread > 0}" data-unread="${unread}">
+    return `<button type="button" class="private-contact ${unread ? "has-unread" : ""} ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}" data-kind="private" data-favorite-id="${escapeHtml(member.authId || "")}" data-favorite="${favorite}" data-search="${escapeHtml(`${member.name} ${member.username || ""}`)}" data-conversation="${Boolean(latest) || unread > 0}" data-unread="${unread}" aria-description="Mantén pulsado para gestionar favoritos">
       ${getAvatar(member)}
       <span class="private-contact-copy"><span><strong>${escapeHtml(member.name)}</strong>${latest ? `<time datetime="${escapeHtml(latest.createdAt)}">${formatInboxTime(latest.createdAt)}</time>` : ""}</span><small>${latest ? `${latest.senderId === currentAuthUser?.id ? "Tú: " : ""}${escapeHtml(messagePreviewText(latest.body, latest.attachmentType))}` : "Iniciar conversación"}</small></span>
-      <span class="inbox-favorite ${favorite ? "active" : ""}" role="button" tabindex="0" data-toggle-favorite="${escapeHtml(member.authId || "")}" aria-label="${favorite ? "Quitar chat de favoritos" : "Añadir chat a favoritos"}" aria-pressed="${favorite}">★</span>
       ${unread ? `<span class="inbox-unread-count" aria-label="${unread} avisos sin leer">${unread > 99 ? "99+" : unread}</span>` : ""}
     </button>`;
   }).join("");
@@ -1391,9 +1521,9 @@ async function openPrivateConversation(memberId) {
   if (!member || member.id === currentUser?.id) return;
   await transitionMessageView(() => {
     activePrivateMemberId = member.id;
-    renderPrivateContacts();
     renderPrivateConversation();
     goTo("privados");
+    scrollConversationToLatest(document.getElementById("privateMessages"));
   });
 }
 
@@ -1432,14 +1562,12 @@ function renderPrivateConversation() {
     (message.senderId === currentAuthUser?.id && message.recipientId === member.authId)
     || (message.senderId === member.authId && message.recipientId === currentAuthUser?.id));
   container.innerHTML = items.length ? items.map(message => {
-    const sender = getMemberByAuthId(message.senderId);
     const own = message.senderId === currentAuthUser?.id;
     return `<div class="message private-message ${own ? "own own-message" : ""}">
-      ${own ? "" : `<button class="message-avatar-link" type="button" data-profile="${sender?.id || ""}" aria-label="Ver perfil de ${escapeHtml(sender?.name || "miembro")}">${getAvatar(sender)}</button>`}
       <div class="message-bubble" data-message-bubble>
-        ${own ? "" : `<div class="message-head"><strong>${escapeHtml(sender?.name || "Miembro")}</strong><time>${formatMessageDate(message.createdAt)}</time></div>`}
         ${message.body ? `<p>${escapeHtml(message.body)}</p>` : ""}
         ${message.attachmentUrl ? renderMessageAttachment(message) : ""}
+        <time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatInboxTime(message.createdAt)}</time>
         ${own ? `<div class="message-actions">
           <button type="button" data-edit-private-message="${message.id}">Editar</button>
           <button type="button" class="danger" data-delete-private-message="${message.id}">Eliminar</button>
@@ -1457,6 +1585,7 @@ function renderPrivateConversation() {
 }
 
 function renderCalendar() {
+  renderUpcomingEvents();
   const year = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
   document.getElementById("calendarMonthTitle").textContent = calendarDate.toLocaleDateString("es-ES", {month: "long", year: "numeric"});
@@ -1473,9 +1602,8 @@ function renderCalendar() {
     const date = new Date(year, month, day);
     const events = groupEvents.filter(event => eventOccursOn(event, date));
     const calendarKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    cells += `<button class="calendar-day ${dateKey(date) === todayKey ? "today" : ""}" type="button" data-calendar-date="${calendarKey}" aria-label="Ver ${day} de ${calendarDate.toLocaleDateString("es-ES", {month: "long"})}">
-      <span>${day}</span>${events.slice(0, 3).map(event => `<i class="calendar-event-pill ${event.eventType === "birthday" ? "birthday" : ""}" title="${escapeHtml(event.title)}">${event.eventType === "birthday" ? "🎂 " : ""}${escapeHtml(event.title)}</i>`).join("")}
-      ${events.length > 3 ? `<small>+${events.length - 3} más</small>` : ""}
+    cells += `<button class="calendar-day ${dateKey(date) === todayKey ? "today" : ""} ${events.length ? "has-events" : ""}" type="button" data-calendar-date="${calendarKey}" ${dateKey(date) === todayKey ? 'aria-current="date"' : ""} aria-label="${day} de ${calendarDate.toLocaleDateString("es-ES", {month: "long"})}, ${events.length} eventos${events.length ? `: ${escapeHtml(events.map(event => event.title).join(", "))}` : ""}">
+      <span>${day}</span><span class="calendar-dots" aria-hidden="true">${events.slice(0, 3).map(event => `<i class="${event.eventType === "birthday" ? "birthday" : ""}"></i>`).join("")}</span>
     </button>`;
   }
   document.getElementById("calendarGrid").innerHTML = cells;
@@ -1492,9 +1620,23 @@ function renderCalendar() {
     </article>`).join("") : `<div class="empty-state compact">No hay eventos este mes.</div>`;
 }
 
+function renderUpcomingEvents() {
+  const upcoming = ClubModel.upcomingEvents(groupEvents);
+  document.getElementById("upcomingEvents").innerHTML = upcoming.length ? upcoming.map(({event, date}) => {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return `<button class="club-event" type="button" data-calendar-date="${key}">
+      <time datetime="${key}"><strong>${date.getDate()}</strong><small>${date.toLocaleDateString("es-ES", {month: "short"}).replace(".", "")}</small></time>
+      <span><strong>${escapeHtml(event.title)}</strong><small>${event.eventType === "birthday" ? "Cumpleaños · Todo el día" : date.toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"})}${event.location ? ` · ${escapeHtml(event.location)}` : ""}</small></span>
+    </button>`;
+  }).join("") : `<div class="club-plans-empty"><strong>Lo próximo está por escribir</strong><p>Los planes y cumpleaños del club aparecerán aquí.</p></div>`;
+}
+
+let activeCalendarDay = null;
+
 function openCalendarDay(dateValue) {
   const [year, month, day] = String(dateValue).split("-").map(Number);
   if (!year || !month || !day) return;
+  activeCalendarDay = dateValue;
   const selectedDate = new Date(year, month - 1, day);
   const events = groupEvents.filter(event => eventOccursOn(event, selectedDate));
   document.getElementById("calendarDayTitle").textContent = selectedDate.toLocaleDateString("es-ES", {weekday: "long", day: "numeric", month: "long", year: "numeric"});
@@ -1513,6 +1655,7 @@ function openCalendarDay(dateValue) {
 }
 
 function closeCalendarDayModal() {
+  activeCalendarDay = null;
   const modal = document.getElementById("calendarDayModal");
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
@@ -1540,8 +1683,9 @@ function formatEventDate(value) {
 
 function performSearch(query) {
   const term = normalizeUsername(query);
+  document.getElementById("searchResults").hidden = !term;
   if (!term) {
-    document.getElementById("searchResults").innerHTML = `<div class="empty-state compact">Escribe un nombre o un @ para buscar miembros.</div>`;
+    document.getElementById("searchResults").innerHTML = "";
     return;
   }
   const results = members
@@ -1552,7 +1696,6 @@ function performSearch(query) {
     return `<button type="button" class="search-result member-search-result" data-profile="${member.id}">
       ${getAvatar(member, "avatar small")}
       <span class="search-result-copy"><strong>${escapeHtml(member.name)}</strong><small>${escapeHtml(detail)}</small></span>
-      <b aria-hidden="true">→</b>
     </button>`;
   }).join("") : `<div class="empty-state compact">No hay miembros para “${escapeHtml(query)}”.</div>`;
 }
@@ -1561,7 +1704,7 @@ function renderAdminPanel() {
   const summary = document.getElementById("adminSummary");
   const table = document.getElementById("adminUsersTable");
   const tools = document.getElementById("superAdminTools");
-  tools?.classList.toggle("visible", isSuperAdmin());
+  tools?.classList.toggle("visible", canManageSite());
   if (!summary || !table) return;
   if (!canManageSite()) {
     summary.innerHTML = "";
@@ -1580,131 +1723,118 @@ function renderAdminPanel() {
       <span class="admin-member-copy"><strong>${escapeHtml(user.name)}</strong><small>@${escapeHtml(user.username)}</small></span>
       <span class="role-chip ${user.roleKey}">${user.roleKey === "admin" ? "Administrador" : "Miembro"}</span>
       <span class="account-status ${online ? "" : "offline"}"><i></i>${online ? "En línea" : "Desconectado"}</span>
-      <span class="admin-member-chevron" aria-hidden="true">›</span>
     </button>`;
   }).join("");
   renderAdminAchievements();
 }
 
-function achievementMemberOptions(selectedIds = new Set(), inputName = "achievementMembers") {
-  const eligibleMembers = members.filter(member => !member.hidden && member.authId);
-  return eligibleMembers.length ? eligibleMembers.map(member => `
-    <label class="achievement-member-option">
-      <input type="checkbox" name="${escapeHtml(inputName)}" value="${escapeHtml(member.authId)}" ${selectedIds.has(member.authId) ? "checked" : ""}>
-      ${getAvatar(member, "avatar tiny")}<span><strong>${escapeHtml(member.name)}</strong><small>@${escapeHtml(member.username)}</small></span>
-    </label>`).join("") : `<div class="empty-state compact">No hay perfiles vinculados disponibles.</div>`;
+const dailyParticipation = AchievementProgress.createDailyVisitRecorder({
+  session: () => backendReady && currentAuthUser?.id,
+  visible: () => !document.hidden,
+  rpc: () => db.rpc("record_daily_app_visit"),
+});
+function refreshDailyParticipation(force = false) {
+  void globalThis.DailyPacks?.refresh(force);
+  return dailyParticipation.record({force}).then(recorded => { if (recorded) return loadAchievements(); });
 }
 
-function renderAdminAchievements() {
-  const membersContainer = document.getElementById("achievementMembers");
-  const list = document.getElementById("adminAchievementsList");
-  if (!membersContainer || !list) return;
-  if (!canManageSite()) {
-    membersContainer.innerHTML = "";
-    list.innerHTML = "";
-    return;
+const achievementAdmin = AchievementAdmin.create({
+  members: () => members, achievements: () => achievements, awards: () => achievementAwards,
+  canManage: canManageSite, avatar: getAvatar, trophy: achievementTrophyIcon,
+  tier: achievementTier, escape: escapeHtml, navigate: goTo, refresh: loadAchievements,
+  progressStatus: () => achievementProgressStatus,
+  createAward: payload => writeAchievement("create_achievement_with_awards", payload),
+  createAutomatic: async payload => {
+    const result = await writeAchievement("create_automatic_achievement", payload);
+    if (!result.error) await dailyParticipation.record({force:true});
+    return result;
+  },
+  assignAward: payload => writeAchievement("set_achievement_awards", payload),
+});
+
+function writeAchievement(method, payload) {
+  if (!canManageSite() || !currentAuthUser || !db) throw new Error("No se puede guardar: comprueba tu conexión y tu sesión de administrador.");
+  return db.rpc(method, payload);
+}
+
+function renderAdminAchievements() { achievementAdmin.render(); }
+function openAchievementAssignments(id) { achievementAdmin.openAssignments(id); }
+function closeAchievementAssignments() { achievementAdmin.closeAssignments(); }
+
+function loadAchievements() {
+  if (!backendReady || !currentAuthUser) return;
+  void globalThis.DailyPacks?.refresh();
+  const userId = currentAuthUser.id;
+  if (achievementsRequest?.userId === userId) {
+    achievementsRequest.pending = true;
+    return achievementsRequest.promise;
   }
-  membersContainer.innerHTML = achievementMemberOptions();
-  list.innerHTML = achievements.length ? achievements.map(achievement => {
-    const tier = achievementTier(achievement.tier);
-    const recipients = achievementAwards.filter(award => String(award.achievementId) === String(achievement.id))
-      .map(award => getMemberByAuthId(award.userId)).filter(Boolean);
-    return `<article class="admin-achievement-card tier-${achievement.tier}">
-      <span class="achievement-emblem" aria-hidden="true">${achievementTrophyIcon(achievement.tier, achievement.icon)}</span>
-      <div class="admin-achievement-copy"><span>${escapeHtml(tier.label)}</span><strong>${escapeHtml(achievement.name)}</strong><p>${escapeHtml(achievement.description || "Sin descripción")}</p><small>${recipients.length ? recipients.map(member => escapeHtml(member.name)).join(" · ") : "Sin asignar"}</small></div>
-      <div class="admin-achievement-actions"><button class="secondary-button" type="button" data-manage-achievement="${achievement.id}">Asignar</button><button class="text-button danger" type="button" data-delete-achievement="${achievement.id}" data-delete-achievement-name="${escapeHtml(achievement.name)}">Eliminar</button></div>
-    </article>`;
-  }).join("") : `<div class="empty-state compact"><strong>Crea el primer logro</strong><span>Podrás asignarlo a uno o varios miembros en el mismo paso.</span></div>`;
-}
-
-async function loadAchievements() {
-  if (!backendReady || !currentAuthUser || achievementsLoading) return;
+  const request = {userId, pending:false, promise:null};
+  achievementsRequest = request;
   achievementsLoading = true;
-  const [definitionsResult, awardsResult] = await Promise.all([
-    db.from("achievements").select("id,name,description,tier,icon,created_by,created_at").order("created_at", {ascending: false}),
-    db.from("achievement_awards").select("id,achievement_id,user_id,awarded_by,awarded_at").order("awarded_at", {ascending: false}),
-  ]);
-  const feedback = document.getElementById("achievementFeedback");
-  achievementsLoaded = true;
-  if (definitionsResult.error || awardsResult.error) {
-    achievements = [];
-    achievementAwards = [];
-    if (feedback && canManageSite()) feedback.textContent = "Falta activar el módulo de logros en Supabase con supabase-achievements.sql.";
-  } else {
-    achievements = (definitionsResult.data || []).map(item => ({
-      id: item.id, name: item.name, description: item.description || "", tier: item.tier,
-      icon: item.icon || "", createdBy: item.created_by, createdAt: item.created_at,
-    }));
-    achievementAwards = (awardsResult.data || []).map(item => ({
-      id: item.id, achievementId: item.achievement_id, userId: item.user_id,
-      awardedBy: item.awarded_by, awardedAt: item.awarded_at,
-    }));
-    if (feedback) feedback.textContent = "";
+  if (achievementProgressUserId !== userId) {
+    achievementProgress = [];
+    achievementProgressUserId = null;
+    achievementProgressStatus = "loading";
   }
-  renderAdminAchievements();
-  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
-  achievementsLoading = false;
-}
-
-async function createAchievement(form) {
-  if (!canManageSite() || !currentAuthUser) return;
-  const feedback = document.getElementById("achievementFeedback");
-  const submit = form.querySelector("[type=submit]");
-  const targetUserIds = [...form.querySelectorAll('input[name="achievementMembers"]:checked')].map(input => input.value);
-  if (!targetUserIds.length) return void (feedback.textContent = "Selecciona al menos un miembro para asignar el logro.");
-  submit.disabled = true;
-  feedback.textContent = "Creando y asignando logro…";
-  const {error} = await db.rpc("create_achievement_with_awards", {
-    new_name: document.getElementById("achievementName").value.trim(),
-    new_description: document.getElementById("achievementDescription").value.trim(),
-    new_tier: document.getElementById("achievementTier").value,
-    new_icon: document.getElementById("achievementIcon").value.trim() || null,
-    target_user_ids: targetUserIds,
-  });
-  submit.disabled = false;
-  if (error) return void (feedback.textContent = error.message || "No se pudo crear el logro.");
-  form.reset();
-  feedback.textContent = "Logro creado y asignado correctamente.";
-  await loadAchievements();
-}
-
-function openAchievementAssignments(id) {
-  if (!canManageSite()) return;
-  const achievement = achievements.find(item => String(item.id) === String(id));
-  if (!achievement) return;
-  editingAchievementId = achievement.id;
-  const selectedIds = new Set(achievementAwards.filter(award => String(award.achievementId) === String(id)).map(award => award.userId));
-  document.getElementById("achievementAssignmentTitle").textContent = achievement.name;
-  document.getElementById("achievementAssignmentMembers").innerHTML = achievementMemberOptions(selectedIds, "achievementAssignmentMembers");
-  document.getElementById("achievementAssignmentFeedback").textContent = "";
-  const modal = document.getElementById("achievementAssignmentModal");
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
-}
-
-function closeAchievementAssignments() {
-  editingAchievementId = null;
-  const modal = document.getElementById("achievementAssignmentModal");
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
-}
-
-async function saveAchievementAssignments(form) {
-  if (!canManageSite() || !editingAchievementId) return;
-  const feedback = document.getElementById("achievementAssignmentFeedback");
-  const submit = form.querySelector("[type=submit]");
-  const targetUserIds = [...form.querySelectorAll('input[name="achievementAssignmentMembers"]:checked')].map(input => input.value);
-  submit.disabled = true;
-  feedback.textContent = "Guardando asignaciones…";
-  const {error} = await db.rpc("set_achievement_awards", {target_achievement_id: editingAchievementId, target_user_ids: targetUserIds});
-  submit.disabled = false;
-  if (error) return void (feedback.textContent = error.message || "No se pudieron guardar las asignaciones.");
-  closeAchievementAssignments();
-  await loadAchievements();
+  const isCurrent = () => achievementsRequest === request && currentAuthUser?.id === userId;
+  request.promise = (async () => {
+    try {
+      do {
+        request.pending = false;
+        await dailyParticipation.record();
+        if (!isCurrent()) return;
+        const [definitionsResult, awardsResult, rulesResult, progressResult] = await Promise.all([
+          db.from("achievements").select("id,name,description,tier,icon,created_by,created_at").order("created_at", {ascending: false}),
+          db.from("achievement_awards").select("id,achievement_id,user_id,awarded_by,awarded_at").order("awarded_at", {ascending: false}),
+          db.from("achievement_rules").select("achievement_id,metric,target_count,created_at"),
+          db.from("achievement_progress").select("achievement_id,current_value,completed_at").eq("user_id", userId),
+        ]);
+        if (!isCurrent()) return;
+        if (definitionsResult.error || awardsResult.error) throw definitionsResult.error || awardsResult.error;
+        const rules = new Map((rulesResult.data || []).map(r => [String(r.achievement_id), {metric:r.metric, target:r.target_count, createdAt:r.created_at}]));
+        const previousRules = new Map(achievements.map(a => [String(a.id), a.rule]));
+        achievements = (definitionsResult.data || []).map(item => ({
+          id:item.id, name:item.name, description:item.description || "", tier:item.tier,
+          icon:item.icon || "", createdBy:item.created_by, createdAt:item.created_at,
+          rule:rulesResult.error ? previousRules.get(String(item.id)) : rules.get(String(item.id)),
+        }));
+        achievementAwards = (awardsResult.data || []).map(item => ({
+          id:item.id, achievementId:item.achievement_id, userId:item.user_id,
+          awardedBy:item.awarded_by, awardedAt:item.awarded_at,
+        }));
+        globalThis.TrophyUnlock?.observe(userId, achievements, achievementAwards);
+        achievementsLoaded = true;
+        const progressError = rulesResult.error || progressResult.error;
+        if (progressError) {
+          achievementProgressStatus = ["PGRST205", "42P01"].includes(progressError.code) ? "unavailable" : "error";
+        } else {
+          achievementProgress = (progressResult.data || []).map(item => ({achievementId:item.achievement_id, value:item.current_value, completedAt:item.completed_at}));
+          achievementProgressUserId = userId;
+          achievementProgressStatus = "ready";
+        }
+      } while (request.pending && isCurrent());
+    } catch (error) {
+      if (!isCurrent()) return;
+      achievementProgressStatus = "error";
+      const feedback = document.getElementById("achievementLibraryFeedback");
+      if (feedback && canManageSite()) feedback.textContent = "No se han podido actualizar los logros. Comprueba la conexión y que el módulo esté activado.";
+    } finally {
+      if (isCurrent()) {
+        achievementsLoading = false;
+        achievementsRequest = null;
+        renderAdminAchievements();
+        if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId, false);
+        if (document.getElementById("achievementChallengesDialog")?.open) renderAchievementChallengesDialog();
+        renderAchievementDetail();
+      }
+    }
+  })();
+  return request.promise;
 }
 
 async function deleteAchievement(id, name) {
-  if (!canManageSite() || !window.confirm(`¿Eliminar el logro “${name}” y todas sus asignaciones?`)) return;
+  if (!canManageSite() || !db || !window.confirm(`¿Eliminar el logro “${name}” y todas sus asignaciones?`)) return;
   const {error} = await db.from("achievements").delete().eq("id", id);
   if (error) return window.alert(error.message || "No se pudo eliminar el logro.");
   await loadAchievements();
@@ -1715,17 +1845,19 @@ function refreshProfileSurfaces() {
   renderMembers();
   renderPresence();
   renderMessages();
-  renderActivity();
   renderAdminPanel();
   if (currentUser) applyUserHeader(currentUser);
+  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId, false);
 }
 
 function applyUserHeader(user) {
   ["bottomNavAvatar"].forEach(id => {
     const node = document.getElementById(id);
     if (!node) return;
-    node.classList.toggle("has-image", Boolean(user.avatarUrl));
-    node.innerHTML = user.avatarUrl ? `<img src="${escapeHtml(user.avatarUrl)}" alt="">` : escapeHtml(user.name.charAt(0));
+    const initial = escapeHtml(user.name?.charAt(0).toUpperCase() || "U");
+    const avatarUrl = user.avatarUrl || getMember(user.id)?.avatarUrl || "";
+    node.classList.toggle("has-image", Boolean(avatarUrl));
+    node.innerHTML = avatarUrl ? `<img data-avatar-image src="${escapeHtml(avatarUrl)}" alt="">` : initial;
   });
   document.querySelectorAll(".admin-only").forEach(node => node.style.display = canManageSite() ? "" : "none");
   renderGroupAvatarSurfaces();
@@ -1733,24 +1865,61 @@ function applyUserHeader(user) {
 
 function getStoredSession() {
   try {
-    return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || sessionStorage.getItem(AUTH_SESSION_KEY) || "null");
+    const persistentSession = localStorage.getItem(AUTH_STORAGE_KEY);
+    const temporarySession = sessionStorage.getItem(AUTH_SESSION_KEY);
+    if (!persistentSession && temporarySession) {
+      localStorage.setItem(AUTH_STORAGE_KEY, temporarySession);
+      sessionStorage.removeItem(AUTH_SESSION_KEY);
+    }
+    return JSON.parse(persistentSession || temporarySession || "null");
   } catch {
     return null;
   }
 }
 
-function saveLocalSession(user, remember) {
-  localStorage.removeItem(AUTH_STORAGE_KEY);
+function saveLocalSession(user) {
   sessionStorage.removeItem(AUTH_SESSION_KEY);
-  (remember ? localStorage : sessionStorage).setItem(
-    remember ? AUTH_STORAGE_KEY : AUTH_SESSION_KEY,
+  localStorage.setItem(
+    AUTH_STORAGE_KEY,
     JSON.stringify({userId: user.id, loginAt: new Date().toISOString()})
   );
+}
+
+function cacheAuthenticatedProfile(user, authUser) {
+  if (!user || !authUser?.id) return;
+  localStorage.setItem(AUTH_PROFILE_CACHE_KEY, JSON.stringify({authId: authUser.id, profile: user}));
+}
+
+function getCachedAuthenticatedProfile(authId) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(AUTH_PROFILE_CACHE_KEY) || "null");
+    return cached?.authId === authId ? cached.profile : null;
+  } catch {
+    return null;
+  }
+}
+
+async function hydrateAuthenticatedData(authUser) {
+  try {
+    await Promise.all([loadRemoteProfiles(), loadChatChannels()]);
+    await Promise.all([
+      loadMessages(), loadAchievements(),
+      loadNotifications(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()
+    ]);
+    if (currentAuthUser?.id === authUser.id) connectRealtime();
+    runWhenIdle(() => {
+      if (currentAuthUser?.id === authUser.id && !achievementsLoaded) loadAchievements();
+    });
+  } catch (error) {
+    console.warn("No se pudieron actualizar todos los datos al iniciar:", error);
+  }
 }
 
 async function applyUserInterface(user, authUser = null) {
   currentUser = user;
   currentAuthUser = authUser;
+  if (authUser) cacheAuthenticatedProfile(user, authUser);
+  document.documentElement.classList.add("auth-session-hint");
   document.body.classList.add("authenticated");
   document.getElementById("loginScreen")?.classList.add("login-hidden");
   applyUserHeader(user);
@@ -1758,19 +1927,14 @@ async function applyUserInterface(user, authUser = null) {
   renderPrivateContacts();
   renderPrivateConversation();
   renderCalendar();
-  renderMoments();
-  renderPublications();
   renderNotifications();
   renderSpotify();
   renderHelpCenter();
   renderAdminAchievements();
+  completeInitialLaunch();
   if (backendReady && authUser) {
-    await Promise.all([loadRemoteProfiles(), loadChatChannels()]);
-    await Promise.all([loadMessages(), loadMoments(), loadProfilePosts(), loadMediaLikes(), loadNotifications(), loadPrivateMessages(), loadGroupEvents(), loadSiteSettings()]);
-    connectRealtime();
-    runWhenIdle(() => {
-      if (currentAuthUser && !achievementsLoaded) loadAchievements();
-    });
+    void globalThis.DailyPacks?.refresh();
+    void hydrateAuthenticatedData(authUser);
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
     renderPresence();
@@ -1786,7 +1950,12 @@ async function applyUserInterface(user, authUser = null) {
 }
 
 function showLogin() {
+  globalThis.CardCollection?.close();
+  globalThis.DailyPacks?.reset();
+  globalThis.TrophyUnlock?.reset();
   closeProfileQuickMenu();
+  closeAchievementChallenges(false);
+  document.documentElement.classList.remove("auth-session-hint");
   document.body.classList.remove("authenticated");
   document.getElementById("loginScreen")?.classList.remove("login-hidden");
   onlineUsers = [];
@@ -1794,25 +1963,27 @@ function showLogin() {
   renderPresence();
   renderNotifications();
   closeNotifications();
-  goTo("contenido");
+  goTo("inicio");
+  completeInitialLaunch();
 }
 
 async function logoutCurrentUser() {
-  closeStoryCamera();
+  globalThis.CardCollection?.close();
+  globalThis.DailyPacks?.reset();
+  globalThis.TrophyUnlock?.reset();
+  closeAchievementDetail();
+  closeAchievementChallenges(false);
   if (activeAudioRecording) activeAudioRecording.cancelled = true;
-  if (activeAudioRecording?.recorder.state !== "inactive") activeAudioRecording.recorder.stop();
+  if (activeAudioRecording && activeAudioRecording.recorder.state !== "inactive") activeAudioRecording.recorder.stop();
   clearPendingChatFile("group");
   clearPendingChatFile("private");
   if (db) await db.auth.signOut();
   localStorage.removeItem(AUTH_STORAGE_KEY);
+  localStorage.removeItem(AUTH_PROFILE_CACHE_KEY);
   sessionStorage.removeItem(AUTH_SESSION_KEY);
   currentUser = null;
   currentAuthUser = null;
   messages = [];
-  moments = [];
-  profilePosts = [];
-  mediaLikes = [];
-  mediaLikesIndex = new Map();
   notifications = [];
   privateMessages = [];
   groupEvents = [];
@@ -1821,17 +1992,19 @@ async function logoutCurrentUser() {
   helpMessages = [];
   achievements = [];
   achievementAwards = [];
+  achievementProgress = [];
+  achievementProgressUserId = null;
+  achievementProgressStatus = "loading";
+  dailyParticipation.reset();
   achievementsLoaded = false;
   helpCenterLoaded = false;
   achievementsLoading = false;
+  achievementsRequest = null;
   helpCenterLoading = false;
   activeHelpRequestId = null;
   activeChatChannelId = null;
   if (db && presenceChannel) db.removeChannel(presenceChannel);
   if (db && messageChannel) db.removeChannel(messageChannel);
-  if (db && momentChannel) db.removeChannel(momentChannel);
-  if (db && postChannel) db.removeChannel(postChannel);
-  if (db && mediaLikesChannel) db.removeChannel(mediaLikesChannel);
   if (db && notificationsChannel) db.removeChannel(notificationsChannel);
   if (db && privateChannel) db.removeChannel(privateChannel);
   if (db && eventChannel) db.removeChannel(eventChannel);
@@ -1839,16 +2012,17 @@ async function logoutCurrentUser() {
   if (db && chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
   if (db && helpRealtime) db.removeChannel(helpRealtime);
   if (db && achievementsRealtime) db.removeChannel(achievementsRealtime);
+  if (db && profilesRealtime) db.removeChannel(profilesRealtime);
   showLogin();
   renderMessages();
   renderNotifications();
 }
 
-async function login(username, password, remember) {
+async function login(username, password) {
   if (!backendReady) {
     const user = members.find(item => normalizeUsername(item.username) === normalizeUsername(username) && item.password === password);
     if (!user) throw new Error("Usuario o contraseña incorrectos.");
-    saveLocalSession(user, remember);
+    saveLocalSession(user);
     if (password === GENERIC_PASSWORD) requirePasswordChange(user.id);
     await applyUserInterface(user);
     return;
@@ -1977,10 +2151,16 @@ function mergeRemoteProfile(profile, expectedAuthId = currentAuthUser?.id) {
 async function loadRemoteProfiles() {
   const {data, error} = await db.from("profiles").select("*").order("legacy_id");
   if (error) return;
-  data.forEach(mergeRemoteProfile);
+  const activeProfiles = data.filter(profile => !profile.is_hidden && profile.is_active !== false);
+  const ids = new Set(activeProfiles.map(profile => Number(profile.legacy_id)));
+  members = members.filter(member => ids.has(Number(member.id)));
   rebuildMemberIndexes();
-  if (!currentUser.hidden) currentUser = getMember(currentUser.id);
+  activeProfiles.forEach(profile => mergeRemoteProfile(profile));
+  rebuildMemberIndexes();
+  if (currentUser && !currentUser.hidden) currentUser = getMember(currentUser.id) || currentUser;
   refreshProfileSurfaces();
+  renderAchievementDetail();
+  performSearch(document.getElementById("globalSearchInput").value);
 }
 
 async function loadMessages() {
@@ -1998,7 +2178,6 @@ async function loadMessages() {
 function refreshGroupMessageSurfaces() {
   renderMessages();
   renderPrivateContacts();
-  renderActivity();
 }
 
 function mapMessage(item) {
@@ -2039,183 +2218,8 @@ async function loadChatChannels() {
   renderPrivateContacts();
 }
 
-function mapMedia(item) {
-  return {
-    id: item.id, userId: item.user_id, member: item.legacy_id, caption: item.caption,
-    mediaUrl: item.media_url, mediaType: item.media_type, createdAt: item.created_at,
-    expiresAt: item.expires_at, mentionedUserId: item.mentioned_user_id
-  };
-}
-
-function refreshMomentSurfaces() {
-  if (document.getElementById("contenido")?.classList.contains("active") && activeContentTab === "momentos") renderMoments();
-  else document.getElementById("momentsGrid")?.removeAttribute("data-render-signature");
-  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
-}
-
-function refreshPostSurfaces() {
-  if (document.getElementById("contenido")?.classList.contains("active") && activeContentTab === "publicaciones") renderPublications();
-  else document.getElementById("publicationsFeed")?.removeAttribute("data-render-signature");
-  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId);
-  if (!activePostViewerId) return;
-  if (profilePosts.some(item => String(item.id) === String(activePostViewerId))) renderPostViewer(activePostViewerId);
-  else closePostViewer();
-}
-
-function handleRealtimeMoment(payload) {
-  moments = applyRealtimeChange(moments, payload, mapMedia)
-    .filter(item => !item.expiresAt || new Date(item.expiresAt) > new Date())
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  refreshMomentSurfaces();
-}
-
-function handleRealtimePost(payload) {
-  profilePosts = applyRealtimeChange(profilePosts, payload, mapMedia)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  refreshPostSurfaces();
-}
-
-function getMediaLikes(kind, mediaId) {
-  return mediaLikesIndex.get(`${kind}:${mediaId}`) || [];
-}
-
-function mapMediaLike(item) {
-  return {
-    id: item.id,
-    userId: item.user_id,
-    kind: item.moment_id != null ? "moment" : "post",
-    mediaId: item.moment_id ?? item.profile_post_id
-  };
-}
-
-function rebuildMediaLikesIndex() {
-  mediaLikesIndex = new Map();
-  mediaLikes.forEach(like => {
-    const key = `${like.kind}:${like.mediaId}`;
-    const indexed = mediaLikesIndex.get(key) || [];
-    indexed.push(like);
-    mediaLikesIndex.set(key, indexed);
-  });
-}
-
-function syncMediaLikeControls(kind, mediaId) {
-  const likes = getMediaLikes(kind, mediaId);
-  const liked = Boolean(currentAuthUser && likes.some(like => like.userId === currentAuthUser.id));
-  const pending = pendingMediaLikes.has(`${kind}:${mediaId}`);
-  const escapedId = window.CSS?.escape ? CSS.escape(String(mediaId)) : String(mediaId).replace(/["\\]/g, "\\$&");
-  document.querySelectorAll(`[data-like-kind="${kind}"][data-like-media="${escapedId}"]`).forEach(control => {
-    control.disabled = pending;
-    control.setAttribute("aria-pressed", String(liked));
-    control.setAttribute("aria-label", liked ? "Quitar Me gusta" : "Dar Me gusta");
-    if (control.matches(".feed-post-like-summary, .post-viewer-likes")) {
-      control.textContent = likes.length ? `${likes.length} Me gusta` : "Sé el primero en dar Me gusta";
-      return;
-    }
-    if (!control.classList.contains("media-like-button")) return;
-    control.classList.toggle("liked", liked);
-    const icon = control.querySelector("svg");
-    if (icon) icon.outerHTML = mediaActionIcon("like", liked);
-    const inlineCount = [...control.children].find(child => child.tagName === "STRONG");
-    const shouldShowInlineCount = Boolean(control.closest("[data-media-card-kind]") && !control.closest(".feed-post-card, .post-viewer-post"));
-    if (shouldShowInlineCount && likes.length) {
-      const count = inlineCount || document.createElement("strong");
-      count.textContent = String(likes.length);
-      if (!inlineCount) control.querySelector("small")?.before(count);
-    } else {
-      inlineCount?.remove();
-    }
-  });
-}
-
-function syncContentLikeSignatures() {
-  const momentsGrid = document.getElementById("momentsGrid");
-  const publicationsFeed = document.getElementById("publicationsFeed");
-  if (momentsGrid?.dataset.renderSignature != null) momentsGrid.dataset.renderSignature = moments.map(item => `${item.id}:${getMediaLikes("moment", item.id).length}`).join("|");
-  if (publicationsFeed?.dataset.renderSignature != null) publicationsFeed.dataset.renderSignature = profilePosts.map(item => `${item.id}:${getMediaLikes("post", item.id).length}`).join("|");
-}
-
-async function loadMediaLikes() {
-  const {data, error} = await db.from("media_likes").select("id,user_id,moment_id,profile_post_id");
-  if (error) return;
-  const previousKeys = new Set(mediaLikes.map(like => `${like.kind}:${like.mediaId}`));
-  mediaLikes = data.map(mapMediaLike);
-  rebuildMediaLikesIndex();
-  mediaLikes.forEach(like => previousKeys.add(`${like.kind}:${like.mediaId}`));
-  previousKeys.forEach(key => {
-    const separator = key.indexOf(":");
-    syncMediaLikeControls(key.slice(0, separator), key.slice(separator + 1));
-  });
-  syncContentLikeSignatures();
-}
-
-function handleRealtimeMediaLike(payload) {
-  const record = payload.new && Object.keys(payload.new).length ? payload.new : payload.old;
-  const previous = mediaLikes.find(like => String(like.id) === String(record?.id));
-  const mapped = payload.eventType === "DELETE" ? previous : record?.id != null ? mapMediaLike(record) : null;
-  if (mapped && payload.eventType === "INSERT") {
-    mediaLikes = mediaLikes.filter(like => !(like.userId === mapped.userId && like.kind === mapped.kind && String(like.mediaId) === String(mapped.mediaId)));
-  }
-  mediaLikes = applyRealtimeChange(mediaLikes, payload, mapMediaLike);
-  rebuildMediaLikesIndex();
-  const affected = mapped || previous;
-  if (affected) syncMediaLikeControls(affected.kind, affected.mediaId);
-  syncContentLikeSignatures();
-}
-
-async function toggleMediaLike(kind, mediaId) {
-  if (!backendReady || !currentAuthUser || !["moment", "post"].includes(kind)) return;
-  const key = `${kind}:${mediaId}`;
-  if (pendingMediaLikes.has(key)) return;
-  const existing = getMediaLikes(kind, mediaId).find(like => like.userId === currentAuthUser.id);
-  const previousLikes = mediaLikes.slice();
-  pendingMediaLikes.add(key);
-  if (existing) mediaLikes = mediaLikes.filter(like => like !== existing);
-  else mediaLikes.push({id: `optimistic-${key}`, userId: currentAuthUser.id, kind, mediaId});
-  rebuildMediaLikesIndex();
-  syncMediaLikeControls(kind, mediaId);
-  syncContentLikeSignatures();
-  try {
-    let result;
-    if (existing) result = await db.from("media_likes").delete().eq("id", existing.id).eq("user_id", currentAuthUser.id);
-    else result = await db.from("media_likes").insert({user_id: currentAuthUser.id, moment_id: kind === "moment" ? mediaId : null, profile_post_id: kind === "post" ? mediaId : null}).select("id").single();
-    const {data, error} = result;
-    if (error) throw error;
-    if (!existing) {
-      const optimistic = mediaLikes.find(like => like.id === `optimistic-${key}`);
-      if (optimistic && data?.id) optimistic.id = data.id;
-      dispatchPush("like", data?.id);
-    }
-  } catch (error) {
-    mediaLikes = previousLikes;
-    rebuildMediaLikesIndex();
-    syncMediaLikeControls(kind, mediaId);
-    syncContentLikeSignatures();
-    window.alert(error.message || "No se pudo guardar el Me gusta.");
-  } finally {
-    pendingMediaLikes.delete(key);
-    syncMediaLikeControls(kind, mediaId);
-  }
-}
-
-async function loadMoments() {
-  const {data, error} = await db.from("moments").select("*")
-    .gt("expires_at", new Date().toISOString()).order("created_at", {ascending: false});
-  if (error) {
-    document.getElementById("momentsStatus").textContent = "No se pudieron cargar las historias.";
-    moments = [];
-  } else {
-    moments = data.map(mapMedia);
-  }
-  refreshMomentSurfaces();
-}
-
-async function loadProfilePosts() {
-  const {data, error} = await db.from("profile_posts").select("*").order("created_at", {ascending: false});
-  profilePosts = error ? [] : data.map(mapMedia);
-  refreshPostSurfaces();
-}
-
 function renderNotifications() {
+  renderPrivateContacts();
   const list = document.getElementById("notificationsList");
   const badge = document.getElementById("notificationCount");
   const markAll = document.getElementById("markAllNotificationsRead");
@@ -2234,13 +2238,7 @@ function renderNotifications() {
   list.innerHTML = notifications.map(item => {
     const actor = getMemberByAuthId(item.actorId);
     const actorName = actor?.name || "Un miembro";
-    const text = item.type === "private_message"
-      ? `${actorName} te ha enviado un mensaje`
-      : item.type === "media_created"
-        ? `${actorName} ha subido ${item.targetType === "moment" ? "una historia" : "una publicación"}`
-        : item.type === "reply"
-          ? `${actorName} ha respondido a tu ${item.targetType === "moment" ? "historia" : "publicación"}`
-          : `${actorName} ha dado Me gusta a tu ${item.targetType === "moment" ? "historia" : "publicación"}`;
+    const text = `${actorName} te ha enviado un mensaje`;
     return `<article class="notification-item ${item.readAt ? "" : "unread"}">
       <button class="notification-open" type="button" data-notification-id="${item.id}">
         ${getAvatar(actor, "avatar tiny")}
@@ -2254,7 +2252,7 @@ function renderNotifications() {
 
 async function loadNotifications() {
   const {data, error} = await db.from("notifications").select("*")
-    .order("created_at", {ascending: false}).limit(100);
+    .eq("type", "private_message").order("created_at", {ascending: false}).limit(100);
   notifications = error ? [] : data.map(mapNotification);
   renderNotifications();
 }
@@ -2274,6 +2272,7 @@ function mapNotification(item) {
 
 function handleRealtimeNotification(payload) {
   notifications = applyRealtimeChange(notifications, payload, mapNotification)
+    .filter(item => item.type === "private_message")
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 100);
   renderNotifications();
@@ -2317,11 +2316,6 @@ async function openNotification(id) {
   if (item.type === "private_message") {
     const actor = getMemberByAuthId(item.actorId);
     if (actor) openPrivateConversation(actor.id);
-  } else if (item.targetType === "moment") {
-    goTo("momentos");
-    if (["media_created", "reply", "like"].includes(item.type)) setTimeout(() => openMoment(item.targetId), 120);
-  } else if (item.targetType === "post") {
-    goTo("publicaciones");
   }
 }
 
@@ -2366,6 +2360,7 @@ async function loadGroupEvents() {
     eventType: item.event_type || "event", annual: Boolean(item.annual)
   }));
   renderCalendar();
+  if (activeCalendarDay) openCalendarDay(activeCalendarDay);
 }
 
 async function loadSiteSettings() {
@@ -2379,9 +2374,6 @@ async function loadSiteSettings() {
 function connectRealtime() {
   if (presenceChannel) db.removeChannel(presenceChannel);
   if (messageChannel) db.removeChannel(messageChannel);
-  if (momentChannel) db.removeChannel(momentChannel);
-  if (postChannel) db.removeChannel(postChannel);
-  if (mediaLikesChannel) db.removeChannel(mediaLikesChannel);
   if (notificationsChannel) db.removeChannel(notificationsChannel);
   if (privateChannel) db.removeChannel(privateChannel);
   if (eventChannel) db.removeChannel(eventChannel);
@@ -2389,6 +2381,7 @@ function connectRealtime() {
   if (chatChannelsRealtime) db.removeChannel(chatChannelsRealtime);
   if (helpRealtime) db.removeChannel(helpRealtime);
   if (achievementsRealtime) db.removeChannel(achievementsRealtime);
+  if (profilesRealtime) db.removeChannel(profilesRealtime);
   presenceChannel = db.channel("big-boy-presence", {config: {presence: {key: currentAuthUser.id}}});
   presenceChannel
     .on("presence", {event: "sync"}, () => {
@@ -2412,15 +2405,6 @@ function connectRealtime() {
     });
   messageChannel = db.channel("messages-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "messages"}, handleRealtimeMessage)
-    .subscribe();
-  momentChannel = db.channel("moments-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "moments"}, handleRealtimeMoment)
-    .subscribe();
-  postChannel = db.channel("profile-posts-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "profile_posts"}, handleRealtimePost)
-    .subscribe();
-  mediaLikesChannel = db.channel("media-likes-live")
-    .on("postgres_changes", {event: "*", schema: "public", table: "media_likes"}, handleRealtimeMediaLike)
     .subscribe();
   notificationsChannel = db.channel(`notifications-${currentAuthUser.id}`)
     .on("postgres_changes", {event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentAuthUser.id}`}, handleRealtimeNotification)
@@ -2447,10 +2431,31 @@ function connectRealtime() {
     .subscribe();
   achievementsRealtime = db.channel("achievements-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "achievements"}, () => {
-      if (achievementsLoaded) scheduleRealtimeRefresh("achievements", loadAchievements);
+      scheduleRealtimeRefresh("achievements", loadAchievements, 60);
     })
     .on("postgres_changes", {event: "*", schema: "public", table: "achievement_awards"}, () => {
-      if (achievementsLoaded) scheduleRealtimeRefresh("achievement-awards", loadAchievements);
+      scheduleRealtimeRefresh("achievements", loadAchievements, 60);
+    })
+    .on("postgres_changes", {event: "*", schema: "public", table: "achievement_rules"}, () => {
+      scheduleRealtimeRefresh("achievement-visit", () => refreshDailyParticipation(true), 60);
+      scheduleRealtimeRefresh("achievements", loadAchievements, 60);
+    })
+    .on("postgres_changes", {event: "*", schema: "public", table: "achievement_progress", filter: `user_id=eq.${currentAuthUser.id}`}, () => {
+      scheduleRealtimeRefresh("achievements", loadAchievements, 60);
+    })
+    .subscribe(status => {
+      // Reconnects recover activity missed while the app was asleep/offline.
+      if (status === "SUBSCRIBED") {
+        scheduleRealtimeRefresh("achievement-visit", () => refreshDailyParticipation(true), 60);
+        scheduleRealtimeRefresh("achievements", loadAchievements, 60);
+      }
+    });
+  profilesRealtime = db.channel("profiles-live", {config: {broadcast: {self: false}}})
+    .on("broadcast", {event: "profile-updated"}, () => {
+      scheduleRealtimeRefresh("profiles", loadRemoteProfiles, 40);
+    })
+    .on("postgres_changes", {event: "*", schema: "public", table: "profiles"}, () => {
+      scheduleRealtimeRefresh("profiles", loadRemoteProfiles, 60);
     })
     .subscribe();
 }
@@ -2687,7 +2692,7 @@ async function sendMessage(text, file = null) {
 }
 
 async function createChatChannel() {
-  if (!canManageSite() || !currentAuthUser) return;
+  if (!canManageSite() || !currentAuthUser || !db) return window.alert("No hay una sesión conectada al servidor. Cierra sesión y vuelve a entrar.");
   const value = window.prompt("Nombre de la nueva sección:");
   if (value === null) return;
   const name = value.trim().toLowerCase().normalize("NFD")
@@ -2696,8 +2701,12 @@ async function createChatChannel() {
   const {error} = await db.from("chat_channels").insert({
     name, created_by: currentAuthUser.id, position: chatChannels.length
   });
-  if (error) window.alert(error.message || "No se pudo crear la sección.");
-  else await loadChatChannels();
+  if (error) {
+    const message = error.code === "23505" ? "Ya existe una sección con ese nombre."
+      : error.code === "42501" || error.code === "PGRST301" ? "Supabase ha rechazado la operación. Vuelve a iniciar sesión y verifica que tu cuenta conserve permisos de administración."
+      : error.message || "No se pudo crear la sección.";
+    window.alert(message);
+  } else await loadChatChannels();
 }
 
 async function deleteChatChannel(id) {
@@ -2738,22 +2747,6 @@ function updateShareDestinations() {
   document.querySelector("#shareMediaForm [type=submit]").disabled = !select.options.length;
 }
 
-function openShareMedia(kind, id) {
-  const collection = kind === "moment" ? moments : profilePosts;
-  const item = collection.find(media => String(media.id) === String(id));
-  if (!item || !currentAuthUser || isSuperAdmin()) return;
-  sharingMedia = {...item, kind};
-  document.getElementById("shareDestinationType").value = "group";
-  document.getElementById("shareMediaFeedback").textContent = "";
-  document.getElementById("shareMediaPreview").innerHTML = item.mediaType === "video"
-    ? `<video src="${escapeHtml(item.mediaUrl)}" controls preload="metadata"></video>`
-    : `<img src="${escapeHtml(item.mediaUrl)}" alt="Vista previa" decoding="async">`;
-  updateShareDestinations();
-  const modal = document.getElementById("shareMediaModal");
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
-}
-
 function openShareNews(index) {
   const item = newsItems[Number(index)];
   if (!item || !currentAuthUser || isSuperAdmin()) return;
@@ -2776,17 +2769,15 @@ function closeShareMedia() {
 }
 
 async function shareMediaToChat(form) {
-  if (!sharingMedia || !currentAuthUser || !currentUser) return;
+  if (sharingMedia?.kind !== "news" || !currentAuthUser || !currentUser) return;
   const submit = form.querySelector("[type=submit]");
   const feedback = document.getElementById("shareMediaFeedback");
   const destinationType = document.getElementById("shareDestinationType").value;
   const destination = document.getElementById("shareDestination").value;
-  const isNews = sharingMedia.kind === "news";
-  const label = sharingMedia.kind === "moment" ? "momento" : sharingMedia.kind === "post" ? "publicación" : "noticia";
-  const body = isNews ? `Noticia compartida: ${sharingMedia.cleanTitle || sharingMedia.title}` : `Ha compartido un ${label}${sharingMedia.caption ? `: ${sharingMedia.caption}` : "."}`;
-  const attachmentType = isNews ? "text/news-link" : sharingMedia.mediaType === "video" ? "video/mp4" : "image/jpeg";
-  const attachmentUrl = isNews ? sharingMedia.link : sharingMedia.mediaUrl;
-  const attachmentName = isNews ? sharingMedia.source : `bb-share:${sharingMedia.kind}:${sharingMedia.id}`;
+  const body = `Noticia compartida: ${sharingMedia.cleanTitle || sharingMedia.title}`;
+  const attachmentType = "text/news-link";
+  const attachmentUrl = sharingMedia.link;
+  const attachmentName = sharingMedia.source;
   submit.disabled = true;
   feedback.textContent = "Compartiendo…";
   try {
@@ -3227,6 +3218,11 @@ async function saveProfile(form) {
         avatar_url: updates.avatarUrl, updated_at: new Date().toISOString()
       }).eq("id", targetAuthId);
       if (error) throw error;
+      profilesRealtime?.send({
+        type: "broadcast",
+        event: "profile-updated",
+        payload: {userId: targetAuthId, updatedAt: Date.now()}
+      });
     }
     Object.assign(profile, updates);
     if (profile.id === currentUser.id) Object.assign(currentUser, updates);
@@ -3240,975 +3236,6 @@ async function saveProfile(form) {
     submit.disabled = false;
   }
 }
-
-function stopStoryCameraStream() {
-  const preview = document.getElementById("storyCameraPreview");
-  preview.pause();
-  preview.srcObject = null;
-  preview.removeAttribute("src");
-  preview.load();
-  storyCameraStream?.getTracks().forEach(track => track.stop());
-  storyCameraStream = null;
-}
-
-function renewStoryCameraPreview() {
-  const previous = document.getElementById("storyCameraPreview");
-  const preview = document.createElement("video");
-  preview.id = "storyCameraPreview";
-  preview.autoplay = true;
-  preview.muted = true;
-  preview.playsInline = true;
-  preview.setAttribute("autoplay", "");
-  preview.setAttribute("muted", "");
-  preview.setAttribute("playsinline", "");
-  preview.addEventListener("loadedmetadata", fitStoryCameraPreview);
-  preview.addEventListener("resize", fitStoryCameraPreview);
-  previous.replaceWith(preview);
-  return preview;
-}
-
-function fitStoryCameraPreview() {
-  const preview = document.getElementById("storyCameraPreview");
-  const shell = document.getElementById("cameraCaptureDialog");
-  if (!preview || !shell?.classList || !document.getElementById("storyCamera")?.classList.contains("open")) return;
-  const bounds = shell.getBoundingClientRect();
-  if (!bounds.width || !bounds.height) return;
-  const sourceWidth = preview.videoWidth || bounds.width;
-  const sourceHeight = preview.videoHeight || bounds.height;
-  const sourceRatio = sourceWidth / sourceHeight;
-  const targetRatio = bounds.width / bounds.height;
-  const renderedWidth = sourceRatio > targetRatio ? bounds.height * sourceRatio : bounds.width;
-  const renderedHeight = sourceRatio > targetRatio ? bounds.height : bounds.width / sourceRatio;
-  preview.style.setProperty("width", `${Math.ceil(renderedWidth)}px`, "important");
-  preview.style.setProperty("height", `${Math.ceil(renderedHeight)}px`, "important");
-  preview.setAttribute("width", String(Math.ceil(renderedWidth)));
-  preview.setAttribute("height", String(Math.ceil(renderedHeight)));
-}
-
-function clearStoryRecordingTimer() {
-  if (storyRecordingTimer) window.clearInterval(storyRecordingTimer);
-  storyRecordingTimer = null;
-}
-
-function formatStoryRecordingTime(milliseconds) {
-  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
-  return `${String(Math.floor(totalSeconds / 60)).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
-}
-
-function setStoryRecordingUI(recording) {
-  const camera = document.getElementById("storyCamera");
-  const indicator = document.getElementById("storyRecordingIndicator");
-  camera.classList.toggle("recording", recording);
-  indicator.hidden = !recording;
-  document.getElementById("switchStoryCamera").disabled = recording;
-  document.getElementById("toggleStoryFlash").disabled = recording;
-  document.getElementById("storyGalleryInput").disabled = recording;
-  document.querySelectorAll("[data-camera-mode]").forEach(button => button.disabled = recording);
-  if (!recording) document.getElementById("storyRecordingTime").textContent = "00:00";
-}
-
-function resetStoryRecordingState() {
-  if (storyShutterHoldTimer) window.clearTimeout(storyShutterHoldTimer);
-  storyShutterHoldTimer = null;
-  storyShutterPointerId = null;
-  storyCaptureInProgress = false;
-  clearStoryRecordingTimer();
-  setStoryRecordingUI(false);
-  document.getElementById("captureStoryPhoto")?.classList.remove("holding");
-  document.querySelectorAll("[data-camera-mode]").forEach(button => button.disabled = false);
-}
-
-function setStoryCameraStatus(message = "", isError = false) {
-  const status = document.getElementById("storyCameraStatus");
-  status.textContent = message;
-  status.hidden = !message;
-  status.classList.toggle("error", isError);
-}
-
-async function startStoryCamera() {
-  const token = ++storyCameraOpeningToken;
-  stopStoryCameraStream();
-  const preview = renewStoryCameraPreview();
-  await refreshMediaPermission("camera");
-  await refreshMediaPermission("microphone");
-  setStoryCameraStatus(mediaPermissionWasRemembered("camera") ? "Abriendo cámara autorizada…" : "Activando cámara…");
-  const shutter = document.getElementById("captureStoryPhoto");
-  const switchButton = document.getElementById("switchStoryCamera");
-  const flashButton = document.getElementById("toggleStoryFlash");
-  shutter.disabled = true;
-  switchButton.disabled = true;
-  flashButton.hidden = true;
-  storyCameraTorchEnabled = false;
-  flashButton.classList.remove("active");
-  flashButton.setAttribute("aria-pressed", "false");
-  if (!navigator.mediaDevices?.getUserMedia) {
-    setStoryCameraStatus("La cámara no está disponible aquí. Puedes elegir una foto o vídeo desde la galería.", true);
-    return;
-  }
-  try {
-    const video = {facingMode: {ideal: storyCameraFacingMode}, width: {ideal: 1920}, height: {ideal: 1080}};
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({video, audio: {echoCancellation: true, noiseSuppression: true}});
-      rememberMediaPermission("camera", "granted");
-      rememberMediaPermission("microphone", "granted");
-    } catch (combinedError) {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({video, audio: false});
-        rememberMediaPermission("camera", "granted");
-        if (combinedError?.name === "NotAllowedError" || combinedError?.name === "PermissionDeniedError") rememberMediaPermission("microphone", "denied");
-      } catch (cameraError) {
-        if (cameraError?.name === "NotAllowedError" || cameraError?.name === "PermissionDeniedError") rememberMediaPermission("camera", "denied");
-        throw cameraError;
-      }
-    }
-    if (token !== storyCameraOpeningToken || !document.getElementById("storyCamera").classList.contains("open")) {
-      stream.getTracks().forEach(track => track.stop());
-      return;
-    }
-    storyCameraStream = stream;
-    preview.muted = true;
-    preview.playsInline = true;
-    preview.srcObject = stream;
-    fitStoryCameraPreview();
-    await preview.play();
-    fitStoryCameraPreview();
-    requestAnimationFrame(fitStoryCameraPreview);
-    document.querySelector(".story-camera-shell").classList.toggle("front-camera", storyCameraFacingMode === "user");
-    shutter.disabled = false;
-    switchButton.disabled = false;
-    setStoryCameraStatus();
-    const track = stream.getVideoTracks()[0];
-    const capabilities = track?.getCapabilities?.() || {};
-    flashButton.hidden = !capabilities.torch;
-  } catch (error) {
-    if (token !== storyCameraOpeningToken) return;
-    switchButton.disabled = false;
-    const denied = error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError";
-    setStoryCameraStatus(denied
-      ? "Necesitamos permiso para usar la cámara. También puedes continuar desde la galería."
-      : "No se pudo abrir la cámara. Puedes seleccionar una foto o vídeo desde la galería.", true);
-  }
-}
-
-function setCameraCaptureMode(mode = "moment") {
-  cameraCaptureMode = mode === "post" ? "post" : "moment";
-  const isPost = cameraCaptureMode === "post";
-  document.getElementById("cameraCaptureLabel").textContent = isPost ? "PUBLICACIÓN" : "MOMENTO";
-  document.getElementById("cameraCaptureDialog").setAttribute("aria-label", isPost ? "Cámara de publicaciones" : "Cámara de momentos");
-  document.querySelectorAll("[data-camera-mode]").forEach(button => {
-    const active = button.dataset.cameraMode === cameraCaptureMode;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
-}
-
-function openStoryCamera(mode = "moment") {
-  if (!currentUser) return;
-  closeMediaUploader();
-  setCameraCaptureMode(mode);
-  const camera = document.getElementById("storyCamera");
-  storyCameraFacingMode = "environment";
-  camera.classList.add("open");
-  camera.setAttribute("aria-hidden", "false");
-  if (storyCameraEntranceTimer) window.clearTimeout(storyCameraEntranceTimer);
-  const animateEntrance = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  document.body.classList.toggle("camera-entering", animateEntrance);
-  document.body.classList.add("story-camera-open");
-  if (animateEntrance) {
-    storyCameraEntranceTimer = window.setTimeout(() => {
-      document.body.classList.remove("camera-entering");
-      storyCameraEntranceTimer = null;
-    }, 460);
-  }
-  syncMobileViewport();
-  requestAnimationFrame(fitStoryCameraPreview);
-  document.getElementById("storyGalleryInput").value = "";
-  resetStoryRecordingState();
-  startStoryCamera();
-}
-
-function closeStoryCamera() {
-  storyCameraOpeningToken += 1;
-  if (storyCameraEntranceTimer) window.clearTimeout(storyCameraEntranceTimer);
-  storyCameraEntranceTimer = null;
-  document.body.classList.remove("camera-entering");
-  if (storyRecorder && storyRecorder.state !== "inactive") {
-    storyRecordingDiscard = true;
-    storyRecorder.stop();
-  }
-  resetStoryRecordingState();
-  stopStoryCameraStream();
-  const camera = document.getElementById("storyCamera");
-  camera.classList.remove("open");
-  camera.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("story-camera-open");
-  syncMobileViewport();
-  setStoryCameraStatus();
-}
-
-async function switchStoryCamera() {
-  storyCameraFacingMode = storyCameraFacingMode === "environment" ? "user" : "environment";
-  await startStoryCamera();
-}
-
-async function toggleStoryFlash() {
-  const track = storyCameraStream?.getVideoTracks?.()[0];
-  if (!track) return;
-  const button = document.getElementById("toggleStoryFlash");
-  try {
-    storyCameraTorchEnabled = !storyCameraTorchEnabled;
-    await track.applyConstraints({advanced: [{torch: storyCameraTorchEnabled}]});
-    button.classList.toggle("active", storyCameraTorchEnabled);
-    button.setAttribute("aria-pressed", String(storyCameraTorchEnabled));
-    button.setAttribute("aria-label", storyCameraTorchEnabled ? "Desactivar flash" : "Activar flash");
-  } catch {
-    storyCameraTorchEnabled = false;
-    button.classList.remove("active");
-    button.setAttribute("aria-pressed", "false");
-    setStoryCameraStatus("El flash no está disponible con esta cámara.", true);
-  }
-}
-
-async function showCameraTransitionGuard(file) {
-  const guard = document.getElementById("cameraTransitionGuard");
-  const image = guard.querySelector("img");
-  if (cameraTransitionGuardUrl) URL.revokeObjectURL(cameraTransitionGuardUrl);
-  cameraTransitionGuardUrl = "";
-  image.removeAttribute("src");
-  guard.classList.remove("has-image");
-  guard.classList.add("active");
-  if (!file?.type?.startsWith("image/")) return;
-  cameraTransitionGuardUrl = URL.createObjectURL(file);
-  image.src = cameraTransitionGuardUrl;
-  guard.classList.add("has-image");
-  try {
-    await image.decode();
-  } catch {}
-}
-
-function hideCameraTransitionGuard() {
-  const guard = document.getElementById("cameraTransitionGuard");
-  guard.classList.remove("active", "has-image");
-  guard.querySelector("img").removeAttribute("src");
-  if (cameraTransitionGuardUrl) URL.revokeObjectURL(cameraTransitionGuardUrl);
-  cameraTransitionGuardUrl = "";
-}
-
-async function useStoryMediaFile(file) {
-  if (!file) return;
-  const mode = cameraCaptureMode;
-  const cameraWasOpen = document.getElementById("storyCamera")?.classList.contains("open");
-  if (cameraWasOpen) {
-    document.body.classList.add("camera-editor-transition");
-    await showCameraTransitionGuard(file);
-  }
-  openMediaUploader(mode, {backToCamera: true});
-  try {
-    await prepareMediaUploadFile(file);
-  } finally {
-    if (cameraWasOpen) {
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      closeStoryCamera();
-    }
-    window.setTimeout(() => {
-      document.body.classList.remove("camera-editor-transition");
-      hideCameraTransitionGuard();
-    }, 650);
-  }
-}
-
-function supportedStoryRecordingMimeType() {
-  if (!window.MediaRecorder?.isTypeSupported) return "";
-  return ["video/mp4;codecs=h264,aac", "video/mp4", "video/webm;codecs=vp8,opus", "video/webm"]
-    .find(type => MediaRecorder.isTypeSupported(type)) || "";
-}
-
-function finishStoryVideoRecording() {
-  if (!storyRecorder || storyRecorder.state === "inactive") return;
-  storyRecorder.stop();
-}
-
-function startStoryVideoRecording() {
-  storyShutterHoldTimer = null;
-  if (!storyCameraStream || !window.MediaRecorder) {
-    setStoryCameraStatus("Este dispositivo no permite grabar vídeo desde la web. Puedes elegirlo desde la galería.", true);
-    document.getElementById("captureStoryPhoto").classList.remove("holding");
-    return;
-  }
-  try {
-    const mimeType = supportedStoryRecordingMimeType();
-    let recorder;
-    try {
-      recorder = new MediaRecorder(storyCameraStream, mimeType ? {mimeType, videoBitsPerSecond: 6000000} : undefined);
-    } catch {
-      recorder = new MediaRecorder(storyCameraStream, mimeType ? {mimeType} : undefined);
-    }
-    storyRecorder = recorder;
-    storyRecordingChunks = [];
-    storyRecordingDiscard = false;
-    storyRecordingStartedAt = Date.now();
-    recorder.addEventListener("dataavailable", event => {
-      if (event.data?.size) storyRecordingChunks.push(event.data);
-    });
-    recorder.addEventListener("stop", () => {
-      const discard = storyRecordingDiscard;
-      const chunks = storyRecordingChunks;
-      const recordedType = recorder.mimeType || mimeType || "video/webm";
-      storyRecorder = null;
-      storyRecordingChunks = [];
-      storyRecordingDiscard = false;
-      resetStoryRecordingState();
-      if (discard) return;
-      if (!chunks.length) {
-        setStoryCameraStatus("La grabación fue demasiado corta. Mantén pulsado un poco más.", true);
-        return;
-      }
-      const extension = recordedType.includes("mp4") ? "mp4" : "webm";
-      const prefix = cameraCaptureMode === "post" ? "publicacion" : "historia";
-      useStoryMediaFile(new File([new Blob(chunks, {type: recordedType})], `${prefix}-${Date.now()}.${extension}`, {type: recordedType, lastModified: Date.now()}));
-    }, {once: true});
-    recorder.start(200);
-    setStoryRecordingUI(true);
-    document.getElementById("storyRecordingTime").textContent = "00:00";
-    storyRecordingTimer = window.setInterval(() => {
-      const elapsed = Date.now() - storyRecordingStartedAt;
-      document.getElementById("storyRecordingTime").textContent = formatStoryRecordingTime(elapsed);
-      if (elapsed >= 60000) finishStoryVideoRecording();
-    }, 200);
-  } catch (error) {
-    resetStoryRecordingState();
-    setStoryCameraStatus(error.message || "No se pudo iniciar la grabación.", true);
-  }
-}
-
-function beginStoryShutterGesture(event) {
-  if (event.currentTarget.disabled || storyRecorder || storyCaptureInProgress) return;
-  event.preventDefault();
-  storyShutterPointerId = event.pointerId;
-  event.currentTarget.setPointerCapture?.(event.pointerId);
-  event.currentTarget.classList.add("holding");
-  storyShutterHoldTimer = window.setTimeout(startStoryVideoRecording, 320);
-}
-
-function endStoryShutterGesture(event) {
-  if (storyShutterPointerId !== event.pointerId) return;
-  event.preventDefault();
-  const wasWaitingForHold = Boolean(storyShutterHoldTimer);
-  if (storyShutterHoldTimer) window.clearTimeout(storyShutterHoldTimer);
-  storyShutterHoldTimer = null;
-  storyShutterPointerId = null;
-  event.currentTarget.classList.remove("holding");
-  if (storyRecorder?.state === "recording") finishStoryVideoRecording();
-  else if (wasWaitingForHold) captureStoryPhoto();
-}
-
-function cancelStoryShutterGesture(event) {
-  if (storyShutterPointerId !== event.pointerId) return;
-  event.preventDefault();
-  if (storyShutterHoldTimer) window.clearTimeout(storyShutterHoldTimer);
-  storyShutterHoldTimer = null;
-  storyShutterPointerId = null;
-  event.currentTarget.classList.remove("holding");
-  if (storyRecorder?.state === "recording") finishStoryVideoRecording();
-}
-
-function captureStoryPhoto() {
-  const preview = document.getElementById("storyCameraPreview");
-  if (storyCaptureInProgress || !storyCameraStream || !preview.videoWidth || !preview.videoHeight) return;
-  storyCaptureInProgress = true;
-  document.querySelectorAll("[data-camera-mode]").forEach(button => button.disabled = true);
-  const shutter = document.getElementById("captureStoryPhoto");
-  shutter.disabled = true;
-  setStoryCameraStatus("Preparando foto…");
-  const canvas = document.getElementById("storyCameraCanvas");
-  const scale = Math.min(1, 2560 / Math.max(preview.videoWidth, preview.videoHeight));
-  canvas.width = Math.round(preview.videoWidth * scale);
-  canvas.height = Math.round(preview.videoHeight * scale);
-  const context = canvas.getContext("2d");
-  if (storyCameraFacingMode === "user") {
-    context.translate(canvas.width, 0);
-    context.scale(-1, 1);
-  }
-  context.drawImage(preview, 0, 0, canvas.width, canvas.height);
-  canvas.toBlob(blob => {
-    if (!blob) {
-      storyCaptureInProgress = false;
-      shutter.disabled = false;
-      setStoryCameraStatus("No se pudo preparar la foto. Inténtalo de nuevo.", true);
-      return;
-    }
-    const prefix = cameraCaptureMode === "post" ? "publicacion" : "historia";
-    useStoryMediaFile(new File([blob], `${prefix}-${Date.now()}.jpg`, {type: "image/jpeg", lastModified: Date.now()}));
-  }, "image/jpeg", .92);
-}
-
-function openMediaUploader(mode, {backToCamera = false} = {}) {
-  if (!currentUser) return;
-  mediaUploadMode = mode;
-  mediaUploaderBackToCamera = backToCamera;
-  pendingMediaUploadFile = null;
-  if (mediaPreviewObjectUrl) URL.revokeObjectURL(mediaPreviewObjectUrl);
-  mediaPreviewObjectUrl = "";
-  const isMoment = mode === "moment";
-  document.getElementById("mediaUploaderEyebrow").textContent = isMoment ? "NUEVO MOMENTO" : "NUEVA PUBLICACIÓN";
-  document.getElementById("mediaUploaderTitle").textContent = isMoment ? "Compartir una historia" : "Compartir en mi perfil";
-  document.getElementById("mediaUploadHelp").textContent = isMoment
-    ? `La historia desaparecerá en 24 horas · original o personalizada · máximo ${formatLimit(FILE_LIMITS.media)}`
-    : `Se mostrará en tu perfil · original o personalizada · máximo ${formatLimit(FILE_LIMITS.media)}`;
-  document.getElementById("mediaUploadFile").value = "";
-  document.getElementById("mediaUploadCaption").value = "";
-  document.getElementById("mediaMention").innerHTML = `<option value="">Nadie</option>${members.filter(member => !member.hidden && member.authId && member.id !== currentUser.id).map(member => `<option value="${escapeHtml(member.authId)}">@${escapeHtml(member.username)} · ${escapeHtml(member.name)}</option>`).join("")}`;
-  document.getElementById("mediaUploadPreview").innerHTML = "";
-  document.getElementById("mediaDropzone").hidden = false;
-  document.getElementById("mediaUploadPreview").hidden = false;
-  resetMediaCropEditor();
-  document.getElementById("mediaUploadFeedback").textContent = "";
-  const modal = document.getElementById("mediaUploader");
-  modal.classList.remove("has-media", "has-video");
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
-  const closeButton = document.getElementById("closeMediaUploader");
-  closeButton.textContent = backToCamera ? "←" : "×";
-  closeButton.setAttribute("aria-label", backToCamera ? "Volver a la cámara" : "Cerrar");
-}
-
-function closeMediaUploader() {
-  const modal = document.getElementById("mediaUploader");
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
-  modal.classList.remove("has-media", "has-video");
-  document.getElementById("mediaDropzone").hidden = false;
-  document.getElementById("mediaUploadPreview").hidden = false;
-  pendingMediaUploadFile = null;
-  if (mediaPreviewObjectUrl) URL.revokeObjectURL(mediaPreviewObjectUrl);
-  mediaPreviewObjectUrl = "";
-  mediaUploaderBackToCamera = false;
-  resetMediaCropEditor();
-}
-
-function dismissMediaUploader({returnToCamera = false} = {}) {
-  const mode = mediaUploadMode;
-  const shouldReturnToCamera = returnToCamera && mediaUploaderBackToCamera;
-  closeMediaUploader();
-  if (shouldReturnToCamera) openStoryCamera(mode);
-}
-
-async function prepareMediaUploadFile(file) {
-  const input = document.getElementById("mediaUploadFile");
-  const preview = document.getElementById("mediaUploadPreview");
-  const dropzone = document.getElementById("mediaDropzone");
-  const uploader = document.getElementById("mediaUploader");
-  const feedback = document.getElementById("mediaUploadFeedback");
-  pendingMediaUploadFile = file || null;
-  if (mediaPreviewObjectUrl) URL.revokeObjectURL(mediaPreviewObjectUrl);
-  mediaPreviewObjectUrl = "";
-
-  if (!file) {
-    preview.innerHTML = "";
-    dropzone.hidden = false;
-    preview.hidden = false;
-    uploader.classList.remove("has-media", "has-video");
-    feedback.textContent = "";
-    resetMediaCropEditor();
-    return;
-  }
-  if (file.size > FILE_LIMITS.media) {
-    input.value = "";
-    pendingMediaUploadFile = null;
-    feedback.textContent = `El archivo supera el máximo de ${formatLimit(FILE_LIMITS.media)}.`;
-    return;
-  }
-
-  feedback.textContent = "";
-  dropzone.hidden = true;
-  uploader.classList.add("has-media");
-  if (file.type.startsWith("video/")) {
-    resetMediaCropEditor();
-    uploader.classList.add("has-video");
-    preview.hidden = false;
-    mediaPreviewObjectUrl = URL.createObjectURL(file);
-    preview.innerHTML = `<video src="${mediaPreviewObjectUrl}" controls playsinline preload="metadata"></video>`;
-    return;
-  }
-
-  uploader.classList.remove("has-video");
-  preview.innerHTML = "";
-  preview.hidden = true;
-  try {
-    await loadMediaCrop(file);
-    document.getElementById("mediaUploadForm").scrollTo({top: 0, behavior: "instant"});
-  } catch (error) {
-    pendingMediaUploadFile = null;
-    uploader.classList.remove("has-media", "has-video");
-    dropzone.hidden = false;
-    preview.hidden = false;
-    feedback.textContent = error.message || "No se pudo preparar el archivo.";
-  }
-}
-
-function resetMediaCropEditor() {
-  mediaCropImage = null;
-  mediaCropZoom = 1;
-  mediaCropOffsetX = 0;
-  mediaCropOffsetY = 0;
-  mediaCropPointer = null;
-  mediaFilter = "none";
-  mediaOverlayText = "";
-  const cropper = document.getElementById("mediaCropper");
-  const stage = document.getElementById("mediaCropStage");
-  if (cropper) cropper.hidden = true;
-  if (stage) stage.classList.remove("dragging");
-  const zoom = document.getElementById("mediaCropZoom");
-  if (zoom) zoom.value = "1";
-  const filter = document.getElementById("mediaFilter");
-  const overlay = document.getElementById("mediaOverlayText");
-  const original = document.getElementById("mediaKeepOriginal");
-  if (filter) filter.value = "none";
-  document.querySelectorAll("[data-editor-filter]").forEach(button => button.classList.toggle("active", button.dataset.editorFilter === "none"));
-  document.querySelectorAll("[data-media-tool]").forEach(button => {
-    button.classList.remove("active");
-    button.setAttribute("aria-expanded", "false");
-  });
-  document.querySelectorAll("[data-media-panel]").forEach(panel => panel.classList.remove("active"));
-  if (overlay) overlay.value = "";
-  if (original) original.checked = true;
-}
-
-function configureMediaCropCanvas() {
-  const canvas = document.getElementById("mediaCropCanvas");
-  const isMoment = mediaUploadMode === "moment";
-  canvas.width = isMoment ? 540 : 720;
-  canvas.height = isMoment ? 840 : 720;
-  document.getElementById("mediaCropStage").classList.toggle("is-square", !isMoment);
-}
-
-function clampMediaCrop() {
-  if (!mediaCropImage) return;
-  const canvas = document.getElementById("mediaCropCanvas");
-  const baseScale = Math.min(canvas.width / mediaCropImage.naturalWidth, canvas.height / mediaCropImage.naturalHeight);
-  const scale = baseScale * mediaCropZoom;
-  const maxX = Math.max(0, (mediaCropImage.naturalWidth * scale - canvas.width) / 2);
-  const maxY = Math.max(0, (mediaCropImage.naturalHeight * scale - canvas.height) / 2);
-  mediaCropOffsetX = Math.max(-maxX, Math.min(maxX, mediaCropOffsetX));
-  mediaCropOffsetY = Math.max(-maxY, Math.min(maxY, mediaCropOffsetY));
-}
-
-function drawMediaCrop() {
-  if (!mediaCropImage) return;
-  clampMediaCrop();
-  const canvas = document.getElementById("mediaCropCanvas");
-  const context = canvas.getContext("2d");
-  const baseScale = Math.min(canvas.width / mediaCropImage.naturalWidth, canvas.height / mediaCropImage.naturalHeight);
-  const scale = baseScale * mediaCropZoom;
-  const width = mediaCropImage.naturalWidth * scale;
-  const height = mediaCropImage.naturalHeight * scale;
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  const filters = {none: "none", vivid: "saturate(1.35) contrast(1.08)", warm: "sepia(.18) saturate(1.2)", cool: "hue-rotate(175deg) saturate(.85)", mono: "grayscale(1)", vintage: "sepia(.45) contrast(.9)"};
-  context.filter = filters[mediaFilter] || "none";
-  context.drawImage(mediaCropImage, (canvas.width - width) / 2 + mediaCropOffsetX, (canvas.height - height) / 2 + mediaCropOffsetY, width, height);
-  context.filter = "none";
-  if (mediaOverlayText) {
-    context.font = `700 ${Math.max(28, canvas.width * .055)}px Inter, sans-serif`;
-    context.textAlign = "center";
-    context.lineWidth = 8;
-    context.strokeStyle = "rgba(0,0,0,.75)";
-    context.fillStyle = "white";
-    context.strokeText(mediaOverlayText, canvas.width / 2, canvas.height * .88, canvas.width * .86);
-    context.fillText(mediaOverlayText, canvas.width / 2, canvas.height * .88, canvas.width * .86);
-  }
-}
-
-function loadMediaCrop(file) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    const objectUrl = URL.createObjectURL(file);
-    image.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      mediaCropImage = image;
-      mediaCropZoom = 1;
-      mediaCropOffsetX = 0;
-      mediaCropOffsetY = 0;
-      configureMediaCropCanvas();
-      document.getElementById("mediaCropZoom").value = "1";
-      document.getElementById("mediaCropper").hidden = false;
-      const form = document.getElementById("mediaUploadForm");
-      form.scrollTop = 0;
-      drawMediaCrop();
-      resolve();
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("No se pudo abrir la foto seleccionada."));
-    };
-    image.src = objectUrl;
-  });
-}
-
-function createCroppedMediaFile() {
-  return new Promise((resolve, reject) => {
-    document.getElementById("mediaCropCanvas").toBlob(blob => {
-      if (!blob) return reject(new Error("No se pudo preparar la foto."));
-      resolve(new File([blob], "momento.webp", {type: "image/webp"}));
-    }, "image/webp", .9);
-  });
-}
-
-async function publishMedia(form) {
-  const file = pendingMediaUploadFile || document.getElementById("mediaUploadFile").files[0];
-  const feedback = document.getElementById("mediaUploadFeedback");
-  const submit = form.querySelector("[type=submit]");
-  if (!file) return;
-  submit.disabled = true;
-  feedback.textContent = "Subiendo…";
-  try {
-    if (!backendReady || !currentAuthUser) throw new Error("Necesitas la conexión compartida para publicar.");
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) throw new Error("Selecciona una imagen o vídeo compatible.");
-    const keepOriginal = document.getElementById("mediaKeepOriginal")?.checked && mediaFilter === "none" && !mediaOverlayText;
-    const mediaFile = file.type.startsWith("image/") && mediaCropImage && !keepOriginal ? await createCroppedMediaFile() : file;
-    const mediaUrl = await uploadGroupMedia(mediaFile, mediaUploadMode === "moment" ? "moments" : "posts");
-    const record = {
-      user_id: currentAuthUser.id, legacy_id: currentUser.id,
-      caption: document.getElementById("mediaUploadCaption").value.trim(),
-      mentioned_user_id: resolveMediaMention(),
-      media_url: mediaUrl, media_type: file.type.startsWith("video/") ? "video" : "image"
-    };
-    const table = mediaUploadMode === "moment" ? "moments" : "profile_posts";
-    const {data, error} = await db.from(table).insert(record).select("*").single();
-    if (error) throw error;
-    dispatchPush("media_created", `${mediaUploadMode}:${data.id}`);
-    closeMediaUploader();
-    if (mediaUploadMode === "moment") {
-      if (!moments.some(item => String(item.id) === String(data.id))) moments.unshift(mapMedia(data));
-      goTo("momentos");
-    } else {
-      if (!profilePosts.some(item => String(item.id) === String(data.id))) profilePosts.unshift(mapMedia(data));
-      goTo("publicaciones");
-    }
-  } catch (error) {
-    feedback.textContent = error.message || "No se pudo publicar el archivo.";
-  } finally {
-    submit.disabled = false;
-  }
-}
-
-async function deleteMedia(kind, id) {
-  if (!backendReady || !currentAuthUser) return;
-  const table = kind === "moment" ? "moments" : "profile_posts";
-  const collection = kind === "moment" ? moments : profilePosts;
-  const item = collection.find(entry => String(entry.id) === String(id));
-  const isOwner = isMediaOwner(item);
-  if (!item || (!isOwner && !isSuperAdmin())) return;
-  if (!window.confirm(`¿Quieres eliminar ${kind === "moment" ? "este momento" : "esta publicación"}?`)) return;
-  let query = db.from(table).delete().eq("id", item.id);
-  if (!isSuperAdmin()) query = query.eq("user_id", currentAuthUser.id);
-  const {error} = await query;
-  if (error) return;
-  if (kind === "moment") {
-    moments = moments.filter(entry => String(entry.id) !== String(item.id));
-    refreshMomentSurfaces();
-  } else {
-    profilePosts = profilePosts.filter(entry => String(entry.id) !== String(item.id));
-    refreshPostSurfaces();
-  }
-}
-
-function isMediaOwner(item) {
-  if (!item || !currentUser) return false;
-  const mediaAuthId = String(item.userId || "").toLowerCase();
-  const sessionAuthId = String(currentAuthUser?.id || "").toLowerCase();
-  const profileAuthId = String(currentUser.authId || "").toLowerCase();
-  return Boolean(mediaAuthId && (mediaAuthId === sessionAuthId || mediaAuthId === profileAuthId))
-    || (item.member != null && String(item.member) === String(currentUser.id));
-}
-
-function storyOwnerKey(item) {
-  return String(item?.userId || `legacy-${item?.member ?? "unknown"}`);
-}
-
-function viewedMomentsStorageKey() {
-  return `bb-viewed-moments-${currentAuthUser?.id || currentUser?.id || "guest"}`;
-}
-
-function getViewedMomentIds() {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(viewedMomentsStorageKey()) || "[]").map(String));
-  } catch {
-    return new Set();
-  }
-}
-
-function hasViewedMoment(id) {
-  return getViewedMomentIds().has(String(id));
-}
-
-function markMomentViewed(id) {
-  const viewed = getViewedMomentIds();
-  viewed.add(String(id));
-  localStorage.setItem(viewedMomentsStorageKey(), JSON.stringify([...viewed].slice(-500)));
-}
-
-function openMediaViewer(url, caption = "Momento", mediaType = "image") {
-  const viewer = document.getElementById("mediaViewer");
-  const image = document.getElementById("mediaViewerImage");
-  const video = document.getElementById("mediaViewerVideo");
-  const isVideo = mediaType === "video";
-  image.hidden = isVideo;
-  video.hidden = !isVideo;
-  image.src = isVideo ? "" : url;
-  image.alt = caption;
-  video.src = isVideo ? url : "";
-  document.getElementById("mediaViewerCaption").textContent = caption;
-  viewer.classList.add("open");
-  viewer.setAttribute("aria-hidden", "false");
-}
-
-function closeMediaViewer() {
-  clearTimeout(momentAdvanceTimer);
-  momentAdvanceTimer = null;
-  momentAdvanceDeadline = 0;
-  momentAdvanceRemaining = 6000;
-  activeMomentSequence = [];
-  activeMomentIndex = -1;
-  suppressMomentNavigationClick = false;
-  const viewer = document.getElementById("mediaViewer");
-  viewer.classList.remove("open");
-  viewer.setAttribute("aria-hidden", "true");
-  document.getElementById("mediaViewerImage").src = "";
-  const video = document.getElementById("mediaViewerVideo");
-  video.pause();
-  video.src = "";
-  document.getElementById("momentProgress").hidden = true;
-  document.getElementById("previousMoment").hidden = true;
-  document.getElementById("nextMoment").hidden = true;
-  document.getElementById("momentOptionsButton").hidden = true;
-  document.getElementById("momentOptionsButton").setAttribute("aria-expanded", "false");
-  document.getElementById("momentOptionsMenu").hidden = true;
-  if (typeof clearMomentGesture === "function") clearMomentGesture();
-}
-
-function openModal(id) {
-  const modal = document.getElementById(id);
-  if (!modal) return;
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
-}
-
-function closeModal(id) {
-  const modal = document.getElementById(id);
-  if (!modal) return;
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
-}
-
-function openMoment(momentId) {
-  const item = moments.find(moment => String(moment.id) === String(momentId));
-  if (!item) return window.alert("Este momento ya no está disponible.");
-  activeMomentSequence = moments
-    .filter(moment => storyOwnerKey(moment) === storyOwnerKey(item))
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  activeMomentIndex = activeMomentSequence.findIndex(moment => String(moment.id) === String(momentId));
-  showActiveMoment();
-}
-
-function showActiveMoment() {
-  const item = activeMomentSequence[activeMomentIndex];
-  if (!item) return closeMediaViewer();
-  clearTimeout(momentAdvanceTimer);
-  momentAdvanceTimer = null;
-  momentAdvanceDeadline = 0;
-  momentAdvanceRemaining = 6000;
-  const member = getMember(item.member);
-  markMomentViewed(item.id);
-  registerMomentView(item);
-  openMediaViewer(item.mediaUrl, item.caption || `Momento de ${member?.name || "miembro"}`, item.mediaType);
-  const progress = document.getElementById("momentProgress");
-  progress.classList.remove("paused");
-  progress.hidden = false;
-  progress.innerHTML = activeMomentSequence.map((_, index) => `<span class="${index < activeMomentIndex ? "complete" : index === activeMomentIndex ? "active" : ""}"><i></i></span>`).join("");
-  document.getElementById("previousMoment").hidden = activeMomentIndex === 0;
-  document.getElementById("nextMoment").hidden = false;
-  const canDeleteMoment = isMediaOwner(item) || isSuperAdmin();
-  document.getElementById("momentOptionsButton").hidden = !canDeleteMoment;
-  document.getElementById("momentOptionsButton").setAttribute("aria-expanded", "false");
-  document.getElementById("momentOptionsMenu").hidden = true;
-  renderMoments();
-  if (item.mediaType !== "video") scheduleMomentAdvance();
-}
-
-function scheduleMomentAdvance(delay = momentAdvanceRemaining) {
-  clearTimeout(momentAdvanceTimer);
-  momentAdvanceRemaining = Math.max(80, delay);
-  momentAdvanceDeadline = Date.now() + momentAdvanceRemaining;
-  momentAdvanceTimer = setTimeout(nextMoment, momentAdvanceRemaining);
-}
-
-function pauseActiveMoment() {
-  const item = activeMomentSequence[activeMomentIndex];
-  if (!item || item.mediaType === "video" || !momentAdvanceTimer) return;
-  momentAdvanceRemaining = Math.max(80, momentAdvanceDeadline - Date.now());
-  clearTimeout(momentAdvanceTimer);
-  momentAdvanceTimer = null;
-  document.getElementById("momentProgress").classList.add("paused");
-}
-
-function resumeActiveMoment() {
-  const item = activeMomentSequence[activeMomentIndex];
-  if (!item || item.mediaType === "video" || momentAdvanceTimer) return;
-  document.getElementById("momentProgress").classList.remove("paused");
-  scheduleMomentAdvance();
-}
-
-function nextMoment() {
-  if (!activeMomentSequence.length) return;
-  if (activeMomentIndex >= activeMomentSequence.length - 1) return closeMediaViewer();
-  activeMomentIndex += 1;
-  showActiveMoment();
-}
-
-function previousMoment() {
-  if (!activeMomentSequence.length || activeMomentIndex <= 0) return;
-  activeMomentIndex -= 1;
-  showActiveMoment();
-}
-
-async function deleteActiveMoment() {
-  const item = activeMomentSequence[activeMomentIndex];
-  if (!item || (!isMediaOwner(item) && !isSuperAdmin()) || !backendReady || !currentAuthUser) return;
-  if (!window.confirm("¿Quieres eliminar esta historia?")) return;
-  let query = db.from("moments").delete().eq("id", item.id);
-  if (!isSuperAdmin()) query = query.eq("user_id", currentAuthUser.id);
-  const {error} = await query;
-  if (error) return window.alert(error.message || "No se pudo eliminar la historia.");
-  activeMomentSequence.splice(activeMomentIndex, 1);
-  moments = moments.filter(moment => String(moment.id) !== String(item.id));
-  if (!activeMomentSequence.length) closeMediaViewer();
-  else {
-    activeMomentIndex = Math.min(activeMomentIndex, activeMomentSequence.length - 1);
-    showActiveMoment();
-  }
-  refreshMomentSurfaces();
-}
-
-function openContent(kind, id) {
-  const item = (kind === "moment" ? moments : profilePosts).find(entry => String(entry.id) === String(id));
-  if (!item) return window.alert("Este contenido ya no está disponible.");
-  if (kind === "post") return openPostViewer(item.id);
-  registerMomentView(item);
-  openMediaViewer(item.mediaUrl, item.caption || "Momento", item.mediaType);
-}
-
-function renderPostViewer(postId = activePostViewerId) {
-  const item = profilePosts.find(entry => String(entry.id) === String(postId));
-  if (!item) return;
-  const member = getMember(item.member);
-  const memberName = member?.name || "Miembro";
-  const username = member?.username || normalizeUsername(memberName);
-  const likes = getMediaLikes("post", item.id);
-  const liked = Boolean(currentAuthUser && likes.some(like => like.userId === currentAuthUser.id));
-  const canDelete = isMediaOwner(item) || isSuperAdmin();
-  document.getElementById("postViewerUsername").textContent = `@${username}`;
-  document.getElementById("postViewerContent").innerHTML = `
-    <article class="post-viewer-post" data-media-card-kind="post" data-media-card-id="${item.id}">
-      <header class="post-viewer-author-row">
-        <button class="post-viewer-author" type="button" data-profile="${item.member}">
-          ${getAvatar(member, "avatar small")}
-          <span><strong>${escapeHtml(username)}</strong><small>${escapeHtml(member?.nickname || memberName)}</small></span>
-        </button>
-        <div class="feed-post-menu">
-          <button class="feed-post-menu-button" type="button" data-toggle-post-menu="viewer-${item.id}" aria-label="Opciones de la publicación" aria-expanded="false">${postOptionsIcon()}</button>
-          <div class="feed-post-menu-popover" data-post-menu="viewer-${item.id}" hidden>
-            ${!isSuperAdmin() ? `<button type="button" data-share-media="${item.id}" data-share-kind="post">Enviar por chat</button>` : ""}
-            ${canDelete ? `<button class="danger" type="button" data-delete-post="${item.id}">Eliminar publicación</button>` : ""}
-          </div>
-        </div>
-      </header>
-      <div class="post-viewer-media">${item.mediaType === "video"
-        ? `<video src="${escapeHtml(item.mediaUrl)}" controls playsinline preload="metadata"></video>`
-        : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.caption || `Publicación de ${memberName}`)}" decoding="async">`}
-      </div>
-      <div class="post-viewer-details">
-        <div class="media-social-actions post-viewer-actions">
-          <button class="media-like-button ${liked ? "liked" : ""}" type="button" data-like-media="${item.id}" data-like-kind="post" aria-pressed="${liked}" aria-label="${liked ? "Quitar Me gusta" : "Dar Me gusta"}">${mediaActionIcon("like", liked)}<small>Me gusta</small></button>
-          ${!isSuperAdmin() ? `<button class="media-reply-button" type="button" data-reply-media="${item.id}" data-reply-kind="post" aria-label="Comentar">${mediaActionIcon("reply")}<small>Comentar</small></button>` : ""}
-          ${!isSuperAdmin() ? `<button class="media-share-button" type="button" data-share-media="${item.id}" data-share-kind="post" aria-label="Enviar por chat">${mediaActionIcon("share")}<small>Enviar</small></button>` : ""}
-        </div>
-        <button class="post-viewer-likes" type="button" data-like-media="${item.id}" data-like-kind="post">${likes.length ? `${likes.length} Me gusta` : "Sé el primero en dar Me gusta"}</button>
-        ${item.caption ? `<p class="post-viewer-caption"><strong>${escapeHtml(username)}</strong><span>${escapeHtml(item.caption)}</span></p>` : ""}
-        ${item.mentionedUserId ? `<button class="media-mention" type="button" data-profile="${getMemberByAuthId(item.mentionedUserId)?.id || ""}">@${escapeHtml(getMemberByAuthId(item.mentionedUserId)?.username || "miembro")}</button>` : ""}
-        <time datetime="${escapeHtml(item.createdAt)}">${formatRelativeTime(item.createdAt)}</time>
-      </div>
-    </article>`;
-}
-
-function openPostViewer(postId) {
-  const item = profilePosts.find(entry => String(entry.id) === String(postId));
-  if (!item) return window.alert("Esta publicación ya no está disponible.");
-  activePostViewerId = item.id;
-  renderPostViewer(item.id);
-  const viewer = document.getElementById("postViewer");
-  viewer.classList.add("open");
-  viewer.setAttribute("aria-hidden", "false");
-  document.body.classList.add("post-viewer-open");
-  viewer.querySelector(".post-viewer-shell").scrollTop = 0;
-}
-
-function closePostViewer() {
-  activePostViewerId = null;
-  closePostMenus();
-  const viewer = document.getElementById("postViewer");
-  viewer.classList.remove("open");
-  viewer.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("post-viewer-open");
-  document.getElementById("postViewerContent").innerHTML = "";
-}
-
-async function registerMomentView(item) {
-  if (!backendReady || !currentAuthUser || item.userId === currentAuthUser.id) return;
-  await db.from("moment_views").upsert({moment_id: item.id, viewer_id: currentAuthUser.id}, {onConflict: "moment_id,viewer_id"});
-}
-
-async function replyToMedia(kind, id) {
-  if (!backendReady || !currentAuthUser || isSuperAdmin()) return;
-  const item = (kind === "moment" ? moments : profilePosts).find(entry => String(entry.id) === String(id));
-  if (!item) return;
-  replyingMedia = {kind, id, item};
-  const member = getMember(item.member);
-  document.getElementById("mediaReplyTitle").textContent = `Responder ${kind === "moment" ? "historia" : "publicación"}`;
-  document.getElementById("mediaReplyContext").innerHTML = `${item.mediaUrl ? `<img src="${escapeHtml(item.mediaUrl)}" alt="">` : ""}<div><strong>${escapeHtml(member?.name || "Miembro")}</strong><small>${escapeHtml(item.caption || (kind === "moment" ? "Historia" : "Publicación"))}</small></div>`;
-  document.getElementById("mediaReplyBody").value = "";
-  document.getElementById("mediaReplyFeedback").textContent = "";
-  openModal("mediaReplyModal");
-  setTimeout(() => document.getElementById("mediaReplyBody").focus(), 80);
-}
-
-function closeMediaReply() {
-  replyingMedia = null;
-  closeModal("mediaReplyModal");
-}
-
-async function submitMediaReply(form) {
-  if (!replyingMedia) return;
-  const body = document.getElementById("mediaReplyBody").value.trim();
-  if (!body) return;
-  const submit = form.querySelector("[type=submit]");
-  submit.disabled = true;
-  const {kind, id} = replyingMedia;
-  const record = {user_id: currentAuthUser.id, body, moment_id: kind === "moment" ? id : null, profile_post_id: kind === "post" ? id : null};
-  const {data, error} = await db.from("media_replies").insert(record).select("id").single();
-  submit.disabled = false;
-  if (error) return void (document.getElementById("mediaReplyFeedback").textContent = error.message || "No se pudo enviar la respuesta.");
-  dispatchPush("reply", data.id);
-  closeMediaReply();
-}
-
-const HELP_STATUS = Object.freeze({
-  new: {label: "Nueva", className: "new"},
-  in_progress: {label: "En proceso", className: "in-progress"},
-  answered: {label: "Respondida", className: "answered"},
-  closed: {label: "Cerrada", className: "closed"},
-});
-const HELP_TYPES = Object.freeze({help: "Ayuda", suggestion: "Sugerencia", complaint: "Queja"});
 
 function helpStatus(status) {
   return HELP_STATUS[status] || HELP_STATUS.new;
@@ -4385,15 +3412,6 @@ async function updateHelpRequestStatus(status) {
   await loadHelpCenter();
 }
 
-async function showMomentViewers(id) {
-  const moment = moments.find(item => String(item.id) === String(id));
-  if (!moment || !isMediaOwner(moment)) return;
-  const {data, error} = await db.from("moment_views").select("viewer_id,viewed_at").eq("moment_id", id).order("viewed_at", {ascending: false}).limit(250);
-  if (error) return window.alert(error.message);
-  const names = (data || []).map(view => getMemberByAuthId(view.viewer_id)?.name || "Miembro");
-  window.alert(names.length ? `Visto por ${names.length}:\n\n${names.join("\n")}` : "Todavía nadie ha visto este momento.");
-}
-
 async function editGroupMessage(id) {
   if (!backendReady || !currentAuthUser) return;
   const message = messages.find(item => String(item.id) === String(id));
@@ -4529,6 +3547,7 @@ function fileToDataUrl(file) {
 }
 
 async function loadNews(force = false) {
+  if (document.getElementById("newsCollapsible").hidden || !currentUser) return;
   const grid = document.getElementById("newsGrid");
   const status = document.getElementById("newsStatus");
   const cacheKey = `bb-news-${activeNewsCategory}`;
@@ -4640,21 +3659,10 @@ function formatRelativeTime(value) {
   return new Date(value).toLocaleDateString("es-ES");
 }
 
-function formatExpiry(value) {
-  const minutes = Math.max(0, Math.ceil((new Date(value).getTime() - Date.now()) / 60000));
-  if (minutes < 60) return `en ${minutes} min`;
-  return `en ${Math.ceil(minutes / 60)} h`;
-}
-
 function formatFileSize(bytes) {
   if (!bytes) return "Archivo";
   if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function closePostMenus() {
-  document.querySelectorAll("[data-post-menu]").forEach(menu => { menu.hidden = true; });
-  document.querySelectorAll("[data-toggle-post-menu]").forEach(button => button.setAttribute("aria-expanded", "false"));
 }
 
 document.addEventListener("click", event => {
@@ -4670,35 +3678,6 @@ document.addEventListener("click", event => {
   } else if (!event.target.closest(".message-actions")) {
     document.querySelectorAll("[data-message-bubble].actions-open").forEach(item => item.classList.remove("actions-open"));
   }
-  const postMenuToggle = event.target.closest("[data-toggle-post-menu]");
-  if (postMenuToggle) {
-    event.preventDefault();
-    event.stopPropagation();
-    const menu = document.querySelector(`[data-post-menu="${postMenuToggle.dataset.togglePostMenu}"]`);
-    const shouldOpen = Boolean(menu?.hidden);
-    closePostMenus();
-    if (menu && shouldOpen) {
-      menu.hidden = false;
-      postMenuToggle.setAttribute("aria-expanded", "true");
-    }
-    return;
-  }
-  if (!event.target.closest(".feed-post-menu")) closePostMenus();
-  else if (event.target.closest(".feed-post-menu-popover button")) closePostMenus();
-  const likeMedia = event.target.closest("[data-like-media]");
-  if (likeMedia) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleMediaLike(likeMedia.dataset.likeKind, likeMedia.dataset.likeMedia);
-    return;
-  }
-  const shareMediaTarget = event.target.closest("[data-share-media]");
-  if (shareMediaTarget) {
-    event.preventDefault();
-    event.stopPropagation();
-    openShareMedia(shareMediaTarget.dataset.shareKind, shareMediaTarget.dataset.shareMedia);
-    return;
-  }
   const shareNewsTarget = event.target.closest("[data-share-news]");
   if (shareNewsTarget) {
     event.preventDefault();
@@ -4706,58 +3685,27 @@ document.addEventListener("click", event => {
     openShareNews(shareNewsTarget.dataset.shareNews);
     return;
   }
-  const sharedMediaTarget = event.target.closest("[data-open-shared-kind]");
-  if (sharedMediaTarget) {
-    event.preventDefault();
-    event.stopPropagation();
-    openSharedMedia(sharedMediaTarget.dataset.openSharedKind, sharedMediaTarget.dataset.openSharedId);
-    return;
-  }
-  const momentTarget = event.target.closest("[data-open-moment]");
-  if (momentTarget) {
-    event.preventDefault();
-    openMoment(momentTarget.dataset.openMoment);
-    return;
-  }
-  const openContentTarget = event.target.closest("[data-open-content-kind]");
-  if (openContentTarget) openContent(openContentTarget.dataset.openContentKind, openContentTarget.dataset.openContentId);
-  const replyMediaTarget = event.target.closest("[data-reply-media]");
-  if (replyMediaTarget) replyToMedia(replyMediaTarget.dataset.replyKind, replyMediaTarget.dataset.replyMedia);
-  const viewersTarget = event.target.closest("[data-moment-viewers]");
-  if (viewersTarget) showMomentViewers(viewersTarget.dataset.momentViewers);
-  const favorite = event.target.closest("[data-toggle-favorite]");
-  if (favorite) {
+  const goTarget = event.target.closest("[data-go]");
+  if (suppressInboxRowClick && event.target.closest(".chat-inbox .private-contact")) {
     event.preventDefault();
     event.stopImmediatePropagation();
-    const authId = currentAuthUser?.id;
-    const targetId = favorite.dataset.toggleFavorite;
-    if (!authId || !targetId) return;
-    let stored = {};
-    try { stored = JSON.parse(localStorage.getItem(CHAT_FAVORITES_STORAGE_KEY) || "{}"); } catch {}
-    const next = new Set(Array.isArray(stored[authId]) ? stored[authId].map(String) : []);
-    if (next.has(targetId)) next.delete(targetId); else next.add(targetId);
-    stored[authId] = [...next];
-    localStorage.setItem(CHAT_FAVORITES_STORAGE_KEY, JSON.stringify(stored));
-    renderPrivateContacts();
+    suppressInboxRowClick = false;
     return;
   }
-  const goTarget = event.target.closest("[data-go]");
+  const achievementTarget = event.target.closest("[data-open-achievement]");
+  if (achievementTarget) {
+    const returnFocus = achievementTarget.closest("#achievementChallengesDialog") ? achievementChallengesReturnFocus : document.activeElement;
+    if (achievementTarget.closest("#achievementChallengesDialog")) closeAchievementChallenges(false);
+    openAchievementDetail(achievementTarget.dataset.openAchievement, returnFocus);
+  }
+  if (event.target.closest("[data-open-achievement-challenges]")) openAchievementChallenges();
+  if (event.target.closest("[data-reload-achievements]")) loadAchievements();
   if (goTarget) goTo(goTarget.dataset.go);
   const profileTarget = event.target.closest("[data-profile]");
   if (profileTarget) {
-    if (profileTarget.closest("#postViewer")) closePostViewer();
     const profileId = profileTarget.dataset.profile;
-    goTo("perfil");
-    requestAnimationFrame(() => window.setTimeout(() => {
-      if (document.getElementById("perfil")?.classList.contains("active")) renderProfile(profileId, false);
-    }, 0));
+    renderProfile(profileId);
   }
-  const deleteMoment = event.target.closest("[data-delete-moment]");
-  if (deleteMoment) deleteMedia("moment", deleteMoment.dataset.deleteMoment);
-  const viewMedia = event.target.closest("[data-view-media]");
-  if (viewMedia) openMediaViewer(viewMedia.dataset.viewMedia, viewMedia.dataset.viewCaption);
-  const deletePost = event.target.closest("[data-delete-post]");
-  if (deletePost) deleteMedia("post", deletePost.dataset.deletePost);
   const notificationTarget = event.target.closest("[data-notification-id]");
   if (notificationTarget) openNotification(notificationTarget.dataset.notificationId);
   const editGroupTarget = event.target.closest("[data-edit-group-message]");
@@ -4810,35 +3758,6 @@ document.addEventListener("input", event => {
   }, true);
 });
 
-const profileTab = document.querySelector(".profile-tab");
-function clearProfileQuickMenuPress() {
-  clearTimeout(profileQuickMenuPressTimer);
-  profileQuickMenuPressTimer = null;
-  profileQuickMenuPointer = null;
-}
-profileTab.addEventListener("pointerdown", event => {
-  if (event.button !== 0 || !currentUser) return;
-  profileQuickMenuPointer = {id: event.pointerId, x: event.clientX, y: event.clientY};
-  profileQuickMenuPressTimer = setTimeout(() => {
-    suppressProfileTabClick = true;
-    openProfileQuickMenu();
-  }, 480);
-});
-profileTab.addEventListener("pointermove", event => {
-  if (!profileQuickMenuPointer || profileQuickMenuPointer.id !== event.pointerId) return;
-  if (Math.hypot(event.clientX - profileQuickMenuPointer.x, event.clientY - profileQuickMenuPointer.y) > 12) clearProfileQuickMenuPress();
-});
-["pointerup", "pointercancel", "pointerleave"].forEach(type => profileTab.addEventListener(type, clearProfileQuickMenuPress));
-profileTab.addEventListener("contextmenu", event => {
-  event.preventDefault();
-  openProfileQuickMenu();
-});
-profileTab.addEventListener("click", event => {
-  if (!suppressProfileTabClick) return;
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  suppressProfileTabClick = false;
-}, true);
 document.getElementById("quickHelpButton").addEventListener("click", () => {
   closeProfileQuickMenu();
   goTo("ayuda");
@@ -4850,21 +3769,25 @@ document.getElementById("quickLogoutButton").addEventListener("click", () => {
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     closeProfileQuickMenu();
-    if (document.getElementById("storyCamera")?.classList.contains("open")) closeStoryCamera();
-    else if (document.getElementById("mediaUploader")?.classList.contains("open")) dismissMediaUploader({returnToCamera: true});
   }
 });
-window.addEventListener("pagehide", closeStoryCamera);
-navLinks.forEach(link => link.addEventListener("click", event => {
+bindTabNavigation(navLinks, {
+  navigate(targetSection) {
+    if (targetSection === "perfil" && currentUser) renderProfile(currentUser.id);
+    else goTo(targetSection);
+  },
+  openProfileMenu: openProfileQuickMenu
+});
+
+document.addEventListener("pointerdown", startChatBackGesture, {passive: true});
+document.addEventListener("pointermove", moveChatBackGesture, {passive: false});
+document.addEventListener("pointerup", finishChatBackGesture, {passive: true});
+document.addEventListener("pointercancel", () => resetChatBackGesture({settle: true}), {passive: true});
+document.addEventListener("click", event => {
+  if (!suppressChatGestureClick || event.target.closest(".floating-tab-bar")) return;
   event.preventDefault();
-  const targetSection = link.dataset.section;
-  goTo(targetSection);
-  if (targetSection === "perfil" && currentUser && activeProfileId !== currentUser.id) {
-    requestAnimationFrame(() => window.setTimeout(() => {
-      if (document.getElementById("perfil")?.classList.contains("active")) renderProfile(currentUser.id, false);
-    }, 0));
-  }
-}));
+  event.stopImmediatePropagation();
+}, true);
 document.getElementById("loginForm").addEventListener("submit", async event => {
   event.preventDefault();
   const error = document.getElementById("loginError");
@@ -4874,8 +3797,7 @@ document.getElementById("loginForm").addEventListener("submit", async event => {
   try {
     await login(
       document.getElementById("loginUsername").value,
-      document.getElementById("loginPassword").value,
-      document.getElementById("rememberSession").checked
+      document.getElementById("loginPassword").value
     );
   } catch (loginError) {
     error.textContent = loginError.message;
@@ -4951,72 +3873,69 @@ document.getElementById("helpRequestList").addEventListener("click", event => {
   activeHelpRequestId = request.dataset.helpRequest;
   renderHelpCenter();
 });
-document.getElementById("closeMediaReplyModal").addEventListener("click", closeMediaReply);
-document.getElementById("cancelMediaReply").addEventListener("click", closeMediaReply);
-document.getElementById("mediaReplyModal").addEventListener("click", event => { if (event.target.id === "mediaReplyModal") closeMediaReply(); });
-document.getElementById("mediaReplyForm").addEventListener("submit", event => { event.preventDefault(); submitMediaReply(event.currentTarget); });
-document.getElementById("messageForm").addEventListener("submit", async event => {
+async function submitChatMessage(kind, event) {
   event.preventDefault();
-  if (activeAudioRecording?.kind === "group") {
+  const form = event.currentTarget;
+  if (form.dataset.sending) return;
+  if (activeAudioRecording?.kind === kind) {
     activeAudioRecording.sendOnStop = true;
     activeAudioRecording.recorder.stop();
     return;
   }
-  const input = document.getElementById("messageInput");
-  const text = input.value.trim();
-  if (!text && !pendingMessageFile) return;
-  input.disabled = true;
+  const input = form.querySelector('input[type="text"]');
+  const submit = form.querySelector('[type="submit"]');
+  const value = input.value;
+  const text = value.trim();
+  const file = pendingChatFile(kind);
+  if (!text && !file) return;
+  const destination = kind === "private" ? activePrivateMemberId : activeChatChannelId;
+  const sameConversation = () => destination === (kind === "private" ? activePrivateMemberId : activeChatChannelId);
+  form.dataset.sending = "true";
+  submit.disabled = true;
+  // Keep the editor focused and editable: disabling it dismisses the iOS keyboard.
   try {
-    const sentMessage = await sendMessage(text, pendingMessageFile);
-    if (sentMessage && !messages.some(message => String(message.id) === String(sentMessage.id))) {
-      messages.push(sentMessage);
-      refreshGroupMessageSurfaces();
+    const sentMessage = await (kind === "private" ? sendPrivateMessage(text, file) : sendMessage(text, file));
+    const collection = kind === "private" ? privateMessages : messages;
+    if (sentMessage && !collection.some(message => String(message.id) === String(sentMessage.id))) {
+      collection.push(sentMessage);
+      if (kind === "private") refreshPrivateMessageSurfaces();
+      else refreshGroupMessageSurfaces();
     }
-    input.value = "";
-    clearPendingChatFile("group");
-  } catch (error) {
-    input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
-    input.reportValidity();
-    input.setCustomValidity("");
-  } finally {
-    input.disabled = false;
-    input.focus();
-  }
-});
-document.getElementById("privateMessageForm").addEventListener("submit", async event => {
-  event.preventDefault();
-  if (activeAudioRecording?.kind === "private") {
-    activeAudioRecording.sendOnStop = true;
-    activeAudioRecording.recorder.stop();
-    return;
-  }
-  const input = document.getElementById("privateMessageInput");
-  const text = input.value.trim();
-  if (!text && !pendingPrivateMessageFile) return;
-  input.disabled = true;
-  try {
-    const sentMessage = await sendPrivateMessage(text, pendingPrivateMessageFile);
-    if (sentMessage && !privateMessages.some(message => String(message.id) === String(sentMessage.id))) {
-      privateMessages.push(sentMessage);
-      refreshPrivateMessageSurfaces();
+    if (sentMessage && sameConversation()) {
+      if (input.value === value) input.value = "";
+      if (pendingChatFile(kind) === file) clearPendingChatFile(kind);
     }
-    input.value = "";
-    clearPendingChatFile("private");
   } catch (error) {
-    input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
-    input.reportValidity();
-    input.setCustomValidity("");
+    if (sameConversation()) {
+      input.setCustomValidity(error.message || "No se pudo enviar el mensaje.");
+      input.reportValidity();
+      input.setCustomValidity("");
+    }
   } finally {
-    input.disabled = false;
-    input.focus();
+    delete form.dataset.sending;
+    submit.disabled = input.disabled;
+    syncComposerState(kind);
   }
-});
+}
+document.getElementById("messageForm").addEventListener("submit", event => submitChatMessage("group", event));
+document.getElementById("privateMessageForm").addEventListener("submit", event => submitChatMessage("private", event));
 [["group", "messageInput"], ["private", "privateMessageInput"]].forEach(([kind, inputId]) => {
   document.getElementById(inputId).addEventListener("input", () => syncComposerState(kind));
 });
+chatKeyboard = ChatKeyboard.install({onViewportChange: syncMobileViewport});
 window.visualViewport?.addEventListener("resize", () => syncMobileViewport());
 window.visualViewport?.addEventListener("scroll", () => syncMobileViewport());
 window.addEventListener("resize", () => syncMobileViewport());
+window.addEventListener("resize", () => {
+  if (!activeChatMotionScene || Math.abs(activeChatMotionScene.width - window.innerWidth) < 2) return;
+  if (chatBackGesture) resetChatBackGesture();
+  else activeChatMotionScene.animations.forEach(animation => animation.finish());
+}, {passive: true});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) return;
+  if (chatBackGesture) resetChatBackGesture();
+  else activeChatMotionScene?.animations.forEach(animation => animation.finish());
+});
 window.addEventListener("orientationchange", () => setTimeout(() => syncMobileViewport(), 250));
 document.addEventListener("focusin", event => {
   if (event.target.closest(".message-form input")) syncMobileViewport();
@@ -5140,17 +4059,23 @@ function setNewsCollapsed(collapsed) {
   content.hidden = collapsed;
   button.setAttribute("aria-expanded", String(!collapsed));
   button.querySelector("span").textContent = collapsed ? "Ver noticias" : "Ocultar noticias";
+  if (!collapsed) loadNews(false);
 }
 document.getElementById("toggleNewsButton").addEventListener("click", () => {
   setNewsCollapsed(!document.getElementById("noticias").classList.contains("is-collapsed"));
 });
-setNewsCollapsed(false);
+setNewsCollapsed(true);
 document.getElementById("refreshNewsButton").addEventListener("click", () => loadNews(true));
+// Also cover returning online and staying in the foreground across midnight.
+window.addEventListener("online", () => { void refreshDailyParticipation(true); });
+setInterval(() => { if (!document.hidden) void refreshDailyParticipation(); }, 60000);
 setInterval(() => {
   if (!document.hidden && document.getElementById("inicio").classList.contains("active")) loadNews(true);
 }, NEWS_REFRESH_INTERVAL);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) void Promise.all([refreshMediaPermission("camera"), refreshMediaPermission("microphone")]);
+  if (!document.hidden && currentAuthUser) void refreshDailyParticipation(true);
+  if (!document.hidden && currentAuthUser) scheduleRealtimeRefresh("achievements", loadAchievements, 60);
   if (!document.hidden
     && document.getElementById("inicio").classList.contains("active")
     && Date.now() - lastNewsRefreshAt >= NEWS_CACHE_DURATION) {
@@ -5176,212 +4101,6 @@ document.getElementById("addChatChannelButton").addEventListener("click", create
 document.getElementById("messageAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("messageMediaAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
 document.getElementById("messageCameraAttachment").addEventListener("change", event => setPendingChatFile("group", event.target.files[0] || null));
-document.getElementById("createMediaButton").addEventListener("click", () => openStoryCamera("moment"));
-document.getElementById("closeStoryCamera").addEventListener("click", closeStoryCamera);
-document.getElementById("captureStoryPhoto").addEventListener("pointerdown", beginStoryShutterGesture);
-document.getElementById("captureStoryPhoto").addEventListener("pointerup", endStoryShutterGesture);
-document.getElementById("captureStoryPhoto").addEventListener("pointercancel", cancelStoryShutterGesture);
-document.getElementById("captureStoryPhoto").addEventListener("contextmenu", event => event.preventDefault());
-document.getElementById("switchStoryCamera").addEventListener("click", switchStoryCamera);
-document.getElementById("toggleStoryFlash").addEventListener("click", toggleStoryFlash);
-document.querySelectorAll("[data-camera-mode]").forEach(button => button.addEventListener("click", () => {
-  if (storyRecorder || storyCaptureInProgress) return;
-  setCameraCaptureMode(button.dataset.cameraMode);
-}));
-document.getElementById("storyGalleryInput").addEventListener("change", event => useStoryMediaFile(event.target.files[0] || null));
-document.getElementById("closeMediaUploader").addEventListener("click", () => dismissMediaUploader({returnToCamera: true}));
-document.getElementById("cancelMediaUploader").addEventListener("click", () => dismissMediaUploader({returnToCamera: true}));
-document.getElementById("mediaUploader").addEventListener("click", event => {
-  if (event.target.id === "mediaUploader" && !event.currentTarget.classList.contains("has-media")) dismissMediaUploader();
-});
-document.getElementById("mediaUploadFile").addEventListener("change", event => prepareMediaUploadFile(event.target.files[0] || null));
-document.getElementById("mediaCropZoom").addEventListener("input", event => {
-  document.getElementById("mediaKeepOriginal").checked = false;
-  const previousZoom = mediaCropZoom;
-  mediaCropZoom = Number(event.target.value);
-  if (previousZoom) {
-    mediaCropOffsetX *= mediaCropZoom / previousZoom;
-    mediaCropOffsetY *= mediaCropZoom / previousZoom;
-  }
-  drawMediaCrop();
-});
-document.getElementById("mediaFilter").addEventListener("change", event => { mediaFilter = event.target.value; drawMediaCrop(); });
-document.getElementById("mediaOverlayText").addEventListener("input", event => { mediaOverlayText = event.target.value.trim(); drawMediaCrop(); });
-function toggleMediaTool(toolName) {
-  const targetPanel = document.querySelector(`[data-media-panel="${toolName}"]`);
-  const targetButton = document.querySelector(`[data-media-tool="${toolName}"]`);
-  const willOpen = targetPanel && !targetPanel.classList.contains("active");
-  document.querySelectorAll("[data-media-panel]").forEach(panel => panel.classList.remove("active"));
-  document.querySelectorAll("[data-media-tool]").forEach(button => {
-    button.classList.remove("active");
-    button.setAttribute("aria-expanded", "false");
-  });
-  if (!willOpen) return;
-  targetPanel.classList.add("active");
-  targetButton.classList.add("active");
-  targetButton.setAttribute("aria-expanded", "true");
-  const field = targetPanel.querySelector("input:not([type=range]):not([type=checkbox]), textarea, select");
-  if (field && !window.matchMedia("(max-width: 760px)").matches) {
-    requestAnimationFrame(() => field.focus({preventScroll: true}));
-  }
-}
-// Extrae solo los paneles interactivos. El antiguo contenedor lateral no debe
-// participar en el layout móvil ni crear una segunda columna vacía.
-const mediaControlsContainer = document.querySelector("#mediaUploader .media-crop-controls");
-const mediaToolPortal = document.createElement("div");
-mediaToolPortal.className = "media-tool-portal";
-mediaToolPortal.setAttribute("aria-live", "polite");
-mediaControlsContainer?.querySelectorAll("[data-media-panel]").forEach(panel => mediaToolPortal.appendChild(panel));
-mediaControlsContainer?.remove();
-document.getElementById("mediaUploader").appendChild(mediaToolPortal);
-document.querySelectorAll("[data-media-tool]").forEach(button => button.addEventListener("click", () => toggleMediaTool(button.dataset.mediaTool)));
-document.querySelectorAll("[data-editor-filter]").forEach(button => button.addEventListener("click", () => {
-  mediaFilter = button.dataset.editorFilter;
-  document.getElementById("mediaFilter").value = mediaFilter;
-  document.querySelectorAll("[data-editor-filter]").forEach(item => {
-    const selected = item === button;
-    item.classList.toggle("active", selected);
-    item.setAttribute("aria-pressed", String(selected));
-  });
-  requestAnimationFrame(() => {
-    drawMediaCrop();
-    const canvas = document.getElementById("mediaCropCanvas");
-    canvas.classList.remove("filter-previewing");
-    requestAnimationFrame(() => canvas.classList.add("filter-previewing"));
-  });
-}));
-document.getElementById("resetMediaCrop").addEventListener("click", () => {
-  mediaCropZoom = 1;
-  mediaCropOffsetX = 0;
-  mediaCropOffsetY = 0;
-  document.getElementById("mediaCropZoom").value = "1";
-  drawMediaCrop();
-});
-const mediaCropStage = document.getElementById("mediaCropStage");
-mediaCropStage.addEventListener("pointerdown", event => {
-  if (!mediaCropImage) return;
-  mediaCropPointer = {id: event.pointerId, x: event.clientX, y: event.clientY};
-  mediaCropStage.setPointerCapture(event.pointerId);
-  mediaCropStage.classList.add("dragging");
-});
-mediaCropStage.addEventListener("pointermove", event => {
-  if (!mediaCropPointer || mediaCropPointer.id !== event.pointerId) return;
-  const canvas = document.getElementById("mediaCropCanvas");
-  const scaleX = canvas.width / mediaCropStage.getBoundingClientRect().width;
-  const scaleY = canvas.height / mediaCropStage.getBoundingClientRect().height;
-  mediaCropOffsetX += (event.clientX - mediaCropPointer.x) * scaleX;
-  mediaCropOffsetY += (event.clientY - mediaCropPointer.y) * scaleY;
-  mediaCropPointer.x = event.clientX;
-  mediaCropPointer.y = event.clientY;
-  drawMediaCrop();
-});
-function stopMediaCropDrag(event) {
-  if (!mediaCropPointer || mediaCropPointer.id !== event.pointerId) return;
-  mediaCropPointer = null;
-  mediaCropStage.classList.remove("dragging");
-}
-mediaCropStage.addEventListener("pointerup", stopMediaCropDrag);
-mediaCropStage.addEventListener("pointercancel", stopMediaCropDrag);
-document.getElementById("mediaUploadForm").addEventListener("submit", event => {
-  event.preventDefault();
-  publishMedia(event.currentTarget);
-});
-document.getElementById("closeMediaViewer").addEventListener("click", closeMediaViewer);
-document.getElementById("closePostViewer").addEventListener("click", closePostViewer);
-document.getElementById("momentOptionsButton").addEventListener("click", event => {
-  event.stopPropagation();
-  const menu = document.getElementById("momentOptionsMenu");
-  menu.hidden = !menu.hidden;
-  event.currentTarget.setAttribute("aria-expanded", String(!menu.hidden));
-});
-document.getElementById("deleteViewedMoment").addEventListener("click", event => {
-  event.stopPropagation();
-  deleteActiveMoment();
-});
-document.getElementById("previousMoment").addEventListener("click", event => {
-  event.stopPropagation();
-  if (suppressMomentNavigationClick) return void (suppressMomentNavigationClick = false);
-  previousMoment();
-});
-document.getElementById("nextMoment").addEventListener("click", event => {
-  event.stopPropagation();
-  if (suppressMomentNavigationClick) return void (suppressMomentNavigationClick = false);
-  nextMoment();
-});
-document.getElementById("mediaViewerVideo").addEventListener("ended", () => {
-  if (activeMomentSequence.length) nextMoment();
-});
-const storyViewerDialog = document.querySelector("#mediaViewer .media-viewer-dialog");
-
-function clearMomentGesture(keepVisual = false) {
-  momentGesture = null;
-  momentPressStartedAt = 0;
-  if (keepVisual) return;
-  storyViewerDialog.classList.remove("swiping-down", "dismissed-down");
-  storyViewerDialog.style.removeProperty("--story-drag-y");
-  storyViewerDialog.style.removeProperty("--story-drag-opacity");
-}
-
-function dismissMomentDown() {
-  storyViewerDialog.classList.add("dismissed-down");
-  storyViewerDialog.style.setProperty("--story-drag-y", "100dvh");
-  storyViewerDialog.style.setProperty("--story-drag-opacity", "0");
-  suppressMomentNavigationClick = true;
-  clearTimeout(momentAdvanceTimer);
-  setTimeout(() => {
-    closeMediaViewer();
-    clearMomentGesture();
-  }, 180);
-}
-
-storyViewerDialog.addEventListener("pointerdown", event => {
-  if (!activeMomentSequence.length || event.target.closest("button:not(.moment-navigation),video")) return;
-  momentGesture = {id: event.pointerId, x: event.clientX, y: event.clientY};
-  momentPressStartedAt = Date.now();
-  storyViewerDialog.setPointerCapture?.(event.pointerId);
-  pauseActiveMoment();
-});
-
-storyViewerDialog.addEventListener("pointermove", event => {
-  if (!momentGesture || momentGesture.id !== event.pointerId || !activeMomentSequence.length) return;
-  const distanceY = Math.max(0, event.clientY - momentGesture.y);
-  const distanceX = Math.abs(event.clientX - momentGesture.x);
-  if (distanceY < 8 || distanceY <= distanceX) return;
-  event.preventDefault();
-  storyViewerDialog.classList.add("swiping-down");
-  storyViewerDialog.style.setProperty("--story-drag-y", `${distanceY}px`);
-  storyViewerDialog.style.setProperty("--story-drag-opacity", String(Math.max(.35, 1 - distanceY / 420)));
-});
-
-storyViewerDialog.addEventListener("pointerup", event => {
-  if (!momentGesture || momentGesture.id !== event.pointerId || !activeMomentSequence.length) return;
-  const result = classifyStoryGesture(momentGesture, event.clientX, event.clientY, Date.now() - momentPressStartedAt);
-  if (result.action === "dismiss") {
-    clearMomentGesture(true);
-    dismissMomentDown();
-    return;
-  }
-  clearMomentGesture();
-  if (result.action === "release") {
-    suppressMomentNavigationClick = result.held;
-    resumeActiveMoment();
-    return;
-  }
-  if (result.action === "next") nextMoment();
-  else previousMoment();
-});
-
-storyViewerDialog.addEventListener("pointercancel", () => {
-  clearMomentGesture();
-  resumeActiveMoment();
-});
-document.getElementById("mediaViewer").addEventListener("click", event => {
-  if (event.target.id === "mediaViewer") closeMediaViewer();
-});
-document.addEventListener("keydown", event => {
-  if (event.key === "Escape" && document.getElementById("mediaViewer").classList.contains("open")) closeMediaViewer();
-  else if (event.key === "Escape" && document.getElementById("postViewer").classList.contains("open")) closePostViewer();
-});
 function closeGlobalSearch() {
   document.getElementById("globalSearchInput")?.blur();
 }
@@ -5402,6 +4121,26 @@ document.getElementById("previousMonthButton").addEventListener("click", () => {
   calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
   renderCalendar();
 });
+document.getElementById("calendarTodayButton").addEventListener("click", () => {
+  calendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  renderCalendar();
+});
+document.getElementById("closeAchievementDetail").addEventListener("click", closeAchievementDetail);
+document.getElementById("achievementDetail").addEventListener("close", finishAchievementDetail);
+document.getElementById("achievementDetail").addEventListener("click", event => {
+  if (event.target === event.currentTarget) {
+    const box = event.currentTarget.getBoundingClientRect();
+    if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) closeAchievementDetail();
+  }
+});
+document.getElementById("closeAchievementChallenges").addEventListener("click", () => closeAchievementChallenges());
+document.getElementById("achievementChallengesDialog").addEventListener("cancel", event => {
+  event.preventDefault(); closeAchievementChallenges();
+});
+document.getElementById("achievementChallengesDialog").addEventListener("click", event => {
+  const box = event.currentTarget.getBoundingClientRect();
+  if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) closeAchievementChallenges();
+});
 document.getElementById("nextMonthButton").addEventListener("click", () => {
   calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
   renderCalendar();
@@ -5411,9 +4150,6 @@ document.getElementById("addBirthdayButton").addEventListener("click", event => 
   openEventEditor(event.currentTarget.dataset.birthdayEventId || null, "birthday");
 });
 document.getElementById("eventType").addEventListener("change", updateEventEditorType);
-document.querySelectorAll("[data-content-tab]").forEach(button => {
-  button.addEventListener("click", () => selectContentTab(button.dataset.contentTab));
-});
 document.getElementById("closeEventEditor").addEventListener("click", closeEventEditor);
 document.getElementById("cancelEventEditor").addEventListener("click", closeEventEditor);
 document.getElementById("eventEditor").addEventListener("click", event => {
@@ -5431,19 +4167,6 @@ document.getElementById("deleteEventButton").addEventListener("click", deleteEve
 document.getElementById("createUserForm")?.addEventListener("submit", event => {
   event.preventDefault();
   createClubUser(event.currentTarget);
-});
-document.getElementById("achievementForm")?.addEventListener("submit", event => {
-  event.preventDefault();
-  createAchievement(event.currentTarget);
-});
-document.getElementById("closeAchievementAssignment")?.addEventListener("click", closeAchievementAssignments);
-document.getElementById("cancelAchievementAssignment")?.addEventListener("click", closeAchievementAssignments);
-document.getElementById("achievementAssignmentModal")?.addEventListener("click", event => {
-  if (event.target.id === "achievementAssignmentModal") closeAchievementAssignments();
-});
-document.getElementById("achievementAssignmentForm")?.addEventListener("submit", event => {
-  event.preventDefault();
-  saveAchievementAssignments(event.currentTarget);
 });
 document.getElementById("editSpotifyButton").addEventListener("click", openSpotifyEditor);
 document.getElementById("closeSpotifyEditor").addEventListener("click", closeSpotifyEditor);
@@ -5484,38 +4207,72 @@ document.getElementById("groupAvatarForm").addEventListener("submit", event => {
 });
 document.getElementById("removeGroupAvatarButton").addEventListener("click", removeGroupAvatar);
 
+// The server validates the catalog, account and deduplication. No local award.
+const pendingCardExplorations = new Set();
+document.addEventListener('bb:card-explored', async event => {
+  const userId = currentAuthUser?.id, cardId = event.detail?.cardId;
+  if (!backendReady || !userId || !db || document.hidden || !globalThis.CardCollection?.catalog.some(card => card.id === cardId)) return;
+  const key = `${userId}:${cardId}`;
+  if (pendingCardExplorations.has(key)) return;
+  pendingCardExplorations.add(key);
+  try {
+    const {data,error} = await db.rpc('record_card_exploration', {target_card_id:cardId});
+    if (!error && data && currentAuthUser?.id === userId) scheduleRealtimeRefresh('achievements', loadAchievements, 60);
+  } catch { /* Offline or migration pending: reopening retries, without inventing progress. */ }
+  finally { pendingCardExplorations.delete(key); }
+});
+
+globalThis.DailyPacks?.initialize({
+  session: () => backendReady && currentAuthUser?.id,
+  visible: () => !document.hidden,
+  rpc: signal => db.rpc("claim_daily_card_pack").abortSignal(signal),
+});
+globalThis.TrophyUnlock?.initialize({
+  canShow: () => !!currentAuthUser && document.body.classList.contains("authenticated") && !activeAudioRecording,
+  openDetail: id => openAchievementDetail(id),
+});
 applyStoredProfiles();
 if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("light");
 
 (async function restoreSession() {
-  if (backendReady) {
-    const {data} = await db.auth.getSession();
-    if (data.session?.user) {
-      const profile = await profileForAuthUser(data.session.user);
-      if (profile) return applyUserInterface(profile, data.session.user);
+  try {
+    if (backendReady) {
+      const {data, error} = await db.auth.getSession();
+      if (error) throw error;
+      if (data.session?.user) {
+        const cachedProfile = getCachedAuthenticatedProfile(data.session.user.id);
+        if (cachedProfile) return applyUserInterface(cachedProfile, data.session.user);
+        const profile = await profileForAuthUser(data.session.user);
+        if (profile) return applyUserInterface(profile, data.session.user);
+      }
+    } else {
+      const session = getStoredSession();
+      const user = session && getMember(session.userId);
+      if (user) return applyUserInterface(user);
     }
-  } else {
-    const session = getStoredSession();
-    const user = session && getMember(session.userId);
-    if (user) return applyUserInterface(user);
+  } catch (error) {
+    console.warn("No se pudo restaurar la sesión guardada:", error);
   }
   showLogin();
 })();
 
 const requestedInitialSection = location.hash.replace("#", "");
 const initialSection = requestedInitialSection === "privados" ? "chat" : requestedInitialSection;
-if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "buscar", "calendario", "perfil", "ayuda"].includes(initialSection)) {
+if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "buscar", "calendario", "perfil", "ayuda", "sobres"].includes(initialSection)) {
   if (initialSection === "perfil" && currentUser) renderProfile(currentUser.id);
   else goTo(initialSection);
 }
 window.addEventListener("scroll", scheduleMobileHeaderSync, {passive: true});
+sections.forEach(section => section.addEventListener("scroll", () => {
+  if (section.classList.contains("active")) scheduleMobileHeaderSync();
+}, {passive: true}));
 window.addEventListener("resize", () => {
   if (!isMobileSidebar()) showMobileHeader();
-  mobileHeaderLastScrollY = Math.max(0, window.scrollY);
+  mobileHeaderLastScrollY = activePageScrollY();
   mobileHeaderScrollAnchor = mobileHeaderLastScrollY;
   mobileHeaderDirection = null;
 }, {passive: true});
-requestAnimationFrame(() => setTimeout(() => document.getElementById("pageLoader")?.classList.add("hidden"), 120));
+window.setTimeout(completeInitialLaunch, 4500);
 const cursorGlow = document.getElementById("cursorGlow");
 document.addEventListener("pointermove", event => {
   if (!cursorGlow || cursorFrame || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;

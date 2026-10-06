@@ -9,16 +9,29 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
+  <script>
+    (() => {
+      try {
+        const cachedProfile = JSON.parse(localStorage.getItem("bb-auth-profile") || "null");
+        const hasSupabaseSession = Object.keys(localStorage).some(key =>
+          key.startsWith("sb-") && key.endsWith("-auth-token") && localStorage.getItem(key)
+        );
+        const hasLocalSession = Boolean(localStorage.getItem("bb-auth-session"));
+        if ((cachedProfile?.profile && hasSupabaseSession) || hasLocalSession) {
+          document.documentElement.classList.add("auth-session-hint");
+        }
+      } catch {}
+    })();
+  </script>
   <title>The Big Boy Rules</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260829-119" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260901-125" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260829-119" />
-  <link rel="stylesheet" href="chat.css?v=20261006-120" />
+  <link rel="stylesheet" href="styles.css?v=20261006-157" />
+  <link rel="stylesheet" href="club.css?v=20261006-157" />
+  <link rel="stylesheet" href="packs.css?v=20260905-154" />
+  <link rel="stylesheet" href="achievement-admin.css?v=20260903-135" />
+  <link rel="stylesheet" href="chat.css?v=20261006-157" />
 </head>
 <body>
 
@@ -63,15 +76,12 @@
           </label>
 
           <div class="login-options">
-            <label class="remember-row">
-              <input type="checkbox" id="rememberSession" checked>
-              <span>Recordar sesión</span>
-            </label>
+            <span class="persistent-session-label">✓ Sesión guardada en este dispositivo</span>
             <span class="secure-label">◆ Acceso cifrado visual</span>
           </div>
 
           <div class="login-error" id="loginError" role="alert"></div>
-          <button class="login-submit" type="submit">Entrar al club <span>→</span></button>
+          <button class="login-submit" type="submit">Entrar al club</button>
 
         </form>
       </div>
@@ -93,9 +103,6 @@
 
   <main class="app">
     <header class="topbar">
-      <button class="top-create-button" id="createMediaButton" type="button" aria-label="Crear momento o publicación" title="Crear">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
       <div class="topbar-title">
         <span class="eyebrow">COMUNIDAD PRIVADA</span>
         <h1 id="pageTitle">The Big Boy Rules</h1>
@@ -123,102 +130,91 @@
       </div>
     </header>
 
-    <section class="page-section" id="inicio">
-      <div class="hero-card reveal">
-        <div class="hero-lines" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </div>
-        <div class="hero-copy">
-          <span class="status-pill" id="heroOnlineStatus"><i></i> Sin conexión</span>
-          <div class="hero-kicker">PRIVATE SOCIAL CLUB · EST. 2026</div>
-          <h2>NO ES SOLO UN GRUPO.<br><em>ES UNA REGLA.</em></h2>
-          <p>El punto de encuentro de The Big Boy Rules. Habla con el grupo, entra en el perfil de cada miembro y guarda los mejores momentos.</p>
-          <div class="hero-actions">
-            <button class="primary-button" data-go="chat">Entrar al chat</button>
-            <button class="secondary-button" data-go="miembros">Ver miembros</button>
-          </div>
-        </div>
-        <div class="hero-emblem">
-          <div class="emblem-ring">
-            <div class="emblem-crown">◆</div>
-            <span>THE BIG BOY</span>
-            <strong>BB</strong>
-            <small>RULES · EST. 2026</small>
-          </div>
-        </div>
+    <section class="page-section active club-home" id="inicio">
+      <div class="club-search">
+        <label class="search-hub-box" for="globalSearchInput">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="globalSearchInput" type="search" placeholder="Buscar miembros" aria-label="Buscar miembros" autocomplete="off">
+        </label>
+        <div class="search-results search-hub-results" id="searchResults" aria-live="polite" hidden></div>
       </div>
-
-      <section class="home-news-section home-news-featured reveal" id="noticias">
-        <div class="section-intro">
-          <div><span class="eyebrow">ACTUALIDAD EN DIRECTO</span><h2>Noticias de última hora.</h2></div>
-          <div class="news-intro-actions">
-            <p>Deportes, España y el mundo, reunidos desde numerosos medios reales y ordenados de más reciente a más antiguo.</p>
-            <button class="news-collapse-button" id="toggleNewsButton" type="button" aria-expanded="true" aria-controls="newsCollapsible"><span>Ocultar noticias</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-          </div>
+      <div class="club-welcome">
+        <div><span class="eyebrow">TU CÍRCULO. TUS PLANES.</span><h2>Dentro del club.</h2></div>
+        <span class="status-pill" id="heroOnlineStatus"><i></i> Conectando</span>
+      </div>
+      <section class="home-news-section is-collapsed" id="noticias" aria-labelledby="clubNewsTitle">
+        <div class="club-news-heading">
+          <div><h3 id="clubNewsTitle">Al día</h3><p>Deportes, España y el mundo</p></div>
+          <button class="news-collapse-button" id="toggleNewsButton" type="button" aria-expanded="false" aria-controls="newsCollapsible"><span>Ver noticias</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         </div>
-        <div class="news-collapsible" id="newsCollapsible">
-          <div class="news-toolbar">
-            <div class="news-tabs" role="tablist" aria-label="Categorías de noticias">
-              <button class="news-tab active" type="button" data-news-category="deportes">Deportes</button>
-              <button class="news-tab" type="button" data-news-category="espana">España</button>
-              <button class="news-tab" type="button" data-news-category="mundo">Mundo</button>
-            </div>
-            <button class="secondary-button news-refresh" id="refreshNewsButton" type="button">Actualizar ahora</button>
-          </div>
-          <div class="news-status" id="newsStatus" aria-live="polite">Cargando noticias reales…</div>
+        <div class="news-collapsible" id="newsCollapsible" hidden>
+          <div class="news-toolbar"><div class="news-tabs" aria-label="Categorías de noticias">
+            <button class="news-tab active" type="button" data-news-category="deportes">Deportes</button>
+            <button class="news-tab" type="button" data-news-category="espana">España</button>
+            <button class="news-tab" type="button" data-news-category="mundo">Mundo</button>
+          </div><button class="text-button" id="refreshNewsButton" type="button">Actualizar</button></div>
+          <div class="news-status" id="newsStatus" aria-live="polite"></div>
           <div class="news-grid" id="newsGrid"></div>
         </div>
       </section>
-
-      <div class="dashboard-grid reveal">
-        <article class="panel activity-panel">
-          <div class="panel-heading">
-            <div>
-              <span class="eyebrow">AHORA MISMO</span>
-              <h3>Actividad del grupo</h3>
-            </div>
-            <button class="text-button" data-go="chat">Ver chat →</button>
-          </div>
-          <div class="activity-list" id="activityList"></div>
+      <div class="club-dashboard">
+        <article class="panel club-plans" aria-labelledby="clubPlansTitle">
+          <div class="panel-heading"><div><span class="eyebrow">AGENDA</span><h3 id="clubPlansTitle"><button class="club-heading-link" data-go="calendario" type="button" aria-label="Próximos planes: abrir calendario">Próximos planes</button></h3></div></div>
+          <div id="upcomingEvents" aria-live="polite"><p class="club-placeholder">Consultando la agenda…</p></div>
+          <button class="club-calendar-link" data-go="calendario" type="button">Ver calendario</button>
         </article>
-
-        <article class="panel rules-panel">
-          <span class="eyebrow">MANIFIESTO</span>
-          <h3>Las Big Boy Rules</h3>
-          <ol>
-            <li><b>01</b><span>La lealtad va primero.</span></li>
-            <li><b>02</b><span>Lo del grupo se queda en el grupo.</span></li>
-            <li><b>03</b><span>Nunca se deja atrás a un Big Boy.</span></li>
-            <li><b>04</b><span>Las risas son obligatorias.</span></li>
-          </ol>
+        <article class="panel spotify-panel">
+          <div class="panel-heading"><div><span class="eyebrow">SPOTIFY</span><h3>Nuestra música</h3></div><button class="text-button admin-only" id="editSpotifyButton" type="button">Vincular playlist</button></div>
+          <div id="spotifyPlayer"></div>
         </article>
       </div>
-
-      <section class="home-members-section reveal" id="miembros">
-        <div class="section-intro">
-          <div><span class="eyebrow">THE CREW</span><h2>Cada Big Boy tiene su historia.</h2></div>
-          <p>Selecciona cualquier perfil para ver su presentación, apodo, papel en el grupo y mejores momentos.</p>
-        </div>
+      <button class="packs-home-link" type="button" data-go="sobres" aria-label="Abrir mis sobres de la colección Los nuestros">
+        <span class="packs-miniature" aria-hidden="true">BB</span>
+        <span class="packs-home-copy"><span class="eyebrow">COLECCIÓN 01 · LOS NUESTROS</span><strong>Tus sobres</strong><span id="packsHomeBalance">Tu colección personal</span></span>
+        <span class="packs-home-daily">Un acceso.<br>Un sobre.</span>
+      </button>
+      <section class="home-members-section" id="miembros" aria-labelledby="clubMembersTitle">
+        <div class="panel-heading"><div><span class="eyebrow">LOS DE SIEMPRE</span><h3 id="clubMembersTitle">Miembros</h3></div></div>
         <div class="members-grid" id="membersGrid"></div>
       </section>
+    </section>
 
-      <article class="panel spotify-panel reveal">
-        <div class="panel-heading">
-          <div>
-            <span class="eyebrow">BANDA SONORA DEL GRUPO</span>
-            <h3>Big Boy Playlist</h3>
-          </div>
-          <button class="text-button admin-only" id="editSpotifyButton" type="button">Vincular playlist</button>
+    <section class="page-section packs-page" id="sobres" aria-labelledby="packsTitle">
+      <header class="packs-heading">
+        <button class="packs-back" type="button" data-go="inicio" aria-label="Volver a Inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+        <div><span class="eyebrow">TU COLECCIÓN PERSONAL</span><h2 id="packsTitle">Los nuestros.</h2></div>
+      </header>
+      <div class="packs-layout">
+        <div class="packs-display">
+          <span class="packs-display-edition">BIG BOYS · COLECCIÓN 01</span>
+          <img class="packs-art" src="icons/cards/sobre-los-nuestros-v1.png?v=20260903-139" width="1024" height="1536" loading="lazy" decoding="async" alt="Sobre Los nuestros, negro y dorado, con el monograma BB">
+          <span class="packs-display-caption">Vuestras historias, por descubrir.</span>
+          <button class="packs-sync" type="button" id="packPreviewButton" aria-haspopup="dialog">Probar apertura</button>
+          <small class="pack-preview-note">Vista previa · no consume sobres</small>
         </div>
-        <div id="spotifyPlayer">
-          <div class="empty-state"><strong>Todavía no hay una playlist vinculada</strong><span>Kike puede añadir un enlace público de Spotify.</span></div>
+        <div class="packs-information">
+          <div class="packs-balance" aria-live="polite"><strong id="packsCount">—</strong><span id="packsCountLabel">sobres guardados</span></div>
+          <section class="packs-daily-panel" id="packsDailyPanel" aria-labelledby="packsStatusTitle" data-state="idle">
+            <span class="eyebrow" id="packsDailyLabel">UN ACCESO · UN SOBRE</span>
+            <h3 id="packsStatusTitle">Tu colección empieza aquí.</h3>
+            <progress id="packsDailyProgress" max="1" value="0" aria-label="Recarga del sobre diario"></progress>
+            <p id="packsStatusMessage" role="status">El saldo se guarda en tu cuenta y se comparte entre tus dispositivos.</p>
+            <div class="packs-reset"><span>Próximo acceso diario</span><strong id="packsNextReset">Pendiente de sincronización</strong><small>Hora de Madrid</small></div>
+            <button class="packs-sync" type="button" id="packsSyncButton">Actualizar saldo</button>
+          </section>
+          <div class="packs-rules"><p><strong>Entra y suma.</strong> Tu primer acceso del día añade un sobre automáticamente, aunque mantengas la sesión iniciada.</p><p><strong>A tu ritmo.</strong> Se acumulan sin caducar. Si no entras un día, no pierdes los que ya tienes.</p></div>
+          <div class="packs-coming"><span>PRÓXIMAMENTE</span><strong>La primera apertura.</strong><p>Ya puedes descubrir las cartas del catálogo. La apertura de sobres aún no está disponible; tus sobres siguen guardados.</p></div>
         </div>
-      </article>
+      </div>
+      <section class="collection-catalog" aria-labelledby="collectionCatalogTitle">
+        <header><span class="eyebrow">COLECCIÓN 01</span><h3 id="collectionCatalogTitle">Las caras del club.</h3><p>Explora las cartas de Los nuestros. Este es el catálogo, no tus cartas conseguidas.</p></header>
+        <div class="collection-card-grid" id="collectionCardGrid"></div>
+      </section>
     </section>
 
     <section class="page-section" id="chat">
       <div class="messages-hub reveal">
-        <aside class="panel chat-inbox" data-filter="all">
+        <aside class="panel chat-inbox">
           <div class="inbox-tools">
             <label class="inbox-search" for="inboxSearchInput">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
@@ -234,6 +230,9 @@
           </div>
           <div id="privateContacts" class="unified-chat-list"></div>
           <p class="inbox-empty" id="inboxEmpty" role="status" hidden></p>
+          <div class="inbox-context-menu" id="inboxContextMenu" role="menu" hidden>
+            <button id="inboxFavoriteAction" type="button" role="menuitem"></button>
+          </div>
         </aside>
 
         <article class="panel chat-panel group-conversation">
@@ -271,7 +270,7 @@
             <button type="button" class="composer-tool-button" id="attachMessageMediaButton" aria-label="Añadir foto o vídeo" title="Foto o vídeo">
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m5 18 5-5 3 3 2-2 4 4"/></svg>
             </button>
-            <button type="button" class="attach-button composer-tool-button" id="attachMessageButton" aria-label="Adjuntar documento" title="Documento">＋</button>
+            <button type="button" class="attach-button composer-tool-button" id="attachMessageButton" aria-label="Adjuntar documento" title="Documento"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></button>
             <button class="send-button composer-send-button" type="submit" aria-label="Enviar mensaje"><span>Enviar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.4-5.6Z"/><path d="m11.6 13.4 3.3-3.3"/></svg></button>
             <button type="button" class="recording-action recording-delete" id="cancelGroupAudioButton" aria-label="Descartar nota de voz" title="Descartar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button>
             <span class="recording-time" id="groupRecordingTime" hidden>00:00</span>
@@ -308,7 +307,7 @@
             <button type="button" class="composer-tool-button" id="attachPrivateMessageMediaButton" aria-label="Añadir foto o vídeo" title="Foto o vídeo" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m5 18 5-5 3 3 2-2 4 4"/></svg>
             </button>
-            <button type="button" class="attach-button composer-tool-button" id="attachPrivateMessageButton" aria-label="Adjuntar documento" title="Documento" disabled>＋</button>
+            <button type="button" class="attach-button composer-tool-button" id="attachPrivateMessageButton" aria-label="Adjuntar documento" title="Documento" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></button>
             <button class="send-button composer-send-button" type="submit" aria-label="Enviar mensaje" disabled><span>Enviar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.4-5.6Z"/><path d="m11.6 13.4 3.3-3.3"/></svg></button>
             <button type="button" class="recording-action recording-delete" id="cancelPrivateAudioButton" aria-label="Descartar nota de voz" title="Descartar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button>
             <span class="recording-time" id="privateRecordingTime" hidden>00:00</span>
@@ -328,44 +327,8 @@
       <div id="profileContent"></div>
     </section>
 
-    <section class="page-section active" id="contenido">
-      <div class="stories-section" data-content-panel="momentos">
-        <div class="stories-heading"><div><span class="eyebrow">MOMENTOS · 24 HORAS</span><h3>Historias del grupo</h3></div><span id="momentsStatus" class="news-status moments-status" aria-live="polite"></span></div>
-        <div class="stories-row">
-          <div class="moments-grid stories-strip" id="momentsGrid"></div>
-        </div>
-      </div>
-      <div data-content-panel="publicaciones">
-        <div class="section-intro publications-hero">
-          <div><span class="eyebrow">EL MURO DEL GRUPO</span><h2>Publicaciones.</h2></div>
-          <p>Las fotos que cada miembro comparte en su perfil aparecen aquí, ordenadas de más recientes a más antiguas.</p>
-        </div>
-        <div class="publications-feed reveal" id="publicationsFeed"></div>
-      </div>
-    </section>
-
-    <section class="page-section search-calendar-page" id="buscar">
-      <div class="search-hub">
-        <div class="section-intro search-hub-heading">
-          <div><span class="eyebrow">MIEMBROS DEL CLUB</span><h2>Buscar usuarios.</h2></div>
-          <p>Encuentra a cualquier miembro por su nombre o por su @.</p>
-        </div>
-        <div class="search-hub-box">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-          <input id="globalSearchInput" type="search" placeholder="Buscar por nombre o @..." autocomplete="off">
-        </div>
-        <div class="search-results search-hub-results" id="searchResults">
-          <div class="empty-state compact">Escribe un nombre o un @ para buscar miembros.</div>
-        </div>
-      </div>
-      <div class="calendar-divider"><span></span><strong>CALENDARIO</strong><span></span></div>
-      <div class="section-intro">
-        <div>
-          <span class="eyebrow">AGENDA DEL GRUPO</span>
-          <h2>Calendario de eventos.</h2>
-        </div>
-        <p>Todos pueden añadir su cumpleaños. La administración también puede crear, modificar o eliminar eventos del grupo.</p>
-      </div>
+    <section class="page-section club-calendar-page" id="calendario">
+      <div class="club-calendar-heading"><div><span class="eyebrow">TU AGENDA, DE UN VISTAZO</span><h2>Los próximos encuentros.</h2></div><button class="secondary-button" id="calendarTodayButton" type="button">Hoy</button></div>
       <div class="calendar-toolbar">
         <div class="calendar-navigation">
           <button class="icon-button" id="previousMonthButton" type="button" aria-label="Mes anterior">←</button>
@@ -378,7 +341,7 @@
         </div>
       </div>
       <div class="calendar-layout">
-        <div class="panel calendar-grid" id="calendarGrid"></div>
+        <div><div class="panel calendar-grid" id="calendarGrid"></div><p class="calendar-legend"><span><i></i>Plan del club</span><span><i class="birthday"></i>Cumpleaños</span></p></div>
         <aside class="panel event-list-panel">
           <span class="eyebrow">PLANES DEL MES</span>
           <div id="calendarEventList"></div>
@@ -397,25 +360,11 @@
 
       <div class="admin-summary" id="adminSummary"></div>
 
-      <details class="panel admin-achievements-panel admin-tool-disclosure admin-only">
-        <summary class="panel-heading">
-          <div><span class="eyebrow">SISTEMA DE LOGROS</span><h3>Crear y conceder logros</h3></div>
-          <span class="admin-disclosure-icon" aria-hidden="true">⌄</span>
-        </summary>
-        <div class="admin-tool-content">
-          <form class="achievement-create-form" id="achievementForm">
-            <div class="achievement-fields">
-              <label><span>Nombre del logro</span><input id="achievementName" maxlength="70" required placeholder="Ej. Leyenda de la temporada"></label>
-              <label><span>Rango</span><select id="achievementTier" required><option value="bronze">Bronce</option><option value="silver">Plata</option><option value="gold">Oro</option><option value="platinum">Platino</option></select></label>
-              <label><span>Emblema</span><input id="achievementIcon" maxlength="12" placeholder="🏆" inputmode="text"></label>
-              <label class="achievement-description-field"><span>Descripción</span><textarea id="achievementDescription" maxlength="240" placeholder="Explica por qué se concede este logro"></textarea></label>
-            </div>
-            <fieldset class="achievement-member-picker"><legend>Asignar ahora a</legend><div id="achievementMembers"></div></fieldset>
-            <div class="achievement-submit-row"><p class="form-feedback" id="achievementFeedback" aria-live="polite"></p><button class="primary-button" type="submit">Crear y asignar</button></div>
-          </form>
-          <div class="admin-achievements-list" id="adminAchievementsList"></div>
-        </div>
-      </details>
+      <button class="admin-achievements-entry admin-only" type="button" data-go="admin-logros">
+        <span class="admin-achievements-entry-icon" aria-hidden="true"><img src="icons/trophies/gold.svg?v=20260903-132" alt=""></span>
+        <span><small>RECONOCIMIENTOS</small><strong>Logros del club</strong><span>Crear trofeos y reconocer a los miembros.</span></span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+      </button>
 
       <details class="panel superadmin-tools admin-tool-disclosure" id="superAdminTools">
         <summary class="panel-heading">
@@ -446,6 +395,62 @@
         </div>
         <div class="admin-member-list" id="adminUsersTable"></div>
       </article>
+    </section>
+
+    <section class="page-section achievement-admin-page" id="admin-logros">
+      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="administracion" aria-label="Volver a administración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Logros del club</h2></div><span aria-hidden="true"></span></header>
+      <div class="achievement-page-content">
+        <div class="achievement-library-intro"><div><span class="eyebrow">CADA RECONOCIMIENTO CUENTA</span><h3>Un lugar para destacar.</h3><p>Reconoce a un miembro o crea un objetivo que el club pueda conquistar.</p></div><button class="primary-button" id="newAchievementButton" type="button"><span aria-hidden="true">＋</span> Crear logro</button></div>
+        <div class="achievement-library-stats" id="achievementLibraryStats"></div>
+        <div class="achievement-library-tools"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" id="achievementLibrarySearch" placeholder="Buscar un logro" aria-label="Buscar un logro" autocomplete="off"></label><select id="achievementLibraryTier" aria-label="Filtrar por rango"><option value="all">Todos los rangos</option><option value="bronze">Bronce</option><option value="silver">Plata</option><option value="gold">Oro</option><option value="platinum">Platino</option></select></div>
+        <p class="form-feedback" id="achievementLibraryFeedback" role="status"></p>
+        <div class="achievement-library" id="adminAchievementsList"></div>
+      </div>
+    </section>
+
+    <section class="page-section achievement-admin-page" id="crear-logro">
+      <header class="achievement-page-header"><button class="achievement-back" id="cancelAchievementCreate" type="button" aria-label="Volver a los logros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>LOGROS DEL CLUB</small><h2>Crear un logro</h2></div><span aria-hidden="true"></span></header>
+      <form class="achievement-page-content achievement-editor-layout" id="achievementForm">
+        <aside class="achievement-editor-preview" id="achievementCreatePreview" aria-label="Vista previa del logro"></aside>
+        <fieldset class="achievement-editor-fields" id="achievementCreateFields">
+          <div class="achievement-form-section"><div class="achievement-step"><span>01</span><div><h3>Dale una identidad</h3><p>Un nombre y una historia que merezcan recordarse.</p></div></div>
+            <label class="achievement-field" for="achievementName">Nombre<input id="achievementName" minlength="2" maxlength="70" required placeholder="Ej. Leyenda de la temporada" autocomplete="off"></label>
+            <label class="achievement-field" for="achievementDescription">Descripción<textarea id="achievementDescription" maxlength="240" rows="3" placeholder="¿Qué hace especial este reconocimiento?"></textarea><small id="achievementDescriptionCount">0 / 240</small></label>
+            <fieldset class="achievement-rank-picker"><legend>Elige el rango</legend><div id="achievementTierChoices"></div></fieldset>
+          </div>
+          <div class="achievement-form-section"><div class="achievement-step"><span>02</span><div><h3>Cómo se consigue</h3><p>Un reconocimiento personal o un reto para todos.</p></div></div>
+            <fieldset class="achievement-mode-picker"><legend>Tipo de logro</legend>
+              <label><input type="radio" name="achievementMode" value="manual" checked><span><strong>Asignación manual</strong><small>Tú decides quién lo merece.</small></span></label>
+              <label><input type="radio" id="achievementAutomaticMode" name="achievementMode" value="automatic"><span><strong>Objetivo automático</strong><small>Se consigue con la actividad en la app.</small></span></label>
+            </fieldset>
+            <p id="achievementAutomationStatus" class="achievement-section-hint" role="status"></p>
+            <button type="button" class="achievement-connection-check" id="achievementCheckConnection" hidden>Comprobar de nuevo</button>
+            <div id="achievementAutomaticFields" hidden>
+              <label class="achievement-field" for="achievementMetric">Actividad<select id="achievementMetric" disabled><option value="group_messages">Mensajes en el grupo</option><option value="group_active_days">Días de participación</option><option value="profile_completed">Completar el perfil</option></select></label>
+              <p id="achievementMetricHint" class="achievement-section-hint"></p>
+              <label class="achievement-field" for="achievementTarget">Meta<input id="achievementTarget" type="number" inputmode="numeric" min="1" max="100000" step="1" value="10" disabled required></label>
+              <p class="achievement-rule-note">Para todos los miembros, también los nuevos. Mensajes y participación suman como máximo una vez al día, desde la creación del logro. La meta queda fijada al crearlo.</p>
+            </div>
+          </div>
+          <div class="achievement-form-section" id="achievementManualRecipients"><div class="achievement-step"><span>03</span><div><h3>Elige a quién reconocer</h3><p>Puedes seleccionar uno o varios miembros.</p></div></div>
+            <div class="achievement-people-picker" id="achievementCreatePicker"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" placeholder="Buscar por nombre o usuario" aria-label="Buscar miembros para el nuevo logro" data-picker-search autocomplete="off"></label><div class="achievement-picker-tools"><button type="button" data-picker-all>Seleccionar visibles</button><button type="button" data-picker-clear>Limpiar selección</button><span data-picker-count role="status"></span></div><div class="achievement-people-list" id="achievementMembers"></div><p class="achievement-picker-empty" data-picker-empty hidden>No hay miembros que coincidan con tu búsqueda.</p></div>
+          </div>
+          <footer class="achievement-editor-footer"><p class="form-feedback" id="achievementFeedback" role="status"></p><button class="primary-button" type="submit">Crear y asignar logro</button></footer>
+        </fieldset>
+      </form>
+    </section>
+
+    <section class="page-section achievement-admin-page" id="asignar-logro">
+      <header class="achievement-page-header"><button class="achievement-back" id="closeAchievementAssignment" type="button" aria-label="Volver a los logros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>LOGROS DEL CLUB</small><h2>Asignar logro</h2></div><span aria-hidden="true"></span></header>
+      <form class="achievement-page-content achievement-assignment-layout" id="achievementAssignmentForm">
+        <div class="achievement-assignment-summary" id="achievementAssignmentSummary"></div>
+        <fieldset class="achievement-editor-fields" id="achievementAssignmentFields">
+          <div class="achievement-form-section"><h3>¿Quién se lo ha ganado?</h3><p class="achievement-section-hint">Marca los miembros que tendrán este logro. Desmarcar a alguien retirará su asignación al guardar.</p>
+            <div class="achievement-people-picker" id="achievementAssignPicker"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" placeholder="Buscar por nombre o usuario" aria-label="Buscar miembros para asignar" data-picker-search autocomplete="off"></label><div class="achievement-picker-tools"><button type="button" data-picker-all>Seleccionar visibles</button><button type="button" data-picker-clear>Limpiar selección</button><span data-picker-count role="status"></span></div><div class="achievement-people-list" id="achievementAssignmentMembers"></div><p class="achievement-picker-empty" data-picker-empty hidden>No hay miembros que coincidan con tu búsqueda.</p></div>
+          </div>
+          <footer class="achievement-editor-footer"><p class="achievement-selection-review" id="achievementAssignmentReview" role="status"></p><p class="form-feedback" id="achievementAssignmentFeedback" role="status"></p><button class="primary-button" type="submit">Guardar asignaciones</button></footer>
+        </fieldset>
+      </form>
     </section>
 
     <section class="page-section" id="ayuda">
@@ -501,22 +506,40 @@
   </main>
 
   <nav class="floating-tab-bar" id="floatingTabBar" aria-label="Navegación principal">
-    <a class="app-tab active" href="#contenido" data-section="contenido" aria-label="Inicio" title="Inicio">
+    <span class="tab-selection-indicator" aria-hidden="true"></span>
+    <a class="app-tab active" href="#inicio" data-section="inicio" aria-label="Inicio" aria-current="page" title="Inicio">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v10h-6v-6H9v6H3Z"/></svg><span>Inicio</span>
-    </a>
-    <a class="app-tab" href="#inicio" data-section="inicio" aria-label="Club" title="Club">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 20v-2.2A4.8 4.8 0 0 1 8.3 13h1.4a4.8 4.8 0 0 1 4.8 4.8V20M14.5 14a4.2 4.2 0 0 1 6 3.8V20"/></svg><span>Club</span>
     </a>
     <a class="app-tab" href="#chat" data-section="chat" aria-label="Mensajes" title="Mensajes">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4-.9L3 21l1.7-4.6A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 9h8M8 13h5"/></svg><i class="tab-alert" id="chatTabAlert" aria-hidden="true" hidden></i><span>Chats</span>
     </a>
-    <a class="app-tab" href="#buscar" data-section="buscar" aria-label="Buscar y calendario" title="Buscar">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Buscar</span>
+    <a class="app-tab" href="#calendario" data-section="calendario" aria-label="Calendario" title="Calendario">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 11h18M8 15h2M14 15h2M8 18h2"/></svg><span>Calendario</span>
     </a>
     <a class="app-tab profile-tab" href="#perfil" data-section="perfil" aria-label="Mi perfil" aria-haspopup="menu" aria-expanded="false" title="Mi perfil · mantén pulsado para más opciones">
-      <span class="tab-avatar avatar" id="bottomNavAvatar">U</span><span>Perfil</span>
+      <span class="profile-tab-photo" id="bottomNavAvatar" aria-hidden="true">U</span><span>Perfil</span>
     </a>
   </nav>
+
+  <dialog class="achievement-admin-confirm" id="achievementAdminConfirm" aria-labelledby="achievementConfirmTitle" aria-describedby="achievementConfirmDescription">
+    <span class="eyebrow">LOGROS DEL CLUB</span>
+    <h2 id="achievementConfirmTitle">Confirmar cambios</h2>
+    <p id="achievementConfirmDescription"></p>
+    <div>
+      <button class="secondary-button" id="achievementConfirmCancel" type="button" autofocus>Seguir editando</button>
+      <button class="primary-button" id="achievementConfirmAccept" type="button">Guardar cambios</button>
+    </div>
+  </dialog>
+
+  <dialog class="achievement-detail" id="achievementDetail" aria-labelledby="achievementDetailTitle" aria-describedby="achievementDetailDescription">
+    <button class="achievement-detail-close" id="closeAchievementDetail" type="button" aria-label="Cerrar detalle del logro">×</button>
+    <div id="achievementDetailContent" aria-live="polite"></div>
+  </dialog>
+
+  <dialog class="achievement-challenges-dialog" id="achievementChallengesDialog" aria-labelledby="achievementChallengesPanelTitle">
+    <header><div><span>PROGRESO PERSONAL</span><strong>Camino a tus próximos trofeos</strong></div><button type="button" id="closeAchievementChallenges" aria-label="Cerrar próximos logros">×</button></header>
+    <div id="achievementChallengesContent" aria-live="polite"></div>
+  </dialog>
 
   <div class="profile-quick-menu" id="profileQuickMenu" role="menu" aria-label="Opciones de la cuenta" aria-hidden="true" hidden>
     <div class="profile-quick-menu-heading"><span>MI CUENTA</span><strong>Opciones rápidas</strong></div>
@@ -665,118 +688,10 @@
     </div>
   </div>
 
-  <div class="story-camera" id="storyCamera" aria-hidden="true">
-    <div class="story-camera-shell" id="cameraCaptureDialog" role="dialog" aria-modal="true" aria-label="Cámara de historias">
-      <video id="storyCameraPreview" autoplay muted playsinline></video>
-      <canvas id="storyCameraCanvas" hidden></canvas>
-      <div class="story-camera-shade" aria-hidden="true"></div>
-      <div class="story-camera-topbar">
-        <button class="story-camera-control" id="closeStoryCamera" type="button" aria-label="Cerrar cámara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
-        <span id="cameraCaptureLabel">HISTORIA</span>
-        <button class="story-camera-control" id="toggleStoryFlash" type="button" aria-label="Activar flash" aria-pressed="false" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-7 11h6l-1 9 7-12h-6Z"/></svg></button>
-      </div>
-      <div class="story-camera-status" id="storyCameraStatus" role="status">Activando cámara…</div>
-      <div class="story-recording-indicator" id="storyRecordingIndicator" hidden><i aria-hidden="true"></i><span id="storyRecordingTime">00:00</span></div>
-      <div class="story-camera-bottom">
-        <label class="story-gallery-button" for="storyGalleryInput" aria-label="Elegir foto o vídeo de la galería" title="Galería">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="9" cy="10" r="2"/><path d="m5 18 5-5 3 3 2-2 4 4"/></svg>
-          <input id="storyGalleryInput" type="file" accept="image/*,video/*" hidden>
-        </label>
-        <button class="story-shutter" id="captureStoryPhoto" type="button" aria-label="Toca para hacer una foto o mantén pulsado para grabar"><span></span></button>
-        <button class="story-switch-camera" id="switchStoryCamera" type="button" aria-label="Cambiar cámara" title="Cambiar cámara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M18.2 12A7 7 0 0 0 6.4 7.1L4 9M5.8 12a7 7 0 0 0 11.8 4.9L20 15"/></svg></button>
-      </div>
-      <div class="story-camera-mode" role="group" aria-label="Tipo de contenido">
-        <button class="active" type="button" data-camera-mode="moment" aria-pressed="true">Momento</button>
-        <button type="button" data-camera-mode="post" aria-pressed="false">Publicación</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="camera-transition-guard" id="cameraTransitionGuard" aria-hidden="true"><img alt=""></div>
-
-  <div class="modal-backdrop" id="mediaUploader" aria-hidden="true">
-    <div class="profile-editor-modal media-uploader-modal" role="dialog" aria-modal="true" aria-labelledby="mediaUploaderTitle">
-      <div class="modal-heading">
-        <div>
-          <span class="eyebrow" id="mediaUploaderEyebrow">NUEVA PUBLICACIÓN</span>
-          <h2 id="mediaUploaderTitle">Compartir una foto</h2>
-        </div>
-        <button class="icon-button" id="closeMediaUploader" type="button" aria-label="Cerrar">×</button>
-      </div>
-      <form id="mediaUploadForm" class="profile-form">
-        <label class="media-dropzone" id="mediaDropzone" for="mediaUploadFile">
-          <span>＋</span>
-          <strong>Selecciona una foto o vídeo</strong>
-          <small id="mediaUploadHelp">JPG, PNG, WebP o MP4 · máximo 100 MB</small>
-          <input id="mediaUploadFile" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" hidden>
-        </label>
-        <div class="media-upload-preview" id="mediaUploadPreview"></div>
-        <div class="media-cropper" id="mediaCropper" hidden>
-          <div class="media-crop-stage" id="mediaCropStage">
-            <canvas id="mediaCropCanvas" width="540" height="840" aria-label="Encuadre de la foto"></canvas>
-            <span class="media-crop-guide" aria-hidden="true"></span>
-          </div>
-          <div class="media-editor-toolbar" aria-label="Herramientas de edición">
-            <button type="button" data-media-tool="text" aria-label="Añadir texto" aria-expanded="false"><strong>Aa</strong></button>
-            <button type="button" data-media-tool="mention" aria-label="Mencionar a alguien" aria-expanded="false"><strong>@</strong></button>
-            <button type="button" data-media-tool="caption" aria-label="Añadir descripción" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 10h16M4 15h10M4 20h7"/></svg></button>
-            <button type="button" data-media-tool="filter" aria-label="Aplicar filtros" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg></button>
-            <button type="button" data-media-tool="adjust" aria-label="Encuadrar imagen" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v14a2 2 0 0 0 2 2h12M3 7h14a2 2 0 0 1 2 2v12"/></svg></button>
-          </div>
-        </div>
-        <div class="media-crop-controls">
-            <div class="media-customization-grid">
-              <label class="media-text-tool media-tool-panel" data-media-panel="text"><span>Texto sobre la foto</span><input id="mediaOverlayText" maxlength="80" placeholder="Aa · Escribe texto o @usuario"></label>
-            </div>
-            <label class="media-mention-tool media-tool-panel" data-media-panel="mention"><span>@ Mencionar</span><select id="mediaMention"><option value="">Nadie</option></select></label>
-            <label class="media-caption-tool media-tool-panel" data-media-panel="caption"><span>Descripción</span><textarea id="mediaUploadCaption" maxlength="300" rows="3" placeholder="Escribe una descripción o menciona con @..."></textarea></label>
-            <div class="media-filter-tool media-tool-panel" data-media-panel="filter"><span>Filtros</span><div class="media-filter-rail" role="group" aria-label="Filtros de imagen"><button class="active" type="button" data-editor-filter="none"><i></i><small>Original</small></button><button type="button" data-editor-filter="vivid"><i></i><small>Vivo</small></button><button type="button" data-editor-filter="warm"><i></i><small>Cálido</small></button><button type="button" data-editor-filter="cool"><i></i><small>Frío</small></button><button type="button" data-editor-filter="mono"><i></i><small>B&amp;N</small></button><button type="button" data-editor-filter="vintage"><i></i><small>Vintage</small></button></div><select id="mediaFilter" aria-label="Filtro" hidden><option value="none">Original</option><option value="vivid">Vivo</option><option value="warm">Cálido</option><option value="cool">Frío</option><option value="mono">Blanco y negro</option><option value="vintage">Vintage</option></select></div>
-            <div class="media-adjust-tool media-tool-panel" data-media-panel="adjust">
-              <label for="mediaCropZoom"><span>Tamaño</span><input id="mediaCropZoom" type="range" min="1" max="3" value="1" step="0.01"></label>
-              <div class="media-adjust-actions"><button class="text-button" id="resetMediaCrop" type="button">Centrar foto</button><label class="media-original-toggle"><input id="mediaKeepOriginal" type="checkbox" checked> <span>Foto completa</span></label></div>
-            </div>
-        </div>
-        <div class="form-feedback" id="mediaUploadFeedback" role="status"></div>
-        <div class="modal-actions">
-          <button class="secondary-button" id="cancelMediaUploader" type="button">Cancelar</button>
-          <button class="primary-button" type="submit">Compartir</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="post-viewer" id="postViewer" aria-hidden="true">
-    <article class="post-viewer-shell" role="dialog" aria-modal="true" aria-labelledby="postViewerTitle">
-      <header class="post-viewer-topbar">
-        <button class="post-viewer-back" id="closePostViewer" type="button" aria-label="Volver al perfil">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
-        <div><strong id="postViewerTitle">Publicación</strong><small id="postViewerUsername"></small></div>
-      </header>
-      <div class="post-viewer-content" id="postViewerContent"></div>
-    </article>
-  </div>
-
-  <div class="modal-backdrop media-viewer" id="mediaViewer" aria-hidden="true">
-    <div class="media-viewer-dialog" role="dialog" aria-modal="true" aria-labelledby="mediaViewerCaption">
-      <div class="moment-progress" id="momentProgress" aria-label="Progreso de historias" hidden></div>
-      <button class="media-viewer-close" id="closeMediaViewer" type="button" aria-label="Cerrar imagen">×</button>
-      <button class="moment-options-button" id="momentOptionsButton" type="button" aria-label="Opciones de la historia" aria-expanded="false" hidden>•••</button>
-      <div class="moment-options-menu" id="momentOptionsMenu" hidden>
-        <button id="deleteViewedMoment" type="button">Eliminar historia</button>
-      </div>
-      <button class="moment-navigation moment-navigation-previous" id="previousMoment" type="button" aria-label="Historia anterior" hidden></button>
-      <button class="moment-navigation moment-navigation-next" id="nextMoment" type="button" aria-label="Historia siguiente" hidden></button>
-      <img id="mediaViewerImage" src="" alt="">
-      <video id="mediaViewerVideo" controls playsinline hidden></video>
-      <div class="media-viewer-caption" id="mediaViewerCaption">Momento</div>
-    </div>
-  </div>
-
   <div class="modal-backdrop" id="shareMediaModal" aria-hidden="true">
     <div class="profile-editor-modal share-media-modal" role="dialog" aria-modal="true" aria-labelledby="shareMediaTitle">
       <div class="modal-heading">
-        <div><span class="eyebrow">COMPARTIR EN UN CHAT</span><h2 id="shareMediaTitle">Compartir contenido</h2></div>
+        <div><span class="eyebrow">COMPARTIR EN UN CHAT</span><h2 id="shareMediaTitle">Compartir noticia</h2></div>
         <button class="icon-button" id="closeShareMediaModal" type="button" aria-label="Cerrar">×</button>
       </div>
       <form id="shareMediaForm" class="profile-form">
@@ -787,24 +702,6 @@
         <div class="modal-actions">
           <button class="secondary-button" id="cancelShareMedia" type="button">Cancelar</button>
           <button class="primary-button" type="submit">Compartir</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="mediaReplyModal" aria-hidden="true">
-    <div class="profile-editor-modal compact-dialog reply-dialog" role="dialog" aria-modal="true" aria-labelledby="mediaReplyTitle">
-      <div class="modal-heading">
-        <div><span class="eyebrow">CONVERSACIÓN</span><h2 id="mediaReplyTitle">Responder</h2></div>
-        <button class="icon-button" id="closeMediaReplyModal" type="button" aria-label="Cerrar">×</button>
-      </div>
-      <form id="mediaReplyForm" class="profile-form">
-        <div class="reply-context" id="mediaReplyContext"></div>
-        <label><span>Tu respuesta</span><textarea id="mediaReplyBody" maxlength="500" rows="4" placeholder="Escribe una respuesta..." required></textarea></label>
-        <div class="form-feedback" id="mediaReplyFeedback" role="status"></div>
-        <div class="modal-actions">
-          <button class="secondary-button" id="cancelMediaReply" type="button">Cancelar</button>
-          <button class="primary-button" type="submit">Enviar respuesta</button>
         </div>
       </form>
     </div>
@@ -872,20 +769,6 @@
     </div>
   </div>
 
-  <div class="modal-backdrop" id="achievementAssignmentModal" aria-hidden="true">
-    <div class="profile-editor-modal compact-dialog achievement-assignment-modal" role="dialog" aria-modal="true" aria-labelledby="achievementAssignmentTitle">
-      <div class="modal-heading">
-        <div><span class="eyebrow">ASIGNAR LOGRO</span><h2 id="achievementAssignmentTitle">Logro</h2></div>
-        <button class="icon-button" id="closeAchievementAssignment" type="button" aria-label="Cerrar">×</button>
-      </div>
-      <form id="achievementAssignmentForm" class="profile-form">
-        <fieldset class="achievement-member-picker"><legend>Miembros que tendrán este logro</legend><div id="achievementAssignmentMembers"></div></fieldset>
-        <div class="form-feedback" id="achievementAssignmentFeedback" role="status"></div>
-        <div class="modal-actions"><button class="secondary-button" id="cancelAchievementAssignment" type="button">Cancelar</button><button class="primary-button" type="submit">Guardar asignaciones</button></div>
-      </form>
-    </div>
-  </div>
-
   <div class="modal-backdrop" id="spotifyEditor" aria-hidden="true">
     <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="spotifyEditorTitle">
       <div class="modal-heading">
@@ -912,14 +795,55 @@
     <div class="footer-mark">BB</div>
     <div>
       <strong>THE BIG BOY RULES</strong>
-      <small>PRIVATE SOCIAL CLUB · EST. 2026</small>
+      <small>PRIVATE CLUB · EST. 2026</small>
     </div>
     <span>LOYALTY · BROTHERHOOD · LEGACY</span>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <dialog class="collection-card-dialog" id="collectionCardDialog" aria-labelledby="collectionCardTitle">
+    <div class="collection-card-detail">
+      <header><span class="eyebrow">LOS NUESTROS · CATÁLOGO</span><button id="collectionCardClose" class="packs-back" type="button" aria-label="Cerrar carta" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+      <h2 id="collectionCardTitle">Carta del club</h2>
+      <div class="collection-card-perspective"><div class="collection-card-tilt" id="collectionCardTilt" tabindex="0" role="group" aria-label="Carta interactiva" aria-describedby="collectionCardGestureHint"><div class="collection-card-stage" id="collectionCardStage">
+        <img id="collectionCardFront" class="collection-card-face" width="948" height="1659" decoding="async" alt="">
+        <img id="collectionCardBack" class="collection-card-face collection-card-reverse" width="948" height="1659" decoding="async" alt="" aria-hidden="true">
+      </div><div id="collectionCardFoil" class="collection-card-foil" aria-hidden="true"></div></div></div>
+      <p id="collectionCardGestureHint" class="collection-gesture-hint">Arrastra para mover · desliza a un lado para girar</p>
+      <div id="collectionCardError" class="collection-card-error" role="alert" hidden>No se ha podido cargar una de las caras. <button type="button" id="collectionCardRetry">Reintentar</button></div>
+      <p id="collectionCardStatus" role="status">Común · 86 puntos</p>
+      <button type="button" id="collectionCardFlip" class="packs-sync" aria-controls="collectionCardStage" aria-pressed="false">Ver reverso</button>
+    </div>
+  </dialog>
+
+  <dialog class="collection-card-dialog pack-preview-dialog" id="packPreviewDialog" aria-labelledby="packPreviewTitle" aria-describedby="packPreviewNote">
+    <div class="collection-card-detail">
+      <header><span class="eyebrow">LOS NUESTROS · VISTA PREVIA</span><button id="packPreviewClose" class="packs-back" type="button" aria-label="Cerrar vista previa">×</button></header>
+      <h2 id="packPreviewTitle">La primera apertura.</h2>
+      <p id="packPreviewNote" class="pack-preview-note">Demostración visual. Tus sobres siguen guardados.</p>
+      <div class="pack-preview-stage" aria-hidden="true">
+        <img class="pack-preview-poster" src="icons/cards/sobre-los-nuestros-v1.png" alt="" width="1024" height="1536" loading="lazy">
+        <div id="packPreviewMotion" class="pack-preview-motion"></div>
+      </div>
+      <p id="packPreviewStatus" role="status"></p>
+      <button id="packPreviewReplay" class="packs-sync" type="button">Repetir vista previa</button>
+    </div>
+  </dialog>
+
+  <script src="vendor/supabase.js?v=20260901-125"></script>
   <script src="config.js?v=20260805-59"></script>
-  <script src="app.js?v=20261006-120"></script>
+  <script src="club-model.js?v=20260902-126"></script>
+  <script src="chat-motion.js?v=20260902-128"></script>
+  <script src="vendor/capacitor.js?v=8.5.0"></script>
+  <script src="chat-keyboard.js?v=20260902-129"></script>
+  <script src="tab-navigation.js?v=20260903-130"></script>
+  <script src="trophy-motion.js?v=20260904-150"></script>
+  <script src="trophy-unlock.js?v=20260903-138"></script>
+  <script src="daily-packs.js?v=20260903-139"></script>
+  <script src="collection-motion.js?v=20261007-163"></script>
+  <script src="card-collection.js?v=20261007-165"></script>
+  <script src="achievement-progress.js?v=20260908-156"></script>
+  <script src="achievement-admin.js?v=20260908-156"></script>
+  <script src="app.js?v=20261006-157"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
