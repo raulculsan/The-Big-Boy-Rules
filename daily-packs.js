@@ -56,15 +56,28 @@
       message:'El saldo se guarda en tu cuenta y se comparte entre tus dispositivos.', filled:false};
   }
 
+  function updateBalance(available) {
+    const count = Number.isSafeInteger(available) && available >= 0 ? new Intl.NumberFormat('es-ES').format(available) : '—';
+    const label = count === '—' ? 'Saldo de sobres pendiente de sincronización' : `${count} ${available === 1 ? 'sobre disponible' : 'sobres disponibles'}`;
+    for (const id of ['packsCount', 'packsHomeBalance']) {
+      const node = document.getElementById(id);
+      if (node) {node.textContent = count; node.setAttribute('aria-label', label);}
+    }
+    document.querySelector('.packs-home-link')?.setAttribute('aria-label', `Abrir mis sobres de la colección Los nuestros. ${label}`);
+  }
+
   let ui;
   function initialize(options) {
     if (ui) return;
     const text = (id,value) => {const node=document.getElementById(id);if(node && node.textContent !== value) node.textContent=value;};
+    let renderedBalanceData;
     const render = state => {
       const view = presentation(state);
-      text('packsCount',view.count);text('packsCountLabel',view.label);
+      if (state.data !== renderedBalanceData) {
+        renderedBalanceData = state.data;
+        updateBalance(state.data?.available);
+      }
       text('packsStatusTitle',view.heading);text('packsStatusMessage',view.message);
-      text('packsHomeBalance',state.data ? `${view.count} ${view.label}` : 'Tu colección personal');
       const meter=document.getElementById('packsDailyProgress');
       if(meter) {meter.value=view.filled?1:0;meter.setAttribute('aria-valuetext',view.filled?'Sobre de hoy recibido':'Acceso de hoy pendiente de comprobar');}
       text('packsDailyLabel',view.filled?'ACCESO DE HOY · COMPLETADO':'UN ACCESO · UN SOBRE');
@@ -79,5 +92,5 @@
     document.getElementById('packsSyncButton')?.addEventListener('click',()=>void ui.refresh(true));
     render(ui.snapshot());
   }
-  globalThis.DailyPacks=Object.freeze({createStore,presentation,initialize,refresh:(...args)=>ui?.refresh(...args),reset:()=>ui?.reset()});
+  globalThis.DailyPacks=Object.freeze({createStore,presentation,initialize,updateBalance,refresh:(...args)=>ui?.refresh(...args),reset:()=>ui?.reset()});
 })();

@@ -29,7 +29,7 @@
       turn.querySelector('.pack-reveal-back').setAttribute('aria-hidden','true');
       turn.classList.add('is-flipped'); turn.setAttribute('aria-pressed','true'); turn.setAttribute('aria-label',design?.name || item.card_id);
     }
-    revealDialog.querySelector('.pack-reveal-info').innerHTML = reveal.flipped ? `<h3>${escape(design?.name || item.card_id)}</h3><p>${escape(rarityNames[item.edition] || item.edition)} · ${reveal.discarded.has(reveal.index) ? 'Repetida descartada' : Number(item.quantity) > 1 ? 'Repetida' : 'Nueva'}</p>` : '<p>Pulsa la carta para descubrirla</p>';
+    revealDialog.querySelector('.pack-reveal-info').innerHTML = reveal.flipped ? `<h3>${escape(design?.name || item.card_id)}</h3><p>${escape(rarityNames[item.edition] || item.edition)} · ${reveal.discarded.has(reveal.index) ? 'Repetida descartada' : Number(item.quantity) > 1 ? 'Repetida' : 'Nueva'}</p>` : '<p>Pulsa o desliza hacia la izquierda para descubrirla</p>';
     revealDialog.querySelector('.pack-reveal-actions').innerHTML = reveal.flipped ? `${duplicate ? `<button type="button" class="packs-sync" data-reveal-discard ${busy || loading || !online() ? 'disabled' : ''}>Descartar repetida · +${escape(reward)} monedas</button>` : ''}<p class="pack-reveal-swipe-hint">${reveal.index + 1 < reveal.cards.length ? 'Desliza hacia la izquierda para pasar a la siguiente carta' : 'Desliza hacia la izquierda para terminar'}</p>` : '';
     revealDialog.querySelector('.pack-reveal-status').textContent = failure || notice;
   }
@@ -60,15 +60,17 @@
   }
   revealDialog.addEventListener('pointerdown', event => {
     const stage = event.target.closest('.pack-reveal-stage');
-    if (!stage || !reveal?.flipped || reveal.advancing || busy || loading || !event.isPrimary || event.button !== 0) return;
-    swipe = {id:event.pointerId,x:event.clientX,y:event.clientY,stage,dx:0,horizontal:false};
-    stage.setPointerCapture(event.pointerId);
+    if (!stage || !reveal || reveal.advancing || busy || loading || !event.isPrimary || event.button !== 0) return;
+    swipe = {id:event.pointerId,x:event.clientX,y:event.clientY,stage,flipped:reveal.flipped,index:reveal.index,dx:0,horizontal:false};
   });
   revealDialog.addEventListener('pointermove', event => {
     if (!swipe || swipe.id !== event.pointerId) return;
     swipe.dx = event.clientX - swipe.x;
     const dy = event.clientY - swipe.y;
-    if (!swipe.horizontal && Math.abs(swipe.dx) > 12 && Math.abs(swipe.dx) > Math.abs(dy) * 1.3) swipe.horizontal = true;
+    if (!swipe.horizontal && Math.abs(swipe.dx) > 12 && Math.abs(swipe.dx) > Math.abs(dy) * 1.3) {
+      swipe.horizontal = true;
+      swipe.stage.setPointerCapture(event.pointerId);
+    }
     if (!swipe.horizontal) return;
     swipe.stage.classList.add('is-dragging');
     swipe.stage.style.transform = `translateX(${Math.min(0, swipe.dx)}px)`;
@@ -81,13 +83,18 @@
     gesture.stage.style.removeProperty('transform');
     gesture.stage.style.removeProperty('opacity');
     if (gesture.horizontal) suppressRevealClickUntil = Date.now() + 400;
-    if (event.type === 'pointerup' && gesture.horizontal && gesture.dx < -Math.min(70, gesture.stage.clientWidth * .25)) advanceReveal(gesture.stage);
+    if (gesture.stage.hasPointerCapture(event.pointerId)) gesture.stage.releasePointerCapture(event.pointerId);
+    if (event.type !== 'pointerup' || !gesture.horizontal || gesture.dx >= -Math.min(70, gesture.stage.clientWidth * .25) || !reveal || reveal.index !== gesture.index) return;
+    if (gesture.flipped) advanceReveal(gesture.stage);
+    else {reveal.flipped = true; renderReveal();}
   }
   revealDialog.addEventListener('pointerup', finishSwipe);
   revealDialog.addEventListener('pointercancel', finishSwipe);
   revealDialog.addEventListener('keydown', event => {
-    if (event.key === 'ArrowLeft' && reveal?.flipped && !event.target.closest('[data-reveal-discard], [data-reveal-close]')) {
-      event.preventDefault(); advanceReveal(revealDialog.querySelector('.pack-reveal-stage'));
+    if (event.key === 'ArrowLeft' && reveal && !reveal.advancing && !event.repeat && !event.target.closest('[data-reveal-discard], [data-reveal-close]')) {
+      event.preventDefault();
+      if (reveal.flipped) advanceReveal(revealDialog.querySelector('.pack-reveal-stage'));
+      else {reveal.flipped = true; renderReveal();}
     }
   });
   revealDialog.addEventListener('close', () => {reveal = null; swipe = null; el('ownedPackOpen')?.focus({preventScroll:true});});
@@ -216,7 +223,6 @@
     if (el('bannerShopRefresh')) el('bannerShopRefresh').disabled = busy || loading;
     if (el('ownedPackOpen')) el('ownedPackOpen').disabled = busy || loading || !state?.available_packs?.length || !online();
     if (el('packsOpenHint')) el('packsOpenHint').textContent = busy || loading ? 'Preparando tu colección…' : state?.available_packs?.length ? 'Toca el sobre para abrirlo.' : 'Vuestras historias, por descubrir.';
-    if (el('ownedPacksCount')) el('ownedPacksCount').textContent = state ? `${state.available_packs.length} sobres disponibles` : 'Colección pendiente de sincronización';
     if (el('packRarityOdds')) el('packRarityOdds').textContent = state?.rarity_probabilities ? Object.keys(rarityNames).filter(rarity => state.rarity_probabilities[rarity] != null).map(rarity => `${rarityNames[rarity]}: ${state.rarity_probabilities[rarity]}%`).join(' · ') : 'Actualiza para consultar las probabilidades.';
     const container = el('bannerShopItems');
     if (container) container.innerHTML = state ? (state.banners || []).map(banner => `<article class="banner-shop-item">${artwork(banner)}<h3>${escape(banner.name)}</h3><p>${escape(banner.description)}</p><span>${banner.owned ? 'En tu colección' : `${escape(banner.price)} ${Number(banner.price) === 1 ? 'moneda' : 'monedas'}`}</span><button class="packs-sync" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></article>`).join('') : '<p>Actualiza para consultar los banners disponibles.</p>';
@@ -238,7 +244,7 @@
         // covers profile mounting and reconnect, not just packs navigation.
         await options?.synchronizePacks?.(forceDaily);
         if (token !== generation || user !== options.session()) return;
-        const data = await rpc('get_banner_shop_state'); if (token === generation && user === options.session()) {state = data; failure = ''; render();} }
+        const data = await rpc('get_banner_shop_state'); if (token === generation && user === options.session()) {state = data; globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
       catch (error) { if (token === generation) {failure = errorMessage(error); render();} }
       finally {if (token === generation) {loading = false; request = null; render();}}
     })();

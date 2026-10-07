@@ -29,12 +29,12 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="styles.css?v=20261006-157" />
   <link rel="stylesheet" href="club.css?v=20261007-187" />
-  <link rel="stylesheet" href="packs.css?v=20261007-179" />
+  <link rel="stylesheet" href="packs.css?v=20261007-192" />
   <link rel="stylesheet" href="banner-shop.css?v=20261007-187" />
   <link rel="stylesheet" href="album.css?v=20261007-178" />
   <link rel="stylesheet" href="admin-grants.css?v=20261007-176" />
   <link rel="stylesheet" href="achievement-admin.css?v=20260903-135" />
-  <link rel="stylesheet" href="chat.css?v=20261006-157" />
+  <link rel="stylesheet" href="chat.css?v=20261007-192" />
 </head>
 <body>
 
@@ -173,8 +173,9 @@
       </div>
       <button class="packs-home-link" type="button" data-go="sobres" aria-label="Abrir mis sobres de la colección Los nuestros">
         <span class="packs-miniature" aria-hidden="true">BB</span>
-        <span class="packs-home-copy"><span class="eyebrow">COLECCIÓN 01 · LOS NUESTROS</span><strong>Tus sobres</strong><span id="packsHomeBalance">Tu colección personal</span></span>
+        <span class="packs-home-copy"><span class="eyebrow">COLECCIÓN 01 · LOS NUESTROS</span><strong>Tus sobres</strong></span>
         <span class="packs-home-daily">Un acceso.<br>Un sobre.</span>
+        <span id="packsHomeBalance" class="packs-count-badge" aria-label="Saldo de sobres pendiente de sincronización">—</span>
       </button>
       <section class="home-members-section" id="miembros" aria-labelledby="clubMembersTitle">
         <div class="panel-heading"><div><span class="eyebrow">LOS DE SIEMPRE</span><h3 id="clubMembersTitle">Miembros</h3></div></div>
@@ -194,11 +195,10 @@
           <span class="packs-display-edition">BIG BOYS · COLECCIÓN 01</span>
           <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-los-nuestros-v1.png?v=20260903-139" width="1024" height="1536" loading="lazy" decoding="async" alt=""></button>
           <span class="packs-display-caption" id="packsOpenHint">Vuestras historias, por descubrir.</span>
-          <p id="ownedPacksCount" role="status">Colección pendiente de sincronización</p>
-          <div id="ownedPackResult" class="owned-pack-result" aria-live="polite"></div>
+          <span id="packsCount" class="packs-count-badge" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
+          <div id="ownedPackResult" class="owned-pack-result packs-screen-reader" aria-live="polite"></div>
         </div>
         <div class="packs-information">
-          <div class="packs-balance" aria-live="polite"><strong id="packsCount">—</strong><span id="packsCountLabel">sobres guardados</span></div>
           <section class="packs-daily-panel" id="packsDailyPanel" aria-labelledby="packsStatusTitle" data-state="idle">
             <span class="eyebrow" id="packsDailyLabel">UN ACCESO · UN SOBRE</span>
             <h3 id="packsStatusTitle">Tu colección empieza aquí.</h3>
@@ -839,15 +839,15 @@
   <script src="tab-navigation.js?v=20260903-130"></script>
   <script src="trophy-motion.js?v=20260904-150"></script>
   <script src="trophy-unlock.js?v=20260903-138"></script>
-  <script src="daily-packs.js?v=20260903-139"></script>
+  <script src="daily-packs.js?v=20261007-192"></script>
   <script src="collection-motion.js?v=20261007-168"></script>
   <script src="card-collection.js?v=20261007-191"></script>
   <script src="achievement-progress.js?v=20260908-156"></script>
   <script src="achievement-admin.js?v=20260908-156"></script>
   <script src="album.js?v=20261007-184"></script>
-  <script src="banner-shop.js?v=20261007-187"></script>
+  <script src="banner-shop.js?v=20261007-192"></script>
   <script src="admin-grants.js?v=20261007-176"></script>
-  <script src="app.js?v=20261007-187"></script>
+  <script src="app.js?v=20261007-192"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

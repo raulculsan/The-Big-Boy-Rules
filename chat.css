@@ -179,9 +179,12 @@ body.authenticated .chat-inbox .private-contact :is(.avatar, .chat-group-avatar)
 body.authenticated .chat-inbox .private-contact .chat-group-avatar { background: #363023; }
 body.authenticated .chat-inbox .chat-group-avatar b { font: 600 15px/1 var(--font-body, Inter, sans-serif); }
 body.authenticated .chat-inbox .chat-group-avatar i { display: none; }
-body.authenticated .chat-inbox .private-contact-copy { gap: 8px; }
+body.authenticated .chat-inbox .private-contact-copy { flex:1 1 0; min-width:0; gap:8px; }
+body.authenticated .chat-inbox .private-contact-copy > span { min-width:0; align-items:baseline; }
+body.authenticated .chat-inbox .private-contact-copy strong { min-width:0; }
 body.authenticated .chat-inbox .private-contact-copy strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 15px; font-weight: 500; letter-spacing: -.02em; }
 body.authenticated .chat-inbox .private-contact-copy small { color: var(--club-muted); font-size: 12px; font-weight: 400; padding-right: 26px; }
+body.authenticated .chat-inbox .group-chat-contact small { padding-right:0; }
 body.authenticated .chat-inbox .private-contact-copy time { font-size: 10px; font-weight: 400; color: var(--club-muted); }
 body.authenticated .chat-inbox .has-unread strong { font-weight: 650; }
 body.authenticated .chat-inbox .has-unread small { color: #d1d4da; }
