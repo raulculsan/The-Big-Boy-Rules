@@ -117,6 +117,13 @@
   }
   function artwork(banner, extra = '') {
     // Only known artwork keys become styles; future Krita exports are added here.
+    if (banner?.art_key === 'miguel-basket-bano-v1') {
+      // The raster poses and projectile use one source-coordinate canvas.
+      // SVG's meet scaling keeps both Miguel and the bowl visible in small tiles.
+      const poses = ['00', '00a', '01', '01a', '02', '02a', '03'].map((frame, index) => `<image class="banner-basket-pose banner-basket-pose-${index}" href="icons/banners/miguel-basket-miguel-${frame}-v1.png" width="2172" height="724"/>`).join('');
+      const shots = Array.from({length: 3}, (_, i) => `<g class="banner-basket-shot banner-basket-shot-${i}"><text x="0" y="0" text-anchor="middle" dominant-baseline="central">💩</text></g>`).join('');
+      return `<div class="banner-art banner-miguel-basket ${extra}" role="img" aria-label="${escape(banner.name || 'Miguel encesta emojis en el váter')}"><img class="banner-basket-fallback" src="icons/banners/miguel-basket-bano-v1.png" width="2172" height="724" alt="" decoding="async" aria-hidden="true"><svg class="banner-basket-scene" viewBox="0 0 2172 724" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><image href="icons/banners/miguel-basket-bano-bg-v1.png" width="2172" height="724"/><g class="banner-basket-held"><text x="0" y="0" text-anchor="middle" dominant-baseline="central">💩</text></g>${poses}${shots}<g class="banner-basket-impact" transform="translate(1780 539)"><ellipse class="banner-basket-ring" rx="60" ry="12"/><path class="banner-basket-splash" d="M-42 -3 Q-67 -66 -78 -37 M-18 -8 Q-29 -86 -42 -67 M12 -8 Q28 -91 39 -63 M38 -3 Q65 -60 78 -39"/><text class="banner-basket-score" x="0" y="-75" text-anchor="middle">+3</text></g></svg></div>`;
+    }
     if (banner?.art_key === 'miguel-moto-anime-v1') {
       // All moving motorcycle parts use the source image's coordinates, so they
       // stay attached to the wheels and hair in every banner size.

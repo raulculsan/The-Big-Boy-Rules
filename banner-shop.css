@@ -111,3 +111,37 @@
 .profile-banner-empty { display:grid; place-items:center; background:#1a1e23; color:#737780; font:600 22px/1 var(--font-body,sans-serif); }
 .profile-banner-row:focus-visible, .profile-banner-option:focus-visible { outline:2px solid var(--club-gold,#c4ad7e); outline-offset:4px; }
 @media(prefers-reduced-motion:reduce) { .profile-banner-row svg { transition:none; } }
+
+/* Miguel's basketball banner keeps its 3:1 source canvas intact at every size. */
+.banner-miguel-basket{background:#131d2b;contain:paint}
+.banner-basket-scene,.banner-basket-fallback{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.banner-basket-fallback{display:none}
+.banner-basket-pose{opacity:0;animation-duration:4.8s;animation-timing-function:step-end;animation-iteration-count:infinite}
+.banner-basket-pose-0{animation-name:basket-pose-0}
+.banner-basket-pose-1{animation-name:basket-pose-1}
+.banner-basket-pose-2{animation-name:basket-pose-2}
+.banner-basket-pose-3{animation-name:basket-pose-3}
+.banner-basket-pose-4{animation-name:basket-pose-4}
+.banner-basket-pose-5{animation-name:basket-pose-5}
+.banner-basket-pose-6{animation-name:basket-pose-6}
+@keyframes basket-pose-0{0%,11.9%,84%,100%{opacity:1}12%,83.9%{opacity:0}}
+@keyframes basket-pose-1{0%,11.9%,17%,78.9%,84%,100%{opacity:0}12%,16.9%,79%,83.9%{opacity:1}}
+@keyframes basket-pose-2{0%,16.9%,22%,73.9%,79%,100%{opacity:0}17%,21.9%,74%,78.9%{opacity:1}}
+@keyframes basket-pose-3{0%,21.9%,27%,68.9%,74%,100%{opacity:0}22%,26.9%,69%,73.9%{opacity:1}}
+@keyframes basket-pose-4{0%,26.9%,32%,63.9%,69%,100%{opacity:0}27%,31.9%,64%,68.9%{opacity:1}}
+@keyframes basket-pose-5{0%,31.9%,37%,58.9%,64%,100%{opacity:0}32%,36.9%,59%,63.9%{opacity:1}}
+@keyframes basket-pose-6{0%,36.9%,59%,100%{opacity:0}37%,58.9%{opacity:1}}
+.banner-basket-held text,.banner-basket-shot text{font-family:Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif;font-size:116px}
+.banner-basket-held text{font-size:84px}
+.banner-basket-held{animation:basket-held 4.8s step-end infinite}
+@keyframes basket-held{0%,11.9%{transform:translate(690px,203px);opacity:1}12%,16.9%{transform:translate(690px,101px);opacity:1}17%,21.9%{transform:translate(650px,75px);opacity:1}22%,26.9%{transform:translate(940px,63px);opacity:1}27%,31.9%{transform:translate(1020px,83px);opacity:1}32%,36.9%{transform:translate(1090px,71px);opacity:1}37%,100%{transform:translate(1090px,71px);opacity:0}}
+.banner-basket-shot{opacity:0;animation:basket-shot 4.8s linear infinite}
+.banner-basket-shot-1{animation-delay:.13s}
+.banner-basket-shot-2{animation-delay:.26s}
+@keyframes basket-shot{0%,36.9%{transform:translate(1090px,71px) scale(.85);opacity:0}37%{transform:translate(1090px,71px) scale(.85);opacity:1}44%{transform:translate(1270px,-55px) scale(1)}51%{transform:translate(1495px,-20px) scale(1.05)}59%{transform:translate(1690px,195px) scale(.95)}67%{transform:translate(1780px,510px) scale(.55);opacity:1}70%,100%{transform:translate(1780px,530px) scale(0);opacity:0}}
+.banner-basket-ring{fill:none;stroke:#67d4ef;stroke-width:11;filter:drop-shadow(0 0 12px #82e8ff)}
+.banner-basket-splash{fill:none;stroke:#a9f1ff;stroke-width:14;stroke-linecap:round;filter:drop-shadow(0 0 12px #67d4ef)}
+.banner-basket-score{fill:#fff0b1;font:900 90px/1 system-ui,sans-serif;paint-order:stroke;stroke:#1c4770;stroke-width:8px}
+.banner-basket-impact{opacity:0;transform-origin:1780px 539px;animation:basket-impact 4.8s ease-out infinite}
+@keyframes basket-impact{0%,67%{opacity:0;scale:.6}69%,75%{opacity:1;scale:1}84%,100%{opacity:0;scale:1.3}}
+@media(prefers-reduced-motion:reduce){.banner-basket-scene{display:none}.banner-basket-fallback{display:block}}
