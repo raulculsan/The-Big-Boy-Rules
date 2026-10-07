@@ -307,5 +307,8 @@
     button.addEventListener('click', () => open(card, button));
     grid.append(button);
   }
-  globalThis.CardCollection = Object.freeze({catalog, close});
+  globalThis.CardCollection = Object.freeze({catalog, close, open(cardId, button) {
+    const card = catalog.find(item => item.id === cardId);
+    if (card) open(card, button);
+  }});
 })();

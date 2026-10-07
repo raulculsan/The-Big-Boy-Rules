@@ -47,7 +47,7 @@
     const tab = event.target.closest('[data-album-rarity]');
     if (tab) turn(Math.floor(slots.findIndex(slot => slot.rarity.key === tab.dataset.albumRarity) / 5));
     const card = event.target.closest('[data-album-card]');
-    if (card) {const index = globalThis.CardCollection.catalog.findIndex(item => item.id === card.dataset.albumCard); dialog.close(); document.getElementById('collectionCardGrid')?.children[index]?.click();}
+    if (card) globalThis.CardCollection?.open(card.dataset.albumCard, card);
   });
   dialog.addEventListener('keydown',event => {if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); turn(page + (event.key === 'ArrowRight' ? 1 : -1));}});
   let touchStart = null;
