@@ -177,6 +177,13 @@
       width: 948, height: 1659
     }),
     Object.freeze({
+      id: 'vater-comun', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'VÁTER', edition: 'Común',
+      front: 'icons/cards/vater-comun-v1.png',
+      back: 'icons/cards/reverso-comun-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
       id: 'la-biblia-epica', collection: 'los-nuestros-01', folder: 'objetos',
       kind: 'Objeto', name: 'LA BIBLIA', edition: 'Épica',
       front: 'icons/cards/la-biblia-epica-v1.png',
@@ -187,6 +194,13 @@
       id: 'sombrero-militar-epico', collection: 'los-nuestros-01', folder: 'objetos',
       kind: 'Objeto', name: 'SOMBRERO MILITAR', edition: 'Épica',
       front: 'icons/cards/sombrero-militar-epico-v1.png',
+      back: 'icons/cards/reverso-especial-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
+      id: 'bote-de-nutella-epico', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'BOTE DE NUTELLA', edition: 'Épica',
+      front: 'icons/cards/bote-de-nutella-epico-v1.png',
       back: 'icons/cards/reverso-especial-unificado-v1.png',
       width: 948, height: 1659
     }),
