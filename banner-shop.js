@@ -2,7 +2,7 @@
 (() => {
   let options, state = null, busy = false, loading = false, failure = '', notice = '', generation = 0, request = null, profileTarget = null;
   const memberBanners = new Map();
-  let reveal = null;
+  let reveal = null, swipe = null, suppressRevealClickUntil = 0;
   const revealDialog = document.createElement('dialog');
   revealDialog.className = 'pack-reveal-dialog';
   revealDialog.setAttribute('aria-label', 'Abrir sobre: revelar cartas');
@@ -28,7 +28,7 @@
       turn.classList.add('is-flipped'); turn.setAttribute('aria-pressed','true'); turn.setAttribute('aria-label',design?.name || item.card_id);
     }
     revealDialog.querySelector('.pack-reveal-info').innerHTML = reveal.flipped ? `<h3>${escape(design?.name || item.card_id)}</h3><p>${escape(rarityNames[item.edition] || item.edition)} · ${reveal.discarded.has(reveal.index) ? 'Repetida descartada' : Number(item.quantity) > 1 ? 'Repetida' : 'Nueva'}</p>` : '<p>Pulsa la carta para descubrirla</p>';
-    revealDialog.querySelector('.pack-reveal-actions').innerHTML = reveal.flipped ? `${duplicate ? `<button type="button" class="packs-sync" data-reveal-discard ${busy || loading || !online() ? 'disabled' : ''}>Descartar repetida · +${escape(reward)} monedas</button>` : ''}<button type="button" class="packs-sync" data-reveal-next ${busy || loading ? 'disabled' : ''}>${reveal.index + 1 < reveal.cards.length ? 'Siguiente carta' : 'Terminar'}</button>` : '';
+    revealDialog.querySelector('.pack-reveal-actions').innerHTML = reveal.flipped ? `${duplicate ? `<button type="button" class="packs-sync" data-reveal-discard ${busy || loading || !online() ? 'disabled' : ''}>Descartar repetida · +${escape(reward)} monedas</button>` : ''}<p class="pack-reveal-swipe-hint">${reveal.index + 1 < reveal.cards.length ? 'Desliza hacia la izquierda para pasar a la siguiente carta' : 'Desliza hacia la izquierda para terminar'}</p>` : '';
     revealDialog.querySelector('.pack-reveal-status').textContent = failure || notice;
   }
   function startReveal(cards) {
@@ -39,14 +39,56 @@
   }
   revealDialog.addEventListener('click', event => {
     if (event.target.closest('[data-reveal-close]')) revealDialog.close();
+    if (Date.now() < suppressRevealClickUntil) return;
     if (event.target.closest('[data-reveal-flip]') && reveal && !reveal.flipped) {reveal.flipped = true; renderReveal();}
-    if (event.target.closest('[data-reveal-next]') && !busy && !loading) {
-      if (reveal.index + 1 === reveal.cards.length) revealDialog.close();
-      else {reveal.index++; reveal.flipped = false; renderReveal();}
-    }
     if (event.target.closest('[data-reveal-discard]') && reveal?.flipped) void mutate('discard_duplicate_card', {target_card_id:reveal.cards[reveal.index].card_id,copies:1}, 'Repetida descartada. Monedas añadidas.', reveal.index);
   });
-  revealDialog.addEventListener('close', () => {reveal = null; el('ownedPackOpen')?.focus({preventScroll:true});});
+  function advanceReveal(stage) {
+    if (!reveal?.flipped || reveal.advancing || busy || loading) return;
+    const current = reveal;
+    current.advancing = true;
+    stage.classList.add('is-leaving');
+    stage.style.removeProperty('transform');
+    stage.style.removeProperty('opacity');
+    setTimeout(() => {
+      if (reveal !== current || !revealDialog.open) return;
+      if (current.index + 1 === current.cards.length) revealDialog.close();
+      else {current.index++; current.flipped = false; current.advancing = false; renderReveal();}
+    }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220);
+  }
+  revealDialog.addEventListener('pointerdown', event => {
+    const stage = event.target.closest('.pack-reveal-stage');
+    if (!stage || !reveal?.flipped || reveal.advancing || busy || loading || !event.isPrimary || event.button !== 0) return;
+    swipe = {id:event.pointerId,x:event.clientX,y:event.clientY,stage,dx:0,horizontal:false};
+    stage.setPointerCapture(event.pointerId);
+  });
+  revealDialog.addEventListener('pointermove', event => {
+    if (!swipe || swipe.id !== event.pointerId) return;
+    swipe.dx = event.clientX - swipe.x;
+    const dy = event.clientY - swipe.y;
+    if (!swipe.horizontal && Math.abs(swipe.dx) > 12 && Math.abs(swipe.dx) > Math.abs(dy) * 1.3) swipe.horizontal = true;
+    if (!swipe.horizontal) return;
+    swipe.stage.classList.add('is-dragging');
+    swipe.stage.style.transform = `translateX(${Math.min(0, swipe.dx)}px)`;
+    swipe.stage.style.opacity = String(Math.max(.35, 1 + Math.min(0, swipe.dx) / 400));
+  });
+  function finishSwipe(event) {
+    if (!swipe || swipe.id !== event.pointerId) return;
+    const gesture = swipe; swipe = null;
+    gesture.stage.classList.remove('is-dragging');
+    gesture.stage.style.removeProperty('transform');
+    gesture.stage.style.removeProperty('opacity');
+    if (gesture.horizontal) suppressRevealClickUntil = Date.now() + 400;
+    if (event.type === 'pointerup' && gesture.horizontal && gesture.dx < -Math.min(70, gesture.stage.clientWidth * .25)) advanceReveal(gesture.stage);
+  }
+  revealDialog.addEventListener('pointerup', finishSwipe);
+  revealDialog.addEventListener('pointercancel', finishSwipe);
+  revealDialog.addEventListener('keydown', event => {
+    if (event.key === 'ArrowLeft' && reveal?.flipped && !event.target.closest('[data-reveal-discard], [data-reveal-close]')) {
+      event.preventDefault(); advanceReveal(revealDialog.querySelector('.pack-reveal-stage'));
+    }
+  });
+  revealDialog.addEventListener('close', () => {reveal = null; swipe = null; el('ownedPackOpen')?.focus({preventScroll:true});});
   const el = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);
@@ -171,7 +213,7 @@
     } catch (error) { if (token === generation) {state = null; const message = errorMessage(error); await refresh(); if (token === generation) failure = `${message} Comprueba el saldo actualizado antes de repetir la acción.`;} }
     finally {if (token === generation) {busy = false; render();
       const destination = [...document.querySelectorAll('[data-discard-card], [data-banner-id]')].find(button => !button.disabled && ((focusCard && button.dataset.discardCard === focusCard) || (focusBanner && button.dataset.bannerId === focusBanner)));
-      if (revealDialog.open) revealDialog.querySelector('[data-reveal-next]')?.focus({preventScroll:true});
+      if (revealDialog.open) revealDialog.querySelector('[data-reveal-flip]')?.focus({preventScroll:true});
       else if (el('duplicatesDialog').open && focusCard) (destination || el('discardAllDuplicates')).focus({preventScroll:true});
       else if (destination) destination.focus({preventScroll:true});
       else if (focusCard) el('duplicatesTitle')?.focus({preventScroll:true});

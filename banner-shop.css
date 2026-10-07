@@ -38,3 +38,10 @@
 .pack-reveal-stage{animation:pack-card-arrive .4s ease-out both}
 @keyframes pack-card-arrive{from{opacity:0;transform:translateY(35px) rotate(-4deg)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.pack-reveal-card{transition:none}.pack-reveal-stage{animation:none}}
+
+.pack-reveal-stage{touch-action:pan-y;user-select:none;-webkit-user-select:none;transition:transform .22s ease,opacity .22s ease}
+.pack-reveal-stage img{pointer-events:none;-webkit-user-drag:none}
+.pack-reveal-stage.is-dragging{animation:none;transition:none}
+.pack-reveal-stage.is-leaving{animation:none;transform:translateX(-110%);opacity:0}
+.pack-reveal-swipe-hint{width:100%;margin:2px 0;font-size:12px;color:#d9b667}
+@media(prefers-reduced-motion:reduce){.pack-reveal-stage{transition:none}}

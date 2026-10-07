@@ -154,20 +154,25 @@ declare
   new_quantity integer;
   draw_number integer;
   drawn_cards jsonb := '[]'::jsonb;
+  drawn_ids text[] := '{}'::text[];
 begin
   select * into saved_pack from public.card_packs where user_id=actor and opened_at is null
     and (target_pack_id is null or id=target_pack_id) and collection_key='los-nuestros-01'
     order by earned_day,id limit 1 for update;
   if not found then raise exception 'No tienes ese sobre disponible para abrir.'; end if;
-  -- Each of six independent draws chooses rarity, then a uniform active card.
-  -- Empty rarities are excluded and remaining probabilities renormalized.
+  if (select count(*) from public.achievement_card_catalog where active) < 6 then
+    raise exception 'La colección necesita al menos seis cartas distintas para abrir un sobre.';
+  end if;
+  -- Choose rarity, then a uniform active card not yet drawn in this pack.
+  -- Exhausted rarities are excluded and remaining probabilities renormalized.
   -- All inventory writes and pack consumption commit together or roll back together.
   for draw_number in 1..6 loop
     select v.edition into selected_edition from public.card_pack_rarity_weights() v
-      where exists (select 1 from public.achievement_card_catalog c where c.active and c.edition=v.edition)
+      where exists (select 1 from public.achievement_card_catalog c where c.active and c.edition=v.edition and not (c.id=any(drawn_ids)))
       order by -ln(greatest(random(),0.000000000001))/v.weight limit 1;
-    select * into card from public.achievement_card_catalog where active and edition=selected_edition order by random() limit 1 for share;
+    select * into card from public.achievement_card_catalog where active and edition=selected_edition and not (id=any(drawn_ids)) order by random() limit 1 for share;
     if not found then raise exception 'No hay cartas disponibles en la colección.'; end if;
+    drawn_ids := array_append(drawn_ids,card.id);
     insert into public.member_pack_card_awards(pack_id,draw_index,user_id,card_id) values (saved_pack.id,draw_number,actor,card.id);
     insert into public.member_card_inventory(user_id,card_id,quantity) values (actor,card.id,1)
       on conflict (user_id,card_id) do update set quantity=public.member_card_inventory.quantity+1 returning quantity into new_quantity;
