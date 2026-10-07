@@ -149,6 +149,13 @@
       width: 948, height: 1659
     }),
     Object.freeze({
+      id: 'la-biblia-epica', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'LA BIBLIA', edition: 'Épica',
+      front: 'icons/cards/la-biblia-epica-v1.png',
+      back: 'icons/cards/reverso-especial-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
       id: 'locker-luca-de-tena-legendario', collection: 'los-nuestros-01', folder: 'objetos',
       kind: 'Objeto', name: 'LOCKER DE LUCA DE TENA', edition: 'Legendaria',
       front: 'icons/cards/locker-luca-de-tena-legendario-v1.png',
@@ -182,8 +189,9 @@
   let trigger, active, reversed = false, detachMotion;
 
   const kindOf = card => card?.kind || 'Miembro';
-  const editionLabel = card => card?.kind === 'Objeto' && card.edition === 'Legendaria'
-    ? 'Legendario' : card?.edition || 'Especial';
+  const editionLabel = card => card?.kind === 'Objeto'
+    ? ({Legendaria: 'Legendario', 'Épica': 'Épico'}[card.edition] || card.edition || 'Especial')
+    : card?.edition || 'Especial';
   const frontLabel = card => card?.score == null
     ? `${kindOf(card)} · ${editionLabel(card)}`
     : `${card?.edition || 'Común'} · ${card.score} puntos`;

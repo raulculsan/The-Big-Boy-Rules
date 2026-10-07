@@ -10,13 +10,13 @@ alter table public.achievement_rules add constraint achievement_rules_metric_che
 -- Catálogo de identificadores, sin fotos ni datos privados; solo el servidor puede modificarlo.
 create table if not exists public.achievement_card_catalog (
   id text primary key,
-  edition text not null check (edition in ('common','special','legendary','retro')),
+  edition text not null check (edition in ('common','special','epic','legendary','retro')),
   kind text not null check (kind in ('member','location','object')),
   active boolean not null default true
 );
 alter table public.achievement_card_catalog drop constraint if exists achievement_card_catalog_edition_check;
 alter table public.achievement_card_catalog add constraint achievement_card_catalog_edition_check
-  check (edition in ('common','special','legendary','retro'));
+  check (edition in ('common','special','epic','legendary','retro'));
 alter table public.achievement_card_catalog drop constraint if exists achievement_card_catalog_kind_check;
 alter table public.achievement_card_catalog add constraint achievement_card_catalog_kind_check
   check (kind in ('member','location','object'));
@@ -44,6 +44,7 @@ insert into public.achievement_card_catalog(id,edition,kind) values
   ('contrato-de-trabajo-comun','common','object'),
   ('lata-de-red-bull-comun','common','object'),
   ('cafe-del-santander-comun','common','object'),
+  ('la-biblia-epica','epic','object'),
   ('locker-luca-de-tena-legendario','legendary','object'),
   ('big-mac-legendario','legendary','object'),
   ('cubo-de-alitas-kfc-legendario','legendary','object')

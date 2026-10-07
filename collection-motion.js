@@ -5,7 +5,7 @@
   function data(name) {
     if(!cache.has(name)) {
       const abort=new AbortController(), timer=setTimeout(()=>abort.abort(),8000);
-      const version=name==='pack-opening'?'20260904-150':name==='card-touch-retro'?'20261007-163':'20260905-153';
+      const version=name==='pack-opening'?'20260904-150':name==='card-touch-retro'?'20261007-163':name==='card-touch-epic'?'20261007-168':'20260905-153';
       cache.set(name,fetch(`icons/cards/${name}.json?v=${version}`,{signal:abort.signal})
         .then(r=>{if(!r.ok) throw Error('Animation unavailable');return r.json();})
         .catch(e=>{cache.delete(name);throw e;}).finally(()=>clearTimeout(timer)));
@@ -27,7 +27,7 @@
   }
   function attachCard(surface,foil,onFlip,edition='Común') {
     // Choose from the edition, never the score or member/location category.
-    const effect=edition==='Retro'?'card-touch-retro':edition==='Legendaria'?'card-touch-legendary':edition==='Especial'?'card-touch-special':'card-touch';
+    const effect=edition==='Retro'?'card-touch-retro':edition==='Legendaria'?'card-touch-legendary':edition==='Épica'?'card-touch-epic':edition==='Especial'?'card-touch-special':'card-touch';
     const motion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
     let pointer=null, origin, bounds, dx=0,dy=0, frame=0, player, dispose,dead=false;
     const clamp=n=>Math.max(-1,Math.min(1,n));
