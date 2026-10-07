@@ -142,6 +142,13 @@
       width: 948, height: 1659
     }),
     Object.freeze({
+      id: 'cafe-del-santander-comun', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'CAFÉ DEL SANTANDER', edition: 'Común',
+      front: 'icons/cards/cafe-del-santander-comun-v1.png',
+      back: 'icons/cards/reverso-comun-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
       id: 'locker-luca-de-tena-legendario', collection: 'los-nuestros-01', folder: 'objetos',
       kind: 'Objeto', name: 'LOCKER DE LUCA DE TENA', edition: 'Legendaria',
       front: 'icons/cards/locker-luca-de-tena-legendario-v1.png',

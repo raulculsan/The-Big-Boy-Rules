@@ -43,6 +43,7 @@ insert into public.achievement_card_catalog(id,edition,kind) values
   ('mesena-retro','retro','location'),
   ('contrato-de-trabajo-comun','common','object'),
   ('lata-de-red-bull-comun','common','object'),
+  ('cafe-del-santander-comun','common','object'),
   ('locker-luca-de-tena-legendario','legendary','object')
 on conflict (id) do nothing;
 

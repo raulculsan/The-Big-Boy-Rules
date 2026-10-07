@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v165";
+const CACHE_NAME = "big-boy-rules-v166";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -16,7 +16,7 @@ const APP_SHELL = [
   "./app.js?v=20261006-157",
   "./daily-packs.js?v=20260903-139",
   "./packs.css?v=20260905-154",
-  "./card-collection.js?v=20261007-165",
+  "./card-collection.js?v=20261007-166",
   "./collection-motion.js?v=20261007-163",
   "./icons/cards/card-touch.json?v=20260905-153",
   "./icons/cards/card-touch-special.json?v=20260905-153",
@@ -61,6 +61,7 @@ const APP_SHELL = [
   "./icons/cards/mesena-retro-v1.png",
   "./icons/cards/contrato-de-trabajo-comun-v1.png",
   "./icons/cards/lata-de-red-bull-comun-v1.png",
+  "./icons/cards/cafe-del-santander-comun-v1.png",
   "./icons/cards/locker-luca-de-tena-legendario-v1.png",
   "./icons/cards/reverso-retro-unificado-v1.png",
   "./icons/cards/reverso-comun-unificado-v1.png",
