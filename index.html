@@ -30,6 +30,7 @@
   <link rel="stylesheet" href="styles.css?v=20261006-157" />
   <link rel="stylesheet" href="club.css?v=20261006-157" />
   <link rel="stylesheet" href="packs.css?v=20260905-154" />
+  <link rel="stylesheet" href="banner-shop.css?v=20261007-173" />
   <link rel="stylesheet" href="achievement-admin.css?v=20260903-135" />
   <link rel="stylesheet" href="chat.css?v=20261006-157" />
 </head>
@@ -189,7 +190,10 @@
           <span class="packs-display-edition">BIG BOYS · COLECCIÓN 01</span>
           <img class="packs-art" src="icons/cards/sobre-los-nuestros-v1.png?v=20260903-139" width="1024" height="1536" loading="lazy" decoding="async" alt="Sobre Los nuestros, negro y dorado, con el monograma BB">
           <span class="packs-display-caption">Vuestras historias, por descubrir.</span>
-          <button class="packs-sync" type="button" id="packPreviewButton" aria-haspopup="dialog">Probar apertura</button>
+          <button class="packs-sync" type="button" id="ownedPackOpen" disabled>Abrir un sobre guardado</button>
+          <p id="ownedPacksCount" role="status">Colección pendiente de sincronización</p>
+          <div id="ownedPackResult" class="owned-pack-result" aria-live="polite"></div>
+          <button class="packs-sync" type="button" id="packPreviewButton" aria-haspopup="dialog">Probar animación</button>
           <small class="pack-preview-note">Vista previa · no consume sobres</small>
         </div>
         <div class="packs-information">
@@ -202,8 +206,9 @@
             <div class="packs-reset"><span>Próximo acceso diario</span><strong id="packsNextReset">Pendiente de sincronización</strong><small>Hora de Madrid</small></div>
             <button class="packs-sync" type="button" id="packsSyncButton">Actualizar saldo</button>
           </section>
+          <section class="owned-inventory" aria-labelledby="ownedInventoryTitle"><h3 id="ownedInventoryTitle" tabindex="-1">Mis cartas</h3><p id="inventoryStatus" role="status"></p><button class="packs-sync" id="ownedInventoryRefresh" type="button">Actualizar colección</button><div id="ownedCardInventory" class="owned-card-inventory"></div></section>
           <div class="packs-rules"><p><strong>Entra y suma.</strong> Tu primer acceso del día añade un sobre automáticamente, aunque mantengas la sesión iniciada.</p><p><strong>A tu ritmo.</strong> Se acumulan sin caducar. Si no entras un día, no pierdes los que ya tienes.</p></div>
-          <div class="packs-coming"><span>PRÓXIMAMENTE</span><strong>La primera apertura.</strong><p>Ya puedes descubrir las cartas del catálogo. La apertura de sobres aún no está disponible; tus sobres siguen guardados.</p></div>
+          <div class="packs-coming"><span>TU COLECCIÓN</span><strong>Abre, colecciona y personaliza.</strong><p>Cada sobre guardado contiene una carta. Las repetidas se pueden descartar para conseguir monedas y comprar banners para tu perfil.</p></div>
         </div>
       </div>
       <section class="collection-catalog" aria-labelledby="collectionCatalogTitle">
@@ -829,6 +834,15 @@
     </div>
   </dialog>
 
+  <dialog id="bannerShopDialog" class="banner-shop-dialog" aria-labelledby="bannerShopTitle">
+    <header class="banner-shop-heading"><div><span class="eyebrow">PERSONALIZA TU PERFIL</span><h2 id="bannerShopTitle">Tienda de banners</h2></div><button id="bannerShopClose" class="packs-back" type="button" aria-label="Cerrar tienda">×</button></header>
+    <p id="bannerShopBalance" class="banner-shop-balance">— monedas</p>
+    <p>Consigue monedas descartando cartas repetidas. Durante las pruebas, el banner cuesta una moneda.</p>
+    <p id="bannerShopStatus" role="status"></p>
+    <div id="bannerShopItems" class="banner-shop-items"></div>
+    <div class="banner-shop-actions"><button id="bannerShopRefresh" class="packs-sync" type="button">Actualizar</button><button id="bannerUnequip" class="packs-sync" type="button" disabled>Quitar banner</button><button id="bannerShopInventory" class="packs-sync" type="button">Ver mis cartas</button></div>
+  </dialog>
+
   <script src="vendor/supabase.js?v=20260901-125"></script>
   <script src="config.js?v=20260805-59"></script>
   <script src="club-model.js?v=20260902-126"></script>
@@ -843,7 +857,8 @@
   <script src="card-collection.js?v=20261007-172"></script>
   <script src="achievement-progress.js?v=20260908-156"></script>
   <script src="achievement-admin.js?v=20260908-156"></script>
-  <script src="app.js?v=20261006-157"></script>
+  <script src="banner-shop.js?v=20261007-173"></script>
+  <script src="app.js?v=20261007-173"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

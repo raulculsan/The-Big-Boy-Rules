@@ -583,7 +583,7 @@ function goTo(sectionId) {
       }
       if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
       if (sectionId === "ayuda" && currentUser) loadHelpCenter();
-      if (sectionId === "sobres" && currentUser) globalThis.DailyPacks?.refresh(true);
+      if (sectionId === "sobres" && currentUser) void globalThis.BannerShop?.refresh(true);
       if (["perfil", "administracion", "admin-logros", "crear-logro", "asignar-logro"].includes(sectionId) && currentUser && !achievementsLoaded) loadAchievements();
     }, 120);
   });
@@ -1083,6 +1083,7 @@ function renderProfile(memberId, navigate = true) {
     profileRender = {id: member.id, markup};
     document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
   }
+  globalThis.BannerShop?.mountProfile(document.querySelector("#profileContent .club-profile"), member.authId, isOwnProfile);
   if (navigate) goTo("perfil");
 }
 
@@ -1916,6 +1917,7 @@ async function hydrateAuthenticatedData(authUser) {
 }
 
 async function applyUserInterface(user, authUser = null) {
+  if (currentAuthUser?.id !== authUser?.id) globalThis.BannerShop?.reset();
   currentUser = user;
   currentAuthUser = authUser;
   if (authUser) cacheAuthenticatedProfile(user, authUser);
@@ -1933,7 +1935,7 @@ async function applyUserInterface(user, authUser = null) {
   renderAdminAchievements();
   completeInitialLaunch();
   if (backendReady && authUser) {
-    void globalThis.DailyPacks?.refresh();
+    void globalThis.BannerShop?.refresh();
     void hydrateAuthenticatedData(authUser);
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
@@ -1952,6 +1954,7 @@ async function applyUserInterface(user, authUser = null) {
 function showLogin() {
   globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
+  globalThis.BannerShop?.reset();
   globalThis.TrophyUnlock?.reset();
   closeProfileQuickMenu();
   closeAchievementChallenges(false);
@@ -1970,6 +1973,7 @@ function showLogin() {
 async function logoutCurrentUser() {
   globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
+  globalThis.BannerShop?.reset();
   globalThis.TrophyUnlock?.reset();
   closeAchievementDetail();
   closeAchievementChallenges(false);
@@ -4220,6 +4224,13 @@ document.addEventListener('bb:card-explored', async event => {
     if (!error && data && currentAuthUser?.id === userId) scheduleRealtimeRefresh('achievements', loadAchievements, 60);
   } catch { /* Offline or migration pending: reopening retries, without inventing progress. */ }
   finally { pendingCardExplorations.delete(key); }
+});
+
+globalThis.BannerShop?.initialize({
+  session: () => backendReady && currentAuthUser?.id,
+  rpc: (name, args) => db.rpc(name, args),
+  synchronizePacks: force => globalThis.DailyPacks?.refresh(force),
+  openInventory: () => goTo("sobres"),
 });
 
 globalThis.DailyPacks?.initialize({
