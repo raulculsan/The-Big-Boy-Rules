@@ -36,6 +36,7 @@ insert into public.achievement_card_catalog(id,edition,kind) values
   ('daniel-gonzalez-motos-normal','common','member'),
   ('juan-manuel-perez-saldana-retro','retro','member'),
   ('juan-carlos-vega-quevedo-retro','retro','member'),
+  ('carlos-sanchez-rodriguez-retro','retro','member'),
   ('luca-de-tena-especial','special','location'),
   ('borox-legendaria','legendary','location'),
   ('abelias-comun','common','location'),

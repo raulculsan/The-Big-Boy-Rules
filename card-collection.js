@@ -93,6 +93,13 @@
       width: 948, height: 1659
     }),
     Object.freeze({
+      id: 'carlos-sanchez-rodriguez-retro', collection: 'los-nuestros-01',
+      name: 'CARLOS SÁNCHEZ RODRÍGUEZ', edition: 'Retro', score: 88,
+      front: 'icons/cards/carlos-sanchez-rodriguez-retro-88-v1.png',
+      back: 'icons/cards/reverso-retro-unificado-v1.png',
+      width: 1024, height: 1536
+    }),
+    Object.freeze({
       id: 'luca-de-tena-especial', collection: 'los-nuestros-01', folder: 'ubicaciones',
       kind: 'Ubicación', name: 'LUCA DE TENA', edition: 'Especial',
       front: 'icons/cards/luca-de-tena-especial-v1.png',
