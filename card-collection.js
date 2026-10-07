@@ -86,6 +86,13 @@
       width: 948, height: 1659
     }),
     Object.freeze({
+      id: 'juan-carlos-vega-quevedo-retro', collection: 'los-nuestros-01',
+      name: 'JUAN CARLOS VEGA QUEVEDO', edition: 'Retro', score: 87,
+      front: 'icons/cards/juan-carlos-vega-quevedo-retro-87-v1.png',
+      back: 'icons/cards/reverso-retro-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
       id: 'luca-de-tena-especial', collection: 'los-nuestros-01', folder: 'ubicaciones',
       kind: 'Ubicación', name: 'LUCA DE TENA', edition: 'Especial',
       front: 'icons/cards/luca-de-tena-especial-v1.png',
