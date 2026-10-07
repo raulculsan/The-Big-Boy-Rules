@@ -177,6 +177,13 @@
       width: 948, height: 1659
     }),
     Object.freeze({
+      id: 'sombrero-militar-epico', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'SOMBRERO MILITAR', edition: 'Épica',
+      front: 'icons/cards/sombrero-militar-epico-v1.png',
+      back: 'icons/cards/reverso-especial-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
       id: 'locker-luca-de-tena-legendario', collection: 'los-nuestros-01', folder: 'objetos',
       kind: 'Objeto', name: 'LOCKER DE LUCA DE TENA', edition: 'Legendaria',
       front: 'icons/cards/locker-luca-de-tena-legendario-v1.png',

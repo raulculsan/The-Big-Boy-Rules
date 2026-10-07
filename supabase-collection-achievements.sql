@@ -48,6 +48,7 @@ insert into public.achievement_card_catalog(id,edition,kind) values
   ('cafe-del-santander-comun','common','object'),
   ('test-de-embarazo-positivo-comun','common','object'),
   ('la-biblia-epica','epic','object'),
+  ('sombrero-militar-epico','epic','object'),
   ('locker-luca-de-tena-legendario','legendary','object'),
   ('big-mac-legendario','legendary','object'),
   ('cubo-de-alitas-kfc-legendario','legendary','object')
