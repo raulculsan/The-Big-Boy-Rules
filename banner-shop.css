@@ -10,6 +10,29 @@
 @media(max-width:480px){.profile-banner-hero{height:140px}}
 .profile-banner-hero{flex-basis:100%;margin-bottom:25px}
 .profile-banner-hero .club-profile-avatar{left:18px;transform:none}
+
+/* The camera follows Miguel into the road's vanishing point (58%, 72%). */
+.banner-miguel-moto{background:#344b65;contain:paint;--road-horizon:72%;--road-center:58%}
+.banner-moto-city{position:absolute;inset:0;background:url("icons/banners/miguel-moto-city-v1.png") center center/cover no-repeat;transform-origin:var(--road-center) var(--road-horizon);pointer-events:none}
+.banner-moto-far{animation:banner-moto-horizon 14s ease-in-out infinite alternate;will-change:transform}
+.banner-moto-mid{mask-image:linear-gradient(transparent 25%,#000 48%,#000 68%,transparent 75%);-webkit-mask-image:linear-gradient(transparent 25%,#000 48%,#000 68%,transparent 75%);animation:banner-moto-buildings 7s ease-in-out infinite alternate;will-change:transform}
+.banner-moto-near{mask-image:linear-gradient(transparent 69%,#000 79%);-webkit-mask-image:linear-gradient(transparent 69%,#000 79%);animation:banner-moto-forward 3s linear infinite;will-change:transform,opacity}
+.banner-moto-near-delayed{animation-delay:-1.5s}
+.banner-moto-road{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.banner-moto-lane{position:absolute;left:var(--road-center);top:var(--road-horizon);display:block;background:#fff1be;box-shadow:0 0 7px #ffd69366;transform:rotate(-20deg);transform-origin:center;animation:banner-moto-lane-left 1.8s cubic-bezier(.55,.05,.8,.4) infinite;animation-delay:calc(var(--phase) * -.45s);will-change:left,top,width,height,opacity}
+.banner-moto-lane.is-right{animation-name:banner-moto-lane-right;transform:rotate(24deg)}
+.banner-moto-rider-group{position:absolute;z-index:1;left:29%;bottom:-4%;width:57%;height:101%;transform-origin:55% 90%;animation:banner-moto-ride 1.65s ease-in-out infinite;will-change:transform;pointer-events:none}
+.banner-moto-rider{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 3px 2px #10182280)}
+.banner-moto-shadow{position:absolute;left:28%;bottom:3%;width:46%;height:7%;border-radius:50%;background:#0b122ca0;filter:blur(4px);transform:rotate(-8deg)}
+.banner-moto-light{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 42% 40%,#ffbc6c20,transparent 55%),linear-gradient(0deg,#07122020,transparent 45%);mix-blend-mode:screen}
+@keyframes banner-moto-horizon{from{transform:scale(1.015) translateY(0)}to{transform:scale(1.025) translateY(-.35%)}}
+@keyframes banner-moto-buildings{from{transform:scale(1.015)}to{transform:scale(1.045)}}
+@keyframes banner-moto-forward{0%{transform:scale(1.015);opacity:0}20%{opacity:.7}65%{opacity:.7}100%{transform:scale(1.22);opacity:0}}
+@keyframes banner-moto-lane-left{0%{left:58%;top:72%;width:1px;height:1px;opacity:0}15%{opacity:.15}70%{opacity:.45}100%{left:8%;top:118%;width:20%;height:7px;opacity:0}}
+@keyframes banner-moto-lane-right{0%{left:58%;top:72%;width:1px;height:1px;opacity:0}15%{opacity:.15}70%{opacity:.45}100%{left:97%;top:118%;width:17%;height:7px;opacity:0}}
+@keyframes banner-moto-ride{0%,100%{transform:translateY(0) rotate(-.5deg)}25%{transform:translateY(-1px) rotate(-.1deg)}50%{transform:translateY(.7px) rotate(.5deg)}75%{transform:translateY(-.6px) rotate(.1deg)}}
+@media(max-width:480px){.banner-moto-rider-group{left:27%;width:63%;height:99%}}
+@media(prefers-reduced-motion:reduce){.banner-moto-city,.banner-moto-lane,.banner-moto-rider-group{animation:none;will-change:auto}.banner-moto-mid,.banner-moto-near,.banner-moto-lane{display:none}}
 .duplicate-cards-trigger{position:relative;width:44px;height:44px;padding:10px;border:1px solid #d9b66755;border-radius:13px;background:#171b20;color:#d9b667;cursor:pointer}
 .duplicate-cards-trigger svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}
 .duplicate-cards-trigger span{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;padding:0 4px;display:grid;place-items:center;background:#d9b667;color:#111;border-radius:10px;font-size:10px;font-weight:700}

@@ -108,6 +108,9 @@
   }
   function artwork(banner, extra = '') {
     // Only known artwork keys become styles; future Krita exports are added here.
+    if (banner?.art_key === 'miguel-moto-anime-v1') {
+      return `<div class="banner-art banner-miguel-moto ${extra}" role="img" aria-label="${escape(banner.name || 'Miguel en moto por la ciudad')}"><div class="banner-moto-city banner-moto-far" aria-hidden="true"></div><div class="banner-moto-city banner-moto-mid" aria-hidden="true"></div><div class="banner-moto-city banner-moto-near" aria-hidden="true"></div><div class="banner-moto-city banner-moto-near banner-moto-near-delayed" aria-hidden="true"></div><div class="banner-moto-road" aria-hidden="true">${Array.from({length: 8}, (_, i) => `<i class="banner-moto-lane ${i > 3 ? 'is-right' : ''}" style="--phase:${i % 4}"></i>`).join('')}</div><div class="banner-moto-rider-group" aria-hidden="true"><div class="banner-moto-shadow"></div><img class="banner-moto-rider" src="icons/banners/miguel-moto-rider-v2.png" width="1312" height="1199" alt="" decoding="async"></div><div class="banner-moto-light" aria-hidden="true"></div></div>`;
+    }
     const style = banner?.art_key === 'banner-de-prueba' ? 'banner-trial' : 'banner-neutral';
     return `<div class="banner-art ${style} ${extra}" role="img" aria-label="${escape(banner?.name || 'Banner de perfil')}"><span>BB</span></div>`;
   }

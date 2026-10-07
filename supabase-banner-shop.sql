@@ -101,6 +101,11 @@ insert into public.profile_banner_catalog(id,name,description,art_key,price)
   values ('banner-de-prueba','Banner de prueba','Banner para la cabecera del perfil durante las pruebas.','banner-de-prueba',1)
   on conflict (id) do nothing;
 
+insert into public.profile_banner_catalog(id,name,description,art_key,price,active)
+  values ('miguel-moto-anime-v1','Miguel · Ruta urbana','Miguel Ángel Jiménez Sánchez recorre la ciudad en moto. Banner anime animado.','miguel-moto-anime-v1',1,true)
+  on conflict (id) do update set name=excluded.name,description=excluded.description,
+    art_key=excluded.art_key,price=excluded.price,active=excluded.active;
+
 -- Internal guard + per-member lock. Every economy operation takes this lock
 -- before pack, card or catalog locks; concurrent spend/discard/open is serialized.
 create or replace function public.lock_banner_shop_actor()
