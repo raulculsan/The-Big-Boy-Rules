@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v189";
+const CACHE_NAME = "big-boy-rules-v190";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -25,7 +25,7 @@ const APP_SHELL = [
   "./icons/banners/miguel-moto-clouds-v1.png",
   "./daily-packs.js?v=20260903-139",
   "./packs.css?v=20261007-179",
-  "./card-collection.js?v=20261007-189",
+  "./card-collection.js?v=20261007-190",
   "./collection-motion.js?v=20261007-168",
   "./icons/cards/card-touch.json?v=20260905-153",
   "./icons/cards/card-touch-epic.json?v=20261007-168",
@@ -80,6 +80,7 @@ const APP_SHELL = [
   "./icons/cards/la-biblia-epica-v1.png",
   "./icons/cards/sombrero-militar-epico-v1.png",
   "./icons/cards/bote-de-nutella-epico-v1.png",
+  "./icons/cards/ceviche-epico-v1.png",
   "./icons/cards/locker-luca-de-tena-legendario-v1.png",
   "./icons/cards/big-mac-legendario-v1.png",
   "./icons/cards/cubo-de-alitas-kfc-legendario-v1.png",

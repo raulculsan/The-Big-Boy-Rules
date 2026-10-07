@@ -52,6 +52,7 @@ insert into public.achievement_card_catalog(id,edition,kind) values
   ('la-biblia-epica','epic','object'),
   ('sombrero-militar-epico','epic','object'),
   ('bote-de-nutella-epico','epic','object'),
+  ('ceviche-epico','epic','object'),
   ('locker-luca-de-tena-legendario','legendary','object'),
   ('big-mac-legendario','legendary','object'),
   ('cubo-de-alitas-kfc-legendario','legendary','object'),
