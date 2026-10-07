@@ -135,6 +135,13 @@
       width: 948, height: 1659
     }),
     Object.freeze({
+      id: 'galicia-legendaria', collection: 'los-nuestros-01', folder: 'ubicaciones',
+      kind: 'Ubicación', name: 'GALICIA', edition: 'Legendaria',
+      front: 'icons/cards/galicia-legendaria-v1.png',
+      back: 'icons/cards/reverso-legendario-unificado-v1.png',
+      width: 948, height: 1660
+    }),
+    Object.freeze({
       id: 'josefa-valcarcel-epica', collection: 'los-nuestros-01', folder: 'ubicaciones',
       kind: 'Ubicación', name: 'JOSEFA VALCARCEL', edition: 'Épica',
       front: 'icons/cards/josefa-valcarcel-epica-v1.png',
