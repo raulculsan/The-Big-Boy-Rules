@@ -1702,6 +1702,7 @@ function performSearch(query) {
 }
 
 function renderAdminPanel() {
+  globalThis.AdminGrants?.render();
   const summary = document.getElementById("adminSummary");
   const table = document.getElementById("adminUsersTable");
   const tools = document.getElementById("superAdminTools");
@@ -1917,7 +1918,10 @@ async function hydrateAuthenticatedData(authUser) {
 }
 
 async function applyUserInterface(user, authUser = null) {
-  if (currentAuthUser?.id !== authUser?.id) globalThis.BannerShop?.reset();
+  if (currentAuthUser?.id !== authUser?.id) {
+    globalThis.BannerShop?.reset();
+    globalThis.AdminGrants?.reset();
+  }
   currentUser = user;
   currentAuthUser = authUser;
   if (authUser) cacheAuthenticatedProfile(user, authUser);
@@ -1955,6 +1959,7 @@ function showLogin() {
   globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
+  globalThis.AdminGrants?.reset();
   globalThis.TrophyUnlock?.reset();
   closeProfileQuickMenu();
   closeAchievementChallenges(false);
@@ -1974,6 +1979,7 @@ async function logoutCurrentUser() {
   globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
+  globalThis.AdminGrants?.reset();
   globalThis.TrophyUnlock?.reset();
   closeAchievementDetail();
   closeAchievementChallenges(false);
@@ -1987,6 +1993,7 @@ async function logoutCurrentUser() {
   sessionStorage.removeItem(AUTH_SESSION_KEY);
   currentUser = null;
   currentAuthUser = null;
+  globalThis.AdminGrants?.render();
   messages = [];
   notifications = [];
   privateMessages = [];
@@ -4231,6 +4238,14 @@ globalThis.BannerShop?.initialize({
   rpc: (name, args) => db.rpc(name, args),
   synchronizePacks: force => globalThis.DailyPacks?.refresh(force),
   openInventory: () => goTo("sobres"),
+});
+
+globalThis.AdminGrants?.initialize({
+  members: () => members,
+  canManage: canManageSite,
+  session: () => backendReady && currentAuthUser?.id,
+  rpc: (name, args) => db.rpc(name, args),
+  refreshOwn: () => globalThis.BannerShop?.refresh(true),
 });
 
 globalThis.DailyPacks?.initialize({

@@ -10,8 +10,12 @@ create table if not exists public.card_packs (
   collection_key text not null default 'los-nuestros-01',
   created_at timestamptz not null default clock_timestamp(),
   opened_at timestamptz,
-  unique (user_id, earned_day)
+  source text not null default 'daily'
 );
+alter table public.card_packs add column if not exists source text not null default 'daily';
+alter table public.card_packs drop constraint if exists card_packs_user_id_earned_day_key;
+create unique index if not exists card_packs_daily_user_day_key
+  on public.card_packs(user_id, earned_day) where source = 'daily';
 alter table public.card_packs enable row level security;
 revoke all on public.card_packs from public, anon, authenticated;
 revoke all on sequence public.card_packs_id_seq from public, anon, authenticated;
@@ -36,7 +40,7 @@ begin
     raise exception 'Tu cuenta no tiene acceso a esta colección.' using errcode = '42501';
   end if;
   insert into public.card_packs(user_id, earned_day) values (actor, today)
-    on conflict (user_id, earned_day) do nothing;
+    on conflict (user_id, earned_day) where source = 'daily' do nothing;
   get diagnostics inserted_rows = row_count;
   select count(*) filter (where opened_at is null), count(*)
     into available_count, total_count from public.card_packs where user_id = actor;

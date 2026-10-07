@@ -31,6 +31,8 @@
   <link rel="stylesheet" href="club.css?v=20261006-157" />
   <link rel="stylesheet" href="packs.css?v=20260905-154" />
   <link rel="stylesheet" href="banner-shop.css?v=20261007-175" />
+  <link rel="stylesheet" href="album.css?v=20261007-176" />
+  <link rel="stylesheet" href="admin-grants.css?v=20261007-176" />
   <link rel="stylesheet" href="achievement-admin.css?v=20260903-135" />
   <link rel="stylesheet" href="chat.css?v=20261006-157" />
 </head>
@@ -206,7 +208,7 @@
             <div class="packs-reset"><span>Próximo acceso diario</span><strong id="packsNextReset">Pendiente de sincronización</strong><small>Hora de Madrid</small></div>
             <button class="packs-sync" type="button" id="packsSyncButton">Actualizar saldo</button>
           </section>
-          <section class="owned-inventory" aria-labelledby="ownedInventoryTitle"><h3 id="ownedInventoryTitle" tabindex="-1">Mis cartas</h3><p id="inventoryStatus" role="status"></p><button class="packs-sync" id="ownedInventoryRefresh" type="button">Actualizar colección</button><div id="ownedCardInventory" class="owned-card-inventory"></div></section>
+          <section class="owned-inventory" aria-labelledby="ownedInventoryTitle"><div class="owned-inventory-heading"><h3 id="ownedInventoryTitle" tabindex="-1">Mis cartas</h3><button type="button" class="card-album-trigger" data-card-album aria-label="Abrir mi álbum de cartas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M5 8h4M5 11h4M15 8h4M15 11h4"/></svg></button></div><p id="inventoryStatus" role="status"></p><button class="packs-sync" id="ownedInventoryRefresh" type="button">Actualizar colección</button><details class="card-album-duplicates"><summary>Ver mis cartas y gestionar repetidas</summary><div id="ownedCardInventory" class="owned-card-inventory"></div></details></section>
           <div class="packs-rules"><p><strong>Entra y suma.</strong> Tu primer acceso del día añade un sobre automáticamente, aunque mantengas la sesión iniciada.</p><p><strong>A tu ritmo.</strong> Se acumulan sin caducar. Si no entras un día, no pierdes los que ya tienes.</p></div>
           <div class="packs-coming"><span>TU COLECCIÓN</span><strong>Abre, colecciona y personaliza.</strong><p>Cada sobre guardado contiene 6 cartas. Cada carta tiene su propia probabilidad de rareza. Las repetidas se pueden descartar para conseguir monedas y comprar banners para tu perfil.</p><p id="packRarityOdds" class="pack-rarity-odds">Actualiza para consultar las probabilidades.</p></div>
         </div>
@@ -857,8 +859,10 @@
   <script src="card-collection.js?v=20261007-172"></script>
   <script src="achievement-progress.js?v=20260908-156"></script>
   <script src="achievement-admin.js?v=20260908-156"></script>
-  <script src="banner-shop.js?v=20261007-175"></script>
-  <script src="app.js?v=20261007-173"></script>
+  <script src="album.js?v=20261007-176"></script>
+  <script src="banner-shop.js?v=20261007-176"></script>
+  <script src="admin-grants.js?v=20261007-176"></script>
+  <script src="app.js?v=20261007-176"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

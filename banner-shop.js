@@ -38,6 +38,7 @@
   }
   function render() {
     paintProfile();
+    globalThis.CardAlbum?.update({cards:state?.cards || null, loading, failure});
     const status = el('bannerShopStatus');
     if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); }
     if (el('bannerShopBalance')) el('bannerShopBalance').textContent = coins();
@@ -108,6 +109,7 @@
     if (own) {
       const topline = node.querySelector('.club-profile-topline');
       if (topline && !topline.querySelector('[data-banner-shop]')) topline.insertAdjacentHTML('beforeend', '<button type="button" class="banner-shop-trigger" data-banner-shop aria-haspopup="dialog"><span data-wallet-balance>— monedas</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18l-2-6H5L3 9Zm1 0v12h16V9M9 21v-7h6v7M3 9c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0"/></svg></button>');
+      if (topline && !topline.querySelector('[data-card-album]')) topline.insertAdjacentHTML('beforeend', `<button type="button" class="card-album-trigger" data-card-album aria-label="Abrir mi álbum de cartas" aria-haspopup="dialog">${globalThis.CardAlbum?.icon || ''}</button>`);
       paintProfile();
       if (!state && !request) void refresh();
     } else if (userId) {
@@ -118,6 +120,7 @@
   }
   function initialize(config) {
     options = config;
+    globalThis.CardAlbum?.configure({refresh:() => refresh()});
     document.addEventListener('click', event => {
       if (event.target.closest('[data-banner-shop]')) {el('bannerShopDialog').showModal(); void refresh();}
       const banner = event.target.closest('[data-banner-action]');
@@ -130,13 +133,14 @@
     el('ownedInventoryRefresh').addEventListener('click', () => void refresh());
     el('bannerUnequip').addEventListener('click', () => void mutate('equip_profile_banner', {target_banner_id:null}, 'Banner retirado de tu perfil.'));
     el('ownedPackOpen').addEventListener('click', () => void mutate('open_owned_card_pack', {}, 'Sobre abierto. Todas las cartas se han guardado en tu colección.'));
-    el('bannerShopInventory').addEventListener('click', () => {el('bannerShopDialog').close(); options.openInventory(); el('ownedInventoryTitle')?.focus();});
+    el('bannerShopInventory').addEventListener('click', () => {el('bannerShopDialog').close(); if (globalThis.CardAlbum) globalThis.CardAlbum.open(el('bannerShopInventory')); else {options.openInventory(); el('ownedInventoryTitle')?.focus();}});
     window.addEventListener('online', () => {if (options.session()) void refresh();});
     window.addEventListener('offline', render);
     render();
   }
   function reset() {
     generation++; state = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear();
+    globalThis.CardAlbum?.reset();
     el('bannerShopDialog')?.close(); if (el('ownedPackResult')) el('ownedPackResult').replaceChildren(); render();
   }
   globalThis.BannerShop = Object.freeze({initialize, refresh, mountProfile, reset});

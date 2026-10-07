@@ -1,0 +1,10 @@
+.admin-reward-grants { margin: 20px 0; }
+.admin-reward-grants[hidden] { display: none; }
+.admin-grant-description { color: var(--muted, #9298a3); line-height: 1.5; margin: 0 0 20px; }
+.admin-grant-form { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 16px; align-items: end; }
+.admin-grant-form label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--muted, #9298a3); min-width: 0; }
+.admin-grant-form select, .admin-grant-form input { width: 100%; min-width: 0; box-sizing: border-box; min-height: 48px; padding: 12px; border: 1px solid #323740; border-radius: 12px; background: #15181e; color: #f3f1e9; font: inherit; color-scheme: dark; }
+.admin-grant-form button { grid-column: 1 / -1; justify-self: start; }
+.admin-reward-grants .form-feedback { min-height: 22px; margin-top: 16px; color: #d6bd7e; }
+.admin-reward-grants .form-feedback.is-error { color: #f3a4a4; }
+@media (max-width: 640px) { .admin-grant-form { grid-template-columns: 1fr; } .admin-grant-form button { width: 100%; } }
