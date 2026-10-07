@@ -22,6 +22,8 @@ const sources = [
   "card-collection.js",
   "collection-motion.js",
   "packs.css",
+  "banner-shop.js",
+  "banner-shop.css",
   "app.js",
   "config.js",
   "manifest.webmanifest",

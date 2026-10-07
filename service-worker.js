@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v173";
+const CACHE_NAME = "big-boy-rules-v174";
 const APP_SHELL = [
   "./",
   "./index.html",
