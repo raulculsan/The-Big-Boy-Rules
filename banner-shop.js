@@ -28,8 +28,26 @@
     if (!profileTarget?.node.isConnected) return;
     const {node, userId, own} = profileTarget;
     const banner = own ? state?.banners?.find(item => item.id === state.equipped_banner_id) : memberBanners.get(userId);
-    node.querySelector('.profile-banner')?.remove();
-    if (banner) node.insertAdjacentHTML('afterbegin', artwork(banner, 'profile-banner'));
+    const identity = node.querySelector('.club-profile-identity');
+    const avatar = identity?.querySelector('.club-profile-avatar');
+    let hero = identity?.querySelector('.profile-banner-hero');
+    if (banner && identity && avatar) {
+      if (!hero) {
+        hero = document.createElement('div');
+        hero.className = 'profile-banner-hero';
+        avatar.before(hero);
+        hero.append(avatar);
+      }
+      // Keep the decoded, circular avatar intact while the artwork changes.
+      if (hero.dataset.bannerId !== String(banner.id) || !hero.querySelector('.profile-banner')) {
+        hero.querySelector('.profile-banner')?.remove();
+        hero.insertAdjacentHTML('afterbegin', artwork(banner, 'profile-banner'));
+        hero.dataset.bannerId = String(banner.id);
+      }
+    } else if (hero) {
+      if (avatar) hero.before(avatar);
+      hero.remove();
+    }
     if (own) {
       const balance = node.querySelector('[data-wallet-balance]');
       if (balance) balance.textContent = coins();
