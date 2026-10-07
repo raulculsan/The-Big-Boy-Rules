@@ -44,7 +44,9 @@ insert into public.achievement_card_catalog(id,edition,kind) values
   ('contrato-de-trabajo-comun','common','object'),
   ('lata-de-red-bull-comun','common','object'),
   ('cafe-del-santander-comun','common','object'),
-  ('locker-luca-de-tena-legendario','legendary','object')
+  ('locker-luca-de-tena-legendario','legendary','object'),
+  ('big-mac-legendario','legendary','object'),
+  ('cubo-de-alitas-kfc-legendario','legendary','object')
 on conflict (id) do nothing;
 
 create or replace function public.create_automatic_achievement(

@@ -154,6 +154,20 @@
       front: 'icons/cards/locker-luca-de-tena-legendario-v1.png',
       back: 'icons/cards/reverso-legendario-unificado-v1.png',
       width: 948, height: 1659
+    }),
+    Object.freeze({
+      id: 'big-mac-legendario', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'BIG MAC', edition: 'Legendaria',
+      front: 'icons/cards/big-mac-legendario-v1.png',
+      back: 'icons/cards/reverso-legendario-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
+      id: 'cubo-de-alitas-kfc-legendario', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'CUBO DE ALITAS DEL KFC', edition: 'Legendaria',
+      front: 'icons/cards/cubo-de-alitas-kfc-legendario-v1.png',
+      back: 'icons/cards/reverso-legendario-unificado-v1.png',
+      width: 948, height: 1660
     })
   ]);
   const dialog = document.getElementById('collectionCardDialog');
