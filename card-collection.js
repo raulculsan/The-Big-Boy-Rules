@@ -121,6 +121,13 @@
       width: 948, height: 1659
     }),
     Object.freeze({
+      id: 'josefa-valcarcel-epica', collection: 'los-nuestros-01', folder: 'ubicaciones',
+      kind: 'Ubicación', name: 'JOSEFA VALCARCEL', edition: 'Épica',
+      front: 'icons/cards/josefa-valcarcel-epica-v1.png',
+      back: 'icons/cards/reverso-especial-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
       id: 'mesena-retro', collection: 'los-nuestros-01', folder: 'ubicaciones',
       kind: 'Ubicación', name: 'MESENA', edition: 'Retro',
       front: 'icons/cards/mesena-retro-v1.png',

@@ -40,6 +40,7 @@ insert into public.achievement_card_catalog(id,edition,kind) values
   ('abelias-comun','common','location'),
   ('castellana-legendaria','legendary','location'),
   ('carabanchel-legendaria','legendary','location'),
+  ('josefa-valcarcel-epica','epic','location'),
   ('mesena-retro','retro','location'),
   ('contrato-de-trabajo-comun','common','object'),
   ('lata-de-red-bull-comun','common','object'),
