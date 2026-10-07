@@ -16,3 +16,5 @@
 .card-album-slot small{min-height:2.8em;line-height:1.4}
 .card-album-navigation{margin:16px 0 12px}
 @media(max-width:600px){.card-album-header h2{font-size:24px}.card-album-tabs{padding-bottom:12px}.card-album-summary{margin:4px 0}.card-album-navigation{margin:12px 0 8px}.card-album-note{font-size:11px}.card-album-navigation span{font-size:12px}}
+.card-album-header>div:first-child{flex:1;min-width:0}
+.card-album-header .duplicate-cards-trigger{flex:none}

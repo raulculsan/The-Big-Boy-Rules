@@ -1064,14 +1064,14 @@ function renderProfile(memberId, navigate = true) {
       <div class="club-profile-topline"><span class="eyebrow">MIEMBRO DEL CLUB</span><span class="club-member-number">${member.hidden ? "ADMIN" : `N.º ${String(memberDisplayNumber(member)).padStart(2, "0")}`}</span></div>
       <div class="club-profile-identity">
         ${getAvatar(member, "avatar club-profile-avatar")}
-        <div><span class="club-profile-handle">@${escapeHtml(member.username || member.name)}</span><h2>${escapeHtml(member.name)}</h2><span class="club-profile-role">${escapeHtml(member.role || "Miembro")}</span></div>
+        <div class="club-profile-copy"><span class="club-profile-handle">@${escapeHtml(member.username || member.name)}</span><h2>${escapeHtml(member.name)}</h2><span class="club-profile-role">${escapeHtml(member.role || "Miembro")}</span></div>
+        ${canManageProfile ? `<button class="secondary-button profile-edit-compact" id="editProfileButton" type="button">${canEdit ? "Editar perfil" : "Gestionar"}</button>` : ""}
       </div>
       ${member.nickname ? `<p class="club-profile-nickname">${escapeHtml(member.nickname)}</p>` : ""}
       ${member.bio ? `<p class="club-profile-bio">${escapeHtml(member.bio)}</p>` : ""}
       <div class="profile-tags">${(member.tags || []).map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
       <div class="club-profile-bottom">
         <div class="profile-actions">
-          ${canManageProfile ? `<button class="secondary-button" id="editProfileButton" type="button">${canEdit ? "Editar perfil" : "Gestionar perfil"}</button>` : ""}
           ${!isOwnProfile ? `<button class="primary-button" data-private-member="${member.id}" type="button">Enviar mensaje</button>` : ""}
         </div>
       </div>

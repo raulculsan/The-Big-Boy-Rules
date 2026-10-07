@@ -2,6 +2,51 @@
 (() => {
   let options, state = null, busy = false, loading = false, failure = '', notice = '', generation = 0, request = null, profileTarget = null;
   const memberBanners = new Map();
+  let reveal = null;
+  const revealDialog = document.createElement('dialog');
+  revealDialog.className = 'pack-reveal-dialog';
+  revealDialog.setAttribute('aria-label', 'Abrir sobre: revelar cartas');
+  document.body.append(revealDialog);
+  const extraCopies = () => (state?.cards || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) - 1), 0);
+  function renderReveal() {
+    if (!reveal || !revealDialog.open) return;
+    const item = reveal.cards[reveal.index], design = card(item.card_id);
+    const duplicate = !reveal.discarded.has(reveal.index) && Number(item.quantity) > 1 && Number(state?.cards?.find(owned => owned.card_id === item.card_id)?.quantity) > 1;
+    const reward = state?.discard_rewards?.[item.edition] || 1;
+    // Keep the turning card intact during wallet refreshes and discards.
+    if (revealDialog.dataset.cardIndex !== String(reveal.index)) {
+      revealDialog.dataset.cardIndex = String(reveal.index);
+      revealDialog.innerHTML = `<header class="pack-reveal-header"><span>Carta ${reveal.index + 1} de ${reveal.cards.length}</span><button type="button" data-reveal-close aria-label="Cerrar: todas las cartas ya están guardadas">✕</button></header><div class="pack-reveal-stage"><button type="button" class="pack-reveal-card" data-reveal-flip aria-label="Girar carta" aria-pressed="false"><span class="pack-reveal-face pack-reveal-back"><img src="${escape(design?.back || 'icons/cards/reverso-comun-unificado-v1.png')}" alt="Reverso de carta"></span><span class="pack-reveal-face pack-reveal-front" aria-hidden="true"></span></button></div><div class="pack-reveal-info" aria-live="polite"></div><div class="pack-reveal-actions"></div><p class="pack-reveal-status" role="status"></p>`;
+      revealDialog.querySelector('[data-reveal-flip]').focus({preventScroll:true});
+    }
+    const turn = revealDialog.querySelector('[data-reveal-flip]');
+    if (reveal.flipped && !turn.classList.contains('is-flipped')) {
+      const front = turn.querySelector('.pack-reveal-front');
+      front.innerHTML = design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}">` : '<span>Carta guardada</span>';
+      front.setAttribute('aria-hidden','false');
+      turn.querySelector('.pack-reveal-back').setAttribute('aria-hidden','true');
+      turn.classList.add('is-flipped'); turn.setAttribute('aria-pressed','true'); turn.setAttribute('aria-label',design?.name || item.card_id);
+    }
+    revealDialog.querySelector('.pack-reveal-info').innerHTML = reveal.flipped ? `<h3>${escape(design?.name || item.card_id)}</h3><p>${escape(rarityNames[item.edition] || item.edition)} · ${reveal.discarded.has(reveal.index) ? 'Repetida descartada' : Number(item.quantity) > 1 ? 'Repetida' : 'Nueva'}</p>` : '<p>Pulsa la carta para descubrirla</p>';
+    revealDialog.querySelector('.pack-reveal-actions').innerHTML = reveal.flipped ? `${duplicate ? `<button type="button" class="packs-sync" data-reveal-discard ${busy || loading || !online() ? 'disabled' : ''}>Descartar repetida · +${escape(reward)} monedas</button>` : ''}<button type="button" class="packs-sync" data-reveal-next ${busy || loading ? 'disabled' : ''}>${reveal.index + 1 < reveal.cards.length ? 'Siguiente carta' : 'Terminar'}</button>` : '';
+    revealDialog.querySelector('.pack-reveal-status').textContent = failure || notice;
+  }
+  function startReveal(cards) {
+    if (!cards.length) return;
+    reveal = {cards,index:0,flipped:false,discarded:new Set()};
+    delete revealDialog.dataset.cardIndex;
+    revealDialog.showModal(); renderReveal();
+  }
+  revealDialog.addEventListener('click', event => {
+    if (event.target.closest('[data-reveal-close]')) revealDialog.close();
+    if (event.target.closest('[data-reveal-flip]') && reveal && !reveal.flipped) {reveal.flipped = true; renderReveal();}
+    if (event.target.closest('[data-reveal-next]') && !busy && !loading) {
+      if (reveal.index + 1 === reveal.cards.length) revealDialog.close();
+      else {reveal.index++; reveal.flipped = false; renderReveal();}
+    }
+    if (event.target.closest('[data-reveal-discard]') && reveal?.flipped) void mutate('discard_duplicate_card', {target_card_id:reveal.cards[reveal.index].card_id,copies:1}, 'Repetida descartada. Monedas añadidas.', reveal.index);
+  });
+  revealDialog.addEventListener('close', () => {reveal = null; el('ownedPackOpen')?.focus({preventScroll:true});});
   const el = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);
@@ -56,6 +101,10 @@
   }
   function render() {
     paintProfile();
+    renderReveal();
+    document.querySelectorAll('[data-duplicates-count]').forEach(node => {node.textContent = state ? extraCopies() : '—'; node.closest('button')?.setAttribute('aria-label', `Gestionar ${state ? extraCopies() : ''} cartas repetidas`);});
+    if (el('discardAllDuplicates')) el('discardAllDuplicates').disabled = busy || loading || !extraCopies() || !online();
+    if (el('duplicatesStatus')) el('duplicatesStatus').textContent = failure || notice || (loading ? 'Actualizando repetidas…' : state ? `${extraCopies()} copias repetidas. Conservas una de cada carta.` : 'Actualiza la colección para consultar las repetidas.');
     globalThis.CardAlbum?.update({cards:state?.cards || null, loading, failure});
     const status = el('bannerShopStatus');
     if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); }
@@ -70,10 +119,10 @@
     if (container) container.innerHTML = state ? (state.banners || []).map(banner => `<article class="banner-shop-item">${artwork(banner)}<h3>${escape(banner.name)}</h3><p>${escape(banner.description)}</p><span>${banner.owned ? 'En tu colección' : `${escape(banner.price)} ${Number(banner.price) === 1 ? 'moneda' : 'monedas'}`}</span><button class="packs-sync" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></article>`).join('') : '<p>Actualiza para consultar los banners disponibles.</p>';
     if (el('bannerUnequip')) el('bannerUnequip').disabled = busy || loading || !state?.equipped_banner_id || !online();
     const inventory = el('ownedCardInventory');
-    if (inventory) inventory.innerHTML = state ? (state.cards.length ? state.cards.map(item => {
+    if (inventory) inventory.innerHTML = state ? (extraCopies() ? state.cards.filter(item => Number(item.quantity) > 1).map(item => {
       const design = card(item.card_id), reward = state.discard_rewards?.[item.edition] || 1;
       return `<article class="owned-card">${design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}" loading="lazy" decoding="async">` : ''}<h4>${escape(design?.name || item.card_id)}</h4><p>${escape(design?.edition || item.edition)} · ${escape(item.quantity)} ${Number(item.quantity) === 1 ? 'copia' : 'copias'}</p>${Number(item.quantity) > 1 ? `<button type="button" class="packs-sync" data-discard-card="${escape(item.card_id)}" ${busy || loading || !online() ? 'disabled' : ''}>Descartar 1 repetida · +${escape(reward)} monedas</button>` : '<small>Única copia</small>'}</article>`;
-    }).join('') : '<p>Abre un sobre guardado para conseguir tu primera carta.</p>') : '<p>Tu inventario se mostrará al sincronizar la colección.</p>';
+    }).join('') : '<p>No tienes cartas repetidas.</p>') : '<p>Tu inventario se mostrará al sincronizar la colección.</p>';
   }
   function refresh(forceDaily = false) {
     if (request) return request;
@@ -92,33 +141,40 @@
     })();
     return request;
   }
-  async function mutate(name, args, message) {
+  async function mutate(name, args, message, discardedIndex = null) {
     if (busy || loading) return;
     const token = generation, user = options.session();
     const focus = document.activeElement;
+    const revealAtStart = reveal;
     const focusCard = focus?.dataset?.discardCard;
     const focusBanner = focus?.dataset?.bannerId;
     busy = true; failure = ''; notice = ''; render();
     try {
       const data = await rpc(name, args);
       if (token !== generation || user !== options.session()) return;
+      if (discardedIndex != null && reveal === revealAtStart) reveal.discarded.add(discardedIndex);
       // A successful spend invalidates the old wallet until the server refreshes it.
       state = null;
       if (name === 'open_owned_card_pack') {
         const draws = data.cards || (data.card ? [data.card] : []);
-        el('ownedPackResult').innerHTML = `<h4>${draws.length} cartas conseguidas</h4><div class="owned-pack-cards">${draws.map(item => {
-          const design = card(item.card_id);
-          return `<article class="owned-pack-card">${design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}" loading="lazy" decoding="async">` : ''}<h5>${escape(design?.name || item.card_id)}</h5><p>${escape(rarityNames[item.edition] || item.edition)}${Number(item.quantity) > 1 ? ' · Repetida' : ' · Nueva'}</p></article>`;
-        }).join('')}</div>`;
+        el('ownedPackResult').textContent = `${draws.length} cartas guardadas en tu colección.`;
+        startReveal(draws);
         await options.synchronizePacks?.(true);
         if (token !== generation || user !== options.session()) return;
       }
+      if (name === 'discard_duplicate_card' || name === 'discard_all_duplicate_cards') {
+        const earned = Number(data.coins_earned) || 0;
+        const copies = name === 'discard_all_duplicate_cards' ? Number(data.copies_discarded) || 0 : 1;
+        message = `${copies} ${copies === 1 ? 'carta repetida descartada' : 'cartas repetidas descartadas'} · +${earned} ${earned === 1 ? 'moneda' : 'monedas'}.`;
+      }
       notice = message;
       await refresh();
-    } catch (error) { if (token === generation) failure = errorMessage(error); }
+    } catch (error) { if (token === generation) {state = null; const message = errorMessage(error); await refresh(); if (token === generation) failure = `${message} Comprueba el saldo actualizado antes de repetir la acción.`;} }
     finally {if (token === generation) {busy = false; render();
       const destination = [...document.querySelectorAll('[data-discard-card], [data-banner-id]')].find(button => !button.disabled && ((focusCard && button.dataset.discardCard === focusCard) || (focusBanner && button.dataset.bannerId === focusBanner)));
-      if (destination) destination.focus({preventScroll:true});
+      if (revealDialog.open) revealDialog.querySelector('[data-reveal-next]')?.focus({preventScroll:true});
+      else if (el('duplicatesDialog').open && focusCard) (destination || el('discardAllDuplicates')).focus({preventScroll:true});
+      else if (destination) destination.focus({preventScroll:true});
       else if (focusCard) el('ownedInventoryTitle')?.focus({preventScroll:true});
     }}
   }
@@ -143,9 +199,12 @@
       if (event.target.closest('[data-banner-shop]')) {el('bannerShopDialog').showModal(); void refresh();}
       const banner = event.target.closest('[data-banner-action]');
       if (banner) void mutate(banner.dataset.bannerAction === 'buy' ? 'buy_profile_banner' : 'equip_profile_banner', {target_banner_id:banner.dataset.bannerId}, banner.dataset.bannerAction === 'buy' ? 'Banner comprado. Ya puedes equiparlo.' : 'Banner equipado en la cabecera de tu perfil.');
+      if (event.target.closest('[data-duplicates-open]')) {el('duplicatesDialog').showModal(); void refresh();}
+      if (event.target.closest('[data-duplicates-close]')) el('duplicatesDialog').close();
       const discard = event.target.closest('[data-discard-card]');
       if (discard) void mutate('discard_duplicate_card', {target_card_id:discard.dataset.discardCard,copies:1}, 'Carta repetida descartada. Monedas añadidas a tu cuenta.');
     });
+    el('discardAllDuplicates').addEventListener('click', () => void mutate('discard_all_duplicate_cards', {}, 'Todas las repetidas descartadas. Monedas añadidas a tu cuenta.'));
     el('bannerShopClose').addEventListener('click', () => el('bannerShopDialog').close());
     el('bannerShopRefresh').addEventListener('click', () => void refresh());
     el('ownedInventoryRefresh').addEventListener('click', () => void refresh());
@@ -159,6 +218,7 @@
   function reset() {
     generation++; state = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear();
     globalThis.CardAlbum?.reset();
+    revealDialog.close(); el('duplicatesDialog')?.close();
     el('bannerShopDialog')?.close(); if (el('ownedPackResult')) el('ownedPackResult').replaceChildren(); render();
   }
   globalThis.BannerShop = Object.freeze({initialize, refresh, mountProfile, reset});

@@ -10,6 +10,9 @@
 --   {pack_id,cards:[{card_id,edition,kind,quantity}],balance}; seis cartas; NULL abre el más antiguo.
 -- discard_duplicate_card(target_card_id text,copies integer DEFAULT 1):
 --   {card_id,quantity,coins_earned,balance}; conserva siempre una copia.
+-- discard_all_duplicate_cards():
+--   {copies_discarded,cards_affected,coins_earned,balance,cards:[{card_id,quantity,copies_discarded,coins_earned}]};
+--   conserva una copia de cada carta; sin repetidas devuelve ceros y cards:[].
 -- buy_profile_banner(target_banner_id text): {banner_id,owned:true,purchased,balance}
 -- equip_profile_banner(target_banner_id text DEFAULT NULL): {equipped_banner_id}; NULL quita el banner.
 -- get_member_profile_banner(target_user_id uuid): {id,name,description,art_key} o null.
@@ -200,6 +203,51 @@ begin
 end;
 $$;
 
+-- The wallet lock serializes this batch with single discards, pack openings and
+-- purchases. Repeating the call without new cards is a no-op, never a second payout.
+create or replace function public.discard_all_duplicate_cards()
+returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  actor uuid := public.lock_banner_shop_actor();
+  duplicate record;
+  discarded integer;
+  earned bigint;
+  total_earned bigint := 0;
+  total_copies bigint := 0;
+  affected integer := 0;
+  new_balance bigint;
+  discarded_cards jsonb := '[]'::jsonb;
+begin
+  select balance into new_balance from public.member_coin_wallets where user_id=actor;
+  for duplicate in
+    select i.card_id,i.quantity,
+      case c.edition when 'common' then 1 when 'retro' then 2 when 'special' then 2 when 'epic' then 3 when 'legendary' then 5 end as reward
+    from public.member_card_inventory i
+    join public.achievement_card_catalog c on c.id=i.card_id
+    where i.user_id=actor and i.quantity>1
+    order by i.card_id for update of i
+  loop
+    if duplicate.reward is null then raise exception 'La rareza de la carta no tiene un valor de descarte.'; end if;
+    discarded := duplicate.quantity-1;
+    earned := discarded::bigint*duplicate.reward;
+    update public.member_card_inventory set quantity=1 where user_id=actor and card_id=duplicate.card_id;
+    new_balance := new_balance+earned;
+    insert into public.member_coin_ledger(user_id,delta,balance_after,reason,item_id,copies)
+      values (actor,earned,new_balance,'duplicate_discard',duplicate.card_id,discarded);
+    total_earned := total_earned+earned;
+    total_copies := total_copies+discarded;
+    affected := affected+1;
+    discarded_cards := discarded_cards || jsonb_build_array(jsonb_build_object(
+      'card_id',duplicate.card_id,'quantity',1,'copies_discarded',discarded,'coins_earned',earned));
+  end loop;
+  if affected>0 then
+    update public.member_coin_wallets set balance=new_balance where user_id=actor;
+  end if;
+  return jsonb_build_object('copies_discarded',total_copies,'cards_affected',affected,
+    'coins_earned',total_earned,'balance',new_balance,'cards',discarded_cards);
+end;
+$$;
+
 create or replace function public.buy_profile_banner(target_banner_id text)
 returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
 declare
@@ -254,10 +302,10 @@ end;
 $$;
 
 revoke all on function public.get_banner_shop_state(), public.open_owned_card_pack(bigint),
-  public.discard_duplicate_card(text,integer), public.buy_profile_banner(text),
+  public.discard_duplicate_card(text,integer), public.discard_all_duplicate_cards(), public.buy_profile_banner(text),
   public.equip_profile_banner(text), public.get_member_profile_banner(uuid) from public, anon, authenticated;
 grant execute on function public.get_banner_shop_state(), public.open_owned_card_pack(bigint),
-  public.discard_duplicate_card(text,integer), public.buy_profile_banner(text),
+  public.discard_duplicate_card(text,integer), public.discard_all_duplicate_cards(), public.buy_profile_banner(text),
   public.equip_profile_banner(text), public.get_member_profile_banner(uuid) to authenticated;
 notify pgrst, 'reload schema';
 commit;

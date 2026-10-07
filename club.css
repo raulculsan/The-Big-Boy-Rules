@@ -416,3 +416,15 @@ body.authenticated .club-calendar-page .calendar-grid { padding: 10px 0; border:
   .club-home .club-dashboard { grid-template-columns: minmax(0, 1fr); }
   .club-welcome { align-items: flex-start; flex-direction: column; }
 }
+
+/* Compact identity stays aligned with the profile header. */
+.club-profile-identity{position:relative;flex-direction:row;flex-wrap:wrap;justify-content:flex-start;align-items:center;text-align:left;gap:12px;margin:18px 0 10px}
+.club-profile-copy{flex:1;min-width:0}
+.club-profile-identity h2{margin:3px 0 5px;font-size:clamp(22px,4vw,28px)}
+.club-profile-handle,.club-profile-role{font-size:11px}
+.club-profile-nickname,.club-profile-bio{text-align:left;margin:5px 0;max-width:620px;font-size:13px;line-height:1.45}
+.club-profile .profile-tags{justify-content:flex-start;margin:9px 0 0;gap:6px}
+.club-profile-identity .profile-edit-compact{flex:none;min-width:0;min-height:34px;padding:7px 11px;font-size:11px;border-radius:10px}
+.club-profile-bottom{justify-content:flex-start;margin-top:10px}
+.club-profile .profile-actions{justify-content:flex-start;width:auto}
+.club-profile-bottom:has(.profile-actions:empty){display:none}
