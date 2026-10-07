@@ -204,6 +204,38 @@
       if (userId !== options?.session() || !state) void loadMemberBanner(userId);
     });
   }
+  function renderEditor() {
+    const settings = el('profileBannerSettings');
+    if (!settings || settings.hidden) return;
+    const picker = el('profileBannerPicker'), list = el('profileBannerOptions');
+    if (state) {
+      const owned = (state.banners || []).filter(banner => banner.owned);
+      const selected = owned.find(banner => banner.id === state.equipped_banner_id);
+      el('profileBannerSelection').textContent = selected?.name || 'Sin banner';
+      const signature = JSON.stringify([state.equipped_banner_id, owned]);
+      if (list.dataset.signature !== signature) {
+        list.dataset.signature = signature;
+        list.innerHTML = `<button type="button" class="profile-banner-option" data-profile-banner="" data-banner-id="" aria-pressed="${!state.equipped_banner_id}"><div class="profile-banner-empty" aria-hidden="true">BB</div><span>Sin banner</span></button>` + owned.map(banner => `<button type="button" class="profile-banner-option" data-profile-banner="${escape(banner.id)}" data-banner-id="${escape(banner.id)}" aria-pressed="${banner.id === state.equipped_banner_id}">${artwork(banner)}<span>${escape(banner.name)}</span></button>`).join('');
+      }
+    }
+    list.querySelectorAll('button').forEach(button => {button.disabled = busy || loading || !state || !online();});
+    picker.setAttribute('aria-busy', String(busy || loading));
+    el('profileBannerStatus').textContent = failure || (busy ? 'Aplicando banner…' : loading ? 'Cargando tus banners…' : !online() ? 'Conéctate para elegir tu banner.' : notice || (state && !(state.banners || []).some(banner => banner.owned) ? 'Todavía no tienes banners comprados.' : ''));
+    el('profileBannerRetry').hidden = !failure && (loading || !!state);
+    el('profileBannerRetry').disabled = busy || loading || !online();
+  }
+  function openEditor(own) {
+    el('profileBannerSettings').hidden = !own;
+    el('profileBannerPicker').hidden = true;
+    el('profileBannerToggle').setAttribute('aria-expanded', 'false');
+    failure = ''; notice = '';
+    if (own) {renderEditor(); void refresh();}
+  }
+  function closeEditor() {
+    el('profileBannerSettings').hidden = true;
+    el('profileBannerPicker').hidden = true;
+    el('profileBannerToggle').setAttribute('aria-expanded', 'false');
+  }
   function render() {
     if (state && options?.session()) {
       const userId = options.session();
@@ -213,6 +245,7 @@
     paintProfile();
     paintMembers();
     renderReveal();
+    renderEditor();
     document.querySelectorAll('[data-duplicates-count]').forEach(node => {node.textContent = state ? extraCopies() : '—'; node.closest('button')?.setAttribute('aria-label', `Gestionar ${state ? extraCopies() : ''} cartas repetidas`);});
     if (el('discardAllDuplicates')) el('discardAllDuplicates').disabled = busy || loading || !extraCopies() || !online();
     if (el('duplicatesStatus')) el('duplicatesStatus').textContent = failure || notice || (loading ? 'Actualizando repetidas…' : state ? `${extraCopies()} copias repetidas. Conservas una de cada carta.` : 'Actualiza la colección para consultar las repetidas.');
@@ -257,6 +290,7 @@
     const revealAtStart = reveal;
     const focusCard = focus?.dataset?.discardCard;
     const focusBanner = focus?.dataset?.bannerId;
+    const focusProfileBanner = focus?.dataset?.profileBanner;
     busy = true; failure = ''; notice = ''; render();
     try {
       const data = await rpc(name, args);
@@ -281,7 +315,12 @@
     } catch (error) { if (token === generation) {state = null; const message = errorMessage(error); await refresh(); if (token === generation) failure = `${message} Comprueba el saldo actualizado antes de repetir la acción.`;} }
     finally {if (token === generation) {busy = false; render();
       const destination = [...document.querySelectorAll('[data-discard-card], [data-banner-id]')].find(button => !button.disabled && ((focusCard && button.dataset.discardCard === focusCard) || (focusBanner && button.dataset.bannerId === focusBanner)));
-      if (revealDialog.open) revealDialog.querySelector('[data-reveal-flip]')?.focus({preventScroll:true});
+      if (focusProfileBanner !== undefined) {
+        if (!el('profileBannerSettings').hidden && !el('profileBannerPicker').hidden) {
+          const option = [...el('profileBannerOptions').querySelectorAll('[data-profile-banner]')].find(button => button.dataset.profileBanner === focusProfileBanner);
+          (option && !option.disabled ? option : el('profileBannerToggle')).focus({preventScroll:true});
+        }
+      } else if (revealDialog.open) revealDialog.querySelector('[data-reveal-flip]')?.focus({preventScroll:true});
       else if (el('duplicatesDialog').open && focusCard) (destination || el('discardAllDuplicates')).focus({preventScroll:true});
       else if (destination) destination.focus({preventScroll:true});
       else if (focusCard) el('duplicatesTitle')?.focus({preventScroll:true});
@@ -305,6 +344,11 @@
     globalThis.CardAlbum?.configure({refresh:() => refresh()});
     document.addEventListener('click', event => {
       if (event.target.closest('[data-banner-shop]')) {el('bannerShopDialog').showModal(); void refresh();}
+      const ownedOption = event.target.closest('[data-profile-banner]');
+      if (ownedOption && !el('profileBannerSettings').hidden && !ownedOption.disabled) {
+        const id = ownedOption.dataset.profileBanner || null;
+        if (state && id !== (state.equipped_banner_id || null) && (id === null || state?.banners?.some(banner => banner.id === id && banner.owned))) void mutate('equip_profile_banner', {target_banner_id:id}, id ? 'Banner aplicado a tu perfil.' : 'Banner retirado de tu perfil.');
+      }
       const banner = event.target.closest('[data-banner-action]');
       if (banner) void mutate(banner.dataset.bannerAction === 'buy' ? 'buy_profile_banner' : 'equip_profile_banner', {target_banner_id:banner.dataset.bannerId}, banner.dataset.bannerAction === 'buy' ? 'Banner comprado. Ya puedes equiparlo.' : 'Banner equipado en la cabecera de tu perfil.');
       if (event.target.closest('[data-duplicates-open]')) {el('duplicatesDialog').showModal(); void refresh();}
@@ -313,6 +357,13 @@
       if (discard) void mutate('discard_duplicate_card', {target_card_id:discard.dataset.discardCard,copies:1}, 'Carta repetida descartada. Monedas añadidas a tu cuenta.');
     });
     el('discardAllDuplicates').addEventListener('click', () => void mutate('discard_all_duplicate_cards', {}, 'Todas las repetidas descartadas. Monedas añadidas a tu cuenta.'));
+    el('profileBannerToggle').addEventListener('click', () => {
+      const picker = el('profileBannerPicker');
+      picker.hidden = !picker.hidden;
+      el('profileBannerToggle').setAttribute('aria-expanded', String(!picker.hidden));
+      if (!picker.hidden) {renderEditor(); if (!state && !request) void refresh();}
+    });
+    el('profileBannerRetry').addEventListener('click', () => void refresh());
     el('bannerShopClose').addEventListener('click', () => el('bannerShopDialog').close());
     el('bannerShopRefresh').addEventListener('click', () => void refresh());
     el('bannerUnequip').addEventListener('click', () => void mutate('equip_profile_banner', {target_banner_id:null}, 'Banner retirado de tu perfil.'));
@@ -326,11 +377,15 @@
     render();
   }
   function reset() {
+    closeEditor();
+    el('profileBannerOptions').replaceChildren();
+    delete el('profileBannerOptions').dataset.signature;
+    el('profileBannerSelection').textContent = 'Sin banner';
     generation++; state = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear(); memberBannerRequests.clear(); memberBannerFetchedAt.clear();
     paintMembers(); membersTarget = null;
     globalThis.CardAlbum?.reset();
     revealDialog.close(); el('duplicatesDialog')?.close();
     el('bannerShopDialog')?.close(); if (el('ownedPackResult')) el('ownedPackResult').replaceChildren(); render();
   }
-  globalThis.BannerShop = Object.freeze({initialize, refresh, mountProfile, mountMembers, memberArtwork, artwork, reset});
+  globalThis.BannerShop = Object.freeze({initialize, refresh, openEditor, closeEditor, mountProfile, mountMembers, memberArtwork, artwork, reset});
 })();

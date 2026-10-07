@@ -27,10 +27,10 @@
   <link rel="manifest" href="manifest.webmanifest?v=20260901-125" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="styles.css?v=20261006-157" />
+  <link rel="stylesheet" href="styles.css?v=20261007-193" />
   <link rel="stylesheet" href="club.css?v=20261007-187" />
   <link rel="stylesheet" href="packs.css?v=20261007-192" />
-  <link rel="stylesheet" href="banner-shop.css?v=20261007-187" />
+  <link rel="stylesheet" href="banner-shop.css?v=20261007-193" />
   <link rel="stylesheet" href="album.css?v=20261007-178" />
   <link rel="stylesheet" href="admin-grants.css?v=20261007-176" />
   <link rel="stylesheet" href="achievement-admin.css?v=20260903-135" />
@@ -656,6 +656,15 @@
           <textarea id="profileBio" maxlength="350" rows="5" required></textarea>
           <small><span id="bioCount">0</span>/350</small>
         </label>
+        <section class="profile-banner-settings" id="profileBannerSettings" hidden>
+          <button class="profile-banner-row" id="profileBannerToggle" type="button" aria-expanded="false" aria-controls="profileBannerPicker"><span><strong>Banners</strong><small id="profileBannerSelection">Sin banner</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+          <div id="profileBannerPicker" class="profile-banner-picker" hidden>
+            <p class="profile-banner-help">Elige uno de tus banners comprados. Se aplica al seleccionarlo.</p>
+            <p id="profileBannerStatus" role="status" aria-live="polite"></p>
+            <div id="profileBannerOptions" class="profile-banner-options"></div>
+            <button id="profileBannerRetry" class="text-button" type="button" hidden>Reintentar</button>
+          </div>
+        </section>
         <label>
           <span>Intereses (separados por comas)</span>
           <input id="profileTags" maxlength="120" placeholder="Música, viajes, deporte">
@@ -845,9 +854,9 @@
   <script src="achievement-progress.js?v=20260908-156"></script>
   <script src="achievement-admin.js?v=20260908-156"></script>
   <script src="album.js?v=20261007-184"></script>
-  <script src="banner-shop.js?v=20261007-192"></script>
+  <script src="banner-shop.js?v=20261007-193"></script>
   <script src="admin-grants.js?v=20261007-176"></script>
-  <script src="app.js?v=20261007-192"></script>
+  <script src="app.js?v=20261007-193"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

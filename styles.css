@@ -10095,3 +10095,70 @@ body.authenticated .achievement-emblem {
     touch-action: manipulation;
   }
 }
+
+/* Own profile editor: compact field cards and a full-screen account page. */
+#profileEditor:not(.admin-member-editor) {
+  z-index:2650;
+  display:block;
+  padding:0;
+  overflow:hidden;
+  background:var(--club-paper,#101216);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+#profileEditor:not(.admin-member-editor) .profile-editor-modal {
+  width:100%;
+  height:100dvh;
+  max-height:none;
+  padding:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  border:0;
+  border-radius:0;
+  background:var(--club-paper,#101216);
+  box-shadow:none;
+  overscroll-behavior:contain;
+}
+#profileEditor:not(.admin-member-editor) .modal-heading {
+  position:sticky;
+  top:0;
+  z-index:20;
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr) 44px;
+  align-items:center;
+  min-height:calc(64px + env(safe-area-inset-top,0px));
+  margin:0;
+  padding:max(8px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));
+  border-bottom:1px solid var(--club-line,#ffffff14);
+  background:var(--club-paper,#101216);
+}
+#profileEditor:not(.admin-member-editor) .modal-heading > div { grid-area:1 / 2; text-align:center; min-width:0; }
+#profileEditor:not(.admin-member-editor) .modal-heading .eyebrow { display:none; }
+#profileEditor:not(.admin-member-editor) .modal-heading h2 { margin:0; font:600 17px/1.3 var(--font-body,sans-serif); letter-spacing:-.02em; }
+#profileEditor:not(.admin-member-editor) .profile-editor-back { grid-area:1 / 1; width:44px; height:44px; padding:10px; border:1px solid var(--club-line,#ffffff24); border-radius:50%; background:#25282e; color:var(--club-white,#f1eee7); }
+#profileEditor:not(.admin-member-editor) .profile-form { display:block; width:min(100%,580px); margin:auto; padding:0 max(18px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px)); }
+#profileEditor:not(.admin-member-editor) .avatar-editor { display:flex; flex-direction:column; align-items:center; gap:12px; padding:28px 0; border:0; background:transparent; }
+#profileEditor:not(.admin-member-editor) .avatar-preview { width:96px; height:96px; flex:0 0 96px; border:1px solid #bca46c70; border-radius:50%; box-shadow:none; }
+#profileEditor:not(.admin-member-editor) .avatar-actions { justify-content:center; gap:12px; }
+#profileEditor:not(.admin-member-editor) .avatar-actions .file-button,
+#profileEditor:not(.admin-member-editor) .avatar-actions .text-button { min-height:36px; padding:5px 8px; border:0; background:transparent; color:var(--club-gold,#c4ad7e); box-shadow:none; font-size:13px; font-weight:500; }
+#profileEditor:not(.admin-member-editor) .avatar-actions .danger-text { color:var(--club-muted,#959aa3); }
+#profileEditor:not(.admin-member-editor) .avatar-editor > small { margin:0; color:var(--club-muted,#959aa3); font-size:10px; }
+#profileEditor:not(.admin-member-editor) .profile-form > label,
+#profileEditor:not(.admin-member-editor) .admin-profile-fields > label { display:block; min-height:0; margin:0 0 14px; padding:12px 15px 9px; border:1px solid var(--club-line,#ffffff24); border-radius:14px; background:#ffffff02; }
+#profileEditor:not(.admin-member-editor) .profile-form > label > span,
+#profileEditor:not(.admin-member-editor) .admin-profile-fields > label > span { display:block; margin:0 0 2px; color:var(--club-muted,#959aa3); font-size:12px; font-weight:400; }
+#profileEditor:not(.admin-member-editor) .profile-form > label > :is(input,textarea,select),
+#profileEditor:not(.admin-member-editor) .admin-profile-fields > label > :is(input,select) { width:100%; min-height:34px; margin:0; padding:5px 0; border:0; border-radius:0; background:transparent; color:#f1eee7; box-shadow:none; font:400 15px/1.5 var(--font-body,sans-serif); }
+#profileEditor:not(.admin-member-editor) .profile-form > label > textarea { min-height:80px; resize:vertical; }
+#profileEditor:not(.admin-member-editor) .profile-form label:focus-within { border-color:var(--club-gold,#c4ad7e); }
+#profileEditor:not(.admin-member-editor) .profile-form > label > :is(input,textarea,select):focus,
+#profileEditor:not(.admin-member-editor) .admin-profile-fields > label > :is(input,select):focus { box-shadow:none; }
+#profileEditor:not(.admin-member-editor) .profile-form > label > small,
+#profileEditor:not(.admin-member-editor) .admin-profile-fields > label > small { display:block; margin:4px 0 0; color:var(--club-muted,#959aa3); font-size:10px; line-height:1.5; }
+#profileEditor:not(.admin-member-editor) .admin-profile-fields { display:block; padding:0; border:0; background:transparent; }
+#profileEditor:not(.admin-member-editor) .admin-profile-fields-heading { display:none; }
+#profileEditor:not(.admin-member-editor) .form-feedback { min-height:0; padding:8px 0; font-size:12px; }
+#profileEditor:not(.admin-member-editor) .modal-actions { position:sticky; bottom:0; z-index:18; display:block; margin:12px 0 0; padding:12px 0 max(12px,env(safe-area-inset-bottom,0px)); border:0; background:var(--club-paper,#101216); }
+#profileEditor:not(.admin-member-editor) #cancelProfileEditor { display:none; }
+#profileEditor:not(.admin-member-editor) .modal-actions .primary-button { width:100%; min-height:46px; border-radius:14px; }

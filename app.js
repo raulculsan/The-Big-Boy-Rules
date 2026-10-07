@@ -3069,6 +3069,7 @@ function openProfileEditor(memberId = currentUser?.id) {
   preview.innerHTML = profile.avatarUrl ? `<img src="${escapeHtml(profile.avatarUrl)}" alt="">` : profile.name.charAt(0);
   const modal = document.getElementById("profileEditor");
   modal.classList.toggle("admin-member-editor", managingAnotherUser);
+  globalThis.BannerShop?.openEditor(!managingAnotherUser);
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("profile-editor-open");
@@ -3081,6 +3082,7 @@ function closeProfileEditor() {
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("profile-editor-open");
   editingProfileId = null;
+  globalThis.BannerShop?.closeEditor();
   resetAvatarCropEditor();
 }
 
