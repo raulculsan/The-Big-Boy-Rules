@@ -6,6 +6,7 @@
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);
   const online = () => navigator.onLine !== false && !!options?.session();
+  const rarityNames = {common:'Común',retro:'Retro',special:'Especial',epic:'Épica',legendary:'Legendaria'};
   const coins = () => state ? `${state.balance} monedas` : '— monedas';
   function errorMessage(error) {
     if (navigator.onLine === false) return 'Sin conexión. Conéctate para actualizar tu colección y tus monedas.';
@@ -45,6 +46,7 @@
     if (el('ownedPackOpen')) el('ownedPackOpen').disabled = busy || loading || !state?.available_packs?.length || !online();
     if (el('ownedPacksCount')) el('ownedPacksCount').textContent = state ? `${state.available_packs.length} sobres disponibles` : 'Colección pendiente de sincronización';
     if (el('inventoryStatus')) el('inventoryStatus').textContent = failure || notice || (loading ? 'Actualizando colección…' : 'Conservas una copia de cada carta. Puedes descartar las repetidas para conseguir monedas.');
+    if (el('packRarityOdds')) el('packRarityOdds').textContent = state?.rarity_probabilities ? Object.keys(rarityNames).filter(rarity => state.rarity_probabilities[rarity] != null).map(rarity => `${rarityNames[rarity]}: ${state.rarity_probabilities[rarity]}%`).join(' · ') : 'Actualiza para consultar las probabilidades.';
     const container = el('bannerShopItems');
     if (container) container.innerHTML = state ? (state.banners || []).map(banner => `<article class="banner-shop-item">${artwork(banner)}<h3>${escape(banner.name)}</h3><p>${escape(banner.description)}</p><span>${banner.owned ? 'En tu colección' : `${escape(banner.price)} ${Number(banner.price) === 1 ? 'moneda' : 'monedas'}`}</span><button class="packs-sync" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></article>`).join('') : '<p>Actualiza para consultar los banners disponibles.</p>';
     if (el('bannerUnequip')) el('bannerUnequip').disabled = busy || loading || !state?.equipped_banner_id || !online();
@@ -84,8 +86,11 @@
       // A successful spend invalidates the old wallet until the server refreshes it.
       state = null;
       if (name === 'open_owned_card_pack') {
-        const design = card(data.card?.card_id);
-        el('ownedPackResult').innerHTML = `<h4>Has conseguido ${escape(design?.name || data.card?.card_id)}</h4>${design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}">` : ''}`;
+        const draws = data.cards || (data.card ? [data.card] : []);
+        el('ownedPackResult').innerHTML = `<h4>${draws.length} cartas conseguidas</h4><div class="owned-pack-cards">${draws.map(item => {
+          const design = card(item.card_id);
+          return `<article class="owned-pack-card">${design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}" loading="lazy" decoding="async">` : ''}<h5>${escape(design?.name || item.card_id)}</h5><p>${escape(rarityNames[item.edition] || item.edition)}${Number(item.quantity) > 1 ? ' · Repetida' : ' · Nueva'}</p></article>`;
+        }).join('')}</div>`;
         await options.synchronizePacks?.(true);
         if (token !== generation || user !== options.session()) return;
       }
@@ -124,7 +129,7 @@
     el('bannerShopRefresh').addEventListener('click', () => void refresh());
     el('ownedInventoryRefresh').addEventListener('click', () => void refresh());
     el('bannerUnequip').addEventListener('click', () => void mutate('equip_profile_banner', {target_banner_id:null}, 'Banner retirado de tu perfil.'));
-    el('ownedPackOpen').addEventListener('click', () => void mutate('open_owned_card_pack', {}, 'Sobre abierto y carta guardada en tu colección.'));
+    el('ownedPackOpen').addEventListener('click', () => void mutate('open_owned_card_pack', {}, 'Sobre abierto. Todas las cartas se han guardado en tu colección.'));
     el('bannerShopInventory').addEventListener('click', () => {el('bannerShopDialog').close(); options.openInventory(); el('ownedInventoryTitle')?.focus();});
     window.addEventListener('online', () => {if (options.session()) void refresh();});
     window.addEventListener('offline', render);

@@ -7,14 +7,14 @@
 --   banners:[{id,name,description,art_key,price,owned,equipped}],equipped_banner_id,
 --   discard_rewards:{common:1,retro:2,special:2,epic:3,legendary:5}}
 -- open_owned_card_pack(target_pack_id bigint DEFAULT NULL):
---   {pack_id,card:{card_id,edition,kind,quantity},balance}; NULL abre el más antiguo.
+--   {pack_id,cards:[{card_id,edition,kind,quantity}],balance}; seis cartas; NULL abre el más antiguo.
 -- discard_duplicate_card(target_card_id text,copies integer DEFAULT 1):
 --   {card_id,quantity,coins_earned,balance}; conserva siempre una copia.
 -- buy_profile_banner(target_banner_id text): {banner_id,owned:true,purchased,balance}
 -- equip_profile_banner(target_banner_id text DEFAULT NULL): {equipped_banner_id}; NULL quita el banner.
 -- get_member_profile_banner(target_user_id uuid): {id,name,description,art_key} o null.
 -- Errores RPC no modifican nada. Comprar de nuevo es idempotente; abrir un sobre
--- ya abierto devuelve error y nunca concede otra carta. El cliente debe recargar
+-- ya abierto devuelve error y nunca concede más cartas. El cliente debe recargar
 -- estado tras una respuesta de red ambigua antes de reintentar descartes.
 begin;
 
@@ -64,6 +64,23 @@ create table if not exists public.member_pack_card_awards (
   created_at timestamptz not null default clock_timestamp()
 );
 
+-- Preserve previous one-card pack records as draw 1; future packs record six draws.
+alter table public.member_pack_card_awards add column if not exists draw_index integer not null default 1;
+alter table public.member_pack_card_awards drop constraint if exists member_pack_card_awards_pkey;
+alter table public.member_pack_card_awards add primary key (pack_id, draw_index);
+do $$ begin
+  if not exists (select 1 from pg_constraint where conrelid='public.member_pack_card_awards'::regclass and conname='member_pack_card_awards_draw_index_check') then
+    alter table public.member_pack_card_awards add constraint member_pack_card_awards_draw_index_check check (draw_index between 1 and 6);
+  end if;
+end $$;
+
+-- Shared odds for every individual draw, independent of how many cards a rarity has.
+create or replace function public.card_pack_rarity_weights()
+returns table (edition text, weight integer) language sql immutable set search_path = public, pg_temp as $$
+  values ('common',70),('retro',12),('special',10),('epic',6),('legendary',2);
+$$;
+revoke all on function public.card_pack_rarity_weights() from public, anon, authenticated;
+
 -- No direct table grants: RLS is an additional boundary; all reads use RPC.
 alter table public.profile_banner_catalog enable row level security;
 alter table public.member_card_inventory enable row level security;
@@ -102,6 +119,11 @@ returns jsonb language plpgsql security definer set search_path = public, pg_tem
 declare actor uuid := public.lock_banner_shop_actor();
 begin
   return jsonb_build_object(
+    'cards_per_pack',6,
+    'rarity_probabilities',coalesce((select jsonb_object_agg(edition,round(100.0*weight/total_weight,2)) from (
+      select w.*,sum(weight) over () as total_weight from public.card_pack_rarity_weights() w
+      where exists (select 1 from public.achievement_card_catalog c where c.active and c.edition=w.edition)
+    ) odds),'{}'::jsonb),
     'balance', (select balance from public.member_coin_wallets where user_id = actor),
     'cards', coalesce((select jsonb_agg(jsonb_build_object('card_id',i.card_id,'quantity',i.quantity,'edition',c.edition,'kind',c.kind) order by i.card_id)
       from public.member_card_inventory i join public.achievement_card_catalog c on c.id = i.card_id where i.user_id = actor),'[]'::jsonb),
@@ -127,23 +149,30 @@ declare
   selected_edition text;
   card public.achievement_card_catalog%rowtype;
   new_quantity integer;
+  draw_number integer;
+  drawn_cards jsonb := '[]'::jsonb;
 begin
   select * into saved_pack from public.card_packs where user_id=actor and opened_at is null
     and (target_pack_id is null or id=target_pack_id) and collection_key='los-nuestros-01'
     order by earned_day,id limit 1 for update;
   if not found then raise exception 'No tienes ese sobre disponible para abrir.'; end if;
-  -- Choose a rarity first (70/12/10/6/2), then a uniform active card in it.
+  -- Each of six independent draws chooses rarity, then a uniform active card.
   -- Empty rarities are excluded and remaining probabilities renormalized.
-  select v.edition into selected_edition from (values ('common',70),('retro',12),('special',10),('epic',6),('legendary',2)) v(edition,weight)
-    where exists (select 1 from public.achievement_card_catalog c where c.active and c.edition=v.edition)
-    order by -ln(greatest(random(),0.000000000001))/v.weight limit 1;
-  select * into card from public.achievement_card_catalog where active and edition=selected_edition order by random() limit 1 for share;
-  if not found then raise exception 'No hay cartas disponibles en la colección.'; end if;
-  insert into public.member_pack_card_awards(pack_id,user_id,card_id) values (saved_pack.id,actor,card.id);
-  insert into public.member_card_inventory(user_id,card_id,quantity) values (actor,card.id,1)
-    on conflict (user_id,card_id) do update set quantity=public.member_card_inventory.quantity+1 returning quantity into new_quantity;
+  -- All inventory writes and pack consumption commit together or roll back together.
+  for draw_number in 1..6 loop
+    select v.edition into selected_edition from public.card_pack_rarity_weights() v
+      where exists (select 1 from public.achievement_card_catalog c where c.active and c.edition=v.edition)
+      order by -ln(greatest(random(),0.000000000001))/v.weight limit 1;
+    select * into card from public.achievement_card_catalog where active and edition=selected_edition order by random() limit 1 for share;
+    if not found then raise exception 'No hay cartas disponibles en la colección.'; end if;
+    insert into public.member_pack_card_awards(pack_id,draw_index,user_id,card_id) values (saved_pack.id,draw_number,actor,card.id);
+    insert into public.member_card_inventory(user_id,card_id,quantity) values (actor,card.id,1)
+      on conflict (user_id,card_id) do update set quantity=public.member_card_inventory.quantity+1 returning quantity into new_quantity;
+    drawn_cards := drawn_cards || jsonb_build_array(jsonb_build_object('card_id',card.id,'edition',card.edition,'kind',card.kind,'quantity',new_quantity));
+  end loop;
   update public.card_packs set opened_at=clock_timestamp() where id=saved_pack.id;
-  return jsonb_build_object('pack_id',saved_pack.id,'card',jsonb_build_object('card_id',card.id,'edition',card.edition,'kind',card.kind,'quantity',new_quantity),
+  -- Keep the first-card field for clients still running the previous bundle.
+  return jsonb_build_object('pack_id',saved_pack.id,'cards',drawn_cards,'card',drawn_cards->0,
     'balance',(select balance from public.member_coin_wallets where user_id=actor));
 end;
 $$;

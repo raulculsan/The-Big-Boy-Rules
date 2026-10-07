@@ -30,7 +30,7 @@
   <link rel="stylesheet" href="styles.css?v=20261006-157" />
   <link rel="stylesheet" href="club.css?v=20261006-157" />
   <link rel="stylesheet" href="packs.css?v=20260905-154" />
-  <link rel="stylesheet" href="banner-shop.css?v=20261007-173" />
+  <link rel="stylesheet" href="banner-shop.css?v=20261007-175" />
   <link rel="stylesheet" href="achievement-admin.css?v=20260903-135" />
   <link rel="stylesheet" href="chat.css?v=20261006-157" />
 </head>
@@ -208,7 +208,7 @@
           </section>
           <section class="owned-inventory" aria-labelledby="ownedInventoryTitle"><h3 id="ownedInventoryTitle" tabindex="-1">Mis cartas</h3><p id="inventoryStatus" role="status"></p><button class="packs-sync" id="ownedInventoryRefresh" type="button">Actualizar colección</button><div id="ownedCardInventory" class="owned-card-inventory"></div></section>
           <div class="packs-rules"><p><strong>Entra y suma.</strong> Tu primer acceso del día añade un sobre automáticamente, aunque mantengas la sesión iniciada.</p><p><strong>A tu ritmo.</strong> Se acumulan sin caducar. Si no entras un día, no pierdes los que ya tienes.</p></div>
-          <div class="packs-coming"><span>TU COLECCIÓN</span><strong>Abre, colecciona y personaliza.</strong><p>Cada sobre guardado contiene una carta. Las repetidas se pueden descartar para conseguir monedas y comprar banners para tu perfil.</p></div>
+          <div class="packs-coming"><span>TU COLECCIÓN</span><strong>Abre, colecciona y personaliza.</strong><p>Cada sobre guardado contiene 6 cartas. Cada carta tiene su propia probabilidad de rareza. Las repetidas se pueden descartar para conseguir monedas y comprar banners para tu perfil.</p><p id="packRarityOdds" class="pack-rarity-odds">Actualiza para consultar las probabilidades.</p></div>
         </div>
       </div>
       <section class="collection-catalog" aria-labelledby="collectionCatalogTitle">
@@ -857,7 +857,7 @@
   <script src="card-collection.js?v=20261007-172"></script>
   <script src="achievement-progress.js?v=20260908-156"></script>
   <script src="achievement-admin.js?v=20260908-156"></script>
-  <script src="banner-shop.js?v=20261007-173"></script>
+  <script src="banner-shop.js?v=20261007-175"></script>
   <script src="app.js?v=20261007-173"></script>
   <script>
     if ("serviceWorker" in navigator) {
