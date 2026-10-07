@@ -2,6 +2,8 @@
 (() => {
   let options, state = null, busy = false, loading = false, failure = '', notice = '', generation = 0, request = null, profileTarget = null;
   const memberBanners = new Map();
+  const memberBannerRequests = new Map(), memberBannerFetchedAt = new Map();
+  let membersTarget = null;
   let reveal = null, swipe = null, suppressRevealClickUntil = 0;
   const revealDialog = document.createElement('dialog');
   revealDialog.className = 'pack-reveal-dialog';
@@ -148,8 +150,61 @@
       node.querySelector('[data-banner-shop]')?.setAttribute('aria-label', `Abrir tienda de banners. ${coins()}`);
     }
   }
+  function memberBanner(userId) {
+    if (userId && userId === options?.session() && state) {
+      return state.banners?.find(item => item.id === state.equipped_banner_id) || null;
+    }
+    return memberBanners.get(userId) || null;
+  }
+  function memberArtwork(userId) {
+    return artwork(memberBanner(userId), 'member-banner-art');
+  }
+  function paintMembers() {
+    if (!membersTarget?.isConnected) return;
+    membersTarget.querySelectorAll('[data-member-banner-user]').forEach(node => {
+      const banner = memberBanner(node.dataset.memberBannerUser);
+      const key = banner?.id || '';
+      const surface = node.querySelector('.club-member-banner');
+      if (surface && (surface.dataset.bannerId !== key || !surface.firstElementChild)) {
+        surface.innerHTML = artwork(banner, 'member-banner-art');
+        surface.dataset.bannerId = key;
+      }
+    });
+  }
+  function loadMemberBanner(userId, force = false) {
+    if (!userId || !online()) return Promise.resolve();
+    if (memberBannerRequests.has(userId)) return memberBannerRequests.get(userId);
+    if (!force && Date.now() - (memberBannerFetchedAt.get(userId) || 0) < 60000) return Promise.resolve();
+    const token = generation, session = options.session();
+    const pending = rpc('get_member_profile_banner', {target_user_id:userId}).then(data => {
+      if (token !== generation || session !== options.session()) return;
+      memberBanners.set(userId, data);
+      memberBannerFetchedAt.set(userId, Date.now());
+      paintProfile(); paintMembers();
+    }).catch(() => {
+      // Keep the last good artwork and avoid retrying on every UI render.
+      if (token === generation && session === options.session()) memberBannerFetchedAt.set(userId, Date.now());
+    }).finally(() => {
+      if (memberBannerRequests.get(userId) === pending) memberBannerRequests.delete(userId);
+    });
+    memberBannerRequests.set(userId, pending);
+    return pending;
+  }
+  function mountMembers(node) {
+    membersTarget = node;
+    paintMembers();
+    new Set([...node.querySelectorAll('[data-member-banner-user]')].map(item => item.dataset.memberBannerUser)).forEach(userId => {
+      if (userId !== options?.session() || !state) void loadMemberBanner(userId);
+    });
+  }
   function render() {
+    if (state && options?.session()) {
+      const userId = options.session();
+      memberBanners.set(userId, state.banners?.find(item => item.id === state.equipped_banner_id) || null);
+      memberBannerFetchedAt.set(userId, Date.now());
+    }
     paintProfile();
+    paintMembers();
     renderReveal();
     document.querySelectorAll('[data-duplicates-count]').forEach(node => {node.textContent = state ? extraCopies() : '—'; node.closest('button')?.setAttribute('aria-label', `Gestionar ${state ? extraCopies() : ''} cartas repetidas`);});
     if (el('discardAllDuplicates')) el('discardAllDuplicates').disabled = busy || loading || !extraCopies() || !online();
@@ -236,8 +291,7 @@
       if (!state && !request) void refresh();
     } else if (userId) {
       paintProfile();
-      const token = generation;
-      void rpc('get_member_profile_banner', {target_user_id:userId}).then(data => {if (token === generation) {memberBanners.set(userId, data); paintProfile();}}).catch(() => {});
+      void loadMemberBanner(userId, true);
     }
   }
   function initialize(config) {
@@ -258,15 +312,19 @@
     el('bannerUnequip').addEventListener('click', () => void mutate('equip_profile_banner', {target_banner_id:null}, 'Banner retirado de tu perfil.'));
     el('ownedPackOpen').addEventListener('click', () => void mutate('open_owned_card_pack', {}, 'Sobre abierto. Todas las cartas se han guardado en tu colección.'));
     el('bannerShopInventory').addEventListener('click', () => {el('bannerShopDialog').close(); if (globalThis.CardAlbum) globalThis.CardAlbum.open(el('bannerShopInventory')); else {options.openInventory(); el('packsTitle')?.focus();}});
-    window.addEventListener('online', () => {if (options.session()) void refresh();});
+    window.addEventListener('online', () => {
+      if (options.session()) void refresh();
+      if (membersTarget?.isConnected) mountMembers(membersTarget);
+    });
     window.addEventListener('offline', render);
     render();
   }
   function reset() {
-    generation++; state = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear();
+    generation++; state = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear(); memberBannerRequests.clear(); memberBannerFetchedAt.clear();
+    paintMembers(); membersTarget = null;
     globalThis.CardAlbum?.reset();
     revealDialog.close(); el('duplicatesDialog')?.close();
     el('bannerShopDialog')?.close(); if (el('ownedPackResult')) el('ownedPackResult').replaceChildren(); render();
   }
-  globalThis.BannerShop = Object.freeze({initialize, refresh, mountProfile, reset});
+  globalThis.BannerShop = Object.freeze({initialize, refresh, mountProfile, mountMembers, memberArtwork, artwork, reset});
 })();

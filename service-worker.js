@@ -1,9 +1,9 @@
-const CACHE_NAME = "big-boy-rules-v186";
+const CACHE_NAME = "big-boy-rules-v187";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css?v=20261006-157",
-  "./club.css?v=20261007-178",
+  "./club.css?v=20261007-187",
   "./achievement-admin.css?v=20260903-135",
   "./achievement-progress.js?v=20260908-156",
   "./achievement-admin.js?v=20260908-156",
@@ -13,13 +13,13 @@ const APP_SHELL = [
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20260903-130",
-  "./app.js?v=20261007-178",
+  "./app.js?v=20261007-187",
   "./album.js?v=20261007-184",
   "./album.css?v=20261007-178",
   "./admin-grants.js?v=20261007-176",
   "./admin-grants.css?v=20261007-176",
-  "./banner-shop.js?v=20261007-186",
-  "./banner-shop.css?v=20261007-186",
+  "./banner-shop.js?v=20261007-187",
+  "./banner-shop.css?v=20261007-187",
   "./icons/banners/miguel-moto-rider-v2.png",
   "./icons/banners/miguel-moto-city-v1.png",
   "./icons/banners/miguel-moto-clouds-v1.png",

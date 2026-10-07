@@ -881,11 +881,13 @@ function renderFeatured() {
 }
 
 function renderMembers() {
-  document.getElementById("membersGrid").innerHTML = members.filter(member => !member.hidden).map(member => `
-    <button class="club-member" type="button" data-profile="${member.id}">
-      ${getAvatar(member)}
-      <span><strong>${escapeHtml(member.name)}</strong><small>@${escapeHtml(member.username)}</small></span>
+  const grid = document.getElementById("membersGrid");
+  grid.innerHTML = members.filter(member => !member.hidden).map(member => `
+    <button class="club-member" type="button" data-profile="${member.id}" data-member-banner-user="${escapeHtml(member.authId || '')}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
+      <div class="club-member-hero"><div class="club-member-banner" aria-hidden="true">${globalThis.BannerShop?.memberArtwork(member.authId) || ''}</div>${getAvatar(member)}</div>
+      <span class="club-member-identity"><strong>${escapeHtml(member.name)}</strong><small>@${escapeHtml(member.username)}</small></span>
     </button>`).join("");
+  globalThis.BannerShop?.mountMembers(grid);
 }
 
 function memberDisplayNumber(member) {

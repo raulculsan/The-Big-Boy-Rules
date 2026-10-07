@@ -92,8 +92,13 @@ body.authenticated .club-dashboard > .panel { min-width: 0; margin: 0; padding: 
 .club-dashboard iframe { display: block; width: 100%; border: 0; border-radius: 14px; }
 .club-home .home-members-section { margin-top: 32px; }
 .club-home .members-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.club-member { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 14px; border: 1px solid var(--club-line); border-radius: 16px; text-align: left; background: #101317; color: #eceef1; }
-.club-member .avatar { flex: 0 0 42px; width: 42px; height: 42px; }
+.club-member { display: flex; flex-direction: column; align-items: stretch; gap: 0; min-width: 0; padding: 0; overflow: hidden; border: 1px solid var(--club-line); border-radius: 16px; text-align: left; background: #101317; color: #eceef1; cursor: pointer; }
+.club-member-hero { position: relative; isolation: isolate; height: 118px; margin-bottom: 20px; }
+.club-member-banner { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(135deg, #252a34, #171c22 65%, #403522); }
+.club-member .club-member-hero .avatar { position: absolute; z-index: 3; left: 12px; bottom: -18px; flex: none; width: 52px; height: 52px; min-width: 52px; max-width: 52px; min-height: 52px; max-height: 52px; aspect-ratio: 1; box-sizing: border-box; overflow: hidden; border: 3px solid #101317; border-radius: 50%; outline: 1px solid #d9b66755; box-shadow: 0 3px 10px #0005; }
+.club-member .club-member-hero .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.club-member-identity { padding: 6px 12px 14px; }
+.club-member:focus-visible { outline: 2px solid #d9b667; outline-offset: 3px; }
 .club-member > span:not(.avatar) { min-width: 0; }
 .club-member strong, .club-member small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .club-member strong { font-size: 13px; font-weight: 600; }
@@ -294,8 +299,9 @@ body.achievement-challenges-open { overflow: hidden; }
   .club-dashboard { gap: 14px; }
   body.authenticated .club-dashboard > .panel { padding: 18px; border-radius: 20px; }
   .club-home .members-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .club-member { gap: 9px; padding: 12px 9px; }
-  .club-member .avatar { width: 36px; height: 36px; flex-basis: 36px; }
+  .club-member { gap: 0; padding: 0; }
+  .club-member-hero { height: 96px; }
+  .club-member-identity { padding-inline: 10px; }
   .club-member strong { font-size: 11px; }
   .club-member small { font-size: 10px; }
   .club-calendar-page .calendar-layout { grid-template-columns: minmax(0, 1fr); gap: 8px; }
