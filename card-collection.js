@@ -226,6 +226,13 @@
       width: 948, height: 1660
     }),
     Object.freeze({
+      id: 'trofeo-champions-legendario', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'TROFEO CHAMPIONS', edition: 'Legendaria',
+      front: 'icons/cards/trofeo-champions-legendario-v1.png',
+      back: 'icons/cards/reverso-legendario-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
       id: 'ticket-de-viaje-a-roma-legendario', collection: 'los-nuestros-01', folder: 'objetos',
       kind: 'Objeto', name: 'TICKET DE VIAJE A ROMA', edition: 'Legendaria',
       front: 'icons/cards/ticket-de-viaje-a-roma-legendario-v1.png',
