@@ -156,6 +156,13 @@
       width: 948, height: 1659
     }),
     Object.freeze({
+      id: 'test-de-embarazo-positivo-comun', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'TEST DE EMBARAZO POSITIVO', edition: 'Común',
+      front: 'icons/cards/test-de-embarazo-positivo-comun-v1.png',
+      back: 'icons/cards/reverso-comun-unificado-v1.png',
+      width: 948, height: 1659
+    }),
+    Object.freeze({
       id: 'la-biblia-epica', collection: 'los-nuestros-01', folder: 'objetos',
       kind: 'Objeto', name: 'LA BIBLIA', edition: 'Épica',
       front: 'icons/cards/la-biblia-epica-v1.png',
