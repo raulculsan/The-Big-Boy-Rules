@@ -110,10 +110,9 @@
     if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); }
     if (el('bannerShopBalance')) el('bannerShopBalance').textContent = coins();
     if (el('bannerShopRefresh')) el('bannerShopRefresh').disabled = busy || loading;
-    if (el('ownedInventoryRefresh')) el('ownedInventoryRefresh').disabled = busy || loading;
     if (el('ownedPackOpen')) el('ownedPackOpen').disabled = busy || loading || !state?.available_packs?.length || !online();
+    if (el('packsOpenHint')) el('packsOpenHint').textContent = busy || loading ? 'Preparando tu colección…' : state?.available_packs?.length ? 'Toca el sobre para abrirlo.' : 'Vuestras historias, por descubrir.';
     if (el('ownedPacksCount')) el('ownedPacksCount').textContent = state ? `${state.available_packs.length} sobres disponibles` : 'Colección pendiente de sincronización';
-    if (el('inventoryStatus')) el('inventoryStatus').textContent = failure || notice || (loading ? 'Actualizando colección…' : 'Conservas una copia de cada carta. Puedes descartar las repetidas para conseguir monedas.');
     if (el('packRarityOdds')) el('packRarityOdds').textContent = state?.rarity_probabilities ? Object.keys(rarityNames).filter(rarity => state.rarity_probabilities[rarity] != null).map(rarity => `${rarityNames[rarity]}: ${state.rarity_probabilities[rarity]}%`).join(' · ') : 'Actualiza para consultar las probabilidades.';
     const container = el('bannerShopItems');
     if (container) container.innerHTML = state ? (state.banners || []).map(banner => `<article class="banner-shop-item">${artwork(banner)}<h3>${escape(banner.name)}</h3><p>${escape(banner.description)}</p><span>${banner.owned ? 'En tu colección' : `${escape(banner.price)} ${Number(banner.price) === 1 ? 'moneda' : 'monedas'}`}</span><button class="packs-sync" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></article>`).join('') : '<p>Actualiza para consultar los banners disponibles.</p>';
@@ -175,7 +174,7 @@
       if (revealDialog.open) revealDialog.querySelector('[data-reveal-next]')?.focus({preventScroll:true});
       else if (el('duplicatesDialog').open && focusCard) (destination || el('discardAllDuplicates')).focus({preventScroll:true});
       else if (destination) destination.focus({preventScroll:true});
-      else if (focusCard) el('ownedInventoryTitle')?.focus({preventScroll:true});
+      else if (focusCard) el('duplicatesTitle')?.focus({preventScroll:true});
     }}
   }
   function mountProfile(node, userId, own) {
@@ -207,10 +206,9 @@
     el('discardAllDuplicates').addEventListener('click', () => void mutate('discard_all_duplicate_cards', {}, 'Todas las repetidas descartadas. Monedas añadidas a tu cuenta.'));
     el('bannerShopClose').addEventListener('click', () => el('bannerShopDialog').close());
     el('bannerShopRefresh').addEventListener('click', () => void refresh());
-    el('ownedInventoryRefresh').addEventListener('click', () => void refresh());
     el('bannerUnequip').addEventListener('click', () => void mutate('equip_profile_banner', {target_banner_id:null}, 'Banner retirado de tu perfil.'));
     el('ownedPackOpen').addEventListener('click', () => void mutate('open_owned_card_pack', {}, 'Sobre abierto. Todas las cartas se han guardado en tu colección.'));
-    el('bannerShopInventory').addEventListener('click', () => {el('bannerShopDialog').close(); if (globalThis.CardAlbum) globalThis.CardAlbum.open(el('bannerShopInventory')); else {options.openInventory(); el('ownedInventoryTitle')?.focus();}});
+    el('bannerShopInventory').addEventListener('click', () => {el('bannerShopDialog').close(); if (globalThis.CardAlbum) globalThis.CardAlbum.open(el('bannerShopInventory')); else {options.openInventory(); el('packsTitle')?.focus();}});
     window.addEventListener('online', () => {if (options.session()) void refresh();});
     window.addEventListener('offline', render);
     render();
