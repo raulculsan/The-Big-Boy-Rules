@@ -210,6 +210,13 @@
       front: 'icons/cards/cubo-de-alitas-kfc-legendario-v1.png',
       back: 'icons/cards/reverso-legendario-unificado-v1.png',
       width: 948, height: 1660
+    }),
+    Object.freeze({
+      id: 'ticket-de-viaje-a-roma-legendario', collection: 'los-nuestros-01', folder: 'objetos',
+      kind: 'Objeto', name: 'TICKET DE VIAJE A ROMA', edition: 'Legendaria',
+      front: 'icons/cards/ticket-de-viaje-a-roma-legendario-v1.png',
+      back: 'icons/cards/reverso-legendario-unificado-v1.png',
+      width: 948, height: 1660
     })
   ]);
   const dialog = document.getElementById('collectionCardDialog');

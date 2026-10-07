@@ -52,7 +52,8 @@ insert into public.achievement_card_catalog(id,edition,kind) values
   ('sombrero-militar-epico','epic','object'),
   ('locker-luca-de-tena-legendario','legendary','object'),
   ('big-mac-legendario','legendary','object'),
-  ('cubo-de-alitas-kfc-legendario','legendary','object')
+  ('cubo-de-alitas-kfc-legendario','legendary','object'),
+  ('ticket-de-viaje-a-roma-legendario','legendary','object')
 on conflict (id) do nothing;
 
 create or replace function public.create_automatic_achievement(
