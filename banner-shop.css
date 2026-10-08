@@ -187,7 +187,23 @@
 
 /* Keep the complete 3:1 artwork above the avatar in narrow member cards.
    A softened backdrop fills the same header area as the motorcycle. */
-.club-member-banner .banner-alberto-galicia{--member-scene-backdrop:url("icons/banners/alberto-galicia-bg-v1.png")}
-.club-member-banner .banner-miguel-basket{--member-scene-backdrop:url("icons/banners/miguel-basket-bano-bg-v1.png")}
-.club-member-banner .banner-alberto-galicia::before,.club-member-banner .banner-miguel-basket::before{content:"";position:absolute;inset:-12px;z-index:-1;background-image:var(--member-scene-backdrop);background-position:center bottom;background-size:cover;filter:blur(12px);opacity:.8}
-.club-member-banner .banner-galicia-fallback,.club-member-banner .banner-basket-fallback{object-position:center top}
+/* Compact bathroom artwork uses a recomposed canvas, not a cropped wide strip. */
+.banner-basket-compact-scene .banner-basket-shot{animation-name:basket-compact-shot}
+.banner-basket-compact-scene .banner-basket-impact{transform-origin:960px 539px}
+@keyframes basket-compact-shot{0%,36.9%{transform:translate(981px,136px) scale(.76);opacity:0}37%{transform:translate(981px,136px) scale(.76);opacity:1}44%{transform:translate(1030px,45px) scale(.82)}51%{transform:translate(1090px,115px) scale(.86)}59%{transform:translate(1030px,325px) scale(.74)}67%{transform:translate(960px,510px) scale(.43);opacity:1}70%,100%{transform:translate(960px,530px) scale(0);opacity:0}}
+@media(prefers-reduced-motion:reduce){.banner-basket-compact .banner-basket-scene{display:block}.banner-basket-compact .banner-basket-pose,.banner-basket-compact .banner-basket-held,.banner-basket-compact .banner-basket-shot,.banner-basket-compact .banner-basket-impact{animation:none;opacity:0}.banner-basket-compact .banner-basket-pose-0{opacity:1}}
+
+.banner-basket-compact{container-type:inline-size}
+.banner-basket-wide-scene{display:none}
+@container(min-width:250px){.banner-basket-compact-scene{display:none}.banner-basket-wide-scene{display:block}}
+@media(prefers-reduced-motion:reduce){.banner-basket-compact .banner-basket-wide-scene{display:none}@container(min-width:250px){.banner-basket-compact .banner-basket-compact-scene{display:none}.banner-basket-compact .banner-basket-wide-scene{display:block}}}
+
+/* Member composition exported from Krita at the mobile tile's aspect ratio. */
+.banner-alberto-member-responsive{container-type:inline-size;background:#8cbd77}
+.banner-alberto-member-responsive>.banner-art{position:absolute;inset:0;width:100%;height:100%;border-radius:0}
+.banner-alberto-member-wide{display:none}
+@container(min-width:250px){.banner-alberto-member-compact{display:none}.banner-alberto-member-wide{display:block}}
+.banner-galicia-member-goat{transform-origin:var(--member-goat-joint);animation:galicia-member-goat var(--graze-duration) ease-in-out infinite;animation-delay:var(--graze-phase)}
+@keyframes galicia-member-goat{0%,100%{transform:rotate(0) scaleY(1)}24%{transform:rotate(.45deg) scaleY(1.009)}42%{transform:rotate(.2deg) scaleY(1.003)}67%{transform:rotate(-.55deg) scaleY(1.014)}86%{transform:rotate(.2deg) scaleY(1.006)}}
+.banner-alberto-member-compact .banner-galicia-bird-flight{animation-name:galicia-member-bird-flight}
+@keyframes galicia-member-bird-flight{0%{transform:translate(-85px,var(--flight-height))}25%{transform:translate(280px,calc(var(--flight-height) - 28px))}50%{transform:translate(650px,calc(var(--flight-height) + 12px))}75%{transform:translate(1020px,calc(var(--flight-height) - 34px))}100%{transform:translate(1390px,var(--flight-height))}}
