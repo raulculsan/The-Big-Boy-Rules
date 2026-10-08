@@ -18,3 +18,17 @@
 @media(max-width:600px){.card-album-header h2{font-size:24px}.card-album-tabs{padding-bottom:12px}.card-album-summary{margin:4px 0}.card-album-navigation{margin:12px 0 8px}.card-album-note{font-size:11px}.card-album-navigation span{font-size:12px}}
 .card-album-header>div:first-child{flex:1;min-width:0}
 .card-album-header .duplicate-cards-trigger{flex:none}
+
+/* Figma collection motion: a leaf folds over the incoming page. */
+.card-album-dialog{height:auto;overflow:hidden}
+.card-album{position:relative;height:auto;min-height:0;max-height:calc(100dvh - 34px);box-sizing:border-box}
+.card-album-leaf{flex:0 1 auto;min-height:0;max-height:none;transform-origin:left center;backface-visibility:hidden}
+.card-album-slots{animation:none}
+.card-album-page-ghost{position:absolute;box-sizing:border-box;z-index:3;pointer-events:none;overflow:hidden;backface-visibility:hidden;box-shadow:18px 4px 32px #0008}
+.card-album-leaf::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#0002,transparent 12%);border-radius:inherit}
+.card-album-leaf{position:relative}
+#cardAlbumStatus:empty{display:none}
+#cardAlbumStatus{height:auto;max-height:2.8em}
+.card-album-summary{min-height:0}
+.card-album-leaf h3{min-height:0}
+@media(prefers-reduced-motion:reduce){.card-album-slots{animation:none}}

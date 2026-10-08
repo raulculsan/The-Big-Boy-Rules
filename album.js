@@ -18,8 +18,15 @@
       return Array.from({length:Math.max(rarity.capacity[index], designs.length)}, (_, position) => ({rarity,kind,design:designs[position] || null}));
     }));
   }
+  let pageAnimations = [], pageGhost = null, pageMotionToken = 0, turning = false, pendingRender = false;
+  const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function stopTurn() {
+    pageMotionToken++; pageAnimations.forEach(animation => animation.cancel()); pageAnimations = [];
+    pageGhost?.remove(); pageGhost = null; turning = false; dialog.style.removeProperty('height');
+  }
   function render() {
     if (!dialog.open) return;
+    if (turning) {pendingRender = true; return;}
     const owned = new Map((inventory || []).map(item => [item.card_id, Number(item.quantity)]));
     const totalPages = Math.ceil(slots.length / 5);
     page = Math.min(page, Math.max(0,totalPages - 1));
@@ -37,8 +44,35 @@
     dialog.querySelector('[data-album-next]').disabled = page >= totalPages - 1;
     dialog.querySelectorAll('[data-album-rarity]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.albumRarity === rarity?.key)));
   }
-  function turn(destination) {page = Math.max(0,Math.min(Math.ceil(slots.length / 5) - 1,destination)); render(); const leaf=document.getElementById('cardAlbumLeaf'); leaf.scrollTop=0; if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) leaf.animate([{opacity:.4,transform:'translateX(8px)'},{opacity:1,transform:'translateX(0)'}],{duration:220,easing:'ease-out'});}
-  function open(trigger) {opener = trigger || document.activeElement; buildSlots(); dialog.showModal(); render(); void refresh?.();}
+  function turn(destination) {
+    const target = Math.max(0,Math.min(Math.ceil(slots.length / 5) - 1,destination));
+    if (target === page || !dialog.open) return;
+    stopTurn();
+    const leaf = document.getElementById('cardAlbumLeaf'), direction = target > page ? 1 : -1;
+    const oldHeight = dialog.getBoundingClientRect().height;
+    const ghost = leaf.cloneNode(true);
+    ghost.removeAttribute('id'); ghost.removeAttribute('aria-labelledby'); ghost.setAttribute('aria-hidden','true'); ghost.inert = true;
+    ghost.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+    ghost.classList.add('card-album-page-ghost');
+    Object.assign(ghost.style,{top:`${leaf.offsetTop}px`,left:`${leaf.offsetLeft}px`,width:`${leaf.offsetWidth}px`,height:`${leaf.offsetHeight}px`,transformOrigin:direction > 0 ? 'left center' : 'right center'});
+    page = target; render(); leaf.scrollTop = 0;
+    leaf.style.transformOrigin = direction > 0 ? 'left center' : 'right center';
+    const newHeight = dialog.getBoundingClientRect().height;
+    if (reducedMotion()) return;
+    dialog.querySelector('.card-album').append(ghost); pageGhost = ghost; turning = true;
+    const token = pageMotionToken;
+    pageAnimations = [
+      ghost.animate([{transform:'perspective(1400px) rotateY(0deg)',opacity:1,filter:'brightness(1)'},{transform:`perspective(1400px) rotateY(${-direction * 87}deg) translateX(${-direction * 68}px)`,opacity:0,filter:'brightness(.5)'}],{duration:280,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'}),
+      leaf.animate([{transform:`perspective(1400px) rotateY(${direction * 85}deg) translateX(${direction * 64}px)`,opacity:.4},{transform:'perspective(1400px) rotateY(0deg) translateX(0)',opacity:1}],{duration:320,delay:240,easing:'cubic-bezier(0,0,.2,1)',fill:'backwards'}),
+      dialog.animate([{height:`${oldHeight}px`},{height:`${newHeight}px`}],{duration:420,easing:'cubic-bezier(.4,0,.2,1)'})
+    ];
+    Promise.all(pageAnimations.map(animation => animation.finished.catch(() => {}))).then(() => {
+      if (token !== pageMotionToken) return;
+      stopTurn(); if (pendingRender) {pendingRender = false; render();}
+    });
+  }
+  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event => {if (event.matches) {stopTurn(); if (pendingRender) {pendingRender = false; render();}}});
+  function open(trigger) {if (dialog.open) return; stopTurn(); opener = trigger || document.activeElement; buildSlots(); dialog.showModal(); render(); void refresh?.();}
   document.addEventListener('click',event => {const trigger = event.target.closest('[data-card-album]'); if (trigger) open(trigger);});
   dialog.addEventListener('click',event => {
     if (event.target.closest('[data-album-close]')) dialog.close();
@@ -52,8 +86,9 @@
   dialog.addEventListener('keydown',event => {if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); turn(page + (event.key === 'ArrowRight' ? 1 : -1));}});
   let touchStart = null;
   dialog.addEventListener('touchstart',event => {touchStart = event.touches.length === 1 ? {x:event.touches[0].clientX,y:event.touches[0].clientY}:null;},{passive:true});
+  dialog.addEventListener('touchcancel',() => {touchStart = null;},{passive:true});
   dialog.addEventListener('touchend',event => {if (!touchStart || !event.changedTouches[0]) return; const dx = event.changedTouches[0].clientX-touchStart.x,dy=event.changedTouches[0].clientY-touchStart.y; touchStart=null; if (Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.5) turn(page+(dx<0?1:-1));},{passive:true});
-  dialog.addEventListener('close',() => {if (opener?.isConnected) opener.focus({preventScroll:true});});
+  dialog.addEventListener('close',() => {stopTurn(); touchStart = null; if (opener?.isConnected) opener.focus({preventScroll:true});});
   window.addEventListener('hashchange',() => dialog.close());
   globalThis.CardAlbum = Object.freeze({icon,open,update(data) {inventory=data.cards; loading=!!data.loading; failure=data.failure || ''; render();},configure(config) {refresh=config.refresh;},reset() {inventory=null; page=0; dialog.close();}});
 })();

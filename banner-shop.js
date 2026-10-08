@@ -18,13 +18,12 @@
     // Keep the turning card intact during wallet refreshes and discards.
     if (revealDialog.dataset.cardIndex !== String(reveal.index)) {
       revealDialog.dataset.cardIndex = String(reveal.index);
-      revealDialog.innerHTML = `<header class="pack-reveal-header"><span>Carta ${reveal.index + 1} de ${reveal.cards.length}</span><button type="button" data-reveal-close aria-label="Cerrar: todas las cartas ya están guardadas">✕</button></header><div class="pack-reveal-stage"><button type="button" class="pack-reveal-card" data-reveal-flip aria-label="Girar carta" aria-pressed="false"><span class="pack-reveal-face pack-reveal-back"><img src="${escape(design?.back || 'icons/cards/reverso-comun-unificado-v1.png')}" alt="Reverso de carta"></span><span class="pack-reveal-face pack-reveal-front" aria-hidden="true"></span></button></div><div class="pack-reveal-info" aria-live="polite"></div><div class="pack-reveal-actions"></div><p class="pack-reveal-status" role="status"></p>`;
+      revealDialog.innerHTML = `<header class="pack-reveal-header"><span>Carta ${reveal.index + 1} de ${reveal.cards.length}</span><button type="button" data-reveal-close aria-label="Cerrar: todas las cartas ya están guardadas">✕</button></header><div class="pack-reveal-stage"><button type="button" class="pack-reveal-card" data-reveal-flip aria-label="Girar carta" aria-pressed="false"><span class="pack-reveal-face pack-reveal-back"><img src="${escape(design?.back || 'icons/cards/reverso-comun-unificado-v1.png')}" alt="Reverso de carta"></span><span class="pack-reveal-face pack-reveal-front" aria-hidden="true">${design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}">` : '<span>Carta guardada</span>'}</span></button></div><div class="pack-reveal-info" aria-live="polite"></div><div class="pack-reveal-actions"></div><p class="pack-reveal-status" role="status"></p>`;
       revealDialog.querySelector('[data-reveal-flip]').focus({preventScroll:true});
     }
     const turn = revealDialog.querySelector('[data-reveal-flip]');
     if (reveal.flipped && !turn.classList.contains('is-flipped')) {
       const front = turn.querySelector('.pack-reveal-front');
-      front.innerHTML = design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}">` : '<span>Carta guardada</span>';
       front.setAttribute('aria-hidden','false');
       turn.querySelector('.pack-reveal-back').setAttribute('aria-hidden','true');
       turn.classList.add('is-flipped'); turn.setAttribute('aria-pressed','true'); turn.setAttribute('aria-label',design?.name || item.card_id);
@@ -33,34 +32,54 @@
     revealDialog.querySelector('.pack-reveal-actions').innerHTML = reveal.flipped ? `${duplicate ? `<button type="button" class="packs-sync" data-reveal-discard ${busy || loading || !online() ? 'disabled' : ''}>Descartar repetida · +${escape(reward)} monedas</button>` : ''}<p class="pack-reveal-swipe-hint">${reveal.index + 1 < reveal.cards.length ? 'Desliza hacia la izquierda para pasar a la siguiente carta' : 'Desliza hacia la izquierda para terminar'}</p>` : '';
     revealDialog.querySelector('.pack-reveal-status').textContent = failure || notice;
   }
+  const revealReduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let revealTimer = 0;
+  function finishRevealMotion(current) {
+    clearTimeout(revealTimer);
+    if (reveal !== current || !revealDialog.open) return;
+    current.phase = 'idle';
+    revealDialog.classList.remove('is-opening-pack');
+    revealDialog.querySelector('.pack-opening-wrap')?.remove();
+  }
+  function flipReveal() {
+    if (!reveal || reveal.flipped || reveal.phase !== 'idle') return;
+    const current = reveal; current.flipped = true; current.phase = 'flipping'; renderReveal();
+    clearTimeout(revealTimer);
+    revealTimer = setTimeout(() => finishRevealMotion(current),revealReduced() ? 0 : 640);
+  }
   function startReveal(cards) {
     if (!cards.length) return;
-    reveal = {cards,index:0,flipped:false,discarded:new Set()};
+    reveal = {cards,index:0,flipped:false,discarded:new Set(),phase:'idle'};
     delete revealDialog.dataset.cardIndex;
     revealDialog.showModal(); renderReveal();
+    if (!revealReduced()) {
+      reveal.phase = 'opening'; revealDialog.classList.add('is-opening-pack');
+      revealDialog.querySelector('.pack-reveal-stage').insertAdjacentHTML('beforeend', '<div class="pack-opening-wrap" aria-hidden="true"><img class="pack-opening-body" src="icons/cards/sobre-los-nuestros-v1.png" alt=""><img class="pack-opening-seal" src="icons/cards/sobre-los-nuestros-v1.png" alt=""><span class="pack-opening-light"></span></div>');
+      const current = reveal; revealTimer = setTimeout(() => finishRevealMotion(current),1200);
+    }
   }
   revealDialog.addEventListener('click', event => {
     if (event.target.closest('[data-reveal-close]')) revealDialog.close();
     if (Date.now() < suppressRevealClickUntil) return;
-    if (event.target.closest('[data-reveal-flip]') && reveal && !reveal.flipped) {reveal.flipped = true; renderReveal();}
+    if (event.target.closest('[data-reveal-flip]') && reveal && !reveal.flipped) flipReveal();
     if (event.target.closest('[data-reveal-discard]') && reveal?.flipped) void mutate('discard_duplicate_card', {target_card_id:reveal.cards[reveal.index].card_id,copies:1}, 'Repetida descartada. Monedas añadidas.', reveal.index);
   });
   function advanceReveal(stage) {
-    if (!reveal?.flipped || reveal.advancing || busy || loading) return;
+    if (!reveal?.flipped || reveal.phase !== 'idle' || reveal.advancing || busy || loading) return;
     const current = reveal;
-    current.advancing = true;
+    current.advancing = true; current.phase = 'advancing';
     stage.classList.add('is-leaving');
     stage.style.removeProperty('transform');
     stage.style.removeProperty('opacity');
-    setTimeout(() => {
+    revealTimer = setTimeout(() => {
       if (reveal !== current || !revealDialog.open) return;
       if (current.index + 1 === current.cards.length) revealDialog.close();
-      else {current.index++; current.flipped = false; current.advancing = false; renderReveal();}
-    }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220);
+      else {current.index++; current.flipped = false; current.advancing = false; current.phase = 'idle'; renderReveal();}
+    }, revealReduced() ? 0 : 280);
   }
   revealDialog.addEventListener('pointerdown', event => {
     const stage = event.target.closest('.pack-reveal-stage');
-    if (!stage || !reveal || reveal.advancing || busy || loading || !event.isPrimary || event.button !== 0) return;
+    if (!stage || !reveal || reveal.phase !== 'idle' || reveal.advancing || busy || loading || !event.isPrimary || event.button !== 0) return;
     swipe = {id:event.pointerId,x:event.clientX,y:event.clientY,stage,flipped:reveal.flipped,index:reveal.index,dx:0,horizontal:false};
   });
   revealDialog.addEventListener('pointermove', event => {
@@ -73,7 +92,7 @@
     }
     if (!swipe.horizontal) return;
     swipe.stage.classList.add('is-dragging');
-    swipe.stage.style.transform = `translateX(${Math.min(0, swipe.dx)}px)`;
+    swipe.stage.style.transform = `translateX(${Math.min(0, swipe.dx)}px) rotateZ(${Math.max(-9,Math.min(0,swipe.dx) / 30)}deg)`;
     swipe.stage.style.opacity = String(Math.max(.35, 1 + Math.min(0, swipe.dx) / 400));
   });
   function finishSwipe(event) {
@@ -86,18 +105,20 @@
     if (gesture.stage.hasPointerCapture(event.pointerId)) gesture.stage.releasePointerCapture(event.pointerId);
     if (event.type !== 'pointerup' || !gesture.horizontal || gesture.dx >= -Math.min(70, gesture.stage.clientWidth * .25) || !reveal || reveal.index !== gesture.index) return;
     if (gesture.flipped) advanceReveal(gesture.stage);
-    else {reveal.flipped = true; renderReveal();}
+    else flipReveal();
   }
   revealDialog.addEventListener('pointerup', finishSwipe);
   revealDialog.addEventListener('pointercancel', finishSwipe);
+  revealDialog.addEventListener('lostpointercapture', finishSwipe);
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event => {if (event.matches && reveal && reveal.phase !== 'advancing') finishRevealMotion(reveal);});
   revealDialog.addEventListener('keydown', event => {
-    if (event.key === 'ArrowLeft' && reveal && !reveal.advancing && !event.repeat && !event.target.closest('[data-reveal-discard], [data-reveal-close]')) {
+    if (event.key === 'ArrowLeft' && reveal && reveal.phase === 'idle' && !reveal.advancing && !event.repeat && !event.target.closest('[data-reveal-discard], [data-reveal-close]')) {
       event.preventDefault();
       if (reveal.flipped) advanceReveal(revealDialog.querySelector('.pack-reveal-stage'));
-      else {reveal.flipped = true; renderReveal();}
+      else flipReveal();
     }
   });
-  revealDialog.addEventListener('close', () => {reveal = null; swipe = null; el('ownedPackOpen')?.focus({preventScroll:true});});
+  revealDialog.addEventListener('close', () => {clearTimeout(revealTimer); revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack'); reveal = null; swipe = null; el('ownedPackOpen')?.focus({preventScroll:true});});
   const el = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);

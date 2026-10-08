@@ -97,3 +97,9 @@ body.collection-card-open,body.pack-preview-open { overflow:hidden; }
   .packs-art-button .packs-art{width:100%;margin:0}
   .packs-daily-panel { padding:22px; }
 }
+
+/* Card inspection follows the same motion rhythm as pack reveals. */
+.collection-card-stage{transition:transform .64s cubic-bezier(.4,0,.2,1)}
+.collection-card-dialog[open] .collection-card-perspective{animation:collection-card-inspect .32s cubic-bezier(.22,1,.36,1) both}
+@keyframes collection-card-inspect{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.collection-card-stage{transition:none}.collection-card-dialog[open] .collection-card-perspective{animation:none}}

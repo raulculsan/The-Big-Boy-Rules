@@ -1,4 +1,16 @@
-# Movimiento de la colección — versión 150
+# Movimiento de la colección
+
+## Versión 200 — sobres, revelación y álbum
+
+Estudio editable en [Figma](https://www.figma.com/design/1gKFohvPW6sczaUjicOp2D). Los fotogramas y curvas exportados están en `figma-motion-v1.json`.
+
+- Sobre: sello que se desprende, envoltorio que cae y carta que emerge de espaldas; 1200 ms. Se reproduce después de confirmar la apertura del servidor.
+- Carta: giro de 640 ms, salida al deslizar de 280 ms y entrada de la siguiente de 420 ms. Mantener las ilustraciones del catálogo y los gestos existentes.
+- Álbum: pliegue direccional de 560 ms y adaptación de altura de 420 ms. Al cerrar una carta se conserva la página del álbum.
+- Figma representa el giro mediante compresión horizontal en 2D; la app aplica la misma secuencia como giro 3D. El bucle de 2 segundos de los estudios incluye una pausa para observar el resultado; las interacciones reales reproducen el tramo activo una vez.
+- Con movimiento reducido, conservar el resultado y los controles sin los desplazamientos, giros ni destellos.
+
+## Historial — versión 150
 
 - Cartas: arrastre directo con inclinación limitada a 14°/20°, reflejo Lottie vinculado a la posición horizontal, giro al soltar un gesto horizontal amplio. El botón de reverso y las flechas del teclado siguen funcionando.
 - Sobre: apertura Lottie de 2,42 segundos usando el sobre y reverso originales. Botón «Probar apertura», etiquetado siempre como vista previa: no modifica saldo, no concede cartas ni hace peticiones a Supabase.

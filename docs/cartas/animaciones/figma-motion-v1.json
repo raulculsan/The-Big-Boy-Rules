@@ -1,0 +1,117 @@
+{
+  "fileUrl": "https://www.figma.com/design/1gKFohvPW6sczaUjicOp2D",
+  "purpose": "Estudios de movimiento; aplicar los tramos activos una vez por interacción con las ilustraciones reales del catálogo. Las pausas finales y el bucle de 2 s sirven solo para revisar el estudio en Figma.",
+  "frames": [
+    {
+      "nodeId": "2:2",
+      "motion": {
+        "nodes": [
+          {
+            "nodeId": "2:5",
+            "nodeName": "pack-card-emerge",
+            "nodeType": "FRAME",
+            "codeSnippets": {
+              "css": "animation: kf_2_5_opacity_0 2s linear, kf_2_5_translate_0 2s linear, kf_2_5_scale_0 2s linear; animation-iteration-count: infinite; @keyframes kf_2_5_opacity_0 { 0% { opacity: 0; } 15% { animation-timing-function: ease-out; opacity: 0; } 24% { opacity: 1; } 100% { opacity: 1; } } @keyframes kf_2_5_translate_0 { 0% { translate: 0px 80px; } 18% { animation-timing-function: ease-out; translate: 0px 80px; } 48% { animation-timing-function: ease-out; translate: 0px -14px; } 60% { translate: 0px 0px; } 100% { translate: 0px 0px; } } @keyframes kf_2_5_scale_0 { 0% { scale: 0.92 0.92; } 18% { animation-timing-function: ease-out; scale: 0.92 0.92; } 60% { scale: 1 1; } 100% { scale: 1 1; } }"
+            }
+          },
+          {
+            "nodeId": "2:26",
+            "nodeName": "pack-wrapper",
+            "nodeType": "FRAME",
+            "codeSnippets": {
+              "css": "@property --rotate-transform { syntax: '<angle>'; initial-value: 0rad; inherits: false; } transform: rotate(var(--rotate-transform, 0rad)); animation: kf_2_26_opacity_0 2s linear, kf_2_26_rotate_0 2s linear, kf_2_26_translate_0 2s linear; animation-iteration-count: infinite; @keyframes kf_2_26_opacity_0 { 0% { opacity: 1; } 31% { animation-timing-function: ease-out; opacity: 1; } 52.5% { opacity: 0; } 100% { opacity: 0; } } @keyframes kf_2_26_rotate_0 { 0% { animation-timing-function: ease-out; --rotate-transform: 0rad; } 9% { animation-timing-function: ease-out; --rotate-transform: 0.035rad; } 18% { animation-timing-function: ease-out; --rotate-transform: -0.017rad; } 52.5% { --rotate-transform: -0.105rad; } 100% { --rotate-transform: -0.105rad; } } @keyframes kf_2_26_translate_0 { 0% { animation-timing-function: ease-out; translate: 0px 0px; } 9% { animation-timing-function: ease-out; translate: 0px 4px; } 18% { animation-timing-function: ease-out; translate: 0px 0px; } 52.5% { translate: 0px 110px; } 100% { translate: 0px 110px; } }"
+            }
+          },
+          {
+            "nodeId": "2:44",
+            "nodeName": "pack-seal",
+            "nodeType": "ROUNDED_RECTANGLE",
+            "codeSnippets": {
+              "css": "@property --rotate-transform { syntax: '<angle>'; initial-value: 0rad; inherits: false; } transform: rotate(var(--rotate-transform, 0rad)); animation: kf_2_44_opacity_0 2s linear, kf_2_44_rotate_0 2s linear, kf_2_44_translate_0 2s linear; animation-iteration-count: infinite; @keyframes kf_2_44_opacity_0 { 0% { opacity: 1; } 21% { animation-timing-function: ease-out; opacity: 1; } 35% { opacity: 0; } 100% { opacity: 0; } } @keyframes kf_2_44_rotate_0 { 0% { --rotate-transform: 0rad; } 11% { animation-timing-function: ease-out; --rotate-transform: 0rad; } 32.5% { --rotate-transform: 0.209rad; } 100% { --rotate-transform: 0.209rad; } } @keyframes kf_2_44_translate_0 { 0% { translate: 0px 0px; } 11% { animation-timing-function: ease-out; translate: 0px 0px; } 32.5% { translate: 64px -68px; } 100% { translate: 64px -68px; } }"
+            }
+          }
+        ],
+        "timelineCohorts": [
+          {
+            "rootNodeId": "2:2",
+            "durationMs": 2000,
+            "loopMode": "loop",
+            "memberNodeIds": [
+              "2:5",
+              "2:26",
+              "2:44"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "nodeId": "2:62",
+      "motion": {
+        "nodes": [
+          {
+            "nodeId": "2:65",
+            "nodeName": "card-back-flip",
+            "nodeType": "FRAME",
+            "codeSnippets": {
+              "css": "animation: kf_2_65_opacity_0 2s linear, kf_2_65_scale_0 2s linear; animation-iteration-count: infinite; @keyframes kf_2_65_opacity_0 { 0% { animation-timing-function: step-end; opacity: 1; } 14% { opacity: 0; } 100% { opacity: 0; } } @keyframes kf_2_65_scale_0 { 0% { animation-timing-function: ease-in; scale: 1 1; } 14% { scale: 0.02 1; } 100% { scale: 0.02 1; } }"
+            }
+          },
+          {
+            "nodeId": "2:74",
+            "nodeName": "card-front-settle",
+            "nodeType": "FRAME",
+            "codeSnippets": {
+              "css": "animation: kf_2_74_opacity_0 2s linear, kf_2_74_translate_0 2s linear, kf_2_74_scale_0 2s linear; animation-iteration-count: infinite; @keyframes kf_2_74_opacity_0 { 0% { animation-timing-function: step-end; opacity: 0; } 14% { opacity: 1; } 100% { opacity: 1; } } @keyframes kf_2_74_translate_0 { 0% { translate: 0px -8px; } 14% { animation-timing-function: ease-out; translate: 0px -8px; } 32% { translate: 0px 0px; } 100% { translate: 0px 0px; } } @keyframes kf_2_74_scale_0 { 0% { scale: 0.02 1; } 14% { animation-timing-function: ease-out; scale: 0.02 1; } 32% { scale: 1 1; } 100% { scale: 1 1; } }"
+            }
+          }
+        ],
+        "timelineCohorts": [
+          {
+            "rootNodeId": "2:62",
+            "durationMs": 2000,
+            "loopMode": "loop",
+            "memberNodeIds": [
+              "2:65",
+              "2:74"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "nodeId": "2:90",
+      "motion": {
+        "nodes": [
+          {
+            "nodeId": "2:93",
+            "nodeName": "album-page-in",
+            "nodeType": "FRAME",
+            "codeSnippets": {
+              "css": "animation: kf_2_93_opacity_0 2s linear, kf_2_93_translate_0 2s linear, kf_2_93_scale_0 2s linear; animation-iteration-count: infinite; @keyframes kf_2_93_opacity_0 { 0% { opacity: 0; } 12% { animation-timing-function: ease-out; opacity: 0; } 14% { opacity: 1; } 100% { opacity: 1; } } @keyframes kf_2_93_translate_0 { 0% { translate: 64px 0px; } 12% { animation-timing-function: ease-out; translate: 64px 0px; } 28% { translate: 0px 0px; } 100% { translate: 0px 0px; } } @keyframes kf_2_93_scale_0 { 0% { scale: 0.08 1; } 12% { animation-timing-function: ease-out; scale: 0.08 1; } 28% { scale: 1 1; } 100% { scale: 1 1; } }"
+            }
+          },
+          {
+            "nodeId": "2:95",
+            "nodeName": "album-page-out",
+            "nodeType": "FRAME",
+            "codeSnippets": {
+              "css": "animation: kf_2_95_opacity_0 2s linear, kf_2_95_translate_0 2s linear, kf_2_95_scale_0 2s linear; animation-iteration-count: infinite; @keyframes kf_2_95_opacity_0 { 0% { opacity: 1; } 13% { animation-timing-function: step-end; opacity: 1; } 14% { opacity: 0; } 100% { opacity: 0; } } @keyframes kf_2_95_translate_0 { 0% { animation-timing-function: ease-in; translate: 0px 0px; } 14% { translate: -68px 0px; } 100% { translate: -68px 0px; } } @keyframes kf_2_95_scale_0 { 0% { animation-timing-function: ease-in; scale: 1 1; } 14% { scale: 0.05 1; } 100% { scale: 0.05 1; } }"
+            }
+          }
+        ],
+        "timelineCohorts": [
+          {
+            "rootNodeId": "2:90",
+            "durationMs": 2000,
+            "loopMode": "loop",
+            "memberNodeIds": [
+              "2:93",
+              "2:95"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

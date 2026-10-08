@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v199";
+const CACHE_NAME = "big-boy-rules-v200";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -14,12 +14,12 @@ const APP_SHELL = [
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20260903-130",
   "./app.js?v=20261007-193",
-  "./album.js?v=20261007-184",
-  "./album.css?v=20261007-178",
+  "./album.js?v=20261008-200",
+  "./album.css?v=20261008-200",
   "./admin-grants.js?v=20261007-176",
   "./admin-grants.css?v=20261007-176",
-  "./banner-shop.js?v=20261008-199",
-  "./banner-shop.css?v=20261008-199",
+  "./banner-shop.js?v=20261008-200",
+  "./banner-shop.css?v=20261008-200",
   "./icons/banners/miguel-basket-bano-bg-v1.png",
   "./icons/banners/miguel-basket-bano-v1.png",
   "./icons/banners/miguel-basket-miguel-00-v1.png",
@@ -40,7 +40,7 @@ const APP_SHELL = [
   "./icons/banners/alberto-galicia-member-bg-v1.png",
   "./icons/banners/alberto-galicia-member-figures-v1.png",
   "./daily-packs.js?v=20261007-192",
-  "./packs.css?v=20261007-192",
+  "./packs.css?v=20261008-200",
   "./card-collection.js?v=20261007-191",
   "./collection-motion.js?v=20261007-168",
   "./icons/cards/card-touch.json?v=20260905-153",
