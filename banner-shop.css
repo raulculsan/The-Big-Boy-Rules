@@ -185,8 +185,6 @@
 @keyframes galicia-breeze{0%,30%,100%{opacity:0;transform:translateX(-12px)}48%{opacity:.3}65%{opacity:0;transform:translateX(65px)}}
 @media(prefers-reduced-motion:reduce){.banner-galicia-scene{display:none}.banner-galicia-fallback{display:block}}
 
-/* Keep the complete 3:1 artwork above the avatar in narrow member cards.
-   A softened backdrop fills the same header area as the motorcycle. */
 /* Compact bathroom artwork uses a recomposed canvas, not a cropped wide strip. */
 .banner-basket-compact-scene .banner-basket-shot{animation-name:basket-compact-shot}
 .banner-basket-compact-scene .banner-basket-impact{transform-origin:960px 539px}
@@ -201,6 +199,7 @@
 /* Member composition exported from Krita at the mobile tile's aspect ratio. */
 .banner-alberto-member-responsive{container-type:inline-size;background:#8cbd77}
 .banner-alberto-member-responsive>.banner-art{position:absolute;inset:0;width:100%;height:100%;border-radius:0}
+.banner-alberto-member-compact .banner-galicia-fallback{object-fit:fill}
 .banner-alberto-member-wide{display:none}
 @container(min-width:250px){.banner-alberto-member-compact{display:none}.banner-alberto-member-wide{display:block}}
 .banner-galicia-member-goat{transform-origin:var(--member-goat-joint);animation:galicia-member-goat var(--graze-duration) ease-in-out infinite;animation-delay:var(--graze-phase)}

@@ -123,7 +123,7 @@
     // Each mounted tile gets its own clip IDs; all joints use the 2172 × 724
     // source coordinates, preserving their registration at every display size.
     const id = `galicia-${++galiciaSceneId}`;
-    const sceneFit = 'xMidYMid meet';
+    const sceneFit = compact ? 'none' : 'xMidYMid meet';
     const sceneWidth = compact ? 1299 : 2172;
     const figure = `<image href="icons/banners/${compact ? 'alberto-galicia-member-figures-v1.png' : 'alberto-galicia-figures-v1.png'}" width="${sceneWidth}" height="724"/>`;
     const background = `<image href="icons/banners/${compact ? 'alberto-galicia-member-bg-v1.png' : 'alberto-galicia-bg-v1.png'}" width="${sceneWidth}" height="724"/>`;
@@ -180,7 +180,7 @@
       const subject = `<g class="banner-basket-held"><text x="0" y="0" text-anchor="middle" dominant-baseline="central">💩</text></g>${poses}`;
       const impact = `<g class="banner-basket-impact" transform="translate(${member ? '960' : '1780'} 539)"><ellipse class="banner-basket-ring" rx="60" ry="12"/><path class="banner-basket-splash" d="M-42 -3 Q-67 -66 -78 -37 M-18 -8 Q-29 -86 -42 -67 M12 -8 Q28 -91 39 -63 M38 -3 Q65 -60 78 -39"/><text class="banner-basket-score" x="0" y="-75" text-anchor="middle">+3</text></g>`;
       const wideScene = `<svg class="banner-basket-scene ${member ? 'banner-basket-wide-scene' : ''}" viewBox="0 0 2172 724" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><image href="icons/banners/miguel-basket-bano-bg-v1.png" width="2172" height="724"/>${subject}${shots}<g class="banner-basket-impact" transform="translate(1780 539)"><ellipse class="banner-basket-ring" rx="60" ry="12"/><path class="banner-basket-splash" d="M-42 -3 Q-67 -66 -78 -37 M-18 -8 Q-29 -86 -42 -67 M12 -8 Q28 -91 39 -63 M38 -3 Q65 -60 78 -39"/><text class="banner-basket-score" x="0" y="-75" text-anchor="middle">+3</text></g></svg>`;
-      const compactScene = member ? `<svg class="banner-basket-scene banner-basket-compact-scene" viewBox="0 0 1297 724" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">${background}<g transform="translate(0 72) scale(.9)">${subject}</g>${shots}${impact}</svg>` : '';
+      const compactScene = member ? `<svg class="banner-basket-scene banner-basket-compact-scene" viewBox="0 0 1297 724" preserveAspectRatio="none" aria-hidden="true" focusable="false">${background}<g transform="translate(0 72) scale(.9)">${subject}</g>${shots}${impact}</svg>` : '';
       return `<div class="banner-art banner-miguel-basket ${memberClass} ${extra}" role="img" aria-label="${escape(banner.name || 'Miguel encesta emojis en el váter')}">${member ? '' : '<img class="banner-basket-fallback" src="icons/banners/miguel-basket-bano-v1.png" width="2172" height="724" alt="" decoding="async" aria-hidden="true">'}${compactScene}${wideScene}</div>`;
     }
     if (banner?.art_key === 'miguel-moto-anime-v1') {
