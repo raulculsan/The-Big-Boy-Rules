@@ -115,8 +115,35 @@
     if (response.error) throw response.error;
     return response.data;
   }
+  let galiciaSceneId = 0;
+  function galiciaArtwork(banner, extra) {
+    // Each mounted tile gets its own clip IDs; all joints use the 2172 × 724
+    // source coordinates, preserving their registration at every display size.
+    const id = `galicia-${++galiciaSceneId}`;
+    const figure = '<image href="icons/banners/alberto-galicia-figures-v1.png" width="2172" height="724"/>';
+    const background = '<image href="icons/banners/alberto-galicia-bg-v1.png" width="2172" height="724"/>';
+    const head = '275,0 500,0 500,180 442,218 388,241 323,209 290,166';
+    const goats = [
+      {box:[575,305,510,419], head:'882,466 975,471 987,522 1083,585 1083,724 918,724 884,624 847,557', joint:'906px 539px', tail:'585,322 652,322 675,362 664,412 615,406 585,377', tailJoint:'655px 395px', ear:'858,562 890,550 935,552 946,564 930,587 894,602 864,587', earJoint:'936px 561px', wind:'3.7s', phase:'0s', duration:'5.8s'},
+      {box:[1085,305,515,419], head:'1090,451 1180,451 1285,481 1348,572 1303,631 1259,724 1085,724', joint:'1250px 558px', tail:'1500,331 1589,331 1600,377 1580,411 1520,427 1510,398', tailJoint:'1515px 398px', ear:'1085,562 1115,553 1165,550 1160,575 1126,603 1085,615', earJoint:'1158px 560px', wind:'4.6s', phase:'-2.3s', duration:'7.1s'},
+      {box:[1600,300,520,424], head:'1600,465 1715,465 1794,496 1855,559 1836,611 1772,724 1600,724', joint:'1770px 558px', tail:'1987,316 2070,316 2070,383 2040,421 1999,406 1990,362', tailJoint:'2006px 400px', ear:'1600,560 1640,551 1700,550 1690,569 1650,586 1600,582', earJoint:'1695px 559px', wind:'3.2s', phase:'-4.1s', duration:'6.4s'}
+    ];
+    const goatDefs = goats.map((goat, i) => {
+      const [x,y,w,h] = goat.box;
+      return `<clipPath id="${id}-goat-${i}"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></clipPath><clipPath id="${id}-goat-head-${i}"><polygon points="${goat.head}"/></clipPath><clipPath id="${id}-goat-upper-${i}"><rect x="${x}" y="${y}" width="${w}" height="${575-y}"/></clipPath><clipPath id="${id}-goat-feet-${i}"><rect x="${x}" y="565" width="${w}" height="159"/></clipPath><clipPath id="${id}-goat-tail-${i}"><polygon points="${goat.tail}"/></clipPath><clipPath id="${id}-goat-ear-${i}"><polygon points="${goat.ear}"/></clipPath><mask id="${id}-goat-face-${i}" maskUnits="userSpaceOnUse" x="${x}" y="${y}" width="${w}" height="${h}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="white"/><polygon points="${goat.ear}" fill="black"/></mask><mask id="${id}-goat-body-${i}" maskUnits="userSpaceOnUse" x="${x}" y="${y}" width="${w}" height="${h}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="white"/><polygon points="${goat.head}" fill="black"/><polygon points="${goat.tail}" fill="black"/></mask>`;
+    }).join('');
+    const goatArt = goats.map((goat, i) => `<g class="banner-galicia-goat" style="--graze-duration:${goat.duration};--graze-phase:${goat.phase};--goat-joint:${goat.joint};--tail-joint:${goat.tailJoint};--ear-joint:${goat.earJoint};--wind-duration:${goat.wind}" clip-path="url(#${id}-goat-${i})"><g clip-path="url(#${id}-goat-feet-${i})" mask="url(#${id}-goat-body-${i})">${figure}</g><g class="banner-galicia-goat-body"><g clip-path="url(#${id}-goat-upper-${i})" mask="url(#${id}-goat-body-${i})">${figure}</g></g><g class="banner-galicia-goat-tail"><g clip-path="url(#${id}-goat-tail-${i})">${figure}</g></g><g class="banner-galicia-goat-head"><g clip-path="url(#${id}-goat-head-${i})" mask="url(#${id}-goat-face-${i})">${figure}</g><g class="banner-galicia-goat-ear"><g clip-path="url(#${id}-goat-ear-${i})">${figure}</g></g></g></g>`).join('');
+    // Wind ribbons are sparse source-coordinate strokes amongst the foreground
+    // grass. Cloud masks have soft edges so the landscape stays registered.
+    const grass = Array.from({length:18}, (_, i) => {
+      const x = 530 + i * 91, y = 690 + (i % 3) * 12;
+      return `<path class="banner-galicia-blade" style="--blade-phase:${i * -.19}s" d="M${x} ${y} Q${x-5} ${y-23} ${x+9} ${y-39} M${x} ${y} Q${x+14} ${y-18} ${x+21} ${y-21}"/>`;
+    }).join('');
+    return `<div class="banner-art banner-alberto-galicia ${extra}" role="img" aria-label="${escape(banner.name || 'Alberto Velasco con sus cabras en Galicia')}"><img class="banner-galicia-fallback" src="icons/banners/alberto-galicia-anime-preview-v1.png" width="2172" height="724" alt="" decoding="async" aria-hidden="true"><svg class="banner-galicia-scene" viewBox="0 0 2172 724" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><defs><clipPath id="${id}-alberto"><rect width="545" height="724"/></clipPath><clipPath id="${id}-head"><polygon points="${head}"/></clipPath><clipPath id="${id}-torso"><rect y="155" width="545" height="395"/></clipPath><clipPath id="${id}-legs"><rect y="535" width="545" height="189"/></clipPath><mask id="${id}-body" maskUnits="userSpaceOnUse" x="0" y="0" width="545" height="724"><rect width="545" height="724" fill="white"/><polygon points="${head}" fill="black"/></mask><radialGradient id="${id}-cloud-fade"><stop offset="60%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><mask id="${id}-clouds" maskUnits="userSpaceOnUse" x="380" y="0" width="760" height="95"><ellipse cx="760" cy="32" rx="370" ry="56" fill="url(#${id}-cloud-fade)"/></mask>${goatDefs}</defs>${background}<g class="banner-galicia-clouds" mask="url(#${id}-clouds)">${background}</g><g class="banner-galicia-alberto" clip-path="url(#${id}-alberto)"><g clip-path="url(#${id}-legs)">${figure}</g><g class="banner-galicia-torso"><g clip-path="url(#${id}-torso)" mask="url(#${id}-body)">${figure}</g></g><g class="banner-galicia-head"><g clip-path="url(#${id}-head)">${figure}</g></g></g>${goatArt}<g class="banner-galicia-grass">${grass}</g><g class="banner-galicia-breeze"><path d="M730 473 Q820 441 917 460"/><path d="M1460 269 Q1530 245 1616 256"/></g></svg></div>`;
+  }
   function artwork(banner, extra = '') {
     // Only known artwork keys become styles; future Krita exports are added here.
+    if (banner?.art_key === 'alberto-galicia-anime-v1') return galiciaArtwork(banner, extra);
     if (banner?.art_key === 'miguel-basket-bano-v1') {
       // The raster poses and projectile use one source-coordinate canvas.
       // SVG's meet scaling keeps both Miguel and the bowl visible in small tiles.

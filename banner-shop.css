@@ -145,3 +145,30 @@
 .banner-basket-impact{opacity:0;transform-origin:1780px 539px;animation:basket-impact 4.8s ease-out infinite}
 @keyframes basket-impact{0%,67%{opacity:0;scale:.6}69%,75%{opacity:1;scale:1}84%,100%{opacity:0;scale:1.3}}
 @media(prefers-reduced-motion:reduce){.banner-basket-scene{display:none}.banner-basket-fallback{display:block}}
+
+/* Alberto's anatomy and every grazing neck move around separate source joints. */
+.banner-alberto-galicia{background:#8cbd77;contain:paint}
+.banner-galicia-scene,.banner-galicia-fallback{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.banner-galicia-fallback{display:none}
+.banner-galicia-alberto{transform-origin:335px 724px;animation:galicia-weight 10.5s ease-in-out infinite}
+.banner-galicia-torso{transform-origin:335px 540px;animation:galicia-breathe 4.2s ease-in-out infinite}
+.banner-galicia-head{transform-origin:359px 195px;animation:galicia-look 8.4s ease-in-out infinite}
+.banner-galicia-goat-body{transform-origin:1450px 570px;animation:galicia-goat-breathe 3.1s ease-in-out infinite;animation-delay:var(--graze-phase)}
+.banner-galicia-goat-head{transform-origin:var(--goat-joint);animation:galicia-graze var(--graze-duration) ease-in-out infinite;animation-delay:var(--graze-phase)}
+.banner-galicia-goat-tail{transform-origin:var(--tail-joint);animation:galicia-tail var(--wind-duration) ease-in-out infinite;animation-delay:var(--graze-phase)}
+.banner-galicia-goat-ear{transform-origin:var(--ear-joint);animation:galicia-ear calc(var(--wind-duration) * 1.4) ease-in-out infinite;animation-delay:var(--graze-phase)}
+.banner-galicia-clouds{animation:galicia-clouds 28s ease-in-out infinite alternate}
+.banner-galicia-grass{fill:none;stroke:#b7d867;stroke-width:3.5;stroke-linecap:round;opacity:.65}
+.banner-galicia-blade{transform-box:fill-box;transform-origin:center bottom;animation:galicia-grass 2.6s ease-in-out infinite alternate;animation-delay:var(--blade-phase)}
+.banner-galicia-breeze{fill:none;stroke:#ffffe1;stroke-width:3;stroke-linecap:round;opacity:0;animation:galicia-breeze 7.2s ease-in-out infinite}
+@keyframes galicia-weight{0%,100%{transform:skewX(0)}30%{transform:skewX(.28deg)}65%{transform:skewX(-.22deg)}85%{transform:skewX(-.16deg)}}
+@keyframes galicia-tail{0%,100%{transform:rotate(0)}24%{transform:rotate(-2.8deg)}40%{transform:rotate(1.7deg)}51%{transform:rotate(-1deg)}68%{transform:rotate(2.6deg)}84%{transform:rotate(.5deg)}}
+@keyframes galicia-ear{0%,100%{transform:rotate(0)}34%{transform:rotate(1.8deg)}42%{transform:rotate(-2.3deg)}52%{transform:rotate(.8deg)}74%{transform:rotate(-1.1deg)}}
+@keyframes galicia-breathe{0%,100%{transform:scale(1,1)}45%{transform:scale(1.009,1.014) skewX(-.35deg)}70%{transform:scale(1.003,1.005)}}
+@keyframes galicia-look{0%,100%{transform:rotate(0)}20%{transform:rotate(2deg) translateY(2px)}40%{transform:rotate(-1.4deg) translateY(-2px)}55%{transform:rotate(-1.4deg) translateY(-2px)}72%{transform:rotate(1.1deg) translateY(1px)}}
+@keyframes galicia-goat-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1,1.007)}}
+@keyframes galicia-graze{0%,100%{transform:rotate(0) translateY(0)}15%{transform:rotate(1.8deg) translateY(3px)}24%{transform:rotate(1.1deg) translateY(0)}32%{transform:rotate(2deg) translateY(3px)}43%{transform:rotate(1.2deg) translateY(1px)}60%{transform:rotate(-3.5deg) translateY(-5px)}74%{transform:rotate(-3.5deg) translateY(-4px)}87%{transform:rotate(.7deg) translateY(2px)}}
+@keyframes galicia-clouds{from{transform:translateX(-14px)}to{transform:translateX(20px)}}
+@keyframes galicia-grass{from{transform:skewX(-7deg) rotate(-3deg)}to{transform:skewX(12deg) rotate(5deg)}}
+@keyframes galicia-breeze{0%,30%,100%{opacity:0;transform:translateX(-12px)}48%{opacity:.3}65%{opacity:0;transform:translateX(65px)}}
+@media(prefers-reduced-motion:reduce){.banner-galicia-scene{display:none}.banner-galicia-fallback{display:block}}
