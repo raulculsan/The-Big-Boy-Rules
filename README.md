@@ -5,6 +5,8 @@ personal, historias de grupo de 24 horas, bandeja unificada de chats con notas
 de voz y adjuntos, presencia en tiempo
 real, mensajes privados, calendario administrado por Kike y noticias actuales.
 
+Para crear banners nuevos, seguir la [regla de composición de Miembros](artwork/banners/README.md).
+
 ## Activar las funciones compartidas
 
 La interfaz puede abrirse sin backend para revisar el diseño y editar un perfil
