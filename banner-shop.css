@@ -184,3 +184,10 @@
 @keyframes galicia-grass{0%,100%{transform:skewX(-8deg) rotate(-4deg)}34%{transform:skewX(19deg) rotate(8deg)}59%{transform:skewX(7deg) rotate(2deg)}80%{transform:skewX(22deg) rotate(9deg)}}
 @keyframes galicia-breeze{0%,30%,100%{opacity:0;transform:translateX(-12px)}48%{opacity:.3}65%{opacity:0;transform:translateX(65px)}}
 @media(prefers-reduced-motion:reduce){.banner-galicia-scene{display:none}.banner-galicia-fallback{display:block}}
+
+/* Keep the complete 3:1 artwork above the avatar in narrow member cards.
+   A softened backdrop fills the same header area as the motorcycle. */
+.club-member-banner .banner-alberto-galicia{--member-scene-backdrop:url("icons/banners/alberto-galicia-bg-v1.png")}
+.club-member-banner .banner-miguel-basket{--member-scene-backdrop:url("icons/banners/miguel-basket-bano-bg-v1.png")}
+.club-member-banner .banner-alberto-galicia::before,.club-member-banner .banner-miguel-basket::before{content:"";position:absolute;inset:-12px;z-index:-1;background-image:var(--member-scene-backdrop);background-position:center bottom;background-size:cover;filter:blur(12px);opacity:.8}
+.club-member-banner .banner-galicia-fallback,.club-member-banner .banner-basket-fallback{object-position:center top}
