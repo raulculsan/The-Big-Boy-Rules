@@ -157,9 +157,16 @@
 .banner-galicia-goat-head{transform-origin:var(--goat-joint);animation:galicia-graze var(--graze-duration) ease-in-out infinite;animation-delay:var(--graze-phase)}
 .banner-galicia-goat-tail{transform-origin:var(--tail-joint);animation:galicia-tail var(--wind-duration) ease-in-out infinite;animation-delay:var(--graze-phase)}
 .banner-galicia-goat-ear{transform-origin:var(--ear-joint);animation:galicia-ear calc(var(--wind-duration) * 1.4) ease-in-out infinite;animation-delay:var(--graze-phase)}
-.banner-galicia-clouds{animation:galicia-clouds 28s ease-in-out infinite alternate}
-.banner-galicia-grass{fill:none;stroke:#b7d867;stroke-width:3.5;stroke-linecap:round;opacity:.65}
-.banner-galicia-blade{transform-box:fill-box;transform-origin:center bottom;animation:galicia-grass 2.6s ease-in-out infinite alternate;animation-delay:var(--blade-phase)}
+.banner-galicia-clouds{animation:galicia-clouds var(--cloud-duration) linear infinite alternate;animation-delay:var(--cloud-phase)}
+.banner-galicia-foliage{transform-origin:var(--foliage-joint);animation:galicia-foliage var(--wind-duration) ease-in-out infinite;animation-delay:var(--wind-phase)}
+.banner-galicia-foliage.is-tree{animation-name:galicia-tree}
+.banner-galicia-bird-flight{animation:galicia-bird-flight var(--flight-duration) linear infinite;animation-delay:var(--flight-phase)}
+.banner-galicia-bird{fill:#324849;opacity:.85;transform:scale(var(--bird-scale))}
+.banner-galicia-wing{transform-origin:0 0;animation:galicia-wing var(--flap-duration) ease-in-out infinite}
+.banner-galicia-expression{opacity:0;animation:galicia-expression 8.4s linear infinite}
+.banner-galicia-grass{fill:none;stroke:#527e33;stroke-width:4;stroke-linecap:round;opacity:.82}
+.banner-galicia-grass .is-light{stroke:#b7d867;stroke-width:3}
+.banner-galicia-blade{transform-origin:var(--blade-joint);animation:galicia-grass 3.1s ease-in-out infinite;animation-delay:var(--blade-phase)}
 .banner-galicia-breeze{fill:none;stroke:#ffffe1;stroke-width:3;stroke-linecap:round;opacity:0;animation:galicia-breeze 7.2s ease-in-out infinite}
 @keyframes galicia-weight{0%,100%{transform:skewX(0)}30%{transform:skewX(.28deg)}65%{transform:skewX(-.22deg)}85%{transform:skewX(-.16deg)}}
 @keyframes galicia-tail{0%,100%{transform:rotate(0)}24%{transform:rotate(-2.8deg)}40%{transform:rotate(1.7deg)}51%{transform:rotate(-1deg)}68%{transform:rotate(2.6deg)}84%{transform:rotate(.5deg)}}
@@ -168,7 +175,12 @@
 @keyframes galicia-look{0%,100%{transform:rotate(0)}20%{transform:rotate(2deg) translateY(2px)}40%{transform:rotate(-1.4deg) translateY(-2px)}55%{transform:rotate(-1.4deg) translateY(-2px)}72%{transform:rotate(1.1deg) translateY(1px)}}
 @keyframes galicia-goat-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1,1.007)}}
 @keyframes galicia-graze{0%,100%{transform:rotate(0) translateY(0)}15%{transform:rotate(1.8deg) translateY(3px)}24%{transform:rotate(1.1deg) translateY(0)}32%{transform:rotate(2deg) translateY(3px)}43%{transform:rotate(1.2deg) translateY(1px)}60%{transform:rotate(-3.5deg) translateY(-5px)}74%{transform:rotate(-3.5deg) translateY(-4px)}87%{transform:rotate(.7deg) translateY(2px)}}
-@keyframes galicia-clouds{from{transform:translateX(-14px)}to{transform:translateX(20px)}}
-@keyframes galicia-grass{from{transform:skewX(-7deg) rotate(-3deg)}to{transform:skewX(12deg) rotate(5deg)}}
+@keyframes galicia-clouds{from{transform:translateX(-105px)}to{transform:translateX(135px)}}
+@keyframes galicia-foliage{0%,100%{transform:skewX(-3deg)}30%{transform:skewX(10deg)}55%{transform:skewX(4deg)}78%{transform:skewX(12deg)}}
+@keyframes galicia-tree{0%,100%{transform:skewX(-1.4deg) rotate(-.5deg)}35%{transform:skewX(3deg) rotate(.8deg)}65%{transform:skewX(.5deg) rotate(.2deg)}82%{transform:skewX(3.7deg) rotate(1deg)}}
+@keyframes galicia-bird-flight{0%{transform:translate(-85px,var(--flight-height))}25%{transform:translate(480px,calc(var(--flight-height) - 28px))}50%{transform:translate(1100px,calc(var(--flight-height) + 12px))}75%{transform:translate(1680px,calc(var(--flight-height) - 34px))}100%{transform:translate(2255px,var(--flight-height))}}
+@keyframes galicia-wing{0%,100%{transform:scaleY(1)}45%{transform:scaleY(-.65)}70%{transform:scaleY(.3)}}
+@keyframes galicia-expression{0%,23%,27%,53%,67%,83%,87%,100%{opacity:0}24%,26%,55%,65%,84%,86%{opacity:1}}
+@keyframes galicia-grass{0%,100%{transform:skewX(-8deg) rotate(-4deg)}34%{transform:skewX(19deg) rotate(8deg)}59%{transform:skewX(7deg) rotate(2deg)}80%{transform:skewX(22deg) rotate(9deg)}}
 @keyframes galicia-breeze{0%,30%,100%{opacity:0;transform:translateX(-12px)}48%{opacity:.3}65%{opacity:0;transform:translateX(65px)}}
 @media(prefers-reduced-motion:reduce){.banner-galicia-scene{display:none}.banner-galicia-fallback{display:block}}

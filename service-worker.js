@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v195";
+const CACHE_NAME = "big-boy-rules-v196";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -18,8 +18,8 @@ const APP_SHELL = [
   "./album.css?v=20261007-178",
   "./admin-grants.js?v=20261007-176",
   "./admin-grants.css?v=20261007-176",
-  "./banner-shop.js?v=20261008-195",
-  "./banner-shop.css?v=20261008-195",
+  "./banner-shop.js?v=20261008-196",
+  "./banner-shop.css?v=20261008-196",
   "./icons/banners/miguel-basket-bano-bg-v1.png",
   "./icons/banners/miguel-basket-bano-v1.png",
   "./icons/banners/miguel-basket-miguel-00-v1.png",
@@ -34,6 +34,7 @@ const APP_SHELL = [
   "./icons/banners/miguel-moto-clouds-v1.png",
   "./icons/banners/alberto-galicia-bg-v1.png",
   "./icons/banners/alberto-galicia-figures-v1.png",
+  "./icons/banners/alberto-galicia-expression-v2.png",
   "./icons/banners/alberto-galicia-anime-preview-v1.png",
   "./daily-packs.js?v=20261007-192",
   "./packs.css?v=20261007-192",
