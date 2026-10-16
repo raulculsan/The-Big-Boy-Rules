@@ -47,6 +47,7 @@ globalThis.CardThumbnails = Object.freeze({
   "icons/cards/josefa-valcarcel-epica-v1.jpg": "icons/cards/thumbnails/josefa-valcarcel-epica-v1.jpg",
   "icons/cards/juan-carlos-vega-quevedo-comun-78-v1.jpg": "icons/cards/thumbnails/juan-carlos-vega-quevedo-comun-78-v1.jpg",
   "icons/cards/juan-carlos-vega-quevedo-retro-87-v1.jpg": "icons/cards/thumbnails/juan-carlos-vega-quevedo-retro-87-v1.jpg",
+  "icons/cards/juan-manuel-perez-saldana-comun-81-v1.jpg": "icons/cards/thumbnails/juan-manuel-perez-saldana-comun-81-v1.jpg",
   "icons/cards/juan-manuel-perez-saldana-retro-90-v1.jpg": "icons/cards/thumbnails/juan-manuel-perez-saldana-retro-90-v1.jpg",
   "icons/cards/justificante-medico-comun-v1.jpg": "icons/cards/thumbnails/justificante-medico-comun-v1.jpg",
   "icons/cards/la-biblia-epica-v1.jpg": "icons/cards/thumbnails/la-biblia-epica-v1.jpg",

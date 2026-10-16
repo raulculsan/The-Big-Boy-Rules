@@ -2,6 +2,13 @@
 (() => {
   const catalog = Object.freeze([
     Object.freeze({
+      id: 'juan-manuel-perez-saldana-comun', collection: 'los-nuestros-01',
+      kind: 'Personaje', name: 'JUAN MANUEL PEREZ SALDAÑA', edition: 'Común', rarity: 'common', score: 81,
+      front: 'icons/cards/juan-manuel-perez-saldana-comun-81-v1.jpg',
+      back: 'icons/cards/reverso-comun-unificado-v1.jpg',
+      width: 948, height: 1660
+    }),
+    Object.freeze({
       id: 'fufi-vice-city', collection: 'los-nuestros-01',
       kind: 'Personaje', name: 'FUFI', edition: 'Vice City', rarity: 'vice_city', score: 89,
       front: 'icons/cards/fufi-vice-city-89-v3.jpg',
