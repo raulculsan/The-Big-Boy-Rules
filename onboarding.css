@@ -1,0 +1,13 @@
+.club-onboarding{position:fixed;z-index:1100;left:max(16px,env(safe-area-inset-left));bottom:calc(88px + env(safe-area-inset-bottom));width:min(340px,calc(100vw - 32px));box-sizing:border-box;padding:20px;background:#191b20;color:#f4f0e7;border:1px solid #c4a66066;border-radius:20px;box-shadow:0 14px 56px #0009;font-family:inherit}
+.club-onboarding[hidden],.club-guide-highlight[hidden]{display:none!important}
+.club-guide-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#c7af77;font-size:9px;letter-spacing:1.5px}
+.club-guide-heading button{border:0;background:transparent;color:#c8c4bb;font-size:17px;padding:5px;cursor:pointer}
+.club-onboarding h2{font-size:22px;line-height:1.2;margin:10px 0}
+.club-onboarding p{font-size:13px;line-height:1.55;color:#c9c6bf;margin:0 0 18px}
+.club-guide-actions{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.club-guide-actions button{border:0;background:transparent;color:#c4c0b6;font:inherit;font-size:12px;padding:11px;cursor:pointer;min-height:42px}
+.club-guide-actions [data-guide-next]{border-radius:11px;background:#dcc185;color:#171717;padding-inline:18px;font-weight:700}
+.club-guide-highlight{position:fixed;z-index:1099;pointer-events:none;border:2px solid #e4c378;border-radius:14px;box-shadow:0 0 0 5px #e4c3781a;box-sizing:border-box}
+.club-onboarding button:focus-visible{outline:2px solid #e4c378;outline-offset:3px}
+@media(min-width:900px){.club-onboarding{left:28px;bottom:28px}}
+@media(prefers-reduced-motion:no-preference){.club-onboarding{animation:club-guide-enter .18s ease-out}@keyframes club-guide-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}

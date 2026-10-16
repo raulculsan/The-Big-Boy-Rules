@@ -93,3 +93,23 @@
 #album #cardAlbumStatus.is-error{border-color:#e7a77940;color:#edc4a6}
 #album [data-album-retry]{flex:none;min-height:36px;padding:7px 12px;border:1px solid #d2b56e55;border-radius:9px;background:#d2b56e15;color:#ecd594;font:inherit;cursor:pointer}
 #album [data-album-retry]:disabled{opacity:.5;cursor:default}
+
+/* Collection tools share the album's binding palette and stay compact on phones. */
+#album .card-album-tools{display:grid;grid-template-columns:minmax(170px,1fr) minmax(130px,1fr) auto;gap:10px;align-items:center;margin:12px 0;position:relative;z-index:5}
+#album .album-collection-select,#album .album-card-search{display:flex;gap:8px;align-items:center;min-width:0;background:#191b1f;border:1px solid #39372f;border-radius:12px;padding:10px 12px}
+#album .album-collection-select[hidden]{display:none!important}
+#album .album-collection-select>span{color:#b7a983;font-size:10px;letter-spacing:.5px}
+#album .card-album-tools select,#album .card-album-tools input{width:100%;min-width:0;background:transparent;border:0;color:#ede6d5;font:inherit;font-size:13px;outline-offset:5px}
+#album .card-album-tools select option{background:#1a1b1f;color:#ede6d5}
+#album .album-card-search>span{font-size:22px;line-height:1;color:#c6ac70}
+#album .album-card-search input::-webkit-search-cancel-button{-webkit-appearance:auto}
+#album .album-filter-panel{position:relative}
+#album .album-filter-panel summary{cursor:pointer;list-style:none;border:1px solid #605135;border-radius:12px;padding:12px;color:#e5cc92;font-size:12px;background:#25221c;display:flex;gap:6px}
+#album .album-filter-panel summary::-webkit-details-marker{display:none}
+#album .album-filter-fields{position:absolute;right:0;top:calc(100% + 8px);width:min(280px,calc(100vw - 56px));padding:16px;border-radius:16px;border:1px solid #605135;background:#18191d;box-shadow:0 12px 40px #0008;display:grid;gap:14px}
+#album .album-filter-fields label{display:grid;gap:8px;font-size:11px;color:#b9ab8d}
+#album .album-filter-fields select{border:1px solid #403d34;padding:10px;border-radius:9px}
+#album [data-album-clear]{background:transparent;border:0;color:#e5cc92;font-size:12px;padding:8px;text-align:left;cursor:pointer}
+#album .album-empty-results{grid-column:1/-1;color:#b4aca0;font-size:13px;min-height:100px;padding:24px 0}
+#album .card-album-tabs button:disabled{opacity:.35;cursor:default}
+@media(max-width:600px){#album .card-album-tools{grid-template-columns:minmax(0,1fr) auto;gap:8px}#album .album-collection-select{grid-column:1/-1}#album .album-card-search{padding:9px 12px}#album .album-filter-panel summary{padding:12px}}

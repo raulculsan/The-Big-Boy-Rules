@@ -49,7 +49,7 @@
     revealDialog.querySelector('.pack-reveal-actions').innerHTML = reveal.flipped ? `${duplicate ? `<button type="button" class="packs-sync" data-reveal-discard ${busy || loading || !online() ? 'disabled' : ''}>Descartar repetida · +${escape(reward)} monedas</button>` : ''}<p class="pack-reveal-swipe-hint">${reveal.index + 1 < reveal.cards.length ? 'Pulsa la carta o desliza a la izquierda para continuar' : 'Pulsa la carta o desliza a la izquierda para terminar'}</p>` : '';
     revealDialog.querySelector('.pack-reveal-status').textContent = failure || notice;
   }
-  const revealReduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const revealReduced = () => (globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).matches;
   const motionTimings = globalThis.CollectionMotion?.timings || {flip:420, opening:720, advance:200, discard:480, reward:620};
   let revealTimer = 0;
   function finishRevealMotion(current) {
@@ -167,7 +167,7 @@
   revealDialog.addEventListener('pointercancel', finishSwipe);
   revealDialog.addEventListener('lostpointercapture', finishSwipe);
   revealDialog.addEventListener('dragstart',event => {if (event.target.closest('.pack-reveal-stage')) event.preventDefault();});
-  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event => {if (event.matches) {detachRevealVfx?.();detachRevealVfx=null;if(reveal && reveal.phase !== 'advancing') finishRevealMotion(reveal);}});
+  (globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).addEventListener('change',event => {if (event.matches) {detachRevealVfx?.();detachRevealVfx=null;if(reveal && reveal.phase !== 'advancing') finishRevealMotion(reveal);}});
   revealDialog.addEventListener('keydown', event => {
     if (event.key === 'ArrowLeft' && reveal && reveal.phase === 'idle' && !reveal.advancing && !event.repeat && !event.target.closest('[data-reveal-discard], [data-reveal-close]')) {
       event.preventDefault();
@@ -311,7 +311,7 @@
     const key = String(banner?.id || '');
     const surface = node.querySelector('.club-member-banner');
     if (!surface) return;
-    const animate = (!memberObserver || visibleMemberTiles.has(node)) && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const animate = (!memberObserver || visibleMemberTiles.has(node)) && !document.hidden && !(globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).matches;
     const changed = surface.dataset.bannerId !== key;
     const mode = animate ? 'animated' : 'poster';
     if (changed || !surface.firstElementChild || surface.dataset.bannerMode !== mode) {
@@ -322,6 +322,7 @@
     // Offscreen tiles retain one poster, releasing SVG masks and compositor layers.
     // Visible tiles keep the complete 2172 × 724 composition and original aspect.
   }
+  globalThis.ClubMotion?.media.addEventListener('change', () => paintMembers());
   function paintMembers() {
     if (!membersTarget?.isConnected) return;
     membersTarget.querySelectorAll('[data-member-banner-user]').forEach(paintMember);
@@ -533,7 +534,7 @@
     reward.innerHTML = `<span class="card-discard-coin" aria-hidden="true">B</span><strong>+${escape(earned)} ${earned === 1 ? 'moneda' : 'monedas'}</strong><small>${escape(copies)} ${copies === 1 ? 'repetida descartada' : 'repetidas descartadas'}</small>`;
     layer.append(reward); host.append(layer);
     const animations = [], originals = [];
-    const preference = matchMedia('(prefers-reduced-motion: reduce)');
+    const preference = (globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)'));
     const cancelMotion = () => {if (preference.matches || document.hidden) animations.forEach(animation => animation.cancel());};
     preference.addEventListener('change', cancelMotion);
     document.addEventListener('visibilitychange', cancelMotion);

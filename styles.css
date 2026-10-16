@@ -10300,3 +10300,10 @@ body.event-editor-open { overflow:hidden; overscroll-behavior:none; }
   }
   #eventEditor input:not([type="hidden"]),#eventEditor textarea,#eventEditor select { font-size:16px; }
 }
+
+/* Account preference supplements the system setting without changing layout or touch targets. */
+.motion-preference{padding:16px;border:1px solid #ffffff18;border-radius:18px;background:#ffffff04;display:grid;gap:8px}.motion-preference small{font-size:.74rem;line-height:1.5;color:var(--muted,#9b9ba3)}
+.form-draft-note{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.74rem;color:var(--muted,#9b9ba3);padding:8px 2px}.form-draft-note[hidden]{display:none}.form-draft-note button{background:transparent;color:inherit;border:0;text-decoration:underline;font:inherit;padding:6px}
+html[data-reduced-motion="true"] *,html[data-reduced-motion="true"] *::before,html[data-reduced-motion="true"] *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-delay:0ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0ms!important}
+html[data-reduced-motion="true"] .full-art-foil,html[data-reduced-motion="true"] .pack-rarity-vfx{opacity:0!important}
+.motion-preference{grid-column:1/-1}.motion-preference[hidden]{display:none}

@@ -1,18 +1,60 @@
+/* Motion preference is local to this account/device and always respects Reduce Motion. */
+(() => {
+  const system = matchMedia('(prefers-reduced-motion: reduce)');
+  const listeners = new Set();
+  let owner = '', choice = 'system';
+  const media = {get matches() { return choice === 'reduce' || system.matches; },
+    addEventListener(type, callback) { if (type === 'change') listeners.add(callback); },
+    removeEventListener(type, callback) { if (type === 'change') listeners.delete(callback); }};
+  const apply = () => {
+    document.documentElement.dataset.reducedMotion = String(media.matches);
+    document.querySelectorAll('[data-motion-preference]').forEach(select => { select.value = choice; });
+    [...listeners].forEach(callback => callback({matches:media.matches, media:system.media}));
+    dispatchEvent(new CustomEvent('club:motion-change', {detail:{reduced:media.matches}}));
+  };
+  window.ClubMotion = {
+    media,
+    configure(account) {
+      const next = String(account || 'guest');
+      if (owner === next) return;
+      owner = next;
+      try { choice = localStorage.getItem(`bb-motion-v1:${owner}`) === 'reduce' ? 'reduce' : 'system'; } catch { choice = 'system'; }
+      apply();
+    },
+    mount(form) {
+      if (!form || form.querySelector('[data-motion-preference]')) return;
+      const row = document.createElement('label'); row.className = 'motion-preference';
+      row.innerHTML = '<span>Animaciones</span><select data-motion-preference aria-label="Preferencia de animaciones"><option value="system">Según el dispositivo</option><option value="reduce">Suaves</option></select><small>Suaves reduce giros, destellos y movimiento. Se respeta siempre Reducir movimiento del dispositivo.</small>';
+      row.querySelector('select').value = choice;
+      row.querySelector('select').addEventListener('change', event => {
+        choice = event.target.value === 'reduce' ? 'reduce' : 'system';
+        try { localStorage.setItem(`bb-motion-v1:${owner}`, choice); } catch {}
+        apply();
+      });
+      const anchor=form.querySelector(".modal-actions");
+      if(anchor)anchor.before(row);else form.append(row);
+    }
+  };
+  system.addEventListener('change', apply);
+  window.ClubMotion.configure('guest');
+})();
+
 /* Bounded local diagnostics. No account data, content, URLs or tokens. */
 (() => {
   'use strict';
   const key = 'bb-local-health-v1', limit = 300;
   const session = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const areas = {inicio:'Inicio', chat:'Chats', privados:'Chat privado', perfil:'Perfil', calendario:'Calendario', sobres:'Sobres', album:'Álbum', catalogo:'Catálogo', administracion:'Administración', 'admin-configuracion':'Configuración', 'admin-cuentas':'Cuentas', 'admin-logros':'Logros', 'admin-diagnostico':'Diagnóstico', otra:'Otras'};
-  const kinds = ['session-start','authenticated','home-ready','network','stall','image','image-error','script-error','promise-error'];
+  const kinds = ['session-start','authenticated','home-ready','network','stall','image','image-error','script-error','promise-error','interaction'];
   let previous = [];
   try {
     const stored = JSON.parse(localStorage.getItem(key) || '[]');
     if (Array.isArray(stored)) previous = stored.slice(-limit).filter(item => item && kinds.includes(item.kind)).map(item => {
       const clean = {kind:item.kind};
-      for (const field of ['at','ts','ms','kb','mp','status']) if (Number.isFinite(item[field]) && item[field] >= 0) clean[field] = item[field];
+      for (const field of ['at','ts','ms','kb','mp','status','inputMs']) if (Number.isFinite(item[field]) && item[field] >= 0) clean[field] = item[field];
       if (typeof item.session === 'string' && /^[a-z0-9-]{1,40}$/.test(item.session)) clean.session = item.session;
       if (Object.hasOwn(areas, item.area)) clean.area = item.area;
+      if (['sobres','album','chats','chota'].includes(item.action)) clean.action = item.action;
       if (['auth','media','function','data','resource'].includes(item.resource)) clean.resource = item.resource;
       return clean;
     });
@@ -56,6 +98,28 @@
   document.addEventListener('error', event => { if (event.target instanceof HTMLImageElement) record('image-error', {area:area()}); }, true);
   window.addEventListener('error', () => record('script-error', {area:area()}));
   window.addEventListener('unhandledrejection', () => record('promise-error', {area:area()}));
+  // Estimate input-to-presented-frame on Safari/WKWebView too. No message content is stored.
+  const interactionAction = target => {
+    if (!(target instanceof Element)) return null;
+    if (target.closest('[data-chota-open], [data-chota-expand], [data-chota-action]')) return 'chota';
+    if (target.closest('#album, #albumDialog')) return 'album';
+    if (target.closest('#packOpeningDialog, #ownedPackOpen, #packsTopButton, .pack-reveal-dialog, .pack-opening-stage, [data-open-pack]')) return 'sobres';
+    if (target.closest('#chat, #privados')) return 'chats';
+    return null;
+  };
+  let lastInteraction = 0;
+  const measureInteraction = event => {
+    if(event.type==='keydown' && !['Enter',' ','ArrowLeft','ArrowRight'].includes(event.key))return;
+    const action = interactionAction(event.target), started = performance.now();
+    if (!action || document.hidden || started - lastInteraction < 150) return;
+    lastInteraction = started;
+    const delay = started - event.timeStamp;
+    const inputMs = delay >= 0 && delay < 60000 ? Math.round(delay) : 0;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (!document.hidden) record('interaction', {action, area:area(), inputMs, ms:Math.round(performance.now() - started + inputMs)});
+    }));
+  };
+  ['pointerup','click','keydown'].forEach(type => document.addEventListener(type,measureInteraction,{capture:true,passive:true}));
   const all = () => [...previous, ...samples].slice(-limit);
   const persist = () => { try { localStorage.setItem(key, JSON.stringify(all())); } catch {} };
   document.addEventListener('visibilitychange', () => { last = performance.now(); visible = !document.hidden; if (document.hidden) persist(); });
@@ -105,9 +169,15 @@
       const values = counts(group), areaPauses = durationValues(group.items.filter(item => item.kind === 'stall'));
       return `<div class="health-area-row"><div><strong>${areas[group.id]}</strong><small>${group.items.length} avisos${areaPauses.length ? ` · pausa máx. ${time(maxValue(areaPauses))}` : ''}</small></div><div class="health-stack" role="img" aria-label="${values.map((value,i) => `${labels[i]}: ${value}`).join(', ')}">${values.map((value,i) => `<i style="width:${value/areaMax*100}%;background:${colors[i]}"></i>`).join('')}</div></div>`;
     }).join('');
+    const responseRows = [['sobres','Sobres'],['album','Álbum'],['chats','Chats'],['chota','El Chota']].map(([action,label]) => {
+      const events = items.filter(item => item.kind === 'interaction' && item.action === action), values = durationValues(events);
+      const p95 = percentile(values,.95), delay = percentile(events.map(item => item.inputMs).filter(Number.isFinite),.95);
+      return `<div class="health-response-row"><strong>${label}</strong><span>${events.length} toques</span><b>${time(p95)}</b><small>${p95 > 200 ? 'Revisar respuesta' : events.length ? 'Respuesta ágil' : 'Sin muestras'} · espera de entrada ${time(delay)}</small><i style="--response-width:${Math.min(100,(p95 || 0)/10)}%"></i></div>`;
+    }).join('');
     return `<div class="health-metrics">${card('Inicio listo · p95',time(percentile(startup,.95)),`${startup.length} mediciones desde apertura`)}${card('Pausas detectadas',stalls.length,`p95 ${time(percentile(pauses,.95))} · máx. ${time(maxValue(pauses))}`)}${card('Fallos de red',network.length,`Respuesta fallida o sin conexión`)}${card('Avisos de imágenes',images.length,`p95 ${time(percentile(durationValues(images),.95))} · ${items.filter(item => item.kind === 'image-error').length} errores`)}</div>
       <div class="health-chart-grid"><article class="health-chart-card"><h3>Tiempo de inicio</h3><p>Desde apertura hasta inicio listo. Incluye la espera si tienes que iniciar sesión.</p>${drawStartup(recent)}<div class="health-chart-foot"><span>Sesiones numeradas abajo</span><span>Máximo ${time(maxValue(startup))}</span></div></article><article class="health-chart-card"><h3>Avisos por sesión</h3><p>Últimas ${recent.length} sesiones guardadas; los registros antiguos aparecen sin fecha.</p>${recent.length ? `<div class="health-session-chart">${sessionRows}</div>` : empty('Usa la app para empezar a registrar sesiones.')}${legend()}</article></div>
       <article class="health-chart-card health-area-chart"><h3>Dónde se acumulan los avisos</h3><p>Las imágenes se atribuyen a la pantalla visible al completar su carga. Son avisos registrados, no tasas de error.</p>${areaRows || empty('Todavía no hay avisos registrados en ninguna pantalla.')}${legend()}</article>
+      <article class="health-chart-card health-response-chart"><h3>Respuesta al toque</h3><p>Tiempo estimado hasta presentar un fotograma tras el toque, incluido el trabajo del navegador. p95 por función; no mide la espera de red ni toda la animación.</p>${responseRows}</article>
       <p class="health-capture-note">${items.length} / ${limit} muestras · ${groups.length} sesiones conservadas · p95: el 95 % de las mediciones queda por debajo de ese tiempo.</p>`;
   }
   window.ClubHealth = {

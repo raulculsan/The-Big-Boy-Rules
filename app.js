@@ -614,7 +614,7 @@ async function transitionMessageView(update, {back = false} = {}) {
   messageViewTransitioning = true;
   let scene = null;
   try {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)")).matches;
     const fromInbox = document.body.classList.contains("chat-inbox-view") && !document.body.classList.contains("chat-focus");
     if (!isMobileSidebar() || reducedMotion || (!back && !fromInbox)) {
       update();
@@ -697,6 +697,7 @@ function goTo(sectionId) {
   document.body.classList.toggle("chat-focus", sectionId === "privados");
   document.body.classList.toggle("chat-inbox-view", sectionId === "chat");
   document.body.classList.toggle("achievement-management-open", ["admin-configuracion", "admin-diagnostico", "admin-cuentas", "admin-logros", "crear-logro", "asignar-logro", "editar-usuario"].includes(sectionId));
+  if (sectionId === "ayuda") { globalThis.ClubDrafts?.begin("helpRequestForm", "new"); globalThis.ClubDrafts?.begin("helpReplyForm", activeHelpRequestId == null ? null : `request:${activeHelpRequestId}`); }
   if (sectionId === "admin-logros") renderAdminAchievements();
   if (sectionId === "admin-diagnostico") globalThis.ClubHealth?.show();
   if (sectionId === "admin-cuentas") renderAdminPanel();
@@ -835,6 +836,7 @@ function showGroupChatInbox() {
 
 function showPrivateChatInbox() {
   dismissChatComposerKeyboard();
+  globalThis.ClubDrafts?.flush();
   activePrivateMemberId = null;
   renderPrivateConversation();
   goTo("chat");
@@ -906,7 +908,7 @@ async function settleChatBackScene(scene, targetOffset) {
   if (!scene?.panel) return;
   const from = ChatMotion.position(scene.offset, scene.width);
   const to = ChatMotion.position(targetOffset, scene.width);
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduced = (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)")).matches;
   const duration = ChatMotion.duration(Math.abs(to.offset - from.offset), scene.width, reduced);
   updateChatBackScene(scene, to.offset);
   if (!duration || !scene.panel.animate) return;
@@ -1486,7 +1488,7 @@ function releaseChatMenuFocus(menu, immediate = false) {
   if (!focus) return;
   chatMenuFocus.delete(menu);
   focus.source.classList.remove("chat-menu-source-hidden");
-  if (immediate || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (immediate || (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)")).matches) {
     focus.layer.remove();
     return;
   }
@@ -1543,7 +1545,7 @@ function focusChatMenuSource(menu, source) {
   menu.style.transformOrigin = "top center";
   source.classList.add("chat-menu-source-hidden");
   chatMenuFocus.set(menu, {layer, source});
-  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (!(globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)")).matches) {
     layer.animate([{opacity: 0}, {opacity: 1}], {duration: 220, easing: "ease-out"});
     preview.animate([
       {transform: "scale(1)", left: `${rect.left}px`, top: `${rect.top}px`},
@@ -1563,7 +1565,7 @@ function animateChatMenu(menu, opening) {
     menu.hidden = false;
     if (!isEditableAppTarget(document.activeElement)) window.getSelection()?.removeAllRanges();
   }
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !menu.animate) {
+  if ((globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)")).matches || !menu.animate) {
     menu.hidden = !opening;
     menu.classList.remove("is-closing");
     chatMenuMotion.delete(menu);
@@ -1787,6 +1789,7 @@ function renderChatChannels() {
   if (!chatChannels.some(channel => String(channel.id) === String(activeChatChannelId))) {
     activeChatChannelId = chatChannels[0].id;
   }
+  globalThis.ClubDrafts?.begin("messageForm", `channel:${activeChatChannelId}`);
   const active = chatChannels.find(channel => String(channel.id) === String(activeChatChannelId));
   document.getElementById("activeChannelName").textContent = `# ${active?.name || "general"}`;
   const description = document.getElementById("activeChannelDescription");
@@ -2301,6 +2304,7 @@ async function openPrivateConversation(memberId) {
 }
 
 function renderPrivateConversation() {
+  globalThis.ClubDrafts?.begin("privateMessageForm", activePrivateMemberId == null ? null : `member:${activePrivateMemberId}`);
   reconcileMessageUI("private");
   const member = getMember(activePrivateMemberId);
   const container = document.getElementById("privateMessages");
@@ -2440,7 +2444,7 @@ let chotaCommentSequence = 0;
 let tigretonRenderedKey = "";
 // One visible pet at a time: pause offscreen and cancel every timer on a rerender.
 let tigretonMotion = null;
-const tigretonReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const tigretonReducedMotion = (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)"));
 // Load the Krita speech poses before the first comment is displayed.
 const chotaTalkSprite = new Image();
 chotaTalkSprite.src = "icons/mascot/chota-v2/chota-talk.png";
@@ -2785,10 +2789,11 @@ async function loadTigretonComment(event, date, contextKey, action = "agenda") {
   // Share an in-flight call, but never pin one AI sentence for the entire day.
   if (tigretonRequests.has(key)) return tigretonRequests.get(key);
   const previous = tigretonComments.get(key);
+  if (previous?.source === "ai" && Date.now() - previous.savedAt < 45000) return previous;
   const variation = previous ? (previous.variation + 1) % 12 : Math.floor(Math.random() * 12);
   const request = (async () => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 4500);
     try {
       const {data, error} = await db.functions.invoke("tigreton-agenda", {
         body: {eventId: event.id, action, variation, previousComment: previous?.comment || "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Madrid"},
@@ -2832,7 +2837,11 @@ function renderUpcomingEvents() {
   const viewer = document.getElementById("chotaViewer");
   if (viewer?.open && viewer.dataset.contextKey !== tigretonRenderedKey) viewer.close();
   mountTigretonMotion(previousPlanKey !== tigretonRenderedKey, upcoming[0]?.event, upcoming[0]?.date);
-
+  if (upcoming.length && previousPlanKey !== tigretonRenderedKey && currentAuthUser) {
+    const expected = tigretonRenderedKey, first = upcoming[0];
+    const warm = () => { if (!document.hidden && expected === tigretonRenderedKey && !tigretonComments.has(expected)) void loadTigretonComment(first.event, first.date, expected); };
+    if (window.requestIdleCallback) requestIdleCallback(warm,{timeout:2500}); else setTimeout(warm,900);
+  }
 }
 let tigretonLastDay = tigretonDayKey();
 function refreshTigretonDay() {
@@ -3133,12 +3142,15 @@ async function hydrateAuthenticatedData(authUser) {
 
 async function applyUserInterface(user, authUser = null, {restoring = false} = {}) {
   if (currentAuthUser?.id !== authUser?.id) {
+    globalThis.ClubDrafts?.suspend();
+    globalThis.ClubOnboarding?.reset();
     globalThis.BannerShop?.reset();
     globalThis.AdminGrants?.reset();
     globalThis.GroupInteractions?.reset();
   }
   currentUser = user;
   currentAuthUser = authUser;
+  globalThis.ClubMotion?.configure(authUser?.id);
   document.documentElement.classList.add("auth-session-hint");
   document.body.classList.add("authenticated");
   globalThis.ClubHealth?.mark("authenticated");
@@ -3161,6 +3173,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     return;
   }
   document.body.classList.remove("session-restoring");
+  runWhenIdle(() => { if (currentAuthUser?.id === authUser?.id && currentUser === user) globalThis.ClubOnboarding?.ready({userId:authUser?.id || `local:${user.id}`, navigate:goTo}); });
   if (backendReady && authUser) {
     void globalThis.BannerShop?.refresh();
     void hydrateAuthenticatedData(authUser);
@@ -3178,9 +3191,12 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
 }
 
 function showLogin() {
+  globalThis.ClubOnboarding?.reset();
   document.body.classList.remove("session-restoring");
   currentUser = null;
+  globalThis.ClubDrafts?.suspend();
   currentAuthUser = null;
+  globalThis.ClubMotion?.configure(null);
   globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
@@ -3225,7 +3241,9 @@ async function logoutCurrentUser() {
   localStorage.removeItem(AUTH_PROFILE_CACHE_KEY);
   sessionStorage.removeItem(AUTH_SESSION_KEY);
   currentUser = null;
+  globalThis.ClubDrafts?.suspend();
   currentAuthUser = null;
+  globalThis.ClubMotion?.configure(null);
   globalThis.AdminGrants?.render();
   messages = [];
   notifications = [];
@@ -3288,7 +3306,9 @@ async function beginAuthenticatedSession(authUser) {
   // Roles and account visibility must also come from the current server profile.
   const profile = await profileForAuthUser(verifiedUser);
   if (!profile) {
+    globalThis.ClubDrafts?.suspend();
     currentAuthUser = null;
+    globalThis.ClubMotion?.configure(null);
     await db.auth.signOut();
     throw new Error("Esta cuenta todavía no tiene un perfil del club.");
   }
@@ -3679,7 +3699,7 @@ async function openNotification(id) {
     else goTo("sobres");
   } else if (item.type === "group_poll") void openGroupConversation(item.targetId);
   else if (item.type === "group_message") goTo("chat");
-  else if (item.type === "news_update") {goTo("inicio");document.getElementById("noticias")?.classList.remove("is-collapsed");document.getElementById("noticias")?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth",block:"start"});}
+  else if (item.type === "news_update") {goTo("inicio");document.getElementById("noticias")?.classList.remove("is-collapsed");document.getElementById("noticias")?.scrollIntoView({behavior:(globalThis.ClubMotion?.media || matchMedia("(prefers-reduced-motion: reduce)")).matches?"instant":"smooth",block:"start"});}
   else {
     const actor = getMemberByAuthId(item.actorId);
     if (actor) renderProfile(actor.id);
@@ -4379,6 +4399,7 @@ function closeChannelEditor() {
 async function createChatChannel(channelId = null) {
   if (!canManageSite() || !currentAuthUser || !db) return;
   const channel = chatChannels.find(item => String(item.id) === String(channelId));
+  globalThis.ClubDrafts?.flush();
   editingChatChannel = channel || null;
   const request = ++channelEditorRequest;
   const form = document.getElementById("channelSetupForm");
@@ -4414,6 +4435,7 @@ async function createChatChannel(channelId = null) {
       }
     }
   }
+  globalThis.ClubDrafts?.begin("channelSetupForm", channel ? `channel:${channel.id}` : "new", {reopen:true});
   form.querySelector('[type="submit"]').disabled = false;
   updateChannelSetupFields();
 }
@@ -4433,6 +4455,7 @@ async function saveChatChannel(event) {
   event.preventDefault();
   if (!canManageSite() || !currentAuthUser) return;
   const request = channelEditorRequest, owner = currentAuthUser.id;
+  const draftToken = globalThis.ClubDrafts?.token("channelSetupForm");
   const form = event.currentTarget, status = document.getElementById("channelSetupStatus"), submit = form.querySelector('[type="submit"]');
   const name = form.elements.channelName.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0,32);
   if (!name) { status.textContent = "Escribe un nombre para la sección."; return; }
@@ -4449,6 +4472,7 @@ async function saveChatChannel(event) {
     if (error) throw error;
     await loadChatChannels();
     if (request !== channelEditorRequest || owner !== currentAuthUser?.id) return;
+    globalThis.ClubDrafts?.clear("channelSetupForm", draftToken);
     activeChatChannelId = data; closeChannelEditor(); selectChatChannel(data);
   } catch (error) { if (request !== channelEditorRequest || owner !== currentAuthUser?.id) return; status.textContent = error.code === "23505" ? "Ya hay una sección con este nombre." : error.message || "No se pudo guardar. Inténtalo de nuevo."; }
   finally { if (request === channelEditorRequest) submit.disabled = false; }
@@ -4634,6 +4658,7 @@ function syncEventEditorViewport() {
 }
 
 function openEventEditor(eventId = null, requestedType = "event") {
+  globalThis.ClubDrafts?.flush();
   const event = groupEvents.find(item => String(item.id) === String(eventId));
   const eventType = event?.eventType || requestedType;
   if (event && !canEditCalendarEvent(event)) return;
@@ -4656,6 +4681,8 @@ function openEventEditor(eventId = null, requestedType = "event") {
   updateEventEditorType();
   document.getElementById("eventFeedback").textContent = "";
   document.getElementById("deleteEventButton").hidden = !event || !canEditCalendarEvent(event);
+  globalThis.ClubDrafts?.begin("eventForm", event ? `event:${event.id}` : `new:${eventType}`, {reopen:true});
+  updateEventEditorType();
   const modal = document.getElementById("eventEditor");
   document.body.classList.add("event-editor-open");
   modal.classList.add("open");
@@ -4672,6 +4699,7 @@ function closeEventEditor() {
 }
 
 async function saveEvent(form) {
+  const draftToken = globalThis.ClubDrafts?.token(form.id);
   const feedback = document.getElementById("eventFeedback");
   const submit = form.querySelector("[type=submit]");
   submit.disabled = true;
@@ -4697,6 +4725,7 @@ async function saveEvent(form) {
     const {data: savedEvent, error} = await query.select("id").single();
     if (error) throw error;
     if (!id && savedEvent?.id) void dispatchPush("event_created", String(savedEvent.id));
+    globalThis.ClubDrafts?.clear("eventForm", draftToken);
     closeEventEditor();
     await loadGroupEvents();
   } catch (error) {
@@ -4714,6 +4743,7 @@ async function deleteEvent() {
   if (!id || !canEditCalendarEvent(event)) return;
   const {error} = await db.from("group_events").delete().eq("id", id);
   if (!error) {
+    globalThis.ClubDrafts?.clear("eventForm");
     closeEventEditor();
     await loadGroupEvents();
   }
@@ -4832,6 +4862,7 @@ async function removeGroupAvatar() {
 }
 
 function openProfileEditor(memberId = currentUser?.id) {
+  globalThis.ClubDrafts?.flush();
   const profile = getMember(memberId);
   if (!profile || (profile.id !== currentUser?.id && !canManageSite())) return;
   editingProfileId = profile.id;
@@ -4867,6 +4898,11 @@ function openProfileEditor(memberId = currentUser?.id) {
   const preview = document.getElementById("avatarPreview");
   preview.classList.toggle("has-image", Boolean(profile.avatarUrl));
   preview.innerHTML = profile.avatarUrl ? `<img src="${escapeHtml(profile.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : profile.name.charAt(0);
+  globalThis.ClubDrafts?.begin("profileForm", `profile:${profile.id}`, {reopen:true});
+  document.getElementById("bioCount").textContent = document.getElementById("profileBio").value.length;
+  globalThis.ClubMotion?.mount(document.getElementById("profileForm"));
+  const motionPreference = document.querySelector("#profileForm .motion-preference");
+  if (motionPreference) motionPreference.hidden = managingAnotherUser;
   const modal = document.getElementById("profileEditor");
   modal.classList.toggle("admin-member-editor", managingAnotherUser);
   globalThis.BannerShop?.openEditor(!managingAnotherUser);
@@ -4967,6 +5003,7 @@ function createCroppedAvatarFile() {
 }
 
 async function saveProfile(form) {
+  const draftToken = globalThis.ClubDrafts?.token(form.id);
   const profile = getMember(editingProfileId);
   if (!profile || (profile.id !== currentUser?.id && !canManageSite())) return;
   const feedback = document.getElementById("profileFeedback");
@@ -5048,6 +5085,7 @@ async function saveProfile(form) {
     if (!backendReady) persistLocalProfile(profile);
     refreshProfileSurfaces();
     renderProfile(profile.id);
+    globalThis.ClubDrafts?.clear("profileForm", draftToken);
     closeProfileEditor();
   } catch (error) {
     feedback.textContent = error.message || "No se pudo guardar el perfil.";
@@ -5116,6 +5154,7 @@ function renderHelpCenter() {
   }).join("") : `<div class="empty-state compact">No hay peticiones en este estado.</div>`;
 
   const active = helpRequests.find(item => String(item.id) === String(activeHelpRequestId));
+  globalThis.ClubDrafts?.begin("helpReplyForm", active ? `request:${active.id}` : null);
   const conversation = document.getElementById("helpConversation");
   const empty = document.getElementById("helpConversationEmpty");
   conversation.hidden = !active;
@@ -5168,6 +5207,7 @@ function renderHelpCenter() {
 }
 
 async function submitHelpRequest(form) {
+  const draftToken = globalThis.ClubDrafts?.token(form.id);
   if (!backendReady || !currentAuthUser) return;
   const message = document.getElementById("helpRequestMessage").value.trim();
   const type = document.getElementById("helpRequestType").value;
@@ -5179,7 +5219,8 @@ async function submitHelpRequest(form) {
   try {
     const {data: requestId, error} = await db.rpc("create_help_request", {new_type: type, initial_body: message});
     if (error) throw error;
-    form.reset();
+    globalThis.ClubDrafts?.clear("helpRequestForm", draftToken);
+    if (globalThis.ClubDrafts?.token(form.id) === draftToken) form.reset();
     feedback.textContent = "Petición enviada a todos los administradores.";
     activeHelpRequestId = requestId;
     activeHelpFilter = "all";
@@ -5193,6 +5234,7 @@ async function submitHelpRequest(form) {
 }
 
 async function submitHelpReply(form) {
+  const draftToken = globalThis.ClubDrafts?.token(form.id);
   const body = document.getElementById("helpReplyMessage").value.trim();
   const feedback = document.getElementById("helpReplyFeedback");
   if (!body || !activeHelpRequestId || !currentAuthUser) return;
@@ -5207,7 +5249,8 @@ async function submitHelpReply(form) {
   const {error} = await db.from("help_messages").insert({request_id: activeHelpRequestId, sender_id: currentAuthUser.id, body});
   submit.disabled = false;
   if (error) return void (feedback.textContent = error.message || "No se pudo enviar la respuesta.");
-  form.reset();
+  globalThis.ClubDrafts?.clear("helpReplyForm", draftToken);
+  if (globalThis.ClubDrafts?.token(form.id) === draftToken) form.reset();
   feedback.textContent = "";
   await loadHelpCenter();
 }
@@ -5829,7 +5872,7 @@ async function finishPageBackGesture(event) {
   suppressPageBackClickUntil = Date.now() + 450;
   const dx = Math.max(0, event.clientX - gesture.x);
   const commit = event.type === "pointerup" && gesture.page.classList.contains("active") && dx >= Math.min(84, innerWidth * .22);
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduced = (globalThis.ClubMotion?.media || matchMedia("(prefers-reduced-motion: reduce)")).matches;
   const animations = [];
   try {
     if (!reduced && gesture.page.animate) {
@@ -5996,6 +6039,7 @@ document.getElementById("helpRequestList").addEventListener("click", event => {
   const request = event.target.closest("[data-help-request]");
   if (!request) return;
   activeHelpRequestId = request.dataset.helpRequest;
+  globalThis.ClubDrafts?.begin("helpReplyForm", `request:${activeHelpRequestId}`);
   renderHelpCenter();
 });
 // Failed sends retain their exact draft and destination until retried or dismissed.
@@ -6023,6 +6067,7 @@ function renderChatSendStatus(kind) {
 async function submitChatMessage(kind, event, retry = null) {
   event.preventDefault();
   const form = event.currentTarget;
+  const draftToken = globalThis.ClubDrafts?.token(form.id);
   const destination = kind === "private" ? activePrivateMemberId : activeChatChannelId;
   const key = chatSendKey(kind, destination);
   if (chatSendAttempts.get(key)?.sending) return;
@@ -6058,6 +6103,7 @@ async function submitChatMessage(kind, event, retry = null) {
       else refreshGroupMessageSurfaces();
     }
     chatSendAttempts.delete(key);
+    if (sentMessage) globalThis.ClubDrafts?.clearSent(form.id, draftToken, value);
     if (sentMessage && sameConversation()) {
       if (input.value === value) input.value = "";
       if (pendingChatFile(kind) === file) clearPendingChatFile(kind);
@@ -6551,3 +6597,113 @@ document.getElementById("groupEventNotice")?.addEventListener("click", event => 
   const plan=groupEvents.find(plan=>String(plan.id)===event.currentTarget.dataset.eventId);
   if(plan)globalThis.GroupInteractions?.openPlan(plan);
 });
+
+
+/* Text drafts are private to the signed-in account on this device. Never serialize a form wholesale. */
+(() => {
+  const forms = new Map(), prefix = 'bb-draft-v1:', lifetime = 7 * 86400000;
+  const whitelist = {
+    messageForm:['#messageInput'], privateMessageForm:['#privateMessageInput'],
+    eventForm:['#eventTitle','#eventDescription','#eventStartsAt','#eventEndsAt','#eventLocation','#birthdayDate'],
+    profileForm:['#profileName','#profileNickname','#profileBio','#profileTags','#profileFlag'],
+    helpRequestForm:['#helpRequestMessage','#helpRequestType'], helpReplyForm:['#helpReplyMessage'],
+    channelSetupForm:['[name="channelName"]','[name="description"]','[name="readOnly"]','[data-rule]']
+  };
+  let timer;
+  const account = () => currentAuthUser?.id || null;
+  const fields = form => [...form.querySelectorAll(whitelist[form.id].join(','))].filter(field => !['password','file','hidden'].includes(field.type));
+  const keyFor = (id,scope,owner) => `${prefix}${owner}:${id}:${scope}`;
+  function flush() {
+    clearTimeout(timer);
+    for (const [id,state] of forms) {
+      if (!state.dirty || state.owner !== account()) continue;
+      const form = document.getElementById(id); if (!form) continue;
+      const values = fields(form).map(field => field.type === 'checkbox' ? field.checked : field.value.slice(0,12000));
+      try {
+        if (values.some(value => typeof value === 'string' && value.trim())) localStorage.setItem(state.key, JSON.stringify({at:Date.now(),values}));
+        else localStorage.removeItem(state.key);
+        state.dirty = false;
+      } catch { /* Storage can be disabled; typing and sending still work. */ }
+    }
+  }
+  function begin(id,scope,{reopen=false}={}) {
+    const form = document.getElementById(id), owner = account();
+    if (!form || !whitelist[id]) return;
+    const next = owner && scope != null ? keyFor(id,scope,owner) : null;
+    const previous = forms.get(id);
+    if (previous?.key === next && !reopen) return;
+    flush();
+    forms.delete(id);
+    if (id === 'messageForm' || id === 'privateMessageForm' || id === 'helpReplyForm') fields(form).forEach(field => field.value = '');
+    if (!next) return;
+    forms.set(id,{key:next,owner,dirty:false});
+    form.querySelector('.form-draft-note')?.remove();
+    const baseline=fields(form).map(field => field.type==='checkbox' ? field.checked : field.value);
+    try {
+      const saved = JSON.parse(localStorage.getItem(next) || 'null');
+      if (!saved) return;
+      if (!Number.isFinite(saved.at) || Date.now()-saved.at > lifetime || !Array.isArray(saved.values)) { localStorage.removeItem(next); return; }
+      fields(form).forEach((field,index) => {
+        const value = saved.values[index];
+        if (field.type === 'checkbox') { if (typeof value === 'boolean') field.checked = value; }
+        else if (typeof value === 'string') field.value = value.slice(0,field.maxLength > 0 ? field.maxLength : 12000);
+      });
+      if (!['messageForm','privateMessageForm'].includes(id)) {
+        const note=document.createElement('div'); note.className='form-draft-note';
+        const label=document.createElement('span'); label.textContent='Borrador recuperado';
+        const button=document.createElement('button'); button.type='button'; button.textContent='Descartar';
+        button.onclick=()=>{ globalThis.ClubDrafts.clear(id,next); fields(form).forEach((field,index)=>{if(field.type==='checkbox')field.checked=baseline[index];else field.value=baseline[index];}); note.remove(); form.dispatchEvent(new CustomEvent('draftrestored',{bubbles:true})); };
+        note.append(label,button); form.append(note);
+      }
+      // Let counters/autosizing refresh without pretending the draft is a new edit.
+      form.dispatchEvent(new CustomEvent('draftrestored', {bubbles:true}));
+    } catch {}
+  }
+  function changed(event) {
+    if (!event.isTrusted) return;
+    const form = event.target.form;
+    if (!form || !whitelist[form.id] || !fields(form).includes(event.target)) return;
+    if (!forms.has(form.id)) {
+      const scope = form.id === 'helpRequestForm' ? 'new' : form.id === 'helpReplyForm' && activeHelpRequestId ? `request:${activeHelpRequestId}` : null;
+      if (!scope || !account()) return;
+      // Bind without restoring over the user's first typed character.
+      forms.set(form.id,{key:keyFor(form.id,scope,account()),owner:account(),dirty:false});
+    }
+    const state = forms.get(form.id);
+    if (state.owner !== account()) return;
+    state.dirty = true; clearTimeout(timer); timer = setTimeout(flush,250);
+  }
+  document.addEventListener('input',changed); document.addEventListener('change',changed);
+  document.addEventListener('draftrestored',event => {
+    if (event.target.id==='profileForm') document.getElementById('bioCount').textContent=document.getElementById('profileBio').value.length;
+    if (event.target.id==='channelSetupForm') updateChannelSetupFields();
+  });
+  document.addEventListener('visibilitychange',() => { if(document.hidden) flush(); });
+  window.addEventListener('pagehide',flush);
+  globalThis.ClubDrafts = {
+    begin,flush,
+    touch(id) { const state=forms.get(id); if(!state || state.owner!==account()) return; state.dirty=true; clearTimeout(timer); timer=setTimeout(flush,250); },
+    register(id,selectors) { if (typeof id === 'string' && Array.isArray(selectors) && selectors.every(selector => typeof selector === 'string')) whitelist[id]=selectors; },
+    saved(id,scope) { try { const owner=account(); if(!owner) return null; const value=JSON.parse(localStorage.getItem(keyFor(id,scope,owner)) || 'null'); return value && Number.isFinite(value.at) && Date.now()-value.at<lifetime && Array.isArray(value.values) ? value.values : null; } catch { return null; } },
+    release(id) { flush(); forms.delete(id); },
+    token(id) { return forms.get(id)?.key; },
+    clear(id,token) {
+      const state = forms.get(id), key = token || state?.key;
+      if (!key) return;
+      if (state?.key === key) state.dirty=false;
+      try { localStorage.removeItem(key); } catch {}
+      if (state?.key === key) document.getElementById(id)?.querySelector('.form-draft-note')?.setAttribute('hidden','');
+    },
+    clearSent(id,token,value) {
+      if (!token) return;
+      const state=forms.get(id), form=document.getElementById(id);
+      if (state?.key === token && fields(form)[0]?.value !== value) { state.dirty=true; flush(); return; }
+      try { const saved=JSON.parse(localStorage.getItem(token)||'null'); if (!saved || saved.values?.[0] === value) localStorage.removeItem(token); } catch {}
+      if(state?.key === token) state.dirty=false;
+    },
+    suspend() { flush(); for (const id of forms.keys()) if (['messageForm','privateMessageForm','helpReplyForm'].includes(id)) fields(document.getElementById(id)).forEach(field => field.value=''); forms.clear(); }
+  };
+  // Expiry bounds retained data without scanning storage on every keystroke.
+  const prune = () => { try { for (const key of Object.keys(localStorage)) if (key.startsWith(prefix)) { try { const saved=JSON.parse(localStorage.getItem(key)); if (!saved?.at || Date.now()-saved.at>lifetime) localStorage.removeItem(key); } catch { localStorage.removeItem(key); } } } catch {} };
+  if (window.requestIdleCallback) requestIdleCallback(prune,{timeout:5000}); else setTimeout(prune,3000);
+})();

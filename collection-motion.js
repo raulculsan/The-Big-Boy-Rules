@@ -28,7 +28,7 @@
   // A separate foil surface: animation never translates or rotates the card itself.
   function attachFullArtFoil(surface, foil, edition='Full Art') {
     const viceCity=edition==='Vice City';
-    const motion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const motion=(globalThis.ClubMotion?.media || window.matchMedia?.('(prefers-reduced-motion: reduce)'));
     let dead=false;
     foil.classList.add('full-art-foil');
     foil.classList.toggle('vice-city-foil',viceCity);
@@ -58,7 +58,7 @@
     const fullArt=edition==='Full Art'||edition==='Vice City', foilParent=foil.parentNode, foilNext=foil.nextSibling;
     if(fullArt)surface.querySelector('.collection-card-stage')?.append(foil);
     const effect=edition==='Retro'?'card-touch-retro':edition==='Legendaria'?'card-touch-legendary':edition==='Épica'?'card-touch-epic':edition==='Especial'?'card-touch-special':'card-touch';
-    const motion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const motion=(globalThis.ClubMotion?.media || window.matchMedia?.('(prefers-reduced-motion: reduce)'));
     let pointer=null, origin, bounds, dx=0,dy=0, frame=0, player, dispose,dead=false;
     const clamp=n=>Math.max(-1,Math.min(1,n));
     function paint() {
@@ -117,7 +117,7 @@
   let stop, packPlayer,returnFocus;
   if(dialog&&button) {
     const host=document.getElementById('packPreviewMotion'),status=document.getElementById('packPreviewStatus');
-    const replay=document.getElementById('packPreviewReplay'),motion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const replay=document.getElementById('packPreviewReplay'),motion=(globalThis.ClubMotion?.media || window.matchMedia?.('(prefers-reduced-motion: reduce)'));
     function clear(){stop?.();stop=null;packPlayer=null;dialog.dataset.motionState='static';}
     function play() {
       clear();status.textContent='Preparando la apertura…';replay.disabled=true;
@@ -143,7 +143,7 @@
   // One-shot rarity reveal. A separate lifecycle keeps navigation independent of VFX.
   const packRevealDurations={common:650,retro:1000,special:1200,epic:1450,legendary:1750,full_art:2000,vice_city:2400};
   function playPackReveal(stage,edition,{peak=false}={}) {
-    if(!stage||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return ()=>{};
+    if(!stage||(globalThis.ClubMotion?.media || window.matchMedia?.('(prefers-reduced-motion: reduce)')).matches)return ()=>{};
     const rarity=Object.hasOwn(packRevealDurations,edition)?edition:'common';
     const host=document.createElement('span');host.className=`pack-rarity-vfx pack-rarity-${rarity}`;
     host.setAttribute('aria-hidden','true');host.dataset.rarity=rarity;
@@ -160,7 +160,7 @@
     };
     host.innerHTML=scenes[rarity];stage.prepend(host);
     let timer,dead=false;
-    const motion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const motion=(globalThis.ClubMotion?.media || window.matchMedia?.('(prefers-reduced-motion: reduce)'));
     const stop=()=>{if(dead)return;dead=true;clearTimeout(timer);host.getAnimations?.({subtree:true}).forEach(a=>a.cancel());host.remove();motion?.removeEventListener('change',changed);document.removeEventListener('visibilitychange',hidden);};
     const changed=event=>{if(event.matches)stop();};
     const hidden=()=>{if(document.hidden)stop();};

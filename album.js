@@ -6,24 +6,41 @@
   const normalize = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const rarityOf = item => ({common:'common',comun:'common',retro:'retro',special:'special',especial:'special',epic:'epic',epica:'epic',legendary:'legendary',legendaria:'legendary','full art':'full_art',full_art:'full_art','vice city':'vice_city',vice_city:'vice_city'}[normalize(item.rarity || item.edition)] || 'common');
   const icon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M5 8h4M5 11h4M15 8h4M15 11h4"/></svg>';
+  let collections = [{id:'los-nuestros-01',name:'Los nuestros · Colección 01'}], selectedCollection = 'los-nuestros-01';
+  let query = '', kindFilter = '', rarityFilter = '', ownershipFilter = '', allSlots = [];
   let inventory = null, loading = false, failure = '', page = 0, slots = [], refresh, navigate, opener, returnSection = 'sobres', renderedSlots = '';
   const dialog = document.createElement('section');
   dialog.id = 'album'; dialog.className = 'page-section card-album-page'; dialog.hidden = true; dialog.setAttribute('aria-labelledby','cardAlbumTitle');
-  dialog.innerHTML = `<div class="card-album"><header class="card-album-header"><div><span class="eyebrow">LOS NUESTROS · COLECCIÓN 01</span><h2 id="cardAlbumTitle" tabindex="-1">Mi álbum</h2></div><button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span data-duplicates-count>0</span></button><button type="button" class="packs-back" data-album-close aria-label="Volver de álbum">←</button></header><p id="cardAlbumSummary" class="card-album-summary"></p><div id="cardAlbumStatus" role="status" aria-live="polite"><span data-album-status-message></span><button type="button" data-album-retry hidden>Reintentar</button></div><nav class="card-album-tabs" aria-label="Rarezas del álbum">${rarities.map(r => `<button type="button" data-album-rarity="${r.key}">${r.label}</button>`).join('')}</nav><div class="card-album-page-viewport"><section id="cardAlbumLeaf" class="card-album-leaf" aria-labelledby="cardAlbumPageTitle"><h3 id="cardAlbumPageTitle"></h3><div id="cardAlbumSlots" class="card-album-slots"></div></section></div><nav class="card-album-page-controls" aria-label="Páginas del álbum"><div class="card-album-compass-heading"><span>PÁGINAS</span><span id="cardAlbumPageCount" class="card-album-page-count" role="status" aria-live="polite"></span></div><div class="card-album-compass"><span class="card-album-compass-needle" aria-hidden="true"></span><div id="cardAlbumPageCompass" class="card-album-compass-track" aria-label="Seleccionar página"></div></div></nav></div>`;
+  dialog.innerHTML = `<div class="card-album"><header class="card-album-header"><div><span class="eyebrow"><span data-album-collection-name>LOS NUESTROS · COLECCIÓN 01</span></span><h2 id="cardAlbumTitle" tabindex="-1">Mi álbum</h2></div><button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span data-duplicates-count>0</span></button><button type="button" class="packs-back" data-album-close aria-label="Volver de álbum">←</button></header><p id="cardAlbumSummary" class="card-album-summary"></p><div id="cardAlbumStatus" role="status" aria-live="polite"><span data-album-status-message></span><button type="button" data-album-retry hidden>Reintentar</button></div><div class="card-album-tools"><label class="album-collection-select"><span>Colección</span><select data-album-collection aria-label="Colección"></select></label><label class="album-card-search"><span aria-hidden="true">⌕</span><input type="search" data-album-search placeholder="Buscar carta" aria-label="Buscar carta por nombre" autocomplete="off"></label><details class="album-filter-panel"><summary>Filtros<span data-album-filter-count></span></summary><div class="album-filter-fields"><label>Rareza<select data-album-filter="rarity"><option value="">Todas</option>${rarities.map(r => `<option value="${r.key}">${r.label}</option>`).join('')}</select></label><label>Tipo<select data-album-filter="kind"><option value="">Todos</option><option value="Miembro">Miembros</option><option value="Personaje">Personajes</option><option value="Ubicación">Ubicaciones</option><option value="Objeto">Objetos</option></select></label><label>Estado<select data-album-filter="ownership"><option value="">Todas las cartas</option><option value="missing">Me faltan</option><option value="owned">Conseguidas</option></select></label><button type="button" data-album-clear>Limpiar filtros</button></div></details></div><nav class="card-album-tabs" aria-label="Rarezas del álbum">${rarities.map(r => `<button type="button" data-album-rarity="${r.key}">${r.label}</button>`).join('')}</nav><div class="card-album-page-viewport"><section id="cardAlbumLeaf" class="card-album-leaf" aria-labelledby="cardAlbumPageTitle"><h3 id="cardAlbumPageTitle"></h3><div id="cardAlbumSlots" class="card-album-slots"></div></section></div><nav class="card-album-page-controls" aria-label="Páginas del álbum"><div class="card-album-compass-heading"><span>PÁGINAS</span><span id="cardAlbumPageCount" class="card-album-page-count" role="status" aria-live="polite"></span></div><div class="card-album-compass"><span class="card-album-compass-needle" aria-hidden="true"></span><div id="cardAlbumPageCompass" class="card-album-compass-track" aria-label="Seleccionar página"></div></div></nav></div>`;
   const main = document.querySelector('main.app') || document.body.appendChild(Object.assign(document.createElement('main'),{className:'app'}));
   main.append(dialog);
   const isOpen = () => dialog.classList.contains('active') && !dialog.hidden;
   function buildSlots() {
-    const catalog = globalThis.CardCollection?.catalog || [];
-    slots = rarities.flatMap(rarity => kinds.flatMap((kind, index) => {
+    const catalog = (globalThis.CardCollection?.catalog || []).filter(item => (item.collection || 'los-nuestros-01') === selectedCollection);
+    allSlots = rarities.flatMap(rarity => kinds.flatMap((kind, index) => {
       const designs = catalog.filter(item => rarityOf(item) === rarity.key && (item.folder || 'miembros') === kind.key);
       return Array.from({length:Math.max(rarity.capacity[index], designs.length)}, (_, position) => ({rarity,kind,design:designs[position] || null}));
-    }));
+    })).map((slot,index) => ({...slot,number:index + 1}));
+    applyFilters();
   }
+  function applyFilters() {
+    const owned = new Map((inventory || []).map(item => [item.card_id,Number(item.quantity)]));
+    const filtering = query || kindFilter || rarityFilter || ownershipFilter;
+    slots = filtering ? allSlots.filter(slot => slot.design && (!query || normalize(slot.design.name).includes(normalize(query))) && (!kindFilter || normalize(slot.design.kind) === normalize(kindFilter)) && (!rarityFilter || slot.rarity.key === rarityFilter) && (!ownershipFilter || (ownershipFilter === 'owned' ? owned.get(slot.design.id) > 0 : !(owned.get(slot.design.id) > 0)))) : allSlots;
+    const selector = dialog.querySelector('[data-album-collection]');
+    const options = collections.map(c => `<option value="${escape(c.id)}">${escape(c.name)}</option>`).join('');
+    if (selector.innerHTML !== options) selector.innerHTML = options;
+    selector.value = selectedCollection;
+    selector.parentElement.hidden = collections.length < 2;
+    dialog.querySelector('[data-album-collection-name]').textContent = collections.find(c => c.id === selectedCollection)?.name || 'Colección';
+    dialog.querySelector('[data-album-filter-count]').textContent = [kindFilter,rarityFilter,ownershipFilter].filter(Boolean).length || '';
+  }
+  function changeFilters() {stopTurn(); page = 0; compassQueued = null; renderedSlots = ''; applyFilters(); render();}
   const warmedImages = new Set();
   let warmGeneration = 0;
   let pageAnimations = [], pageGhost = null, pageMotionToken = 0, turning = false, pendingRender = false, pageOrderTimer = 0;
-  const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motionMedia = globalThis.ClubMotion?.media || window.matchMedia('(prefers-reduced-motion: reduce)');
+  const reducedMotion = () => motionMedia.matches;
   function stopTurn() {
     pageMotionToken++; clearTimeout(pageOrderTimer); pageOrderTimer = 0; pageAnimations.forEach(animation => animation.cancel()); pageAnimations = [];
     pageGhost?.remove(); pageGhost = null; turning = false;
@@ -38,7 +55,7 @@
     if (!isOpen() && !prepare) return;
     if (turning) {pendingRender = true; return;}
     const owned = new Map((inventory || []).map(item => [item.card_id, Number(item.quantity)]));
-    const totalPages = Math.ceil(slots.length / 5);
+    const totalPages = Math.max(1,Math.ceil(slots.length / 5));
     page = Math.min(page, Math.max(0,totalPages - 1));
     const visible = slots.slice(page * 5, page * 5 + 5), rarity = visible[0]?.rarity;
     document.getElementById('cardAlbumSummary').textContent = inventory ? `${slots.filter(slot => slot.design && owned.get(slot.design.id) > 0).length} cartas conseguidas · ${slots.length} huecos` : `${slots.length} huecos · colección pendiente de sincronización`;
@@ -52,14 +69,14 @@
     retry.hidden = !failure && (loading || !!inventory || offline);
     retry.disabled = loading || offline; retry.textContent = loading ? 'Actualizando…' : 'Reintentar';
     dialog.setAttribute('aria-busy',String(loading));
-    document.getElementById('cardAlbumPageTitle').textContent = `${rarity?.label || ''} · ${[...new Set(visible.map(slot => slot.kind.label))].join(' / ')}`;
+    document.getElementById('cardAlbumPageTitle').textContent = visible.length ? `${rarity?.label || ''} · ${[...new Set(visible.map(slot => slot.kind.label))].join(' / ')}` : 'No hay cartas con estos filtros';
     document.getElementById('cardAlbumLeaf').dataset.rarity = rarity?.key;
     const markup = visible.map((slot,index) => {
-      const quantity = slot.design && owned.get(slot.design.id), number = String(page * 5 + index + 1).padStart(3,'0');
+      const quantity = slot.design && owned.get(slot.design.id), number = String(slot.number).padStart(3,'0');
       const mark = slot.design ? globalThis.CollectionSocial?.actions(slot.design.id,quantity > 0) || '' : '';
       const face = quantity > 0 ? `<button type="button" class="card-album-slot is-owned" data-album-card="${escape(slot.design.id)}" aria-label="Ver ${escape(slot.design.name)}, ${escape(slot.rarity.label)}, ${quantity} copias"><img data-card-original="${escape(slot.design.front)}" src="${escape(globalThis.CardCollection.thumbnail(slot.design))}" alt="${escape(slot.design.name)}" loading="eager" decoding="async"><span class="card-album-slot-number">${number}</span><strong>${escape(slot.design.name)}</strong><small>${slot.kind.label} · ${quantity} ${quantity === 1 ? 'copia' : 'copias'}</small></button>` : `<div class="card-album-slot is-empty" aria-label="Hueco ${number}, ${slot.rarity.label}, ${slot.kind.label}, ${slot.design ? 'carta por conseguir' : 'reservado para una nueva carta'}"><div class="card-album-silhouette">${icon}<span>${number}</span></div><span class="card-album-slot-number" aria-hidden="true">${number}</span><strong>${slot.design ? escape(slot.design.name) : 'Próximamente'}</strong><small>${slot.kind.label} · ${slot.rarity.label}</small></div>`;
       return `<article class="card-album-cell">${face}${mark}</article>`;
-    }).join('');
+    }).join('') || '<p class="album-empty-results">Prueba otro nombre o limpia los filtros.</p>';
     // Keep decoded image elements across loading/balance updates and reopening.
     if (markup !== renderedSlots) {document.getElementById('cardAlbumSlots').innerHTML = markup; renderedSlots = markup;}
     // Small list thumbnails decode to ~0.9 MiB. Warm only two sequentially
@@ -79,7 +96,7 @@
     })();
     document.getElementById('cardAlbumPageCount').textContent = `${page + 1} / ${totalPages}`;
     renderCompass(totalPages);
-    dialog.querySelectorAll('[data-album-rarity]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.albumRarity === rarity?.key)));
+    dialog.querySelectorAll('[data-album-rarity]').forEach(button => {button.setAttribute('aria-pressed',String(button.dataset.albumRarity === rarity?.key)); button.disabled = !slots.some(slot => slot.rarity.key === button.dataset.albumRarity);});
   }
   const compass = document.getElementById('cardAlbumPageCompass');
   let compassTimer = 0, compassDragging = false, compassQueued = null, compassMouse = null, compassSuppressClick = 0;
@@ -174,7 +191,7 @@
     sheet.setAttribute('aria-hidden','true'); sheet.inert = true; sheet.style.height = `${height}px`; sheet.dataset.scrollTop = String(leaf.scrollTop);
     const face = copyLeaf(leaf); face.scrollTop = leaf.scrollTop;
     const back = document.createElement('div'); back.className = 'card-album-sheet-back';
-    back.innerHTML = `<span>${icon}</span><small>LOS NUESTROS · COLECCIÓN 01</small>`;
+    back.innerHTML = `<span>${icon}</span><small>${escape(collections.find(c => c.id === selectedCollection)?.name)}</small>`;
     const shade = document.createElement('div'); shade.className = 'card-album-fold-shade';
     sheet.append(face,back,shade); return sheet;
   }
@@ -261,7 +278,7 @@
       if (!turning && compassQueued !== null && isOpen()) {const next=compassQueued; compassQueued=null; queueMicrotask(() => {void selectCompass(next);});}
     }
   }
-  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event => {if (event.matches) {stopTurn(); if (pendingRender) {pendingRender = false; render();}}});
+  motionMedia.addEventListener('change',event => {if (event.matches) {stopTurn(); if (pendingRender) {pendingRender = false; render();}}});
   function fallbackNavigate(sectionId) {
     document.querySelectorAll('.page-section').forEach(section => {
       section.classList.toggle('active',section.id === sectionId); section.inert = section.id !== sectionId;
@@ -317,7 +334,8 @@
     if (event.target.closest('[data-album-close]')) close();
     if (event.target.closest('[data-album-retry]')) void refresh?.();
     const tab = event.target.closest('[data-album-rarity]');
-    if (tab) turn(Math.floor(slots.findIndex(slot => slot.rarity.key === tab.dataset.albumRarity) / 5));
+    if (tab && !tab.disabled) turn(Math.floor(slots.findIndex(slot => slot.rarity.key === tab.dataset.albumRarity) / 5));
+    if (event.target.closest('[data-album-clear]')) {query = kindFilter = rarityFilter = ownershipFilter = ''; dialog.querySelector('[data-album-search]').value = ''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value = ''); changeFilters();}
     const card = event.target.closest('[data-album-card]');
     if (card) {
       rememberViewerPosition();
@@ -325,7 +343,9 @@
     }
   });
 
-  dialog.addEventListener('keydown',event => {if (event.key === 'Escape') {event.preventDefault(); close(); return;} if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); turn(page + (event.key === 'ArrowRight' ? 1 : -1));}});
+  dialog.addEventListener('input',event => {if (event.target.matches('[data-album-search]')) {query = event.target.value.trim(); changeFilters();}});
+  dialog.addEventListener('change',event => {const field = event.target; if (field.matches('[data-album-collection]')) {selectedCollection = field.value; buildSlots(); changeFilters();} if (field.matches('[data-album-filter]')) {if (field.dataset.albumFilter === 'rarity') rarityFilter = field.value; if (field.dataset.albumFilter === 'kind') kindFilter = field.value; if (field.dataset.albumFilter === 'ownership') ownershipFilter = field.value; changeFilters();}});
+  dialog.addEventListener('keydown',event => {if (event.target.matches('input,select,summary')) return; if (event.key === 'Escape') {event.preventDefault(); close(); return;} if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); turn(page + (event.key === 'ArrowRight' ? 1 : -1));}});
   let touchStart = null;
   const gestureViewport = dialog.querySelector('.card-album-page-viewport');
   gestureViewport.addEventListener('pointerdown',event => {
@@ -362,5 +382,5 @@
     const target = location.hash.slice(1);
     if (isOpen() && target !== 'album' && document.getElementById(target)?.classList.contains('page-section')) (navigate || fallbackNavigate)(target);
   });
-  globalThis.CardAlbum = Object.freeze({icon,open,close,didNavigate,update(data) {inventory=data.cards; loading=!!data.loading; failure=data.failure || ''; render();},configure(config) {refresh=config.refresh; navigate=config.navigate;},reset() {clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; warmedImages.clear(); inventory=null; page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
+  globalThis.CardAlbum = Object.freeze({icon,open,close,didNavigate,update(data) {inventory=data.cards; loading=!!data.loading; failure=data.failure || ''; applyFilters(); render();},configure(config) {refresh=config.refresh; navigate=config.navigate; if (config.collections?.some(c => c?.id && c?.name)) {collections = config.collections.filter(c => c?.id && c?.name); if (!collections.some(c => c.id === selectedCollection)) selectedCollection = collections[0]?.id || 'los-nuestros-01'; buildSlots(); render();}},reset() {clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; warmedImages.clear(); inventory=null; query=kindFilter=rarityFilter=ownershipFilter=''; dialog.querySelector('[data-album-search]').value=''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value=''); page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
 })();

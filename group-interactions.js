@@ -224,17 +224,23 @@
   function openPollComposer(channelId=config?.getChannelId?.()) {
     if(!userId()||!channelId||composer?.open||!canWriteChannel(channelId))return;
     composer=document.createElement('dialog');composer.className='group-poll-composer';composer.setAttribute('aria-label','Crear encuesta');
-    composer.innerHTML=`<form class="group-poll-create-form"><header><span class="group-poll-eyebrow">EN GRUPO</span><button type="button" data-poll-dismiss aria-label="Cerrar">✕</button></header><h2>¿Qué decidimos?</h2><p>Una pregunta clara. Hasta seis opciones.</p><label class="group-poll-question-label">Pregunta<textarea name="question" autofocus maxlength="180" rows="2" placeholder="¿Dónde quedamos el viernes?" required></textarea></label><div class="group-poll-edit-options"></div><button type="button" class="group-poll-add-option" data-poll-add>＋ Añadir opción</button><div class="group-interaction-status" role="status" hidden></div><button type="submit" class="group-poll-publish">Publicar encuesta</button><small class="group-poll-create-note">Un voto por persona. Se puede cambiar mientras esté abierta.</small></form>`;
+    composer.innerHTML=`<form id="groupPollDraftForm" class="group-poll-create-form"><header><span class="group-poll-eyebrow">EN GRUPO</span><button type="button" data-poll-dismiss aria-label="Cerrar">✕</button></header><h2>¿Qué decidimos?</h2><p>Una pregunta clara. Hasta seis opciones.</p><label class="group-poll-question-label">Pregunta<textarea name="question" autofocus maxlength="180" rows="2" placeholder="¿Dónde quedamos el viernes?" required></textarea></label><div class="group-poll-edit-options"></div><button type="button" class="group-poll-add-option" data-poll-add>＋ Añadir opción</button><div class="group-interaction-status" role="status" hidden></div><button type="submit" class="group-poll-publish">Publicar encuesta</button><small class="group-poll-create-note">Un voto por persona. Se puede cambiar mientras esté abierta.</small></form>`;
     document.body.append(composer);
     const form=composer.querySelector('form'), options=form.querySelector('.group-poll-edit-options');
-    function addOption(){if(options.children.length>=6)return;const row=document.createElement('label');row.className='group-poll-edit-option';row.innerHTML=`<span aria-hidden="true">${String(options.children.length+1).padStart(2,'0')}</span><input name="option" aria-label="Opción" maxlength="80" placeholder="Escribe una opción" required><button type="button" aria-label="Quitar opción">×</button>`;options.append(row);row.querySelector('button').addEventListener('click',()=>{if(options.children.length<=2)return;row.remove();updateOptions();});updateOptions();}
+    function addOption(){if(options.children.length>=6)return;const row=document.createElement('label');row.className='group-poll-edit-option';row.innerHTML=`<span aria-hidden="true">${String(options.children.length+1).padStart(2,'0')}</span><input name="option" aria-label="Opción" maxlength="80" placeholder="Escribe una opción" required><button type="button" aria-label="Quitar opción">×</button>`;options.append(row);row.querySelector('button').addEventListener('click',()=>{if(options.children.length<=2)return;globalThis.ClubDrafts?.flush();row.remove();updateOptions();globalThis.ClubDrafts?.touch(form.id);});updateOptions();}
     function updateOptions(){[...options.children].forEach((row,index)=>{row.querySelector('span').textContent=String(index+1).padStart(2,'0');row.querySelector('input').setAttribute('aria-label',`Opción ${index+1}`);row.querySelector('button').disabled=options.children.length<=2;});form.querySelector('[data-poll-add]').hidden=options.children.length>=6;}
-    addOption();addOption();
-    form.querySelector('[data-poll-add]').addEventListener('click',()=>{addOption();options.lastElementChild.querySelector('input').focus({preventScroll:true});});
+    globalThis.ClubDrafts?.register(form.id,['[name="question"]','[name="option"]']);
+    const scope=`channel:${channelId}`;
+    const savedDraft=globalThis.ClubDrafts?.saved(form.id,scope);
+    const optionCount=Math.max(2,Math.min(6,(savedDraft?.length || 3)-1));
+    for(let index=0;index<optionCount;index++)addOption();
+    globalThis.ClubDrafts?.begin(form.id,scope,{reopen:true});
+    const draftToken=globalThis.ClubDrafts?.token(form.id);
+    form.querySelector('[data-poll-add]').addEventListener('click',()=>{addOption();globalThis.ClubDrafts?.touch(form.id);options.lastElementChild.querySelector('input').focus({preventScroll:true});});
     const dialog=composer;let pending=false,requestId=crypto.randomUUID(),fingerprint='';
     const dismiss=()=>{if(!pending)dialog.close();};form.querySelector('[data-poll-dismiss]').addEventListener('click',dismiss);
     dialog.addEventListener('cancel',event=>{if(pending)event.preventDefault();});
-    dialog.addEventListener('close',()=>{dialog.remove();if(composer===dialog)composer=null;},{once:true});
+    dialog.addEventListener('close',()=>{globalThis.ClubDrafts?.release(form.id);dialog.remove();if(composer===dialog)composer=null;},{once:true});
     form.addEventListener('submit',async event=>{
       event.preventDefault();if(pending)return;
       if(!canWriteChannel(channelId)){dialog.close();return;}
@@ -246,7 +252,7 @@
       pending=true;publish.disabled=true;publish.textContent='Publicando…';
       try{
         const {error}=await query(config.db.rpc('create_group_poll',{p_channel_id:channelId,p_question:question,p_options:values,p_request_id:requestId}));if(error)throw error;
-        pending=false;dialog.close();if(String(pollMount?.channelId)===String(channelId)){void refreshPolls();}
+        globalThis.ClubDrafts?.clear(form.id,draftToken);pending=false;dialog.close();if(String(pollMount?.channelId)===String(channelId)){void refreshPolls();}
       }catch(error){status.textContent=message(error);status.hidden=false;}finally{pending=false;publish.disabled=false;publish.textContent='Publicar encuesta';}
     });
     // Keep focus in the editor in the opening user gesture. Letting showModal
