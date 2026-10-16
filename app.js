@@ -3233,6 +3233,19 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   if (document.getElementById("privados")?.classList.contains("active") && activePrivateMemberId == null) goTo("chat");
 }
 
+function updateOfflineAlbumAccess() {
+  const button=document.getElementById('offlineAlbumAccess');
+  if(button)button.hidden=navigator.onLine!==false || !!currentAuthUser || !globalThis.BannerShop?.offlineInventory();
+}
+window.addEventListener('online',updateOfflineAlbumAccess);
+window.addEventListener('offline',updateOfflineAlbumAccess);
+document.addEventListener('bb:offline-album-change',updateOfflineAlbumAccess);
+document.getElementById('offlineAlbumAccess')?.addEventListener('click',event=>{
+  if(currentAuthUser || currentUser || navigator.onLine!==false)return;
+  const snapshot=globalThis.BannerShop?.offlineInventory();
+  if(snapshot)globalThis.CardAlbum?.openOffline(snapshot,event.currentTarget);
+});
+
 function showLogin() {
   globalThis.ClubOnboarding?.reset();
   document.body.classList.remove("session-restoring");
@@ -3260,9 +3273,12 @@ function showLogin() {
   closeNotifications();
   goTo("inicio");
   completeInitialLaunch();
+  updateOfflineAlbumAccess();
 }
 
 async function logoutCurrentUser() {
+  globalThis.CardAlbum?.closeOffline();
+  globalThis.BannerShop?.forgetOfflineInventory();
   try { if (nativePush()) await removeNativePushDevice(); }
   catch (error) { window.alert(error.message); return; }
   chatSendAttempts.clear();
@@ -6608,6 +6624,7 @@ if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("l
   // Keep the launch/login surface until both the Auth record and profile have
   // been verified. A cached identity cannot authorize or reveal the club UI.
   try {
+    if (navigator.onLine === false) {showLogin();return;}
     if (backendReady) {
       const {data, error} = await db.auth.getSession();
       if (error) throw error;

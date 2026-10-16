@@ -7,12 +7,15 @@
   const visibleMemberTiles = new Set(), observedMemberTiles = new Set();
   let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
   let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0;
+  const offlineInventoryOwnerKey = 'bb:album-inventory:last-owner';
   const inventoryCacheKey = owner => `bb:album-inventory:v1:${owner}`;
   function restoreInventory(owner) {
     if (inventoryOwner === owner) return;
     inventoryOwner = owner || null; lastInventory = null; inventorySavedAt = 0;
     if (!owner) return;
     try {
+      const previousOwner=localStorage.getItem(offlineInventoryOwnerKey);
+      if(previousOwner && previousOwner!==owner) {localStorage.removeItem(inventoryCacheKey(previousOwner));localStorage.removeItem(offlineInventoryOwnerKey);}
       const cached = JSON.parse(localStorage.getItem(inventoryCacheKey(owner)) || 'null');
       if (cached?.owner !== owner || !Array.isArray(cached.cards) || !Number.isFinite(cached.savedAt)) return;
       lastInventory = cached.cards.filter(row => typeof row.card_id === 'string' && Number.isSafeInteger(row.quantity) && row.quantity > 0).map(row => ({card_id:row.card_id, quantity:row.quantity}));
@@ -22,7 +25,20 @@
   function saveInventory(owner, cards) {
     if (!owner || owner !== options?.session() || !Array.isArray(cards)) return;
     inventoryOwner = owner; inventorySavedAt = Date.now(); lastInventory = cards;
-    try { localStorage.setItem(inventoryCacheKey(owner), JSON.stringify({owner,savedAt:inventorySavedAt,cards:cards.map(row => ({card_id:row.card_id,quantity:Number(row.quantity)}))})); } catch {}
+    try { localStorage.setItem(inventoryCacheKey(owner), JSON.stringify({owner,savedAt:inventorySavedAt,cards:cards.map(row => ({card_id:row.card_id,quantity:Number(row.quantity)}))})); localStorage.setItem(offlineInventoryOwnerKey,owner); } catch {}
+  }
+  function offlineInventory() {
+    try {
+      const owner=localStorage.getItem(offlineInventoryOwnerKey);
+      if(!owner)return null;
+      const snapshot=JSON.parse(localStorage.getItem(inventoryCacheKey(owner)) || 'null');
+      if(snapshot?.owner!==owner || !Array.isArray(snapshot.cards) || !Number.isFinite(snapshot.savedAt))return null;
+      return {savedAt:snapshot.savedAt,cards:snapshot.cards.filter(row=>typeof row.card_id==='string' && Number.isSafeInteger(row.quantity) && row.quantity>0).map(row=>({card_id:row.card_id,quantity:row.quantity}))};
+    }catch{return null;}
+  }
+  function forgetOfflineInventory() {
+    try {const owner=localStorage.getItem(offlineInventoryOwnerKey);if(owner)localStorage.removeItem(inventoryCacheKey(owner));localStorage.removeItem(offlineInventoryOwnerKey);}catch{}
+    document.dispatchEvent(new CustomEvent('bb:offline-album-change'));
   }
   const revealDialog = document.createElement('dialog');
   revealDialog.className = 'pack-reveal-dialog';
@@ -743,7 +759,7 @@
     delete el('profileBannerOptions').dataset.signature;
     el('profileBannerSelection').textContent = 'Sin banner';
     discardEffects.forEach(cleanup => cleanup());
-    if (inventoryOwner) { try { localStorage.removeItem(inventoryCacheKey(inventoryOwner)); } catch {} }
+    if (inventoryOwner) { try { localStorage.removeItem(inventoryCacheKey(inventoryOwner)); if(localStorage.getItem(offlineInventoryOwnerKey)===inventoryOwner)localStorage.removeItem(offlineInventoryOwnerKey); } catch {} }
     inventoryOwner = null; inventorySavedAt = 0;
     generation++; state = null; lastInventory = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear(); memberBannerRequests.clear(); memberBannerFetchedAt.clear();
     memberObserver?.disconnect(); memberObserver = null; visibleMemberTiles.clear(); observedMemberTiles.clear();
@@ -754,5 +770,5 @@
     revealDialog.close(); el('duplicatesDialog')?.close();
     el('bannerShopDialog')?.close(); if (el('ownedPackResult')) el('ownedPackResult').replaceChildren(); render();
   }
-  globalThis.BannerShop = Object.freeze({initialize, refresh, openEditor, closeEditor, mountProfile, mountMembers, memberArtwork, artwork, reset});
+  globalThis.BannerShop = Object.freeze({initialize, offlineInventory, forgetOfflineInventory, refresh, openEditor, closeEditor, mountProfile, mountMembers, memberArtwork, artwork, reset});
 })();

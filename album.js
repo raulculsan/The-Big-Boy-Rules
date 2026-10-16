@@ -8,7 +8,7 @@
   const icon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M5 8h4M5 11h4M15 8h4M15 11h4"/></svg>';
   let collections = [{id:'los-nuestros-01',name:'Los nuestros · Colección 01'}], selectedCollection = 'los-nuestros-01';
   let query = '', kindFilter = '', rarityFilter = '', ownershipFilter = '', allSlots = [];
-  let savedAt = 0;
+  let savedAt = 0, isolatedOffline = false;
   let inventory = null, loading = false, failure = '', page = 0, slots = [], refresh, navigate, opener, returnSection = 'sobres', renderedSlots = '';
   const dialog = document.createElement('section');
   dialog.id = 'album'; dialog.className = 'page-section card-album-page'; dialog.hidden = true; dialog.setAttribute('aria-labelledby','cardAlbumTitle');
@@ -62,10 +62,10 @@
     document.getElementById('cardAlbumSummary').textContent = inventory ? `${slots.filter(slot => slot.design && owned.get(slot.design.id) > 0).length} cartas conseguidas · ${slots.length} huecos` : `${slots.length} huecos · colección pendiente de sincronización`;
     const status = document.getElementById('cardAlbumStatus');
     // Refreshing a populated album must not insert a new row and move the page.
-    const offline = navigator.onLine === false;
+    const offline = isolatedOffline || navigator.onLine === false;
     dialog.querySelector('[data-duplicates-open]').disabled = offline;
     const cachedLabel = savedAt ? `Última sincronización: ${new Date(savedAt).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}.` : '';
-    const message = offline && inventory ? `Sin conexión · Solo lectura. ${cachedLabel}` : failure && inventory ? `${failure} ${cachedLabel}` : failure || (!inventory ? (offline ? 'Sin conexión. Conéctate para cargar tu álbum.' : loading ? 'Cargando tu colección…' : 'Consulta tu colección para ver tus cartas.') : '');
+    const message = offline && inventory ? `${isolatedOffline ? 'Álbum guardado en este dispositivo' : 'Sin conexión'} · Solo lectura. ${cachedLabel}` : failure && inventory ? `${failure} ${cachedLabel}` : failure || (!inventory ? (offline ? 'Sin conexión. Conéctate para cargar tu álbum.' : loading ? 'Cargando tu colección…' : 'Consulta tu colección para ver tus cartas.') : '');
     status.querySelector('[data-album-status-message]').textContent = message;
     status.hidden = !message; status.classList.toggle('is-error',!!failure);
     const retry = status.querySelector('[data-album-retry]');
@@ -289,6 +289,23 @@
     didNavigate(sectionId);
     history.replaceState(null,'',`#${sectionId}`);
   }
+  function closeOffline() {
+    if(!isolatedOffline)return;
+    stopTurn();isolatedOffline=false;dialog.hidden=true;dialog.classList.remove('active');dialog.inert=true;
+    main.append(dialog);document.body.classList.remove('offline-album-mode','album-page-open');
+    const login=document.getElementById('loginScreen');if(login){login.inert=false;login.classList.remove('login-hidden');}
+    inventory=null;savedAt=0;renderedSlots='';
+    opener?.focus({preventScroll:true});
+  }
+  function openOffline(snapshot, trigger) {
+    if(!snapshot || !Array.isArray(snapshot.cards) || document.body.classList.contains('authenticated'))return;
+    isolatedOffline=true;inventory=snapshot.cards;savedAt=snapshot.savedAt;loading=false;failure='';opener=trigger;
+    const login=document.getElementById('loginScreen');if(login){login.inert=true;login.classList.add('login-hidden');}
+    document.documentElement.classList.remove('auth-session-hint');
+    document.body.append(dialog);document.body.classList.add('offline-album-mode','album-page-open');
+    dialog.hidden=false;dialog.inert=false;dialog.classList.add('active');buildSlots();render(true);
+    document.getElementById('cardAlbumTitle').focus({preventScroll:true});
+  }
   function open(trigger) {
     if (isOpen()) return;
     opener = trigger || document.activeElement;
@@ -296,11 +313,13 @@
     (navigate || fallbackNavigate)('album');
   }
   function close() {
+    if(isolatedOffline){closeOffline();return;}
     if (!isOpen()) return;
     (navigate || fallbackNavigate)(returnSection === 'album' ? 'sobres' : returnSection);
     if (opener?.isConnected) opener.focus({preventScroll:true});
   }
   function didNavigate(sectionId, previousSection) {
+    if(isolatedOffline)return;
     const opening = sectionId === 'album';
     document.body.classList.toggle('album-page-open',opening);
     if (!opening) {clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); stopTurn(); pendingRender = false; touchStart = null; dialog.hidden = true; return;}
@@ -385,5 +404,5 @@
     const target = location.hash.slice(1);
     if (isOpen() && target !== 'album' && document.getElementById(target)?.classList.contains('page-section')) (navigate || fallbackNavigate)(target);
   });
-  globalThis.CardAlbum = Object.freeze({icon,open,close,didNavigate,update(data) {inventory=data.cards; savedAt=data.savedAt || 0; loading=!!data.loading; failure=data.failure || ''; applyFilters(); render();},configure(config) {refresh=config.refresh; navigate=config.navigate; if (config.collections?.some(c => c?.id && c?.name)) {collections = config.collections.filter(c => c?.id && c?.name); if (!collections.some(c => c.id === selectedCollection)) selectedCollection = collections[0]?.id || 'los-nuestros-01'; buildSlots(); render();}},reset() {clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; warmedImages.clear(); inventory=null; savedAt=0; query=kindFilter=rarityFilter=ownershipFilter=''; dialog.querySelector('[data-album-search]').value=''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value=''); page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
+  globalThis.CardAlbum = Object.freeze({icon,open,openOffline,closeOffline,close,didNavigate,update(data) {if(isolatedOffline)return;inventory=data.cards; savedAt=data.savedAt || 0; loading=!!data.loading; failure=data.failure || ''; applyFilters(); render();},configure(config) {refresh=config.refresh; navigate=config.navigate; if (config.collections?.some(c => c?.id && c?.name)) {collections = config.collections.filter(c => c?.id && c?.name); if (!collections.some(c => c.id === selectedCollection)) selectedCollection = collections[0]?.id || 'los-nuestros-01'; buildSlots(); render();}},reset() {closeOffline();clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; warmedImages.clear(); inventory=null; savedAt=0; query=kindFilter=rarityFilter=ownershipFilter=''; dialog.querySelector('[data-album-search]').value=''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value=''); page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
 })();
