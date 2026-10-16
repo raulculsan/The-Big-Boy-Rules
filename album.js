@@ -8,6 +8,7 @@
   const icon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M5 8h4M5 11h4M15 8h4M15 11h4"/></svg>';
   let collections = [{id:'los-nuestros-01',name:'Los nuestros · Colección 01'}], selectedCollection = 'los-nuestros-01';
   let query = '', kindFilter = '', rarityFilter = '', ownershipFilter = '', allSlots = [];
+  let savedAt = 0;
   let inventory = null, loading = false, failure = '', page = 0, slots = [], refresh, navigate, opener, returnSection = 'sobres', renderedSlots = '';
   const dialog = document.createElement('section');
   dialog.id = 'album'; dialog.className = 'page-section card-album-page'; dialog.hidden = true; dialog.setAttribute('aria-labelledby','cardAlbumTitle');
@@ -62,7 +63,9 @@
     const status = document.getElementById('cardAlbumStatus');
     // Refreshing a populated album must not insert a new row and move the page.
     const offline = navigator.onLine === false;
-    const message = failure || (!inventory ? (offline ? 'Sin conexión. Conéctate para cargar tu álbum.' : loading ? 'Cargando tu colección…' : 'Consulta tu colección para ver tus cartas.') : '');
+    dialog.querySelector('[data-duplicates-open]').disabled = offline;
+    const cachedLabel = savedAt ? `Última sincronización: ${new Date(savedAt).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}.` : '';
+    const message = offline && inventory ? `Sin conexión · Solo lectura. ${cachedLabel}` : failure && inventory ? `${failure} ${cachedLabel}` : failure || (!inventory ? (offline ? 'Sin conexión. Conéctate para cargar tu álbum.' : loading ? 'Cargando tu colección…' : 'Consulta tu colección para ver tus cartas.') : '');
     status.querySelector('[data-album-status-message]').textContent = message;
     status.hidden = !message; status.classList.toggle('is-error',!!failure);
     const retry = status.querySelector('[data-album-retry]');
@@ -73,7 +76,7 @@
     document.getElementById('cardAlbumLeaf').dataset.rarity = rarity?.key;
     const markup = visible.map((slot,index) => {
       const quantity = slot.design && owned.get(slot.design.id), number = String(slot.number).padStart(3,'0');
-      const mark = slot.design ? globalThis.CollectionSocial?.actions(slot.design.id,quantity > 0) || '' : '';
+      const mark = slot.design ? (!offline ? globalThis.CollectionSocial?.actions(slot.design.id,quantity > 0) : '') || '' : '';
       const face = quantity > 0 ? `<button type="button" class="card-album-slot is-owned" data-album-card="${escape(slot.design.id)}" aria-label="Ver ${escape(slot.design.name)}, ${escape(slot.rarity.label)}, ${quantity} copias"><img data-card-original="${escape(slot.design.front)}" src="${escape(globalThis.CardCollection.thumbnail(slot.design))}" alt="${escape(slot.design.name)}" loading="eager" decoding="async"><span class="card-album-slot-number">${number}</span><strong>${escape(slot.design.name)}</strong><small>${slot.kind.label} · ${quantity} ${quantity === 1 ? 'copia' : 'copias'}</small></button>` : `<div class="card-album-slot is-empty" aria-label="Hueco ${number}, ${slot.rarity.label}, ${slot.kind.label}, ${slot.design ? 'carta por conseguir' : 'reservado para una nueva carta'}"><div class="card-album-silhouette">${icon}<span>${number}</span></div><span class="card-album-slot-number" aria-hidden="true">${number}</span><strong>${slot.design ? escape(slot.design.name) : 'Próximamente'}</strong><small>${slot.kind.label} · ${slot.rarity.label}</small></div>`;
       return `<article class="card-album-cell">${face}${mark}</article>`;
     }).join('') || '<p class="album-empty-results">Prueba otro nombre o limpia los filtros.</p>';
@@ -382,5 +385,5 @@
     const target = location.hash.slice(1);
     if (isOpen() && target !== 'album' && document.getElementById(target)?.classList.contains('page-section')) (navigate || fallbackNavigate)(target);
   });
-  globalThis.CardAlbum = Object.freeze({icon,open,close,didNavigate,update(data) {inventory=data.cards; loading=!!data.loading; failure=data.failure || ''; applyFilters(); render();},configure(config) {refresh=config.refresh; navigate=config.navigate; if (config.collections?.some(c => c?.id && c?.name)) {collections = config.collections.filter(c => c?.id && c?.name); if (!collections.some(c => c.id === selectedCollection)) selectedCollection = collections[0]?.id || 'los-nuestros-01'; buildSlots(); render();}},reset() {clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; warmedImages.clear(); inventory=null; query=kindFilter=rarityFilter=ownershipFilter=''; dialog.querySelector('[data-album-search]').value=''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value=''); page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
+  globalThis.CardAlbum = Object.freeze({icon,open,close,didNavigate,update(data) {inventory=data.cards; savedAt=data.savedAt || 0; loading=!!data.loading; failure=data.failure || ''; applyFilters(); render();},configure(config) {refresh=config.refresh; navigate=config.navigate; if (config.collections?.some(c => c?.id && c?.name)) {collections = config.collections.filter(c => c?.id && c?.name); if (!collections.some(c => c.id === selectedCollection)) selectedCollection = collections[0]?.id || 'los-nuestros-01'; buildSlots(); render();}},reset() {clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; warmedImages.clear(); inventory=null; savedAt=0; query=kindFilter=rarityFilter=ownershipFilter=''; dialog.querySelector('[data-album-search]').value=''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value=''); page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
 })();

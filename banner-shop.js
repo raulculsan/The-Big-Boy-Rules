@@ -6,7 +6,24 @@
   let membersTarget = null, memberObserver = null;
   const visibleMemberTiles = new Set(), observedMemberTiles = new Set();
   let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
-  let lastInventory = null;
+  let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0;
+  const inventoryCacheKey = owner => `bb:album-inventory:v1:${owner}`;
+  function restoreInventory(owner) {
+    if (inventoryOwner === owner) return;
+    inventoryOwner = owner || null; lastInventory = null; inventorySavedAt = 0;
+    if (!owner) return;
+    try {
+      const cached = JSON.parse(localStorage.getItem(inventoryCacheKey(owner)) || 'null');
+      if (cached?.owner !== owner || !Array.isArray(cached.cards) || !Number.isFinite(cached.savedAt)) return;
+      lastInventory = cached.cards.filter(row => typeof row.card_id === 'string' && Number.isSafeInteger(row.quantity) && row.quantity > 0).map(row => ({card_id:row.card_id, quantity:row.quantity}));
+      inventorySavedAt = cached.savedAt;
+    } catch { /* Storage may be disabled. The server inventory remains available. */ }
+  }
+  function saveInventory(owner, cards) {
+    if (!owner || owner !== options?.session() || !Array.isArray(cards)) return;
+    inventoryOwner = owner; inventorySavedAt = Date.now(); lastInventory = cards;
+    try { localStorage.setItem(inventoryCacheKey(owner), JSON.stringify({owner,savedAt:inventorySavedAt,cards:cards.map(row => ({card_id:row.card_id,quantity:Number(row.quantity)}))})); } catch {}
+  }
   const revealDialog = document.createElement('dialog');
   revealDialog.className = 'pack-reveal-dialog';
   revealDialog.setAttribute('aria-label', 'Abrir sobre: revelar cartas');
@@ -437,7 +454,7 @@
     if (el('discardAllDuplicates')) el('discardAllDuplicates').disabled = busy || loading || !extraCopies() || !online();
     if (el('duplicatesStatus')) el('duplicatesStatus').textContent = failure || notice || (loading ? 'Actualizando repetidas…' : state ? `${extraCopies()} copias repetidas. Conservas una de cada carta.` : 'Actualiza la colección para consultar las repetidas.');
     if (state?.cards) lastInventory = state.cards;
-    globalThis.CardAlbum?.update({cards:lastInventory, loading:loading || busy, failure});
+    globalThis.CardAlbum?.update({cards:lastInventory, loading:loading || busy, failure, savedAt:inventorySavedAt});
     globalThis.CollectionSocial?.update(lastInventory);
     const status = el('bannerShopStatus');
     if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); }
@@ -503,7 +520,9 @@
   function refresh(forceDaily = false) {
     if (request) return request;
     const token = generation, user = options?.session();
+    restoreInventory(user);
     if (!user) state = null;
+    if (!online()) { loading = false; failure = ''; render(); return Promise.resolve(); }
     loading = true; failure = ''; render();
     request = (async () => {
       try {
@@ -511,7 +530,7 @@
         // covers profile mounting and reconnect, not just packs navigation.
         await options?.synchronizePacks?.(forceDaily);
         if (token !== generation || user !== options.session()) return;
-        const data = await rpc('get_banner_shop_state'); if (token === generation && user === options.session()) {state = data; globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
+        const data = await rpc('get_banner_shop_state'); if (token === generation && user === options.session()) {state = data; saveInventory(user, data.cards); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
       catch (error) { if (token === generation) {failure = errorMessage(error); render();} }
       finally {if (token === generation) {loading = false; request = null; render();}}
     })();
@@ -572,7 +591,7 @@
     finally {cleanup(!inReveal);}
   }
   async function mutate(name, args, message, discardedIndex = null) {
-    if (busy || loading) return;
+    if (busy || loading || !online()) return;
     const token = generation, user = options.session();
     const focus = document.activeElement;
     const revealAtStart = reveal;
@@ -724,6 +743,8 @@
     delete el('profileBannerOptions').dataset.signature;
     el('profileBannerSelection').textContent = 'Sin banner';
     discardEffects.forEach(cleanup => cleanup());
+    if (inventoryOwner) { try { localStorage.removeItem(inventoryCacheKey(inventoryOwner)); } catch {} }
+    inventoryOwner = null; inventorySavedAt = 0;
     generation++; state = null; lastInventory = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear(); memberBannerRequests.clear(); memberBannerFetchedAt.clear();
     memberObserver?.disconnect(); memberObserver = null; visibleMemberTiles.clear(); observedMemberTiles.clear();
     paintMembers(); membersTarget = null;

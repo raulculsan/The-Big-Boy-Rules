@@ -533,7 +533,9 @@
       back: 'icons/cards/reverso-legendario-unificado-v1.jpg',
       width: 948, height: 1660
     })
-  ]);
+  ].map(card => Object.freeze({...card,
+    front: globalThis.CardMedia?.source(card.front) || card.front
+  })));
   const dialog = document.getElementById('collectionCardDialog');
   const grid = document.getElementById('collectionCardGrid');
   if (!dialog || !grid) return;
@@ -652,7 +654,7 @@
     if (image.getAttribute('src') !== original) image.src = original;
   }, true);
   // Thumbnail lookup falls back safely for a not-yet-generated future design.
-  const thumbnail = card => globalThis.CardThumbnails?.[card?.front] || card?.front || '';
+  const thumbnail = card => globalThis.CardThumbnails?.[globalThis.CardMedia?.canonical(card?.front) || card?.front] || card?.front || '';
   let catalogRendered = false;
   function renderCatalog() {
   if (catalogRendered) return;

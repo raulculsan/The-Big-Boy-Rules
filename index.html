@@ -42,13 +42,14 @@
   <link rel="stylesheet" href="spotify-player.css?v=20261014-balanced" />
   <link rel="stylesheet" href="packs.css?v=20261016-improvements-319" />
   <link rel="stylesheet" href="banner-shop.css?v=20261015-social-301" />
-  <link rel="stylesheet" href="album.css?v=20261016-improvements-319" />
+  <link rel="stylesheet" href="album.css?v=20261016-release-322" />
   <link rel="stylesheet" href="onboarding.css?v=20261016-improvements-319" />
   <link rel="stylesheet" href="admin-grants.css?v=20261009-213" />
   <link rel="stylesheet" href="achievement-admin.css?v=20261011-256" />
   <link rel="stylesheet" href="chat.css?v=20261016-push-prepared-318" />
   <link rel="stylesheet" href="chat-themes.css?v=20261012-277" />
   <link rel="stylesheet" href="news.css?v=20261014-home-scroll-291" />
+  <link rel="stylesheet" href="pending-actions.css?v=20261016-release-322" />
   <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
   <link rel="stylesheet" href="collection-social.css?v=20261015-mutual-trades-305" />
   <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
@@ -146,6 +147,7 @@
               <div class="notifications-filters" role="group" aria-label="Filtrar notificaciones"><button type="button" data-notification-filter="all" aria-pressed="true">Todas</button><button type="button" data-notification-filter="unread" aria-pressed="false">No leídas <span id="notificationsFilterCount">0</span></button></div>
               <div class="notifications-heading-actions"><button id="markAllNotificationsRead" type="button" aria-label="Marcar todas como leídas" title="Marcar todas como leídas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 12 5 5L19 6M12 17l9-9"/></svg></button><button id="clearAllNotifications" class="danger" type="button" aria-label="Limpiar todas las notificaciones" title="Limpiar todas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg></button></div>
             </div>
+            <button type="button" class="notifications-pending-entry" data-pending-actions><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h12M9 12h12M9 19h12M2 5l2 2 3-4M2 12l2 2 3-4M2 19l2 2 3-4"/></svg><span><strong>Pendientes</strong><small>Intercambios, encuestas y asistencia</small></span><b data-pending-count hidden>0</b></button>
             <div class="notifications-list" id="notificationsList" aria-label="Actividad reciente"></div>
             <details class="notifications-settings">
               <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Configurar mis avisos</span><span class="notifications-chevron" aria-hidden="true">⌄</span></summary>
@@ -940,18 +942,20 @@
   <script defer src="daily-packs.js?v=20261010-251"></script>
   <script defer src="collection-motion.js?v=20261016-performance-320"></script>
   <script defer src="card-thumbnails.js?v=20261016-juan-manuel-321"></script>
-  <script defer src="card-collection.js?v=20261016-juan-manuel-321"></script>
+  <script defer src="card-media.js?v=20261016-release-322"></script>
+  <script defer src="card-collection.js?v=20261016-release-322"></script>
   <script defer src="achievement-progress.js?v=20261010-244"></script>
   <script defer src="achievement-admin.js?v=20261010-244"></script>
-  <script defer src="collection-social.js?v=20261015-mutual-trades-305"></script>
-  <script defer src="album.js?v=20261016-improvements-319"></script>
+  <script defer src="collection-social.js?v=20261016-release-322"></script>
+  <script defer src="album.js?v=20261016-release-322"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
-  <script defer src="banner-shop.js?v=20261016-performance-320"></script>
+  <script defer src="banner-shop.js?v=20261016-release-322"></script>
   <script defer src="admin-grants.js?v=20261015-social-301"></script>
   <script defer src="spotify-player.js?v=20261015-idle-layout-306"></script>
   <script defer src="chat-themes.js?v=20261010-241"></script>
-  <script defer src="group-interactions.js?v=20261016-improvements-319"></script>
-  <script defer src="app.js?v=20261016-performance-320"></script>
+  <script defer src="group-interactions.js?v=20261016-release-322"></script>
+  <script defer src="pending-actions.js?v=20261016-release-322"></script>
+  <script defer src="app.js?v=20261016-release-322"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

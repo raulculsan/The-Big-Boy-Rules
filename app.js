@@ -3189,6 +3189,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.BannerShop?.reset();
     globalThis.AdminGrants?.reset();
     globalThis.GroupInteractions?.reset();
+    globalThis.PendingActions?.reset();
   }
   currentUser = user;
   currentAuthUser = authUser;
@@ -3244,6 +3245,7 @@ function showLogin() {
   globalThis.BannerShop?.reset();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
+  globalThis.PendingActions?.reset();
   globalThis.TrophyUnlock?.reset();
   closeProfileQuickMenu();
   closeAchievementChallenges(false);
@@ -3271,6 +3273,7 @@ async function logoutCurrentUser() {
   globalThis.BannerShop?.reset();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
+  globalThis.PendingActions?.reset();
   globalThis.TrophyUnlock?.reset();
   closeAchievementDetail();
   closeAchievementChallenges(false);
@@ -6512,6 +6515,12 @@ document.addEventListener('bb:card-explored', async event => {
     if (!error && data && currentAuthUser?.id === userId) scheduleRealtimeRefresh('achievements', loadAchievements, 60);
   } catch { /* Offline or migration pending: reopening retries, without inventing progress. */ }
   finally { pendingCardExplorations.delete(key); }
+});
+
+globalThis.PendingActions?.configure({
+  db, session: () => backendReady && currentAuthUser?.id,
+  closeNotifications,
+  canVote: channelId => {const channel=chatChannels.find(channel => String(channel.id) === String(channelId));return !!channel && (!channel.readOnly || canManageSite());},
 });
 
 globalThis.GroupInteractions?.init({
