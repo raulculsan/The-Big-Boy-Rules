@@ -29,7 +29,7 @@
   function attachFullArtFoil(surface, foil, edition='Full Art') {
     const viceCity=edition==='Vice City';
     const motion=(globalThis.ClubMotion?.media || window.matchMedia?.('(prefers-reduced-motion: reduce)'));
-    let dead=false;
+    let dead=false, bounds=null, frame=0, pointerX=0, pointerY=0;
     foil.classList.add('full-art-foil');
     foil.classList.toggle('vice-city-foil',viceCity);
     const glints=viceCity
@@ -37,19 +37,37 @@
       : Array.from({length:16},(_,i)=>({x:8+(i*37)%84,y:6+(i*23)%88}));
     foil.innerHTML='<span class="full-art-spectrum"></span><span class="full-art-sheen"></span>'+(viceCity?'<span class="vice-city-streaks"></span>':'')+'<span class="full-art-sparkles">'+glints.map((p,i)=>`<i style="--sx:${p.x}%;--sy:${p.y}%;--delay:${-(i*.47)}s"></i>`).join('')+'</span>';
     const configure=()=>{foil.classList.toggle('is-paused',document.hidden||!!motion?.matches);};
+    // Cache geometry between layout changes. Pointer movement only queues one
+    // compositor update per frame instead of reading layout after every write.
+    const invalidate=()=>{bounds=null;};
+    const measure=()=>{bounds=surface.getBoundingClientRect();};
+    const paint=()=>{
+      frame=0;
+      if(dead||document.hidden||motion?.matches)return;
+      if(!bounds)measure();
+      if(!bounds.width||!bounds.height)return;
+      foil.style.setProperty('--foil-x',`${Math.max(0,Math.min(100,(pointerX-bounds.left)/bounds.width*100))}%`);
+      foil.style.setProperty('--foil-y',`${Math.max(0,Math.min(100,(pointerY-bounds.top)/bounds.height*100))}%`);
+    };
     const move=event=>{
       if(dead||document.hidden||motion?.matches)return;
-      const rect=surface.getBoundingClientRect();if(!rect.width||!rect.height)return;
-      foil.style.setProperty('--foil-x',`${Math.max(0,Math.min(100,(event.clientX-rect.left)/rect.width*100))}%`);
-      foil.style.setProperty('--foil-y',`${Math.max(0,Math.min(100,(event.clientY-rect.top)/rect.height*100))}%`);
+      pointerX=event.clientX;pointerY=event.clientY;
+      if(!frame)frame=requestAnimationFrame(paint);
     };
-    const reset=()=>{foil.style.removeProperty('--foil-x');foil.style.removeProperty('--foil-y');};
+    const reset=()=>{if(frame)cancelAnimationFrame(frame);frame=0;foil.style.removeProperty('--foil-x');foil.style.removeProperty('--foil-y');};
+    const observer=globalThis.ResizeObserver?new ResizeObserver(invalidate):null;
+    observer?.observe(surface);
+    window.addEventListener('resize',invalidate,{passive:true});
+    window.addEventListener('scroll',invalidate,{capture:true,passive:true});
+    surface.addEventListener('pointerenter',measure);surface.addEventListener('pointerdown',measure);
     surface.addEventListener('pointermove',move);surface.addEventListener('pointerleave',reset);
     surface.addEventListener('pointerup',reset);surface.addEventListener('pointercancel',reset);
     document.addEventListener('visibilitychange',configure);motion?.addEventListener('change',configure);configure();
     return ()=>{dead=true;surface.removeEventListener('pointermove',move);surface.removeEventListener('pointerleave',reset);
       surface.removeEventListener('pointerup',reset);surface.removeEventListener('pointercancel',reset);
       document.removeEventListener('visibilitychange',configure);motion?.removeEventListener('change',configure);
+      observer?.disconnect();window.removeEventListener('resize',invalidate);window.removeEventListener('scroll',invalidate,true);
+      surface.removeEventListener('pointerenter',measure);surface.removeEventListener('pointerdown',measure);
       reset();foil.classList.remove('full-art-foil','vice-city-foil','is-paused');foil.replaceChildren();};
   }
   const attachViceCityFoil=(surface,foil)=>attachFullArtFoil(surface,foil,'Vice City');

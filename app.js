@@ -292,7 +292,10 @@ let profileLoadGeneration = 0;
 function completeInitialLaunch() {
   if (initialLaunchCompleted) return;
   initialLaunchCompleted = true;
-  requestAnimationFrame(() => document.getElementById("pageLoader")?.classList.add("hidden"));
+  requestAnimationFrame(() => {
+    document.getElementById("pageLoader")?.classList.add("hidden");
+    runWhenIdle(() => { void ensureChotaSprites(); });
+  });
 }
 const pendingMediaLikes = new Set();
 
@@ -1423,7 +1426,7 @@ function renderMessages() {
   const finishReading = preserveConversationReading(container, `group:${activeChatChannelId}`);
   const channelMessages = [...messages, ...calendarChatAnnouncements, ...channelAutomationMessages]
     .filter(message => String(message.channelId || "") === String(activeChatChannelId || ""))
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    .sort((a, b) => messageTimestamp(a) - messageTimestamp(b));
   if (!channelMessages.length) {
     container.innerHTML = `<div class="empty-state"><strong>Aún no hay mensajes</strong><span>Sé la primera persona en escribir al grupo.</span></div>`;
     return;
@@ -1728,17 +1731,33 @@ const conversationTimeFormatter = new Intl.DateTimeFormat("es-ES", {hour: "2-dig
 const inboxDateFormatter = new Intl.DateTimeFormat("es-ES", {day: "numeric", month: "short"});
 const notificationDateFormatter = new Intl.DateTimeFormat("es-ES", {day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"});
 
+const conversationDayFormatter = new Intl.DateTimeFormat("es-ES", {day: "numeric", month: "long", year: "numeric"});
+const messageDateFormatter = new Intl.DateTimeFormat("es-ES", {day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"});
+// Bounded by timestamps, so repeated renders reuse parsing and locale strings
+// without retaining whole messages or growing with a long-running session.
+const chatDateCache = new Map();
+function chatDate(value) {
+  if (chatDateCache.has(value)) return chatDateCache.get(value);
+  const date = new Date(value), timestamp = date.getTime();
+  const metadata = {date, timestamp, day: Number.isFinite(timestamp) ? date.toDateString() : ""};
+  if (chatDateCache.size >= 1024) chatDateCache.delete(chatDateCache.keys().next().value);
+  chatDateCache.set(value, metadata);
+  return metadata;
+}
+function messageTimestamp(message) {
+  return message.createdTimestamp ?? chatDate(message.createdAt).timestamp;
+}
 function formatConversationTime(value) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : conversationTimeFormatter.format(date);
+  const metadata = chatDate(value);
+  return metadata.time ??= metadata.day ? conversationTimeFormatter.format(metadata.date) : "";
 }
 
 function conversationDayDivider(value, previousValue) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const day = date.toLocaleDateString("es-ES");
-  if (previousValue && day === new Date(previousValue).toLocaleDateString("es-ES")) return "";
-  const label = day === new Date().toLocaleDateString("es-ES") ? "Hoy" : date.toLocaleDateString("es-ES", {day: "numeric", month: "long", year: "numeric"});
+  const metadata = chatDate(value);
+  if (!metadata.day || (previousValue && metadata.day === chatDate(previousValue).day)) return "";
+  // Keep "Hoy" dynamic across midnight; only the absolute date is cached.
+  const label = metadata.day === new Date().toDateString() ? "Hoy"
+    : (metadata.label ??= conversationDayFormatter.format(metadata.date));
   return `<div class="conversation-day-divider"><span>${escapeHtml(label)}</span></div>`;
 }
 
@@ -2105,12 +2124,12 @@ function getSharedMediaReference(message) {
 }
 
 function formatInboxTime(value, now = new Date()) {
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return "";
+  const metadata = chatDate(value);
+  if (!metadata.day) return "";
   const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-  if (date.toDateString() === now.toDateString()) return conversationTimeFormatter.format(date);
-  if (date.toDateString() === yesterday.toDateString()) return "Ayer";
-  return inboxDateFormatter.format(date);
+  if (metadata.day === now.toDateString()) return formatConversationTime(value);
+  if (metadata.day === yesterday.toDateString()) return "Ayer";
+  return metadata.inbox ??= inboxDateFormatter.format(metadata.date);
 }
 
 function normalizeInboxSearch(value) {
@@ -2237,7 +2256,8 @@ document.getElementById("inboxFavoriteAction")?.addEventListener("click", () => 
 function renderPrivateContacts() {
   const panel = document.getElementById("privateContacts");
   if (!panel || !currentUser) return;
-  const latestGroupMessage = [...messages, ...calendarChatAnnouncements, ...channelAutomationMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).at(-1);
+  const latestGroupMessage = [...messages, ...calendarChatAnnouncements, ...channelAutomationMessages]
+    .reduce((latest, message) => !latest || messageTimestamp(message) >= messageTimestamp(latest) ? message : latest, null);
   const latestGroupChannel = latestGroupMessage
     ? chatChannels.find(channel => String(channel.id) === String(latestGroupMessage.channelId))
     : null;
@@ -2261,8 +2281,8 @@ function renderPrivateContacts() {
     member,
     latest: latestByMember.get(member.authId)
   })).sort((a, b) => {
-    const aTime = a.latest ? new Date(a.latest.createdAt).getTime() : 0;
-    const bTime = b.latest ? new Date(b.latest.createdAt).getTime() : 0;
+    const aTime = a.latest ? messageTimestamp(a.latest) : 0;
+    const bTime = b.latest ? messageTimestamp(b.latest) : 0;
     return bTime - aTime || a.member.name.localeCompare(b.member.name, "es");
   });
   const groupContact = `<button class="private-contact group-chat-contact ${document.getElementById("chat")?.classList.contains("conversation-open") ? "active" : ""}" type="button" data-open-group-chat data-kind="group" data-favorite-id="group" data-favorite="${userFavorites.has("group")}" data-search="Bigboys The Big Boy Rules grupo" data-conversation="true" data-unread="0" aria-description="Mantén pulsado para gestionar favoritos">
@@ -2445,12 +2465,23 @@ let tigretonRenderedKey = "";
 // One visible pet at a time: pause offscreen and cancel every timer on a rerender.
 let tigretonMotion = null;
 const tigretonReducedMotion = (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)"));
-// Load the Krita speech poses before the first comment is displayed.
+// Decode optional animation sheets after the first paint. A first interaction
+// can request the same promise, keeping the resting pose until its sheet is ready.
 const chotaTalkSprite = new Image();
-chotaTalkSprite.src = "icons/mascot/chota-v2/chota-talk.png";
 const chotaPoseSprite = new Image();
-chotaPoseSprite.src = "icons/mascot/chota-v2/chota-poses.png";
-void Promise.allSettled([chotaTalkSprite.decode(), chotaPoseSprite.decode()]);
+let chotaSpritesRequest = null;
+const chotaSpritesReady = {talk: false, poses: false};
+function ensureChotaSprites() {
+  if (!chotaSpritesRequest) {
+    chotaTalkSprite.src = "icons/mascot/chota-v2/chota-talk.png";
+    chotaPoseSprite.src = "icons/mascot/chota-v2/chota-poses.png";
+    chotaSpritesRequest = Promise.allSettled([
+      chotaTalkSprite.decode().then(() => { chotaSpritesReady.talk = chotaTalkSprite.naturalWidth > 0; }),
+      chotaPoseSprite.decode().then(() => { chotaSpritesReady.poses = chotaPoseSprite.naturalWidth > 0; })
+    ]);
+  }
+  return chotaSpritesRequest;
+}
 function mountTigretonMotion(reactToPlan, event, date) {
   tigretonMotion?.destroy();
   tigretonMotion = null;
@@ -2475,12 +2506,13 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     jump: [[0, 2], [12, 1], [13, 2], [14, 1], [15, 2], [14, 1], [16, 2], [17, 2], [0, 3]],
     rest: [[0, 2], [18, 2], [19, 3], [20, 3], [21, 3], [22, 5], [23, 6], [22, 6], [23, 6], [22, 5], [21, 3], [20, 3], [19, 3], [18, 2], [0, 3]],
   };
-  let inView = false, timer = 0, frameTimer = 0, animations = [], destroyed = false, lastGesture = "", paused = false;
+  let inView = false, timer = 0, frameTimer = 0, animations = [], destroyed = false, lastGesture = "", paused = false, spriteRequest = 0;
   const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches;
   function setFrame(frame) {
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
   }
   function stop() {
+    spriteRequest++;
     clearTimeout(timer);
     clearTimeout(frameTimer);
     animations.forEach(animation => animation.cancel());
@@ -2503,6 +2535,11 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   }
   function play(gesture) {
     if (!active()) return;
+    if (!chotaSpritesReady.poses) {
+      const request = ++spriteRequest;
+      void ensureChotaSprites().then(() => { if (request === spriteRequest && active() && chotaSpritesReady.poses) play(gesture); });
+      return;
+    }
     stop();
     pet.classList.add("is-awake");
     const action = {look: "greet", nod: "greet", shuffle: "walk", celebrate: "jump", doze: "rest"}[gesture] || gesture;
@@ -2531,6 +2568,11 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   function speak(text, gesture) {
     stop();
     if (!active() || !String(text || "").trim()) return;
+    if (!chotaSpritesReady.talk) {
+      const request = ++spriteRequest;
+      void ensureChotaSprites().then(() => { if (request === spriteRequest && active() && chotaSpritesReady.talk) speak(text, gesture); });
+      return;
+    }
     pet.classList.add("is-awake");
     character.classList.add("is-speaking");
     const words = String(text).trim().split(/\s+/);
@@ -3121,7 +3163,7 @@ async function hydrateAuthenticatedData(authUser) {
     runWhenIdle(() => {
       if (currentAuthUser?.id === authUser.id && !achievementsLoaded) loadAchievements();
     });
-    const channels = loadChatChannels().then(() => {
+    const channels = loadChatChannels({refreshMessages: false}).then(() => {
       if (currentAuthUser?.id === authUser.id) {
         void loadChannelAutomations({visit: true});
         return loadMessages();
@@ -3472,9 +3514,33 @@ async function loadMessages() {
   }
 }
 
+// Data loaders and realtime events can settle together. Render their shared
+// inbox once per frame, while direct navigation keeps its immediate renders.
+let chatSurfaceRefresh = null;
+function scheduleChatSurfaces({group = false, privateConversation = false, contacts = true} = {}) {
+  const owner = currentAuthUser?.id;
+  if (!owner) return;
+  if (chatSurfaceRefresh?.owner !== owner) {
+    if (chatSurfaceRefresh) cancelAnimationFrame(chatSurfaceRefresh.frame);
+    chatSurfaceRefresh = {owner, group: false, privateConversation: false, contacts: false, frame: null};
+  }
+  const pending = chatSurfaceRefresh;
+  pending.group ||= group;
+  pending.privateConversation ||= privateConversation;
+  pending.contacts ||= contacts;
+  if (pending.frame !== null) return;
+  pending.frame = requestAnimationFrame(() => {
+    if (chatSurfaceRefresh !== pending) return;
+    chatSurfaceRefresh = null;
+    if (currentAuthUser?.id !== owner) return;
+    if (pending.group) renderMessages();
+    if (pending.privateConversation) renderPrivateConversation();
+    if (pending.contacts) renderPrivateContacts();
+  });
+}
+
 function refreshGroupMessageSurfaces() {
-  renderMessages();
-  renderPrivateContacts();
+  scheduleChatSurfaces({group: true});
 }
 
 function mapMessage(item) {
@@ -3482,7 +3548,7 @@ function mapMessage(item) {
     id: item.id, userId: item.user_id, member: item.legacy_id, channelId: item.channel_id, text: item.body,
     attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
-    createdAt: item.created_at
+    createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp
   };
 }
 
@@ -3501,11 +3567,11 @@ function applyRealtimeChange(collection, payload, mapper) {
 
 function handleRealtimeMessage(payload) {
   messages = applyRealtimeChange(messages, payload, mapMessage)
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    .sort((a, b) => messageTimestamp(a) - messageTimestamp(b));
   refreshGroupMessageSurfaces();
 }
 
-async function loadChatChannels() {
+async function loadChatChannels({refreshMessages = true} = {}) {
   const owner = currentAuthUser?.id;
   const anchor = document.getElementById("privateContacts");
   globalThis.ClubFeedback?.set(anchor, "loading", chatChannels.length ? "Actualizando conversaciones…" : "Cargando conversaciones…");
@@ -3515,7 +3581,10 @@ async function loadChatChannels() {
     if (error) throw error;
     chatChannels = (data || []).map(item => ({id: item.id, name: item.name, isDefault: item.is_default, position: item.position, description: item.description || "", readOnly: Boolean(item.read_only)}));
     globalThis.ClubFeedback?.set(anchor, "ready", "");
-    renderChatChannels(); renderMessages(); renderPrivateContacts();
+    // Establish the active channel immediately. Initial hydration loads its
+    // messages next, avoiding a redundant render of the empty conversation.
+    renderChatChannels();
+    scheduleChatSurfaces({group: refreshMessages});
     if (document.getElementById("chat")?.classList.contains("conversation-open")) {
       globalThis.GroupInteractions?.mountPolls(document.getElementById("groupPolls"), activeChatChannelId);
     }
@@ -3582,7 +3651,7 @@ document.getElementById("notificationPreferenceOptions")?.addEventListener("chan
 document.getElementById("retryNotificationPreferences")?.addEventListener("click",()=>void loadNotificationPreferences());
 
 function renderNotifications(refreshContacts = true) {
-  if (refreshContacts) renderPrivateContacts();
+  if (refreshContacts) scheduleChatSurfaces();
   const list = document.getElementById("notificationsList");
   const badge = document.getElementById("notificationCount");
   const unread = notifications.filter(item => !item.readAt).length;
@@ -3795,8 +3864,7 @@ async function resolvePrivateAttachments({changed = false} = {}) {
 }
 
 function refreshPrivateMessageSurfaces() {
-  renderPrivateContacts();
-  renderPrivateConversation();
+  scheduleChatSurfaces({privateConversation: true});
 }
 
 function mapPrivateMessage(item) {
@@ -3804,22 +3872,17 @@ function mapPrivateMessage(item) {
     id: item.id, senderId: item.sender_id, recipientId: item.recipient_id,
     body: item.body, attachmentRef: item.attachment_url, attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
-    createdAt: item.created_at
+    createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp
   };
 }
 
-let privateSurfaceFrame = null;
 function schedulePrivateMessageSurfaces() {
-  if (privateSurfaceFrame !== null) return;
-  privateSurfaceFrame = requestAnimationFrame(() => {
-    privateSurfaceFrame = null;
-    if (currentAuthUser) refreshPrivateMessageSurfaces();
-  });
+  refreshPrivateMessageSurfaces();
 }
 
 function handleRealtimePrivateMessage(payload) {
   privateMessages = applyRealtimeChange(privateMessages, payload, mapPrivateMessage)
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    .sort((a, b) => messageTimestamp(a) - messageTimestamp(b));
   schedulePrivateMessageSurfaces();
   // Text-only events need no signing or second render. Cached signed URLs may
   // resolve immediately, so both updates share the same animation frame.
@@ -3861,7 +3924,7 @@ async function loadChannelAutomations({visit = false} = {}) {
   if (visit) await db.rpc("register_chat_channel_visit");
   const {data, error} = await db.from("chat_channel_automation_messages").select("id,channel_id,body,created_at").order("created_at", {ascending: false}).limit(200);
   if (error || owner !== currentAuthUser?.id) return;
-  channelAutomationMessages = (data || []).map(item => ({id: `automation:${item.id}`, channelId: item.channel_id, text: item.body, createdAt: item.created_at, systemAnnouncement: true, automation: true}));
+  channelAutomationMessages = (data || []).map(item => ({id: `automation:${item.id}`, channelId: item.channel_id, text: item.body, createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp, systemAnnouncement: true, automation: true}));
   refreshGroupMessageSurfaces();
 }
 async function loadCalendarChatAnnouncements({sync = true} = {}) {
@@ -3879,7 +3942,7 @@ async function loadCalendarChatAnnouncements({sync = true} = {}) {
       const {data, error} = await db.from("calendar_chat_announcements")
         .select("id,channel_id,body,created_at").order("created_at", {ascending: false}).limit(200).abortSignal(controller.signal);
       if (error || owner !== currentAuthUser?.id) return;
-      const next = (data || []).map(item => ({id: `calendar:${item.id}`, channelId: item.channel_id, text: item.body, createdAt: item.created_at, systemAnnouncement: true}));
+      const next = (data || []).map(item => ({id: `calendar:${item.id}`, channelId: item.channel_id, text: item.body, createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp, systemAnnouncement: true}));
       if (JSON.stringify(next) !== JSON.stringify(calendarChatAnnouncements)) {
         calendarChatAnnouncements = next;
         refreshGroupMessageSurfaces();
@@ -3920,7 +3983,7 @@ async function loadSiteSettings() {
   siteSettings = Object.fromEntries(data.map(item => [item.key, item.value]));
   renderSpotify();
   renderGroupAvatarSurfaces();
-  renderPrivateContacts();
+  scheduleChatSurfaces();
 }
 
 function connectRealtime() {
@@ -5567,8 +5630,8 @@ function formatNewsDate(value) {
 }
 
 function formatMessageDate(value) {
-  const date = new Date(value);
-  return date.toLocaleString("es-ES", {day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"});
+  const metadata = chatDate(value);
+  return metadata.title ??= metadata.day ? messageDateFormatter.format(metadata.date) : "Invalid Date";
 }
 
 function formatRelativeTime(value) {

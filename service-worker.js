@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v319";
+const CACHE_NAME = "big-boy-rules-v320";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -31,7 +31,7 @@ const APP_SHELL = [
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20260903-130",
-  "./app.js?v=20261016-improvements-319",
+  "./app.js?v=20261016-performance-320",
   "./spotify-player.js?v=20261015-idle-layout-306",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261016-improvements-319",
@@ -40,7 +40,7 @@ const APP_SHELL = [
   "./onboarding.css?v=20261016-improvements-319",
   "./admin-grants.js?v=20261015-social-301",
   "./admin-grants.css?v=20261009-213",
-  "./banner-shop.js?v=20261016-improvements-319",
+  "./banner-shop.js?v=20261016-performance-320",
   "./banner-shop.css?v=20261015-social-301",
   "./collection-social.js?v=20261015-mutual-trades-305",
   "./collection-social.css?v=20261015-mutual-trades-305",
@@ -91,7 +91,7 @@ const APP_SHELL = [
   "./icons/cards/justificante-medico-comun-v1.jpg",
   "./icons/cards/jeringuilla-comun-v1.jpg",
   "./icons/cards/alberto-velasco-full-art-84-v2.jpg",
-  "./collection-motion.js?v=20261016-improvements-319",
+  "./collection-motion.js?v=20261016-performance-320",
   "./icons/cards/card-touch.json?v=20260905-153",
   "./icons/cards/card-touch-epic.json?v=20261007-168",
   "./icons/cards/card-touch-special.json?v=20261012-272",
@@ -222,6 +222,37 @@ const mediaPath = request => {
 };
 let shellUrls;
 let mediaWrite = Promise.resolve();
+let mediaEntries = new Map();
+// Reconcile keys cheaply on writes, but read response metadata only for entries
+// this worker has not seen. Worker restarts rebuild this index lazily once.
+async function reconcileMediaEntries(cache) {
+  const keys = await cache.keys(), entries = new Map(), duplicates = new Set();
+  for (const key of keys) {
+    if (entries.has(key.url)) { duplicates.add(key.url); continue; }
+    let entry = mediaEntries.get(key.url);
+    if (!entry) {
+      const cached = await cache.match(key);
+      if (!cached) continue;
+      const recorded = cached.headers.get("x-big-boy-cache-bytes");
+      let bytes = Number(recorded);
+      // Older or malformed entries must not silently count as zero bytes.
+      if (recorded === null || !Number.isSafeInteger(bytes) || bytes < 0) bytes = (await cached.blob()).size;
+      if (!mediaPath(key) || /(?:private|no-store)/i.test(cached.headers.get("cache-control") || "") || bytes > MEDIA_MAX_FILE_BYTES) {
+        await cache.delete(key);
+        continue;
+      }
+      entry = {request:key, bytes};
+    }
+    entries.set(key.url,entry);
+  }
+  // Static artwork needs one version per exact URL; remove legacy Vary
+  // duplicates rather than undercounting multiple responses for one URL.
+  for (const url of duplicates) {
+    await cache.delete(url,{ignoreVary:true});
+    entries.delete(url);
+  }
+  mediaEntries = entries;
+}
 function savePublicMedia(request, response) {
   const copy = response.clone();
   mediaWrite = mediaWrite.catch(() => {}).then(async () => {
@@ -232,15 +263,25 @@ function savePublicMedia(request, response) {
     headers.set("x-big-boy-cache-bytes", String(blob.size));
     headers.set("x-big-boy-cache-time", String(Date.now()));
     const cache = await caches.open(MEDIA_CACHE_NAME);
+    await reconcileMediaEntries(cache);
     // Reinsertion refreshes FIFO order without a costly write on each hit.
-    await cache.delete(request);
-    await cache.put(request, new Response(blob, {status:copy.status,statusText:copy.statusText,headers}));
-    const keys = await cache.keys();
-    const sizes = await Promise.all(keys.map(async key => Number((await cache.match(key))?.headers.get("x-big-boy-cache-bytes")) || 0));
-    let bytes = sizes.reduce((sum,size) => sum + size, 0), count = keys.length;
-    for (let i = 0; i < keys.length && (bytes > MEDIA_MAX_BYTES || count > MEDIA_MAX_ENTRIES); i++) {
-      await cache.delete(keys[i]); bytes -= sizes[i]; count--;
+    const mediaRequest = new Request(request.url || request);
+    await cache.delete(mediaRequest,{ignoreVary:true});
+    mediaEntries.delete(mediaRequest.url);
+    let bytes = Array.from(mediaEntries.values()).reduce((sum,entry) => sum + entry.bytes, 0);
+    // Make room before put: a quota/write failure cannot leave us over budget.
+    for (const [url,entry] of mediaEntries) {
+      if (bytes + blob.size <= MEDIA_MAX_BYTES && mediaEntries.size < MEDIA_MAX_ENTRIES) break;
+      await cache.delete(entry.request,{ignoreVary:true});
+      bytes -= entry.bytes;
+      mediaEntries.delete(url);
     }
+    await cache.put(mediaRequest, new Response(blob, {status:copy.status,statusText:copy.statusText,headers}));
+    mediaEntries.set(mediaRequest.url,{request:mediaRequest,bytes:blob.size});
+  }).catch(error => {
+    // A partial Cache API failure may invalidate the index. Rebuild next time.
+    mediaEntries = new Map();
+    throw error;
   });
   // Cache failures must not break rendering or prevent an update activating.
   return mediaWrite.catch(() => {});

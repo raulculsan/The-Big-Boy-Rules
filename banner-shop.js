@@ -298,9 +298,8 @@
     return memberBanners.get(userId) || null;
   }
   function memberPoster(banner) {
-    const image = {'alberto-galicia-anime-v1':'alberto-galicia-anime-preview-v1.png', 'miguel-basket-bano-v1':'miguel-basket-bano-v1.png'}[banner?.art_key];
-    if (image) return `<div class="banner-art member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/${image}" width="2172" height="724" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain"></div>`;
-    if (banner?.art_key === 'miguel-moto-anime-v1') return `<div class="banner-art banner-miguel-moto member-banner-art" role="img" aria-label="${escape(banner.name)}" style="background:#344b65 url('icons/banners/miguel-moto-city-v1.png') center/cover no-repeat"><div class="banner-moto-rider-group" style="animation:none;will-change:auto"><div class="banner-moto-rider-plane"><img class="banner-moto-rider" src="icons/banners/miguel-moto-rider-v2.png" width="1312" height="1199" alt="" loading="lazy" decoding="async"></div></div></div>`;
+    const image = {'alberto-galicia-anime-v1':'alberto-galicia-v1.webp', 'miguel-basket-bano-v1':'miguel-basket-v1.webp', 'miguel-moto-anime-v1':'miguel-moto-v1.webp'}[banner?.art_key];
+    if (image) return `<div class="banner-art member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/posters/${image}" width="720" height="240" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain"></div>`;
     return artwork(null, 'member-banner-art');
   }
   function memberArtwork(userId) {
