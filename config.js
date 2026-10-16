@@ -4,6 +4,7 @@
  * Nunca uses la clave service_role en este archivo.
  */
 window.BIG_BOY_CONFIG = {
+  spotifyClientId: "95c69361f4f44aa2ba19fa737570766d",
   supabaseUrl: "https://nfvggpgeypkkqceivkaq.supabase.co",
   supabasePublishableKey: "sb_publishable_76a6wcA_Ow12tT9r_OlvWQ_MN7ALhfX",
   vapidPublicKey: "BDPUEks5WwoHzFot4PsY-Qq63eR6EHorVnlW45hDud-QJ6WkrAmgJclPrJHAHG7UAOlYhFAGN_qtWtKz0aNp0EQ",

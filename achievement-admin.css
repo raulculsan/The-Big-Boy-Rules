@@ -157,3 +157,30 @@ body.authenticated .app > .achievement-admin-page { padding: 0 0 calc(20px + env
   .achievement-picker-tools > span { flex-basis: 100%; margin-left: 0; }
 }
 @media (max-width: 360px) { .achievement-library { grid-template-columns: minmax(0,1fr); } }
+
+/* Acquisition objectives keep scope independent from the number of future collections. */
+.achievement-acquisition-scope{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.achievement-acquisition-scope[hidden]{display:none}.achievement-acquisition-scope .achievement-field:first-child{grid-column:1/-1}@media(max-width:480px){.achievement-acquisition-scope{grid-template-columns:1fr}.achievement-acquisition-scope .achievement-field:first-child{grid-column:auto}}
+
+/* Profile trophy cabinet: a short first view, with the full collection on demand. */
+.profile-achievements{gap:12px}
+.profile-achievements .achievement-tier-summary{display:flex;flex-wrap:wrap;gap:7px;margin-top:-5px}
+.profile-achievements .achievement-tier-count{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid #ffffff12;border-radius:999px;color:#aeb4bd;background:#ffffff04;font-size:10px;letter-spacing:0}
+.profile-achievements .achievement-tier-count i{width:6px;height:6px;border-radius:50%;background:var(--achievement-metal,#b97842)}
+.profile-achievements .achievement-tier-count strong{color:#f3f4f5;font-size:10px}
+.profile-achievements .achievement-showcase{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px}
+.profile-achievements .achievement-card{grid-template-columns:44px minmax(0,1fr);gap:10px;min-width:0;padding:10px 12px;border-radius:14px;text-align:left}
+.profile-achievements .achievement-card-copy{min-width:0;display:grid;gap:4px}
+.profile-achievements .achievement-card-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.profile-achievements .achievement-card-copy small{font-size:8px}
+.profile-achievements .achievement-emblem{width:40px;height:40px;box-shadow:0 0 0 3px var(--achievement-glow),0 6px 14px #0004;font-size:1.15rem}
+.profile-achievements .achievement-emblem .achievement-trophy{width:30px;height:30px}
+.profile-achievements .achievement-archive[hidden]{display:none!important}
+.profile-achievements .achievement-show-all{justify-self:start;min-height:38px;padding:0 12px;border:1px solid #ffffff15;border-radius:11px;color:#d8c18e;background:#ffffff05;font:600 11px/1.2 system-ui,sans-serif;cursor:pointer}
+.profile-achievements .achievement-show-all:hover{border-color:#d9b66766;background:#d9b6670b}
+@media(max-width:760px){
+  #perfil .profile-achievements .achievement-showcase{grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+  #perfil .profile-achievements .achievement-card{flex:auto;grid-template-columns:36px minmax(0,1fr);padding:9px;gap:8px}
+  #perfil .profile-achievements .achievement-emblem{width:34px;height:34px;box-shadow:0 0 0 2px var(--achievement-glow)}
+  #perfil .profile-achievements .achievement-emblem .achievement-trophy{width:26px;height:26px}
+  #perfil .profile-achievements .achievement-card-copy strong{font-size:11px}
+}

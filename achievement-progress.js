@@ -2,9 +2,10 @@
 (() => {
   const metrics = Object.freeze({
     group_messages: Object.freeze({label:'Mensajes en el grupo', unit:'días', hint:'Solo suma el primer mensaje del día, entre todas las categorías del grupo. Los adjuntos cuentan; los privados no. Día según la hora de Madrid.'}),
-    group_active_days: Object.freeze({label:'Días de participación', unit:'días', hint:'Suma al entrar en la app con tu cuenta, una vez al día. También cuenta si tu sesión estaba guardada; no necesitas escribir ni volver a identificarte. Hora de Madrid.'}),
+    group_active_days: Object.freeze({label:'Días en la app', unit:'días', hint:'Cuenta cada día que entras en la app, también con sesión guardada. No requiere escribir ni volver a identificarte. Conserva los días registrados para futuros objetivos. Fecha del servidor en Madrid.'}),
     profile_completed: Object.freeze({label:'Completar el perfil', unit:'perfil', hint:'Nombre, foto y biografía. Si el perfil ya está completo al crear el logro, se concede directamente.'}),
     daily_packs_earned: Object.freeze({label:'Sobres diarios conseguidos', unit:'sobres', hint:'Cuenta cada sobre diario acreditado por el servidor después de crear el objetivo. Actualizar el saldo o probar la animación no suma.'}),
+    cards_acquired: Object.freeze({label:'Cartas distintas conseguidas', unit:'cartas', hint:'Solo cuentan las cartas que has conseguido de verdad. Las copias repetidas no suman. El progreso y los logros se conservan al descartar y al añadir colecciones.'}),
     cards_explored: Object.freeze({label:'Cartas distintas exploradas', unit:'cartas', hint:'Abre cartas del catálogo en grande. Cada carta suma una sola vez por objetivo; no significa que la hayas conseguido en un sobre.'}),
     special_cards_explored: Object.freeze({label:'Cartas especiales exploradas', unit:'cartas', hint:'Explora cartas de edición Especial. Cada carta distinta suma una vez por objetivo; las legendarias tienen su propia categoría.'}),
     legendary_cards_explored: Object.freeze({label:'Cartas legendarias exploradas', unit:'cartas', hint:'Explora cartas de edición Legendaria. Reabrir o girar la misma carta no vuelve a sumar.'}),
@@ -21,6 +22,13 @@
     const goal = new Intl.NumberFormat('es-ES').format(rule.target);
     const plural = Number(rule.target) !== 1;
     if (rule.metric === 'daily_packs_earned') return `Consigue ${goal} ${plural ? 'sobres diarios' : 'sobre diario'}`;
+    if (rule.metric === 'cards_acquired') {
+      const editions = plural ? {common:'comunes',special:'especiales',epic:'épicas',legendary:'legendarias',retro:'retro',full_art:'Full Art',vice_city:'Vice City'} : {common:'común',special:'especial',epic:'épica',legendary:'legendaria',retro:'retro',full_art:'Full Art',vice_city:'Vice City'};
+      const kinds = {member:'miembros',object:'objetos',location:'ubicaciones'};
+      const filters = [rule.edition && editions[rule.edition], rule.kind && `de ${kinds[rule.kind]}`].filter(Boolean).join(' ');
+      const scope = rule.collectionKey ? ` · ${rule.collectionName || rule.collectionKey}` : ' · Todas las colecciones';
+      return `Consigue ${goal} ${plural ? 'cartas distintas' : 'carta'}${filters ? ' '+filters : ''}${scope}`;
+    }
     if (rule.metric === 'locations_explored') return `Explora ${goal} ${plural ? 'ubicaciones distintas' : 'ubicación'}`;
     if (rule.metric.endsWith('cards_explored')) {
       const edition = rule.metric === 'special_cards_explored' ? (plural ? ' especiales' : ' especial')
@@ -53,9 +61,9 @@
     });
   }
   // This cache only avoids requests; the server is the authority for dates and deduplication.
-  function createDailyVisitRecorder({session, visible, rpc, day = () => new Intl.DateTimeFormat('en-CA', {timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}) {
+  function createDailyVisitRecorder({session, visible, rpc, onStatus = () => {}, day = () => new Intl.DateTimeFormat('en-CA', {timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}) {
     let active = null, cachedUser = null, cachedDay = null;
-    const reset = () => { active = null; cachedUser = null; cachedDay = null; };
+    const reset = () => { active = null; cachedUser = null; cachedDay = null; onStatus('idle'); };
     function record({force = false} = {}) {
       const userId = session();
       if (!userId || !visible()) return Promise.resolve(false);
@@ -66,10 +74,12 @@
       request.promise = (async () => {
         try {
           const {data, error} = await rpc();
-          if (active !== request || session() !== userId || error || !data) return false;
+          if (active !== request || session() !== userId) return false;
+          if (error || !data) {onStatus('error');return false;}
+          onStatus('ready');
           cachedUser = userId; cachedDay = data;
           return true;
-        } catch { return false; } // Offline visits retry; never manufacture progress locally.
+        } catch { if (active === request && session() === userId) onStatus('error'); return false; } // Offline visits retry; never manufacture progress locally.
         finally { if (active === request) active = null; }
       })();
       return request.promise;

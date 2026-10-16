@@ -14,6 +14,12 @@
     const selected = container => new Set([...container.querySelectorAll('input[type="checkbox"]:checked')].map(input=>input.value));
     const currentAwards = id => new Set(options.awards().filter(award=>String(award.achievementId)===String(id)).map(award=>award.userId));
     const isAutomatic = () => creation.querySelector('input[name="achievementMode"]:checked')?.value === 'automatic';
+    function acquisitionRule() {
+      const collectionKey = $('achievementCollection').value || null;
+      return {metric:'cards_acquired',target:Number($('achievementTarget').value),collectionKey,
+        collectionName:options.cardScopes?.()?.collections?.find(c=>c.key===collectionKey)?.name,
+        edition:$('achievementEdition').value || null,kind:$('achievementKind').value || null};
+    }
     function updateMode() {
       const automatic = isAutomatic(), status = options.progressStatus();
       $('achievementAutomaticMode').disabled = status !== 'ready';
@@ -21,7 +27,7 @@
       $('achievementCheckConnection').disabled = status === 'loading';
       $('achievementAutomationStatus').textContent = status === 'ready' ? '' : status === 'unavailable'
         ? 'Los objetivos automáticos necesitan activar la actualización de logros en Supabase. La asignación manual sigue disponible.'
-        : status === 'loading' ? 'Comprobando los objetivos automáticos…' : 'No se pudo comprobar la conexión. Conservamos tu borrador; vuelve a intentarlo antes de crear el objetivo.';
+        : status === 'loading' ? 'Comprobando los objetivos automáticos…' : options.visitFailed?.() ? 'No se pudo registrar el día de hoy. Comprueba la conexión para volver a intentarlo; tu progreso anterior se conserva.' : 'No se pudo comprobar la conexión. Conservamos tu borrador; vuelve a intentarlo antes de crear el objetivo.';
       $('achievementAutomaticFields').hidden = !automatic;
       $('achievementManualRecipients').hidden = automatic;
       $('achievementMetric').disabled = !automatic;
@@ -29,17 +35,32 @@
       if (profile) $('achievementTarget').value = '1';
       $('achievementTarget').disabled = !automatic || profile;
       const metric = $('achievementMetric').value;
+      const scopes = options.cardScopes?.();
+      const acquisition = metric === 'cards_acquired';
+      const picker = $('achievementCollection');
+      const signature = JSON.stringify(scopes?.collections || []);
+      if (picker.dataset.catalog !== signature) {
+        const value = picker.value;
+        picker.dataset.catalog = signature;
+        picker.innerHTML = '<option value="">Todas las colecciones</option>' + (scopes?.collections || []).map(c=>`<option value="${esc(c.key)}">${esc(c.name)}</option>`).join('');
+        if ([...picker.options].some(o=>o.value===value)) picker.value=value;
+      }
+      $('achievementAcquisitionScope').hidden = !automatic || !acquisition;
+      ['achievementCollection','achievementEdition','achievementKind'].forEach(id=>$(id).disabled=!automatic || !acquisition || !scopes);
+
       const catalog = globalThis.CardCollection?.catalog;
       const exploration = metric.endsWith('explored');
-      const available = exploration && catalog ? catalog.filter(card => metric === 'cards_explored'
+      const available = acquisition && scopes ? scopes.catalog.filter(c=>(!picker.value || c.collectionKey===picker.value) && (!$('achievementEdition').value || c.edition===$('achievementEdition').value) && (!$('achievementKind').value || c.kind===$('achievementKind').value)).length : exploration && catalog ? catalog.filter(card => metric === 'cards_explored'
         || (metric === 'special_cards_explored' && card.edition === 'Especial')
         || (metric === 'legendary_cards_explored' && card.edition === 'Legendaria')
         || (metric === 'locations_explored' && card.kind === 'Ubicación')).length : null;
-      $('achievementTarget').max = profile ? '1' : String(available ?? 100000);
-      if (metric !== previousMetric && available > 0 && Number($('achievementTarget').value) > available) $('achievementTarget').value = String(available);
+      $('achievementTarget').max = profile ? '1' : String(acquisition ? 100000 : available ?? 100000);
+      if (!acquisition && metric !== previousMetric && available > 0 && Number($('achievementTarget').value) > available) $('achievementTarget').value = String(available);
       previousMetric = metric;
       $('achievementMetricHint').textContent = (AchievementProgress.metrics[metric]?.hint || '')
-        + (available == null ? '' : ` Disponibles en el catálogo: ${available}.`);
+        + (available == null ? '' : ` Disponibles ahora: ${available}.${acquisition ? ' Puedes fijar una meta mayor para futuras ampliaciones.' : ''}`);
+      if (acquisition && !scopes) $('achievementMetricHint').textContent='No se pudo cargar el catálogo de colecciones. Pulsa Comprobar de nuevo antes de crear este objetivo.';
+      if (acquisition && !scopes) $('achievementCheckConnection').hidden=false;
       creation.querySelector('[type="submit"]').textContent = automatic ? 'Crear objetivo automático' : 'Crear y asignar logro';
     }
 
@@ -115,7 +136,7 @@
     function preview() {
       const tier = creation.querySelector('input[name="achievementTier"]:checked')?.value || 'bronze';
       const name = $('achievementName').value.trim(), description = $('achievementDescription').value.trim();
-      const objective = isAutomatic() ? AchievementProgress.objective({metric:$('achievementMetric').value,target:Number($('achievementTarget').value)}) : '';
+      const objective = isAutomatic() ? AchievementProgress.objective($('achievementMetric').value === 'cards_acquired' ? acquisitionRule() : {metric:$('achievementMetric').value,target:Number($('achievementTarget').value)}) : '';
       $('achievementCreatePreview').innerHTML = `<small class="achievement-preview-label">ASÍ SE VERÁ EN EL PERFIL</small><div class="achievement-preview-art tier-${tier}">${options.trophy(tier)}</div><span class="achievement-preview-tier">${esc(options.tier(tier).label)}</span><h3>${esc(name || 'Un logro con historia')}</h3><p>${esc(description || 'Tu reconocimiento, con su propio significado.')}</p>${isAutomatic() ? `<div class="achievement-preview-objective"><small>OBJETIVO AUTOMÁTICO</small><p>${esc(objective || 'Elige una meta para tu objetivo.')}</p></div>` : ''}`;
       $('achievementDescriptionCount').textContent = `${$('achievementDescription').value.length} / 240`;
     }
@@ -187,6 +208,10 @@
       if (automatic) {
         payload.new_metric = $('achievementMetric').value;
         payload.new_target = Number($('achievementTarget').value);
+        if (payload.new_metric === 'cards_acquired') {
+          if (!options.cardScopes?.()) {feedback.textContent='No se pudo cargar el catálogo de colecciones. Comprueba de nuevo la conexión.';return;}
+          Object.assign(payload,{target_collection:$('achievementCollection').value || null,target_edition:$('achievementEdition').value || null,target_kind:$('achievementKind').value || null});
+        }
         if (!AchievementProgress.validTarget(payload.new_metric, payload.new_target)) { feedback.textContent='La meta debe ser un número entero entre 1 y 100.000.'; return; }
       } else Object.assign(payload, {new_icon:null,target_user_ids:ids});
       if (payload.new_name.length<2) {feedback.textContent='Escribe un nombre de al menos 2 caracteres.';return;}

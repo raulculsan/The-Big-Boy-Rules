@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="theme-color" content="#0b0b0d" />
   <meta name="color-scheme" content="dark" />
+  <link rel="stylesheet" href="app-health.css?v=20261015-accessibility-295">
+  <script defer src="app-health.js?v=20261015-settings-294"></script>
+  <style id="startup-paint">
+    html, body { background:#08090c; color:#f4f1e9; }
+    #pageLoader { position:fixed; inset:0; z-index:9999; display:grid; place-items:center; background:#08090c; }
+    #pageLoader.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+    #pageLoader .loader-emblem { display:grid; place-items:center; gap:8px; color:#d3b46a; font-family:Georgia,serif; }
+    #pageLoader .loader-emblem strong { font-size:64px; }
+    #pageLoader .loader-emblem span, #pageLoader .loader-emblem small { font:10px system-ui; letter-spacing:3px; }
+  </style>
   <meta name="application-name" content="The Big Boy Rules" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -27,14 +37,20 @@
   <link rel="manifest" href="manifest.webmanifest?v=20260901-125" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="styles.css?v=20261007-193" />
-  <link rel="stylesheet" href="club.css?v=20261007-187" />
-  <link rel="stylesheet" href="packs.css?v=20261008-200" />
-  <link rel="stylesheet" href="banner-shop.css?v=20261008-200" />
-  <link rel="stylesheet" href="album.css?v=20261008-200" />
-  <link rel="stylesheet" href="admin-grants.css?v=20261007-176" />
-  <link rel="stylesheet" href="achievement-admin.css?v=20260903-135" />
-  <link rel="stylesheet" href="chat.css?v=20261007-192" />
+  <link rel="stylesheet" href="styles.css?v=20261012-279" />
+  <link rel="stylesheet" href="club.css?v=20261015-release-300" />
+  <link rel="stylesheet" href="spotify-player.css?v=20261014-balanced" />
+  <link rel="stylesheet" href="packs.css?v=20261015-release-300" />
+  <link rel="stylesheet" href="banner-shop.css?v=20261015-social-301" />
+  <link rel="stylesheet" href="album.css?v=20261015-compass-302" />
+  <link rel="stylesheet" href="admin-grants.css?v=20261009-213" />
+  <link rel="stylesheet" href="achievement-admin.css?v=20261011-256" />
+  <link rel="stylesheet" href="chat.css?v=20261016-push-prepared-318" />
+  <link rel="stylesheet" href="chat-themes.css?v=20261012-277" />
+  <link rel="stylesheet" href="news.css?v=20261014-home-scroll-291" />
+  <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
+  <link rel="stylesheet" href="collection-social.css?v=20261015-mutual-trades-305" />
+  <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
 </head>
 <body>
 
@@ -111,23 +127,34 @@
         <h1 id="pageTitle">The Big Boy Rules</h1>
       </div>
       <div class="top-actions">
+        <button class="icon-button packs-top-button monochrome-top-button" id="packsTopButton" type="button" data-go="sobres" aria-label="Abrir mis sobres. Saldo pendiente de sincronización" title="Mis sobres">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 7h16M4 17h16m-9-5 4-3 4 3-4 3-4-3Z"/></svg>
+          <span id="packsHomeBalance" class="packs-top-count" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
+        </button>
         <div class="notifications-wrap">
           <button class="icon-button notification-button monochrome-top-button" id="notificationsButton" type="button" aria-label="Abrir notificaciones" aria-expanded="false" title="Notificaciones">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="notification-count" id="notificationCount" hidden>0</span>
           </button>
-          <div class="notifications-dropdown" id="notificationsDropdown" aria-hidden="true">
+          <div class="notifications-backdrop" id="notificationsBackdrop" hidden></div>
+          <section class="notifications-dropdown" id="notificationsDropdown" role="dialog" aria-modal="true" aria-labelledby="notificationsTitle" aria-hidden="true" inert>
             <div class="notifications-heading">
-              <div><span class="eyebrow">ACTIVIDAD</span><strong>Notificaciones</strong></div>
-              <div class="notifications-heading-actions"><button id="markAllNotificationsRead" type="button">Marcar leídas</button><button id="clearAllNotifications" class="danger" type="button">Limpiar</button></div>
+              <div><span class="eyebrow">AVISOS</span><h2 id="notificationsTitle">Notificaciones</h2><span id="notificationsUnreadSummary">Todo al día</span></div>
+              <button id="closeNotifications" class="notifications-close" type="button" aria-label="Cerrar notificaciones"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
             </div>
-            <div class="push-notification-settings">
-              <div><strong>Avisos en el móvil</strong><small id="pushNotificationStatus">Comprueba si tu dispositivo es compatible.</small></div>
-              <div class="push-notification-actions"><button id="pushNotificationTestButton" type="button" hidden>Probar</button><button id="pushNotificationButton" type="button">Activar</button></div>
+            <div class="notifications-toolbar">
+              <div class="notifications-filters" role="group" aria-label="Filtrar notificaciones"><button type="button" data-notification-filter="all" aria-pressed="true">Todas</button><button type="button" data-notification-filter="unread" aria-pressed="false">No leídas <span id="notificationsFilterCount">0</span></button></div>
+              <div class="notifications-heading-actions"><button id="markAllNotificationsRead" type="button" aria-label="Marcar todas como leídas" title="Marcar todas como leídas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 12 5 5L19 6M12 17l9-9"/></svg></button><button id="clearAllNotifications" class="danger" type="button" aria-label="Limpiar todas las notificaciones" title="Limpiar todas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg></button></div>
             </div>
-            <div class="notifications-list" id="notificationsList">
-              <div class="empty-state compact">No tienes notificaciones.</div>
-            </div>
-          </div>
+            <div class="notifications-list" id="notificationsList" aria-label="Actividad reciente"></div>
+            <details class="notifications-settings">
+              <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Configurar mis avisos</span><span class="notifications-chevron" aria-hidden="true">⌄</span></summary>
+              <div class="push-notification-settings">
+                <small id="pushNotificationStatus">Comprueba si tu dispositivo es compatible.</small>
+                <div class="push-notification-actions"><button id="pushNotificationTestButton" type="button" hidden>Probar</button><button id="pushNotificationButton" type="button">Activar</button></div>
+              </div>
+              <div class="notification-preferences"><div class="notification-preferences-heading"><span>TUS CATEGORÍAS</span><small>En esta cuenta</small></div><div id="notificationPreferenceOptions"></div><p id="notificationPreferencesStatus" role="status" aria-live="polite">Cargando tus preferencias…</p><button id="retryNotificationPreferences" type="button" hidden>Reintentar</button></div>
+            </details>
+          </section>
         </div>
         <button class="icon-button admin-only admin-crown-button monochrome-top-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración">♛</button>
       </div>
@@ -142,7 +169,7 @@
         <div class="search-results search-hub-results" id="searchResults" aria-live="polite" hidden></div>
       </div>
       <div class="club-welcome">
-        <div><span class="eyebrow">TU CÍRCULO. TUS PLANES.</span><h2>Dentro del club.</h2></div>
+        <div><span class="eyebrow">THE BIG BOY RULES</span><h2>Inicio</h2></div>
         <span class="status-pill" id="heroOnlineStatus"><i></i> Conectando</span>
       </div>
       <section class="home-news-section is-collapsed" id="noticias" aria-labelledby="clubNewsTitle">
@@ -155,14 +182,14 @@
             <button class="news-tab active" type="button" data-news-category="deportes">Deportes</button>
             <button class="news-tab" type="button" data-news-category="espana">España</button>
             <button class="news-tab" type="button" data-news-category="mundo">Mundo</button>
-          </div><button class="text-button" id="refreshNewsButton" type="button">Actualizar</button></div>
+          </div><button class="text-button" id="refreshNewsButton" type="button" aria-label="Actualizar noticias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 18 17"/></svg><span>Actualizar</span></button></div>
           <div class="news-status" id="newsStatus" aria-live="polite"></div>
           <div class="news-grid" id="newsGrid"></div>
         </div>
       </section>
       <div class="club-dashboard">
         <article class="panel club-plans" aria-labelledby="clubPlansTitle">
-          <div class="panel-heading"><div><span class="eyebrow">AGENDA</span><h3 id="clubPlansTitle"><button class="club-heading-link" data-go="calendario" type="button" aria-label="Próximos planes: abrir calendario">Próximos planes</button></h3></div></div>
+          <div class="panel-heading"><div><h3 id="clubPlansTitle"><button class="club-heading-link" data-go="calendario" type="button" aria-label="Próximos planes: abrir calendario">Próximos planes</button></h3></div></div>
           <div id="upcomingEvents" aria-live="polite"><p class="club-placeholder">Consultando la agenda…</p></div>
           <button class="club-calendar-link" data-go="calendario" type="button">Ver calendario</button>
         </article>
@@ -171,12 +198,6 @@
           <div id="spotifyPlayer"></div>
         </article>
       </div>
-      <button class="packs-home-link" type="button" data-go="sobres" aria-label="Abrir mis sobres de la colección Los nuestros">
-        <span class="packs-miniature" aria-hidden="true">BB</span>
-        <span class="packs-home-copy"><span class="eyebrow">COLECCIÓN 01 · LOS NUESTROS</span><strong>Tus sobres</strong></span>
-        <span class="packs-home-daily">Un acceso.<br>Un sobre.</span>
-        <span id="packsHomeBalance" class="packs-count-badge" aria-label="Saldo de sobres pendiente de sincronización">—</span>
-      </button>
       <section class="home-members-section" id="miembros" aria-labelledby="clubMembersTitle">
         <div class="panel-heading"><div><span class="eyebrow">LOS DE SIEMPRE</span><h3 id="clubMembersTitle">Miembros</h3></div></div>
         <div class="members-grid" id="membersGrid"></div>
@@ -187,35 +208,40 @@
       <header class="packs-heading">
         <button class="packs-back" type="button" data-go="inicio" aria-label="Volver a Inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
         <div><span class="eyebrow">TU COLECCIÓN PERSONAL</span><h2 id="packsTitle" tabindex="-1">Los nuestros.</h2></div>
-        <button type="button" class="card-album-trigger" data-card-album aria-label="Abrir mi álbum de cartas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M5 8h4M5 11h4M15 8h4M15 11h4"/></svg></button>
+        <button type="button" class="collection-catalog-trigger" data-go="catalogo" aria-label="Ver todas las cartas de la colección"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6 9-3 4 13-9 3zM15 5h5v16H10v-2"/><path d="m7 9 5-1M8 12l5-1"/></svg></button>
+        <button type="button" class="card-album-trigger" data-card-album aria-label="Abrir mi álbum de cartas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M5 8h4M5 11h4M15 8h4M15 11h4"/></svg></button>
         <button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span data-duplicates-count>0</span></button>
       </header>
       <div class="packs-layout">
         <div class="packs-display">
           <span class="packs-display-edition">BIG BOYS · COLECCIÓN 01</span>
-          <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-los-nuestros-v1.png?v=20260903-139" width="1024" height="1536" loading="lazy" decoding="async" alt=""></button>
-          <span class="packs-display-caption" id="packsOpenHint">Vuestras historias, por descubrir.</span>
+          <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-los-nuestros-v1.jpg?v=20260903-139" width="1024" height="1536" loading="lazy" decoding="async" alt=""></button>
           <span id="packsCount" class="packs-count-badge" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
+          <button type="button" class="packs-info-trigger" id="packsInfoTrigger" aria-label="Información y saldo de sobres" aria-expanded="false" aria-controls="packsInfoPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button>
+          <aside class="packs-info-panel" id="packsInfoPanel" hidden aria-labelledby="packsInfoTitle"><strong id="packsInfoTitle">Información del sobre</strong><p><span>Sobres disponibles</span><b id="packsInfoBalance">—</b></p><p><span>Monedas</span><b id="packsInfoCoins">—</b></p><p class="pack-rarity-odds" id="packRarityOdds">Actualiza para consultar las probabilidades.</p></aside>
           <div id="ownedPackResult" class="owned-pack-result packs-screen-reader" aria-live="polite"></div>
         </div>
         <div class="packs-information">
           <section class="packs-daily-panel" id="packsDailyPanel" aria-labelledby="packsStatusTitle" data-state="idle">
-            <span class="eyebrow" id="packsDailyLabel">UN ACCESO · UN SOBRE</span>
-            <h3 id="packsStatusTitle">Tu colección empieza aquí.</h3>
+            <span class="eyebrow" id="packsDailyLabel">SOBRE DIARIO</span>
+            <h3 id="packsStatusTitle">Sobres disponibles</h3>
             <progress id="packsDailyProgress" max="1" value="0" aria-label="Recarga del sobre diario"></progress>
-            <p id="packsStatusMessage" role="status">El saldo se guarda en tu cuenta y se comparte entre tus dispositivos.</p>
+            <p id="packsStatusMessage" role="status">Saldo sincronizado con tu cuenta.</p>
             <div class="packs-reset"><span>Próximo acceso diario</span><strong id="packsNextReset">Pendiente de sincronización</strong><small>Hora de Madrid</small></div>
             <button class="packs-sync" type="button" id="packsSyncButton">Actualizar saldo</button>
           </section>
-          <div class="packs-rules"><p><strong>Entra y suma.</strong> Tu primer acceso del día añade un sobre automáticamente, aunque mantengas la sesión iniciada.</p><p><strong>A tu ritmo.</strong> Se acumulan sin caducar. Si no entras un día, no pierdes los que ya tienes.</p></div>
-          <div class="packs-coming"><span>TU COLECCIÓN</span><strong>Abre, colecciona y personaliza.</strong><p>Cada sobre guardado contiene 6 cartas. Cada carta tiene su propia probabilidad de rareza. Las repetidas se pueden descartar para conseguir monedas y comprar banners para tu perfil.</p><p id="packRarityOdds" class="pack-rarity-odds">Actualiza para consultar las probabilidades.</p></div>
         </div>
       </div>
-      <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle"><header class="banner-shop-heading"><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2><button type="button" data-duplicates-close aria-label="Cerrar repetidas">✕</button></header><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Descartar todas</button><div id="ownedCardInventory" class="owned-card-inventory"></div></dialog>
-      <section class="collection-catalog" aria-labelledby="collectionCatalogTitle">
-        <header><span class="eyebrow">COLECCIÓN 01</span><h3 id="collectionCatalogTitle">Las caras del club.</h3><p>Explora las cartas de Los nuestros. Este es el catálogo, no tus cartas conseguidas.</p></header>
-        <div class="collection-card-grid" id="collectionCardGrid"></div>
-      </section>
+
+    </section>
+
+    <section class="page-section collection-catalog-page" id="catalogo" aria-labelledby="collectionCatalogTitle">
+      <header class="packs-heading">
+        <button class="packs-back" type="button" data-go="sobres" aria-label="Volver a sobres"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+        <div><span class="eyebrow">COLECCIÓN 01 · LOS NUESTROS</span><h2 id="collectionCatalogTitle" tabindex="-1">Cartas de la colección</h2></div>
+      </header>
+      <p class="collection-catalog-note">Todas las cartas de Los nuestros, ordenadas por rareza y media.</p>
+      <div class="collection-card-grid" id="collectionCardGrid"></div>
     </section>
 
     <section class="page-section" id="chat">
@@ -248,18 +274,20 @@
           </div>
           <div class="chat-header">
             <div class="chat-header-main">
-              <button class="chat-back-button" type="button" data-chat-back aria-label="Volver atrás">←</button>
+              <button class="chat-back-button" type="button" data-chat-back aria-label="Volver atrás"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button>
               <button class="group-header-avatar" id="editGroupAvatarButton" type="button" aria-label="Foto del grupo" title="Foto del grupo">
                 <span class="chat-group-avatar" data-group-avatar aria-hidden="true"><b>BB</b><i></i></span>
               </button>
               <div>
-                <span class="eyebrow">CHAT DEL GRUPO</span>
                 <h3 id="activeChannelName"># general</h3>
+                <p id="activeChannelDescription" class="channel-description" hidden></p><span class="online-label" id="chatOnlineStatus"><i></i> 0 conectados</span>
               </div>
             </div>
-            <span class="online-label" id="chatOnlineStatus"><i></i> 0 conectados</span>
           </div>
 
+          <button type="button" id="editChatChannelButton" class="channel-settings-button" hidden>Configurar sección</button>
+          <button type="button" id="groupEventNotice" class="group-event-notice" aria-label="Ver próximo evento y asistencia" aria-haspopup="dialog" hidden></button>
+          <div id="groupPolls" class="group-polls-shelf" aria-label="Encuestas del grupo"></div>
           <div class="messages" id="messages">
             <div class="empty-state">Accede para consultar el chat.</div>
           </div>
@@ -273,10 +301,10 @@
               <svg class="record-microphone-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
               <svg class="record-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3.5-6.5Z"/><path d="m11.5 13.5 4-4"/></svg>
             </button>
-            <button type="button" class="composer-tool-button" id="attachMessageMediaButton" aria-label="Añadir foto o vídeo" title="Foto o vídeo">
+            <button type="button" class="composer-tool-button" id="attachMessageMediaButton" aria-label="Abrir galería" title="Galería">
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m5 18 5-5 3 3 2-2 4 4"/></svg>
             </button>
-            <button type="button" class="attach-button composer-tool-button" id="attachMessageButton" aria-label="Adjuntar documento" title="Documento"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></button>
+            <button type="button" class="attach-button composer-tool-button" id="attachMessageButton" aria-label="Archivos y GIFs" title="Archivos y GIFs" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></button>
             <button class="send-button composer-send-button" type="submit" aria-label="Enviar mensaje"><span>Enviar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.4-5.6Z"/><path d="m11.6 13.4 3.3-3.3"/></svg></button>
             <button type="button" class="recording-action recording-delete" id="cancelGroupAudioButton" aria-label="Descartar nota de voz" title="Descartar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button>
             <span class="recording-time" id="groupRecordingTime" hidden>00:00</span>
@@ -284,14 +312,28 @@
             <button type="button" class="recording-action recording-pause" id="pauseGroupAudioButton" aria-label="Pausar grabación" title="Pausar" hidden><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7v10M15 7v10"/></svg><svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 9 5-9 5Z"/></svg></button>
             <input id="messageCameraAttachment" type="file" accept="image/*,video/*" capture="environment" hidden>
             <input id="messageAttachment" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <input id="messageGifAttachment" type="file" accept="image/gif,.gif" hidden>
             <input id="messageMediaAttachment" type="file" accept="image/*,video/*" hidden>
           </form>
+          <div class="chat-send-status" id="messageSendStatus" hidden>
+            <span data-send-label role="status" aria-live="polite" aria-atomic="true"></span>
+            <button type="button" data-retry-send hidden>Reintentar</button>
+            <button type="button" data-dismiss-send aria-label="Ocultar aviso de envío" hidden>×</button>
+          </div>
           <div class="attachment-preview" id="messageAttachmentPreview" hidden></div>
         </article>
 
       </div>
     </section>
 
+    <section class="page-section channel-setup-page" id="seccion-chat" aria-labelledby="channelSetupTitle">
+      <header class="channel-setup-heading"><button type="button" id="channelSetupBack" class="channel-back" aria-label="Volver al chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><span>BIGBOYS · SECCIONES</span></header>
+      <div class="channel-setup-intro"><div class="channel-setup-symbol" aria-hidden="true">#</div><h2 id="channelSetupTitle">Nueva sección</h2><p>Un espacio del grupo, con sus propias reglas.</p></div>
+      <form id="channelSetupForm" class="channel-setup-form">
+        <div class="channel-setup-card"><span class="channel-card-step">01 · IDENTIDAD</span><label>Nombre de la sección<input name="channelName" maxlength="32" placeholder="avisos-del-club" required autocomplete="off"><small>Se mostrará con #. Usa un nombre corto y reconocible.</small></label><label>Descripción<textarea name="description" maxlength="500" rows="3" placeholder="¿Qué se comparte en esta sección?"></textarea></label></div>
+        <div class="channel-setup-card"><span class="channel-card-step">02 · PERMISOS</span><label class="channel-switch"><span><strong>Solo visualización</strong><small>Los miembros pueden leer. Solo administración puede enviar mensajes, archivos y audios.</small></span><input name="readOnly" type="checkbox" role="switch"></label></div>
+        <div class="channel-automation-heading"><span class="channel-card-step">03 · AUTOMATIZACIONES</span><h3>Mensajes que llegan a tiempo</h3><p>Se publican aunque la aplicación esté cerrada. Horarios recurrentes de Madrid.</p></div>
+<div class="channel-setup-card channel-rule" data-automation="once"><label class="channel-switch"><span><strong>Programar un mensaje</strong><small>Un envío en la fecha y hora que elijas.</small></span><input type="checkbox" data-rule="enabled" role="switch"></label><div class="channel-rule-fields"><label>Fecha y hora<input type="datetime-local" data-rule="date"></label><label>Mensaje<textarea data-rule="body" maxlength="1200" rows="3" placeholder="Escribe el mensaje…"></textarea></label></div></div><div class="channel-setup-card channel-rule" data-automation="recurring"><label class="channel-switch"><span><strong>Mensaje recurrente</strong><small>Una rutina diaria o semanal para esta sección.</small></span><input type="checkbox" data-rule="enabled" role="switch"></label><div class="channel-rule-fields"><div class="channel-rule-grid"><label>Frecuencia<select data-rule="cadence"><option value="daily">Cada día</option><option value="weekly">Cada semana</option></select></label><label>Hora · Madrid<input type="time" data-rule="time" value="09:00"></label><label hidden>Día<select data-rule="weekday"><option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option></select></label></div><label>Mensaje<textarea data-rule="body" maxlength="1200" rows="3" placeholder="Escribe el mensaje…"></textarea></label></div></div><div class="channel-setup-card channel-rule" data-automation="visit"><label class="channel-switch"><span><strong>Al entrar en la aplicación</strong><small>Se publica una vez al día por miembro al abrir la app. Usa {nombre} para saludarle.</small></span><input type="checkbox" data-rule="enabled" role="switch"></label><div class="channel-rule-fields"><label>Mensaje<textarea data-rule="body" maxlength="1200" rows="3" placeholder="Escribe el mensaje…"></textarea></label></div></div><p id="channelSetupStatus" class="channel-setup-status" role="status" aria-live="polite"></p><button type="submit" class="channel-save">Guardar sección</button><p class="channel-setup-footnote">Los mensajes automáticos aparecen identificados como tales.</p></form></section>
     <section class="page-section" id="privados">
       <div class="private-chat-layout">
         <article class="panel private-conversation">
@@ -310,10 +352,10 @@
               <svg class="record-microphone-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
               <svg class="record-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3.5-6.5Z"/><path d="m11.5 13.5 4-4"/></svg>
             </button>
-            <button type="button" class="composer-tool-button" id="attachPrivateMessageMediaButton" aria-label="Añadir foto o vídeo" title="Foto o vídeo" disabled>
+            <button type="button" class="composer-tool-button" id="attachPrivateMessageMediaButton" aria-label="Abrir galería" title="Galería" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m5 18 5-5 3 3 2-2 4 4"/></svg>
             </button>
-            <button type="button" class="attach-button composer-tool-button" id="attachPrivateMessageButton" aria-label="Adjuntar documento" title="Documento" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></button>
+            <button type="button" class="attach-button composer-tool-button" id="attachPrivateMessageButton" aria-label="Archivos y GIFs" title="Archivos y GIFs" aria-haspopup="menu" aria-expanded="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></button>
             <button class="send-button composer-send-button" type="submit" aria-label="Enviar mensaje" disabled><span>Enviar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.4-5.6Z"/><path d="m11.6 13.4 3.3-3.3"/></svg></button>
             <button type="button" class="recording-action recording-delete" id="cancelPrivateAudioButton" aria-label="Descartar nota de voz" title="Descartar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button>
             <span class="recording-time" id="privateRecordingTime" hidden>00:00</span>
@@ -321,36 +363,45 @@
             <button type="button" class="recording-action recording-pause" id="pausePrivateAudioButton" aria-label="Pausar grabación" title="Pausar" hidden><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7v10M15 7v10"/></svg><svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 9 5-9 5Z"/></svg></button>
             <input id="privateMessageCameraAttachment" type="file" accept="image/*,video/*" capture="environment" hidden>
             <input id="privateMessageAttachment" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <input id="privateMessageGifAttachment" type="file" accept="image/gif,.gif" hidden>
             <input id="privateMessageMediaAttachment" type="file" accept="image/*,video/*" hidden>
           </form>
+          <div class="chat-send-status" id="privateMessageSendStatus" hidden>
+            <span data-send-label role="status" aria-live="polite" aria-atomic="true"></span>
+            <button type="button" data-retry-send hidden>Reintentar</button>
+            <button type="button" data-dismiss-send aria-label="Ocultar aviso de envío" hidden>×</button>
+          </div>
           <div class="attachment-preview" id="privateMessageAttachmentPreview" hidden></div>
         </article>
       </div>
     </section>
 
     <section class="page-section" id="perfil">
-      <button class="back-button" data-go="miembros">← Volver a miembros</button>
+      <button class="back-button" type="button" data-profile-back>← Volver a miembros</button>
       <div id="profileContent"></div>
     </section>
 
     <section class="page-section club-calendar-page" id="calendario">
-      <div class="club-calendar-heading"><div><span class="eyebrow">TU AGENDA, DE UN VISTAZO</span><h2>Los próximos encuentros.</h2></div><button class="secondary-button" id="calendarTodayButton" type="button">Hoy</button></div>
-      <div class="calendar-toolbar">
-        <div class="calendar-navigation">
-          <button class="icon-button" id="previousMonthButton" type="button" aria-label="Mes anterior">←</button>
-          <h3 id="calendarMonthTitle"></h3>
-          <button class="icon-button" id="nextMonthButton" type="button" aria-label="Mes siguiente">→</button>
-        </div>
-        <div class="calendar-actions">
-          <button class="secondary-button" id="addBirthdayButton" type="button">🎂 Añadir mi cumpleaños</button>
-          <button class="primary-button admin-only" id="addEventButton" type="button">＋ Nuevo evento</button>
-        </div>
+      <div class="club-calendar-heading"><div><span class="eyebrow">EL CLUB · AGENDA</span><h2>Calendario</h2></div><button class="secondary-button" id="calendarTodayButton" type="button">Hoy</button></div>
+      <div class="calendar-actions">
+        <button class="secondary-button" id="addBirthdayButton" type="button">Añadir mi cumpleaños</button>
+        <button class="primary-button admin-only" id="addEventButton" type="button">＋ Crear un plan</button>
       </div>
       <div class="calendar-layout">
-        <div><div class="panel calendar-grid" id="calendarGrid"></div><p class="calendar-legend"><span><i></i>Plan del club</span><span><i class="birthday"></i>Cumpleaños</span></p></div>
-        <aside class="panel event-list-panel">
-          <span class="eyebrow">PLANES DEL MES</span>
-          <div id="calendarEventList"></div>
+        <div class="calendar-month-panel panel">
+          <div class="calendar-toolbar"><div class="calendar-navigation">
+            <button class="icon-button" id="previousMonthButton" type="button" aria-label="Mes anterior">‹</button>
+            <h3 id="calendarMonthTitle"></h3>
+            <button class="icon-button" id="nextMonthButton" type="button" aria-label="Mes siguiente">›</button>
+          </div></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <p class="calendar-legend"><span><i></i>Planes</span><span><i class="birthday"></i>Cumpleaños</span></p>
+        </div>
+        <aside class="panel calendar-agenda-panel">
+          <div class="calendar-agenda-heading"><span class="eyebrow">TU DÍA</span><span id="calendarDayCount" class="calendar-count"></span></div>
+          <h3 id="calendarSelectedTitle"></h3>
+          <div id="calendarSelectedEvents" class="calendar-selected-events"></div>
+          <div class="calendar-month-agenda"><div class="calendar-agenda-heading"><span class="eyebrow">ESTE MES</span><span id="calendarMonthCount" class="calendar-count"></span></div><div id="calendarEventList"></div></div>
         </aside>
       </div>
     </section>
@@ -361,17 +412,35 @@
           <span class="eyebrow">CONTROL DEL CLUB</span>
           <h2>Administración.</h2>
         </div>
-        <div class="admin-heading-actions"><p>Zona exclusiva para gestionar usuarios, contenido, calendario y configuración del club.</p><button class="secondary-button" type="button" data-go="ayuda">Atender ayuda</button></div>
+        <div class="admin-heading-actions"><button class="admin-settings-gear admin-only" type="button" data-go="admin-configuracion" aria-label="Configuración de administración" title="Configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 3-.7 2.3-2 .9-2.2-.6-2 3.4L4.2 11v2L2.6 15l2 3.4 2.2-.6 2 .9.7 2.3h4.9l.7-2.3 2-.9 2.2.6 2-3.4-1.6-2v-2l1.6-2-2-3.4-2.2.6-2-.9-.7-2.3Z"/><circle cx="12" cy="12" r="3.2"/></svg></button></div>
       </div>
 
       <div class="admin-summary" id="adminSummary"></div>
+      <button class="secondary-button admin-help-entry" type="button" data-go="ayuda">Atender ayuda</button>
+    </section>
 
-      <button class="admin-achievements-entry admin-only" type="button" data-go="admin-logros">
-        <span class="admin-achievements-entry-icon" aria-hidden="true"><img src="icons/trophies/gold.svg?v=20260903-132" alt=""></span>
-        <span><small>RECONOCIMIENTOS</small><strong>Logros del club</strong><span>Crear trofeos y reconocer a los miembros.</span></span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
-      </button>
+    <section class="page-section achievement-admin-page admin-settings-page" id="admin-configuracion">
+      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="administracion" aria-label="Volver a administración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Configuración</h2></div><span aria-hidden="true"></span></header>
+      <div class="achievement-page-content"><div class="admin-settings-list"><button class="admin-settings-entry" type="button" data-go="admin-diagnostico"><span class="admin-settings-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></span><span><strong>Rendimiento y diagnóstico</strong><small>Tiempos de carga, pausas y estado de la app.</small></span><svg class="admin-settings-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+<button class="admin-settings-entry" type="button" data-go="admin-logros"><span class="admin-settings-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v5a4 4 0 0 1-8 0V3Zm0 2H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4m-4 1v6m-4 3h8"/></svg></span><span><strong>Configuración de logros</strong><small>Crear, asignar y gestionar los logros del club.</small></span><svg class="admin-settings-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+<button class="admin-settings-entry" type="button" data-go="admin-cuentas"><span class="admin-settings-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21v-3a7 7 0 0 1 14 0v3m3-14v6m-3-3h6"/></svg></span><span><strong>Control de cuentas</strong><small>Crear usuarios y gestionar perfiles, sobres y monedas.</small></span><svg class="admin-settings-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+</div></div>
+    </section>
 
+    <section class="page-section achievement-admin-page admin-settings-page" id="admin-diagnostico">
+      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="admin-configuracion" aria-label="Volver a configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Rendimiento y diagnóstico</h2></div><span aria-hidden="true"></span></header>
+      <div class="achievement-page-content health-tools">
+        <div class="health-dashboard-heading"><div><span class="eyebrow">EN ESTE DISPOSITIVO</span><p>Mediciones locales durante el uso de la app.</p></div><button type="button" class="secondary-button" onclick="ClubHealth.show()">Actualizar</button></div>
+        <div id="healthDashboard"></div>
+        <p class="health-note">Las pausas se estiman mientras la app está visible. Los tamaños de imágenes externas pueden no estar disponibles. Solo se guardan datos técnicos; nunca mensajes, contraseñas ni direcciones.</p>
+        <div class="health-actions"><button type="button" class="secondary-button" onclick="ClubHealth.export()">Compartir diagnóstico</button><button type="button" class="text-button" onclick="ClubHealth.clear()">Limpiar registro</button></div>
+        <p id="healthSummary" role="status" aria-live="polite"></p><details class="health-json"><summary>Ver datos técnicos</summary><textarea id="healthReport" readonly rows="10" aria-label="Diagnóstico local"></textarea></details>
+      </div>
+    </section>
+
+    <section class="page-section achievement-admin-page admin-settings-page" id="admin-cuentas">
+      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="admin-configuracion" aria-label="Volver a configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Control de cuentas</h2></div><span aria-hidden="true"></span></header>
+      <div class="achievement-page-content admin-accounts-content">
       <details class="panel superadmin-tools admin-tool-disclosure" id="superAdminTools">
         <summary class="panel-heading">
           <div>
@@ -401,10 +470,13 @@
         </div>
         <div class="admin-member-list" id="adminUsersTable"></div>
       </article>
+      </div>
     </section>
 
+    <section class="page-section admin-account-page" id="editar-usuario" aria-label="Editar usuario"></section>
+
     <section class="page-section achievement-admin-page" id="admin-logros">
-      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="administracion" aria-label="Volver a administración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Logros del club</h2></div><span aria-hidden="true"></span></header>
+      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="admin-configuracion" aria-label="Volver a configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Configuración de logros</h2></div><span aria-hidden="true"></span></header>
       <div class="achievement-page-content">
         <div class="achievement-library-intro"><div><span class="eyebrow">CADA RECONOCIMIENTO CUENTA</span><h3>Un lugar para destacar.</h3><p>Reconoce a un miembro o crea un objetivo que el club pueda conquistar.</p></div><button class="primary-button" id="newAchievementButton" type="button"><span aria-hidden="true">＋</span> Crear logro</button></div>
         <div class="achievement-library-stats" id="achievementLibraryStats"></div>
@@ -415,7 +487,7 @@
     </section>
 
     <section class="page-section achievement-admin-page" id="crear-logro">
-      <header class="achievement-page-header"><button class="achievement-back" id="cancelAchievementCreate" type="button" aria-label="Volver a los logros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>LOGROS DEL CLUB</small><h2>Crear un logro</h2></div><span aria-hidden="true"></span></header>
+      <header class="achievement-page-header"><button class="achievement-back" id="cancelAchievementCreate" type="button" aria-label="Volver a los logros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>CONFIGURACIÓN DE LOGROS</small><h2>Crear un logro</h2></div><span aria-hidden="true"></span></header>
       <form class="achievement-page-content achievement-editor-layout" id="achievementForm">
         <aside class="achievement-editor-preview" id="achievementCreatePreview" aria-label="Vista previa del logro"></aside>
         <fieldset class="achievement-editor-fields" id="achievementCreateFields">
@@ -434,8 +506,13 @@
             <div id="achievementAutomaticFields" hidden>
               <label class="achievement-field" for="achievementMetric">Actividad<select id="achievementMetric" disabled><option value="group_messages">Mensajes en el grupo</option><option value="group_active_days">Días de participación</option><option value="profile_completed">Completar el perfil</option></select></label>
               <p id="achievementMetricHint" class="achievement-section-hint"></p>
+              <div id="achievementAcquisitionScope" class="achievement-acquisition-scope" hidden>
+                <label class="achievement-field" for="achievementCollection">Colección<select id="achievementCollection"><option value="">Todas las colecciones</option></select></label>
+                <label class="achievement-field" for="achievementEdition">Rareza<select id="achievementEdition"><option value="">Todas las rarezas</option><option value="common">Común</option><option value="special">Especial</option><option value="epic">Épica</option><option value="legendary">Legendaria</option><option value="retro">Retro</option><option value="full_art">Full Art</option><option value="vice_city">Vice City</option></select></label>
+                <label class="achievement-field" for="achievementKind">Tipo de carta<select id="achievementKind"><option value="">Todos los tipos</option><option value="member">Miembros</option><option value="object">Objetos</option><option value="location">Ubicaciones</option></select></label>
+              </div>
               <label class="achievement-field" for="achievementTarget">Meta<input id="achievementTarget" type="number" inputmode="numeric" min="1" max="100000" step="1" value="10" disabled required></label>
-              <p class="achievement-rule-note">Para todos los miembros, también los nuevos. Mensajes y participación suman como máximo una vez al día, desde la creación del logro. La meta queda fijada al crearlo.</p>
+              <p class="achievement-rule-note">Para todos los miembros, también los nuevos. Mensajes y participación suman como máximo una vez al día, desde la creación del logro. Las cartas conseguidas y los días registrados también cuentan para los objetivos nuevos. La meta queda fijada al crearlo.</p>
             </div>
           </div>
           <div class="achievement-form-section" id="achievementManualRecipients"><div class="achievement-step"><span>03</span><div><h3>Elige a quién reconocer</h3><p>Puedes seleccionar uno o varios miembros.</p></div></div>
@@ -447,7 +524,7 @@
     </section>
 
     <section class="page-section achievement-admin-page" id="asignar-logro">
-      <header class="achievement-page-header"><button class="achievement-back" id="closeAchievementAssignment" type="button" aria-label="Volver a los logros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>LOGROS DEL CLUB</small><h2>Asignar logro</h2></div><span aria-hidden="true"></span></header>
+      <header class="achievement-page-header"><button class="achievement-back" id="closeAchievementAssignment" type="button" aria-label="Volver a los logros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>CONFIGURACIÓN DE LOGROS</small><h2>Asignar logro</h2></div><span aria-hidden="true"></span></header>
       <form class="achievement-page-content achievement-assignment-layout" id="achievementAssignmentForm">
         <div class="achievement-assignment-summary" id="achievementAssignmentSummary"></div>
         <fieldset class="achievement-editor-fields" id="achievementAssignmentFields">
@@ -610,7 +687,7 @@
           <div class="profile-admin-action-grid">
             <button class="secondary-button" id="adminViewProfileButton" type="button">Ver perfil público</button>
             <button class="secondary-button" id="adminMessageProfileButton" type="button">Enviar mensaje</button>
-            <button class="secondary-button" id="adminResetProfilePasswordButton" type="button">Cambiar contraseña</button>
+            <button class="secondary-button" id="adminResetProfilePasswordButton" type="button">Editar usuario</button>
             <button class="secondary-button danger" id="adminDeleteProfileButton" type="button">Eliminar usuario</button>
           </div>
         </section>
@@ -732,31 +809,28 @@
     </div>
   </div>
 
-  <div class="modal-backdrop" id="eventEditor" aria-hidden="true">
-    <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="eventEditorTitle">
-      <div class="modal-heading">
-        <div><span class="eyebrow">CALENDARIO</span><h2 id="eventEditorTitle">Nuevo evento</h2></div>
-        <button class="icon-button" id="closeEventEditor" type="button" aria-label="Cerrar">×</button>
-      </div>
-      <form id="eventForm" class="profile-form">
+  <div class="modal-backdrop calendar-editor-backdrop" id="eventEditor" aria-hidden="true">
+    <div class="profile-editor-modal calendar-editor" role="dialog" aria-modal="true" aria-labelledby="eventEditorTitle">
+      <div class="modal-heading"><div><span class="eyebrow">EL CLUB · AGENDA</span><h2 id="eventEditorTitle">Nuevo evento</h2></div><button class="icon-button" id="closeEventEditor" type="button" aria-label="Cerrar">×</button></div>
+      <p class="calendar-editor-intro" id="eventEditorIntro">Un buen plan empieza por una fecha.</p>
+      <form id="eventForm" class="profile-form calendar-event-form">
         <input id="eventId" type="hidden">
-        <label id="eventTypeField"><span>Tipo</span><select id="eventType"><option value="event">Evento del grupo</option><option value="birthday">Cumpleaños</option></select></label>
-        <label><span>Título</span><input id="eventTitle" maxlength="80" required></label>
-        <label><span>Descripción</span><textarea id="eventDescription" maxlength="500" rows="4"></textarea></label>
-        <label id="birthdayDateField" hidden><span>Fecha de cumpleaños</span><input id="birthdayDate" type="date"></label>
-        <div class="birthday-all-day-note" id="birthdayAllDayNote" hidden><span>🎂</span><div><strong>Durará todo el día</strong><small>El cumpleaños se repetirá cada año y no necesita hora de inicio ni de finalización.</small></div></div>
+        <div id="eventTypeField" class="event-kind-picker">
+          <select id="eventType" aria-label="Tipo de fecha" hidden><option value="event">Evento del grupo</option><option value="birthday">Cumpleaños</option></select>
+          <button type="button" data-event-kind="event" aria-pressed="true"><span class="event-kind-icon">◇</span><span><strong>Plan del club</strong><small>Nos juntamos</small></span></button>
+          <button type="button" data-event-kind="birthday" aria-pressed="false"><span class="event-kind-icon">✦</span><span><strong>Cumpleaños</strong><small>Lo celebramos</small></span></button>
+        </div>
+        <label class="event-title-field"><span id="eventTitleLabel">¿Qué vamos a hacer?</span><input id="eventTitle" maxlength="80" required placeholder="Cena, escapada, partido…"></label>
         <div class="event-date-fields" id="eventDateFields">
           <label><span>Comienza</span><input id="eventStartsAt" type="datetime-local" required></label>
-          <label><span>Termina</span><input id="eventEndsAt" type="datetime-local"></label>
+          <label><span>Termina <small>opcional</small></span><input id="eventEndsAt" type="datetime-local"></label>
         </div>
-        <label><span>Lugar</span><input id="eventLocation" maxlength="120" placeholder="Opcional"></label>
-        <div class="form-feedback" id="eventFeedback" role="status"></div>
-        <div class="modal-actions event-modal-actions">
-          <button class="text-button danger-text" id="deleteEventButton" type="button" hidden>Eliminar</button>
-          <span></span>
-          <button class="secondary-button" id="cancelEventEditor" type="button">Cancelar</button>
-          <button class="primary-button" type="submit">Guardar evento</button>
-        </div>
+        <label id="birthdayDateField" hidden><span>El día que celebramos</span><input id="birthdayDate" type="date"></label>
+        <div class="birthday-all-day-note" id="birthdayAllDayNote" hidden><span>✦</span><div><strong>Una fecha para recordar</strong><small>Todo el día, cada año. Lo guardamos en la agenda del club.</small></div></div>
+        <label><span>¿Dónde quedamos? <small>opcional</small></span><input id="eventLocation" maxlength="120" placeholder="Un sitio, una dirección…"></label>
+        <label><span id="eventDescriptionLabel">Los detalles <small>opcional</small></span><textarea id="eventDescription" maxlength="500" rows="3" placeholder="Todo lo que el grupo necesita saber"></textarea></label>
+        <div class="form-feedback" id="eventFeedback" role="status" aria-live="polite"></div>
+        <div class="modal-actions event-modal-actions"><button class="text-button danger-text" id="deleteEventButton" type="button" hidden>Eliminar</button><button class="secondary-button" id="cancelEventEditor" type="button">Cancelar</button><button class="primary-button" type="submit" id="eventSaveButton">Crear plan</button></div>
       </form>
     </div>
   </div>
@@ -830,43 +904,57 @@
     </div>
   </dialog>
 
+  <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle"><header class="banner-shop-heading"><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2><button type="button" data-duplicates-close aria-label="Cerrar repetidas">✕</button></header><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Descartar todas</button><div id="ownedCardInventory" class="owned-card-inventory"></div></dialog>
+
   <dialog id="bannerShopDialog" class="banner-shop-dialog" aria-labelledby="bannerShopTitle">
-    <header class="banner-shop-heading"><div><span class="eyebrow">PERSONALIZA TU PERFIL</span><h2 id="bannerShopTitle">Tienda de banners</h2></div><button id="bannerShopClose" class="packs-back" type="button" aria-label="Cerrar tienda">×</button></header>
-    <p id="bannerShopBalance" class="banner-shop-balance">— monedas</p>
-    <p>Consigue monedas descartando cartas repetidas. Durante las pruebas, el banner cuesta una moneda.</p>
-    <p id="bannerShopStatus" role="status"></p>
-    <div id="bannerShopItems" class="banner-shop-items"></div>
-    <div class="banner-shop-actions"><button id="bannerShopRefresh" class="packs-sync" type="button">Actualizar</button><button id="bannerUnequip" class="packs-sync" type="button" disabled>Quitar banner</button><button id="bannerShopInventory" class="packs-sync" type="button">Ver mis cartas</button></div>
+    <header class="banner-shop-heading shop-topbar"><span class="shop-brand">BB <span>STORE</span></span><button id="bannerShopClose" type="button" aria-label="Cerrar tienda">×</button></header>
+    <div class="shop-content">
+      <section class="shop-intro"><div><span class="shop-kicker">EL CLUB · PERSONALIZACIÓN</span><h2 id="bannerShopTitle">Tienda</h2><p>Banners animados y premios del club.</p></div><div class="shop-wallet"><span>Tu saldo</span><strong><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.8 8.5h-4a2 2 0 0 0 0 4h2.4a2 2 0 0 1 0 4H9M12 6v12"/></svg><span id="bannerShopBalance" class="banner-shop-balance">— monedas</span></strong></div></section>
+      <div class="shop-navigation" role="tablist" aria-label="Secciones de la tienda"><button type="button" id="shopBannersTab" role="tab" aria-selected="true" aria-controls="shopBannersPanel" data-shop-tab="banners">Banners <span data-shop-banner-count>—</span></button><button type="button" id="shopVouchersTab" role="tab" aria-selected="false" aria-controls="shopVouchersPanel" tabindex="-1" data-shop-tab="vouchers">Vales <span data-shop-voucher-count>—</span></button></div>
+      <p id="bannerShopStatus" class="shop-status" role="status" aria-live="polite"></p>
+      <section id="shopBannersPanel" role="tabpanel" aria-labelledby="shopBannersTab"><header class="shop-section-heading"><div><h3>Para tu perfil</h3><p>Vista completa de cada diseño.</p></div><button id="bannerUnequip" class="shop-text-button" type="button" disabled>Quitar banner</button></header><div id="bannerShopItems" class="banner-shop-items"></div></section>
+      <section id="shopVouchersPanel" class="reward-voucher-shop" role="tabpanel" aria-labelledby="shopVouchersTab" hidden><header class="shop-section-heading"><div><h3 id="rewardVoucherTitle">Premios del club</h3><p>Desbloquea un vale y canjéalo cuando quieras.</p></div></header><div id="rewardVoucherItems" class="banner-shop-items"></div></section>
+    </div>
   </dialog>
 
-  <script src="vendor/supabase.js?v=20260901-125"></script>
-  <script src="config.js?v=20260805-59"></script>
-  <script src="club-model.js?v=20260902-126"></script>
-  <script src="chat-motion.js?v=20260902-128"></script>
-  <script src="vendor/capacitor.js?v=8.5.0"></script>
-  <script src="chat-keyboard.js?v=20260902-129"></script>
-  <script src="tab-navigation.js?v=20260903-130"></script>
-  <script src="trophy-motion.js?v=20260904-150"></script>
-  <script src="trophy-unlock.js?v=20260903-138"></script>
-  <script src="daily-packs.js?v=20261007-192"></script>
-  <script src="collection-motion.js?v=20261007-168"></script>
-  <script src="card-collection.js?v=20261007-191"></script>
-  <script src="achievement-progress.js?v=20260908-156"></script>
-  <script src="achievement-admin.js?v=20260908-156"></script>
-  <script src="album.js?v=20261008-200"></script>
-  <script src="banner-shop.js?v=20261008-200"></script>
-  <script src="admin-grants.js?v=20261007-176"></script>
-  <script src="app.js?v=20261007-193"></script>
+  <dialog id="chatImageViewer" aria-label="Imagen del chat">
+    <button type="button" id="closeChatImageViewer" aria-label="Cerrar imagen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    <div id="chatImageViewerStage"></div>
+    <p id="chatImageViewerStatus" role="status" hidden></p>
+  </dialog>
+  <div id="messageContextMenu" class="message-context-menu" role="menu" aria-label="Opciones del mensaje" hidden></div>
+  <dialog id="messageInfoDialog" class="message-info-dialog" aria-labelledby="messageInfoTitle">
+    <div class="message-info-heading"><div><span class="eyebrow">CONVERSACIÓN</span><h2 id="messageInfoTitle">Información del mensaje</h2></div><button type="button" id="closeMessageInfo" aria-label="Cerrar información">×</button></div>
+    <div id="messageInfoContent"></div>
+  </dialog>
+  <script defer src="vendor/supabase.js?v=20260901-125"></script>
+  <script defer src="config.js?v=20261008-210"></script>
+  <script defer src="club-model.js?v=20260902-126"></script>
+  <script defer src="chat-motion.js?v=20260902-128"></script>
+  <script defer src="vendor/capacitor.js?v=8.5.0"></script>
+  <script defer src="chat-keyboard.js?v=20261010-242"></script>
+  <script defer src="tab-navigation.js?v=20260903-130"></script>
+  <script defer src="trophy-motion.js?v=20260904-150"></script>
+  <script defer src="trophy-unlock.js?v=20260903-138"></script>
+  <script defer src="daily-packs.js?v=20261010-251"></script>
+  <script defer src="collection-motion.js?v=20261015-release-300"></script>
+  <script defer src="card-thumbnails.js?v=20261015-delivery-299"></script>
+  <script defer src="card-collection.js?v=20261015-delivery-299"></script>
+  <script defer src="achievement-progress.js?v=20261010-244"></script>
+  <script defer src="achievement-admin.js?v=20261010-244"></script>
+  <script defer src="collection-social.js?v=20261015-mutual-trades-305"></script>
+  <script defer src="album.js?v=20261015-compass-302"></script>
+  <script defer src="banner-shop.js?v=20261015-chat-selection-309"></script>
+  <script defer src="admin-grants.js?v=20261015-social-301"></script>
+  <script defer src="spotify-player.js?v=20261015-idle-layout-306"></script>
+  <script defer src="chat-themes.js?v=20261010-241"></script>
+  <script defer src="group-interactions.js?v=20261016-push-prepared-318"></script>
+  <script defer src="app.js?v=20261016-push-prepared-318"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        const hadController = Boolean(navigator.serviceWorker.controller);
-        let reloadingForUpdate = false;
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          if (!hadController || reloadingForUpdate) return;
-          reloadingForUpdate = true;
-          window.location.reload();
-        });
+        // The installed update is used on the next navigation. Reloading this
+        // visible session interrupts startup, chats and pending user actions.
         navigator.serviceWorker.register("./service-worker.js", {scope: "./", updateViaCache: "none"})
           .then(registration => registration.update())
           .catch(error => console.warn("No se pudo activar el modo PWA:", error));

@@ -1,0 +1,41 @@
+/* Native player: consistent touch areas and a clear hierarchy on narrow screens. */
+.club-spotify-player{box-sizing:border-box;min-width:0;padding:24px;border:1px solid #ffffff12;border-radius:24px;background:linear-gradient(150deg,#1c2d23,#111815 58%);color:#f5f5f2}
+.club-spotify-player *{box-sizing:border-box}
+.spotify-now{display:flex;align-items:center;gap:16px;min-width:0}
+.spotify-art{width:80px;height:80px;flex:none;display:grid;place-items:center;border-radius:14px;background:#25432e;overflow:hidden;color:#1ed760;font-size:34px;box-shadow:0 8px 22px #0003}
+.spotify-art img{width:100%;height:100%;object-fit:cover}
+.spotify-track{min-width:0;display:grid;gap:6px}
+.spotify-brand{color:#1ed760;font-size:11px;font-weight:800;letter-spacing:.07em}
+.spotify-track strong{font-size:18px;line-height:1.3;overflow-wrap:anywhere}
+.spotify-track>span:last-child{font-size:13px;line-height:1.4;color:#adb8af;overflow-wrap:anywhere}
+.spotify-controls{display:grid;grid-template-columns:52px 60px 52px;justify-content:center;align-items:center;gap:24px;margin:26px 0 16px}
+.spotify-controls button{border:1px solid #ffffff0c;border-radius:50%;background:#ffffff05;width:52px;height:52px;display:grid;place-items:center;color:#fff;padding:14px;touch-action:manipulation}
+.spotify-controls svg{width:24px;height:24px;display:block}
+.spotify-controls .spotify-toggle{width:60px;height:60px;padding:18px;background:#1ed760;border:0;color:#08130b;box-shadow:0 4px 20px #1ed76018}
+.club-spotify-player button{cursor:pointer;transition:background .15s,transform .15s; -webkit-tap-highlight-color:transparent}
+.club-spotify-player button:active:not(:disabled){transform:scale(.96)}
+.club-spotify-player button:disabled{opacity:.35;cursor:default}
+.spotify-progress input{display:block;width:100%;height:32px;margin:0;accent-color:#1ed760;touch-action:pan-x;cursor:pointer}
+.spotify-progress>div{display:flex;justify-content:space-between;font-size:11px;color:#a5b4ab;font-variant-numeric:tabular-nums}
+.spotify-status{font-size:12px;line-height:1.55;color:#b1bfb5;min-height:18px;margin:20px 0 16px;overflow-wrap:anywhere}
+.spotify-account{display:grid;gap:14px;min-width:0}
+.spotify-account-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.spotify-linked{font-size:11px;color:#80df9d;line-height:1.4}
+.spotify-linked:before{content:'';display:inline-block;width:6px;height:6px;margin-right:7px;border-radius:50%;background:#1ed760;vertical-align:middle}
+.spotify-account button,.spotify-authorize,.spotify-queue>button{min-height:46px;width:100%;padding:12px 16px;border:1px solid #ffffff25;border-radius:14px;background:#ffffff08;color:#eef4ef;font:inherit;font-size:13px;line-height:1.4;font-weight:650;touch-action:manipulation;white-space:normal}
+.spotify-account .spotify-connect,.spotify-account .spotify-listen{background:#1ed760;color:#08200f;border:0}
+.spotify-account .spotify-disconnect{width:auto;min-height:44px;padding:8px 0 8px 12px;border:0;background:none;border-radius:8px;color:#a8b6ad;font-size:11px;font-weight:500;flex:none}
+.spotify-authorize{margin-top:12px}
+.spotify-web-note{font-size:11px;line-height:1.5;color:#a5ada9;margin:10px 0 0}.spotify-web-note a{color:#1ed760;text-decoration:none}
+.spotify-queue{margin-top:24px;padding-top:22px;border-top:1px solid #ffffff18;min-width:0}
+.spotify-queue-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.spotify-queue-heading strong{font-size:14px;color:#f0f7f1}.spotify-queue-heading>span{font-size:10px;color:#a8b9ae}
+.spotify-queue ol{list-style:none;padding:0;margin:0;max-height:292px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.spotify-queue li{display:flex;align-items:center;gap:10px;padding:10px 0;min-width:0;border-bottom:1px solid #ffffff08}
+.spotify-queue-number{width:14px;flex:none;font-size:10px;color:#91a399;font-variant-numeric:tabular-nums}
+.spotify-queue li img,.spotify-queue-placeholder{width:42px;height:42px;border-radius:8px;object-fit:cover;flex:none;background:#22372a;display:grid;place-items:center;color:#1ed760}
+.spotify-queue li>div{min-width:0;flex:1;display:grid;gap:4px}.spotify-queue li>div strong,.spotify-queue li>div span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spotify-queue li>div strong{font-size:12px;color:#eff7f1}.spotify-queue li>div span{font-size:11px;color:#a7b8ad}.spotify-queue-duration{font-size:10px;color:#9fafa5;flex:none;font-variant-numeric:tabular-nums}
+.spotify-queue>p{font-size:12px;line-height:1.55;color:#abbcaf;margin:0}.spotify-queue>button{margin-top:12px}
+@media(max-width:359px){.club-spotify-player{padding:18px;border-radius:20px}.spotify-art{width:66px;height:66px}.spotify-now{gap:12px}.spotify-track strong{font-size:16px}.spotify-controls{gap:20px}.spotify-queue li{gap:8px}.spotify-queue li img,.spotify-queue-placeholder{width:36px;height:36px}}
+@media(prefers-reduced-motion:reduce){.club-spotify-player button{transition:none}}

@@ -1,11 +1,21 @@
 /* Collection surfaces: the original pack and card artwork are reused without alteration. */
-.collection-catalog { padding:28px 0 12px; border-top:1px solid #ffffff16; }
-.collection-catalog header>.eyebrow { color:#bfa36c; font-size:10px; letter-spacing:.17em; }
-.collection-catalog h3 { margin:9px 0; color:#f1eee7; font:600 clamp(24px,4vw,32px)/1.2 var(--font-body,sans-serif); letter-spacing:-.045em; }
-.collection-catalog header>p { margin:0 0 26px; max-width:520px; color:#999fa9; font-size:13px; line-height:1.6; }
+.collection-catalog-page { width:min(100%,1040px); margin-inline:auto; }
+.collection-catalog-note { margin:0 0 26px; max-width:520px; color:#999fa9; font-size:13px; line-height:1.6; }
+.collection-catalog-trigger { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; flex:none; align-self:flex-end; padding:10px; border:1px solid #b89a5359; border-radius:13px; color:#d2b56e; background:#16191c; cursor:pointer; }
+.collection-catalog-trigger svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+.collection-catalog-page button:focus-visible { outline:2px solid #d9b667; outline-offset:4px; }
+#catalogo .packs-heading h2,#sobres .packs-heading h2 { white-space:normal; }
+@media(max-width:480px) { .collection-catalog-trigger { width:44px; height:44px; padding:10px; } }
 .collection-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,230px)); gap:24px; }
 .collection-card-tile { display:flex; flex-direction:column; align-items:stretch; padding:0; min-width:0; border:0; background:transparent; color:#eee; text-align:left; cursor:pointer; }
 .collection-card-tile>img { display:block; width:100%; height:auto; aspect-ratio:4/7; object-fit:contain; border-radius:14px; background:#090a0c; transition:transform .2s ease; }
+/* Mario's artwork fills the same production silhouette in every card surface. */
+:root img[src*="mario-salvatierra-medina-full-art-88-v2.png"] { aspect-ratio:4/7; object-fit:fill; }
+:root img[src*="carlos-gonzalez-motos-full-art-89-v1.png"],
+:root img[src*="carlos-gonzalez-motos-full-art-89-v3.png"] { aspect-ratio:4/7; object-fit:fill; }
+:root img[src*="caonabo-alberto-full-art-88-v1.png"] { aspect-ratio:4/7; object-fit:fill; }
+:root img[src*="raul-culsan-gonzalez-full-art-92-playa-v5.png"] { aspect-ratio:4/7; object-fit:fill; }
+:root img[src*="hospital-12-de-octubre-comun-v1.png"] { aspect-ratio:4/7; object-fit:fill; }
 .collection-card-meta { margin-top:15px; color:#c6a569; font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
 .collection-card-tile>strong { margin-top:7px; max-width:230px; font:600 15px/1.45 var(--font-body,sans-serif); }
 .collection-card-hint { margin-top:7px; color:#8e949f; font-size:12px; }
@@ -60,9 +70,17 @@ body.collection-card-open,body.pack-preview-open { overflow:hidden; }
 .packs-art-button{display:block;width:min(100%,330px);padding:0;margin:10px auto;border:0;background:transparent;cursor:pointer}
 .packs-art-button .packs-art{width:100%;max-width:none;margin:0}
 .packs-art-button:disabled{cursor:default;opacity:.65}
-.packs-display-caption { color:#878b93; font-size:11px; }
 .packs-information { min-width:0; }
 .packs-count-badge { position:absolute; right:16px; bottom:14px; display:grid; place-items:center; width:36px; height:36px; padding:3px; box-sizing:border-box; border:1px solid #d9b66765; border-radius:50%; background:#242016; color:#e3c181; font:600 12px/1 var(--font-body,sans-serif); font-variant-numeric:tabular-nums; }
+.packs-info-trigger{position:absolute;left:12px;bottom:10px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #d9b66765;border-radius:50%;background:#242016;color:#e3c181;cursor:pointer}
+.packs-info-trigger svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.packs-info-trigger[aria-expanded="true"]{background:#3a301e;border-color:#d9b667}
+.packs-info-panel{position:absolute;z-index:5;left:12px;bottom:58px;width:min(280px,calc(100% - 24px));padding:15px;border:1px solid #d9b66755;border-radius:16px;background:#151619;box-shadow:0 12px 36px #000b;color:#f1eee7;text-align:left}
+.packs-info-panel[hidden]{display:none}
+.packs-info-panel>strong{font-size:13px;font-weight:600}
+.packs-info-panel>p:not(.pack-rarity-odds){display:flex;justify-content:space-between;gap:12px;margin:10px 0 0;color:#aeb2ba;font-size:12px}
+.packs-info-panel b{color:#e8d29b;font-weight:600}
+.packs-info-panel .pack-rarity-odds{margin:12px 0 0;padding-top:10px;border-top:1px solid #fff2;color:#aeb2ba;font-size:11px;line-height:1.65}
 .packs-screen-reader { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 .packs-daily-panel { padding:24px; border:1px solid #2b2e34; border-radius:22px; background:#111419; }
 .packs-daily-panel .eyebrow { display:block; color:#bda573; font-size:9px; letter-spacing:.13em; }
@@ -78,12 +96,6 @@ body.collection-card-open,body.pack-preview-open { overflow:hidden; }
 .packs-reset strong { color:#dcdde1; font-size:13px; font-weight:500; }
 .packs-sync { min-height:44px; margin-top:20px; padding:10px 16px; border:1px solid #d9b66745; border-radius:12px; background:#d9b6670b; color:#dec391; font:500 12px var(--font-body,sans-serif); cursor:pointer; }
 .packs-sync:disabled { cursor:wait; opacity:.55; }
-.packs-rules { padding:8px 4px; }
-.packs-rules strong { color:#dfdfde; font-weight:500; }
-.packs-coming { padding:18px 4px 0; border-top:1px solid #ffffff13; }
-.packs-coming>span { display:block; color:#bba470; font-size:9px; letter-spacing:.15em; }
-.packs-coming>strong { display:block; margin-top:8px; color:#e8e8e6; font-size:16px; font-weight:500; }
-.packs-coming p { margin:8px 0 0; }
 .packs-page button:focus-visible,.packs-home-link:focus-visible { outline:2px solid #d9b667; outline-offset:4px; }
 @media(max-width:760px) {
   .packs-home-link { gap:14px; padding:20px 18px 44px; border-radius:20px; }
@@ -99,7 +111,92 @@ body.collection-card-open,body.pack-preview-open { overflow:hidden; }
 }
 
 /* Card inspection follows the same motion rhythm as pack reveals. */
-.collection-card-stage{transition:transform .64s cubic-bezier(.4,0,.2,1)}
+.collection-card-stage{transition:transform var(--collection-flip-duration,420ms) cubic-bezier(.4,0,.2,1)}
 .collection-card-dialog[open] .collection-card-perspective{animation:collection-card-inspect .32s cubic-bezier(.22,1,.36,1) both}
-@keyframes collection-card-inspect{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes collection-card-inspect{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.collection-card-stage{transition:none}.collection-card-dialog[open] .collection-card-perspective{animation:none}}
+
+/* Full Art has its own animated holographic print; artwork stays perfectly still. */
+.full-art-foil{--foil-x:50%;--foil-y:42%;position:absolute;inset:0;display:block;overflow:hidden;border-radius:12px;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(1px);opacity:1!important;isolation:isolate}
+.full-art-foil>span{position:absolute;inset:0;pointer-events:none}
+.full-art-spectrum{background:radial-gradient(ellipse at var(--foil-x) var(--foil-y),#f0fcff2e,transparent 60%),repeating-linear-gradient(118deg,#79eaf72b 0%,#9d88ef26 17%,#ee85bd20 32%,#f5d58e22 46%,#8cf1db28 61%,#79eaf72b 76%);background-size:100% 100%,240% 240%;mix-blend-mode:screen;animation:full-art-iridescence 9s ease-in-out infinite alternate}
+.full-art-sheen{background:linear-gradient(112deg,transparent 36%,#bfe8ff08 42%,#fff5 49%,#fff1 53%,transparent 61%);background-size:300% 100%;mix-blend-mode:screen;animation:full-art-sweep 6s ease-in-out infinite}
+.full-art-sparkles i{position:absolute;left:var(--sx);top:var(--sy);width:9px;height:9px;background:linear-gradient(90deg,transparent 42%,#e7fbffcc 50%,transparent 58%),linear-gradient(0deg,transparent 42%,#e7fbffcc 50%,transparent 58%);opacity:0;animation:full-art-glint 3.8s ease-in-out var(--delay) infinite}
+.full-art-foil.is-paused>span,.full-art-foil.is-paused i,.collection-card-stage.is-reversed .full-art-foil>span,.collection-card-stage.is-reversed .full-art-foil i,.pack-reveal-card:not(.is-flipped) .full-art-foil>span,.pack-reveal-card:not(.is-flipped) .full-art-foil i{animation-play-state:paused}
+@keyframes full-art-iridescence{from{background-position:50% 50%,0% 30%}to{background-position:50% 50%,100% 80%}}
+@keyframes full-art-sweep{0%,14%{background-position:125% 0}65%,100%{background-position:-25% 0}}
+@keyframes full-art-glint{0%,35%,100%{opacity:0;transform:scale(.4)}50%{opacity:.85;transform:scale(1.1)}65%{opacity:0;transform:scale(.5)}}
+@media(prefers-reduced-motion:reduce){.full-art-foil{display:none}}
+
+/* Vice City: neon ink and narrow holographic streaks, with edge-only glints. */
+.vice-city-foil .full-art-spectrum{background:radial-gradient(ellipse at var(--foil-x) var(--foil-y),#ff38a21c,transparent 52%),repeating-linear-gradient(125deg,#ff329932 0%,#25ecd837 18%,#ff9a4830 34%,#b970e824 50%,#ff329932 68%);background-size:100% 100%,280% 220%;mask-image:linear-gradient(90deg,#000, #0005 22%,#0002 45%,#0005 78%,#000);-webkit-mask-image:linear-gradient(90deg,#000, #0005 22%,#0002 45%,#0005 78%,#000);animation:vice-city-iridescence 5.8s ease-in-out infinite alternate}
+.vice-city-foil .full-art-sheen{background:linear-gradient(112deg,transparent 40%,#ff389919 45%,#2efce35c 49%,#ffbd6150 50%,#ff52cb29 52%,transparent 58%);background-size:350% 100%;animation:vice-city-sweep 4.6s ease-in-out infinite}
+.vice-city-streaks{background:repeating-linear-gradient(128deg,transparent 0 45px,#27f5dd2c 46px,#ff409729 48px,transparent 50px 95px);background-size:240% 240%;mix-blend-mode:screen;mask-image:linear-gradient(90deg,#000a,#0001 28%,#0001 72%,#000a);-webkit-mask-image:linear-gradient(90deg,#000a,#0001 28%,#0001 72%,#000a);animation:vice-city-streaks 7s linear infinite}
+.vice-city-foil .full-art-sparkles i{width:12px;height:12px;background:linear-gradient(90deg,transparent 43%,#c5fff2 50%,transparent 57%),linear-gradient(0deg,transparent 43%,#ffd2f1 50%,transparent 57%);filter:drop-shadow(0 0 3px #ff3299);animation:vice-city-glint 3.2s ease-in-out var(--delay) infinite}
+@keyframes vice-city-iridescence{from{background-position:50% 50%,0% 10%}to{background-position:50% 50%,100% 90%}}
+@keyframes vice-city-sweep{0%,8%{background-position:125% 0}72%,100%{background-position:-25% 0}}
+@keyframes vice-city-streaks{from{background-position:0% 0%}to{background-position:100% 100%}}
+@keyframes vice-city-glint{0%,36%,100%{opacity:0;transform:scale(.35)}48%{opacity:.95;transform:scale(1.25)}61%{opacity:0;transform:scale(.45)}}
+/* Keep these overrides after the edition rules, including dynamically hidden faces. */
+.vice-city-foil.is-paused>span,.vice-city-foil.is-paused i,.collection-card-stage.is-reversed .vice-city-foil>span,.collection-card-stage.is-reversed .vice-city-foil i,.pack-reveal-card:not(.is-flipped) .vice-city-foil>span,.pack-reveal-card:not(.is-flipped) .vice-city-foil i{animation-play-state:paused}
+
+/* Rarity reveal: decorative siblings, independent of the card flip and gestures. */
+.pack-reveal-card[data-pack-reveal-rarity]{z-index:1}
+.pack-reveal-card[data-pack-reveal-rarity].is-flipped .pack-reveal-front::after{animation:none}
+.pack-rarity-vfx{--reveal-delay:280ms;position:absolute;inset:-20px -28px;overflow:hidden;pointer-events:none;z-index:0;contain:layout paint;border-radius:28px}
+.pack-rarity-vfx>i{position:absolute;display:block;opacity:0;animation:reveal-bloom var(--reveal-duration) cubic-bezier(.16,.7,.25,1) var(--reveal-delay) both;pointer-events:none}
+.pack-rarity-vfx.is-peak>i{animation-play-state:paused}
+.reveal-warm-halo{inset:12px 16px;border-radius:22px;box-shadow:0 0 12px 4px #e8d4a077,inset 0 0 8px #e8d4a0}
+.reveal-warm-glint{left:8px;top:0;width:9px;height:45%;background:linear-gradient(transparent,#ffe8bc,transparent);filter:blur(2px);animation-name:reveal-scan!important}
+.reveal-film-frame{inset:9px 13px;border:2px solid #eab459;border-radius:18px;box-shadow:0 0 17px #eab45988;background:repeating-linear-gradient(0deg,#b7752533 0 2px,transparent 2px 7px)}
+.reveal-film-scan{inset:0 4px auto;height:16px;background:linear-gradient(transparent,#ffd898aa,transparent);animation-name:reveal-scan!important}
+.reveal-film-dust{left:var(--x);top:var(--y);width:3px;height:3px;background:#ffd59b;box-shadow:0 0 5px #ed9b3a;animation-name:reveal-dust!important}
+.reveal-orbit{inset:10% 1%;border:3px solid transparent;border-top-color:#e1eeee;border-bottom-color:#59bfb2;border-radius:50%;box-shadow:0 0 10px #69cabb55;animation-name:reveal-orbit!important}
+.reveal-orbit-b{inset:2% 5%;border-left-color:#cce8e2;border-right-color:#368e85;border-top-color:transparent;border-bottom-color:transparent;animation-direction:reverse!important}
+.reveal-orbit-star,.reveal-prism-star{left:var(--x);top:var(--y);width:8px;height:8px;background:#edd8ff;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);animation-name:reveal-dust!important}
+.reveal-orbit-star{background:#d5f1eb;box-shadow:0 0 5px #79d6c955}
+.reveal-shockwave{inset:15% 5%;border:4px solid #b67dff;border-radius:50%;box-shadow:0 0 16px #b67dff,inset 0 0 14px #9654e8;animation-name:reveal-wave!important}
+.reveal-shockwave-echo{inset:8% 0;border-width:2px;animation-delay:calc(var(--reveal-delay) + 90ms)!important}
+.reveal-crystal{left:var(--x);top:var(--y);width:13px;height:30px;background:linear-gradient(120deg,#f2d6ff,#aa67fa 50%,#6334c4);clip-path:polygon(50% 0,100% 45%,50% 100%,0 45%);transform:rotate(var(--angle));animation-name:reveal-shard!important}
+.reveal-sunburst{inset:-10%;background:repeating-conic-gradient(from 9deg,transparent 0 10deg,#f7c85666 11deg 15deg,transparent 16deg 30deg);mask-image:radial-gradient(ellipse,transparent 28%,#000 50%,transparent 72%);animation-name:reveal-sun!important}
+.reveal-gold-ring{inset:7px 8px;border:3px solid #ffdf87;border-radius:26px;box-shadow:0 0 24px #ffc84b,inset 0 0 14px #ffc84b;animation-name:reveal-wave!important}
+.reveal-gold-spark{left:var(--x);top:var(--y);width:4px;height:13px;border-radius:50%;background:#fff2b1;box-shadow:0 0 7px #ffd055;animation-name:reveal-shard!important}
+.reveal-prism-a,.reveal-prism-b,.reveal-prism-c{inset:4px 8px;border:5px solid transparent;border-radius:42% 10% 38% 16%;border-left-color:#86f3ff;border-right-color:#ed83ff;box-shadow:0 0 12px #64ddfa55;animation-name:reveal-ribbon!important}
+.reveal-prism-b{inset:0 0;border-left-color:#fc89ec;border-right-color:#a2afff;border-radius:12% 44% 16% 38%;animation-direction:reverse!important}
+.reveal-prism-c{inset:14px 14px;border-width:2px;border-top-color:#ffe7a6;border-bottom-color:#a7faff;animation-name:reveal-wave!important}
+.reveal-prism-star{background:#9bf7ff;filter:drop-shadow(0 0 4px #ee83ff)}
+.reveal-neon-sun{width:96%;aspect-ratio:1;left:2%;top:5%;border-radius:50%;background:repeating-linear-gradient(0deg,transparent 0 6px,#ff7182aa 7px 17px);box-shadow:0 0 26px #ff388055;mask-image:linear-gradient(#000,transparent);animation-name:reveal-sun!important}
+.reveal-neon-grid{left:0;right:0;height:27%;bottom:0;background:repeating-linear-gradient(0deg,transparent 0 14px,#fa4ba5bb 15px 16px),repeating-linear-gradient(90deg,transparent 0 25px,#46f6e7aa 26px 27px);transform:perspective(140px) rotateX(28deg);transform-origin:bottom;animation-name:reveal-grid!important}
+.reveal-neon-horizon{left:0;right:0;bottom:22%;height:4px;background:#70fff3;box-shadow:0 0 18px 5px #ff51ac;animation-name:reveal-bloom!important}
+.reveal-neon-pulse{inset:3px 5px;border:3px solid #ff55bc;border-radius:25px;box-shadow:0 0 24px #ff55bc,inset 0 0 18px #4effe0;animation-name:reveal-wave!important}
+.reveal-neon-streak{left:var(--x);top:var(--y);width:3px;height:35px;background:linear-gradient(transparent,#50ffe8,#ff5ebb,transparent);transform:rotate(-24deg);animation-name:reveal-shard!important}
+@keyframes reveal-bloom{0%{opacity:0;transform:scale(.96)}24%{opacity:.85;transform:scale(1)}65%{opacity:.35}100%{opacity:0;transform:scale(1.02)}}
+@keyframes reveal-scan{0%{opacity:0;transform:translateY(-20px)}24%{opacity:.8}70%{opacity:.35}100%{opacity:0;transform:translateY(380px)}}
+@keyframes reveal-dust{0%{opacity:0;transform:translateY(8px) scale(.3)}26%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-24px) scale(.3)}}
+@keyframes reveal-orbit{0%{opacity:0;transform:rotate(-32deg) scale(.7)}25%{opacity:.9;transform:rotate(0) scale(1)}100%{opacity:0;transform:rotate(48deg) scale(1.08)}}
+@keyframes reveal-wave{0%{opacity:0;transform:scale(.7)}23%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.17)}}
+@keyframes reveal-shard{0%{opacity:0;translate:0 16px;scale:.3}26%{opacity:1;translate:0 0;scale:1}100%{opacity:0;translate:0 -32px;scale:.5}}
+@keyframes reveal-sun{0%{opacity:0;scale:.7}25%{opacity:.95;scale:1}100%{opacity:0;scale:1.12}}
+@keyframes reveal-ribbon{0%{opacity:0;transform:rotate(-18deg) scale(.8)}24%{opacity:1;transform:rotate(0) scale(1)}100%{opacity:0;transform:rotate(18deg) scale(1.08)}}
+@keyframes reveal-grid{0%{opacity:0;translate:0 14px}25%{opacity:.95;translate:0 0}100%{opacity:0;translate:0 -6px}}
+@media(prefers-reduced-motion:reduce){.pack-rarity-vfx{display:none}.pack-rarity-vfx>i{animation:none}}
+
+/* Pack access shares the notification area and the authoritative daily balance. */
+body.authenticated .topbar .top-actions{flex-shrink:0;gap:5px}
+.topbar .top-actions>.icon-button,.topbar .top-actions .notification-button{display:inline-grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;flex:0 0 44px;padding:0}
+.topbar .packs-top-button{position:relative;overflow:visible}
+.topbar .packs-top-button svg{width:22px;height:22px}
+.topbar .packs-top-count{position:absolute;top:-5px;right:-5px;display:grid;place-items:center;width:22px;height:22px;padding:0;box-sizing:border-box;border:2px solid #08080a;border-radius:50%;background:#fff;color:#050506;font:800 9px/1 var(--font-body,sans-serif);font-variant-numeric:tabular-nums;pointer-events:none}
+.topbar .packs-top-button:focus-visible{outline:2px solid #d9b667;outline-offset:4px}
+@media(max-width:760px){body.authenticated .topbar{gap:8px}body.authenticated .topbar-title{flex:1 1 auto;min-width:0}body.authenticated .topbar-title h1{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+
+/* Preserve keyboard focus while suppressing pointer selection frames. */
+:root[data-input-modality="pointer"] :is(.packs-page button, .packs-home-link, .packs-top-button, .collection-card-tilt, .collection-card-dialog button, .collection-catalog-page button):focus {
+  outline: none !important;
+}
+:is(.packs-page button, .packs-home-link, .packs-top-button, .collection-card-tilt, .collection-card-dialog button, .collection-catalog-page button) {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

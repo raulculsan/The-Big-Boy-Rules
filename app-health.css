@@ -1,0 +1,90 @@
+.service-feedback{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:8px 0;border:1px solid #ffffff16;border-radius:12px;background:#ffffff06;color:var(--muted,#a6a8b0);font-size:12px;line-height:1.4}.service-feedback[hidden]{display:none}.service-feedback[data-state=error]{border-color:#d3b46a45}.service-feedback button{flex:none;border:0;background:#ffffff10;color:var(--text,#f4f1e9);padding:7px 10px;border-radius:8px;font:inherit}.health-tools{margin:16px 0}.health-tools summary{cursor:pointer;font-weight:600}.health-tools p{font-size:12px;color:var(--muted,#a6a8b0);line-height:1.5}.health-actions{display:flex;flex-wrap:wrap;gap:8px}.health-tools textarea{box-sizing:border-box;width:100%;max-height:260px;margin-top:12px;resize:vertical;font:11px monospace;user-select:text;-webkit-user-select:text}
+
+:is(.private-conversation,.group-conversation)>.service-feedback{flex:none;margin:6px 12px;padding:8px 10px}.chat-inbox>.service-feedback{margin:8px 20px}.spotify-status.service-feedback{background:transparent;border:0;padding:0}
+
+/* Compact administration entry and independent configuration pages. */
+#administracion .admin-heading-actions{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;width:auto;gap:10px}
+#administracion .admin-settings-gear{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:11px;border:1px solid #ffffff20;border-radius:50%;background:#ffffff06;color:#b4b8c1;cursor:pointer}
+#administracion .admin-settings-gear:focus-visible{outline:2px solid #e2c88e;outline-offset:3px}
+#administracion .admin-settings-gear svg,.admin-settings-entry svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#administracion .admin-settings-gear:hover{color:#e2c88e;border-color:#e2c88e70;background:#e2c88e0b}
+.admin-settings-list{display:grid;gap:12px;max-width:780px;margin:0 auto}
+.admin-settings-entry{display:flex;align-items:center;gap:16px;width:100%;min-height:100px;padding:22px;text-align:left;border:1px solid #ffffff12;border-radius:20px;background:#14171c;color:#f4f4f6;cursor:pointer;font:inherit}
+.admin-settings-entry:hover{border-color:#d3b46a66;background:#191c21}
+.admin-settings-entry:active{transform:scale(.99)}
+.admin-settings-entry .admin-settings-symbol{display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;background:#d3b46a0c;border:1px solid #d3b46a25;border-radius:14px;color:#d9bc7e}
+.admin-settings-entry>span:nth-child(2){display:grid;gap:7px;flex:1;min-width:0}
+.admin-settings-entry strong{font-size:15px;font-weight:600;line-height:1.35;letter-spacing:-.015em}
+.admin-settings-entry small{color:#989fac;font-size:12px;line-height:1.5}
+.admin-settings-entry .admin-settings-chevron{flex:0 0 18px;width:18px;height:18px;color:#717884}
+.admin-accounts-content .superadmin-tools{margin:0 0 20px}
+.admin-accounts-content .admin-users-panel{margin-top:0}
+.admin-settings-page .achievement-page-header h2{font-size:clamp(14px,3.6vw,18px)}
+/* All charts are drawn locally with small SVG/CSS elements. */
+#admin-diagnostico .health-tools{margin:0 auto}
+.health-dashboard-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+.health-dashboard-heading .eyebrow{font-size:9px;letter-spacing:.14em;color:#d3b46a}
+.health-tools .health-dashboard-heading p{margin:7px 0 0;color:#969eac;font-size:13px}
+.health-dashboard-heading button{flex-shrink:0}
+.health-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.health-metric{display:grid;align-content:start;gap:12px;min-width:0;padding:20px 16px;border:1px solid #ffffff10;border-radius:18px;background:#14171c}
+.health-metric small{color:#a2a9b5;font-size:11px;line-height:1.4}
+.health-metric strong{font-size:28px;line-height:1.1;letter-spacing:-.045em;color:#f4ead5;font-weight:600}
+.health-metric span{font-size:10px;line-height:1.6;color:#8992a0}
+.health-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.health-chart-card{min-width:0;padding:22px;border:1px solid #ffffff10;border-radius:20px;background:#111419}
+.health-chart-card h3{margin:0 0 8px;font:600 15px/1.4 var(--font-body,sans-serif);letter-spacing:-.015em}
+.health-tools .health-chart-card p{margin:0 0 18px;color:#929baa;font-size:11px;line-height:1.6}
+.health-line-chart{display:block;width:100%;height:auto;overflow:visible;margin:0 0 12px}
+.health-line-chart text{fill:#8b94a2;font:10px system-ui,sans-serif}
+.health-chart-foot{display:flex;justify-content:space-between;gap:10px;font-size:10px;color:#8c95a3;line-height:1.5}
+.health-session-chart{display:grid;gap:12px;margin:22px 0;min-height:100px;align-content:start}
+.health-session-row{display:grid;grid-template-columns:112px minmax(0,1fr) 24px;gap:9px;align-items:center;color:#969fac;font-size:10px}
+.health-session-row>span{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.health-session-row b{display:grid;place-items:center;width:18px;height:18px;border-radius:5px;background:#ffffff09;color:#c7cbd1;font-size:9px;font-weight:500}
+.health-session-row>strong{text-align:right;color:#cdd3dd;font-size:10px;font-weight:500}
+.health-stack{display:flex;align-items:stretch;height:10px;width:100%;overflow:hidden;border-radius:4px;background:#ffffff06}
+.health-stack i{display:block;height:100%;min-width:0}
+.health-legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:18px;color:#9da6b5;font-size:10px}
+.health-legend span{display:flex;align-items:center;gap:6px}
+.health-legend i{width:6px;height:6px;border-radius:2px}
+.health-area-row{display:grid;grid-template-columns:minmax(150px,1fr) 2fr;align-items:center;gap:20px;padding:12px 0;border-bottom:1px solid #ffffff08}
+.health-area-row>div:first-child{display:grid;gap:5px}
+.health-area-row strong{font-size:12px;font-weight:500;color:#d1d6df}
+.health-area-row small{color:#8f99a8;font-size:10px;line-height:1.5}
+.health-tools .health-empty{display:grid;place-items:center;min-height:140px;padding:20px;border:1px dashed #ffffff14;border-radius:12px;text-align:center;color:#8d97a6;font-size:12px;line-height:1.7}
+.health-tools .health-capture-note,.health-tools .health-note{color:#7f8999;font-size:10px;line-height:1.8;margin:18px 0}
+.health-json{margin-top:20px;padding-top:18px;border-top:1px solid #ffffff10}
+.health-json summary{font-size:11px;font-weight:400;color:#929baa;min-height:32px}
+.health-json textarea{border:1px solid #ffffff16;border-radius:12px;background:#0b0d11;color:#9fa8b5;padding:14px}
+.health-tools .health-actions{gap:12px;align-items:center;margin:22px 0 0}
+.health-tools #healthSummary:empty{display:none}
+@media(max-width:760px){
+ #administracion .section-intro{flex-direction:row;align-items:center;flex-wrap:wrap}
+ #administracion .admin-heading-actions{margin-left:auto;flex-shrink:0}
+ #administracion .admin-heading-actions .secondary-button{padding:10px 12px;font-size:11px}
+ .admin-settings-page .achievement-page-content{padding:22px 16px 0}
+ .admin-settings-page .achievement-page-header{padding-right:16px;padding-left:16px;gap:8px}
+ .admin-settings-entry{gap:12px;padding:18px 14px;min-height:96px;border-radius:17px}
+ .admin-settings-entry strong{font-size:14px}
+ .admin-settings-entry small{font-size:11px}
+ .admin-settings-entry .admin-settings-symbol{flex-basis:40px;width:40px;height:40px;border-radius:12px}
+ .health-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .health-metric{padding:16px 13px;gap:10px;border-radius:15px}
+ .health-metric strong{font-size:26px}
+ .health-chart-grid{grid-template-columns:1fr;gap:14px;margin-bottom:14px}
+ .health-chart-card{padding:18px 15px;border-radius:17px}
+ .health-area-row{grid-template-columns:minmax(115px,1fr) 1.3fr;gap:12px}
+ .health-dashboard-heading{gap:10px}
+ .health-tools .health-dashboard-heading p{font-size:11px}
+ .health-dashboard-heading button{min-height:42px;padding:9px 12px;font-size:11px}
+ .admin-accounts-content .admin-badge{max-width:130px;font-size:10px}
+ .admin-accounts-content .admin-member-card{grid-template-columns:40px minmax(0,1fr) auto;gap:10px}
+ .admin-accounts-content .admin-member-card .account-status{display:none}
+ .admin-accounts-content .admin-member-card .role-chip{font-size:8px}
+ .health-session-row{grid-template-columns:112px minmax(0,1fr) 24px}
+}
+#administracion .section-intro{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;flex-wrap:nowrap}
+#administracion .section-intro>div:first-child{min-width:0}
+#administracion .admin-help-entry{margin-top:18px}
+@media(max-width:760px){#administracion .section-intro h2{font-size:clamp(24px,7.5vw,34px)}}

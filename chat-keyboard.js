@@ -13,7 +13,15 @@ const ChatKeyboard = Object.freeze({
     const capacitor = window.Capacitor;
     const keyboard = nativeLayout && capacitor?.isPluginAvailable?.('Keyboard')
       ? capacitor.registerPlugin('Keyboard') : null;
-    const state = {nativeLayout, keyboardVisible: false};
+    const state = {
+      nativeLayout,
+      keyboardVisible: false,
+      dismiss() {
+        // Blur is handled by the caller. Request native dismissal without waiting
+        // or applying delayed state changes to a subsequently opened conversation.
+        if (keyboard) void keyboard.hide().catch(() => {});
+      }
+    };
     const refresh = () => onViewportChange();
     if (keyboard) {
       const setVisible = visible => {
@@ -26,13 +34,22 @@ const ChatKeyboard = Object.freeze({
       // Keep the dock's compact spacing throughout dismissal, until UIKit has finished.
       window.addEventListener('keyboardDidHide', () => setVisible(false));
       let previousChat;
+      let previousScrollLock;
+      let previousDismissLock;
       const syncContext = () => {
         const inChat = document.body.classList.contains('chat-focus');
-        if (inChat === previousChat) return;
-        previousChat = inChat;
-        void keyboard.setAccessoryBarVisible({isVisible: !inChat}).catch(() => {});
-        // Only the document scroll is locked; nested message lists still scroll normally.
-        void keyboard.setScroll({isDisabled: inChat}).catch(() => {});
+        const lockDocument = inChat || document.body.classList.contains('event-editor-open');
+        if (inChat !== previousChat) {
+          previousChat = inChat;
+          void keyboard.setAccessoryBarVisible({isVisible: !inChat}).catch(() => {});
+        }
+        if (lockDocument !== previousScrollLock || inChat !== previousDismissLock) {
+          previousScrollLock = lockDocument;
+          previousDismissLock = inChat;
+          // Native focus auto-scroll must not move a fixed editor. Its own scroller,
+          // like the chat message lists, remains available while the document is locked.
+          void keyboard.setScroll({isDisabled: lockDocument, preventKeyboardDismiss: inChat}).catch(() => {});
+        }
       };
       new MutationObserver(syncContext).observe(document.body, {attributes:true, attributeFilter:['class']});
       syncContext();

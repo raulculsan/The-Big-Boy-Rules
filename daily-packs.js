@@ -46,14 +46,14 @@
     const known = data != null;
     const count = known ? new Intl.NumberFormat('es-ES').format(data.available) : '—';
     if (status === 'ready') return {count, label:data.available===1?'sobre guardado':'sobres guardados',
-      heading:data.credited?'Tu sobre de hoy ya está contigo.':'Tu sobre de hoy está guardado.',
-      message:'Vuelve mañana para sumar otro. No necesitas cerrar sesión.', filled:true};
-    if (status === 'unavailable') return {count, label:'sobres guardados', heading:'La recarga diaria aún no está activada.',
-      message:'Tu colección está preparada. Falta activar la recarga en el servidor.', filled:false};
+      heading:data.credited?'Sobre diario recibido':'Saldo de sobres actualizado',
+      message:'El siguiente sobre diario estará disponible mañana.', filled:true};
+    if (status === 'unavailable') return {count, label:'sobres guardados', heading:'Recarga diaria no configurada',
+      message:'La recarga diaria no está activada en el servidor.', filled:false};
     if (status === 'error') return {count, label:known?'sobres · última sincronización':'sobres guardados',
-      heading:'No hemos podido sincronizar tus sobres.', message:'Revisa la conexión. No se descuenta ni se pierde ningún sobre.', filled:false};
-    return {count, label:'sobres guardados', heading:status==='idle'?'Tu colección empieza aquí.':'Comprobando tu acceso de hoy…',
-      message:'El saldo se guarda en tu cuenta y se comparte entre tus dispositivos.', filled:false};
+      heading:'No se pudieron actualizar los sobres', message:'Comprueba la conexión y vuelve a intentarlo.', filled:false};
+    return {count, label:'sobres guardados', heading:status==='idle'?'Saldo de sobres':'Comprobando saldo…',
+      message:'El saldo se sincroniza con tu cuenta.', filled:false};
   }
 
   function updateBalance(available) {
@@ -61,9 +61,9 @@
     const label = count === '—' ? 'Saldo de sobres pendiente de sincronización' : `${count} ${available === 1 ? 'sobre disponible' : 'sobres disponibles'}`;
     for (const id of ['packsCount', 'packsHomeBalance']) {
       const node = document.getElementById(id);
-      if (node) {node.textContent = count; node.setAttribute('aria-label', label);}
+      if (node) {node.textContent = count; node.setAttribute('aria-label', label); if (id === 'packsHomeBalance') node.style.fontSize = `${Math.min(9, 30 / Math.max(1, count.length))}px`;}
     }
-    document.querySelector('.packs-home-link')?.setAttribute('aria-label', `Abrir mis sobres de la colección Los nuestros. ${label}`);
+    document.getElementById('packsTopButton')?.setAttribute('aria-label', `Abrir mis sobres de la colección Los nuestros. ${label}`);
   }
 
   let ui;
@@ -80,7 +80,7 @@
       text('packsStatusTitle',view.heading);text('packsStatusMessage',view.message);
       const meter=document.getElementById('packsDailyProgress');
       if(meter) {meter.value=view.filled?1:0;meter.setAttribute('aria-valuetext',view.filled?'Sobre de hoy recibido':'Acceso de hoy pendiente de comprobar');}
-      text('packsDailyLabel',view.filled?'ACCESO DE HOY · COMPLETADO':'UN ACCESO · UN SOBRE');
+      text('packsDailyLabel',view.filled?'SOBRE DIARIO · RECIBIDO':'SOBRE DIARIO');
       const button=document.getElementById('packsSyncButton');
       if(button) {button.disabled=state.status==='loading';button.textContent=state.status==='loading'?'Sincronizando…':state.status==='error'?'Reintentar':'Actualizar saldo';}
       const next = state.status === 'ready' ? new Intl.DateTimeFormat('es-ES',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}).format(new Date(state.data.next_reset_at)) : 'Pendiente de sincronización';

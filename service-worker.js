@@ -1,25 +1,49 @@
-const CACHE_NAME = "big-boy-rules-v200";
+const CACHE_NAME = "big-boy-rules-v318";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=20261007-193",
-  "./club.css?v=20261007-187",
-  "./achievement-admin.css?v=20260903-135",
-  "./achievement-progress.js?v=20260908-156",
-  "./achievement-admin.js?v=20260908-156",
-  "./chat.css?v=20261007-192",
-  "./chat-keyboard.js?v=20260902-129",
+  "./app-health.js?v=20261015-settings-294",
+  "./app-health.css?v=20261015-accessibility-295",
+  "./styles.css?v=20261012-279",
+  "./notifications.css?v=20261015-notifications-polls-307",
+  "./club.css?v=20261015-release-300",
+  "./icons/mascot/chota-v2/chota-poses.png",
+  "./icons/mascot/chota-v2/chota-talk.png",
+  "./news.css?v=20261014-home-scroll-291",
+  "./achievement-admin.css?v=20261011-256",
+  "./achievement-progress.js?v=20261010-244",
+  "./achievement-admin.js?v=20261010-244",
+  "./chat.css?v=20261016-push-prepared-318",
+  "./chat-themes.css?v=20261012-277",
+  "./chat-themes.js?v=20261010-241",
+  "./chat-theme-catalog.json?v=20261010-241",
+  "./icons/chat-backgrounds/big-boy.svg",
+  "./icons/chat-backgrounds/carbono.svg",
+  "./icons/chat-backgrounds/papel.svg",
+  "./icons/chat-backgrounds/oceano.svg",
+  "./icons/chat-backgrounds/bosque.svg",
+  "./icons/chat-backgrounds/arena.svg",
+  "./icons/chat-backgrounds/aurora.svg",
+  "./icons/chat-backgrounds/vice-city.svg",
+  "./icons/chat-backgrounds/orbita.svg",
+  "./chat-keyboard.js?v=20261010-242",
   "./vendor/capacitor.js?v=8.5.0",
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20260903-130",
-  "./app.js?v=20261007-193",
-  "./album.js?v=20261008-200",
-  "./album.css?v=20261008-200",
-  "./admin-grants.js?v=20261007-176",
-  "./admin-grants.css?v=20261007-176",
-  "./banner-shop.js?v=20261008-200",
-  "./banner-shop.css?v=20261008-200",
+  "./app.js?v=20261016-push-prepared-318",
+  "./spotify-player.js?v=20261015-idle-layout-306",
+  "./spotify-player.css?v=20261014-balanced",
+  "./album.js?v=20261015-compass-302",
+  "./album.css?v=20261015-compass-302",
+  "./admin-grants.js?v=20261015-social-301",
+  "./admin-grants.css?v=20261009-213",
+  "./banner-shop.js?v=20261015-chat-selection-309",
+  "./banner-shop.css?v=20261015-social-301",
+  "./collection-social.js?v=20261015-mutual-trades-305",
+  "./collection-social.css?v=20261015-mutual-trades-305",
+  "./group-interactions.js?v=20261016-push-prepared-318",
+  "./group-interactions.css?v=20261015-poll-focus-315",
   "./icons/banners/miguel-basket-bano-bg-v1.png",
   "./icons/banners/miguel-basket-bano-v1.png",
   "./icons/banners/miguel-basket-miguel-00-v1.png",
@@ -39,75 +63,118 @@ const APP_SHELL = [
   "./icons/banners/alberto-galicia-member-v1.png",
   "./icons/banners/alberto-galicia-member-bg-v1.png",
   "./icons/banners/alberto-galicia-member-figures-v1.png",
-  "./daily-packs.js?v=20261007-192",
-  "./packs.css?v=20261008-200",
-  "./card-collection.js?v=20261007-191",
-  "./collection-motion.js?v=20261007-168",
+  "./daily-packs.js?v=20261010-251",
+  "./packs.css?v=20261015-release-300",
+  "./card-thumbnails.js?v=20261015-delivery-299",
+  "./card-collection.js?v=20261015-delivery-299",
+  "./icons/cards/raul-culsan-gonzalez-full-art-92-playa-v5.jpg",
+  "./icons/cards/ruben-king-vice-city-96-v2.jpg",
+  "./icons/cards/cristobal-fabrik-vice-city-91-v2.jpg",
+  "./icons/cards/cristobal-fabrik-comun-75-v1.jpg",
+  "./icons/cards/juan-carlos-vega-quevedo-comun-78-v1.jpg",
+  "./icons/cards/fufi-comun-77-v1.jpg",
+  "./icons/cards/fufi-vice-city-89-v3.jpg",
+  "./icons/cards/azul-comun-77-v1.jpg",
+  "./icons/cards/francisco-trigo-vice-city-90-v2.jpg",
+  "./icons/cards/miguel-angel-jimenez-sanchez-full-art-92-v1.jpg",
+  "./icons/cards/reverso-vice-city-unificado-v1.jpg",
+  "./icons/cards/peru-comun-v1.jpg",
+  "./icons/cards/hospital-12-de-octubre-comun-v1.jpg",
+  "./icons/cards/caonabo-alberto-full-art-88-v1.jpg",
+  "./icons/cards/felipe-hp-full-art-87-v4.jpg",
+  "./icons/cards/carlos-gonzalez-motos-full-art-89-v3.jpg",
+  "./icons/cards/almudena-de-diego-matilla-full-art-91-v4.jpg",
+  "./icons/cards/mario-salvatierra-medina-full-art-88-v2.jpg",
+  "./icons/cards/daniel-gonzalez-motos-full-art-87-v1.jpg",
+  "./icons/cards/justificante-medico-comun-v1.jpg",
+  "./icons/cards/jeringuilla-comun-v1.jpg",
+  "./icons/cards/alberto-velasco-full-art-84-v2.jpg",
+  "./collection-motion.js?v=20261015-release-300",
   "./icons/cards/card-touch.json?v=20260905-153",
   "./icons/cards/card-touch-epic.json?v=20261007-168",
-  "./icons/cards/card-touch-special.json?v=20260905-153",
+  "./icons/cards/card-touch-special.json?v=20261012-272",
   "./icons/cards/card-touch-legendary.json?v=20260905-153",
   "./icons/cards/card-touch-retro.json?v=20261007-163",
   "./icons/cards/pack-opening.json?v=20260904-150",
-  "./icons/cards/jose-enrique-fernandez-cruz-comun-86-v4.png",
-  "./icons/cards/jose-enrique-fernandez-cruz-normal-86-reverso-v1.png",
-  "./icons/cards/miguel-angel-jimenez-sanchez-comun-83-v4.png",
-  "./icons/cards/miguel-angel-jimenez-sanchez-normal-83-reverso-v1.png",
-  "./icons/cards/lizzy-machado-yong-comun-81-v1.png",
-  "./icons/cards/lizzy-machado-yong-comun-81-reverso-v1.png",
-  "./icons/cards/raul-culsan-gonzalez-comun-83-v4.png",
-  "./icons/cards/raul-culsan-gonzalez-normal-83-reverso-v2.png",
-  "./icons/cards/mario-salvatierra-medina-comun-81-v1.png",
-  "./icons/cards/mario-salvatierra-medina-comun-81-reverso-v1.png",
-  "./icons/cards/almudena-de-diego-matilla-comun-84-v1.png",
-  "./icons/cards/almudena-de-diego-matilla-comun-84-reverso-v1.png",
-  "./icons/cards/caonabo-alberto-comun-82-v4.png",
-  "./icons/cards/caonabo-alberto-normal-82-reverso-v1.png",
-  "./icons/cards/alberto-velasco-comun-79-v4.png",
-  "./icons/cards/alberto-velasco-normal-79-reverso-v1.png",
-  "./icons/cards/carlos-gonzalez-motos-comun-82-v4.png",
-  "./icons/cards/carlos-gonzalez-motos-normal-82-reverso-v3.png",
-  "./icons/cards/felipe-hp-comun-80-v4.png",
-  "./icons/cards/felipe-hp-normal-80-reverso-v1.png",
-  "./icons/cards/daniel-gonzalez-motos-comun-80-v4.png",
-  "./icons/cards/daniel-gonzalez-motos-normal-80-reverso-v1.png",
-  "./icons/cards/borox-legendaria-v3.png",
-  "./icons/cards/borox-legendaria-reverso-v3.png",
-  "./icons/cards/luca-de-tena-especial-v1.png",
-  "./icons/cards/luca-de-tena-especial-reverso-v1.png",
-  "./icons/cards/abelias-comun-v1.png",
-  "./icons/cards/abelias-comun-reverso-v1.png",
-  "./icons/cards/castellana-legendaria-v1.png",
-  "./icons/cards/castellana-legendaria-reverso-v1.png",
-  "./icons/cards/borox-legendaria-v4.png",
-  "./icons/cards/borox-legendaria-v5.png",
-  "./icons/cards/castellana-legendaria-v2.png",
-  "./icons/cards/carabanchel-legendaria-v1.png",
-  "./icons/cards/galicia-legendaria-v1.png",
-  "./icons/cards/josefa-valcarcel-epica-v1.png",
-  "./icons/cards/juan-manuel-perez-saldana-retro-90-v1.png",
-  "./icons/cards/juan-carlos-vega-quevedo-retro-87-v1.png",
-  "./icons/cards/carlos-sanchez-rodriguez-retro-88-v2.png",
-  "./icons/cards/mesena-retro-v1.png",
-  "./icons/cards/contrato-de-trabajo-comun-v1.png",
-  "./icons/cards/lata-de-red-bull-comun-v1.png",
-  "./icons/cards/cafe-del-santander-comun-v1.png",
-  "./icons/cards/test-de-embarazo-positivo-comun-v1.png",
-  "./icons/cards/vater-comun-v1.png",
-  "./icons/cards/la-biblia-epica-v1.png",
-  "./icons/cards/sombrero-militar-epico-v1.png",
-  "./icons/cards/bote-de-nutella-epico-v1.png",
-  "./icons/cards/ceviche-epico-v1.png",
-  "./icons/cards/locker-luca-de-tena-legendario-v1.png",
-  "./icons/cards/big-mac-legendario-v1.png",
-  "./icons/cards/cubo-de-alitas-kfc-legendario-v1.png",
-  "./icons/cards/trofeo-champions-legendario-v1.png",
-  "./icons/cards/ticket-de-viaje-a-roma-legendario-v1.png",
-  "./icons/cards/reverso-retro-unificado-v1.png",
-  "./icons/cards/reverso-comun-unificado-v1.png",
-  "./icons/cards/reverso-especial-unificado-v1.png",
-  "./icons/cards/reverso-legendario-unificado-v1.png",
-  "./icons/cards/sobre-los-nuestros-v1.png?v=20260903-139",
+  "./icons/cards/jose-enrique-fernandez-cruz-comun-86-v4.jpg",
+  "./icons/cards/jose-enrique-fernandez-cruz-full-art-93-v3.jpg",
+  "./icons/cards/reverso-full-art-unificado-v1.jpg",
+  "./icons/cards/jose-enrique-fernandez-cruz-normal-86-reverso-v1.jpg",
+  "./icons/cards/miguel-angel-jimenez-sanchez-comun-83-v4.jpg",
+  "./icons/cards/miguel-angel-jimenez-sanchez-normal-83-reverso-v1.jpg",
+  "./icons/cards/lizzy-machado-yong-comun-81-v1.jpg",
+  "./icons/cards/lizzy-machado-yong-full-art-85-v1.jpg",
+  "./icons/cards/lizzy-machado-yong-comun-81-reverso-v1.jpg",
+  "./icons/cards/raul-culsan-gonzalez-comun-83-v4.jpg",
+  "./icons/cards/raul-culsan-gonzalez-normal-83-reverso-v2.jpg",
+  "./icons/cards/mario-salvatierra-medina-comun-81-v1.jpg",
+  "./icons/cards/mario-salvatierra-medina-comun-81-reverso-v1.jpg",
+  "./icons/cards/almudena-de-diego-matilla-comun-84-v1.jpg",
+  "./icons/cards/almudena-de-diego-matilla-comun-84-reverso-v1.jpg",
+  "./icons/cards/caonabo-alberto-comun-82-v4.jpg",
+  "./icons/cards/caonabo-alberto-normal-82-reverso-v1.jpg",
+  "./icons/cards/alberto-velasco-comun-79-v4.jpg",
+  "./icons/cards/alberto-velasco-normal-79-reverso-v1.jpg",
+  "./icons/cards/carlos-gonzalez-motos-comun-82-v4.jpg",
+  "./icons/cards/carlos-gonzalez-motos-normal-82-reverso-v3.jpg",
+  "./icons/cards/felipe-hp-comun-80-v4.jpg",
+  "./icons/cards/felipe-hp-normal-80-reverso-v1.jpg",
+  "./icons/cards/daniel-gonzalez-motos-comun-80-v4.jpg",
+  "./icons/cards/daniel-gonzalez-motos-normal-80-reverso-v1.jpg",
+  "./icons/cards/borox-legendaria-v3.jpg",
+  "./icons/cards/borox-legendaria-reverso-v3.jpg",
+  "./icons/cards/luca-de-tena-especial-v2.jpg",
+  "./icons/cards/luca-de-tena-especial-reverso-v1.jpg",
+  "./icons/cards/abelias-comun-v1.jpg",
+  "./icons/cards/abelias-comun-reverso-v1.jpg",
+  "./icons/cards/castellana-legendaria-v1.jpg",
+  "./icons/cards/castellana-legendaria-reverso-v1.jpg",
+  "./icons/cards/borox-legendaria-v4.jpg",
+  "./icons/cards/borox-legendaria-v5.jpg",
+  "./icons/cards/castellana-legendaria-v2.jpg",
+  "./icons/cards/carabanchel-legendaria-v1.jpg",
+  "./icons/cards/galicia-legendaria-v1.jpg",
+  "./icons/cards/josefa-valcarcel-epica-v1.jpg",
+  "./icons/cards/stussy-madrid-epica-v2.jpg",
+  "./icons/cards/abrantes-metro-comun-v1.jpg",
+  "./icons/cards/plaza-eliptica-metro-comun-v1.jpg",
+  "./icons/cards/fabrik-comun-v1.jpg",
+  "./icons/cards/cuba-epica-v1.jpg",
+  "./icons/cards/juan-manuel-perez-saldana-retro-90-v1.jpg",
+  "./icons/cards/juan-carlos-vega-quevedo-retro-87-v1.jpg",
+  "./icons/cards/carlos-sanchez-rodriguez-retro-88-v2.jpg",
+  "./icons/cards/mesena-retro-v1.jpg",
+  "./icons/cards/estadio-vicente-calderon-retro-v1.jpg",
+  "./icons/cards/estadio-santiago-bernabeu-retro-v1.jpg",
+  "./icons/cards/contrato-de-trabajo-comun-v1.jpg",
+  "./icons/cards/titulacion-comun-v2.jpg",
+  "./icons/cards/lata-de-red-bull-comun-v1.jpg",
+  "./icons/cards/cafe-del-santander-comun-v1.jpg",
+  "./icons/cards/test-de-embarazo-positivo-comun-v1.jpg",
+  "./icons/cards/vater-comun-v1.jpg",
+  "./icons/cards/satisfyer-comun-v1.jpg",
+  "./icons/cards/la-biblia-epica-v1.jpg",
+  "./icons/cards/sombrero-militar-epico-v1.jpg",
+  "./icons/cards/gafas-vision-nocturna-epicas-v1.jpg",
+  "./icons/cards/bote-de-nutella-epico-v1.jpg",
+  "./icons/cards/ceviche-epico-v1.jpg",
+  "./icons/cards/locker-luca-de-tena-legendario-v1.jpg",
+  "./icons/cards/cruz-anticristo-legendaria-v1.jpg",
+  "./icons/cards/big-mac-legendario-v1.jpg",
+  "./icons/cards/cubo-de-alitas-kfc-legendario-v1.jpg",
+  "./icons/cards/trofeo-champions-legendario-v1.jpg",
+  "./icons/cards/ticket-de-viaje-a-roma-legendario-v1.jpg",
+  "./icons/cards/reverso-retro-unificado-v1.jpg",
+  "./icons/cards/reverso-comun-unificado-v1.jpg",
+  "./icons/cards/reverso-especial-unificado-v1.jpg",
+  "./icons/cards/reverso-especial-unificado-v2.jpg",
+  "./icons/cards/el-retiro-especial-v1.jpg",
+  "./icons/cards/bajos-de-arguelles-especial-v1.jpg",
+  "./icons/cards/ikea-la-gavia-especial-v1.jpg",
+  "./icons/cards/pistola-de-balines-especial-v1.jpg",
+  "./icons/cards/mochila-carhartt-especial-v1.jpg",
+  "./icons/cards/reverso-legendario-unificado-v1.jpg",
+  "./icons/cards/sobre-los-nuestros-v1.jpg?v=20260903-139",
   "./trophy-motion.js?v=20260904-150",
   "./trophy-unlock.js?v=20260903-138",
   "./vendor/lottie-light.min.js?v=5.13.0",
@@ -119,7 +186,7 @@ const APP_SHELL = [
   "./vendor/supabase.js?v=20260901-125",
   "./vendor/fonts/anton-latin.woff2",
   "./vendor/fonts/inter-latin.woff2",
-  "./config.js?v=20260805-59",
+  "./config.js?v=20261008-210",
   "./manifest.webmanifest?v=20260901-125",
   "./icons/icon.svg",
   "./icons/icon-192.png",
@@ -128,17 +195,72 @@ const APP_SHELL = [
   "./icons/apple-touch-icon.png"
 ];
 
+// Card illustrations, banner sprites and trophy renders are downloaded only
+// when viewed. They must never delay installing/updating the executable shell.
+const CORE_SHELL = APP_SHELL.filter(asset => !asset.startsWith("./icons/cards/") && !asset.startsWith("./icons/banners/") && !asset.startsWith("./icons/trophies/") && !asset.startsWith("./icons/mascot/"));
+
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
-  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE_NAME)
+    .then(cache => cache.addAll(CORE_SHELL))
+    .then(() => self.skipWaiting()));
 });
 
+// Public illustrations are independent of executable release caches. Exact
+// URLs include the artwork version; user uploads/API responses never enter it.
+const MEDIA_CACHE_NAME = "big-boy-rules-public-media-v1";
+const MEDIA_MAX_ENTRIES = 120, MEDIA_MAX_BYTES = 48 * 1024 * 1024;
+const MEDIA_MAX_FILE_BYTES = 6 * 1024 * 1024, MEDIA_FRESH_MS = 24 * 60 * 60 * 1000;
+const workerScope = () => new URL(self.registration?.scope || "./", self.location?.href || self.location.origin);
+const mediaPath = request => {
+  const scopeUrl = workerScope();
+  const url = new URL(request.url || request, scopeUrl);
+  if (url.origin !== scopeUrl.origin || !url.pathname.startsWith(scopeUrl.pathname)) return false;
+  const path = url.pathname.slice(scopeUrl.pathname.length);
+  return /^icons\/(?:cards|banners|trophies|chat-backgrounds|mascot)\/[^?]+\.(?:png|webp|jpg|jpeg|svg|json)$/i.test(path);
+};
+let shellUrls;
+let mediaWrite = Promise.resolve();
+function savePublicMedia(request, response) {
+  const copy = response.clone();
+  mediaWrite = mediaWrite.catch(() => {}).then(async () => {
+    if (!response.ok || !mediaPath(request) || /(?:private|no-store)/i.test(response.headers.get("cache-control") || "")) return;
+    const blob = await copy.blob();
+    if (blob.size > MEDIA_MAX_FILE_BYTES) return;
+    const headers = new Headers(copy.headers);
+    headers.set("x-big-boy-cache-bytes", String(blob.size));
+    headers.set("x-big-boy-cache-time", String(Date.now()));
+    const cache = await caches.open(MEDIA_CACHE_NAME);
+    // Reinsertion refreshes FIFO order without a costly write on each hit.
+    await cache.delete(request);
+    await cache.put(request, new Response(blob, {status:copy.status,statusText:copy.statusText,headers}));
+    const keys = await cache.keys();
+    const sizes = await Promise.all(keys.map(async key => Number((await cache.match(key))?.headers.get("x-big-boy-cache-bytes")) || 0));
+    let bytes = sizes.reduce((sum,size) => sum + size, 0), count = keys.length;
+    for (let i = 0; i < keys.length && (bytes > MEDIA_MAX_BYTES || count > MEDIA_MAX_ENTRIES); i++) {
+      await cache.delete(keys[i]); bytes -= sizes[i]; count--;
+    }
+  });
+  // Cache failures must not break rendering or prevent an update activating.
+  return mediaWrite.catch(() => {});
+}
 self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil((async () => {
+    await self.clients.claim();
+    const oldKeys = (await caches.keys()).filter(key => key.startsWith("big-boy-rules-v") && key !== CACHE_NAME);
+    // Carry public artwork from the immediately previous release only. Private
+    // same-origin attachments cached by old workers are deliberately discarded.
+    const previous = oldKeys.at(-1);
+    if (previous) {
+      const oldCache = await caches.open(previous), mediaCache = await caches.open(MEDIA_CACHE_NAME);
+      const publicKeys = (await oldCache.keys()).filter(mediaPath).slice(-MEDIA_MAX_ENTRIES);
+      for (const request of publicKeys) {
+        if (await mediaCache.match(request)) continue;
+        const response = await oldCache.match(request);
+        if (response?.ok) await savePublicMedia(request,response);
+      }
+    }
+    await Promise.all(oldKeys.map(key => caches.delete(key)));
+  })());
 });
 
 self.addEventListener("fetch", event => {
@@ -148,42 +270,36 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
-          return response;
-        })
-        .catch(() => caches.match("./index.html"))
-    );
+    // Each worker serves the HTML it installed with its exact core dependencies.
+    event.respondWith(caches.open(CACHE_NAME).then(async cache =>
+      await cache.match("./index.html") || fetch(request)));
     return;
   }
-
-  if (["script", "style", "font", "manifest"].includes(request.destination)) {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(request).then(cached => cached || fetch(request).then(response => {
-      if (response.ok && ["script", "style", "font", "image", "manifest"].includes(request.destination)) {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+  if (mediaPath(request)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(MEDIA_CACHE_NAME), cached = await cache.match(request);
+      const fresh = cached && Date.now() - Number(cached.headers.get("x-big-boy-cache-time")) < MEDIA_FRESH_MS;
+      if (cached) {
+        if (!fresh) event.waitUntil(fetch(request).then(response => savePublicMedia(request,response)).catch(() => {}));
+        return cached;
       }
+      const response = await fetch(request);
+      if (response.ok) event.waitUntil(savePublicMedia(request,response));
       return response;
-    }))
-  );
+    })());
+    return;
+  }
+  // Never retain arbitrary same-origin images or media: these may be private
+  // attachments. Only the explicit executable/static shell is cacheable here.
+  shellUrls ||= new Set(CORE_SHELL.map(asset => new URL(asset, workerScope()).href));
+  if (!shellUrls.has(url.href)) return;
+  event.respondWith(caches.open(CACHE_NAME).then(async cache => {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    const response = await fetch(request);
+    if (response.ok) event.waitUntil(cache.put(request,response.clone()).catch(() => {}));
+    return response;
+  }));
 });
 
 self.addEventListener("push", event => {

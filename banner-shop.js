@@ -3,13 +3,17 @@
   let options, state = null, busy = false, loading = false, failure = '', notice = '', generation = 0, request = null, profileTarget = null;
   const memberBanners = new Map();
   const memberBannerRequests = new Map(), memberBannerFetchedAt = new Map();
-  let membersTarget = null;
-  let reveal = null, swipe = null, suppressRevealClickUntil = 0;
+  let membersTarget = null, memberObserver = null;
+  const visibleMemberTiles = new Set(), observedMemberTiles = new Set();
+  let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
+  let lastInventory = null;
   const revealDialog = document.createElement('dialog');
   revealDialog.className = 'pack-reveal-dialog';
   revealDialog.setAttribute('aria-label', 'Abrir sobre: revelar cartas');
   document.body.append(revealDialog);
+  const discardEffects = new Set();
   const extraCopies = () => (state?.cards || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) - 1), 0);
+  const characterCardIds = new Set(['francisco-trigo-vice-city','cristobal-fabrik-vice-city','ruben-king-vice-city','felipe-hp-full-art','felipe-hp','daniel-gonzalez-motos-full-art','daniel-gonzalez-motos','jose-enrique-fernandez-cruz-normal','juan-manuel-perez-saldana-retro','juan-carlos-vega-quevedo-retro','carlos-sanchez-rodriguez-retro']);
   function renderReveal() {
     if (!reveal || !revealDialog.open) return;
     const item = reveal.cards[reveal.index], design = card(item.card_id);
@@ -17,22 +21,36 @@
     const reward = state?.discard_rewards?.[item.edition] || 1;
     // Keep the turning card intact during wallet refreshes and discards.
     if (revealDialog.dataset.cardIndex !== String(reveal.index)) {
+      detachRevealVfx?.();detachRevealVfx=null;
+      detachRevealFoil?.();detachRevealFoil=null;
       revealDialog.dataset.cardIndex = String(reveal.index);
-      revealDialog.innerHTML = `<header class="pack-reveal-header"><span>Carta ${reveal.index + 1} de ${reveal.cards.length}</span><button type="button" data-reveal-close aria-label="Cerrar: todas las cartas ya están guardadas">✕</button></header><div class="pack-reveal-stage"><button type="button" class="pack-reveal-card" data-reveal-flip aria-label="Girar carta" aria-pressed="false"><span class="pack-reveal-face pack-reveal-back"><img src="${escape(design?.back || 'icons/cards/reverso-comun-unificado-v1.png')}" alt="Reverso de carta"></span><span class="pack-reveal-face pack-reveal-front" aria-hidden="true">${design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}">` : '<span>Carta guardada</span>'}</span></button></div><div class="pack-reveal-info" aria-live="polite"></div><div class="pack-reveal-actions"></div><p class="pack-reveal-status" role="status"></p>`;
+      revealDialog.innerHTML = `<header class="pack-reveal-header"><span>Carta ${reveal.index + 1} de ${reveal.cards.length}</span><button type="button" data-reveal-close aria-label="Cerrar: todas las cartas ya están guardadas">✕</button></header><div class="pack-reveal-center"><div class="pack-reveal-stage"><button type="button" class="pack-reveal-card" data-reveal-flip aria-label="Girar carta" aria-pressed="false"><span class="pack-reveal-face pack-reveal-back"><img src="${escape(design?.back || 'icons/cards/reverso-comun-unificado-v1.jpg')}" alt="Reverso de carta" draggable="false"></span><span class="pack-reveal-face pack-reveal-front" aria-hidden="true">${design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}" draggable="false">` : '<span>Carta guardada</span>'}</span></button></div></div><div class="pack-reveal-footer"><div class="pack-reveal-info" aria-live="polite"></div><div class="pack-reveal-actions"></div><p class="pack-reveal-status" role="status"></p></div>`;
+      if(design?.edition==='Full Art'||design?.edition==='Vice City'){
+        const foil=document.createElement('span');foil.setAttribute('aria-hidden','true');
+        revealDialog.querySelector('.pack-reveal-front').append(foil);
+        detachRevealFoil=globalThis.CollectionMotion?.attachFullArtFoil(revealDialog.querySelector('.pack-reveal-stage'),foil,design.edition);
+      }
       revealDialog.querySelector('[data-reveal-flip]').focus({preventScroll:true});
+      const next = card(reveal.cards[reveal.index + 1]?.card_id);
+      [next?.front, next?.back].filter(Boolean).forEach(src => {
+        const image = new Image(); image.decoding = 'async'; image.src = src;
+        void image.decode?.().catch(() => {});
+      });
     }
     const turn = revealDialog.querySelector('[data-reveal-flip]');
     if (reveal.flipped && !turn.classList.contains('is-flipped')) {
       const front = turn.querySelector('.pack-reveal-front');
       front.setAttribute('aria-hidden','false');
       turn.querySelector('.pack-reveal-back').setAttribute('aria-hidden','true');
-      turn.classList.add('is-flipped'); turn.setAttribute('aria-pressed','true'); turn.setAttribute('aria-label',design?.name || item.card_id);
+      turn.classList.add('is-flipped'); turn.setAttribute('aria-pressed','true'); turn.setAttribute('aria-label',`${design?.name || item.card_id}. Pulsa para ${reveal.index + 1 < reveal.cards.length ? 'ver la siguiente carta' : 'terminar el sobre'}`);
     }
-    revealDialog.querySelector('.pack-reveal-info').innerHTML = reveal.flipped ? `<h3>${escape(design?.name || item.card_id)}</h3><p>${escape(rarityNames[item.edition] || item.edition)} · ${reveal.discarded.has(reveal.index) ? 'Repetida descartada' : Number(item.quantity) > 1 ? 'Repetida' : 'Nueva'}</p>` : '<p>Pulsa o desliza hacia la izquierda para descubrirla</p>';
-    revealDialog.querySelector('.pack-reveal-actions').innerHTML = reveal.flipped ? `${duplicate ? `<button type="button" class="packs-sync" data-reveal-discard ${busy || loading || !online() ? 'disabled' : ''}>Descartar repetida · +${escape(reward)} monedas</button>` : ''}<p class="pack-reveal-swipe-hint">${reveal.index + 1 < reveal.cards.length ? 'Desliza hacia la izquierda para pasar a la siguiente carta' : 'Desliza hacia la izquierda para terminar'}</p>` : '';
+    const displayKind = item.kind === 'member' ? (characterCardIds.has(item.card_id) ? 'Personaje' : 'Miembro') : item.kind === 'object' ? 'Objeto' : item.kind === 'location' ? 'Ubicación' : '';
+    revealDialog.querySelector('.pack-reveal-info').innerHTML = reveal.flipped ? `<h3>${escape(design?.name || item.card_id)}</h3><p>${escape(displayKind)} · ${escape(rarityNames[item.edition] || item.edition)} · ${reveal.discarded.has(reveal.index) ? 'Repetida descartada' : Number(item.quantity) > 1 ? 'Repetida' : 'Nueva'}</p>` : '<p>Pulsa o desliza hacia la izquierda para descubrirla</p>';
+    revealDialog.querySelector('.pack-reveal-actions').innerHTML = reveal.flipped ? `${duplicate ? `<button type="button" class="packs-sync" data-reveal-discard ${busy || loading || !online() ? 'disabled' : ''}>Descartar repetida · +${escape(reward)} monedas</button>` : ''}<p class="pack-reveal-swipe-hint">${reveal.index + 1 < reveal.cards.length ? 'Pulsa la carta o desliza a la izquierda para continuar' : 'Pulsa la carta o desliza a la izquierda para terminar'}</p>` : '';
     revealDialog.querySelector('.pack-reveal-status').textContent = failure || notice;
   }
   const revealReduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motionTimings = globalThis.CollectionMotion?.timings || {flip:420, opening:720, advance:200, discard:480, reward:620};
   let revealTimer = 0;
   function finishRevealMotion(current) {
     clearTimeout(revealTimer);
@@ -44,8 +62,12 @@
   function flipReveal() {
     if (!reveal || reveal.flipped || reveal.phase !== 'idle') return;
     const current = reveal; current.flipped = true; current.phase = 'flipping'; renderReveal();
+    const stage=revealDialog.querySelector('.pack-reveal-stage');
+    stage.querySelector('.pack-reveal-card').dataset.packRevealRarity=current.cards[current.index].edition;
+    detachRevealVfx?.();
+    detachRevealVfx=globalThis.CollectionMotion?.playPackReveal(stage,current.cards[current.index].edition);
     clearTimeout(revealTimer);
-    revealTimer = setTimeout(() => finishRevealMotion(current),revealReduced() ? 0 : 640);
+    revealTimer = setTimeout(() => finishRevealMotion(current),revealReduced() ? 0 : motionTimings.flip);
   }
   function startReveal(cards) {
     if (!cards.length) return;
@@ -54,20 +76,31 @@
     revealDialog.showModal(); renderReveal();
     if (!revealReduced()) {
       reveal.phase = 'opening'; revealDialog.classList.add('is-opening-pack');
-      revealDialog.querySelector('.pack-reveal-stage').insertAdjacentHTML('beforeend', '<div class="pack-opening-wrap" aria-hidden="true"><img class="pack-opening-body" src="icons/cards/sobre-los-nuestros-v1.png" alt=""><img class="pack-opening-seal" src="icons/cards/sobre-los-nuestros-v1.png" alt=""><span class="pack-opening-light"></span></div>');
-      const current = reveal; revealTimer = setTimeout(() => finishRevealMotion(current),1200);
+      revealDialog.querySelector('.pack-reveal-stage').insertAdjacentHTML('beforeend', `<svg class="pack-opening-wrap" viewBox="120 95 780 1345" aria-hidden="true"><defs><image id="packOpeningArt" href="icons/cards/sobre-los-nuestros-v1.jpg" width="1024" height="1536"/><clipPath id="packOpeningSeal"><path d="M136 115H880V182H138Z"/></clipPath><clipPath id="packOpeningBody"><path d="M138 182H879L868 240L858 1290L882 1370V1420H137V1370L156 1300L157 275Z"/></clipPath></defs><g class="pack-opening-body"><use href="#packOpeningArt" clip-path="url(#packOpeningBody)"/></g><g class="pack-opening-seal"><use href="#packOpeningArt" clip-path="url(#packOpeningSeal)"/></g></svg>`);
+      const current = reveal; revealTimer = setTimeout(() => finishRevealMotion(current),motionTimings.opening);
     }
   }
   revealDialog.addEventListener('click', event => {
     if (event.target.closest('[data-reveal-close]')) revealDialog.close();
     if (Date.now() < suppressRevealClickUntil) return;
-    if (event.target.closest('[data-reveal-flip]') && reveal && !reveal.flipped) flipReveal();
+    if (event.target.closest('[data-reveal-flip]')) activateReveal();
     if (event.target.closest('[data-reveal-discard]') && reveal?.flipped) void mutate('discard_duplicate_card', {target_card_id:reveal.cards[reveal.index].card_id,copies:1}, 'Repetida descartada. Monedas añadidas.', reveal.index);
   });
+  function activateReveal() {
+    if (!reveal || reveal.phase !== 'idle' || reveal.advancing || reveal.discarding) return;
+    if (reveal.flipped) advanceReveal(revealDialog.querySelector('.pack-reveal-stage'));
+    else flipReveal();
+  }
   function advanceReveal(stage) {
-    if (!reveal?.flipped || reveal.phase !== 'idle' || reveal.advancing || busy || loading) return;
+    if (!reveal?.flipped || reveal.phase !== 'idle' || reveal.advancing || reveal.discarding) return;
     const current = reveal;
+    detachRevealVfx?.();detachRevealVfx=null;
     current.advancing = true; current.phase = 'advancing';
+    stage.style.transform = `translateX(${current.releaseX || 0}px)`;
+    stage.style.opacity = String(current.releaseOpacity ?? 1);
+    current.releaseX = 0; current.releaseOpacity = 1;
+    // Commit the finger's final pose before the departure transition starts.
+    void stage.offsetWidth;
     stage.classList.add('is-leaving');
     stage.style.removeProperty('transform');
     stage.style.removeProperty('opacity');
@@ -75,12 +108,15 @@
       if (reveal !== current || !revealDialog.open) return;
       if (current.index + 1 === current.cards.length) revealDialog.close();
       else {current.index++; current.flipped = false; current.advancing = false; current.phase = 'idle'; renderReveal();}
-    }, revealReduced() ? 0 : 280);
+    }, revealReduced() ? 0 : motionTimings.advance);
   }
   revealDialog.addEventListener('pointerdown', event => {
     const stage = event.target.closest('.pack-reveal-stage');
-    if (!stage || !reveal || reveal.phase !== 'idle' || reveal.advancing || busy || loading || !event.isPrimary || event.button !== 0) return;
+    if (swipe || !stage || !reveal || reveal.phase !== 'idle' || reveal.advancing || reveal.discarding || !event.isPrimary || event.button !== 0) return;
     swipe = {id:event.pointerId,x:event.clientX,y:event.clientY,stage,flipped:reveal.flipped,index:reveal.index,dx:0,horizontal:false};
+    // Keep one capture owner from down through up. Moving capture off the
+    // touched button mid-gesture emits a bubbling lostpointercapture.
+    stage.setPointerCapture(event.pointerId);
   });
   revealDialog.addEventListener('pointermove', event => {
     if (!swipe || swipe.id !== event.pointerId) return;
@@ -88,29 +124,50 @@
     const dy = event.clientY - swipe.y;
     if (!swipe.horizontal && Math.abs(swipe.dx) > 12 && Math.abs(swipe.dx) > Math.abs(dy) * 1.3) {
       swipe.horizontal = true;
-      swipe.stage.setPointerCapture(event.pointerId);
     }
-    if (!swipe.horizontal) return;
+    // A swipe on the back reveals it in place; only a revealed card follows
+    // the finger when navigating to the next card.
+    if (!swipe.horizontal || !swipe.flipped) return;
     swipe.stage.classList.add('is-dragging');
-    swipe.stage.style.transform = `translateX(${Math.min(0, swipe.dx)}px) rotateZ(${Math.max(-9,Math.min(0,swipe.dx) / 30)}deg)`;
+    swipe.stage.style.transform = `translateX(${Math.max(-28,Math.min(0,swipe.dx) * .2)}px)`;
     swipe.stage.style.opacity = String(Math.max(.35, 1 + Math.min(0, swipe.dx) / 400));
   });
   function finishSwipe(event) {
     if (!swipe || swipe.id !== event.pointerId) return;
+    // Ignore loss from the child button's implicit touch capture. Only the
+    // stage owns this gesture; unrelated bubbling losses cannot cancel it.
+    if (event.type === 'lostpointercapture' && event.target !== swipe.stage) return;
     const gesture = swipe; swipe = null;
+    if (event.type === 'pointerup') {
+      gesture.dx = event.clientX - gesture.x;
+      const dy = event.clientY - gesture.y;
+      gesture.horizontal ||= Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(dy) * 1.3;
+      gesture.tap = !gesture.horizontal && Math.hypot(gesture.dx,dy) <= 12;
+    }
     gesture.stage.classList.remove('is-dragging');
     gesture.stage.style.removeProperty('transform');
     gesture.stage.style.removeProperty('opacity');
-    if (gesture.horizontal) suppressRevealClickUntil = Date.now() + 400;
+    // Any completed pointer sequence owns its follow-up click, including a
+    // canceled/vertical gesture. Keyboard activation still reaches click.
+    suppressRevealClickUntil = Date.now() + 500;
     if (gesture.stage.hasPointerCapture(event.pointerId)) gesture.stage.releasePointerCapture(event.pointerId);
-    if (event.type !== 'pointerup' || !gesture.horizontal || gesture.dx >= -Math.min(70, gesture.stage.clientWidth * .25) || !reveal || reveal.index !== gesture.index) return;
-    if (gesture.flipped) advanceReveal(gesture.stage);
+    if (event.type !== 'pointerup' || !reveal || reveal.index !== gesture.index) return;
+    // Capturing on the stage retargets the up/click; handle a stationary tap
+    // here as well so tap-to-reveal remains available.
+    if (gesture.tap) {activateReveal(); return;}
+    if (!gesture.horizontal || gesture.dx >= -Math.min(70,gesture.stage.clientWidth * .25)) return;
+    if (gesture.flipped) {
+      reveal.releaseX = Math.max(-28,Math.min(0,gesture.dx) * .2);
+      reveal.releaseOpacity = Math.max(.35,1 + Math.min(0,gesture.dx) / 400);
+      advanceReveal(gesture.stage);
+    }
     else flipReveal();
   }
   revealDialog.addEventListener('pointerup', finishSwipe);
   revealDialog.addEventListener('pointercancel', finishSwipe);
   revealDialog.addEventListener('lostpointercapture', finishSwipe);
-  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event => {if (event.matches && reveal && reveal.phase !== 'advancing') finishRevealMotion(reveal);});
+  revealDialog.addEventListener('dragstart',event => {if (event.target.closest('.pack-reveal-stage')) event.preventDefault();});
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event => {if (event.matches) {detachRevealVfx?.();detachRevealVfx=null;if(reveal && reveal.phase !== 'advancing') finishRevealMotion(reveal);}});
   revealDialog.addEventListener('keydown', event => {
     if (event.key === 'ArrowLeft' && reveal && reveal.phase === 'idle' && !reveal.advancing && !event.repeat && !event.target.closest('[data-reveal-discard], [data-reveal-close]')) {
       event.preventDefault();
@@ -118,12 +175,12 @@
       else flipReveal();
     }
   });
-  revealDialog.addEventListener('close', () => {clearTimeout(revealTimer); revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack'); reveal = null; swipe = null; el('ownedPackOpen')?.focus({preventScroll:true});});
+  revealDialog.addEventListener('close', () => {detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;clearTimeout(revealTimer); revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); el('ownedPackOpen')?.focus({preventScroll:true});});
   const el = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);
   const online = () => navigator.onLine !== false && !!options?.session();
-  const rarityNames = {common:'Común',retro:'Retro',special:'Especial',epic:'Épica',legendary:'Legendaria'};
+  const rarityNames = {common:'Común',retro:'Retro',special:'Especial',epic:'Épica',legendary:'Legendaria',full_art:'Full Art',vice_city:'Vice City'};
   const coins = () => state ? `${state.balance} monedas` : '— monedas';
   function errorMessage(error) {
     if (navigator.onLine === false) return 'Sin conexión. Conéctate para actualizar tu colección y tus monedas.';
@@ -136,11 +193,8 @@
     if (response.error) throw response.error;
     return response.data;
   }
-  let galiciaSceneId = 0, basketSceneId = 0;
-  function galiciaArtwork(banner, extra, compact = false) {
-    if (!compact && extra.split(/\s+/).includes('member-banner-art')) {
-      return `<div class="banner-art banner-alberto-member-responsive ${extra}" role="img" aria-label="${escape(banner.name || 'Alberto Velasco con sus cabras en Galicia')}">${galiciaArtwork(banner, 'banner-alberto-member-compact', true)}${galiciaArtwork(banner, 'banner-alberto-member-wide')}</div>`;
-    }
+  let galiciaSceneId = 0;
+  function galiciaArtwork(banner, extra, compact = false, lightweight = false) {
     // Each mounted tile gets its own clip IDs; all joints use the 2172 × 724
     // source coordinates, preserving their registration at every display size.
     const id = `galicia-${++galiciaSceneId}`;
@@ -170,17 +224,17 @@
     const foliage = [
       {x:105,y:130,rx:230,ry:145,joint:'145px 277px',duration:'4.8s',phase:'-1.1s',tree:true},
       {x:compact ? 1210 : 2060,y:176,rx:144,ry:120,joint:compact ? '1220px 300px' : '2070px 300px',duration:'5.6s',phase:'-3.4s',tree:true},
-      ...Array.from({length:compact ? 6 : 10}, (_,i) => ({x:95+i*226,y:690,rx:170,ry:95,joint:`${95+i*226}px 724px`,duration:`${3.1+(i%4)*.4}s`,phase:`${i*-.47}s`}))
+      ...Array.from({length:compact ? 6 : lightweight ? 4 : 10}, (_,i) => ({x:95+i*226,y:690,rx:170,ry:95,joint:`${95+i*226}px 724px`,duration:`${3.1+(i%4)*.4}s`,phase:`${i*-.47}s`}))
     ];
     const foliageDefs = foliage.map((patch,i) => `<mask id="${id}-foliage-${i}" maskUnits="userSpaceOnUse" x="${patch.x-patch.rx}" y="${patch.y-patch.ry}" width="${patch.rx*2}" height="${patch.ry*2}"><ellipse cx="${patch.x}" cy="${patch.y}" rx="${patch.rx}" ry="${patch.ry}" fill="url(#${id}-foliage-fade)"/></mask>`).join('');
     const foliageArt = (trees) => foliage.map((patch,i) => !!patch.tree === trees ? `<g class="banner-galicia-foliage ${trees ? 'is-tree' : ''}" style="--foliage-joint:${patch.joint};--wind-duration:${patch.duration};--wind-phase:${patch.phase}"><g mask="url(#${id}-foliage-${i})">${background}</g></g>` : '').join('');
-    const grass = Array.from({length:compact ? 21 : 35}, (_, i) => {
+    const grass = Array.from({length:compact ? 21 : lightweight ? 12 : 35}, (_, i) => {
       const x = 25 + i * 63, y = 722 - (i % 3) * 5;
       return `<g class="banner-galicia-blade" style="--blade-phase:${i * -.19}s;--blade-joint:${x}px ${y}px"><path d="M${x} ${y} Q${x-14} ${y-41} ${x-5} ${y-75} M${x} ${y} Q${x+15} ${y-37} ${x+36} ${y-52}"/><path class="is-light" d="M${x+5} ${y} Q${x+27} ${y-18} ${x+43} ${y-26}"/></g>`;
     }).join('');
     const cloudDefs = (compact ? [400,800,1150] : [650,1160,1690]).map((x,i) => `<mask id="${id}-cloud-${i}" maskUnits="userSpaceOnUse" x="${x-340}" y="-65" width="680" height="160"><ellipse cx="${x}" cy="12" rx="340" ry="80" fill="url(#${id}-cloud-fade)"/></mask>`).join('');
     const clouds = [0,1,2].map(i => `<g class="banner-galicia-clouds" style="--cloud-duration:${23+i*8}s;--cloud-phase:${i*-9}s"><g mask="url(#${id}-cloud-${i})">${background}</g></g>`).join('');
-    const birds = Array.from({length:5},(_,i) => `<g class="banner-galicia-bird-flight" style="--flight-duration:${17+i*3}s;--flight-phase:${-i*4.3}s;--flight-height:${108+(i%3)*37}px;--bird-scale:${.7+(i%3)*.25}"><g class="banner-galicia-bird" style="--flap-duration:${.72+i*.11}s"><path class="banner-galicia-wing is-left" d="M0 0 Q-13 -16 -29 -11 Q-13 -7 0 3Z"/><path class="banner-galicia-wing is-right" d="M0 0 Q13 -16 29 -11 Q13 -7 0 3Z"/><path d="M-3 0 Q0 -5 4 0 L10 3 L3 4 L0 10Z"/></g></g>`).join('');
+    const birds = Array.from({length:lightweight ? 3 : 5},(_,i) => `<g class="banner-galicia-bird-flight" style="--flight-duration:${17+i*3}s;--flight-phase:${-i*4.3}s;--flight-height:${108+(i%3)*37}px;--bird-scale:${.7+(i%3)*.25}"><g class="banner-galicia-bird" style="--flap-duration:${.72+i*.11}s"><path class="banner-galicia-wing is-left" d="M0 0 Q-13 -16 -29 -11 Q-13 -7 0 3Z"/><path class="banner-galicia-wing is-right" d="M0 0 Q13 -16 29 -11 Q13 -7 0 3Z"/><path d="M-3 0 Q0 -5 4 0 L10 3 L3 4 L0 10Z"/></g></g>`).join('');
     // Only the registered face changes; the soft edge preserves the original
     // head silhouette and the expression follows the same animated head joint.
     const expression = `<g class="banner-galicia-expression" mask="url(#${id}-expression)"><image href="icons/banners/alberto-galicia-expression-v2.png" width="2172" height="724"/></g>`;
@@ -188,21 +242,13 @@
   }
   function artwork(banner, extra = '') {
     // Only known artwork keys become styles; future Krita exports are added here.
-    if (banner?.art_key === 'alberto-galicia-anime-v1') return galiciaArtwork(banner, extra);
+    if (banner?.art_key === 'alberto-galicia-anime-v1') return galiciaArtwork(banner, extra, false, extra.includes('member-banner-art'));
     if (banner?.art_key === 'miguel-basket-bano-v1') {
-      const member = extra.split(/\s+/).includes('member-banner-art');
-      const memberClass = member ? 'banner-basket-compact' : '';
       const poses = ['00', '00a', '01', '01a', '02', '02a', '03'].map((frame, index) => `<image class="banner-basket-pose banner-basket-pose-${index}" href="icons/banners/miguel-basket-miguel-${frame}-v1.png" width="2172" height="724"/>`).join('');
       const shots = Array.from({length: 3}, (_, i) => `<g class="banner-basket-shot banner-basket-shot-${i}"><text x="0" y="0" text-anchor="middle" dominant-baseline="central">💩</text></g>`).join('');
-      // Recompose the narrow member tile: bring the toilet beside Miguel, retaining
-      // each subject's proportions instead of shrinking the entire wide scene.
-      const id = `basket-${++basketSceneId}`;
-      const background = member ? `<defs><linearGradient id="${id}-edge"><stop stop-color="black"/><stop offset="24%" stop-color="white"/></linearGradient><mask id="${id}-toilet"><rect x="630" width="712" height="724" fill="url(#${id}-edge)"/></mask></defs><svg width="1297" height="724" viewBox="650 0 850 724" preserveAspectRatio="none"><image href="icons/banners/miguel-basket-bano-bg-v1.png" width="2172" height="724"/></svg><g mask="url(#${id}-toilet)"><image href="icons/banners/miguel-basket-bano-bg-v1.png" x="-820" width="2172" height="724"/></g>` : `<image href="icons/banners/miguel-basket-bano-bg-v1.png" width="2172" height="724"/>`;
       const subject = `<g class="banner-basket-held"><text x="0" y="0" text-anchor="middle" dominant-baseline="central">💩</text></g>${poses}`;
-      const impact = `<g class="banner-basket-impact" transform="translate(${member ? '960' : '1780'} 539)"><ellipse class="banner-basket-ring" rx="60" ry="12"/><path class="banner-basket-splash" d="M-42 -3 Q-67 -66 -78 -37 M-18 -8 Q-29 -86 -42 -67 M12 -8 Q28 -91 39 -63 M38 -3 Q65 -60 78 -39"/><text class="banner-basket-score" x="0" y="-75" text-anchor="middle">+3</text></g>`;
-      const wideScene = `<svg class="banner-basket-scene ${member ? 'banner-basket-wide-scene' : ''}" viewBox="0 0 2172 724" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><image href="icons/banners/miguel-basket-bano-bg-v1.png" width="2172" height="724"/>${subject}${shots}<g class="banner-basket-impact" transform="translate(1780 539)"><ellipse class="banner-basket-ring" rx="60" ry="12"/><path class="banner-basket-splash" d="M-42 -3 Q-67 -66 -78 -37 M-18 -8 Q-29 -86 -42 -67 M12 -8 Q28 -91 39 -63 M38 -3 Q65 -60 78 -39"/><text class="banner-basket-score" x="0" y="-75" text-anchor="middle">+3</text></g></svg>`;
-      const compactScene = member ? `<svg class="banner-basket-scene banner-basket-compact-scene" viewBox="0 0 1297 724" preserveAspectRatio="none" aria-hidden="true" focusable="false">${background}<g transform="translate(0 72) scale(.9)">${subject}</g>${shots}${impact}</svg>` : '';
-      return `<div class="banner-art banner-miguel-basket ${memberClass} ${extra}" role="img" aria-label="${escape(banner.name || 'Miguel encesta emojis en el váter')}">${member ? '' : '<img class="banner-basket-fallback" src="icons/banners/miguel-basket-bano-v1.png" width="2172" height="724" alt="" decoding="async" aria-hidden="true">'}${compactScene}${wideScene}</div>`;
+      const wideScene = `<svg class="banner-basket-scene " viewBox="0 0 2172 724" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><image href="icons/banners/miguel-basket-bano-bg-v1.png" width="2172" height="724"/>${subject}${shots}<g class="banner-basket-impact" transform="translate(1780 539)"><ellipse class="banner-basket-ring" rx="60" ry="12"/><path class="banner-basket-splash" d="M-42 -3 Q-67 -66 -78 -37 M-18 -8 Q-29 -86 -42 -67 M12 -8 Q28 -91 39 -63 M38 -3 Q65 -60 78 -39"/><text class="banner-basket-score" x="0" y="-75" text-anchor="middle">+3</text></g></svg>`;
+      return `<div class="banner-art banner-miguel-basket ${extra}" role="img" aria-label="${escape(banner.name || 'Miguel encesta emojis en el váter')}"><img class="banner-basket-fallback" src="icons/banners/miguel-basket-bano-v1.png" width="2172" height="724" alt="" decoding="async" aria-hidden="true">${wideScene}</div>`;
     }
     if (banner?.art_key === 'miguel-moto-anime-v1') {
       // All moving motorcycle parts use the source image's coordinates, so they
@@ -240,8 +286,9 @@
     }
     if (own) {
       const balance = node.querySelector('[data-wallet-balance]');
-      if (balance) balance.textContent = coins();
+      if (balance) balance.textContent = state ? Number(state.balance).toLocaleString('es-ES') : '—';
       node.querySelector('[data-banner-shop]')?.setAttribute('aria-label', `Abrir tienda de banners. ${coins()}`);
+      node.querySelector('[data-wallet]')?.setAttribute('aria-label', `Saldo: ${coins()}`);
     }
   }
   function memberBanner(userId) {
@@ -250,47 +297,100 @@
     }
     return memberBanners.get(userId) || null;
   }
+  function memberPoster(banner) {
+    const image = {'alberto-galicia-anime-v1':'alberto-galicia-anime-preview-v1.png', 'miguel-basket-bano-v1':'miguel-basket-bano-v1.png'}[banner?.art_key];
+    if (image) return `<div class="banner-art member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/${image}" width="2172" height="724" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain"></div>`;
+    if (banner?.art_key === 'miguel-moto-anime-v1') return `<div class="banner-art banner-miguel-moto member-banner-art" role="img" aria-label="${escape(banner.name)}" style="background:#344b65 url('icons/banners/miguel-moto-city-v1.png') center/cover no-repeat"><div class="banner-moto-rider-group" style="animation:none;will-change:auto"><div class="banner-moto-rider-plane"><img class="banner-moto-rider" src="icons/banners/miguel-moto-rider-v2.png" width="1312" height="1199" alt="" loading="lazy" decoding="async"></div></div></div>`;
+    return artwork(null, 'member-banner-art');
+  }
   function memberArtwork(userId) {
-    return artwork(memberBanner(userId), 'member-banner-art');
+    return memberPoster(memberBanner(userId));
+  }
+  function paintMember(node) {
+    const banner = memberBanner(node.dataset.memberBannerUser);
+    const key = String(banner?.id || '');
+    const surface = node.querySelector('.club-member-banner');
+    if (!surface) return;
+    const animate = (!memberObserver || visibleMemberTiles.has(node)) && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const changed = surface.dataset.bannerId !== key;
+    const mode = animate ? 'animated' : 'poster';
+    if (changed || !surface.firstElementChild || surface.dataset.bannerMode !== mode) {
+      surface.innerHTML = animate ? artwork(banner, 'member-banner-art') : memberPoster(banner);
+      surface.dataset.bannerId = key;
+      surface.dataset.bannerMode = mode;
+    }
+    // Offscreen tiles retain one poster, releasing SVG masks and compositor layers.
+    // Visible tiles keep the complete 2172 × 724 composition and original aspect.
   }
   function paintMembers() {
     if (!membersTarget?.isConnected) return;
-    membersTarget.querySelectorAll('[data-member-banner-user]').forEach(node => {
-      const banner = memberBanner(node.dataset.memberBannerUser);
-      const key = banner?.id || '';
-      const surface = node.querySelector('.club-member-banner');
-      if (surface && (surface.dataset.bannerId !== key || !surface.firstElementChild)) {
-        surface.innerHTML = artwork(banner, 'member-banner-art');
-        surface.dataset.bannerId = key;
+    membersTarget.querySelectorAll('[data-member-banner-user]').forEach(paintMember);
+  }
+  function loadMemberBanners(userIds, force = false) {
+    if (!online()) return Promise.resolve();
+    const ids = [...new Set(userIds)].filter(id => id && !memberBannerRequests.has(id) && (force || Date.now() - (memberBannerFetchedAt.get(id) || 0) >= 60000));
+    const existing = [...new Set(userIds.map(id => memberBannerRequests.get(id)).filter(Boolean))];
+    if (!ids.length) return Promise.all(existing);
+    const token = generation, session = options.session();
+    const pending = (async () => {
+      for (let offset = 0; offset < ids.length; offset += 200) {
+        const chunk = ids.slice(offset, offset + 200);
+        let records;
+        try {
+          records = await rpc('get_member_profile_banners', {target_user_ids:chunk});
+        } catch (error) {
+          if (!['PGRST202','42883'].includes(error?.code)) throw error;
+          // Compatibility while the batch migration is being deployed. Bound
+          // concurrency instead of starting a connection for every member.
+          records = [];
+          let cursor = 0;
+          await Promise.all(Array.from({length:Math.min(4,chunk.length)}, async () => {
+            while (cursor < chunk.length) {
+              const userId = chunk[cursor++];
+              records.push({user_id:userId, banner:await rpc('get_member_profile_banner', {target_user_id:userId})});
+            }
+          }));
+        }
+        if (token !== generation || session !== options.session()) return;
+        const banners = new Map((records || []).map(record => [record.user_id,record.banner]));
+        chunk.forEach(id => {memberBanners.set(id, banners.get(id) || null); memberBannerFetchedAt.set(id, Date.now());});
       }
+      paintProfile(); paintMembers();
+    })().catch(() => {
+      if (token === generation && session === options.session()) ids.forEach(id => memberBannerFetchedAt.set(id, Date.now()));
+    }).finally(() => {
+      ids.forEach(id => {if (memberBannerRequests.get(id) === pending) memberBannerRequests.delete(id);});
     });
+    ids.forEach(id => memberBannerRequests.set(id, pending));
+    return Promise.all([...existing,pending]);
   }
   function loadMemberBanner(userId, force = false) {
-    if (!userId || !online()) return Promise.resolve();
-    if (memberBannerRequests.has(userId)) return memberBannerRequests.get(userId);
-    if (!force && Date.now() - (memberBannerFetchedAt.get(userId) || 0) < 60000) return Promise.resolve();
-    const token = generation, session = options.session();
-    const pending = rpc('get_member_profile_banner', {target_user_id:userId}).then(data => {
-      if (token !== generation || session !== options.session()) return;
-      memberBanners.set(userId, data);
-      memberBannerFetchedAt.set(userId, Date.now());
-      paintProfile(); paintMembers();
-    }).catch(() => {
-      // Keep the last good artwork and avoid retrying on every UI render.
-      if (token === generation && session === options.session()) memberBannerFetchedAt.set(userId, Date.now());
-    }).finally(() => {
-      if (memberBannerRequests.get(userId) === pending) memberBannerRequests.delete(userId);
-    });
-    memberBannerRequests.set(userId, pending);
-    return pending;
+    return loadMemberBanners([userId], force);
   }
   function mountMembers(node) {
-    membersTarget = node;
-    paintMembers();
-    new Set([...node.querySelectorAll('[data-member-banner-user]')].map(item => item.dataset.memberBannerUser)).forEach(userId => {
-      if (userId !== options?.session() || !state) void loadMemberBanner(userId);
+    if (membersTarget !== node) {
+      memberObserver?.disconnect(); visibleMemberTiles.clear(); observedMemberTiles.clear(); membersTarget = node;
+      memberObserver = typeof IntersectionObserver === 'function' ? new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visibleMemberTiles.add(entry.target); else visibleMemberTiles.delete(entry.target);
+          paintMember(entry.target);
+        }
+      }) : null;
+    }
+    const tiles = [...node.querySelectorAll('[data-member-banner-user]')];
+    // Drop detached cards after a list rerender; observers otherwise retain them.
+    for (const tile of observedMemberTiles) if (!node.contains(tile)) {
+      memberObserver?.unobserve(tile); observedMemberTiles.delete(tile); visibleMemberTiles.delete(tile);
+    }
+    // Hydration/presence updates often mount the same list. Keep observation
+    // intact so unchanged visible banners do not restart their animation.
+    tiles.forEach(tile => {
+      if (!observedMemberTiles.has(tile)) { observedMemberTiles.add(tile); memberObserver?.observe(tile); }
     });
+    paintMembers();
+    void loadMemberBanners(tiles.map(tile => tile.dataset.memberBannerUser).filter(id => id !== options?.session() || !state));
   }
+  document.addEventListener('visibilitychange', paintMembers);
   function renderEditor() {
     const settings = el('profileBannerSettings');
     if (!settings || settings.hidden) return;
@@ -336,22 +436,69 @@
     document.querySelectorAll('[data-duplicates-count]').forEach(node => {node.textContent = state ? extraCopies() : '—'; node.closest('button')?.setAttribute('aria-label', `Gestionar ${state ? extraCopies() : ''} cartas repetidas`);});
     if (el('discardAllDuplicates')) el('discardAllDuplicates').disabled = busy || loading || !extraCopies() || !online();
     if (el('duplicatesStatus')) el('duplicatesStatus').textContent = failure || notice || (loading ? 'Actualizando repetidas…' : state ? `${extraCopies()} copias repetidas. Conservas una de cada carta.` : 'Actualiza la colección para consultar las repetidas.');
-    globalThis.CardAlbum?.update({cards:state?.cards || null, loading, failure});
+    if (state?.cards) lastInventory = state.cards;
+    globalThis.CardAlbum?.update({cards:lastInventory, loading:loading || busy, failure});
+    globalThis.CollectionSocial?.update(lastInventory);
     const status = el('bannerShopStatus');
     if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); }
     if (el('bannerShopBalance')) el('bannerShopBalance').textContent = coins();
-    if (el('bannerShopRefresh')) el('bannerShopRefresh').disabled = busy || loading;
+    document.querySelectorAll('[data-wallet-balance]').forEach(node => {node.textContent = state ? Number(state.balance).toLocaleString('es-ES') : '—';});
+    document.querySelectorAll('[data-wallet]').forEach(node => node.setAttribute('aria-label', `Saldo: ${coins()}`));
     if (el('ownedPackOpen')) el('ownedPackOpen').disabled = busy || loading || !state?.available_packs?.length || !online();
-    if (el('packsOpenHint')) el('packsOpenHint').textContent = busy || loading ? 'Preparando tu colección…' : state?.available_packs?.length ? 'Toca el sobre para abrirlo.' : 'Vuestras historias, por descubrir.';
-    if (el('packRarityOdds')) el('packRarityOdds').textContent = state?.rarity_probabilities ? Object.keys(rarityNames).filter(rarity => state.rarity_probabilities[rarity] != null).map(rarity => `${rarityNames[rarity]}: ${state.rarity_probabilities[rarity]}%`).join(' · ') : 'Actualiza para consultar las probabilidades.';
+    if (el('packsStatusTitle')) el('packsStatusTitle').textContent = failure ? 'No se pudo actualizar' : busy || loading ? 'Sincronizando sobres' : !online() ? 'Sin conexión' : !state ? 'Consulta tus sobres' : state.available_packs?.length ? 'Sobres disponibles' : 'Sin sobres disponibles';
+    if (el('packsStatusMessage')) el('packsStatusMessage').textContent = failure || (busy || loading ? 'Consultando tu colección y tu saldo…' : !online() ? 'Conéctate a internet para abrir sobres.' : state?.available_packs?.length ? 'Pulsa un sobre para abrirlo.' : state ? 'Vuelve mañana para recibir tu sobre diario.' : 'Pulsa Actualizar saldo para consultar tu cuenta.');
+    if (el('packsSyncButton')) {el('packsSyncButton').disabled = busy || loading || !online(); el('packsSyncButton').textContent = loading || busy ? 'Actualizando…' : failure ? 'Reintentar' : 'Actualizar saldo';}
+    el('ownedPackOpen')?.setAttribute('aria-busy',String(busy));
+    if (el('packsInfoBalance')) el('packsInfoBalance').textContent = state ? String(state.available_packs?.length ?? 0) : '—';
+    if (el('packsInfoCoins')) el('packsInfoCoins').textContent = state ? `${Number(state.balance).toLocaleString('es-ES')} monedas` : '—';
+    if (el('packRarityOdds')) el('packRarityOdds').textContent = state?.rarity_probabilities ? Object.keys(rarityNames).filter(rarity => state.rarity_probabilities[rarity] != null).map(rarity => `${rarityNames[rarity]} ${state.rarity_probabilities[rarity]}%`).join(' · ') : 'Probabilidades disponibles al sincronizar.';
     const container = el('bannerShopItems');
-    if (container) container.innerHTML = state ? (state.banners || []).map(banner => `<article class="banner-shop-item">${artwork(banner)}<h3>${escape(banner.name)}</h3><p>${escape(banner.description)}</p><span>${banner.owned ? 'En tu colección' : `${escape(banner.price)} ${Number(banner.price) === 1 ? 'moneda' : 'monedas'}`}</span><button class="packs-sync" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></article>`).join('') : '<p>Actualiza para consultar los banners disponibles.</p>';
+    if (container) {
+      // Wallet and inventory refreshes must not recreate animated SVG banners.
+      const signature = JSON.stringify(state?.banners || null);
+      if (container.dataset.signature !== signature) {
+        container.dataset.signature = signature;
+        container.innerHTML = state ? ((state.banners || []).map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1'].includes(banner.art_key) ? 'BANNER ANIMADO' : 'BANNER DE PERFIL'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? '✓ Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Tu tienda está a un paso</strong><p>Conéctate para cargar los diseños del club.</p></div>';
+      }
+      container.querySelectorAll('[data-banner-action]').forEach(button => {
+        const banner = state?.banners?.find(item => item.id === button.dataset.bannerId);
+        button.disabled = busy || loading || !banner || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online();
+      });
+    }
+    const vouchers = el('rewardVoucherItems');
+    if (vouchers) {
+      const signature = JSON.stringify(state?.vouchers || null);
+      if (vouchers.dataset.signature !== signature) {
+        vouchers.dataset.signature = signature;
+        vouchers.innerHTML = state ? ((state.vouchers || []).map(voucher => `<article class="banner-shop-item reward-voucher-item"><div class="shop-voucher-art" aria-hidden="true"><span class="reward-voucher-mark">BB</span><span>VALE DEL CLUB</span></div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">CANJE POR PREMIO</span>${voucher.owned_quantity ? `<span class="shop-ownership">${escape(voucher.owned_quantity)} disponibles</span>` : ''}</div><h3>${escape(voucher.name)}</h3><p>${escape(voucher.description || '')}</p><div class="shop-card-purchase"><span class="shop-price">${voucher.owned_quantity ? '<small>Listo para canjear</small>' : `<strong>${escape(voucher.price)}</strong><small>monedas</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-voucher-action="${voucher.owned_quantity ? 'redeem' : 'unlock'}" data-voucher-id="${escape(voucher.id)}">${voucher.owned_quantity ? 'Canjear' : 'Desbloquear'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Aún no hay vales</strong><p>Los próximos premios aparecerán aquí.</p></div>') : '<div class="shop-empty"><strong>Premios del club</strong><p>Conéctate para consultar los vales.</p></div>';
+      }
+      vouchers.querySelectorAll('[data-voucher-action]').forEach(button => {
+        const voucher = state?.vouchers?.find(item => item.id === button.dataset.voucherId);
+        button.disabled = busy || loading || !voucher || !online() || (!voucher.owned_quantity && Number(state.balance) < Number(voucher.price));
+      });
+    }
+    el('bannerShopItems')?.setAttribute('aria-busy', String(busy || loading));
+    document.querySelectorAll('[data-shop-banner-count]').forEach(node => {node.textContent = state ? state.banners?.length || 0 : '—';});
+    document.querySelectorAll('[data-shop-voucher-count]').forEach(node => {node.textContent = state ? state.vouchers?.length || 0 : '—';});
     if (el('bannerUnequip')) el('bannerUnequip').disabled = busy || loading || !state?.equipped_banner_id || !online();
+    renderInventory();
+  }
+  function renderInventory() {
     const inventory = el('ownedCardInventory');
-    if (inventory) inventory.innerHTML = state ? (extraCopies() ? state.cards.filter(item => Number(item.quantity) > 1).map(item => {
+    if (!inventory) return;
+    const markup = state ? (extraCopies() ? state.cards.filter(item => Number(item.quantity) > 1).map(item => {
       const design = card(item.card_id), reward = state.discard_rewards?.[item.edition] || 1;
-      return `<article class="owned-card">${design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}" loading="lazy" decoding="async">` : ''}<h4>${escape(design?.name || item.card_id)}</h4><p>${escape(design?.edition || item.edition)} · ${escape(item.quantity)} ${Number(item.quantity) === 1 ? 'copia' : 'copias'}</p>${Number(item.quantity) > 1 ? `<button type="button" class="packs-sync" data-discard-card="${escape(item.card_id)}" ${busy || loading || !online() ? 'disabled' : ''}>Descartar 1 repetida · +${escape(reward)} monedas</button>` : '<small>Única copia</small>'}</article>`;
+      return `<article class="owned-card" data-owned-card="${escape(item.card_id)}">${design ? `<img data-card-original="${escape(design.front)}" src="${escape(globalThis.CardCollection.thumbnail(design))}" alt="${escape(design.name)}" loading="lazy" decoding="async">` : ''}<h4>${escape(design?.name || item.card_id)}</h4><p>${escape(design?.edition || item.edition)} · ${escape(item.quantity)} ${Number(item.quantity) === 1 ? 'copia' : 'copias'}</p>${Number(item.quantity) > 1 ? `<button type="button" class="packs-sync" data-discard-card="${escape(item.card_id)}">Descartar 1 repetida · +${escape(reward)} monedas</button>` : '<small>Única copia</small>'}</article>`;
     }).join('') : '<p>No tienes cartas repetidas.</p>') : '<p>Tu inventario se mostrará al sincronizar la colección.</p>';
+    // Loading and busy state only change controls, keeping decoded card images
+    // and focus intact while an unchanged inventory is refreshed.
+    if (inventory.dataset.signature !== markup) {
+      inventory.innerHTML = markup;
+      inventory.dataset.signature = markup;
+    }
+    inventory.querySelectorAll('[data-discard-card]').forEach(button => {
+      button.disabled = busy || loading || !state || !online();
+    });
   }
   function refresh(forceDaily = false) {
     if (request) return request;
@@ -370,6 +517,60 @@
     })();
     return request;
   }
+  async function animateDiscard(name, cardId, earned, copies, inReveal) {
+    const host = inReveal ? revealDialog : el('duplicatesDialog');
+    if (!host?.open || !copies) return;
+    const sourceImages = inReveal
+      ? [...revealDialog.querySelectorAll('.pack-reveal-front img')]
+      : [...host.querySelectorAll('[data-owned-card]')].filter(node => name === 'discard_all_duplicate_cards' || node.dataset.ownedCard === cardId).map(node => node.querySelector('img')).filter(Boolean);
+    const layer = document.createElement('div'); layer.className = 'card-discard-effect';
+    const hostRect = host.getBoundingClientRect();
+    const rewardX = Math.max(65,Math.min(innerWidth-65,hostRect.left+hostRect.width/2));
+    const rewardY = Math.max(60,Math.min(innerHeight-80,hostRect.top+95));
+    const reward = document.createElement('div'); reward.className = 'card-discard-reward';
+    reward.setAttribute('role','status'); reward.setAttribute('aria-live','polite');
+    reward.style.left = `${rewardX}px`; reward.style.top = `${rewardY}px`;
+    reward.innerHTML = `<span class="card-discard-coin" aria-hidden="true">B</span><strong>+${escape(earned)} ${earned === 1 ? 'moneda' : 'monedas'}</strong><small>${escape(copies)} ${copies === 1 ? 'repetida descartada' : 'repetidas descartadas'}</small>`;
+    layer.append(reward); host.append(layer);
+    const animations = [], originals = [];
+    const preference = matchMedia('(prefers-reduced-motion: reduce)');
+    const cancelMotion = () => {if (preference.matches || document.hidden) animations.forEach(animation => animation.cancel());};
+    preference.addEventListener('change', cancelMotion);
+    document.addEventListener('visibilitychange', cancelMotion);
+    const cleanup = (keepCopiesDimmed = false) => {preference.removeEventListener('change', cancelMotion); document.removeEventListener('visibilitychange', cancelMotion); animations.forEach(animation => animation.cancel()); if (!keepCopiesDimmed) originals.forEach(node => node.classList.remove('is-discard-source')); layer.remove(); discardEffects.delete(cleanup);};
+    discardEffects.add(cleanup);
+    try {
+      // The permanent status already confirms the award. Reduced motion
+      // must not hold the wallet UI behind an invisible animation delay.
+      if (preference.matches || document.hidden) return;
+      const visible = sourceImages.filter(img => {const r = img.getBoundingClientRect(); return r.bottom>hostRect.top && r.top<hostRect.bottom && r.width>0;});
+      const candidates = (visible.length ? visible : sourceImages).slice(0,6);
+      candidates.forEach((img,index) => {
+        const rect = img.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const ghost = document.createElement('img'); ghost.className = 'card-discard-flying';
+        ghost.src = img.currentSrc || img.src; ghost.alt=''; ghost.setAttribute('aria-hidden','true');
+        Object.assign(ghost.style,{left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`});
+        layer.append(ghost); img.classList.add('is-discard-source'); originals.push(img);
+        const dx=rewardX-(rect.left+rect.width/2),dy=rewardY-(rect.top+rect.height/2);
+        animations.push(ghost.animate([
+          {transform:'translate(0,0) rotate(0deg) scale(1)',opacity:1,filter:'brightness(1)',offset:0},
+          {transform:`translate(${dx*.15}px,${dy*.15-18}px) rotate(${-5+index*2}deg) scale(.86)`,opacity:1,filter:'brightness(1.5)',offset:.28},
+          {transform:`translate(${dx*.7}px,${dy*.7}px) rotate(${16+index*3}deg) scale(.32)`,opacity:.85,filter:'brightness(2.2)',offset:.7},
+          {transform:`translate(${dx}px,${dy}px) rotate(26deg) scale(.04)`,opacity:0,filter:'brightness(2.8)',offset:1}
+        ],{duration:motionTimings.discard,delay:index*24,easing:'cubic-bezier(.4,0,.2,1)',fill:'both'}));
+      });
+      for (let index=0;index<9;index++) {
+        const spark=document.createElement('i'); spark.className='card-discard-spark'; spark.setAttribute('aria-hidden','true');
+        Object.assign(spark.style,{left:`${rewardX}px`,top:`${rewardY}px`}); layer.append(spark);
+        const angle=index*Math.PI*2/9,dx=Math.cos(angle)*55,dy=Math.sin(angle)*40;
+        animations.push(spark.animate([{transform:'translate(0,0) scale(.4)',opacity:0},{opacity:1,offset:.2},{transform:`translate(${dx}px,${dy}px) scale(.2)`,opacity:0}],{duration:220,delay:motionTimings.discard-180,easing:'ease-out',fill:'both'}));
+      }
+      animations.push(reward.animate([{transform:'translate(-50%,-50%) scale(.7)',opacity:0},{transform:'translate(-50%,-50%) scale(1.08)',opacity:1,offset:.45},{transform:'translate(-50%,-50%) scale(1)',opacity:1}],{duration:motionTimings.reward,easing:'cubic-bezier(.4,0,.2,1)',fill:'both'}));
+      await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
+    } catch { /* A visual effect cannot turn a confirmed exchange into a failed transaction. */ }
+    finally {cleanup(!inReveal);}
+  }
   async function mutate(name, args, message, discardedIndex = null) {
     if (busy || loading) return;
     const token = generation, user = options.session();
@@ -378,6 +579,7 @@
     const focusCard = focus?.dataset?.discardCard;
     const focusBanner = focus?.dataset?.bannerId;
     const focusProfileBanner = focus?.dataset?.profileBanner;
+    if (discardedIndex != null && revealAtStart) revealAtStart.discarding = true;
     busy = true; failure = ''; notice = ''; render();
     try {
       const data = await rpc(name, args);
@@ -396,11 +598,15 @@
         const earned = Number(data.coins_earned) || 0;
         const copies = name === 'discard_all_duplicate_cards' ? Number(data.copies_discarded) || 0 : 1;
         message = `${copies} ${copies === 1 ? 'carta repetida descartada' : 'cartas repetidas descartadas'} · +${earned} ${earned === 1 ? 'moneda' : 'monedas'}.`;
+        await animateDiscard(name,args.target_card_id,earned,copies,discardedIndex != null && reveal === revealAtStart);
+        if (token !== generation || user !== options.session()) return;
       }
       notice = message;
       await refresh();
     } catch (error) { if (token === generation) {state = null; const message = errorMessage(error); await refresh(); if (token === generation) failure = `${message} Comprueba el saldo actualizado antes de repetir la acción.`;} }
-    finally {if (token === generation) {busy = false; render();
+    finally {if (token === generation) {
+      if (reveal === revealAtStart && reveal) reveal.discarding = false;
+      busy = false; render();
       const destination = [...document.querySelectorAll('[data-discard-card], [data-banner-id]')].find(button => !button.disabled && ((focusCard && button.dataset.discardCard === focusCard) || (focusBanner && button.dataset.bannerId === focusBanner)));
       if (focusProfileBanner !== undefined) {
         if (!el('profileBannerSettings').hidden && !el('profileBannerPicker').hidden) {
@@ -410,15 +616,15 @@
       } else if (revealDialog.open) revealDialog.querySelector('[data-reveal-flip]')?.focus({preventScroll:true});
       else if (el('duplicatesDialog').open && focusCard) (destination || el('discardAllDuplicates')).focus({preventScroll:true});
       else if (destination) destination.focus({preventScroll:true});
-      else if (focusCard) el('duplicatesTitle')?.focus({preventScroll:true});
+      else if (focusCard) el('duplicatesDialog')?.querySelector('[data-duplicates-close]')?.focus({preventScroll:true});
     }}
   }
   function mountProfile(node, userId, own) {
     profileTarget = {node, userId, own};
     if (own) {
       const topline = node.querySelector('.club-profile-topline');
-      if (topline && !topline.querySelector('[data-banner-shop]')) topline.insertAdjacentHTML('beforeend', '<button type="button" class="banner-shop-trigger" data-banner-shop aria-haspopup="dialog"><span data-wallet-balance>— monedas</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18l-2-6H5L3 9Zm1 0v12h16V9M9 21v-7h6v7M3 9c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0"/></svg></button>');
-      if (topline && !topline.querySelector('[data-card-album]')) topline.insertAdjacentHTML('beforeend', `<button type="button" class="card-album-trigger" data-card-album aria-label="Abrir mi álbum de cartas" aria-haspopup="dialog">${globalThis.CardAlbum?.icon || ''}</button>`);
+      if (topline && !topline.querySelector('[data-banner-shop]')) topline.insertAdjacentHTML('beforeend', '<span class="profile-coin-balance" data-wallet aria-label="Saldo pendiente de sincronización"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.7-.7-1.7-1-3-1-1.6 0-2.7.8-2.7 2s1.1 1.7 2.8 2c1.8.3 2.8.8 2.8 2.1 0 1.2-1.2 2.1-3 2.1-1.4 0-2.6-.5-3.4-1.3M12 5.5v13"/></svg><span data-wallet-balance>—</span></span><button type="button" class="banner-shop-trigger" data-banner-shop aria-label="Abrir tienda de banners" aria-haspopup="dialog" title="Tienda"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18l-2-6H5L3 9Zm1 0v12h16V9M9 21v-7h6v7M3 9c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0"/></svg></button>');
+      if (topline && !topline.querySelector('[data-card-album]')) topline.insertAdjacentHTML('beforeend', `<button type="button" class="card-album-trigger" data-card-album aria-label="Abrir mi álbum de cartas">${globalThis.CardAlbum?.icon || ''}</button>`);
       paintProfile();
       if (!state && !request) void refresh();
     } else if (userId) {
@@ -426,9 +632,39 @@
       void loadMemberBanner(userId, true);
     }
   }
+  let duplicatesOpener = null;
+  function openDuplicates(trigger) {
+    const dialog = el('duplicatesDialog');
+    if (!dialog) return;
+    // Cached HTML can still have this modal inside the inactive packs route.
+    // Native top-layer promotion does not make an inert ancestor interactive.
+    if (dialog.parentElement !== document.body) document.body.append(dialog);
+    dialog.inert = false; dialog.hidden = false; dialog.removeAttribute('aria-hidden');
+    if (dialog.open) {el('duplicatesDialog')?.querySelector('[data-duplicates-close]')?.focus({preventScroll:true}); return;}
+    duplicatesOpener = trigger || document.activeElement;
+    try {
+      render(); dialog.showModal(); el('duplicatesDialog')?.querySelector('[data-duplicates-close]')?.focus({preventScroll:true});
+    } catch {
+      // Never leave an unresponsive top-layer backdrop after a failed mount.
+      if (dialog.open) dialog.close(); duplicatesOpener = null; return;
+    }
+    // A network failure updates the modal status; closing remains available.
+    void Promise.resolve().then(() => refresh()).catch(error => {
+      if (!dialog.open) return;
+      el('duplicatesStatus').textContent = errorMessage(error);
+    });
+  }
   function initialize(config) {
     options = config;
-    globalThis.CardAlbum?.configure({refresh:() => refresh()});
+    globalThis.CollectionSocial?.initialize({session:options.session,rpc:options.rpc,refreshInventory:() => refresh(true)});
+    const duplicatesDialog = el('duplicatesDialog');
+    if (duplicatesDialog?.parentElement !== document.body && duplicatesDialog) document.body.append(duplicatesDialog);
+    duplicatesDialog?.addEventListener('close',() => {
+      discardEffects.forEach(cleanup => cleanup());
+      const trigger = duplicatesOpener; duplicatesOpener = null;
+      if (trigger?.isConnected && !trigger.closest('[inert], [hidden]')) trigger.focus({preventScroll:true});
+    });
+    globalThis.CardAlbum?.configure({refresh:() => refresh(), navigate:options.navigate});
     document.addEventListener('click', event => {
       if (event.target.closest('[data-banner-shop]')) {el('bannerShopDialog').showModal(); void refresh();}
       const ownedOption = event.target.closest('[data-profile-banner]');
@@ -438,7 +674,10 @@
       }
       const banner = event.target.closest('[data-banner-action]');
       if (banner) void mutate(banner.dataset.bannerAction === 'buy' ? 'buy_profile_banner' : 'equip_profile_banner', {target_banner_id:banner.dataset.bannerId}, banner.dataset.bannerAction === 'buy' ? 'Banner comprado. Ya puedes equiparlo.' : 'Banner equipado en la cabecera de tu perfil.');
-      if (event.target.closest('[data-duplicates-open]')) {el('duplicatesDialog').showModal(); void refresh();}
+      const voucher = event.target.closest('[data-voucher-action]');
+      if (voucher) void mutate(voucher.dataset.voucherAction === 'unlock' ? 'unlock_reward_voucher' : 'redeem_reward_voucher', {target_voucher_id:voucher.dataset.voucherId}, voucher.dataset.voucherAction === 'unlock' ? 'Vale desbloqueado.' : 'Premio canjeado.');
+      const duplicatesTrigger = event.target.closest('[data-duplicates-open]');
+      if (duplicatesTrigger) openDuplicates(duplicatesTrigger);
       if (event.target.closest('[data-duplicates-close]')) el('duplicatesDialog').close();
       const discard = event.target.closest('[data-discard-card]');
       if (discard) void mutate('discard_duplicate_card', {target_card_id:discard.dataset.discardCard,copies:1}, 'Carta repetida descartada. Monedas añadidas a tu cuenta.');
@@ -452,10 +691,26 @@
     });
     el('profileBannerRetry').addEventListener('click', () => void refresh());
     el('bannerShopClose').addEventListener('click', () => el('bannerShopDialog').close());
-    el('bannerShopRefresh').addEventListener('click', () => void refresh());
+    const shopTabs = [...document.querySelectorAll('[data-shop-tab]')];
+    const selectShopTab = tab => {
+      shopTabs.forEach(item => {
+        const selected = item === tab;
+        item.setAttribute('aria-selected', String(selected)); item.tabIndex = selected ? 0 : -1;
+        el(item.getAttribute('aria-controls')).hidden = !selected;
+      });
+    };
+    shopTabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectShopTab(tab));
+      tab.addEventListener('keydown', event => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? shopTabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + shopTabs.length) % shopTabs.length;
+        selectShopTab(shopTabs[next]); shopTabs[next].focus();
+      });
+    });
+    el('packsInfoTrigger')?.addEventListener('click', () => {const trigger=el('packsInfoTrigger'), panel=el('packsInfoPanel'), open=trigger.getAttribute('aria-expanded')==='true';panel.hidden=open;trigger.setAttribute('aria-expanded',String(!open));});
     el('bannerUnequip').addEventListener('click', () => void mutate('equip_profile_banner', {target_banner_id:null}, 'Banner retirado de tu perfil.'));
     el('ownedPackOpen').addEventListener('click', () => void mutate('open_owned_card_pack', {}, 'Sobre abierto. Todas las cartas se han guardado en tu colección.'));
-    el('bannerShopInventory').addEventListener('click', () => {el('bannerShopDialog').close(); if (globalThis.CardAlbum) globalThis.CardAlbum.open(el('bannerShopInventory')); else {options.openInventory(); el('packsTitle')?.focus();}});
     window.addEventListener('online', () => {
       if (options.session()) void refresh();
       if (membersTarget?.isConnected) mountMembers(membersTarget);
@@ -468,9 +723,13 @@
     el('profileBannerOptions').replaceChildren();
     delete el('profileBannerOptions').dataset.signature;
     el('profileBannerSelection').textContent = 'Sin banner';
-    generation++; state = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear(); memberBannerRequests.clear(); memberBannerFetchedAt.clear();
+    discardEffects.forEach(cleanup => cleanup());
+    generation++; state = null; lastInventory = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear(); memberBannerRequests.clear(); memberBannerFetchedAt.clear();
+    memberObserver?.disconnect(); memberObserver = null; visibleMemberTiles.clear(); observedMemberTiles.clear();
     paintMembers(); membersTarget = null;
+    duplicatesOpener = null;
     globalThis.CardAlbum?.reset();
+    globalThis.CollectionSocial?.reset();
     revealDialog.close(); el('duplicatesDialog')?.close();
     el('bannerShopDialog')?.close(); if (el('ownedPackResult')) el('ownedPackResult').replaceChildren(); render();
   }
