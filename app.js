@@ -295,12 +295,31 @@ function completeInitialLaunch() {
   initialLaunchCompleted = true;
   requestAnimationFrame(() => {
     document.getElementById("pageLoader")?.classList.add("hidden");
+    requestAnimationFrame(() => {
+      globalThis.ClubHealth?.mark("shell-ready");
+      document.documentElement.dataset.launchReady = "true";
+      document.dispatchEvent(new Event("bb:launch-ready"));
+    });
+  });
+}
+function waitForStartupPaint() {
+  if (document.hidden) return Promise.resolve();
+  return new Promise(resolve => {
+    let frame = 0;
+    const finish = () => { clearTimeout(timer); cancelAnimationFrame(frame); resolve(); };
+    // rAF is suspended in background tabs and during some WebKit transitions.
+    const timer = setTimeout(finish, 160);
+    frame = requestAnimationFrame(() => { frame = requestAnimationFrame(finish); });
   });
 }
 const pendingMediaLikes = new Set();
 
 const idleStartupQueue = [];
 let idleStartupScheduled = false;
+let lastStartupInputAt = -Infinity;
+for (const type of ["focusin", "input", "pointerdown"]) document.addEventListener(type, event => {
+  if (isEditableAppTarget(event.target)) lastStartupInputAt = performance.now();
+}, {capture:true, passive:true});
 function runWhenIdle(callback, timeout = 1200) {
   idleStartupQueue.push({callback, timeout});
   scheduleIdleStartup();
@@ -310,8 +329,10 @@ function scheduleIdleStartup() {
   idleStartupScheduled = true;
   const run = () => {
     idleStartupScheduled = false;
-    // An idle timeout is not permission to interrupt typing or keyboard presentation.
-    if (document.hidden || isEditableAppTarget(document.activeElement)) {
+    // Never interrupt typing or keyboard presentation. A focused but idle field
+    // must not starve chat/realtime initialization until the user leaves it.
+    const editing = isEditableAppTarget(document.activeElement) && performance.now() - lastStartupInputAt < 900;
+    if (document.hidden || editing || navigator.scheduling?.isInputPending?.()) {
       idleStartupScheduled = true;
       setTimeout(() => { idleStartupScheduled = false; scheduleIdleStartup(); }, 250);
       return;
@@ -3180,14 +3201,22 @@ async function deleteAchievement(id, name) {
   await loadAchievements();
 }
 
+let profileSurfaceGeneration = 0;
 function refreshProfileSurfaces() {
-  renderFeatured();
-  renderMembers();
-  renderPresence();
-  renderMessages();
-  renderAdminPanel();
+  const generation = ++profileSurfaceGeneration, owner = currentAuthUser?.id;
   if (currentUser) applyUserHeader(currentUser);
-  if (activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId, false);
+  // Give each independent surface its own frame. A profile response used to
+  // rebuild Home, every member, the inbox and administration in one task.
+  const chatVisible = ["chat", "privados"].some(id => document.getElementById(id)?.classList.contains("active"));
+  const renders = chatVisible
+    ? [renderMessages, renderPresence, renderFeatured, renderMembers, renderAdminPanel]
+    : [renderFeatured, renderMembers, renderPresence, renderMessages, renderAdminPanel];
+  for (const render of renders) runWhenIdle(() => {
+    if (generation === profileSurfaceGeneration && currentAuthUser?.id === owner) render();
+  });
+  runWhenIdle(() => {
+    if (generation === profileSurfaceGeneration && currentAuthUser?.id === owner && activeProfileId && document.getElementById("perfil")?.classList.contains("active")) renderProfile(activeProfileId, false);
+  });
 }
 
 function applyUserHeader(user) {
@@ -3204,25 +3233,29 @@ function applyUserHeader(user) {
 }
 
 async function hydrateAuthenticatedData(authUser) {
+  const isCurrent = () => currentAuthUser?.id === authUser.id;
+  // Only the visible Home's data and unread badges compete for the initial
+  // connection. Other requests start independently once input/rendering is idle.
+  const defer = loader => runWhenIdle(() => {
+    if (!isCurrent()) return;
+    Promise.resolve().then(loader).catch(error => console.warn("No se pudo actualizar una sección del club:", error));
+  });
+  const loadChats = async () => {
+    await loadChatChannels({refreshMessages: false});
+    if (!isCurrent()) return;
+    defer(() => loadChannelAutomations({visit: true}));
+    await loadMessages();
+  };
   try {
-    // The visible shell is already ready. Independent surfaces must not wait for
-    // the members/channels query or for an unrelated slow request to finish.
-    connectRealtime();
-    // Trophy queries are independent of the first visible agenda/chat data.
-    // Start them when the shell is idle without waiting for a slow surface.
-    runWhenIdle(() => {
-      if (currentAuthUser?.id === authUser.id && !achievementsLoaded) loadAchievements();
-    });
-    const channels = loadChatChannels({refreshMessages: false}).then(() => {
-      if (currentAuthUser?.id === authUser.id) {
-        void loadChannelAutomations({visit: true});
-        return loadMessages();
-      }
-    });
-    const results = await Promise.allSettled([
-      loadRemoteProfiles(), channels, loadNotifications(), loadNotificationPreferences(), loadPrivateMessages(),
-      loadGroupEvents(), loadSiteSettings()
-    ]);
+    const chatVisible = ["chat", "privados"].some(id => document.getElementById(id)?.classList.contains("active"));
+    const primary = [loadRemoteProfiles(), loadGroupEvents(), loadSiteSettings(), loadNotifications()];
+    if (chatVisible) primary.push(loadChats(), loadPrivateMessages());
+    else { defer(loadChats); defer(loadPrivateMessages); }
+    defer(loadNotificationPreferences);
+    defer(connectRealtime);
+    defer(() => { if (!achievementsLoaded) return loadAchievements(); });
+    const results = await Promise.allSettled(primary);
+    if (!isCurrent()) return;
     globalThis.ClubHealth?.mark("home-ready");
     for (const result of results) {
       if (result.status === "rejected") console.warn("No se pudo actualizar una sección del club:", result.reason);
@@ -3249,10 +3282,14 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   globalThis.ClubHealth?.mark("authenticated");
   document.getElementById("loginScreen")?.classList.add("login-hidden");
   applyUserHeader(user);
-  refreshProfileSurfaces();
-  renderCalendar();
-  renderSpotify();
   completeInitialLaunch();
+  // Authentication and role checks are already finished. Let the authenticated
+  // shell paint before DOM-heavy surfaces or network completion callbacks run.
+  await waitForStartupPaint();
+  if (currentAuthUser?.id !== authUser?.id || currentUser !== user) return;
+  refreshProfileSurfaces();
+  runWhenIdle(() => { if (currentAuthUser?.id === authUser?.id) renderCalendar(); });
+  runWhenIdle(() => { if (currentAuthUser?.id === authUser?.id) renderSpotify(); });
   for (const render of [renderPrivateContacts, renderPrivateConversation, renderNotifications, renderHelpCenter, renderAdminAchievements]) {
     runWhenIdle(() => { if (currentUser === user) render(); });
   }

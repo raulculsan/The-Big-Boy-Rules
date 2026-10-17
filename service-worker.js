@@ -1,8 +1,8 @@
-const CACHE_NAME = "big-boy-rules-v329";
+const CACHE_NAME = "big-boy-rules-v330";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./app-health.js?v=20261017-input-startup-328",
+  "./app-health.js?v=20261017-startup-phases-330",
   "./app-health.css?v=20261016-improvements-319",
   "./styles.css?v=20261016-improvements-319",
   "./visual-system.css?v=20261017-album-calendar-search-329",
@@ -32,7 +32,7 @@ const APP_SHELL = [
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20260903-130",
-  "./app.js?v=20261017-input-startup-328",
+  "./app.js?v=20261017-startup-phases-330",
   "./spotify-player.js?v=20261015-idle-layout-306",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261016-release-323",
@@ -213,7 +213,8 @@ async function installShell() {
     .sort((a,b) => Number(b.split('-v').at(-1)) - Number(a.split('-v').at(-1)));
   const previousCaches = await Promise.all(previousNames.map(name => caches.open(name)));
   let cursor = 0;
-  await Promise.all(Array.from({length:4}, async () => {
+  // Keep update traffic below the foreground app's own requests.
+  await Promise.all(Array.from({length:2}, async () => {
     while (cursor < CORE_SHELL.length) {
       const asset = CORE_SHELL[cursor++], url = new URL(asset, self.registration.scope);
       let response;
@@ -228,9 +229,14 @@ async function installShell() {
       await cache.put(url.href, response);
     }
   }));
-  await self.skipWaiting();
+  // Activate naturally once all clients using the old release have closed.
+  // skipWaiting/claim could pair an old document with a new executable shell.
 }
-self.addEventListener("install", event => event.waitUntil(installShell()));
+self.addEventListener("install", event => event.waitUntil(installShell().catch(async error => {
+  // A failed update leaves the previous complete release available offline.
+  await caches.delete(CACHE_NAME);
+  throw error;
+})));
 
 // Public illustrations are independent of executable release caches. Exact
 // URLs include the artwork version; user uploads/API responses never enter it.
@@ -313,7 +319,8 @@ function savePublicMedia(request, response) {
 }
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
-    await self.clients.claim();
+    // Natural activation guarantees that no controlled old document still
+    // needs its release cache. First-time visitors are controlled next visit.
     const oldKeys = (await caches.keys()).filter(key => key.startsWith("big-boy-rules-v") && key !== CACHE_NAME);
     // Public artwork already has its own persistent cache. Do not re-copy
     // legacy release artwork during activation: it can perform hundreds of

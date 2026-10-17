@@ -45,7 +45,7 @@
   const key = 'bb-local-health-v1', limit = 300;
   const session = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const areas = {inicio:'Inicio', chat:'Chats', privados:'Chat privado', perfil:'Perfil', calendario:'Calendario', sobres:'Sobres', album:'Álbum', catalogo:'Catálogo', administracion:'Administración', 'admin-configuracion':'Configuración', 'admin-cuentas':'Cuentas', 'admin-logros':'Logros', 'admin-diagnostico':'Diagnóstico', otra:'Otras'};
-  const kinds = ['session-start','authenticated','home-ready','network','stall','image','image-error','script-error','promise-error','interaction','editor-focus','editor-input'];
+  const kinds = ['session-start','authenticated','shell-ready','home-ready','main-thread','network','stall','image','image-error','script-error','promise-error','interaction','editor-focus','editor-input'];
   let previous = [];
   try {
     const stored = JSON.parse(localStorage.getItem(key) || '[]');
@@ -91,6 +91,13 @@
     new PerformanceObserver(list => {
       for (const item of list.getEntries()) if (item.initiatorType === 'img' && (item.decodedBodySize > 1000000 || item.duration > 1500)) record('image', {kb:Math.round(item.decodedBodySize / 1024), ms:Math.round(item.duration), area:area()});
     }).observe({type:'resource', buffered:true});
+  } catch {}
+  // Chromium exposes exact main-thread tasks; Safari keeps the interval and
+  // input-to-frame measurements above/below. No task names or attribution are kept.
+  try {
+    if (PerformanceObserver.supportedEntryTypes?.includes('longtask')) new PerformanceObserver(list => {
+      for (const item of list.getEntries()) if (item.duration >= 50 && !document.hidden) record('main-thread', {ms:Math.round(item.duration), area:area()});
+    }).observe({type:'longtask', buffered:true});
   } catch {}
   document.addEventListener('load', event => {
     const image = event.target;
@@ -210,7 +217,7 @@
       const worst = events.reduce((result,item) => !result || item.ms > result.ms ? item : result, null);
       return `<div class="health-response-row"><strong>${label}</strong><span>${events.length} muestras</span><b>${time(p95)}</b><small>Espera de entrada ${time(queue)}${worst ? ` · máximo ${time(worst.ms)} en ${areas[worst.area] || areas.otra} (${worst.field === 'textarea' ? 'texto largo' : 'campo'})` : ''}</small><i style="--response-width:${Math.min(100,(p95 || 0)/10)}%"></i></div>`;
     }).join('');
-    return `<div class="health-metrics">${card('Inicio listo · p95',time(percentile(startup,.95)),`${startup.length} mediciones desde apertura`)}${card('Pausas detectadas',stalls.length,`p95 ${time(percentile(pauses,.95))} · máx. ${time(maxValue(pauses))}`)}${card('Fallos de red',network.length,`Respuesta fallida o sin conexión`)}${card('Avisos de imágenes',images.length,`p95 ${time(percentile(durationValues(images),.95))} · ${items.filter(item => item.kind === 'image-error').length} errores`)}</div>
+    return `<div class="health-metrics">${card('Inicio listo · p95',time(percentile(startup,.95)),`${startup.length} mediciones desde apertura`)}${card('Primera pantalla · p95',time(percentile(durationValues(items.filter(item => item.kind === 'shell-ready')),.95)),'Primer fotograma tras retirar la carga')}${card('Tarea principal más larga',time(maxValue(durationValues(items.filter(item => item.kind === 'main-thread')))),'Tareas de 50 ms o más; requiere navegador compatible')}${card('Pausas detectadas',stalls.length,`p95 ${time(percentile(pauses,.95))} · máx. ${time(maxValue(pauses))}`)}${card('Fallos de red',network.length,`Respuesta fallida o sin conexión`)}${card('Avisos de imágenes',images.length,`p95 ${time(percentile(durationValues(images),.95))} · ${items.filter(item => item.kind === 'image-error').length} errores`)}</div>
       <div class="health-chart-grid"><article class="health-chart-card"><h3>Tiempo de inicio</h3><p>Desde apertura hasta inicio listo. Incluye la espera si tienes que iniciar sesión.</p>${drawStartup(recent)}<div class="health-chart-foot"><span>Sesiones numeradas abajo</span><span>Máximo ${time(maxValue(startup))}</span></div></article><article class="health-chart-card"><h3>Avisos por sesión</h3><p>Últimas ${recent.length} sesiones guardadas; los registros antiguos aparecen sin fecha.</p>${recent.length ? `<div class="health-session-chart">${sessionRows}</div>` : empty('Usa la app para empezar a registrar sesiones.')}${legend()}</article></div>
       <article class="health-chart-card health-area-chart"><h3>Dónde se acumulan los avisos</h3><p>Las imágenes se atribuyen a la pantalla visible al completar su carga. Son avisos registrados, no tasas de error.</p>${areaRows || empty('Todavía no hay avisos registrados en ninguna pantalla.')}${legend()}</article>
       <article class="health-chart-card health-response-chart"><h3>Respuesta al toque</h3><p>Tiempo estimado hasta presentar un fotograma tras el toque, incluido el trabajo del navegador. p95 por función; no mide la espera de red ni toda la animación.</p>${responseRows}</article>
@@ -218,7 +225,7 @@
       <p class="health-capture-note">${items.length} / ${limit} muestras · ${groups.length} sesiones conservadas · p95: el 95 % de las mediciones queda por debajo de ese tiempo.</p>`;
   }
   window.ClubHealth = {
-    mark(name) { if (['authenticated','home-ready'].includes(name) && !marked.has(name)) { marked.add(name); record(name, {ms:Math.round(performance.now())}); } },
+    mark(name) { if (['authenticated','shell-ready','home-ready'].includes(name) && !marked.has(name)) { marked.add(name); record(name, {ms:Math.round(performance.now())}); } },
     show() {
       const target = document.getElementById('healthReport'), host = document.getElementById('healthDashboard');
       if (!target || !host) return;
