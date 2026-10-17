@@ -635,7 +635,7 @@ function syncMobileViewport() {
     }
     const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight);
     const viewportOffset = Math.round(window.visualViewport?.offsetTop || 0);
-    const composerFocused = Boolean(document.activeElement?.closest?.(".message-form"));
+    const composerFocused = Boolean(document.activeElement?.closest?.(".message-form, #inboxSearchInput"));
     if (!composerFocused) mobileViewportBaseline = Math.max(window.innerHeight, viewportHeight);
     const viewport = ChatKeyboard.viewport({height: viewportHeight, offset: viewportOffset,
       baseline: mobileViewportBaseline, focused: composerFocused,
@@ -705,6 +705,7 @@ function goTo(sectionId) {
     if (source && source.id !== "ayuda") helpReturnPage = capturePagePosition(source.id);
   }
   if (sectionId !== "perfil") { profileChatReturn = null; profilePageReturn = null; }
+  cancelActiveAudioRecording();
   closeMessageUI();
   globalThis.ChatThemes?.close();
   if (["admin-configuracion", "admin-diagnostico", "admin-cuentas", "admin-logros", "crear-logro", "asignar-logro", "editar-usuario", "seccion-chat"].includes(sectionId) && !canManageSite()) sectionId = "inicio";
@@ -828,6 +829,7 @@ function closeProfileQuickMenu({immediate = false} = {}) {
 }
 
 async function exitChatView({animate = true} = {}) {
+  cancelActiveAudioRecording();
   closeMessageUI();
   const groupSection = document.getElementById("chat");
   if (groupSection?.classList.contains("active") && groupSection.classList.contains("conversation-open")) {
@@ -842,6 +844,7 @@ async function exitChatView({animate = true} = {}) {
 }
 
 async function backFromPrivateConversation({animate = true} = {}) {
+  cancelActiveAudioRecording();
   closeMessageUI();
   const update = showPrivateChatInbox;
   if (animate) await transitionMessageView(update, {back: true});
@@ -1013,8 +1016,8 @@ function startChatBackGesture(event) {
   if (event.target.closest(".message-form, button, a, input, textarea, select, audio, video, [contenteditable='true']")) return;
   const panel = event.target.closest("#privados.active.conversation-open .private-conversation, #chat.active.conversation-open .group-conversation");
   if (!panel || !event.target.closest(".messages, .chat-header")) return;
-  const composer = document.activeElement;
-  if (panel.contains(composer) && composer?.closest?.(".message-form") && event.cancelable) {
+  const composer = document?.activeElement;
+  if (panel.contains?.(composer) && composer?.closest?.(".message-form") && event.cancelable) {
     // Keep editing focus until the return is committed. WebKit's default focus
     // change can dismiss the keyboard and interrupt the pointer stream mid-drag.
     // Pointer defaults do not control native panning; touch-action still allows pan-y.
@@ -1039,7 +1042,6 @@ function startChatBackGesture(event) {
     frame: null,
     pendingOffset: 0,
   };
-  try { panel.setPointerCapture?.(event.pointerId); } catch { /* Pointer may already have been cancelled by the OS. */ }
 }
 
 // Measure the recent movement, including release coordinates. One noisy final
@@ -1073,6 +1075,7 @@ function moveChatBackGesture(event) {
       resetChatBackGesture();
       return;
     }
+    try { gesture.panel.setPointerCapture?.(event.pointerId); } catch { /* Pointer may already have been cancelled by the OS. */ }
     messageViewTransitioning = true;
   }
   if (event.cancelable) event.preventDefault();
@@ -1750,7 +1753,7 @@ document.addEventListener("pointercancel", () => {
 }, {passive: true});
 document.addEventListener("scroll", () => { cancelMessageHold(); closeMessageMenu(); }, {capture: true, passive: true});
 window.addEventListener("blur", closeMessageUI);
-document.addEventListener("visibilitychange", () => { if (document.hidden) closeMessageUI(); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { cancelActiveAudioRecording(); closeMessageUI(); } });
 window.visualViewport?.addEventListener("resize", () => { cancelMessageHold(); closeMessageMenu(); });
 document.addEventListener("click", event => {
   const suppressed = messageClickSuppression;
@@ -1878,6 +1881,7 @@ function renderChatChannels() {
 
 function selectChatChannel(id) {
   if (!chatChannels.some(channel => String(channel.id) === String(id))) return;
+  if (String(activeChatChannelId) !== String(id)) cancelActiveAudioRecording();
   activeChatChannelId = id;
   renderChatChannels();
   renderMessages();
@@ -2381,6 +2385,7 @@ async function openPrivateConversation(memberId) {
   rememberInboxPosition();
   const member = getMember(memberId);
   if (!member || member.id === currentUser?.id) return;
+  if (activePrivateMemberId !== member.id) cancelActiveAudioRecording();
   void resolvePrivateAttachments().then(refreshPrivateMessageSurfaces);
   await transitionMessageView(() => {
     if (owner !== currentAuthUser?.id) return;
@@ -2720,8 +2725,7 @@ function openChotaViewer(trigger) {
     viewer.setAttribute("aria-modal", "true");
     document.body.append(viewer);
     viewer.addEventListener("click", event => {
-      const bounds = viewer.getBoundingClientRect();
-      if (event.target === viewer && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) { viewer.close(); return; }
+      if (event.target === viewer) { viewer.close(); return; }
       if (event.target.closest("[data-chota-close]")) viewer.close();
       const action = event.target.closest("[data-chota-action]");
       if (action) {
@@ -3283,6 +3287,14 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   }
   currentUser = user;
   currentAuthUser = authUser;
+  if (authUser?.id && user) {
+    try {
+      localStorage.setItem(AUTH_PROFILE_CACHE_KEY, JSON.stringify({
+        userId: authUser.id,
+        profile: {id: user.id, username: user.username, name: user.name},
+      }));
+    } catch {}
+  }
   globalThis.ClubMotion?.configure(authUser?.id);
   document.documentElement.classList.add("auth-session-hint");
   document.body.classList.add("authenticated");
@@ -4245,6 +4257,7 @@ function connectRealtime() {
       if (helpCenterLoaded || document.getElementById("ayuda")?.classList.contains("active")) scheduleRealtimeRefresh("help", loadHelpCenter);
     })
     .subscribe();
+  let achievementsRealtimeSubscribedOnce = false;
   achievementsRealtime = db.channel("achievements-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "achievements"}, () => {
       scheduleRealtimeRefresh("achievements", () => loadAchievements({force: true}), 100);
@@ -4262,8 +4275,12 @@ function connectRealtime() {
     .subscribe(status => {
       // Reconnects recover activity missed while the app was asleep/offline.
       if (status === "SUBSCRIBED") {
-        scheduleRealtimeRefresh("achievement-visit", () => refreshDailyParticipation(true), 60);
-        scheduleRealtimeRefresh("achievements", () => loadAchievements({force: true}), 100);
+        const reconnecting = achievementsRealtimeSubscribedOnce;
+        achievementsRealtimeSubscribedOnce = true;
+        if (reconnecting || (!achievementsLoaded && !achievementsLoading)) {
+          scheduleRealtimeRefresh("achievement-visit", () => refreshDailyParticipation(true), 60);
+          scheduleRealtimeRefresh("achievements", () => loadAchievements({force: reconnecting}), 100);
+        }
       }
     });
   profilesRealtime = db.channel("profiles-live", {config: {broadcast: {self: false}}})
@@ -4563,6 +4580,10 @@ function cancelAudioRecording(kind) {
   session.cancelled = true;
   session.sendOnStop = false;
   if (session.recorder.state !== "inactive") session.recorder.stop();
+}
+
+function cancelActiveAudioRecording() {
+  if (activeAudioRecording) cancelAudioRecording(activeAudioRecording.kind);
 }
 
 async function toggleAudioRecording(kind) {
@@ -5362,10 +5383,19 @@ function helpStatus(status) {
 async function loadHelpCenter() {
   if (!backendReady || !currentAuthUser || helpCenterLoading) return;
   helpCenterLoading = true;
-  const [requestResult, messageResult] = await Promise.all([
-    db.from("help_requests").select("*").order("updated_at", {ascending: false}).limit(250),
-    db.from("help_messages").select("*").order("created_at").limit(1000),
-  ]);
+  const isAdmin = canManageSite();
+  let requestsQuery = db.from("help_requests").select("*").order("updated_at", {ascending: false}).limit(250);
+  if (!isAdmin) requestsQuery = requestsQuery.eq("user_id", currentAuthUser.id);
+  const requestResult = await requestsQuery;
+  let messageResult = {data: [], error: null};
+  if (!requestResult.error) {
+    const requestIds = (requestResult.data || []).map(item => item.id);
+    if (isAdmin) {
+      messageResult = await db.from("help_messages").select("*").order("created_at").limit(1000);
+    } else if (requestIds.length) {
+      messageResult = await db.from("help_messages").select("*").in("request_id", requestIds).order("created_at").limit(1000);
+    }
+  }
   if (requestResult.error || messageResult.error) {
     const list = document.getElementById("helpRequestList");
     if (list) list.innerHTML = `<div class="empty-state compact"><strong>No se pudo abrir Ayuda</strong><span>${escapeHtml(requestResult.error?.message || messageResult.error?.message || "Inténtalo de nuevo.")}</span></div>`;
@@ -5373,7 +5403,7 @@ async function loadHelpCenter() {
     return;
   }
   helpCenterLoaded = true;
-  const visibleRequests = canManageSite()
+  const visibleRequests = isAdmin
     ? (requestResult.data || [])
     : (requestResult.data || []).filter(item => item.user_id === currentAuthUser.id);
   helpRequests = visibleRequests.map(item => ({
@@ -6407,10 +6437,10 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("orientationchange", () => setTimeout(() => syncMobileViewport(), 250));
 document.addEventListener("focusin", event => {
-  if (event.target.closest(".message-form input, #eventForm")) syncMobileViewport();
+  if (event.target.closest(".message-form input, #inboxSearchInput, #eventForm")) syncMobileViewport();
 });
 document.addEventListener("focusout", event => {
-  if (!event.target.closest(".message-form input")) return;
+  if (!event.target.closest(".message-form input, #inboxSearchInput")) return;
   setTimeout(() => syncMobileViewport(), 80);
   setTimeout(() => syncMobileViewport(), 350);
 });
@@ -6539,8 +6569,14 @@ document.getElementById("toggleNewsButton").addEventListener("click", () => {
 setNewsCollapsed(true);
 document.getElementById("refreshNewsButton").addEventListener("click", () => loadNews(true));
 // Also cover returning online and staying in the foreground across midnight.
+let lastForegroundRefreshAt = 0;
 window.addEventListener("online", () => { void refreshDailyParticipation(true); });
-window.addEventListener("focus", () => { if (currentAuthUser && !document.hidden) void refreshDailyParticipation(true); });
+window.addEventListener("focus", () => {
+  if (currentAuthUser && !document.hidden && Date.now() - lastForegroundRefreshAt >= 15000) {
+    lastForegroundRefreshAt = Date.now();
+    void refreshDailyParticipation(true);
+  }
+});
 setInterval(() => { if (!document.hidden) void refreshDailyParticipation(); }, 60000);
 setInterval(() => {
   if (!document.hidden && document.getElementById("inicio").classList.contains("active")) loadNews(true);
@@ -6549,8 +6585,11 @@ window.addEventListener("online", () => markVisibleConversationRead());
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) markVisibleConversationRead();
   if (!document.hidden) void Promise.all([refreshMediaPermission("camera"), refreshMediaPermission("microphone")]);
-  if (!document.hidden && currentAuthUser) void refreshDailyParticipation(true);
-  if (!document.hidden && currentAuthUser) scheduleRealtimeRefresh("achievements", () => loadAchievements({force: true}), 100);
+  if (!document.hidden && currentAuthUser && Date.now() - lastForegroundRefreshAt >= 15000) {
+    lastForegroundRefreshAt = Date.now();
+    void refreshDailyParticipation(true);
+    scheduleRealtimeRefresh("achievements", () => loadAchievements({force: true}), 100);
+  }
   if (!document.hidden
     && document.getElementById("inicio").classList.contains("active")
     && Date.now() - lastNewsRefreshAt >= NEWS_CACHE_DURATION) {

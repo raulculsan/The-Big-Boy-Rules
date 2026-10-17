@@ -5,13 +5,17 @@
   "type": "module",
   "scripts": {
     "test": "node --test scripts/*.test.mjs",
-    "build": "node scripts/build-web.mjs",
+    "build": "node scripts/patch-capacitor-keyboard.mjs && node scripts/build-web.mjs",
+    "cards:thumbnails": "node scripts/build-card-thumbnails.mjs",
     "trophies:build": "node scripts/build-trophies.mjs",
     "dev": "node scripts/live-server.mjs",
     "ios:live": "node scripts/configure-ios-mode.mjs live",
     "ios:stable": "node scripts/configure-ios-mode.mjs stable",
     "ios:sync": "npm run build && cap sync ios",
-    "ios:open": "npm run ios:sync && cap open ios"
+    "ios:open": "npm run ios:sync && cap open ios",
+    "postinstall": "node scripts/patch-capacitor-keyboard.mjs",
+    "capacitor:copy:before": "node scripts/clean-generated-assets.mjs",
+    "capacitor:copy:after": "node scripts/clean-generated-assets.mjs --native"
   },
   "dependencies": {
     "@capacitor/core": "^8.0.0",

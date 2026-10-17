@@ -50,7 +50,7 @@
     const task = (async () => {
       let cached;
       try { cached = await read(url); } catch {}
-      if (cached?.blob) { void retain(url, cached.blob).catch(() => {}); return cached.blob; }
+      if (cached?.blob) return cached.blob;
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 12000);
       try {
         const response = await fetch(url, {cache:'force-cache', signal:controller.signal, credentials:'omit'});
@@ -77,7 +77,7 @@
   function hydrate(image) {
     const value = image.getAttribute('src');
     const original = originals.get(value);
-    if (!original || image.dataset.cardMedia === value) return;
+    if (!original || (image.dataset.cardMedia === value && inflight.has(value))) return;
     image.dataset.cardMedia = value;
     const fallback = globalThis.CardThumbnails?.[original];
     if (fallback) image.src = fallback;

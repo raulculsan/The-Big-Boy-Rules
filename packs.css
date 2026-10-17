@@ -117,7 +117,7 @@ body.collection-card-open,body.pack-preview-open { overflow:hidden; }
 @media(prefers-reduced-motion:reduce){.collection-card-stage{transition:none}.collection-card-dialog[open] .collection-card-perspective{animation:none}}
 
 /* Full Art has its own animated holographic print; artwork stays perfectly still. */
-.full-art-foil{--foil-x:50%;--foil-y:42%;position:absolute;inset:0;display:block;overflow:hidden;border-radius:12px;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(1px);opacity:1!important;isolation:isolate}
+.full-art-foil{--foil-x:50%;--foil-y:42%;position:absolute;inset:0;display:block;overflow:hidden;border-radius:12px;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(1px);opacity:1!important}
 .full-art-foil>span{position:absolute;inset:0;pointer-events:none}
 .full-art-spectrum{background:radial-gradient(ellipse at var(--foil-x) var(--foil-y),#f0fcff2e,transparent 60%),repeating-linear-gradient(118deg,#79eaf72b 0%,#9d88ef26 17%,#ee85bd20 32%,#f5d58e22 46%,#8cf1db28 61%,#79eaf72b 76%);background-size:100% 100%,240% 240%;mix-blend-mode:screen;animation:full-art-iridescence 9s ease-in-out infinite alternate}
 .full-art-sheen{background:linear-gradient(112deg,transparent 36%,#bfe8ff08 42%,#fff5 49%,#fff1 53%,transparent 61%);background-size:300% 100%;mix-blend-mode:screen;animation:full-art-sweep 6s ease-in-out infinite}
@@ -132,7 +132,7 @@ body.collection-card-open,body.pack-preview-open { overflow:hidden; }
 .vice-city-foil .full-art-spectrum{background:radial-gradient(ellipse at var(--foil-x) var(--foil-y),#ff38a21c,transparent 52%),repeating-linear-gradient(125deg,#ff329932 0%,#25ecd837 18%,#ff9a4830 34%,#b970e824 50%,#ff329932 68%);background-size:100% 100%,280% 220%;mask-image:linear-gradient(90deg,#000, #0005 22%,#0002 45%,#0005 78%,#000);-webkit-mask-image:linear-gradient(90deg,#000, #0005 22%,#0002 45%,#0005 78%,#000);animation:vice-city-iridescence 5.8s ease-in-out infinite alternate}
 .vice-city-foil .full-art-sheen{background:linear-gradient(112deg,transparent 40%,#ff389919 45%,#2efce35c 49%,#ffbd6150 50%,#ff52cb29 52%,transparent 58%);background-size:350% 100%;animation:vice-city-sweep 4.6s ease-in-out infinite}
 .vice-city-streaks{background:repeating-linear-gradient(128deg,transparent 0 45px,#27f5dd2c 46px,#ff409729 48px,transparent 50px 95px);background-size:240% 240%;mix-blend-mode:screen;mask-image:linear-gradient(90deg,#000a,#0001 28%,#0001 72%,#000a);-webkit-mask-image:linear-gradient(90deg,#000a,#0001 28%,#0001 72%,#000a);animation:vice-city-streaks 7s linear infinite}
-.vice-city-foil .full-art-sparkles i{width:12px;height:12px;background:linear-gradient(90deg,transparent 43%,#c5fff2 50%,transparent 57%),linear-gradient(0deg,transparent 43%,#ffd2f1 50%,transparent 57%);filter:drop-shadow(0 0 3px #ff3299);animation:vice-city-glint 3.2s ease-in-out var(--delay) infinite}
+.vice-city-foil .full-art-sparkles i{width:12px;height:12px;background:linear-gradient(90deg,transparent 43%,#c5fff2 50%,transparent 57%),linear-gradient(0deg,transparent 43%,#ffd2f1 50%,transparent 57%);box-shadow:0 0 3px #ff3299;animation:vice-city-glint 3.2s ease-in-out var(--delay) infinite}
 @keyframes vice-city-iridescence{from{background-position:50% 50%,0% 10%}to{background-position:50% 50%,100% 90%}}
 @keyframes vice-city-sweep{0%,8%{background-position:125% 0}72%,100%{background-position:-25% 0}}
 @keyframes vice-city-streaks{from{background-position:0% 0%}to{background-position:100% 100%}}

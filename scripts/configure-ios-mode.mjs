@@ -32,13 +32,16 @@ function findPrivateAddress() {
 }
 
 if (mode === "live") {
+  const explicitUrl = process.env.LIVE_SERVER_URL?.trim();
   const host = process.env.TBBR_DEV_HOST || findPrivateAddress();
-  if (!host) throw new Error("No se ha encontrado la dirección local del Mac.");
+  if (!explicitUrl && !host) throw new Error("No se ha encontrado la dirección local del Mac.");
+  const targetUrl = explicitUrl || `http://${host}:${port}`;
   config.server = {
     ...(config.server || {}),
-    url: `http://${host}:${port}`,
-    cleartext: true
+    url: targetUrl,
+    cleartext: targetUrl.startsWith("http://")
   };
+  console.warn("AVISO: Modo live de desarrollo activado (no usar para distribución o archivo de producción).");
   console.log(`Modo directo preparado: ${config.server.url}`);
 } else if (mode === "stable") {
   delete config.server;

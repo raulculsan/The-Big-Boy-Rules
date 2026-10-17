@@ -128,7 +128,7 @@
 
 /* With UIKit's keyboard guide the WebView already ends above the keyboard.
    Never subtract keyboard height or animate the page's height again in JavaScript. */
-body.native-keyboard-layout.authenticated.chat-focus .app {
+body.native-keyboard-layout.authenticated:is(.chat-inbox-view, .chat-focus) .app {
   position: fixed;
   top: var(--pwa-safe-top, 0px);
   bottom: 0;

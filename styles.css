@@ -3354,6 +3354,9 @@ body::before {
   background-size: 500px 100%;
   animation: bodyShine 11s linear infinite;
 }
+@media (max-width: 760px) {
+  body::before { animation: none; display: none; }
+}
 
 @keyframes bodyShine {
   from { background-position: -500px 0; }

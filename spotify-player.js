@@ -98,7 +98,10 @@
     try {
       if (command === 'connect' || command === 'authorize') { const value = await plugin.connect({uri:`spotify:playlist:${playlist}`, authorize:command === 'authorize'}); if (actionGeneration === generation) receive(value); }
       else if (command === 'disconnect') receive(await plugin.disconnect());
-      else await plugin.command({action:command === 'toggle' ? state.paused ? 'resume' : 'pause' : command === 'playlist' ? 'play' : command, uri:`spotify:playlist:${playlist}`, position});
+      else {
+        await plugin.command({action:command === 'toggle' ? state.paused ? 'resume' : 'pause' : command === 'playlist' ? 'play' : command, uri:`spotify:playlist:${playlist}`, position});
+        if (command === 'seek' && Number.isFinite(position)) { state.position = position; receivedAt = Date.now(); }
+      }
     } catch (error) { if (actionGeneration !== generation) return; notice = error.message || 'Spotify no ha podido completar la acción. Inténtalo de nuevo.'; }
     finally { if (actionGeneration === generation) { pending = false; draw(); } }
   }

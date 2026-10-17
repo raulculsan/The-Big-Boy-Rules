@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v332";
+const CACHE_NAME = "big-boy-rules-v333";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -257,30 +257,35 @@ let mediaEntries = new Map();
 // Reconcile keys cheaply on writes, but read response metadata only for entries
 // this worker has not seen. Worker restarts rebuild this index lazily once.
 async function reconcileMediaEntries(cache) {
-  const keys = await cache.keys(), entries = new Map(), duplicates = new Set();
+  const keys = await cache.keys(), entries = new Map(), duplicates = new Set(), uniqueKeys = [];
   for (const key of keys) {
     if (entries.has(key.url)) { duplicates.add(key.url); continue; }
-    let entry = mediaEntries.get(key.url);
-    if (!entry) {
-      const cached = await cache.match(key);
-      if (!cached) continue;
-      const recorded = cached.headers.get("x-big-boy-cache-bytes");
-      let bytes = Number(recorded);
-      // Older or malformed entries must not silently count as zero bytes.
-      if (recorded === null || !Number.isSafeInteger(bytes) || bytes < 0) bytes = (await cached.blob()).size;
-      if (!mediaPath(key) || /(?:private|no-store)/i.test(cached.headers.get("cache-control") || "") || bytes > MEDIA_MAX_FILE_BYTES) {
-        await cache.delete(key);
-        continue;
-      }
-      entry = {request:key, bytes};
-    }
-    entries.set(key.url,entry);
+    entries.set(key.url, mediaEntries.get(key.url) || null);
+    uniqueKeys.push(key);
   }
+  await Promise.all(uniqueKeys.map(async key => {
+    if (duplicates.has(key.url) || entries.get(key.url)) return;
+    const cached = await cache.match(key);
+    if (!cached) { entries.delete(key.url); return; }
+    const recorded = cached.headers.get("x-big-boy-cache-bytes");
+    let bytes = Number(recorded);
+    // Older or malformed entries must not silently count as zero bytes.
+    if (recorded === null || !Number.isSafeInteger(bytes) || bytes < 0) bytes = (await cached.blob()).size;
+    if (!mediaPath(key) || /(?:private|no-store)/i.test(cached.headers.get("cache-control") || "") || bytes > MEDIA_MAX_FILE_BYTES) {
+      await cache.delete(key);
+      entries.delete(key.url);
+      return;
+    }
+    entries.set(key.url, {request:key, bytes});
+  }));
   // Static artwork needs one version per exact URL; remove legacy Vary
   // duplicates rather than undercounting multiple responses for one URL.
   for (const url of duplicates) {
     await cache.delete(url,{ignoreVary:true});
     entries.delete(url);
+  }
+  for (const [url, entry] of entries) {
+    if (!entry) entries.delete(url);
   }
   mediaEntries = entries;
 }
@@ -296,7 +301,8 @@ function savePublicMedia(request, response) {
     const cache = await caches.open(MEDIA_CACHE_NAME);
     await reconcileMediaEntries(cache);
     // Reinsertion refreshes FIFO order without a costly write on each hit.
-    const mediaRequest = new Request(request.url || request);
+    const mediaUrl = new URL(request.url || request, workerScope()).href;
+    const mediaRequest = typeof Request === "function" ? new Request(mediaUrl) : {url:mediaUrl};
     await cache.delete(mediaRequest,{ignoreVary:true});
     mediaEntries.delete(mediaRequest.url);
     let bytes = Array.from(mediaEntries.values()).reduce((sum,entry) => sum + entry.bytes, 0);
@@ -322,9 +328,16 @@ self.addEventListener("activate", event => {
     // Natural activation guarantees that no controlled old document still
     // needs its release cache. First-time visitors are controlled next visit.
     const oldKeys = (await caches.keys()).filter(key => key.startsWith("big-boy-rules-v") && key !== CACHE_NAME);
-    // Public artwork already has its own persistent cache. Do not re-copy
-    // legacy release artwork during activation: it can perform hundreds of
-    // Cache API reads/writes while the user starts typing. Missing art is loaded on demand.
+    const mediaCache = oldKeys.length ? await caches.open(MEDIA_CACHE_NAME) : null;
+    for (const cacheKey of oldKeys) {
+      const oldCache = await caches.open(cacheKey);
+      const requests = await oldCache.keys();
+      for (const req of requests) {
+        if (!mediaPath(req) || await mediaCache.match(req)) continue;
+        const res = await oldCache.match(req);
+        if (res) await savePublicMedia(req, res);
+      }
+    }
     await Promise.all(oldKeys.map(key => caches.delete(key)));
   })());
 });

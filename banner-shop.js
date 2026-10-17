@@ -57,7 +57,7 @@
       detachRevealVfx?.();detachRevealVfx=null;
       detachRevealFoil?.();detachRevealFoil=null;
       revealDialog.dataset.cardIndex = String(reveal.index);
-      revealDialog.innerHTML = `<header class="pack-reveal-header"><span>Carta ${reveal.index + 1} de ${reveal.cards.length}</span><button type="button" data-reveal-close aria-label="Cerrar: todas las cartas ya están guardadas">✕</button></header><div class="pack-reveal-center"><div class="pack-reveal-stage"><button type="button" class="pack-reveal-card" data-reveal-flip aria-label="Girar carta" aria-pressed="false"><span class="pack-reveal-face pack-reveal-back"><img src="${escape(design?.back || 'icons/cards/reverso-comun-unificado-v1.jpg')}" alt="Reverso de carta" draggable="false"></span><span class="pack-reveal-face pack-reveal-front" aria-hidden="true">${design ? `<img src="${escape(design.front)}" alt="${escape(design.name)}" draggable="false">` : '<span>Carta guardada</span>'}</span></button></div></div><div class="pack-reveal-footer"><div class="pack-reveal-info" aria-live="polite"></div><div class="pack-reveal-actions"></div><p class="pack-reveal-status" role="status"></p></div>`;
+      revealDialog.innerHTML = `<header class="pack-reveal-header"><span>Carta ${reveal.index + 1} de ${reveal.cards.length}</span><button type="button" data-reveal-close aria-label="Cerrar: todas las cartas ya están guardadas">✕</button></header><div class="pack-reveal-center"><div class="pack-reveal-stage"><button type="button" class="pack-reveal-card" data-reveal-flip aria-label="Girar carta" aria-pressed="false"><span class="pack-reveal-face pack-reveal-back"><img src="${escape(design?.back || 'icons/cards/reverso-comun-unificado-v1.png')}" width="948" height="1660" decoding="async" alt="Reverso de carta" draggable="false"></span><span class="pack-reveal-face pack-reveal-front" aria-hidden="true">${design ? `<img src="${escape(design.front)}" width="${escape(design.width || 948)}" height="${escape(design.height || 1660)}" decoding="async" alt="${escape(design.name)}" draggable="false">` : '<span>Carta guardada</span>'}</span></button></div></div><div class="pack-reveal-footer"><div class="pack-reveal-info" aria-live="polite"></div><div class="pack-reveal-actions"></div><p class="pack-reveal-status" role="status"></p></div>`;
       if(design?.edition==='Full Art'||design?.edition==='Vice City'){
         const foil=document.createElement('span');foil.setAttribute('aria-hidden','true');
         revealDialog.querySelector('.pack-reveal-front').append(foil);
@@ -110,7 +110,7 @@
     revealDialog.showModal(); renderReveal();
     if (!revealReduced()) {
       reveal.phase = 'opening'; revealDialog.classList.add('is-opening-pack');
-      revealDialog.querySelector('.pack-reveal-stage').insertAdjacentHTML('beforeend', `<svg class="pack-opening-wrap" viewBox="120 95 780 1345" aria-hidden="true"><defs><image id="packOpeningArt" href="icons/cards/sobre-los-nuestros-v1.jpg" width="1024" height="1536"/><clipPath id="packOpeningSeal"><path d="M136 115H880V182H138Z"/></clipPath><clipPath id="packOpeningBody"><path d="M138 182H879L868 240L858 1290L882 1370V1420H137V1370L156 1300L157 275Z"/></clipPath></defs><g class="pack-opening-body"><use href="#packOpeningArt" clip-path="url(#packOpeningBody)"/></g><g class="pack-opening-seal"><use href="#packOpeningArt" clip-path="url(#packOpeningSeal)"/></g></svg>`);
+      revealDialog.querySelector('.pack-reveal-stage').insertAdjacentHTML('beforeend', `<svg class="pack-opening-wrap" viewBox="120 95 780 1345" aria-hidden="true"><defs><image id="packOpeningArt" href="icons/cards/sobre-los-nuestros-v1.png" width="1024" height="1536"/><clipPath id="packOpeningSeal"><path d="M136 115H880V182H138Z"/></clipPath><clipPath id="packOpeningBody"><path d="M138 182H879L868 240L858 1290L882 1370V1420H137V1370L156 1300L157 275Z"/></clipPath></defs><g class="pack-opening-body"><use href="#packOpeningArt" clip-path="url(#packOpeningBody)"/></g><g class="pack-opening-seal"><use href="#packOpeningArt" clip-path="url(#packOpeningSeal)"/></g></svg>`);
       const current = reveal; revealTimer = setTimeout(() => finishRevealMotion(current),motionTimings.opening);
     }
   }
@@ -260,24 +260,26 @@
     const goatSplit = 575, goatFeet = 565;
     const goatDefs = goats.map((goat, i) => {
       const [x,y,w,h] = goat.box;
+      if (compact || lightweight) return `<clipPath id="${id}-goat-${i}"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></clipPath>`;
       return `<clipPath id="${id}-goat-${i}"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></clipPath><clipPath id="${id}-goat-head-${i}"><polygon points="${goat.head}"/></clipPath><clipPath id="${id}-goat-upper-${i}"><rect x="${x}" y="${y}" width="${w}" height="${goatSplit-y}"/></clipPath><clipPath id="${id}-goat-feet-${i}"><rect x="${x}" y="${goatFeet}" width="${w}" height="${724-goatFeet}"/></clipPath><clipPath id="${id}-goat-tail-${i}"><polygon points="${goat.tail}"/></clipPath><clipPath id="${id}-goat-ear-${i}"><polygon points="${goat.ear}"/></clipPath><mask id="${id}-goat-face-${i}" maskUnits="userSpaceOnUse" x="${x}" y="${y}" width="${w}" height="${h}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="white"/><polygon points="${goat.ear}" fill="black"/></mask><mask id="${id}-goat-body-${i}" maskUnits="userSpaceOnUse" x="${x}" y="${y}" width="${w}" height="${h}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="white"/><polygon points="${goat.head}" fill="black"/><polygon points="${goat.tail}" fill="black"/></mask>`;
     }).join('');
-    const goatArt = compact ? goats.map((goat,i) => `<g class="banner-galicia-member-goat" style="--graze-duration:${goat.duration};--graze-phase:${goat.phase};--member-goat-joint:${goat.box[0]+goat.box[2]/2}px 724px"><g clip-path="url(#${id}-goat-${i})">${figure}</g></g>`).join('') : goats.map((goat, i) => `<g class="banner-galicia-goat" style="--graze-duration:${goat.duration};--graze-phase:${goat.phase};--goat-joint:${goat.joint};--tail-joint:${goat.tailJoint};--ear-joint:${goat.earJoint};--wind-duration:${goat.wind}" clip-path="url(#${id}-goat-${i})"><g clip-path="url(#${id}-goat-feet-${i})" mask="url(#${id}-goat-body-${i})">${figure}</g><g class="banner-galicia-goat-body"><g clip-path="url(#${id}-goat-upper-${i})" mask="url(#${id}-goat-body-${i})">${figure}</g></g><g class="banner-galicia-goat-tail"><g clip-path="url(#${id}-goat-tail-${i})">${figure}</g></g><g class="banner-galicia-goat-head"><g clip-path="url(#${id}-goat-head-${i})" mask="url(#${id}-goat-face-${i})">${figure}</g><g class="banner-galicia-goat-ear"><g clip-path="url(#${id}-goat-ear-${i})">${figure}</g></g></g></g>`).join('');
+    const goatArt = (compact || lightweight) ? goats.map((goat,i) => `<g class="banner-galicia-member-goat" style="--graze-duration:${goat.duration};--graze-phase:${goat.phase};--member-goat-joint:${goat.box[0]+goat.box[2]/2}px 724px"><g clip-path="url(#${id}-goat-${i})">${figure}</g></g>`).join('') : goats.map((goat, i) => `<g class="banner-galicia-goat" style="--graze-duration:${goat.duration};--graze-phase:${goat.phase};--goat-joint:${goat.joint};--tail-joint:${goat.tailJoint};--ear-joint:${goat.earJoint};--wind-duration:${goat.wind}" clip-path="url(#${id}-goat-${i})"><g clip-path="url(#${id}-goat-feet-${i})" mask="url(#${id}-goat-body-${i})">${figure}</g><g class="banner-galicia-goat-body"><g clip-path="url(#${id}-goat-upper-${i})" mask="url(#${id}-goat-body-${i})">${figure}</g></g><g class="banner-galicia-goat-tail"><g clip-path="url(#${id}-goat-tail-${i})">${figure}</g></g><g class="banner-galicia-goat-head"><g clip-path="url(#${id}-goat-head-${i})" mask="url(#${id}-goat-face-${i})">${figure}</g><g class="banner-galicia-goat-ear"><g clip-path="url(#${id}-goat-ear-${i})">${figure}</g></g></g></g>`).join('');
     // Feathered source patches keep the painted foliage, with each base pinned
     // to the ground. The sky patches stop above the mountain silhouettes.
     const foliage = [
       {x:105,y:130,rx:230,ry:145,joint:'145px 277px',duration:'4.8s',phase:'-1.1s',tree:true},
       {x:compact ? 1210 : 2060,y:176,rx:144,ry:120,joint:compact ? '1220px 300px' : '2070px 300px',duration:'5.6s',phase:'-3.4s',tree:true},
-      ...Array.from({length:compact ? 6 : lightweight ? 4 : 10}, (_,i) => ({x:95+i*226,y:690,rx:170,ry:95,joint:`${95+i*226}px 724px`,duration:`${3.1+(i%4)*.4}s`,phase:`${i*-.47}s`}))
+      ...Array.from({length:compact ? 6 : lightweight ? 2 : 10}, (_,i) => ({x:95+i*226,y:690,rx:170,ry:95,joint:`${95+i*226}px 724px`,duration:`${3.1+(i%4)*.4}s`,phase:`${i*-.47}s`}))
     ];
     const foliageDefs = foliage.map((patch,i) => `<mask id="${id}-foliage-${i}" maskUnits="userSpaceOnUse" x="${patch.x-patch.rx}" y="${patch.y-patch.ry}" width="${patch.rx*2}" height="${patch.ry*2}"><ellipse cx="${patch.x}" cy="${patch.y}" rx="${patch.rx}" ry="${patch.ry}" fill="url(#${id}-foliage-fade)"/></mask>`).join('');
     const foliageArt = (trees) => foliage.map((patch,i) => !!patch.tree === trees ? `<g class="banner-galicia-foliage ${trees ? 'is-tree' : ''}" style="--foliage-joint:${patch.joint};--wind-duration:${patch.duration};--wind-phase:${patch.phase}"><g mask="url(#${id}-foliage-${i})">${background}</g></g>` : '').join('');
-    const grass = Array.from({length:compact ? 21 : lightweight ? 12 : 35}, (_, i) => {
+    const grass = Array.from({length:compact ? 21 : lightweight ? 10 : 35}, (_, i) => {
       const x = 25 + i * 63, y = 722 - (i % 3) * 5;
       return `<g class="banner-galicia-blade" style="--blade-phase:${i * -.19}s;--blade-joint:${x}px ${y}px"><path d="M${x} ${y} Q${x-14} ${y-41} ${x-5} ${y-75} M${x} ${y} Q${x+15} ${y-37} ${x+36} ${y-52}"/><path class="is-light" d="M${x+5} ${y} Q${x+27} ${y-18} ${x+43} ${y-26}"/></g>`;
     }).join('');
-    const cloudDefs = (compact ? [400,800,1150] : [650,1160,1690]).map((x,i) => `<mask id="${id}-cloud-${i}" maskUnits="userSpaceOnUse" x="${x-340}" y="-65" width="680" height="160"><ellipse cx="${x}" cy="12" rx="340" ry="80" fill="url(#${id}-cloud-fade)"/></mask>`).join('');
-    const clouds = [0,1,2].map(i => `<g class="banner-galicia-clouds" style="--cloud-duration:${23+i*8}s;--cloud-phase:${i*-9}s"><g mask="url(#${id}-cloud-${i})">${background}</g></g>`).join('');
+    const cloudXs = compact ? [400,800,1150] : lightweight ? [1160] : [650,1160,1690];
+    const cloudDefs = cloudXs.map((x,i) => `<mask id="${id}-cloud-${i}" maskUnits="userSpaceOnUse" x="${x-340}" y="-65" width="680" height="160"><ellipse cx="${x}" cy="12" rx="340" ry="80" fill="url(#${id}-cloud-fade)"/></mask>`).join('');
+    const clouds = cloudXs.map((_,i) => `<g class="banner-galicia-clouds" style="--cloud-duration:${23+i*8}s;--cloud-phase:${i*-9}s"><g mask="url(#${id}-cloud-${i})">${background}</g></g>`).join('');
     const birds = Array.from({length:lightweight ? 3 : 5},(_,i) => `<g class="banner-galicia-bird-flight" style="--flight-duration:${17+i*3}s;--flight-phase:${-i*4.3}s;--flight-height:${108+(i%3)*37}px;--bird-scale:${.7+(i%3)*.25}"><g class="banner-galicia-bird" style="--flap-duration:${.72+i*.11}s"><path class="banner-galicia-wing is-left" d="M0 0 Q-13 -16 -29 -11 Q-13 -7 0 3Z"/><path class="banner-galicia-wing is-right" d="M0 0 Q13 -16 29 -11 Q13 -7 0 3Z"/><path d="M-3 0 Q0 -5 4 0 L10 3 L3 4 L0 10Z"/></g></g>`).join('');
     // Only the registered face changes; the soft edge preserves the original
     // head silhouette and the expression follows the same animated head joint.
@@ -354,7 +356,8 @@
     const key = String(banner?.id || '');
     const surface = node.querySelector('.club-member-banner');
     if (!surface) return;
-    const animate = (!memberObserver || visibleMemberTiles.has(node)) && !document.hidden && !(globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).matches;
+    const withinBudget = !memberObserver || [...visibleMemberTiles].slice(0, 2).includes(node);
+    const animate = withinBudget && !document.hidden && !(globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).matches;
     const changed = surface.dataset.bannerId !== key;
     const mode = animate ? 'animated' : 'poster';
     if (changed || !surface.firstElementChild || surface.dataset.bannerMode !== mode) {
@@ -600,10 +603,10 @@
         layer.append(ghost); img.classList.add('is-discard-source'); originals.push(img);
         const dx=rewardX-(rect.left+rect.width/2),dy=rewardY-(rect.top+rect.height/2);
         animations.push(ghost.animate([
-          {transform:'translate(0,0) rotate(0deg) scale(1)',opacity:1,filter:'brightness(1)',offset:0},
-          {transform:`translate(${dx*.15}px,${dy*.15-18}px) rotate(${-5+index*2}deg) scale(.86)`,opacity:1,filter:'brightness(1.5)',offset:.28},
-          {transform:`translate(${dx*.7}px,${dy*.7}px) rotate(${16+index*3}deg) scale(.32)`,opacity:.85,filter:'brightness(2.2)',offset:.7},
-          {transform:`translate(${dx}px,${dy}px) rotate(26deg) scale(.04)`,opacity:0,filter:'brightness(2.8)',offset:1}
+          {transform:'translate(0,0) rotate(0deg) scale(1)',opacity:1,offset:0},
+          {transform:`translate(${dx*.15}px,${dy*.15-18}px) rotate(${-5+index*2}deg) scale(.86)`,opacity:1,offset:.28},
+          {transform:`translate(${dx*.7}px,${dy*.7}px) rotate(${16+index*3}deg) scale(.32)`,opacity:.85,offset:.7},
+          {transform:`translate(${dx}px,${dy}px) rotate(26deg) scale(.04)`,opacity:0,offset:1}
         ],{duration:motionTimings.discard,delay:index*24,easing:'cubic-bezier(.4,0,.2,1)',fill:'both'}));
       });
       for (let index=0;index<9;index++) {

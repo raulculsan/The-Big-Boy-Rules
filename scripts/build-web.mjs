@@ -7,6 +7,8 @@ import {optimizePackagedCards} from "./optimize-packaged-cards.mjs";
 
 import {buildBannerPosters} from "./build-banner-posters.mjs";
 
+import {preflightCards} from "./card-preflight.mjs";
+
 import {buildCardThumbnails} from "./build-card-thumbnails.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -37,10 +39,13 @@ const sources = [
   "trophy-unlock.js",
   "daily-packs.js",
   "card-thumbnails.js",
+  "card-media.js",
   "card-collection.js",
   "collection-motion.js",
   "collection-social.js",
   "collection-social.css",
+  "pending-actions.js",
+  "pending-actions.css",
   "group-interactions.js",
   "group-interactions.css",
   "packs.css",
@@ -61,6 +66,7 @@ const sources = [
 ];
 
 await buildCardThumbnails();
+await preflightCards();
 await buildBannerPosters();
 
 // Keep the small official Capacitor bridge available to native plugins and web previews.

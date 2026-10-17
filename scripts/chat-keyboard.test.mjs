@@ -61,15 +61,30 @@ function sender() {
   const pending = new Promise((yes,no) => {resolve=yes;reject=no;});
   const input = {value:'Hola',disabled:false,setCustomValidity(){},reportValidity(){}};
   const button = {disabled:false};
-  const form = {dataset:{},querySelector:selector=>selector.includes('input')?input:button};
+  const form = {
+    id:'privateMessageForm',
+    dataset:{},
+    toggleAttribute(name, force){if(force)this.dataset[name.replace(/^data-/,'')]='';else delete this.dataset[name.replace(/^data-/,'')];},
+    setAttribute(){},
+    querySelector:selector=>selector.includes('input')?input:button
+  };
+  const chatSendAttempts = new Map();
   const context = vm.createContext({
+    currentAuthUser:{id:'u1'},
+    navigator:{onLine:true},
+    console:{warn(){}},
+    chatSendAttempts,
+    document:{getElementById:id=>id==='privateMessageForm'?form:null},
     activeAudioRecording:null,activePrivateMemberId:2,activeChatChannelId:1,
     pendingChatFile:()=>null,privateMessages:[],messages:[],
     sendPrivateMessage:()=>{requests++;return pending;},sendMessage:()=>{requests++;return pending;},
     refreshPrivateMessageSurfaces(){},refreshGroupMessageSurfaces(){},
-    clearPendingChatFile(){},syncComposerState(){}
+    clearPendingChatFile(){},
+    syncComposerState(kind){context.renderChatSendStatus(kind);}
   });
-  vm.runInContext(read('app.js').match(/async function submitChatMessage\(kind, event\) \{[\s\S]*?\n\}/)[0],context);
+  const appSource = read('app.js');
+  const snippet = appSource.match(/function chatSendKey[\s\S]*?async function submitChatMessage\(kind, event, retry = null\) \{[\s\S]*?\n\}/)[0];
+  vm.runInContext(snippet,context);
   return {input,button,form,context,resolve,reject,get requests(){return requests;},run:()=>context.submitChatMessage('private',{currentTarget:form,preventDefault(){}})};
 }
 test('sending leaves editor enabled and blocks duplicate sends', async () => {

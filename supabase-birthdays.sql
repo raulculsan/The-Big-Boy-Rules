@@ -10,7 +10,16 @@ create policy "kike creates group events" on public.group_events
   for insert to authenticated
   with check (
     auth.uid() = created_by
-    and (public.current_user_can_manage() or event_type = 'birthday')
+    and (
+      public.current_user_can_manage()
+      or (
+        event_type = 'birthday'
+        and not exists (
+          select 1 from public.group_events existing
+          where existing.created_by = auth.uid() and existing.event_type = 'birthday'
+        )
+      )
+    )
   );
 
 drop policy if exists "kike updates group events" on public.group_events;

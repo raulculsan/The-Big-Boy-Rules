@@ -6,6 +6,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
+        if let response = connectionOptions.notificationResponse { ClubPushPlugin.handleResponse(response) }
 
         // Reuse the storyboard window, avoiding a second WebView/bridge on launch.
         if window == nil { window = UIWindow(windowScene: windowScene) }
@@ -15,11 +16,23 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.backgroundColor = UIColor(red: 8/255, green: 9/255, blue: 12/255, alpha: 1)
         window?.makeKeyAndVisible()
 
-        SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
+        let spotifyCallback = connectionOptions.urlContexts.contains { ClubSpotifyPlugin.handleURL($0.url) }
+        if !spotifyCallback {
+            SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
+        }
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        ClubSpotifyPlugin.sceneBecameActive()
+    }
+
+    func sceneWillResignActive(_ scene: UIScene) {
+        ClubSpotifyPlugin.sceneResignedActive()
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        SceneDelegateProxy.shared.scene(scene, openURLContexts: URLContexts)
+        let remaining = Set(URLContexts.filter { !ClubSpotifyPlugin.handleURL($0.url) })
+        if !remaining.isEmpty { SceneDelegateProxy.shared.scene(scene, openURLContexts: remaining) }
     }
 
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {

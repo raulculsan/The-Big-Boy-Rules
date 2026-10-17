@@ -25,7 +25,7 @@ alter table public.media_replies enable row level security;
 alter table public.notifications drop constraint if exists notifications_type_check;
 alter table public.notifications
   add constraint notifications_type_check
-  check (type in ('private_message', 'like', 'reply', 'media_created'));
+  check (type in ('private_message', 'group_message', 'like', 'reply', 'media_created', 'event_created', 'pack_granted', 'news_update', 'group_poll', 'trade_offer', 'trade_resolved'));
 
 create policy "members register moment views" on public.moment_views
   for insert to authenticated with check (viewer_id = auth.uid());

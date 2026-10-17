@@ -3,8 +3,16 @@
 drop policy if exists "members update own profile" on public.profiles;
 create policy "members update own profile" on public.profiles
   for update to authenticated
-  using (auth.uid() = id or public.current_user_can_manage())
-  with check (auth.uid() = id or public.current_user_can_manage());
+  using (
+    auth.uid() = id
+    or public.current_user_is_superadmin()
+    or (public.current_user_can_manage() and not coalesce(is_hidden, false) and role <> 'superadmin')
+  )
+  with check (
+    auth.uid() = id
+    or public.current_user_is_superadmin()
+    or (public.current_user_can_manage() and not coalesce(is_hidden, false) and role <> 'superadmin')
+  );
 
 drop policy if exists "members upload own avatar" on storage.objects;
 create policy "members upload own avatar" on storage.objects

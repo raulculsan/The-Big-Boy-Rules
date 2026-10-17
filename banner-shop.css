@@ -82,7 +82,7 @@
 .pack-reveal-stage{perspective:1200px;margin:14px auto;width:min(280px,65vw);aspect-ratio:4/7}
 .pack-reveal-card{position:relative;display:block;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:pointer;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.2,.7,.2,1)}
 .pack-reveal-card.is-flipped{transform:rotateY(180deg)}
-.pack-reveal-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;overflow:hidden;filter:drop-shadow(0 10px 16px #0009)}
+.pack-reveal-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;overflow:hidden;box-shadow:0 10px 16px #0009}
 .pack-reveal-face img{display:block;width:100%;height:100%;object-fit:contain}
 .pack-reveal-front{transform:rotateY(180deg)}
 .pack-reveal-info{min-height:85px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}
@@ -92,7 +92,7 @@
 .pack-reveal-card:focus-visible,.duplicate-cards-trigger:focus-visible{outline:2px solid #d9b667;outline-offset:5px}
 @media(prefers-reduced-motion:reduce){.pack-reveal-card{transition:none}.pack-reveal-stage{animation:none}}
 
-.pack-reveal-stage{touch-action:pan-y;user-select:none;-webkit-user-select:none;transition:transform .22s ease,opacity .22s ease}
+.pack-reveal-stage{touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .22s ease,opacity .22s ease}
 .pack-reveal-stage img{pointer-events:none;-webkit-user-drag:none}
 .pack-reveal-stage.is-dragging{animation:none;transition:none}
 .pack-reveal-stage.is-leaving{animation:none;transform:translateX(-110%);opacity:0}
@@ -233,7 +233,7 @@
 
 /* Confirmed duplicate exchanges: the copy travels into the server coin reward. */
 .card-discard-effect{position:fixed;inset:0;z-index:20;pointer-events:none;overflow:hidden}
-.card-discard-flying{position:fixed;object-fit:contain;transform-origin:center;filter:drop-shadow(0 8px 14px #0008);will-change:transform,opacity}
+.card-discard-flying{position:fixed;object-fit:contain;transform-origin:center;box-shadow:0 8px 14px #0008;will-change:transform,opacity}
 .is-discard-source{opacity:.2;transition:opacity .15s ease}
 .card-discard-reward{position:fixed;z-index:3;display:flex;align-items:center;flex-direction:column;gap:5px;transform:translate(-50%,-50%);padding:12px 22px;border:1px solid #e4bd6559;border-radius:20px;background:#17130eee;color:#f3d991;text-align:center;box-shadow:0 6px 36px #0007;white-space:nowrap}
 .card-discard-reward strong{font-size:19px}
@@ -309,5 +309,5 @@
 @media(prefers-reduced-motion:reduce){#bannerShopDialog[open]{animation:none}#bannerShopDialog button{transition:none}}
 
 /* Rapid pack taps advance cards without triggering browser double-tap zoom. */
-.pack-reveal-card{touch-action:pan-y}
+.pack-reveal-card{touch-action:none}
 .packs-art-button{touch-action:manipulation}

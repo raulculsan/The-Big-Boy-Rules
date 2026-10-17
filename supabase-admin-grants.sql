@@ -38,8 +38,8 @@ alter table public.member_coin_ledger add constraint member_coin_ledger_reason_c
 
 create table if not exists public.admin_reward_grants (
   request_id uuid primary key,
-  actor_id uuid not null references public.profiles(id),
-  user_id uuid not null references public.profiles(id),
+  actor_id uuid not null references public.profiles(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
   reward text not null check (reward in ('packs','coins')),
   amount integer not null check (amount > 0),
   result jsonb,
@@ -63,6 +63,9 @@ begin
   end if;
   if amount is null or amount <= 0 or reward_kind is null or reward_kind not in ('packs','coins') or request_id is null then
     raise exception 'Elige sobres o monedas y una cantidad entera mayor que cero.' using errcode = '22023';
+  end if;
+  if reward_kind = 'packs' and amount > 10000 then
+    raise exception 'No se pueden conceder más de 10 000 sobres en una sola operación.' using errcode = '22023';
   end if;
   perform 1 from public.profiles where id = target_user_id and not coalesce(is_hidden,false) for share;
   if not found then raise exception 'El miembro seleccionado no está disponible.' using errcode = '22023'; end if;

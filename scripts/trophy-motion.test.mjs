@@ -122,8 +122,8 @@ test('all trophy resources have matching offline URLs and reach the native bundl
   const shellContext=vm.createContext({self:{addEventListener(){}}});
   vm.runInContext(await readFile(new URL('service-worker.js',root),'utf8')+';globalThis.shell=APP_SHELL;',shellContext);
   const html=await readFile(new URL('index.html',root),'utf8');
-  assert.ok(html.indexOf('trophy-motion.js') < html.indexOf('<script src="app.js'));
-  assert.ok(!html.includes('<script src="vendor/lottie-light'));
+  assert.ok(html.indexOf('trophy-motion.js') < html.indexOf('src="app.js'));
+  assert.ok(!html.includes('src="vendor/lottie-light'));
   const resources=['trophy-motion.js?v=20260904-150','vendor/lottie-light.min.js?v=5.13.0',
     ...['bronze','silver','gold','platinum'].flatMap(tier=>['svg','json'].map(ext=>`icons/trophies/${tier}.${ext}?v=20260903-132`))];
   for (const url of resources) {

@@ -35,6 +35,9 @@ export default {
     const token = authorization.replace(/^Bearer\s+/i, "");
     const {data: {user}, error: authError} = await adminClient.auth.getUser(token);
     if (authError || !user) return json({error: "Sesión no válida."}, 401);
+    if (user.app_metadata?.must_change_password === true) {
+      return json({error: "Cambia tu contraseña provisional antes de administrar cuentas."}, 403);
+    }
 
     const {data: caller} = await adminClient
       .from("profiles")
@@ -62,7 +65,7 @@ export default {
       if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
         return json({error: "El usuario debe tener entre 3 y 32 caracteres válidos."}, 400);
       }
-      if (!displayName || displayName.length > 60 || password.length < 8) {
+      if (!displayName || displayName.length > 60 || password.length < 8 || password.length > 128) {
         return json({error: "Revisa el nombre y usa una contraseña de al menos 8 caracteres."}, 400);
       }
       const {data, error} = await adminClient.auth.admin.createUser({
@@ -70,6 +73,7 @@ export default {
         password,
         email_confirm: true,
         user_metadata: {display_name: displayName},
+        app_metadata: {must_change_password: true, password_change_nonce: crypto.randomUUID()},
       });
       if (error) return json({error: error.message}, 400);
       const {data: createdProfile, error: profileReadError} = await adminClient
@@ -114,10 +118,10 @@ export default {
       }
       const {data: target} = await adminClient
         .from("profiles")
-        .select("is_hidden,username")
+        .select("is_hidden,username,role")
         .eq("id", userId)
         .single();
-      if (!target || (target.is_hidden && !isSuperAdmin)) {
+      if (!target || (!isSuperAdmin && (target.is_hidden || target.role !== "member"))) {
         return json({error: "No puedes modificar esta cuenta."}, 403);
       }
       const {error: profileUpdateError} = await adminClient
@@ -142,11 +146,14 @@ export default {
       if (!userId || userId === user.id || password.length < 8 || password.length > 128) {
         return json({error: "Revisa el usuario y usa una contraseña de 8 a 128 caracteres."}, 400);
       }
-      const {data: target} = await adminClient.from("profiles").select("is_hidden").eq("id", userId).single();
-      if (!target || target.is_hidden) return json({error: "No puedes modificar esta cuenta."}, 403);
+      const {data: target} = await adminClient.from("profiles").select("is_hidden,role").eq("id", userId).single();
+      if (!target || target.is_hidden || (!isSuperAdmin && target.role !== "member")) return json({error: "No puedes modificar esta cuenta."}, 403);
+      const {data: targetAuth, error: targetAuthError} = await adminClient.auth.admin.getUserById(userId);
+      if (targetAuthError || !targetAuth.user) return json({error: "No se pudo comprobar la cuenta."}, 400);
       const {error} = await adminClient.auth.admin.updateUserById(userId, {
         password,
-        user_metadata: {must_change_password: true},
+        // New nonce distinguishes an admin reset from the subsequent user's change.
+        app_metadata: {...targetAuth.user.app_metadata, must_change_password: true, password_change_nonce: crypto.randomUUID()},
       });
       if (error) return json({error: error.message}, 400);
       return json({ok: true});

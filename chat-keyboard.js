@@ -37,7 +37,7 @@ const ChatKeyboard = Object.freeze({
       let previousScrollLock;
       let previousDismissLock;
       const syncContext = () => {
-        const inChat = document.body.classList.contains('chat-focus');
+        const inChat = document.body.classList.contains('chat-focus') || document.body.classList.contains('chat-inbox-view');
         const lockDocument = inChat || document.body.classList.contains('event-editor-open');
         if (inChat !== previousChat) {
           previousChat = inChat;

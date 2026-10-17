@@ -199,14 +199,17 @@ as $$
 declare
   caller_role text;
   target_hidden boolean;
+  target_role text;
 begin
   select role into caller_role from public.profiles where id = auth.uid();
-  if caller_role not in ('admin', 'superadmin') then raise exception 'No tienes permiso para cambiar rangos.'; end if;
-  if new_role not in ('member', 'admin') then raise exception 'Rango no válido.'; end if;
+  if caller_role is null or caller_role not in ('admin', 'superadmin') then raise exception 'No tienes permiso para cambiar rangos.'; end if;
+  if new_role is null or new_role not in ('member', 'admin') then raise exception 'Rango no válido.'; end if;
   if target_user_id = auth.uid() then raise exception 'No puedes cambiar tu propio rango.'; end if;
-  select is_hidden into target_hidden from public.profiles where id = target_user_id;
+  select is_hidden, role into target_hidden, target_role from public.profiles where id = target_user_id for update;
   if target_hidden is null then raise exception 'El usuario no existe.'; end if;
-  if target_hidden then raise exception 'No se puede modificar una cuenta oculta.'; end if;
+  if target_hidden or target_role = 'superadmin' then raise exception 'No se puede modificar una cuenta protegida.'; end if;
+  if caller_role = 'admin' and target_role = 'admin' then raise exception 'Solo el superadministrador puede cambiar el rango de otro administrador.'; end if;
+  perform set_config('app.authorized_role_change', 'true', true);
   update public.profiles set role = new_role, updated_at = now() where id = target_user_id;
 end;
 $$;
@@ -247,6 +250,7 @@ grant execute on function public.current_user_is_help_admin() to authenticated;
 create or replace function public.protect_profile_identity()
 returns trigger
 language plpgsql
+set search_path = public, pg_temp
 as $$
 begin
   if coalesce(auth.role(), '') <> 'service_role'
@@ -254,7 +258,7 @@ begin
     new.id <> old.id
     or new.legacy_id <> old.legacy_id
     or new.username <> old.username
-    or new.role <> old.role
+    or (new.role <> old.role and coalesce(current_setting('app.authorized_role_change', true), '') <> 'true')
     or new.is_hidden <> old.is_hidden
   ) then
     raise exception 'No puedes modificar la identidad o el rol de tu cuenta';
@@ -368,8 +372,16 @@ create policy "members read profiles" on public.profiles
 drop policy if exists "members update own profile" on public.profiles;
 create policy "members update own profile" on public.profiles
   for update to authenticated
-  using (auth.uid() = id or public.current_user_can_manage())
-  with check (auth.uid() = id or public.current_user_can_manage());
+  using (
+    auth.uid() = id
+    or public.current_user_is_superadmin()
+    or (public.current_user_can_manage() and not coalesce(is_hidden, false) and role <> 'superadmin')
+  )
+  with check (
+    auth.uid() = id
+    or public.current_user_is_superadmin()
+    or (public.current_user_can_manage() and not coalesce(is_hidden, false) and role <> 'superadmin')
+  );
 
 drop policy if exists "members read messages" on public.messages;
 create policy "members read messages" on public.messages
@@ -513,7 +525,19 @@ create policy "members read group events" on public.group_events
 
 drop policy if exists "kike creates group events" on public.group_events;
 create policy "kike creates group events" on public.group_events
-  for insert to authenticated with check (auth.uid() = created_by and (public.current_user_can_manage() or event_type = 'birthday'));
+  for insert to authenticated with check (
+    auth.uid() = created_by
+    and (
+      public.current_user_can_manage()
+      or (
+        event_type = 'birthday'
+        and not exists (
+          select 1 from public.group_events existing
+          where existing.created_by = auth.uid() and existing.event_type = 'birthday'
+        )
+      )
+    )
+  );
 
 drop policy if exists "kike updates group events" on public.group_events;
 create policy "kike updates group events" on public.group_events
@@ -727,8 +751,13 @@ on conflict (id) do update set
   allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists "public group media viewing" on storage.objects;
-create policy "public group media viewing" on storage.objects
-  for select using (bucket_id = 'group-media');
+drop policy if exists "members view own group media objects" on storage.objects;
+create policy "members view own group media objects" on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'group-media'
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_is_superadmin())
+  );
 
 drop policy if exists "members upload own group media" on storage.objects;
 create policy "members upload own group media" on storage.objects
@@ -1020,3 +1049,49 @@ begin
 exception
   when duplicate_object then null;
 end $$;
+
+-- Security audit: private chat uploads and replay-safe push dispatch.
+-- Apply before deploying the updated client and Edge Functions.
+create table if not exists public.push_dispatch_claims (
+  actor_id uuid not null references auth.users(id) on delete cascade,
+  kind text not null,
+  entity_id text not null,
+  created_at timestamptz not null default now(),
+  primary key (actor_id, kind, entity_id)
+);
+alter table public.push_dispatch_claims enable row level security;
+revoke all on public.push_dispatch_claims from anon, authenticated;
+grant select, insert on public.push_dispatch_claims to service_role;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+select 'private-chat', 'private-chat', false, 52428800, allowed_mime_types
+from storage.buckets where id = 'group-media'
+on conflict (id) do update set public = false, file_size_limit = 52428800,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "participants read private chat files" on storage.objects;
+create policy "participants read private chat files" on storage.objects for select to authenticated
+using (bucket_id = 'private-chat' and exists (
+  select 1 from public.private_messages m
+  where m.attachment_url = 'storage://private-chat/' || storage.objects.name
+    and (m.sender_id = auth.uid() or m.recipient_id = auth.uid() or public.current_user_is_superadmin())
+));
+drop policy if exists "members upload private chat files" on storage.objects;
+create policy "members upload private chat files" on storage.objects for insert to authenticated
+with check (bucket_id = 'private-chat' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "members delete private chat files" on storage.objects;
+create policy "members delete private chat files" on storage.objects for delete to authenticated
+using (bucket_id = 'private-chat' and ((storage.foldername(name))[1] = auth.uid()::text or public.current_user_is_superadmin()));
+
+-- Reject another sender's object reference: a forged message must never grant read access.
+alter table public.private_messages drop constraint if exists private_attachment_owner_check;
+alter table public.private_messages add constraint private_attachment_owner_check check (
+  attachment_url is null or attachment_url not like 'storage://%'
+  or starts_with(attachment_url, 'storage://private-chat/' || sender_id::text || '/')
+) not valid;
+
+-- Existing group-media/<sender>/private-chat files are still public until physically moved.
+-- Copy each referenced object to private-chat keeping its full path via Storage API,
+-- update that private_messages.attachment_url to storage://private-chat/<same path>,
+-- verify participant signing, then remove the original group-media object.
+-- SQL-only edits to storage.objects do not move bytes and must NOT be used.

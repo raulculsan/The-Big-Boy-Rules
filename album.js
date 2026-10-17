@@ -200,7 +200,8 @@
   }
   async function turn(destination) {
     const target = Math.max(0,Math.min(Math.ceil(slots.length / 5) - 1,destination));
-    if (turning || target === page || !isOpen()) return;
+    if (turning) {if (isOpen()) compassQueued = target; return;}
+    if (target === page || !isOpen()) return;
     stopTurn();
     const leaf = document.getElementById('cardAlbumLeaf'), forward = target > page;
     const viewport = dialog.querySelector('.card-album-page-viewport');
@@ -367,11 +368,11 @@
 
   dialog.addEventListener('input',event => {if (event.target.matches('[data-album-search]')) {query = event.target.value.trim(); changeFilters();}});
   dialog.addEventListener('change',event => {const field = event.target; if (field.matches('[data-album-collection]')) {selectedCollection = field.value; buildSlots(); changeFilters();} if (field.matches('[data-album-filter]')) {if (field.dataset.albumFilter === 'rarity') rarityFilter = field.value; if (field.dataset.albumFilter === 'kind') kindFilter = field.value; if (field.dataset.albumFilter === 'ownership') ownershipFilter = field.value; changeFilters();}});
-  dialog.addEventListener('keydown',event => {if (event.target.matches('input,select,summary')) return; if (event.key === 'Escape') {event.preventDefault(); close(); return;} if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); turn(page + (event.key === 'ArrowRight' ? 1 : -1));}});
+  dialog.addEventListener('keydown',event => {if (event.target.matches('input,select,summary')) return; if (event.key === 'Escape') {event.preventDefault(); close(); return;} if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); turn((compassQueued ?? page) + (event.key === 'ArrowRight' ? 1 : -1));}});
   let touchStart = null;
   const gestureViewport = dialog.querySelector('.card-album-page-viewport');
   gestureViewport.addEventListener('pointerdown',event => {
-    if (!isOpen() || turning || !event.isPrimary || event.button !== 0) return;
+    if (!isOpen() || !event.isPrimary || event.button !== 0) return;
     touchStart = {id:event.pointerId,x:event.clientX,y:event.clientY,horizontal:false};
   });
   gestureViewport.addEventListener('pointermove',event => {
@@ -390,7 +391,7 @@
     const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
     if (gesture.horizontal) suppressCardClickUntil=Date.now()+500;
     if (Math.abs(dx)>Math.min(70,gestureViewport.clientWidth*.2) && Math.abs(dx)>Math.abs(dy)*1.5) {
-      suppressCardClickUntil=Date.now()+500; void turn(page+(dx<0?1:-1));
+      suppressCardClickUntil=Date.now()+500; void turn((compassQueued ?? page)+(dx<0?1:-1));
     }
   });
   gestureViewport.addEventListener('pointercancel',() => {touchStart=null;});

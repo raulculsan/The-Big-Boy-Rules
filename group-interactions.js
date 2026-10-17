@@ -74,7 +74,12 @@
     if (!pending.length) return;
     const version=epoch;
     const request=(async()=>{
-      const {data,error}=await query(config.db.from('event_attendance').select('event_id,occurrence,user_id,response').in('event_id',[...new Set(pending.map(key=>attendance.get(key).eventId))]));
+      const eventIds=[...new Set(pending.map(key=>attendance.get(key).eventId))];
+      const occurrences=[...new Set(pending.map(key=>attendance.get(key).occurrence).filter(Boolean))];
+      let attendanceQuery=config.db.from('event_attendance').select('event_id,occurrence,user_id,response').in('event_id',eventIds);
+      if(occurrences.length===1&&typeof attendanceQuery.eq==='function')attendanceQuery=attendanceQuery.eq('occurrence',occurrences[0]);
+      else if(occurrences.length>1&&typeof attendanceQuery.in==='function')attendanceQuery=attendanceQuery.in('occurrence',occurrences);
+      const {data,error}=await query(attendanceQuery);
       if(version!==epoch)return;
       for(const key of pending){
         const state=attendance.get(key); if(!state)continue;

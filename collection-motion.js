@@ -19,7 +19,7 @@
     Promise.all([globalThis.TrophyMotion.loadPlayer(),data(name)]).then(([lottie,json])=>{
       if(dead)return;
       player=lottie.loadAnimation({container:host,renderer:'svg',loop:false,autoplay:false,
-        animationData:JSON.parse(JSON.stringify(json)),assetsPath:'icons/cards/',rendererSettings:{preserveAspectRatio:'xMidYMid meet'}});
+        animationData:typeof structuredClone==='function'?structuredClone(json):JSON.parse(JSON.stringify(json)),assetsPath:'icons/cards/',rendererSettings:{preserveAspectRatio:'xMidYMid meet'}});
       player.addEventListener('DOMLoaded',()=>{if(dead)return;clearTimeout(timer);onReady(player);});
       player.addEventListener('data_failed',fail);player.addEventListener('error',fail);
     }).catch(fail);

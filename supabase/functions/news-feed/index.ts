@@ -6,10 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const json = (body: Record<string, unknown>, status = 200) =>
+const json = (body: Record<string, unknown>, status = 200, extraHeaders: Record<string, string> = {}) =>
   Response.json(body, {
     status,
-    headers: {...corsHeaders, "content-type": "application/json; charset=utf-8"},
+    headers: {...corsHeaders, "content-type": "application/json; charset=utf-8", ...extraHeaders},
   });
 
 const feeds: Record<string, string[]> = {
@@ -36,11 +36,22 @@ const feeds: Record<string, string[]> = {
   ],
 };
 
+// Edge isolates are reused, so keep a short in-memory news cache and coalesce
+// refreshes. This makes category switches and repeat visits return immediately.
+const NEWS_TTL_MS = 90_000;
+const newsCache = new Map<string, {items: ReturnType<typeof parseFeed>; sources: number; refreshedAt: string; savedAt: number}>();
+const refreshes = new Map<string, Promise<{items: ReturnType<typeof parseFeed>; sources: number; refreshedAt: string} | null>>();
+
 function decodeXml(value = "") {
   const named: Record<string, string> = {amp: "&", quot: "\"", apos: "'", lt: "<", gt: ">", nbsp: " "};
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&#(x?[0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code.replace(/^x/i, ""), /^x/i.test(code) ? 16 : 10)))
+    .replace(/&#(x?[0-9a-f]+);/gi, (entity, code) => {
+      const cp = parseInt(code.replace(/^x/i, ""), /^x/i.test(code) ? 16 : 10);
+      return Number.isInteger(cp) && cp >= 0 && cp <= 0x10ffff && (cp < 0xd800 || cp > 0xdfff)
+        ? String.fromCodePoint(cp)
+        : entity;
+    })
     .replace(/&([a-z]+);/gi, (entity, name) => named[name.toLowerCase()] ?? entity)
     .replace(/<[^>]+>/g, "")
     .trim();
@@ -48,6 +59,37 @@ function decodeXml(value = "") {
 
 function tag(item: string, name: string) {
   return decodeXml(item.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, "i"))?.[1] || "");
+}
+
+// Only URLs supplied by the configured publishers' feeds are used. No article scraping.
+function safeFeedUrl(value: string) {
+  try {
+    const url = new URL(decodeXml(value).replace(/^\/\//, "https://"));
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : "";
+  } catch { return ""; }
+}
+
+function feedImage(item: string) {
+  const attribute = (element: string, name: string) =>
+    element.match(new RegExp(`\\b${name}\\s*=\\s*["']([^"']+)["']`, "i"))?.[1] || "";
+  for (const match of item.matchAll(/<(?:media:content|media:thumbnail|enclosure)\b[^>]*>/gi)) {
+    const element = match[0];
+    const type = attribute(element, "type");
+    const medium = attribute(element, "medium");
+    if (/^<enclosure/i.test(element) && !/^image\//i.test(type)) continue;
+    if (/^<media:content/i.test(element) && (type && !/^image\//i.test(type) || medium && medium !== "image")) continue;
+    const image = safeFeedUrl(attribute(element, "url"));
+    if (image) return image;
+  }
+  // Description images can be CDATA HTML or entity-escaped HTML.
+  const description = item.match(/<(?:description|content:encoded)(?:\s[^>]*)?>([\s\S]*?)<\/(?:description|content:encoded)>/i)?.[1] || "";
+  const html = description.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&quot;/gi, '"');
+  for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
+    const image = safeFeedUrl(attribute(match[0], "src"));
+    if (image) return image;
+  }
+  const image = item.match(/<image(?:\s[^>]*)?>([\s\S]*?)<\/image>/i)?.[1] || "";
+  return safeFeedUrl(tag(image, "url") || image);
 }
 
 function parseFeed(xml: string) {
@@ -58,7 +100,9 @@ function parseFeed(xml: string) {
     const source = tag(item, "source") || channelSource || title.split(" - ").pop() || "Medio de comunicación";
     return {
       title,
-      link: tag(item, "link") || tag(item, "guid"),
+      link: safeFeedUrl(tag(item, "link") || tag(item, "guid")),
+      image: feedImage(item),
+      summary: tag(item, "description").replace(/\s+/g, " ").slice(0, 300),
       published: tag(item, "pubDate") || tag(item, "dc:date") || tag(item, "published") || tag(item, "updated") || tag(item, "date"),
       source,
     };
@@ -71,10 +115,62 @@ async function fetchFeed(url: string) {
       "Accept": "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.7",
       "User-Agent": "Mozilla/5.0 (compatible; TheBigBoyRules/1.0; +https://raulculsan.github.io/The-Big-Boy-Rules/)",
     },
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(6000),
   });
   if (!response.ok) throw new Error(`RSS ${response.status}`);
   return parseFeed(await response.text());
+}
+
+function combine(results: PromiseSettledResult<ReturnType<typeof parseFeed>>[]) {
+  const fulfilled = results.filter((result): result is PromiseFulfilledResult<ReturnType<typeof parseFeed>> => result.status === "fulfilled");
+  const seen = new Set<string>();
+  const items = fulfilled.flatMap(result => result.value)
+    .sort((a, b) => (Date.parse(b.published) || 0) - (Date.parse(a.published) || 0))
+    .filter(item => {
+      const key = item.title.toLocaleLowerCase("es").replace(/\s+-\s+[^-]+$/, "").replace(/\W+/g, " ").trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 30);
+  return items.length ? {items, sources: fulfilled.length, refreshedAt: new Date().toISOString()} : null;
+}
+
+function refreshCategory(category: string) {
+  const existing = refreshes.get(category);
+  if (existing) return existing;
+  const urls = feeds[category];
+  const settled: PromiseSettledResult<ReturnType<typeof parseFeed>>[] = [];
+  let completeCount = 0, successCount = 0, resolveFirst!: (value: ReturnType<typeof combine>) => void;
+  const firstBatch = new Promise<ReturnType<typeof combine>>(resolve => { resolveFirst = resolve; });
+  let firstBatchResolved = false;
+  const publishFirstBatch = () => {
+    if (firstBatchResolved || (successCount < 2 && completeCount < urls.length)) return;
+    firstBatchResolved = true;
+    resolveFirst(combine(settled));
+  };
+  const requests = urls.map(url => fetchFeed(url).then(value => {
+    settled.push({status:"fulfilled", value}); successCount++;
+  }, reason => settled.push({status:"rejected", reason})).finally(() => {
+    completeCount++;
+    publishFirstBatch();
+  }));
+  const completion = Promise.all(requests).then(() => {
+    const result = combine(settled);
+    if (result) newsCache.set(category, {...result, savedAt: Date.now()});
+    return result;
+  }).finally(() => refreshes.delete(category));
+  const runtime = globalThis as typeof globalThis & {EdgeRuntime?: {waitUntil?: (promise: Promise<unknown>) => void}};
+  runtime.EdgeRuntime?.waitUntil?.(completion);
+  const pending = firstBatch.then(result => {
+    if (result && !newsCache.has(category)) newsCache.set(category, {...result, savedAt: Date.now()});
+    return result;
+  });
+  refreshes.set(category, pending);
+  return pending;
+}
+
+function newsResponse(value: {items: ReturnType<typeof parseFeed>; sources: number; refreshedAt: string}, cached = false) {
+  return json({...value, cached}, 200, {"Cache-Control": "private, max-age=30, stale-while-revalidate=90"});
 }
 
 export default {
@@ -91,24 +187,19 @@ export default {
     }
     if (!feeds[category]) return json({error: "Categoría no válida."}, 400);
 
-    const results = await Promise.allSettled(feeds[category].map(fetchFeed));
-    const fulfilled = results.filter((result): result is PromiseFulfilledResult<ReturnType<typeof parseFeed>> => result.status === "fulfilled");
-    const combined = fulfilled.flatMap(result => result.value);
-    const seen = new Set<string>();
-    const items = combined
-      .sort((a, b) => Date.parse(b.published) - Date.parse(a.published))
-      .filter(item => {
-        const key = item.title.toLocaleLowerCase("es").replace(/\s+-\s+[^-]+$/, "").replace(/\W+/g, " ").trim();
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .slice(0, 40);
+    const cached = newsCache.get(category);
+    if (cached && Date.now() - cached.savedAt < NEWS_TTL_MS) return newsResponse(cached, true);
 
-    if (!items.length) {
-      const errors = results.filter(result => result.status === "rejected").map(result => String(result.reason?.message || result.reason)).slice(0, 5);
-      return json({error: "Las fuentes no devolvieron titulares.", errors}, 502);
+    const refresh = refreshCategory(category);
+    // Stale headlines are useful immediately while RSS publishers refresh.
+    if (cached) {
+      const runtime = globalThis as typeof globalThis & {EdgeRuntime?: {waitUntil?: (promise: Promise<unknown>) => void}};
+      runtime.EdgeRuntime?.waitUntil?.(refresh);
+      return newsResponse(cached, true);
     }
-    return json({items, sources: fulfilled.length, refreshedAt: new Date().toISOString()});
+
+    const result = await refresh;
+    if (!result) return json({error: "Las fuentes no devolvieron titulares."}, 502);
+    return newsResponse(result);
   },
 };

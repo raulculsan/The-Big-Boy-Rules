@@ -93,7 +93,7 @@
         if (!live()) return;
         state.animation = player.loadAnimation({
           container: host.querySelector('.trophy-lottie'), renderer: 'svg',
-          loop: false, autoplay: false, animationData: JSON.parse(JSON.stringify(data)),
+          loop: false, autoplay: false, animationData: typeof structuredClone === 'function' ? structuredClone(data) : JSON.parse(JSON.stringify(data)),
           rendererSettings: {progressiveLoad: false, preserveAspectRatio: 'xMidYMid meet'}
         });
         const animation = state.animation;
