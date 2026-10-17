@@ -53,6 +53,7 @@
   <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
   <link rel="stylesheet" href="collection-social.css?v=20261015-mutual-trades-305" />
   <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
+  <link rel="stylesheet" href="visual-system.css?v=20261017-bigboy-3" />
 </head>
 <body>
 
@@ -72,7 +73,7 @@
         </div>
         <div class="login-brand-copy">
           <span class="eyebrow">MEMBERS ONLY</span>
-          <h2>ENTRA EN<br><em>EL CÍRCULO.</em></h2>
+          <h2>The Big Boy<br><em>Rules.</em></h2>
           <p>Un espacio privado para los miembros de The Big Boy Rules.</p>
         </div>
       </div>
@@ -98,7 +99,6 @@
 
           <div class="login-options">
             <span class="persistent-session-label">✓ Sesión guardada en este dispositivo</span>
-            <span class="secure-label">◆ Acceso cifrado visual</span>
           </div>
 
           <div class="login-error" id="loginError" role="alert"></div>
@@ -165,16 +165,16 @@
     </header>
 
     <section class="page-section active club-home" id="inicio">
+      <div class="club-welcome">
+        <div><span class="eyebrow">THE BIG BOY RULES</span><h2>Inicio</h2></div>
+        <span class="status-pill" id="heroOnlineStatus"><i></i> Conectando</span>
+      </div>
       <div class="club-search">
         <label class="search-hub-box" for="globalSearchInput">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
           <input id="globalSearchInput" type="search" placeholder="Buscar miembros" aria-label="Buscar miembros" autocomplete="off">
         </label>
         <div class="search-results search-hub-results" id="searchResults" aria-live="polite" hidden></div>
-      </div>
-      <div class="club-welcome">
-        <div><span class="eyebrow">THE BIG BOY RULES</span><h2>Inicio</h2></div>
-        <span class="status-pill" id="heroOnlineStatus"><i></i> Conectando</span>
       </div>
       <section class="home-news-section is-collapsed" id="noticias" aria-labelledby="clubNewsTitle">
         <div class="club-news-heading">
@@ -203,7 +203,7 @@
         </article>
       </div>
       <section class="home-members-section" id="miembros" aria-labelledby="clubMembersTitle">
-        <div class="panel-heading"><div><span class="eyebrow">LOS DE SIEMPRE</span><h3 id="clubMembersTitle">Miembros</h3></div></div>
+        <div class="panel-heading"><div><span class="eyebrow">EL CLUB</span><h3 id="clubMembersTitle">Miembros</h3></div></div>
         <div class="members-grid" id="membersGrid"></div>
       </section>
     </section>
@@ -252,6 +252,7 @@
       <div class="messages-hub reveal">
         <aside class="panel chat-inbox">
           <div class="inbox-tools">
+            <header class="bb2-inbox-heading"><span class="eyebrow">EL CLUB</span><h2>Chats</h2></header>
             <label class="inbox-search" for="inboxSearchInput">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
               <input id="inboxSearchInput" type="search" placeholder="Buscar conversación" aria-label="Buscar conversación o miembro" autocomplete="off">

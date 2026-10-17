@@ -16,6 +16,7 @@ const sources = [
   "app-health.js",
   "app-health.css",
   "styles.css",
+  "visual-system.css",
   "notifications.css",
   "club.css",
   "news.css",

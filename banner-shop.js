@@ -90,6 +90,7 @@
     if (reveal !== current || !revealDialog.open) return;
     current.phase = 'idle';
     revealDialog.classList.remove('is-opening-pack');
+    revealDialog.querySelector('.pack-reveal-center')?.classList.remove('is-arriving');
     revealDialog.querySelector('.pack-opening-wrap')?.remove();
   }
   function flipReveal() {
@@ -140,7 +141,17 @@
     revealTimer = setTimeout(() => {
       if (reveal !== current || !revealDialog.open) return;
       if (current.index + 1 === current.cards.length) revealDialog.close();
-      else {current.index++; current.flipped = false; current.advancing = false; current.phase = 'idle'; renderReveal();}
+      else {
+        current.index++; current.flipped = false; current.advancing = false;
+        current.phase = revealReduced() ? 'idle' : 'arriving';
+        renderReveal();
+        if (current.phase === 'arriving') {
+          // Entrance belongs to the parent; the card keeps exclusive ownership
+          // of rotation and the stage keeps exclusive ownership of swiping.
+          revealDialog.querySelector('.pack-reveal-center').classList.add('is-arriving');
+          revealTimer = setTimeout(() => finishRevealMotion(current),220);
+        }
+      }
     }, revealReduced() ? 0 : motionTimings.advance);
   }
   revealDialog.addEventListener('pointerdown', event => {
@@ -701,7 +712,16 @@
     });
     globalThis.CardAlbum?.configure({refresh:() => refresh(), navigate:options.navigate});
     document.addEventListener('click', event => {
-      if (event.target.closest('[data-banner-shop]')) {el('bannerShopDialog').showModal(); void refresh();}
+      if (event.target.closest('[data-banner-shop]')) {
+        const shop = el('bannerShopDialog');
+        shop.showModal();
+        const artwork = shop.querySelector('.is-featured .shop-artwork');
+        if (artwork && !revealReduced()) artwork.animate([
+          {opacity:.6, transform:'scale(.985)'},
+          {opacity:1, transform:'scale(1)'}
+        ], {duration:300, easing:'cubic-bezier(.22,1,.36,1)'});
+        void refresh();
+      }
       const ownedOption = event.target.closest('[data-profile-banner]');
       if (ownedOption && !el('profileBannerSettings').hidden && !ownedOption.disabled) {
         const id = ownedOption.dataset.profileBanner || null;

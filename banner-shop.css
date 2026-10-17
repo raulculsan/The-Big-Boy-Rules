@@ -216,18 +216,20 @@
 .pack-reveal-front::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,#fff2 48%,transparent 60%);opacity:0;pointer-events:none}
 .pack-reveal-card.is-flipped .pack-reveal-front::after{animation:pack-reveal-glint var(--collection-flip-duration,420ms) ease-out}
 .pack-opening-wrap{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:visible;filter:drop-shadow(0 7px 9px #0005)}
-.pack-opening-body{animation:pack-wrapper-release var(--collection-opening-duration,720ms) ease-out both}
-.pack-opening-seal{transform-box:fill-box;transform-origin:center;animation:pack-seal-release var(--collection-opening-duration,720ms) ease-out both}
+.pack-opening-body{transform-box:fill-box;transform-origin:center;animation:pack-wrapper-release var(--collection-opening-duration,720ms) cubic-bezier(.22,1,.36,1) both}
+.pack-opening-seal{transform-box:fill-box;transform-origin:center;animation:pack-seal-release var(--collection-opening-duration,720ms) cubic-bezier(.22,1,.36,1) both}
 .is-opening-pack .pack-reveal-stage{animation:none}
-.is-opening-pack .pack-reveal-card{animation:pack-card-emerge var(--collection-opening-duration,720ms) ease-out both}
+.is-opening-pack .pack-reveal-card{animation:pack-card-emerge var(--collection-opening-duration,720ms) cubic-bezier(.22,1,.36,1) both}
+.pack-reveal-center.is-arriving{animation:pack-next-arrive 220ms cubic-bezier(.22,1,.36,1) both}
 .is-opening-pack .pack-reveal-info,.is-opening-pack .pack-reveal-actions{visibility:hidden}
 @keyframes pack-seal-release{0%,20%{transform:translateY(0);opacity:1}50%{transform:translateY(-30px);opacity:1}70%,100%{transform:translateY(-40px);opacity:0}}
-@keyframes pack-wrapper-release{0%,38%{transform:translateY(0);opacity:1}90%,100%{transform:translateY(45px);opacity:0}}
+@keyframes pack-wrapper-release{0%,38%{transform:translateY(0) scale(1);opacity:1}90%,100%{transform:translateY(24px) scale(.95);opacity:0}}
 @keyframes pack-card-emerge{0%,28%{transform:translateY(16px) scale(.97);opacity:0}70%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes pack-next-arrive{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 .pack-reveal-card.is-flipped{animation:none}
 @keyframes pack-reveal-glint{0%,40%,100%{opacity:0}65%{opacity:.5}}
 @media(max-height:560px){.pack-reveal-dialog{--pack-footer-height:174px;--pack-card-height:max(96px,min(440px,calc(var(--pack-available-height) - 252px),calc((100vw - var(--pack-safe-left) - var(--pack-safe-right) - 64px) * 7 / 4)))}.pack-reveal-dialog[open]{grid-template-rows:minmax(44px,1fr) auto var(--pack-footer-height)}.pack-reveal-stage{margin:6px auto}.pack-reveal-info{min-height:36px}.pack-reveal-header button{min-height:44px}.pack-reveal-info h3{font-size:13px}.pack-reveal-actions{margin:4px 0}.pack-reveal-swipe-hint{font-size:10px}}
-@media(prefers-reduced-motion:reduce){.pack-reveal-stage,.pack-reveal-card,.pack-reveal-card.is-flipped,.pack-reveal-card.is-flipped .pack-reveal-front::after{animation:none;transition:none}.pack-opening-wrap{display:none}}
+@media(prefers-reduced-motion:reduce){.pack-reveal-center.is-arriving,.pack-reveal-stage,.pack-reveal-card,.pack-reveal-card.is-flipped,.pack-reveal-card.is-flipped .pack-reveal-front::after{animation:none;transition:none}.pack-opening-wrap{display:none}}
 
 /* Confirmed duplicate exchanges: the copy travels into the server coin reward. */
 .card-discard-effect{position:fixed;inset:0;z-index:20;pointer-events:none;overflow:hidden}

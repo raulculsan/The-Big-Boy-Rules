@@ -1918,7 +1918,17 @@ function setChatMessageMarkup(container, markup) {
     const template = document.createElement("template");
     template.innerHTML = markup.slice(previous.markup.length);
     const images = [...template.content.querySelectorAll("[data-chat-thumbnail]")];
+    const incomingRows = [...template.content.querySelectorAll('.message')];
+    const animateIncoming = incomingRows.length <= 3 && !document.hidden
+      && container.closest('.page-section.active') && container.scrollHeight - container.scrollTop - container.clientHeight < 100
+      && !(globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).matches;
     container.append(template.content);
+    // Only live additions animate: reopening a conversation and syncing its
+    // history must not replay the transcript or move its reading position.
+    if (animateIncoming) for (const row of incomingRows) row.animate([
+      {opacity:0, transform:'translateY(7px)'},
+      {opacity:1, transform:'translateY(0)'}
+    ], {duration:180, easing:'cubic-bezier(.22,1,.36,1)'});
     for (const image of images) {
       if (chatThumbnailObserver) chatThumbnailObserver.observe(image);
       else startChatThumbnail(image);
