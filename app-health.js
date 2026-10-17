@@ -104,8 +104,21 @@
     if (image instanceof HTMLImageElement && image.naturalWidth * image.naturalHeight > 4000000) record('image', {mp:Math.round(image.naturalWidth * image.naturalHeight / 1000000), area:area()});
   }, true);
   document.addEventListener('error', event => { if (event.target instanceof HTMLImageElement) record('image-error', {area:area()}); }, true);
-  window.addEventListener('error', () => record('script-error', {area:area()}));
-  window.addEventListener('unhandledrejection', () => record('promise-error', {area:area()}));
+  const safeErrorKind = error => ['TypeError','ReferenceError','RangeError','SyntaxError','URIError','EvalError','AbortError'].includes(error?.name) ? error.name : 'Error';
+  const localSource = value => {
+    // Only a bundled script basename and line numbers, never URLs, text or tokens.
+    const match = String(value || '').match(/(?:^|[/\s(])([a-z][a-z0-9-]*\.js)(?=[?:)\s]|$)/i);
+    return match?.[1] || 'unknown-source';
+  };
+  window.addEventListener('error', event => {
+    if (event.target instanceof HTMLImageElement) return;
+    record('script-error', {area:area()});
+    console.warn(`[BigBoy runtime] ${safeErrorKind(event.error)} ${localSource(event.filename)}:${Number(event.lineno) || 0}:${Number(event.colno) || 0}`);
+  });
+  window.addEventListener('unhandledrejection', event => {
+    record('promise-error', {area:area()});
+    console.warn(`[BigBoy runtime] rejected ${safeErrorKind(event.reason)} ${localSource(event.reason?.stack)}`);
+  });
   // Estimate input-to-presented-frame on Safari/WKWebView too. No message content is stored.
   const interactionAction = target => {
     if (!(target instanceof Element)) return null;
@@ -225,7 +238,7 @@
       <p class="health-capture-note">${items.length} / ${limit} muestras · ${groups.length} sesiones conservadas · p95: el 95 % de las mediciones queda por debajo de ese tiempo.</p>`;
   }
   window.ClubHealth = {
-    mark(name) { if (['authenticated','shell-ready','home-ready'].includes(name) && !marked.has(name)) { marked.add(name); record(name, {ms:Math.round(performance.now())}); } },
+    mark(name) { if (['authenticated','shell-ready','home-ready'].includes(name) && !marked.has(name)) { marked.add(name); const ms = Math.round(performance.now()); record(name, {ms}); console.info(`[BigBoy startup] ${name}: ${ms} ms`); } },
     show() {
       const target = document.getElementById('healthReport'), host = document.getElementById('healthDashboard');
       if (!target || !host) return;

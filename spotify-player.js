@@ -5,7 +5,7 @@
   const native = () => window.Capacitor?.getPlatform?.() === 'ios';
   let plugin, listener, initialization, configuration, host, playlist = '', owner = '', generation = 0, pending = false, notice = '';
   let state = {connected:false, configured:false, installed:false, linked:false};
-  let receivedAt = Date.now(), stateRequest = false, hostObserver = null, hostVisible = false, seeking = false;
+  let receivedAt = Date.now(), lastStateRequest = 0, stateRequest = false, hostObserver = null, hostVisible = false, seeking = false;
   const playerVisible = () => !!host?.isConnected && !document.hidden && (hostObserver ? hostVisible : !!host.getClientRects().length);
   const clock = ms => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2,'0')}`;
   const svg = kind => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">${kind === 'pause' ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : kind === 'previous' ? '<path d="M5 4h2v16H5zM19 4v16L8 12z"/>' : kind === 'next' ? '<path d="M17 4h2v16h-2zM5 4l11 8-11 8z"/>' : '<path d="M7 3l15 9-15 9z"/>'}</svg>`;
@@ -111,13 +111,16 @@
     updateProgress();
   }, 1000);
   const refreshState = () => {
-    if (!plugin || !owner || !playerVisible() || stateRequest) return;
+    const interval = state.currentAvailable && !state.paused ? 15000 : state.connected ? 30000 : 60000;
+    if (document.activeElement?.matches('input:not([type=range]),textarea,[contenteditable=true]')) return;
+    if (!plugin || !configuration || !owner || !state.linked || !playerVisible() || stateRequest || Date.now() - lastStateRequest < interval) return;
+    lastStateRequest = Date.now();
     const token = generation;
     stateRequest = true;
     plugin.getState().then(value => { if (token === generation) receive(value); }).catch(() => {}).finally(() => {stateRequest = false;});
   };
   setInterval(refreshState, 10000);
-  document.addEventListener('visibilitychange', () => {draw();refreshState();});
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastStateRequest = 0; draw(); refreshState(); } });
   window.addEventListener('focus', refreshState);
   window.ClubSpotify = {
     async mount(element, url, userId) {
@@ -141,6 +144,7 @@
       const changed = owner !== nextOwner; playlist = id; owner = nextOwner;
       if (changed) {
         ++generation; configuration = null; pending = false; notice = '';
+        lastStateRequest = 0;
         state = {connected:false,configured:false,linked:false,installed:false};
       }
       const token = generation;

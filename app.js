@@ -5,7 +5,7 @@ document.addEventListener("pointerdown", () => {
   if (document.documentElement.dataset.inputModality !== "pointer") document.documentElement.dataset.inputModality = "pointer";
 }, {capture: true, passive: true});
 document.addEventListener("keydown", event => {
-  if (!event.metaKey && !event.ctrlKey && !event.altKey) {
+  if (!event.metaKey && !event.ctrlKey && !event.altKey && ["Tab", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Escape"].includes(event.key)) {
     if (document.documentElement.dataset.inputModality !== "keyboard") document.documentElement.dataset.inputModality = "keyboard";
   }
 }, {capture: true});
@@ -3236,9 +3236,10 @@ async function hydrateAuthenticatedData(authUser) {
   const isCurrent = () => currentAuthUser?.id === authUser.id;
   // Only the visible Home's data and unread badges compete for the initial
   // connection. Other requests start independently once input/rendering is idle.
+  const reportLoadFailure = (name, error) => console.warn(`[BigBoy startup] ${name} failed (${String(error?.code || error?.name || "unknown").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40)})`);
   const defer = loader => runWhenIdle(() => {
     if (!isCurrent()) return;
-    Promise.resolve().then(loader).catch(error => console.warn("No se pudo actualizar una sección del club:", error));
+    Promise.resolve().then(loader).catch(error => reportLoadFailure(loader.name || "deferred-section", error));
   });
   const loadChats = async () => {
     await loadChatChannels({refreshMessages: false});
@@ -3248,7 +3249,13 @@ async function hydrateAuthenticatedData(authUser) {
   };
   try {
     const chatVisible = ["chat", "privados"].some(id => document.getElementById(id)?.classList.contains("active"));
-    const primary = [loadRemoteProfiles(), loadGroupEvents(), loadSiteSettings(), loadNotifications()];
+    const primaryNames = ["profiles", "events", "settings", "notifications"];
+    const measureLoad = async (name, loader) => {
+      const started = performance.now();
+      try { return await loader(); }
+      finally { console.info(`[BigBoy startup] load-${name}: ${Math.round(performance.now() - started)} ms`); }
+    };
+    const primary = [loadRemoteProfiles, loadGroupEvents, loadSiteSettings, loadNotifications].map((loader, index) => measureLoad(primaryNames[index], loader));
     if (chatVisible) primary.push(loadChats(), loadPrivateMessages());
     else { defer(loadChats); defer(loadPrivateMessages); }
     defer(loadNotificationPreferences);
@@ -3257,8 +3264,8 @@ async function hydrateAuthenticatedData(authUser) {
     const results = await Promise.allSettled(primary);
     if (!isCurrent()) return;
     globalThis.ClubHealth?.mark("home-ready");
-    for (const result of results) {
-      if (result.status === "rejected") console.warn("No se pudo actualizar una sección del club:", result.reason);
+    for (const [index, result] of results.entries()) {
+      if (result.status === "rejected") reportLoadFailure(primaryNames[index] || "chats", result.reason);
     }
   } catch (error) {
     console.warn("No se pudieron actualizar todos los datos al iniciar:", error);
@@ -3592,7 +3599,6 @@ async function loadRemoteProfiles() {
   rebuildMemberIndexes();
   if (currentUser && !currentUser.hidden) {
     currentUser = getMember(currentUser.id) || currentUser;
-    cacheAuthenticatedProfile(currentUser, currentAuthUser);
   }
   refreshProfileSurfaces();
   renderAchievementDetail();
@@ -5336,7 +5342,6 @@ async function saveProfile(form) {
     Object.assign(profile, updates);
     if (profile.id === currentUser.id) {
       Object.assign(currentUser, updates);
-      cacheAuthenticatedProfile(currentUser, currentAuthUser);
     }
     if (!backendReady) persistLocalProfile(profile);
     refreshProfileSurfaces();
@@ -6773,7 +6778,7 @@ globalThis.AdminGrants?.initialize({
       if (error) throw error;
       if (currentAuthUser?.id !== actor) return;
       Object.assign(member,updates);
-      if (member.id === currentUser?.id) { Object.assign(currentUser,updates); cacheAuthenticatedProfile(currentUser,currentAuthUser); }
+      if (member.id === currentUser?.id) Object.assign(currentUser,updates);
       profilesRealtime?.send({type:"broadcast",event:"profile-updated",payload:{userId:member.authId,updatedAt:Date.now()}});
       refreshProfileSurfaces();
     } catch (error) {

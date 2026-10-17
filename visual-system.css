@@ -395,7 +395,9 @@ body.authenticated #inicio .club-search .search-hub-box:focus-within {
   border-color: var(--bb2-line-strong);
   box-shadow: none;
 }
-body.authenticated #inicio .club-search input:focus {
+body.authenticated #inicio .club-search input { caret-color: var(--bb2-ink); }
+body.authenticated #inicio .club-search input:focus,
+body.authenticated #inicio .club-search input:focus-visible {
   border-color: transparent;
   box-shadow: none;
   outline: none;
@@ -404,14 +406,14 @@ body.authenticated #inicio .club-search input::selection {
   color: var(--bb2-ink);
   background: #47668f;
 }
+body.authenticated #inicio .club-search .search-result:focus {
+  outline: none;
+  box-shadow: none;
+}
 :root[data-input-modality="keyboard"] body.authenticated #inicio .club-search .search-hub-box:has(input:focus-visible),
 :root[data-input-modality="keyboard"] body.authenticated #inicio .club-search .search-result:focus-visible {
   outline: 2px solid var(--bb2-secondary);
   outline-offset: 3px;
-}
-:root[data-input-modality="pointer"] body.authenticated #inicio .club-search .search-result:focus {
-  outline: none;
-  box-shadow: none;
 }
 body.authenticated #inicio #noticias {
   border-color: var(--bb2-line-strong);
