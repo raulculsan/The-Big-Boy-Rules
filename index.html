@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0b0d" />
   <meta name="color-scheme" content="dark" />
   <link rel="stylesheet" href="app-health.css?v=20261016-improvements-319">
-  <script defer src="app-health.js?v=20261016-improvements-319"></script>
+  <script defer src="app-health.js?v=20261017-input-startup-328"></script>
   <style id="startup-paint">
     html, body { background:#08090c; color:#f4f1e9; }
     #pageLoader { position:fixed; inset:0; z-index:9999; display:grid; place-items:center; background:#08090c; }
@@ -958,15 +958,25 @@
   <script defer src="chat-themes.js?v=20261010-241"></script>
   <script defer src="group-interactions.js?v=20261016-release-322"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
-  <script defer src="app.js?v=20261017-chat-read-324"></script>
+  <script defer src="app.js?v=20261017-input-startup-328"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        // The installed update is used on the next navigation. Reloading this
-        // visible session interrupts startup, chats and pending user actions.
-        navigator.serviceWorker.register("./service-worker.js", {scope: "./", updateViaCache: "none"})
-          .then(registration => registration.update())
-          .catch(error => console.warn("No se pudo activar el modo PWA:", error));
+        const register = () => {
+          // Cache installation competes for disk/network with the first app interaction.
+          // Wait until the user leaves an editor; registration itself already checks updates.
+          if (document.activeElement?.matches("input,textarea,[contenteditable=true]")) {
+            setTimeout(schedule, 2000);
+            return;
+          }
+          navigator.serviceWorker.register("./service-worker.js", {scope:"./", updateViaCache:"none"})
+            .catch(error => console.warn("No se pudo activar el modo PWA:", error));
+        };
+        const schedule = () => {
+          if (window.requestIdleCallback) requestIdleCallback(register, {timeout:10000});
+          else setTimeout(register, 2000);
+        };
+        schedule();
       });
     }
   </script>

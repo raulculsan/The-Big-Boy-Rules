@@ -1,8 +1,8 @@
-const CACHE_NAME = "big-boy-rules-v327";
+const CACHE_NAME = "big-boy-rules-v328";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./app-health.js?v=20261016-improvements-319",
+  "./app-health.js?v=20261017-input-startup-328",
   "./app-health.css?v=20261016-improvements-319",
   "./styles.css?v=20261016-improvements-319",
   "./visual-system.css?v=20261017-bigboy-4",
@@ -32,7 +32,7 @@ const APP_SHELL = [
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20260903-130",
-  "./app.js?v=20261017-chat-read-324",
+  "./app.js?v=20261017-input-startup-328",
   "./spotify-player.js?v=20261015-idle-layout-306",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261016-release-323",
@@ -205,11 +205,32 @@ const APP_SHELL = [
 // when viewed. They must never delay installing/updating the executable shell.
 const CORE_SHELL = APP_SHELL.filter(asset => !asset.startsWith("./icons/cards/") && !asset.startsWith("./icons/banners/") && !asset.startsWith("./icons/trophies/") && !asset.startsWith("./icons/mascot/"));
 
-self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE_NAME)
-    .then(cache => cache.addAll(CORE_SHELL))
-    .then(() => self.skipWaiting()));
-});
+// Reuse exact versioned executable URLs across releases. HTML and unversioned
+// configuration always come from the network so a release cannot inherit old entrypoints.
+async function installShell() {
+  const cache = await caches.open(CACHE_NAME);
+  const previousNames = (await caches.keys()).filter(key => /^big-boy-rules-v\d+$/.test(key) && key !== CACHE_NAME)
+    .sort((a,b) => Number(b.split('-v').at(-1)) - Number(a.split('-v').at(-1)));
+  const previousCaches = await Promise.all(previousNames.map(name => caches.open(name)));
+  let cursor = 0;
+  await Promise.all(Array.from({length:4}, async () => {
+    while (cursor < CORE_SHELL.length) {
+      const asset = CORE_SHELL[cursor++], url = new URL(asset, self.registration.scope);
+      let response;
+      if (url.searchParams.has('v')) {
+        for (const oldCache of previousCaches) {
+          response = await oldCache.match(url.href);
+          if (response?.ok) break;
+        }
+      }
+      if (!response?.ok) response = await fetch(new Request(url.href, {cache:'reload'}));
+      if (!response.ok) throw new Error(`Shell unavailable: ${url.pathname}`);
+      await cache.put(url.href, response);
+    }
+  }));
+  await self.skipWaiting();
+}
+self.addEventListener("install", event => event.waitUntil(installShell()));
 
 // Public illustrations are independent of executable release caches. Exact
 // URLs include the artwork version; user uploads/API responses never enter it.
@@ -294,18 +315,9 @@ self.addEventListener("activate", event => {
   event.waitUntil((async () => {
     await self.clients.claim();
     const oldKeys = (await caches.keys()).filter(key => key.startsWith("big-boy-rules-v") && key !== CACHE_NAME);
-    // Carry public artwork from the immediately previous release only. Private
-    // same-origin attachments cached by old workers are deliberately discarded.
-    const previous = oldKeys.at(-1);
-    if (previous) {
-      const oldCache = await caches.open(previous), mediaCache = await caches.open(MEDIA_CACHE_NAME);
-      const publicKeys = (await oldCache.keys()).filter(mediaPath).slice(-MEDIA_MAX_ENTRIES);
-      for (const request of publicKeys) {
-        if (await mediaCache.match(request)) continue;
-        const response = await oldCache.match(request);
-        if (response?.ok) await savePublicMedia(request,response);
-      }
-    }
+    // Public artwork already has its own persistent cache. Do not re-copy
+    // legacy release artwork during activation: it can perform hundreds of
+    // Cache API reads/writes while the user starts typing. Missing art is loaded on demand.
     await Promise.all(oldKeys.map(key => caches.delete(key)));
   })());
 });

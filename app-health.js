@@ -45,7 +45,7 @@
   const key = 'bb-local-health-v1', limit = 300;
   const session = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const areas = {inicio:'Inicio', chat:'Chats', privados:'Chat privado', perfil:'Perfil', calendario:'Calendario', sobres:'Sobres', album:'Álbum', catalogo:'Catálogo', administracion:'Administración', 'admin-configuracion':'Configuración', 'admin-cuentas':'Cuentas', 'admin-logros':'Logros', 'admin-diagnostico':'Diagnóstico', otra:'Otras'};
-  const kinds = ['session-start','authenticated','home-ready','network','stall','image','image-error','script-error','promise-error','interaction'];
+  const kinds = ['session-start','authenticated','home-ready','network','stall','image','image-error','script-error','promise-error','interaction','editor-focus','editor-input'];
   let previous = [];
   try {
     const stored = JSON.parse(localStorage.getItem(key) || '[]');
@@ -55,6 +55,7 @@
       if (typeof item.session === 'string' && /^[a-z0-9-]{1,40}$/.test(item.session)) clean.session = item.session;
       if (Object.hasOwn(areas, item.area)) clean.area = item.area;
       if (['sobres','album','chats','chota'].includes(item.action)) clean.action = item.action;
+      if (['input','textarea'].includes(item.field)) clean.field = item.field;
       if (['auth','media','function','data','resource'].includes(item.resource)) clean.resource = item.resource;
       return clean;
     });
@@ -120,6 +121,35 @@
     }));
   };
   ['pointerup','click','keydown'].forEach(type => document.addEventListener(type,measureInteraction,{capture:true,passive:true}));
+  // Sample focus and only the first edit, never the value, field name or account.
+  // Two animation frames include presentation work without forcing layout reads.
+  let editorPress = null;
+  const editorSessions = new WeakMap();
+  const textEditor = target => target instanceof Element && target.matches('textarea,input:not([type]),input[type=text],input[type=search],input[type=email],input[type=tel],input[type=url],input[type=number]');
+  const editorSample = (kind, event, pressedAt) => {
+    const started = performance.now(), section = area();
+    const delay = started - (pressedAt ?? event.timeStamp);
+    const inputMs = delay >= 0 && delay < 60000 ? Math.round(delay) : 0;
+    const field = event.target.tagName.toLowerCase();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (!document.hidden) record(kind, {area:section, field, inputMs, ms:Math.round(performance.now() - started + inputMs)});
+    }));
+  };
+  document.addEventListener('pointerdown', event => {
+    editorPress = textEditor(event.target) ? {target:event.target, at:event.timeStamp} : null;
+  }, {capture:true, passive:true});
+  document.addEventListener('focusin', event => {
+    if (!textEditor(event.target)) return;
+    editorSessions.set(event.target, false);
+    const pressedAt = editorPress?.target === event.target && performance.now() - editorPress.at < 60000 ? editorPress.at : undefined;
+    editorPress = null;
+    editorSample('editor-focus', event, pressedAt);
+  }, {passive:true});
+  document.addEventListener('input', event => {
+    if (!event.isTrusted || !textEditor(event.target) || editorSessions.get(event.target) !== false) return;
+    editorSessions.set(event.target, true);
+    editorSample('editor-input', event);
+  }, {passive:true});
   const all = () => [...previous, ...samples].slice(-limit);
   const persist = () => { try { localStorage.setItem(key, JSON.stringify(all())); } catch {} };
   document.addEventListener('visibilitychange', () => { last = performance.now(); visible = !document.hidden; if (document.hidden) persist(); });
@@ -174,10 +204,17 @@
       const p95 = percentile(values,.95), delay = percentile(events.map(item => item.inputMs).filter(Number.isFinite),.95);
       return `<div class="health-response-row"><strong>${label}</strong><span>${events.length} toques</span><b>${time(p95)}</b><small>${p95 > 200 ? 'Revisar respuesta' : events.length ? 'Respuesta ágil' : 'Sin muestras'} · espera de entrada ${time(delay)}</small><i style="--response-width:${Math.min(100,(p95 || 0)/10)}%"></i></div>`;
     }).join('');
+    const editorRows = [['editor-focus','Activar campo'],['editor-input','Primera escritura']].map(([kind,label]) => {
+      const events = items.filter(item => item.kind === kind), p95 = percentile(durationValues(events), .95);
+      const queue = percentile(events.map(item => item.inputMs).filter(Number.isFinite), .95);
+      const worst = events.reduce((result,item) => !result || item.ms > result.ms ? item : result, null);
+      return `<div class="health-response-row"><strong>${label}</strong><span>${events.length} muestras</span><b>${time(p95)}</b><small>Espera de entrada ${time(queue)}${worst ? ` · máximo ${time(worst.ms)} en ${areas[worst.area] || areas.otra} (${worst.field === 'textarea' ? 'texto largo' : 'campo'})` : ''}</small><i style="--response-width:${Math.min(100,(p95 || 0)/10)}%"></i></div>`;
+    }).join('');
     return `<div class="health-metrics">${card('Inicio listo · p95',time(percentile(startup,.95)),`${startup.length} mediciones desde apertura`)}${card('Pausas detectadas',stalls.length,`p95 ${time(percentile(pauses,.95))} · máx. ${time(maxValue(pauses))}`)}${card('Fallos de red',network.length,`Respuesta fallida o sin conexión`)}${card('Avisos de imágenes',images.length,`p95 ${time(percentile(durationValues(images),.95))} · ${items.filter(item => item.kind === 'image-error').length} errores`)}</div>
       <div class="health-chart-grid"><article class="health-chart-card"><h3>Tiempo de inicio</h3><p>Desde apertura hasta inicio listo. Incluye la espera si tienes que iniciar sesión.</p>${drawStartup(recent)}<div class="health-chart-foot"><span>Sesiones numeradas abajo</span><span>Máximo ${time(maxValue(startup))}</span></div></article><article class="health-chart-card"><h3>Avisos por sesión</h3><p>Últimas ${recent.length} sesiones guardadas; los registros antiguos aparecen sin fecha.</p>${recent.length ? `<div class="health-session-chart">${sessionRows}</div>` : empty('Usa la app para empezar a registrar sesiones.')}${legend()}</article></div>
       <article class="health-chart-card health-area-chart"><h3>Dónde se acumulan los avisos</h3><p>Las imágenes se atribuyen a la pantalla visible al completar su carga. Son avisos registrados, no tasas de error.</p>${areaRows || empty('Todavía no hay avisos registrados en ninguna pantalla.')}${legend()}</article>
       <article class="health-chart-card health-response-chart"><h3>Respuesta al toque</h3><p>Tiempo estimado hasta presentar un fotograma tras el toque, incluido el trabajo del navegador. p95 por función; no mide la espera de red ni toda la animación.</p>${responseRows}</article>
+      <article class="health-chart-card health-response-chart"><h3>Campos de texto</h3><p>Foco y primera escritura hasta presentar un fotograma. Permite localizar pausas por pantalla sin guardar texto ni nombres de campos. No incluye toda la apertura del teclado nativo.</p>${editorRows}</article>
       <p class="health-capture-note">${items.length} / ${limit} muestras · ${groups.length} sesiones conservadas · p95: el 95 % de las mediciones queda por debajo de ese tiempo.</p>`;
   }
   window.ClubHealth = {

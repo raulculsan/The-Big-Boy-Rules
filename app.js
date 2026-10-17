@@ -2,11 +2,11 @@
 // Track input modality so touch surfaces stay clean and keyboard focus stays visible.
 document.documentElement.dataset.inputModality = "keyboard";
 document.addEventListener("pointerdown", () => {
-  document.documentElement.dataset.inputModality = "pointer";
+  if (document.documentElement.dataset.inputModality !== "pointer") document.documentElement.dataset.inputModality = "pointer";
 }, {capture: true, passive: true});
 document.addEventListener("keydown", event => {
   if (!event.metaKey && !event.ctrlKey && !event.altKey) {
-    document.documentElement.dataset.inputModality = "keyboard";
+    if (document.documentElement.dataset.inputModality !== "keyboard") document.documentElement.dataset.inputModality = "keyboard";
   }
 }, {capture: true});
 
@@ -295,14 +295,37 @@ function completeInitialLaunch() {
   initialLaunchCompleted = true;
   requestAnimationFrame(() => {
     document.getElementById("pageLoader")?.classList.add("hidden");
-    runWhenIdle(() => { void ensureChotaSprites(); });
   });
 }
 const pendingMediaLikes = new Set();
 
+const idleStartupQueue = [];
+let idleStartupScheduled = false;
 function runWhenIdle(callback, timeout = 1200) {
-  if ("requestIdleCallback" in window) return window.requestIdleCallback(callback, {timeout});
-  return window.setTimeout(callback, Math.min(timeout, 300));
+  idleStartupQueue.push({callback, timeout});
+  scheduleIdleStartup();
+}
+function scheduleIdleStartup() {
+  if (idleStartupScheduled || !idleStartupQueue.length) return;
+  idleStartupScheduled = true;
+  const run = () => {
+    idleStartupScheduled = false;
+    // An idle timeout is not permission to interrupt typing or keyboard presentation.
+    if (document.hidden || isEditableAppTarget(document.activeElement)) {
+      idleStartupScheduled = true;
+      setTimeout(() => { idleStartupScheduled = false; scheduleIdleStartup(); }, 250);
+      return;
+    }
+    const task = idleStartupQueue.shift();
+    try { task.callback(); }
+    finally {
+      // Yield a painted frame between independent surfaces instead of one long
+      // startup callback rendering contacts, messages, notices and administration.
+      requestAnimationFrame(scheduleIdleStartup);
+    }
+  };
+  if ("requestIdleCallback" in window) window.requestIdleCallback(run, {timeout:idleStartupQueue[0].timeout});
+  else window.setTimeout(run, 300);
 }
 
 function debounce(callback, delay = 90) {
@@ -573,12 +596,16 @@ function persistLocalProfile(member) {
   localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(stored));
 }
 
+// Keyboard animation emits resize + scroll events for the same geometry. Avoid
+// invalidating inherited root styles again on every event (and every typed key).
+function setViewportProperty(element, property, value) {
+  if (element.style.getPropertyValue(property) !== value) element.style.setProperty(property, value);
+}
 function syncMobileViewport() {
   if (viewportSyncFrame) return;
   viewportSyncFrame = requestAnimationFrame(() => {
     viewportSyncFrame = null;
     syncEventEditorViewport();
-    const visualViewport = window.visualViewport;
     if (window.innerWidth > 760) {
       document.documentElement.style.removeProperty("--chat-viewport-height");
       document.documentElement.style.removeProperty("--chat-viewport-offset");
@@ -592,8 +619,8 @@ function syncMobileViewport() {
     const viewport = ChatKeyboard.viewport({height: viewportHeight, offset: viewportOffset,
       baseline: mobileViewportBaseline, focused: composerFocused,
       nativeLayout: chatKeyboard?.nativeLayout, nativeVisible: chatKeyboard?.keyboardVisible});
-    document.documentElement.style.setProperty("--chat-viewport-height", `${viewport.height}px`);
-    document.documentElement.style.setProperty("--chat-viewport-offset", `${viewport.offset}px`);
+    setViewportProperty(document.documentElement, "--chat-viewport-height", `${viewport.height}px`);
+    setViewportProperty(document.documentElement, "--chat-viewport-offset", `${viewport.offset}px`);
     document.body.classList.toggle("chat-keyboard-open", viewport.open);
   });
 }
@@ -2486,20 +2513,22 @@ let tigretonRenderedKey = "";
 // One visible pet at a time: pause offscreen and cancel every timer on a rerender.
 let tigretonMotion = null;
 const tigretonReducedMotion = (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)"));
-// Decode optional animation sheets after the first paint. A first interaction
-// can request the same promise, keeping the resting pose until its sheet is ready.
+// Decode optional animation sheets only when a pose needs them and editing is idle.
+// Keep the resting pose while a shared request prepares the sheet.
 const chotaTalkSprite = new Image();
 const chotaPoseSprite = new Image();
 let chotaSpritesRequest = null;
 const chotaSpritesReady = {talk: false, poses: false};
 function ensureChotaSprites() {
   if (!chotaSpritesRequest) {
-    chotaTalkSprite.src = "icons/mascot/chota-v2/chota-talk.png";
-    chotaPoseSprite.src = "icons/mascot/chota-v2/chota-poses.png";
-    chotaSpritesRequest = Promise.allSettled([
-      chotaTalkSprite.decode().then(() => { chotaSpritesReady.talk = chotaTalkSprite.naturalWidth > 0; }),
-      chotaPoseSprite.decode().then(() => { chotaSpritesReady.poses = chotaPoseSprite.naturalWidth > 0; })
-    ]);
+    chotaSpritesRequest = new Promise(resolve => runWhenIdle(() => {
+      chotaTalkSprite.src = "icons/mascot/chota-v2/chota-talk.png";
+      chotaPoseSprite.src = "icons/mascot/chota-v2/chota-poses.png";
+      Promise.allSettled([
+        chotaTalkSprite.decode().then(() => { chotaSpritesReady.talk = chotaTalkSprite.naturalWidth > 0; }),
+        chotaPoseSprite.decode().then(() => { chotaSpritesReady.poses = chotaPoseSprite.naturalWidth > 0; })
+      ]).then(resolve);
+    }));
   }
   return chotaSpritesRequest;
 }
@@ -3224,14 +3253,9 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   renderCalendar();
   renderSpotify();
   completeInitialLaunch();
-  runWhenIdle(() => {
-    if (currentUser !== user) return;
-    renderPrivateContacts();
-    renderPrivateConversation();
-    renderNotifications();
-    renderHelpCenter();
-    renderAdminAchievements();
-  });
+  for (const render of [renderPrivateContacts, renderPrivateConversation, renderNotifications, renderHelpCenter, renderAdminAchievements]) {
+    runWhenIdle(() => { if (currentUser === user) render(); });
+  }
   if (restoring) {
     document.body.classList.add("session-restoring");
     return;
@@ -4838,8 +4862,8 @@ function syncEventEditorViewport() {
   if (!modal?.classList.contains("open")) return;
   const nativeLayout = window.__bigboysNativeKeyboardLayout === true;
   const viewport = window.visualViewport;
-  modal.style.setProperty("--event-editor-height", `${nativeLayout ? window.innerHeight : viewport?.height || window.innerHeight}px`);
-  modal.style.setProperty("--event-editor-offset", `${nativeLayout ? 0 : viewport?.offsetTop || 0}px`);
+  setViewportProperty(modal, "--event-editor-height", `${nativeLayout ? window.innerHeight : viewport?.height || window.innerHeight}px`);
+  setViewportProperty(modal, "--event-editor-offset", `${nativeLayout ? 0 : viewport?.offsetTop || 0}px`);
   const field = document.activeElement;
   const scroller = modal.querySelector(".calendar-editor");
   if (!field?.matches?.("input:not([type=hidden]),textarea,select") || !scroller.contains(field)) return;
@@ -4882,7 +4906,7 @@ function openEventEditor(eventId = null, requestedType = "event") {
   document.body.classList.add("event-editor-open");
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
-  requestAnimationFrame(syncEventEditorViewport);
+  syncMobileViewport();
 }
 
 function closeEventEditor() {
@@ -6341,8 +6365,7 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("orientationchange", () => setTimeout(() => syncMobileViewport(), 250));
 document.addEventListener("focusin", event => {
-  if (event.target.closest(".message-form input")) syncMobileViewport();
-  if (event.target.closest("#eventForm")) requestAnimationFrame(syncEventEditorViewport);
+  if (event.target.closest(".message-form input, #eventForm")) syncMobileViewport();
 });
 document.addEventListener("focusout", event => {
   if (!event.target.closest(".message-form input")) return;
@@ -6567,7 +6590,7 @@ document.getElementById("addBirthdayButton").addEventListener("click", event => 
   openEventEditor(event.currentTarget.dataset.birthdayEventId || null, "birthday");
 });
 new ResizeObserver(() => {
-  if (document.getElementById("eventEditor").classList.contains("open")) requestAnimationFrame(syncEventEditorViewport);
+  if (document.getElementById("eventEditor").classList.contains("open")) syncMobileViewport();
 }).observe(document.querySelector("#eventEditor .calendar-editor"));
 document.getElementById("eventType").addEventListener("change", updateEventEditorType);
 document.querySelectorAll("[data-event-kind]").forEach(button => button.addEventListener("click", () => {
