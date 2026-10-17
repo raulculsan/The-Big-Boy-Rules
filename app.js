@@ -197,6 +197,7 @@ let currentUser = null;
 let currentAuthUser = null;
 let messages = [];
 let notifications = [];
+let notificationReadState = null;
 let notificationFilter = "all";
 let notificationPreferences = null, notificationPreferencesOwner = null, notificationPreferencesLoading = false, notificationPreferencesSaving = false, notificationPreferencesError = "";
 let newsNoticePending = false;
@@ -858,6 +859,7 @@ function restoreGroupConversation(channelId) {
   renderMessages();
   syncMobileViewport();
   history.replaceState(null, "", "#chat");
+  markVisibleConversationRead({includeHistory: true});
 }
 
 function restorePrivateConversation(memberId) {
@@ -866,6 +868,7 @@ function restorePrivateConversation(memberId) {
   renderPrivateContacts();
   renderPrivateConversation();
   goTo("privados");
+  markVisibleConversationRead({includeHistory: true});
 }
 
 function syncChatInboxAccessibility() {
@@ -1068,12 +1071,15 @@ async function finishChatBackGesture(event) {
 }
 
 async function openGroupConversation(channelId = activeChatChannelId) {
+  const owner = currentAuthUser?.id;
+  if (!owner) return;
   rememberInboxPosition();
   if (channelId != null && chatChannels.some(channel => String(channel.id) === String(channelId))) {
     activeChatChannelId = channelId;
   }
   const groupSection = document.getElementById("chat");
   await transitionMessageView(() => {
+    if (owner !== currentAuthUser?.id) return;
     goTo("chat");
     groupSection.classList.add("conversation-open");
     document.body.classList.add("chat-focus");
@@ -1083,6 +1089,7 @@ async function openGroupConversation(channelId = activeChatChannelId) {
     globalThis.GroupInteractions?.mountPolls(document.getElementById("groupPolls"), activeChatChannelId);
     syncMobileViewport();
     history.replaceState(null, "", "#chat");
+    markVisibleConversationRead({includeHistory: true});
   });
 }
 
@@ -2311,15 +2318,19 @@ function messagePreviewText(body, attachmentType) {
 }
 
 async function openPrivateConversation(memberId) {
+  const owner = currentAuthUser?.id;
+  if (!owner) return;
   rememberInboxPosition();
   const member = getMember(memberId);
   if (!member || member.id === currentUser?.id) return;
   void resolvePrivateAttachments().then(refreshPrivateMessageSurfaces);
   await transitionMessageView(() => {
+    if (owner !== currentAuthUser?.id) return;
     activePrivateMemberId = member.id;
     renderPrivateConversation();
     goTo("privados");
     scrollConversationToLatest(document.getElementById("privateMessages"));
+    markVisibleConversationRead({includeHistory: true});
   });
 }
 
@@ -3267,6 +3278,7 @@ function showLogin() {
   document.getElementById("loginScreen")?.classList.remove("login-hidden");
   onlineUsers = [];
   notifications = [];
+  notificationReadState = null;
   resetNotificationPreferences();
   renderPresence();
   renderNotifications();
@@ -3308,6 +3320,7 @@ async function logoutCurrentUser() {
   globalThis.AdminGrants?.render();
   messages = [];
   notifications = [];
+  notificationReadState = null;
   resetNotificationPreferences();
   privateMessages = [];
   privateAttachmentCache.clear();
@@ -3528,6 +3541,7 @@ async function loadMessages() {
     messages = (data || []).map(mapMessage);
     globalThis.ClubFeedback?.set(anchor, "ready", "");
     refreshGroupMessageSurfaces();
+    markVisibleConversationRead();
   } catch {
     if (owner === currentAuthUser?.id) globalThis.ClubFeedback?.set(anchor, "error", messages.length ? "No se pudo actualizar. Mostramos los últimos mensajes." : "No se pudieron cargar los mensajes. Comprueba la conexión.", () => void loadMessages());
   }
@@ -3588,6 +3602,7 @@ function handleRealtimeMessage(payload) {
   messages = applyRealtimeChange(messages, payload, mapMessage)
     .sort((a, b) => messageTimestamp(a) - messageTimestamp(b));
   refreshGroupMessageSurfaces();
+  markVisibleConversationRead();
 }
 
 async function loadChatChannels({refreshMessages = true} = {}) {
@@ -3714,10 +3729,16 @@ function renderNotifications(refreshContacts = true) {
 
 async function loadNotifications() {
   const owner = currentAuthUser?.id;
-  const {data, error} = await db.from("notifications").select("*")
+  if (!owner || !db) return;
+  const readState = conversationReadState();
+  const {data, error} = await db.from("notifications").select("*").eq("user_id", owner)
     .order("created_at", {ascending: false}).limit(100);
-  if (owner !== currentAuthUser?.id) return;
-  if (!error) notifications = (data || []).map(mapNotification);
+  if (owner !== currentAuthUser?.id || readState !== notificationReadState) return;
+  if (!error) notifications = (data || []).map(mapNotification).map(item => preserveNotificationRead(item, readState));
+  const late = notifications.filter(item => !item.readAt && item.type === "private_message"
+    && new Date(item.createdAt) <= new Date(readState.privateThrough.get(String(item.actorId)) || 0));
+  if (late.length) void persistNotificationReads(late.map(item => item.id), new Date().toISOString(), readState);
+  markVisibleConversationRead();
   renderNotifications();
   globalThis.CollectionSocial?.receiveNotification();
 }
@@ -3735,28 +3756,107 @@ function mapNotification(item) {
   };
 }
 
+// Keep optimistic receipts over older fetch/realtime results. State identity also
+// prevents a request from a previous login restoring another account's badges.
+function conversationReadState() {
+  const owner = currentAuthUser?.id;
+  if (!owner) return null;
+  if (notificationReadState?.owner !== owner) notificationReadState = {owner, receipts: new Map(), privateThrough: new Map()};
+  return notificationReadState;
+}
+
+function preserveNotificationRead(item, state) {
+  const receipt = state?.receipts.get(String(item.id));
+  return receipt && !item.readAt ? {...item, readAt: receipt.readAt} : item;
+}
+
+function visibleConversation() {
+  if (!currentAuthUser || document.hidden) return null;
+  if (document.getElementById("privados")?.classList.contains("active")) {
+    const actorId = getMember(activePrivateMemberId)?.authId;
+    return actorId ? {type: "private_message", actorId} : null;
+  }
+  const group = document.getElementById("chat");
+  return group?.classList.contains("active") && group.classList.contains("conversation-open")
+    ? {type: "group_message", channelId: activeChatChannelId} : null;
+}
+
+function markVisibleConversationRead({includeHistory = false} = {}) {
+  const state = conversationReadState(), conversation = visibleConversation();
+  if (!state || !conversation || !db) return;
+  const readAt = new Date().toISOString();
+  if (conversation.actorId) state.privateThrough.set(String(conversation.actorId), readAt);
+  const ids = notifications.filter(item => {
+    if (item.readAt || item.type !== conversation.type) return false;
+    if (conversation.actorId) return String(item.actorId) === String(conversation.actorId);
+    // Group notification targets are message IDs. Never clear another section.
+    return messages.some(message => String(message.id) === String(item.targetId)
+      && String(message.channelId) === String(conversation.channelId));
+  }).map(item => item.id);
+  if (ids.length || (includeHistory && conversation.actorId)) void persistNotificationReads(ids, readAt, state, false,
+    includeHistory ? conversation.actorId : null);
+}
+
 function handleRealtimeNotification(payload) {
+  if (!currentAuthUser || (payload.new?.user_id && payload.new.user_id !== currentAuthUser.id)) return;
   if (["trade_offer", "trade_resolved"].includes(payload.new?.type)) globalThis.CollectionSocial?.receiveNotification();
+  const state = conversationReadState();
   notifications = applyRealtimeChange(notifications, payload, mapNotification)
+    .map(item => preserveNotificationRead(item, state))
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 100);
+  // The notification can arrive after its message or after leaving the chat.
+  const late = notifications.filter(item => !item.readAt && item.type === "private_message"
+    && new Date(item.createdAt) <= new Date(state.privateThrough.get(String(item.actorId)) || 0));
+  if (late.length) void persistNotificationReads(late.map(item => item.id), new Date().toISOString(), state);
+  markVisibleConversationRead();
   renderNotifications();
 }
 
-async function markNotificationsRead(id = null) {
-  if (!currentAuthUser) return;
-  const previous = notifications.map(item => ({...item}));
-  const readAt = new Date().toISOString();
-  notifications = notifications.map(item => id == null || String(item.id) === String(id) ? {...item, readAt: item.readAt || readAt} : item);
+async function persistNotificationReads(ids, readAt, state = conversationReadState(), all = false, privateActorId = null) {
+  if (!state || !db || state !== notificationReadState || state.owner !== currentAuthUser?.id) return;
+  const keys = new Set(ids.map(String));
+  const operation = {readAt};
+  const previous = new Map();
+  notifications = notifications.map(item => {
+    if (!keys.has(String(item.id)) || item.readAt) return item;
+    previous.set(String(item.id), item.readAt);
+    state.receipts.set(String(item.id), operation);
+    return {...item, readAt};
+  });
   renderNotifications();
-  let query = db.from("notifications").update({read_at: readAt})
-    .eq("user_id", currentAuthUser.id).is("read_at", null);
-  if (id != null) query = query.eq("id", id);
-  const {error} = await query;
-  if (error) {
-    notifications = previous;
+  try {
+    let query = db.from("notifications").update({read_at: readAt}).eq("user_id", state.owner).is("read_at", null);
+    if (privateActorId) query = query.eq("type", "private_message").eq("actor_id", privateActorId).lte("created_at", readAt);
+    else query = all ? query.lte("created_at", readAt) : query.in("id", ids);
+    const {error} = await query;
+    if (error) throw error;
+    if (state.receipts.size > 500) {
+      const loaded = new Set(notifications.map(item => String(item.id)));
+      for (const key of state.receipts.keys()) {
+        if (!loaded.has(key)) state.receipts.delete(key);
+        if (state.receipts.size <= 300) break;
+      }
+    }
+  } catch {
+    if (state !== notificationReadState || state.owner !== currentAuthUser?.id) return;
+    // Roll back only this operation, preserving arrivals and unrelated reads.
+    notifications = notifications.map(item => {
+      const key = String(item.id);
+      if (state.receipts.get(key) !== operation) return item;
+      state.receipts.delete(key);
+      return {...item, readAt: previous.get(key) || null};
+    });
     renderNotifications();
   }
+}
+
+async function markNotificationsRead(id = null) {
+  const state = conversationReadState();
+  if (!state) return;
+  const ids = notifications.filter(item => !item.readAt && (id == null || String(item.id) === String(id))).map(item => item.id);
+  if (!ids.length && id != null) return;
+  await persistNotificationReads(ids, new Date().toISOString(), state, id == null);
 }
 
 async function deleteNotifications(id = null) {
@@ -4042,8 +4142,11 @@ function connectRealtime() {
     .on("postgres_changes", {event: "*", schema: "public", table: "calendar_chat_announcements"}, () => scheduleRealtimeRefresh("calendar-chat", () => loadCalendarChatAnnouncements({sync: false})))
     .on("postgres_changes", {event: "*", schema: "public", table: "messages"}, handleRealtimeMessage)
     .subscribe();
+  const notificationOwner = currentAuthUser.id;
   notificationsChannel = db.channel(`notifications-${currentAuthUser.id}`)
-    .on("postgres_changes", {event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentAuthUser.id}`}, handleRealtimeNotification)
+    .on("postgres_changes", {event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentAuthUser.id}`}, payload => {
+      if (notificationOwner === currentAuthUser?.id) handleRealtimeNotification(payload);
+    })
     .subscribe();
   privateChannel = db.channel(`private-messages-${currentAuthUser.id}`)
     .on("postgres_changes", {event: "*", schema: "public", table: "private_messages"}, handleRealtimePrivateMessage)
@@ -6367,7 +6470,9 @@ setInterval(() => { if (!document.hidden) void refreshDailyParticipation(); }, 6
 setInterval(() => {
   if (!document.hidden && document.getElementById("inicio").classList.contains("active")) loadNews(true);
 }, NEWS_REFRESH_INTERVAL);
+window.addEventListener("online", () => markVisibleConversationRead());
 document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) markVisibleConversationRead();
   if (!document.hidden) void Promise.all([refreshMediaPermission("camera"), refreshMediaPermission("microphone")]);
   if (!document.hidden && currentAuthUser) void refreshDailyParticipation(true);
   if (!document.hidden && currentAuthUser) scheduleRealtimeRefresh("achievements", () => loadAchievements({force: true}), 100);
