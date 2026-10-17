@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
   <link rel="stylesheet" href="collection-social.css?v=20261015-mutual-trades-305" />
   <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
-  <link rel="stylesheet" href="visual-system.css?v=20261017-bigboy-3" />
+  <link rel="stylesheet" href="visual-system.css?v=20261017-bigboy-4" />
 </head>
 <body>
 
@@ -218,7 +218,7 @@
       </header>
       <div class="packs-layout">
         <div class="packs-display">
-          <span class="packs-display-edition">BIG BOYS · COLECCIÓN 01</span>
+          <div class="bb2-pack-copy"><span class="packs-display-edition">BIG BOYS · COLECCIÓN 01</span><h3>Tu próxima<br>apertura.</h3><span class="bb2-pack-action">Toca el sobre para abrir</span></div>
           <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-los-nuestros-v1.jpg?v=20260903-139" width="1024" height="1536" loading="lazy" decoding="async" alt=""></button>
           <span id="packsCount" class="packs-count-badge" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
           <button type="button" class="packs-info-trigger" id="packsInfoTrigger" aria-label="Información y saldo de sobres" aria-expanded="false" aria-controls="packsInfoPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button>
@@ -226,6 +226,7 @@
           <div id="ownedPackResult" class="owned-pack-result packs-screen-reader" aria-live="polite"></div>
         </div>
         <div class="packs-information">
+          <button type="button" class="bb2-album-entry" data-card-album aria-label="Abrir mi álbum de cartas"><span class="eyebrow">COLECCIÓN ORIGINAL</span><strong>Mi álbum</strong><span class="bb2-album-pages" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="bb2-album-label">Ver mis cartas</span></button>
           <section class="packs-daily-panel" id="packsDailyPanel" aria-labelledby="packsStatusTitle" data-state="idle">
             <span class="eyebrow" id="packsDailyLabel">SOBRE DIARIO</span>
             <h3 id="packsStatusTitle">Sobres disponibles</h3>

@@ -514,3 +514,109 @@ body.authenticated .app-tab.active { color: var(--bb2-gold-soft); }
   body.authenticated #inicio .club-welcome { align-items: flex-start; flex-direction: column; }
   body.authenticated #sobres .packs-heading > div { min-width: 150px; }
 }
+
+
+/* Composition v4: apply the Figma frame hierarchy to live, dynamic content.
+   Scroll owners, native safe areas and gesture transforms stay untouched. */
+body.authenticated #inicio.active {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(280px,.75fr);
+  grid-template-areas: "welcome welcome" "search search" "plans music" "members members" "news news";
+  grid-template-rows: repeat(5,max-content);
+  align-content: start;
+  gap: 26px;
+}
+body.authenticated #inicio > .club-welcome { grid-area: welcome; margin: 6px 0 0; padding-bottom: 22px; border-bottom: 1px solid var(--bb2-line-strong); }
+body.authenticated #inicio .club-welcome h2 { font-size: clamp(38px,5vw,54px); font-weight: 700; }
+body.authenticated #inicio > .club-search { grid-area: search; margin: 0; }
+body.authenticated #inicio > .club-dashboard { display: contents; }
+body.authenticated #inicio .club-dashboard > .club-plans { grid-area: plans; padding: 22px; background: var(--bb2-raised); border: 1px solid var(--bb2-line-strong); border-radius: 22px; }
+body.authenticated #inicio .club-dashboard > .spotify-panel { grid-area: music; padding: 22px; background: var(--bb2-panel); border-radius: 22px; }
+body.authenticated #inicio .club-plans .panel-heading { margin-bottom: 14px; }
+body.authenticated #inicio .club-plans .panel-heading h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--bb2-gold); }
+body.authenticated #inicio .club-event-with-tigreton { border: 0; border-radius: 0; background: transparent; padding: 0; }
+body.authenticated #inicio .club-event-open { gap: 14px; }
+body.authenticated #inicio .club-event-open > time { background: var(--bb2-canvas); border: 1px solid var(--bb2-line-strong); border-radius: 12px; }
+body.authenticated #inicio .club-event-details > strong { font-size: clamp(18px,2vw,23px); line-height: 1.22; letter-spacing: -.035em; }
+body.authenticated #inicio .club-event-countdown { display: inline-flex; color: var(--bb2-gold); background: var(--bb2-gold-wash); border: 1px solid var(--bb2-gold-dark); border-radius: 7px; padding: 5px 8px; margin-top: 8px; }
+body.authenticated #inicio .club-calendar-link { margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--bb2-line-strong); width: 100%; text-align: left; }
+body.authenticated #inicio > .home-members-section { grid-area: members; margin: 0; min-width: 0; }
+body.authenticated #inicio .home-members-section > .panel-heading { margin-bottom: 14px; }
+body.authenticated #inicio .home-members-section > .panel-heading .eyebrow { display: none; }
+body.authenticated #inicio .home-members-section > .panel-heading h3 { font-size: 24px; }
+body.authenticated #inicio .members-grid { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: minmax(280px,calc((100% - 36px)/3)); gap: 18px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding: 0 0 14px; scrollbar-width: thin; scrollbar-color: var(--bb2-gold-dark) transparent; }
+body.authenticated #inicio .club-member { scroll-snap-align: start; border: 1px solid var(--bb2-line-strong); border-radius: 18px; }
+body.authenticated #inicio .club-member-hero { aspect-ratio: 3 / 1; margin-bottom: 23px; }
+body.authenticated #inicio .club-member .club-member-hero .avatar { width: 54px; height: 54px; min-width: 54px; max-width: 54px; min-height: 54px; max-height: 54px; left: 16px; bottom: -19px; }
+body.authenticated #inicio .club-member-identity { padding: 7px 16px 17px; }
+body.authenticated #inicio .club-member strong { font-size: 17px; }
+body.authenticated #inicio > #noticias { grid-area: news; margin: 0; border-radius: 18px; background: var(--bb2-panel); }
+body.authenticated #inicio .club-news-heading { padding: 18px 20px; }
+body.authenticated #inicio .club-news-heading h3 { font-size: 19px; }
+
+/* The pack is a horizontal feature; the album has its own primary entry. */
+body.authenticated #sobres .packs-layout { grid-template-columns: minmax(0,1.15fr) minmax(0,.85fr); gap: 22px; }
+body.authenticated #sobres .packs-display { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,.85fr); align-items: center; min-height: 340px; padding: 30px 28px 66px; border-color: var(--bb2-gold-dark); border-radius: 24px; background: var(--bb2-raised); }
+.bb2-pack-copy { min-width: 0; align-self: start; padding-top: 14px; }
+body.authenticated #sobres .packs-display-edition { display: block; padding: 0; border: 0; background: transparent; border-radius: 0; text-align: left; font-size: 9px; letter-spacing: .1em; line-height: 1.6; }
+.bb2-pack-copy h3 { margin: 15px 0 22px; font: 700 clamp(25px,3vw,38px)/1.08 Inter,sans-serif; letter-spacing: -.045em; color: var(--bb2-ink); }
+.bb2-pack-action { display: block; max-width: 130px; font-size: 11px; line-height: 1.6; color: var(--bb2-gold); }
+body.authenticated #sobres .packs-art-button { width: 100%; margin: 0; align-self: center; filter: drop-shadow(0 15px 12px #0005); }
+body.authenticated #sobres .packs-art { mix-blend-mode: normal; }
+body.authenticated #sobres .packs-information { gap: 18px; }
+.bb2-album-entry { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 22px; border: 1px solid var(--bb2-line-strong); border-radius: 22px; color: var(--bb2-ink); background: var(--bb2-panel); text-align: left; cursor: pointer; }
+.bb2-album-entry > strong { font-size: 24px; font-weight: 650; letter-spacing: -.04em; }
+.bb2-album-entry .eyebrow { color: var(--bb2-muted); font-size: 9px; }
+.bb2-album-pages { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; margin: 2px 0; }
+.bb2-album-pages i { display: block; aspect-ratio: .7; border: 1px solid var(--bb2-line-strong); border-radius: 8px; background: var(--bb2-raised); }
+.bb2-album-pages i:nth-child(1),.bb2-album-pages i:nth-child(2),.bb2-album-pages i:nth-child(4) { background: var(--bb2-gold-dark); border-color: #dbba7340; }
+.bb2-album-label { color: var(--bb2-gold); font-size: 12px; font-weight: 600; }
+body.authenticated #sobres .packs-daily-panel { padding: 20px; border-radius: 18px; }
+body.authenticated #sobres .packs-daily-panel h3 { font-size: 19px; margin: 8px 0 15px; }
+
+/* Figma inbox: independent conversation surfaces, rather than ruled rows. */
+body.authenticated .chat-inbox .bb2-inbox-heading { margin-bottom: 22px; }
+body.authenticated .chat-inbox .bb2-inbox-heading h2 { font-size: 34px; }
+body.authenticated .chat-inbox .inbox-filters { padding: 5px; border-radius: 14px; background: var(--bb2-panel); gap: 4px; }
+body.authenticated .chat-inbox .inbox-filters button { border: 0; background: transparent; border-radius: 10px; padding-inline: 14px; }
+body.authenticated .chat-inbox .inbox-filters button[aria-pressed="true"] { color: var(--bb2-ink); background: var(--bb2-raised); }
+body.authenticated .chat-inbox .unified-chat-list { gap: 12px; padding: 6px 22px 28px; }
+body.authenticated .chat-inbox .unified-chat-list .private-contact { min-height: 90px; padding: 17px 16px; border: 1px solid var(--bb2-line); border-radius: 18px; background: var(--bb2-panel); box-shadow: none; }
+body.authenticated .chat-inbox .unified-chat-list .private-contact::before { display: none; }
+body.authenticated .chat-inbox .unified-chat-list .private-contact.has-unread { border-color: var(--bb2-gold-dark); background: var(--bb2-raised); }
+body.authenticated .chat-inbox .unified-chat-list .private-contact .avatar { border-color: var(--bb2-line-strong); }
+body.authenticated .chat-inbox .private-contact-copy time { font-size: 10px; }
+body.authenticated .chat-inbox .private-contact-copy small { color: var(--bb2-secondary); }
+body.authenticated .floating-tab-bar { border: 1px solid var(--bb2-line-strong); border-radius: 20px; background: var(--bb2-panel); }
+body.authenticated .tab-selection-indicator { background: var(--bb2-gold-dark); border-color: transparent; border-radius: 13px; box-shadow: none; }
+body.authenticated .tab-selection-indicator::after { display: none; }
+body.authenticated .app-tab.active { color: var(--bb2-gold-soft); }
+@media (max-width: 760px) {
+  body.authenticated #inicio.active { grid-template-columns: minmax(0,1fr); grid-template-areas: "welcome" "search" "plans" "members" "music" "news"; grid-template-rows: repeat(6,max-content); gap: 22px; }
+  body.authenticated #inicio .club-welcome { padding-bottom: 18px; flex-direction: row; align-items: center; }
+  body.authenticated #inicio .club-welcome h2 { font-size: 38px; }
+  body.authenticated #inicio .club-welcome .eyebrow { font-size: 9px; }
+  body.authenticated #inicio .club-welcome .status-pill { max-width: 118px; overflow: hidden; font-size: 9px; }
+  body.authenticated #inicio .club-dashboard > .club-plans { padding: 19px; }
+  body.authenticated #inicio .members-grid { grid-auto-columns: min(86%,340px); gap: 13px; }
+  body.authenticated #inicio .club-member-hero { aspect-ratio: 3 / 1; }
+  body.authenticated #sobres .packs-layout { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  body.authenticated #sobres .packs-display { min-height: 280px; padding: 22px 20px 62px; grid-template-columns: minmax(0,1.05fr) minmax(0,.95fr); }
+  body.authenticated #sobres .packs-art-button { width: 100%; margin: 0; }
+  .bb2-pack-copy { padding-top: 8px; }
+  .bb2-pack-copy h3 { font-size: clamp(25px,7.1vw,34px); margin: 12px 0 17px; }
+  body.authenticated .chat-inbox .inbox-tools { padding: 18px 18px 12px; }
+  body.authenticated .chat-inbox .unified-chat-list { padding-inline: 18px; }
+  body.authenticated .chat-inbox .unified-chat-list .private-contact { padding: 15px 13px; gap: 12px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bb2-album-entry:active { transform: scale(.985); }
+  .bb2-album-entry { transition: border-color 180ms ease, transform 180ms var(--bb2-ease); }
+}
+/* Let long plan titles breathe beside the mascot on narrow phones. */
+body.authenticated #inicio .club-event-with-tigreton { grid-template-columns: minmax(0,1fr) 90px; gap: 12px; }
+body.authenticated #inicio .club-event-with-tigreton .club-event-open { grid-template-columns: minmax(0,1fr); gap: 9px; }
+body.authenticated #inicio .club-event-open > time { display: inline-flex; align-items: baseline; gap: 5px; width: fit-content; padding: 5px 8px; }
+body.authenticated #inicio .club-event-open > time strong { font-size: 13px; line-height: 1.2; }
+body.authenticated #inicio .club-event-open > time small { font-size: 10px; }
+body.authenticated #inicio .club-event-with-tigreton > .tigreton-agenda { width: 90px; }
