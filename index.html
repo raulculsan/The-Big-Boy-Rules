@@ -37,6 +37,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=20260901-125" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="account-requests.css?v=20261018-requests-338" />
   <link rel="stylesheet" href="account-security.css?v=20261018-security-336" />
   <link rel="stylesheet" href="styles.css?v=20261016-improvements-319" />
   <link rel="stylesheet" href="club.css?v=20261015-release-300" />
@@ -105,6 +106,7 @@
 
           <div class="login-error" id="loginError" role="alert"></div>
           <button class="login-submit" type="submit">Entrar al club</button>
+          <button type="button" class="account-request-link" data-request-account>Solicitar una cuenta</button>
           <button type="button" id="offlineAlbumAccess" class="offline-album-access" hidden><strong>Ver álbum guardado</strong><small>Última colección de este dispositivo · Solo lectura</small></button>
 
         </form>
@@ -417,6 +419,7 @@
     <section class="page-section" id="administracion">
       <div id="superAdminConsole" hidden></div>
       <button type="button" class="control-diagnostics admin-account-security" id="adminSecurityButton"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></svg><span><strong>Seguridad de la cuenta</strong><small>Vincula tu cuenta de Google y configura el autenticador.</small></span><b>Gestionar</b></button>
+      <button type="button" class="request-admin-entry" data-open-account-requests><span><strong>Solicitudes de cuenta</strong><small>Revisa nuevos accesos al club.</small></span><span data-request-count hidden></span></button>
       <div id="standardAdminPanel">
       <div class="section-intro">
         <div>
@@ -968,7 +971,8 @@
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
   <script defer src="admin-console.js?v=20261018-control-334"></script>
   <script defer src="account-security.js?v=20261018-security-336"></script>
-  <script defer src="app.js?v=20261018-security-337"></script>
+  <script defer src="account-requests.js?v=20261018-requests-338"></script>
+  <script defer src="app.js?v=20261018-requests-338"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

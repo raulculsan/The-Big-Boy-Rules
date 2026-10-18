@@ -60,6 +60,8 @@ const sources = [
   "admin-console.js",
   "admin-console.css",
   "app.js",
+  "account-requests.js",
+  "account-requests.css",
   "account-security.js",
   "account-security.css",
   "config.js",

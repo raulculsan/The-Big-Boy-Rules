@@ -220,10 +220,11 @@ export default {
         .update({username, updated_at: new Date().toISOString()})
         .eq("id", userId);
       if (profileUpdateError) return json({error: profileUpdateError.message}, 400);
-      const {error: authUpdateError} = await adminClient.auth.admin.updateUserById(userId, {
-        email: `${username}@bigboyrules.local`,
-        email_confirm: true,
-      });
+      // Approved applicants keep their verified real email when their @ changes.
+      const {data: targetAuth, error: targetAuthReadError} = await adminClient.auth.admin.getUserById(userId);
+      const authUpdateError = targetAuthReadError || (targetAuth.user?.email?.endsWith("@bigboyrules.local")
+        ? (await adminClient.auth.admin.updateUserById(userId, {email: `${username}@bigboyrules.local`, email_confirm: true})).error
+        : null);
       if (authUpdateError) {
         await adminClient.from("profiles").update({username: target.username, updated_at: new Date().toISOString()}).eq("id", userId);
         return json({error: authUpdateError.message}, 400);

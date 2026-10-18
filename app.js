@@ -3072,6 +3072,8 @@ function performSearch(query) {
   }).join("") : `<div class="empty-state compact">No hay miembros para “${escapeHtml(query)}”.</div>`;
 }
 
+const accountRequests = globalThis.ClubAccountRequests?.create({client: db, canManage: canManageSite, owner: () => currentAuthUser?.id});
+
 const adminConsole = globalThis.AdminConsole?.create({
   allowed: isSuperAdmin,
   owner: () => currentAuthUser?.id,
@@ -3100,11 +3102,13 @@ const adminConsole = globalThis.AdminConsole?.create({
     siteSettings = {...siteSettings, [key]: value};
     adminConsole?.apply(siteSettings);
     adminConsole?.sync();
+    accountRequests?.sync();
   },
 });
 
 function renderAdminPanel() {
   adminConsole?.sync();
+  accountRequests?.sync();
   globalThis.AdminGrants?.render();
   const summary = document.getElementById("adminSummary");
   const table = document.getElementById("adminUsersTable");
@@ -3293,6 +3297,7 @@ function applyUserHeader(user) {
   document.querySelectorAll(".admin-only").forEach(node => node.style.display = canManageSite() ? "" : "none");
   renderGroupAvatarSurfaces();
   adminConsole?.sync();
+  accountRequests?.sync();
 }
 
 async function hydrateAuthenticatedData(authUser) {
@@ -3416,6 +3421,7 @@ function showLogin() {
   currentAuthUser = null;
   adminConsole?.apply({});
   adminConsole?.sync();
+  accountRequests?.sync();
   globalThis.ClubMotion?.configure(null);
   globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
@@ -3471,6 +3477,7 @@ async function logoutCurrentUser() {
   currentAuthUser = null;
   adminConsole?.apply({});
   adminConsole?.sync();
+  accountRequests?.sync();
   globalThis.ClubMotion?.configure(null);
   globalThis.AdminGrants?.render();
   messages = [];
@@ -3491,6 +3498,7 @@ async function logoutCurrentUser() {
   siteSettings = {};
   adminConsole?.apply(siteSettings);
   adminConsole?.sync();
+  accountRequests?.sync();
   chatChannels = [];
   helpRequests = [];
   helpMessages = [];
@@ -3560,8 +3568,16 @@ async function beginAuthenticatedSession(authUser) {
 async function login(username, password) {
   if (!backendReady) throw new Error("No se puede conectar con el servicio de acceso. Inténtalo de nuevo cuando haya conexión.");
   const email = `${normalizeUsername(username)}@bigboyrules.local`;
-  const {data, error} = await db.auth.signInWithPassword({email, password});
-  if (error) throw new Error("Usuario o contraseña incorrectos.");
+  let {data, error} = await db.auth.signInWithPassword({email, password});
+  if (error) {
+    // Approved applications use a real verified email; the server resolves it
+    // privately from the public username. Existing club aliases keep working.
+    const result = await db.functions.invoke("account-requests", {body: {action: "login", username: normalizeUsername(username), password}});
+    if (result.error || !result.data?.session) throw new Error("Usuario o contraseña incorrectos.");
+    const restored = await db.auth.setSession(result.data.session);
+    if (restored.error || !restored.data.user) throw new Error("No se pudo iniciar sesión. Inténtalo de nuevo.");
+    data = restored.data;
+  }
   await beginAuthenticatedSession(data.user);
 }
 
@@ -3840,6 +3856,7 @@ function notificationPresentation(item,actor) {
     private_message:{title:who,kind:"Te ha enviado un mensaje"},
     group_message:{title:who,kind:"Mensaje en el grupo"},
     group_poll:{title:who,kind:"Nueva encuesta en el grupo"},
+    account_request:{title:"Solicitud de cuenta",kind:"Administración · acceso al club",system:true,symbol:"＋"},
     like:{title:who,kind:"Le gusta tu contenido"},reply:{title:who,kind:"Ha respondido a tu contenido"},media_created:{title:who,kind:item.targetType==="moment"?"Ha compartido una historia":"Ha publicado contenido"},
     event_created:{title:"Nuevo plan",kind:`Agenda · ${who}`,system:true,symbol:"◷"},
     pack_granted:{title:"Sobres recibidos",kind:"Tu colección",system:true,symbol:"◇"},
@@ -3967,6 +3984,7 @@ function markVisibleConversationRead({includeHistory = false} = {}) {
 function handleRealtimeNotification(payload) {
   if (!currentAuthUser || (payload.new?.user_id && payload.new.user_id !== currentAuthUser.id)) return;
   if (["trade_offer", "trade_resolved"].includes(payload.new?.type)) globalThis.CollectionSocial?.receiveNotification();
+  if (payload.new?.type === "account_request") void accountRequests?.refresh();
   const state = conversationReadState();
   notifications = applyRealtimeChange(notifications, payload, mapNotification)
     .map(item => preserveNotificationRead(item, state))
@@ -4052,7 +4070,8 @@ async function openNotification(id) {
   else if (["pack_granted","trade_offer","trade_resolved"].includes(item.type)) {
     if(item.type.startsWith("trade_")) globalThis.CollectionSocial?.openTrades();
     else goTo("sobres");
-  } else if (item.type === "group_poll") void openGroupConversation(item.targetId);
+  } else if (item.type === "account_request" && canManageSite()) {goTo("administracion");document.querySelector("[data-open-account-requests]")?.click();}
+  else if (item.type === "group_poll") void openGroupConversation(item.targetId);
   else if (item.type === "group_message") goTo("chat");
   else if (item.type === "news_update") {goTo("inicio");document.getElementById("noticias")?.classList.remove("is-collapsed");document.getElementById("noticias")?.scrollIntoView({behavior:(globalThis.ClubMotion?.media || matchMedia("(prefers-reduced-motion: reduce)")).matches?"instant":"smooth",block:"start"});}
   else {
@@ -4277,6 +4296,7 @@ async function loadSiteSettings() {
   siteSettings = Object.fromEntries(data.map(item => [item.key, item.value]));
   adminConsole?.apply(siteSettings);
   adminConsole?.sync();
+  accountRequests?.sync();
   renderSpotify();
   renderGroupAvatarSurfaces();
   scheduleChatSurfaces();
