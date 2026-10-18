@@ -61,6 +61,7 @@ final class ClubBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(ClubSpotifyPlugin())
         bridge?.registerPluginInstance(ClubGalleryPlugin())
         bridge?.registerPluginInstance(ClubPushPlugin())
+        bridge?.registerPluginInstance(ClubAuthPlugin())
         webView?.scrollView.keyboardDismissMode = .interactive
         webView?.scrollView.contentInsetAdjustmentBehavior = .never
         webView?.scrollView.backgroundColor = view.backgroundColor
