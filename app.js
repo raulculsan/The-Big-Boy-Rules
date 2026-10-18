@@ -1,3 +1,16 @@
+function passwordValidationError(password, displayName = "", username = "") {
+  if (typeof password !== "string" || password.length < 8 || password.length > 128) return "La contraseña debe tener entre 8 y 128 caracteres.";
+  // Whitespace alone does not satisfy the symbol requirement.
+  if (!/[^\p{L}\p{N}\s\p{M}]/u.test(password)) return "Añade al menos un carácter especial, por ejemplo !, @ o #.";
+  const normalize = value => String(value || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const normalizedPassword = normalize(password);
+  const nameParts = String(displayName || "").split(/[^\p{L}\p{N}]+/u).map(normalize)
+    .filter(part => part.length >= 2 && !["de", "del", "la", "las", "los", "el", "y"].includes(part));
+  const identityParts = [normalize(username), normalize(displayName), ...nameParts].filter(Boolean);
+  if (identityParts.some(part => normalizedPassword.includes(part))) return "La contraseña no puede contener tu nombre, apellidos ni nombre de usuario.";
+  return "";
+}
+
 // Programmatic focus can inherit :focus-visible after a touch on WebKit.
 // Track input modality so touch surfaces stay clean and keyboard focus stays visible.
 document.documentElement.dataset.inputModality = "keyboard";
@@ -3546,8 +3559,9 @@ async function saveRequiredPasswordChange(form) {
   const feedback = document.getElementById("requiredPasswordFeedback");
   const submit = form.querySelector("[type=submit]");
   feedback.textContent = "";
-  if (password.length < 8 || password.length > 128) {
-    feedback.textContent = "La nueva contraseña debe tener entre 8 y 128 caracteres.";
+  const policyError = passwordValidationError(password, currentAuthUser?.user_metadata?.display_name, currentAuthUser?.email?.split("@")[0]);
+  if (policyError) {
+    feedback.textContent = policyError;
     return;
   }
   if (password !== confirmation) {
@@ -3560,8 +3574,7 @@ async function saveRequiredPasswordChange(form) {
   try {
     if (!backendReady || !currentAuthUser?.email) throw new Error("La sesión ya no está disponible. Vuelve a iniciar sesión.");
     const {id: expectedUserId, email} = currentAuthUser;
-    const {error} = await db.auth.updateUser({password});
-    if (error) throw error;
+    await invokeUserAdmin("change-password", {password});
     passwordSaved = true;
     // GoTrue may invalidate the previous session after a password change.
     // Start a fresh session with the new password instead of refreshing that token.
@@ -5671,7 +5684,7 @@ async function deletePrivateMessage(id) {
 }
 
 async function invokeUserAdmin(action, values) {
-  if (!canManageSite() || !db) throw new Error("No tienes permiso para administrar cuentas.");
+  if (!db || (action === "change-password" ? !currentAuthUser?.id : !canManageSite())) throw new Error("No tienes permiso para esta operación.");
   const {data, error} = await db.functions.invoke("admin-users", {body: {action, ...values}});
   if (error) {
     let detail = error.context?.error || error.message;
@@ -5693,6 +5706,8 @@ async function createClubUser(form) {
   submit.disabled = true;
   feedback.textContent = "Creando cuenta…";
   try {
+    const policyError = passwordValidationError(document.getElementById("newUserPassword").value, document.getElementById("newDisplayName").value, document.getElementById("newUsername").value);
+    if (policyError) throw new Error(policyError);
     await invokeUserAdmin("create", {
       username: document.getElementById("newUsername").value,
       displayName: document.getElementById("newDisplayName").value,
@@ -5730,10 +5745,12 @@ async function deleteClubUser(authId, name) {
 
 async function resetClubUserPassword(authId, name) {
   if (!canManageSite() || !authId) return;
-  const password = window.prompt(`Escribe la nueva contraseña provisional para ${name} (mínimo 8 caracteres):`);
+  const password = window.prompt(`Escribe la nueva contraseña provisional para ${name} (8–128 caracteres, un símbolo y sin su nombre):`);
   if (password == null) return;
   const confirmation = window.prompt("Repítela para confirmar:");
-  if (password.length < 8 || password !== confirmation) return window.alert("Las contraseñas no coinciden o son demasiado cortas.");
+  const target = members.find(member => member.authId === authId);
+  const policyError = passwordValidationError(password, target?.name || name, target?.username);
+  if (policyError || password !== confirmation) return window.alert(policyError || "Las contraseñas no coinciden.");
   if (!window.confirm(`¿Cambiar la contraseña de ${name}? Al entrar tendrá que crear una personal.`)) return;
   try {
     await invokeUserAdmin("reset-password", {userId: authId, password});
@@ -6843,7 +6860,11 @@ globalThis.AdminGrants?.initialize({
   dispatchPush,
   navigate: goTo,
   avatar: getAvatar,
-  changePassword: (member, password) => invokeUserAdmin("reset-password", {userId:member.authId, password}),
+  changePassword: (member, password) => {
+    const policyError = passwordValidationError(password, member.name, member.username);
+    if (policyError) throw new Error(policyError);
+    return invokeUserAdmin("reset-password", {userId:member.authId, password});
+  },
   saveProfile: async (member, values) => {
     if (!canManageSite() || !backendReady || !currentAuthUser) throw new Error("Comprueba tu conexión y tu sesión de administrador.");
     const actor = currentAuthUser.id;

@@ -463,7 +463,8 @@
           <form class="admin-create-user-form" id="createUserForm">
             <label>Usuario<input id="newUsername" name="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]+" autocomplete="off"></label>
             <label>Nombre visible<input id="newDisplayName" name="displayName" required maxlength="60" autocomplete="off"></label>
-            <label>Contraseña temporal<input id="newUserPassword" name="password" type="password" required minlength="8" autocomplete="new-password"></label>
+            <small id="newPasswordRules">Entre 8 y 128 caracteres, un símbolo (!, @, #) y sin el nombre, apellidos ni usuario.</small>
+            <label>Contraseña temporal<input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" aria-describedby="newPasswordRules" autocomplete="new-password"></label>
             <button class="primary-button" type="submit">Crear usuario</button>
           </form>
           <p class="form-feedback" id="createUserFeedback" aria-live="polite"></p>
@@ -777,13 +778,13 @@
       <form id="requiredPasswordChangeForm" class="profile-form">
         <label>
           <span>Nueva contraseña</span>
-          <input id="requiredNewPassword" type="password" minlength="8" autocomplete="new-password" required>
+          <input id="requiredNewPassword" type="password" minlength="8" maxlength="128" aria-describedby="requiredPasswordRules" autocomplete="new-password" required>
         </label>
         <label>
           <span>Confirma de nuevo la contraseña</span>
-          <input id="requiredNewPasswordConfirmation" type="password" minlength="8" autocomplete="new-password" required>
+          <input id="requiredNewPasswordConfirmation" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
         </label>
-        <small>Utiliza al menos 8 caracteres y no reutilices la contraseña provisional.</small>
+        <small id="requiredPasswordRules">Entre 8 y 128 caracteres, al menos un símbolo (!, @, #) y sin tu nombre, apellidos ni usuario.</small>
         <div class="form-feedback" id="requiredPasswordFeedback" role="status" aria-live="polite"></div>
         <button class="primary-button required-password-submit" type="submit">Confirmar y continuar</button>
       </form>
@@ -957,13 +958,13 @@
   <script defer src="album.js?v=20261016-release-323"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="banner-shop.js?v=20261016-release-323"></script>
-  <script defer src="admin-grants.js?v=20261015-social-301"></script>
+  <script defer src="admin-grants.js?v=20261018-password-335"></script>
   <script defer src="spotify-player.js?v=20261017-bounded-reconnect-331"></script>
   <script defer src="chat-themes.js?v=20261010-241"></script>
   <script defer src="group-interactions.js?v=20261016-release-322"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
   <script defer src="admin-console.js?v=20261018-control-334"></script>
-  <script defer src="app.js?v=20261018-control-334"></script>
+  <script defer src="app.js?v=20261018-password-335"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
