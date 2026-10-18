@@ -54,6 +54,7 @@
   <link rel="stylesheet" href="collection-social.css?v=20261015-mutual-trades-305" />
   <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
   <link rel="stylesheet" href="visual-system.css?v=20261017-search-focus-331" />
+  <link rel="stylesheet" href="admin-console.css?v=20261018-control-334" />
 </head>
 <body>
 
@@ -169,6 +170,7 @@
         <div><span class="eyebrow">THE BIG BOY RULES</span><h2>Inicio</h2></div>
         <span class="status-pill" id="heroOnlineStatus"><i></i> Conectando</span>
       </div>
+      <aside class="club-admin-announcement" id="clubAdminAnnouncement" aria-label="Aviso del club" hidden><span>CLUB</span><div><strong></strong><p></p></div></aside>
       <div class="club-search">
         <label class="search-hub-box" for="globalSearchInput">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
@@ -412,6 +414,8 @@
     </section>
 
     <section class="page-section" id="administracion">
+      <div id="superAdminConsole" hidden></div>
+      <div id="standardAdminPanel">
       <div class="section-intro">
         <div>
           <span class="eyebrow">CONTROL DEL CLUB</span>
@@ -422,6 +426,7 @@
 
       <div class="admin-summary" id="adminSummary"></div>
       <button class="secondary-button admin-help-entry" type="button" data-go="ayuda">Atender ayuda</button>
+      </div>
     </section>
 
     <section class="page-section achievement-admin-page admin-settings-page" id="admin-configuracion">
@@ -957,7 +962,8 @@
   <script defer src="chat-themes.js?v=20261010-241"></script>
   <script defer src="group-interactions.js?v=20261016-release-322"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
-  <script defer src="app.js?v=20261017-profile-hydration-332"></script>
+  <script defer src="admin-console.js?v=20261018-control-334"></script>
+  <script defer src="app.js?v=20261018-control-334"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

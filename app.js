@@ -740,6 +740,7 @@ function goTo(sectionId) {
   });
   globalThis.CardAlbum?.didNavigate(sectionId, currentSection);
   globalThis.AdminGrants?.didNavigate(sectionId);
+  adminConsole?.didNavigate(sectionId);
   const navigationSection = sectionId === "privados" ? "chat" : ["sobres", "album", "catalogo"].includes(sectionId) ? "inicio" : sectionId;
   navLinks.forEach(link => {
     const active = link.dataset.section === navigationSection;
@@ -753,7 +754,7 @@ function goTo(sectionId) {
   if (sectionId === "ayuda") { globalThis.ClubDrafts?.begin("helpRequestForm", "new"); globalThis.ClubDrafts?.begin("helpReplyForm", activeHelpRequestId == null ? null : `request:${activeHelpRequestId}`); }
   if (sectionId === "admin-logros") renderAdminAchievements();
   if (sectionId === "admin-diagnostico") globalThis.ClubHealth?.show();
-  if (sectionId === "admin-cuentas") renderAdminPanel();
+  if (sectionId === "admin-cuentas" || sectionId === "administracion") renderAdminPanel();
   syncChatInboxAccessibility();
   syncMobileViewport();
   const titles = {
@@ -1909,6 +1910,7 @@ function setChatEnabled(enabled) {
 }
 
 function renderPresence() {
+  adminConsole?.refreshStats();
   const count = onlineUsers.length;
   const label = count === 1 ? "1 conectado" : `${count} conectados`;
   updateSurfaceMarkup(document.getElementById("chatOnlineStatus"), `<i></i> ${label}`);
@@ -2482,6 +2484,7 @@ function renderCalendarSelectedDay() {
 }
 
 function renderCalendar() {
+  adminConsole?.refreshStats();
   renderUpcomingEvents();
   const year = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
@@ -3046,7 +3049,39 @@ function performSearch(query) {
   }).join("") : `<div class="empty-state compact">No hay miembros para “${escapeHtml(query)}”.</div>`;
 }
 
+const adminConsole = globalThis.AdminConsole?.create({
+  allowed: isSuperAdmin,
+  owner: () => currentAuthUser?.id,
+  username: () => currentUser?.username || "admin",
+  settings: () => siteSettings,
+  ready: () => homeSettingsReady && Boolean(currentAuthUser?.id),
+  stats: () => ({
+    members: members.filter(member => !member.hidden).length,
+    online: onlineUsers.length,
+    admins: members.filter(member => !member.hidden && member.roleKey === "admin").length,
+    events: groupEvents.filter(event => event.eventType !== "birthday" && new Date(event.endsAt || event.startsAt) >= new Date()).length,
+  }),
+  navigate: goTo,
+  reload: loadSiteSettings,
+  logout: logoutCurrentUser,
+  save: async (key, value) => {
+    if (!isSuperAdmin() || !currentAuthUser || key !== "club_presentation_v1") throw new Error("Acceso no autorizado");
+    const owner = currentAuthUser.id;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const {error} = await db.from("site_settings").upsert({key, value, updated_by: owner, updated_at: new Date().toISOString()}).abortSignal(controller.signal);
+      if (error) throw error;
+    } finally { clearTimeout(timeout); }
+    if (currentAuthUser?.id !== owner || !isSuperAdmin()) return;
+    siteSettings = {...siteSettings, [key]: value};
+    adminConsole?.apply(siteSettings);
+    adminConsole?.sync();
+  },
+});
+
 function renderAdminPanel() {
+  adminConsole?.sync();
   globalThis.AdminGrants?.render();
   const summary = document.getElementById("adminSummary");
   const table = document.getElementById("adminUsersTable");
@@ -3234,6 +3269,7 @@ function applyUserHeader(user) {
   });
   document.querySelectorAll(".admin-only").forEach(node => node.style.display = canManageSite() ? "" : "none");
   renderGroupAvatarSurfaces();
+  adminConsole?.sync();
 }
 
 async function hydrateAuthenticatedData(authUser) {
@@ -3301,6 +3337,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   globalThis.ClubHealth?.mark("authenticated");
   document.getElementById("loginScreen")?.classList.add("login-hidden");
   applyUserHeader(user);
+  if (isSuperAdmin() && document.getElementById("inicio")?.classList.contains("active")) goTo("administracion");
   completeInitialLaunch();
   // Authentication and role checks are already finished. Let the authenticated
   // shell paint before DOM-heavy surfaces or network completion callbacks run.
@@ -3353,6 +3390,8 @@ function showLogin() {
   currentUser = null;
   globalThis.ClubDrafts?.suspend();
   currentAuthUser = null;
+  adminConsole?.apply({});
+  adminConsole?.sync();
   globalThis.ClubMotion?.configure(null);
   globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
@@ -3406,6 +3445,8 @@ async function logoutCurrentUser() {
   currentUser = null;
   globalThis.ClubDrafts?.suspend();
   currentAuthUser = null;
+  adminConsole?.apply({});
+  adminConsole?.sync();
   globalThis.ClubMotion?.configure(null);
   globalThis.AdminGrants?.render();
   messages = [];
@@ -3424,6 +3465,8 @@ async function logoutCurrentUser() {
   homeEventsReady = !backendReady;
   homeSettingsReady = !backendReady;
   siteSettings = {};
+  adminConsole?.apply(siteSettings);
+  adminConsole?.sync();
   chatChannels = [];
   helpRequests = [];
   helpMessages = [];
@@ -4182,13 +4225,23 @@ async function loadGroupEvents() {
 }
 
 async function loadSiteSettings() {
-  const {data, error} = await db.from("site_settings").select("key,value");
+  const settingsOwner = currentAuthUser?.id;
+  if (!settingsOwner) return;
+  const settingsController = new AbortController();
+  const settingsTimeout = setTimeout(() => settingsController.abort(), 15000);
+  let settingsResult;
+  try { settingsResult = await db.from("site_settings").select("key,value").abortSignal(settingsController.signal); }
+  finally { clearTimeout(settingsTimeout); }
+  const {data, error} = settingsResult;
+  if (currentAuthUser?.id !== settingsOwner) return;
   if (error) {
     if (!homeSettingsReady) document.getElementById("spotifyPlayer").innerHTML = '<div class="home-loading-state" role="status">No se pudo cargar la playlist. Comprueba la conexión.</div>';
     return;
   }
   homeSettingsReady = true;
   siteSettings = Object.fromEntries(data.map(item => [item.key, item.value]));
+  adminConsole?.apply(siteSettings);
+  adminConsole?.sync();
   renderSpotify();
   renderGroupAvatarSurfaces();
   scheduleChatSurfaces();

@@ -57,6 +57,8 @@ const sources = [
   "onboarding.css",
   "admin-grants.js",
   "admin-grants.css",
+  "admin-console.js",
+  "admin-console.css",
   "app.js",
   "config.js",
   "manifest.webmanifest",
