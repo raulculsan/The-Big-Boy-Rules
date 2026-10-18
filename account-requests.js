@@ -49,36 +49,42 @@
    if(['approved','rejected'].includes(item.status)&&item.email_status!=='sent'){const warning=document.createElement('small');text(warning,'Aviso por correo pendiente de envío.');card.append(warning);button('Reintentar correo','retry');}
    card.append(controls);return card;
   }
+  const reviewHosts=()=>Array.from(document.querySelectorAll('[data-request-review]'));
   function render() {
    const pending=requests.filter(r=>!['approved','rejected'].includes(r.status)),old=requests.filter(r=>['approved','rejected'].includes(r.status));
-   const list=review.querySelector('.request-review-list');list.replaceChildren();
-   if(!requests.length){const empty=document.createElement('p');empty.className='request-empty';text(empty,'No hay solicitudes de cuenta pendientes.');list.append(empty);}
-   pending.forEach(r=>list.append(requestRow(r)));
-   if(old.length){const details=document.createElement('details'),summary=document.createElement('summary');text(summary,`Revisadas · ${old.length}`);details.append(summary,...old.map(requestRow));list.append(details);}
+   for(const host of reviewHosts()){
+    const list=host.querySelector('.request-review-list');list.replaceChildren();
+    if(!pending.length){const empty=document.createElement('p');empty.className='request-empty';text(empty,'No hay solicitudes de cuenta pendientes.');list.append(empty);}
+    pending.forEach(r=>list.append(requestRow(r)));
+    if(old.length){const details=document.createElement('details'),summary=document.createElement('summary');text(summary,`Revisadas · ${old.length}`);details.append(summary,...old.map(requestRow));list.append(details);}
+   }
    document.querySelectorAll('[data-request-count]').forEach(node=>{text(node,String(pending.length));node.hidden=!pending.length;});
   }
+  function reviewFeedback(message){for(const host of reviewHosts())text(host.querySelector('.request-feedback'),message);}
   async function refresh() {
    if(!api.canManage()||!api.owner())return;
    const current=api.owner(),ticket=++generation;
-   try{const result=await invoke('list');if(ticket!==generation||api.owner()!==current||!api.canManage())return;requests=result.requests||[];if(review){render();text(review.querySelector('.request-feedback'),result.configured?'':'El correo de solicitudes todavía está pendiente de configuración.');}else document.querySelectorAll('[data-request-count]').forEach(n=>{const count=requests.filter(r=>!['approved','rejected'].includes(r.status)).length;text(n,String(count));n.hidden=!count;});}
-   catch(error){if(review?.open&&api.owner()===current)text(review.querySelector('.request-feedback'),error.message);}
+   try{const result=await invoke('list');if(ticket!==generation||api.owner()!==current||!api.canManage())return;requests=result.requests||[];render();reviewFeedback(result.configured?'':'El correo de solicitudes todavía está pendiente de configuración.');}
+   catch(error){if(api.owner()===current)reviewFeedback(error.message);}
   }
   async function openReview() {
    if(!api.canManage())return;
-   if(!review){review=makeDialog('Solicitudes de cuenta');review.classList.add('request-review-dialog');review.insertAdjacentHTML('beforeend','<h2>Solicitudes de acceso.</h2><p class="request-intro">Las solicitudes aparecen desde que se envían. El correo debe estar verificado antes de aceptar y activar la cuenta.</p><p class="request-feedback" role="status" aria-live="polite"></p><div class="request-review-list"></div>');
-    review.addEventListener('click',async event=>{
-     const button=event.target.closest('[data-request-action]');if(!button||busy||!api.canManage())return;
-     if(button.dataset.requestAction==='reject'&&!button.dataset.confirm){button.dataset.confirm='true';text(button,'Confirmar rechazo');return;}
-     busy=true;review.querySelectorAll('button').forEach(n=>n.disabled=true);const current=api.owner(),feedback=review.querySelector('.request-feedback');text(feedback,'Guardando…');
-     try{const result=await invoke(button.dataset.requestAction,{id:button.dataset.requestId});if(api.owner()!==current)return;await refresh();text(feedback,result.message||(result.emailSent===false?'La decisión está guardada. El correo está pendiente: puedes reintentarlo.':'Decisión guardada y correo enviado.'));}
-     catch(error){text(feedback,error.message);}finally{busy=false;review.querySelectorAll('button').forEach(n=>n.disabled=false);}
-    });
-   }
-   text(review.querySelector('.request-feedback'),'Cargando solicitudes…');review.showModal();await refresh();
+   if(!review){review=makeDialog('Solicitudes de cuenta');review.classList.add('request-review-dialog');review.insertAdjacentHTML('beforeend','<h2>Solicitudes de acceso.</h2><div data-request-review><p class="request-intro">Las solicitudes aparecen desde que se envían. El correo debe estar verificado antes de aceptar y activar la cuenta.</p><p class="request-feedback" role="status" aria-live="polite"></p><div class="request-review-list"></div></div>');}
+   render();reviewFeedback('Cargando solicitudes…');review.showModal();await refresh();
   }
+  document.addEventListener('click',async event=>{
+   const refreshButton=event.target.closest('[data-request-refresh]');
+   if(refreshButton&&api.canManage()){if(busy)return;refreshButton.disabled=true;try{reviewFeedback('Actualizando…');await refresh();}finally{refreshButton.disabled=false;}return;}
+   const button=event.target.closest('[data-request-action]');if(!button||busy||!api.canManage())return;
+   if(button.dataset.requestAction==='reject'&&!button.dataset.confirm){button.dataset.confirm='true';text(button,'Confirmar rechazo');return;}
+   busy=true;document.querySelectorAll('[data-request-action],[data-request-refresh]').forEach(n=>n.disabled=true);const current=api.owner();reviewFeedback('Guardando…');
+   try{const result=await invoke(button.dataset.requestAction,{id:button.dataset.requestId});if(api.owner()!==current)return;await refresh();if(api.owner()===current)reviewFeedback(result.message||(result.emailSent===false?'La decisión está guardada. El correo está pendiente: puedes reintentarlo.':'Decisión guardada y correo enviado.'));}
+   catch(error){if(api.owner()===current)reviewFeedback(error.message);}finally{busy=false;document.querySelectorAll('[data-request-action],[data-request-refresh]').forEach(n=>n.disabled=false);}
+  });
+  document.addEventListener('club-account-requests-open',()=>{if(api.canManage()){render();reviewFeedback('Actualizando…');void refresh();}});
   function sync() {
    const current=api.canManage()?api.owner():null;if(owner===current)return;owner=current;++generation;requests=[];
-   if(!current){review?.close();review?.querySelector('.request-review-list')?.replaceChildren();document.querySelectorAll('[data-request-count]').forEach(n=>n.hidden=true);}else void refresh();
+   if(!current){review?.close();reviewHosts().forEach(host=>{host.querySelector('.request-review-list').replaceChildren();text(host.querySelector('.request-feedback'),'');});document.querySelectorAll('[data-request-count]').forEach(n=>n.hidden=true);}else void refresh();
   }
   document.addEventListener('click',event=>{if(event.target.closest('[data-request-account]'))void openApplication();if(event.target.closest('[data-open-account-requests]'))void openReview();});
   let confirmation=null,activeVerification='';

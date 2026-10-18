@@ -38,18 +38,27 @@ async function read(request:Request) {
  if(!Object.hasOwn(fields,result.action)||Object.keys(result).some(k=>!fields[result.action].includes(k)))throw new Error('Petición no válida.');
  return result as Record<string,string>;
 }
-async function mail(email:string,subject:string,text:string,key:string) {
+async function mail(email:string,subject:string,text:string,key:string,html?:string) {
  if(!configured) throw new Error('El correo de solicitudes aún no está configurado.');
  if(smtpUser && smtpPassword){
   // Gmail requires a dedicated app password; never a personal account password.
   const {default:nodemailer}=await import('npm:nodemailer@10.1.6');
   const transport=nodemailer.createTransport({host:'smtp.gmail.com',port:465,secure:true,auth:{user:smtpUser,pass:smtpPassword},connectionTimeout:10000,greetingTimeout:10000,socketTimeout:15000,logger:false,debug:false,disableFileAccess:true,disableUrlAccess:true});
-  try{await transport.sendMail({from:{name:'Big Boy',address:smtpUser},to:email,subject,text,messageId:`<${key}@bigboyrules.local>`});}finally{transport.close();}
+  try{await transport.sendMail({from:{name:'Big Boy',address:smtpUser},to:email,subject,text,...(html?{html}:{}),messageId:`<${key}@bigboyrules.local>`});}finally{transport.close();}
   return;
  }
- const response=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':mailKey!,'Content-Type':'application/json'},body:JSON.stringify({sender:{name:'Big Boy',email:sender},to:[{email}],subject,textContent:text,headers:{'X-Account-Request':key}}),signal:AbortSignal.timeout(12000)});
+ const response=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':mailKey!,'Content-Type':'application/json'},body:JSON.stringify({sender:{name:'Big Boy',email:sender},to:[{email}],subject,textContent:text,...(html?{htmlContent:html}:{}),headers:{'X-Account-Request':key}}),signal:AbortSignal.timeout(12000)});
  if(!response.ok){await response.body?.cancel();throw new Error('No se pudo entregar el correo.');}
  await response.body?.cancel();
+}
+const mailEntities:Record<string,string>={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+const escapeMail=(value:string)=>value.replace(/[&<>"']/g,char=>mailEntities[char]);
+async function sendVerification(email:string,name:string,username:string,id:string,token:string,key:string,resent=false) {
+ const link=verificationLink(id,token),safeLink=escapeMail(link);
+ const notice=resent?'Si recibiste un correo anterior, utiliza este nuevo enlace.':'Si no has solicitado una cuenta, ignora este correo.';
+ const plain=`Hola ${name},\n\nConfirma tu correo para enviar a administración la solicitud de @${username}:\n\n${link}\n\nPulsa el enlace para abrir Big Boy en tu iPhone. Caduca en 48 horas. La cuenta solo se activará si administración la acepta. ${notice}`;
+ const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f3f2ee;font-family:Arial,sans-serif;color:#202428"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:32px 16px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#fff;border-radius:20px"><tr><td style="padding:32px"><p style="margin:0 0 24px;font-size:12px;letter-spacing:2px;color:#806329">BIG BOY</p><h1 style="margin:0 0 20px;font-size:28px">Confirma tu correo</h1><p style="line-height:1.6">Hola ${escapeMail(name)},</p><p style="line-height:1.6">Verifica tu dirección para enviar la solicitud de <strong>@${escapeMail(username)}</strong> a administración.</p><p style="margin:28px 0"><a href="${safeLink}" style="display:inline-block;padding:16px 24px;border-radius:12px;background:#202428;color:#fff;text-decoration:none;font-weight:bold">Verificar correo y abrir Big Boy</a></p><p style="font-size:13px;line-height:1.6;color:#626a70">El enlace abre la aplicación en tu iPhone y caduca en 48 horas. Tu cuenta se activará cuando administración acepte la solicitud.</p><p style="font-size:13px;line-height:1.6">También puedes pulsar este enlace:<br><a href="${safeLink}" style="color:#66501f;overflow-wrap:anywhere;word-break:break-all">Abrir enlace de verificación</a></p><p style="margin-top:28px;font-size:12px;line-height:1.6;color:#626a70">${escapeMail(notice)}</p></td></tr></table></td></tr></table></body></html>`;
+ await mail(email,'Confirma tu solicitud de Big Boy',plain,key,html);
 }
 async function notifyAdmin(req:Record<string,any>) {
  if(!adminEmail)throw new Error('Falta el correo de administración.');
@@ -107,7 +116,7 @@ export default {async fetch(request:Request):Promise<Response>{
   const {error:insertError}=await client.from('account_requests').insert({id,auth_user_id:data.user.id,username,display_name:name,email,verification_hash:await digest(token),verification_expires_at:new Date(Date.now()+48*3600000).toISOString()});
   if(insertError){await client.auth.admin.deleteUser(data.user.id);return json(accepted);}
   try{
-   await mail(email,'Confirma tu solicitud de Big Boy',`Hola ${name},\n\nConfirma tu correo para enviar a administración la solicitud de @${username}:\n\n${verificationLink(id,token)}\n\nEl enlace abre Big Boy en tu iPhone y caduca en 48 horas. La cuenta solo se activará si administración la acepta. Si no has solicitado una cuenta, ignora este correo.`,`account-request-${id}-verify`);
+   await sendVerification(email,name,username,id,token,`account-request-${id}-verify`);
   }catch{
    // Do not leave an unverified, unreachable account occupying this email.
    await client.auth.admin.deleteUser(data.user.id);await client.from('account_requests').delete().eq('id',id);
@@ -146,7 +155,7 @@ export default {async fetch(request:Request):Promise<Response>{
    .select('id').maybeSingle();
   if(error||!updated)return json({error:'La solicitud cambió. Actualiza la lista.'},409);
   try{
-   await mail(req.email,'Confirma tu solicitud de Big Boy',`Hola ${req.display_name},\n\nConfirma tu correo para enviar a administración la solicitud de @${req.username}:\n\n${verificationLink(req.id,token)}\n\nEl enlace abre Big Boy en tu iPhone y caduca en 48 horas. Si recibiste un correo anterior, utiliza este nuevo enlace.`,`account-request-${req.id}-verify-${crypto.randomUUID()}`);
+   await sendVerification(req.email,req.display_name,req.username,req.id,token,`account-request-${req.id}-verify-${crypto.randomUUID()}`,true);
   }catch{
    await client.from('account_requests')
     .update({verification_hash:req.verification_hash,verification_expires_at:req.verification_expires_at})

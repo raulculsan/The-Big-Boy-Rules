@@ -9,15 +9,14 @@ El administrador nunca recibe la contraseña. Mientras espera aprobación, Auth
 usa una dirección interna temporal; el correo personal solo está en la solicitud
 protegida. Al aceptar se vincula ese correo a Auth. El login sigue siendo por @.
 
-El correo contiene un enlace HTTPS de Supabase que redirige a
+El correo se envía como HTML con un botón y un enlace pulsables, y una alternativa de texto plano. Ambos apuntan a un enlace HTTPS de Supabase que redirige a
 `bigboyrules://account-request/verify`. El token de un solo uso pasa en la URL
 de redirección, así que puede figurar en registros de acceso de Supabase; caduca
 en 48 horas y no activa la cuenta por sí solo. La persona pulsa Confirmar dentro de la app. El
 servidor comprueba el hash y la caducidad (48 h), consume el
-token y avisa en el panel de notificaciones a los administradores. Solicitudes
-sin verificar no aparecen para aprobación. Cerrar el formulario borra sus campos.
+token y avisa en el panel de notificaciones a los administradores. Las solicitudes sin verificar aparecen con su estado y permiten reenviar la verificación; no se pueden aprobar. Cerrar el formulario borra sus campos.
 
-En Administración > Solicitudes de cuenta se acepta o rechaza. Aceptar crea el
+En la consola de la cuenta admin, la pestaña «Solicitudes» muestra las peticiones directamente en el panel. Otros administradores conservan el acceso «Solicitudes de cuenta». Ambas vistas usan el mismo listado y las mismas acciones para aceptar o rechazar. Aceptar crea el
 perfil con rol member y activa el acceso; rechazar elimina la credencial pendiente.
 Ambas decisiones envían un correo. Un fallo de envío conserva la decisión y muestra
 «Reintentar correo». Gmail ofrece entrega al menos una vez: una interrupción justo

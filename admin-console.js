@@ -71,11 +71,11 @@
     let owner = null, saved = normalize(), draft = {...saved}, dirty = false, busy = false, ready = false;
     mount.innerHTML = `
       <header class="control-heading"><div class="control-brand"><span class="control-emblem">BB<span>CONTROL</span></span><div><span class="control-kicker">THE BIG BOY RULES</span><h2>Tu centro de control.</h2><p>Contenido, personas y experiencia del club.</p></div></div><span class="control-access">Control total</span></header>
-      <nav class="control-tabs" aria-label="Secciones del centro de control"><button type="button" data-control-tab="overview" aria-pressed="true">Vista general</button><button type="button" data-control-tab="design" aria-pressed="false">Personalización<span data-control-unsaved hidden></span></button><button type="button" data-control-action="preview">${icon('eye')}<span>Ver el club</span></button></nav>
+      <nav class="control-tabs" aria-label="Secciones del centro de control"><button type="button" data-control-tab="overview" aria-pressed="true">Vista general</button><button type="button" data-control-tab="requests" aria-pressed="false">Solicitudes<span data-request-count hidden></span></button><button type="button" data-control-tab="design" aria-pressed="false">Personalización<span data-control-unsaved hidden></span></button><button type="button" data-control-action="preview">${icon('eye')}<span>Ver el club</span></button></nav>
       <div data-control-panel="overview">
         <section class="control-overview" aria-label="Resumen del club"><article class="control-overview-lead"><span class="control-kicker">ESTADO DEL CLUB</span><strong>Administra el club.</strong><p>Gestiona las cuentas, prepara los próximos planes y ajusta la experiencia.</p><button type="button" data-control-action="design">Personalizar el club ${icon('paint')}</button></article><div class="control-metrics"><article><span>Cuentas del club</span><strong data-control-stat="members">—</strong><small>Usuarios visibles</small></article><article><span>Conectados</span><strong data-control-stat="online">—</strong><small>Presencia ahora</small></article><article><span>Próximos planes</span><strong data-control-stat="events">—</strong><small>Eventos programados</small></article><article><span>Equipo</span><strong data-control-stat="admins">—</strong><small>Administradores del club</small></article></div></section>
         <div class="control-section-label"><h3>Gestionar el club</h3><span>Accesos de trabajo</span></div>
-        <div class="control-workspaces"><button type="button" class="control-workspace" data-open-account-requests><span class="control-workspace-top"><i>${icon('people')}</i><small data-request-count hidden></small></span><strong>Solicitudes de cuenta</strong><span>Verifica el correo y decide quién entra al club.</span><b>Revisar accesos</b></button>${[
+        <div class="control-workspaces"><button type="button" class="control-workspace" data-control-tab="requests"><span class="control-workspace-top"><i>${icon('people')}</i><small data-request-count hidden></small></span><strong>Solicitudes de cuenta</strong><span>Verifica el correo y decide quién entra al club.</span><b>Revisar accesos</b></button>${[
           ['people', 'admin-cuentas', '01', 'Cuentas y perfiles', 'Usuarios, contraseñas, sobres, monedas y regalos.', 'Cuentas'],
           ['calendar', 'calendario', '02', 'Agenda del club', 'Cumpleaños, eventos y asistencia.', 'Organizar'],
           ['chat', 'chat', '03', 'Conversaciones', 'Secciones, encuestas y mensajes automáticos.', 'Abrir chats'],
@@ -85,6 +85,10 @@
         ].map(([symbol, route, number, title, description, action]) => `<button type="button" class="control-workspace" data-control-route="${route}"><span class="control-workspace-top"><i>${icon(symbol)}</i><small>${number}</small></span><strong>${title}</strong><span>${description}</span><b>${action}</b></button>`).join('')}</div>
         <button type="button" class="control-diagnostics" data-control-route="admin-diagnostico">${icon('pulse')}<span><strong>Rendimiento y diagnóstico</strong><small>Tiempos de carga, pausas y estado de este dispositivo.</small></span><b>Consultar</b></button>
       </div>
+      <section data-control-panel="requests" class="request-admin-section" hidden aria-label="Solicitudes de cuenta">
+        <div class="request-section-heading"><div><span class="control-kicker">ACCESO AL CLUB</span><h3>Solicitudes</h3><p>Revisa quién quiere entrar y decide cuándo activar su cuenta.</p></div><button type="button" data-request-refresh>Actualizar</button></div>
+        <div data-request-review><p class="request-intro">Las solicitudes aparecen al enviarse. Para aceptar una cuenta, su correo debe estar verificado.</p><p class="request-feedback" role="status" aria-live="polite"></p><div class="request-review-list"></div></div>
+      </section>
       <div data-control-panel="design" hidden>
         <div class="control-design-intro"><div><h3>Personalización del club.</h3><p>Los cambios se publican para todos en la web y en el iPhone.</p></div><div class="control-settings-sync"><span data-control-settings-state>Esperando configuración</span><button type="button" data-control-action="reload">Sincronizar</button></div></div>
         <form id="clubPresentationForm" class="control-editor">
@@ -118,6 +122,7 @@
     document.body.append(dock);
     const feedback = mount.querySelector('[data-control-feedback]');
     function view(tab) {
+      if (tab === 'requests') document.dispatchEvent(new Event('club-account-requests-open'));
       for (const node of mount.querySelectorAll('[data-control-panel]')) node.hidden = node.dataset.controlPanel !== tab;
       for (const node of mount.querySelectorAll('[data-control-tab]')) node.setAttribute('aria-pressed', String(node.dataset.controlTab === tab));
     }
