@@ -33,7 +33,7 @@ async function read(request:Request) {
  const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
  const result=JSON.parse(new TextDecoder().decode(bytes));
  if(!result||Array.isArray(result)||typeof result!=='object'||Object.values(result).some(v=>typeof v!=='string'))throw new Error('Petición no válida.');
- const fields:Record<string,string[]>={configuration:['action'],submit:['action','email','username','displayName','password','website'],verify:['action','id','token'],login:['action','username','password'],list:['action'],approve:['action','id'],reject:['action','id'],retry:['action','id'],'retry-admin':['action','id']};
+ const fields:Record<string,string[]>={configuration:['action'],submit:['action','email','username','displayName','password','website'],verify:['action','id','token'],login:['action','username','password'],list:['action'],approve:['action','id'],reject:['action','id'],retry:['action','id'],'retry-admin':['action','id'],'resend-verification':['action','id']};
  if(!Object.hasOwn(fields,result.action)||Object.keys(result).some(k=>!fields[result.action].includes(k)))throw new Error('Petición no válida.');
  return result as Record<string,string>;
 }
@@ -121,12 +121,33 @@ export default {async fetch(request:Request):Promise<Response>{
  const {data:actor}=await client.from('profiles').select('role,is_hidden').eq('id',user.id).single();
  if(!actor||!((actor.role==='superadmin'&&actor.is_hidden)||(actor.role==='admin'&&!actor.is_hidden)))return json({error:'Solo administración puede revisar solicitudes.'},403);
  if(action==='list'){
-  const {data,error}=await client.from('account_requests').select('id,username,display_name,email,status,created_at,verified_at,reviewed_at,email_status,admin_email_status').neq('status','pending_email').order('created_at',{ascending:false}).limit(100);
+  const {data,error}=await client.from('account_requests').select('id,username,display_name,email,status,created_at,verified_at,reviewed_at,email_status,admin_email_status').order('created_at',{ascending:false}).limit(100);
   if(error)throw error;return json({requests:data,configured});
  }
  if(!/^[0-9a-f-]{36}$/.test(body.id||''))return json({error:'Solicitud no válida.'},400);
  const {data:req,error:requestError}=await client.from('account_requests').select('*').eq('id',body.id).maybeSingle();
  if(requestError||!req)return json({error:'Solicitud no disponible.'},404);
+ if(action==='resend-verification'){
+  if(!configured)return json({error:'El correo de solicitudes no está configurado.'},503);
+  if(req.status!=='pending_email'||!req.auth_user_id||!req.verification_hash)return json({error:'Esta solicitud ya no necesita verificar el correo.'},409);
+  if(!await limit(`verification:admin:${req.id}`,3,86400))return json({error:'Ya se han enviado tres recordatorios hoy. Revisa la carpeta de spam o espera hasta mañana.'},429);
+  const token=crypto.randomUUID()+crypto.randomUUID(),hash=await digest(token);
+  const {data:updated,error}=await client.from('account_requests')
+   .update({verification_hash:hash,verification_expires_at:new Date(Date.now()+48*3600000).toISOString()})
+   .eq('id',req.id).eq('status','pending_email').eq('verification_hash',req.verification_hash)
+   .select('id').maybeSingle();
+  if(error||!updated)return json({error:'La solicitud cambió. Actualiza la lista.'},409);
+  const link=new URL(returnUrl!);link.hash=`account-request=${req.id}.${token}`;
+  try{
+   await mail(req.email,'Confirma tu solicitud de Big Boy',`Hola ${req.display_name},\n\nConfirma tu correo para enviar a administración la solicitud de @${req.username}:\n\n${link.href}\n\nEl enlace caduca en 48 horas. Si recibiste un correo anterior, utiliza este nuevo enlace.`,`account-request-${req.id}-verify-${crypto.randomUUID()}`);
+  }catch{
+   await client.from('account_requests')
+    .update({verification_hash:req.verification_hash,verification_expires_at:req.verification_expires_at})
+    .eq('id',req.id).eq('status','pending_email').eq('verification_hash',hash);
+   return json({error:'No se pudo reenviar el correo. Inténtalo más tarde.'},503);
+  }
+  return json({ok:true,emailSent:true,message:'Verificación reenviada al correo de la solicitud. Revisa también spam.'});
+ }
  if(action==='retry-admin'){
   if(!req.verified_at)return json({error:'Solicitud no verificada.'},409);
   await notifyAdmin(req);return json({ok:true,emailSent:true});

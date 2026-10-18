@@ -39,9 +39,10 @@
    const mark=document.createElement('span');mark.className='request-avatar';text(mark,item.display_name.slice(0,1).toUpperCase());
    const info=document.createElement('div'),name=document.createElement('strong'),username=document.createElement('small'),email=document.createElement('span');
    text(name,item.display_name);text(username,`@${item.username}`);text(email,item.email);info.append(name,username,email);heading.append(mark,info);card.append(heading);
-   const meta=document.createElement('p');meta.className='request-review-meta';text(meta,`${new Date(item.created_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})} · ${({pending:'Correo verificado',approving:'Aprobación pendiente de completar',rejecting:'Rechazo pendiente de completar',approved:'Cuenta creada',rejected:'Solicitud rechazada'})[item.status]||item.status}`);card.append(meta);
+   const meta=document.createElement('p');meta.className='request-review-meta';text(meta,`${new Date(item.created_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})} · ${({pending_email:'Correo pendiente de verificar',pending:'Correo verificado',approving:'Aprobación pendiente de completar',rejecting:'Rechazo pendiente de completar',approved:'Cuenta creada',rejected:'Solicitud rechazada'})[item.status]||item.status}`);card.append(meta);
    const controls=document.createElement('div');controls.className='request-review-actions';
    const button=(label,action)=>{const node=document.createElement('button');node.type='button';text(node,label);node.dataset.requestAction=action;node.dataset.requestId=item.id;controls.append(node);};
+   if(item.status==='pending_email')button('Reenviar verificación','resend-verification');
    if(['pending','approving'].includes(item.status))button(item.status==='approving'?'Completar aprobación':'Aceptar solicitud','approve');
    if(item.status==='pending'&&item.admin_email_status!=='sent')button('Reintentar aviso a administración','retry-admin');
    if(['pending','rejecting'].includes(item.status))button(item.status==='rejecting'?'Completar rechazo':'Rechazar','reject');
@@ -51,7 +52,7 @@
   function render() {
    const pending=requests.filter(r=>!['approved','rejected'].includes(r.status)),old=requests.filter(r=>['approved','rejected'].includes(r.status));
    const list=review.querySelector('.request-review-list');list.replaceChildren();
-   if(!requests.length){const empty=document.createElement('p');empty.className='request-empty';text(empty,'No hay solicitudes verificadas pendientes.');list.append(empty);}
+   if(!requests.length){const empty=document.createElement('p');empty.className='request-empty';text(empty,'No hay solicitudes de cuenta pendientes.');list.append(empty);}
    pending.forEach(r=>list.append(requestRow(r)));
    if(old.length){const details=document.createElement('details'),summary=document.createElement('summary');text(summary,`Revisadas · ${old.length}`);details.append(summary,...old.map(requestRow));list.append(details);}
    document.querySelectorAll('[data-request-count]').forEach(node=>{text(node,String(pending.length));node.hidden=!pending.length;});
@@ -64,12 +65,12 @@
   }
   async function openReview() {
    if(!api.canManage())return;
-   if(!review){review=makeDialog('Solicitudes de cuenta');review.classList.add('request-review-dialog');review.insertAdjacentHTML('beforeend','<h2>Solicitudes de acceso.</h2><p class="request-intro">Solo aparecen solicitudes con correo verificado. Aceptar crea el perfil y activa su acceso al club.</p><p class="request-feedback" role="status" aria-live="polite"></p><div class="request-review-list"></div>');
+   if(!review){review=makeDialog('Solicitudes de cuenta');review.classList.add('request-review-dialog');review.insertAdjacentHTML('beforeend','<h2>Solicitudes de acceso.</h2><p class="request-intro">Las solicitudes aparecen desde que se envían. El correo debe estar verificado antes de aceptar y activar la cuenta.</p><p class="request-feedback" role="status" aria-live="polite"></p><div class="request-review-list"></div>');
     review.addEventListener('click',async event=>{
      const button=event.target.closest('[data-request-action]');if(!button||busy||!api.canManage())return;
      if(button.dataset.requestAction==='reject'&&!button.dataset.confirm){button.dataset.confirm='true';text(button,'Confirmar rechazo');return;}
      busy=true;review.querySelectorAll('button').forEach(n=>n.disabled=true);const current=api.owner(),feedback=review.querySelector('.request-feedback');text(feedback,'Guardando…');
-     try{const result=await invoke(button.dataset.requestAction,{id:button.dataset.requestId});if(api.owner()!==current)return;await refresh();text(feedback,result.emailSent===false?'La decisión está guardada. El correo está pendiente: puedes reintentarlo.':'Decisión guardada y correo enviado.');}
+     try{const result=await invoke(button.dataset.requestAction,{id:button.dataset.requestId});if(api.owner()!==current)return;await refresh();text(feedback,result.message||(result.emailSent===false?'La decisión está guardada. El correo está pendiente: puedes reintentarlo.':'Decisión guardada y correo enviado.'));}
      catch(error){text(feedback,error.message);}finally{busy=false;review.querySelectorAll('button').forEach(n=>n.disabled=false);}
     });
    }
