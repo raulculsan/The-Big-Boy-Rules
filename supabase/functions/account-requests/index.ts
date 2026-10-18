@@ -12,8 +12,7 @@ const mailKey=Deno.env.get("BREVO_API_KEY"), sender=Deno.env.get("BREVO_SENDER_E
 const smtpUser=Deno.env.get("ACCOUNT_REQUESTS_GMAIL_USER"),smtpPassword=Deno.env.get("ACCOUNT_REQUESTS_GMAIL_APP_PASSWORD");
 const adminEmail=Deno.env.get("ACCOUNT_REQUESTS_ADMIN_EMAIL");
 const configured=Boolean(((smtpUser && smtpPassword) || (mailKey && sender)) && adminEmail && /^https:\/\//.test(url));
-const verificationLink=(id:string,token:string)=>`${url}/functions/v1/account-requests#account-request=${id}.${token}`;
-const verificationPage=`<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Verificar solicitud · Big Boy</title><style>html{background:#0d1014;color:#f5f1e8;font:16px system-ui}body{max-width:420px;margin:12vh auto;padding:24px}h1{font-size:28px}p{line-height:1.6;color:#bfc5ca}a{display:inline-block;margin-top:12px;padding:15px 20px;border-radius:14px;background:#d8b971;color:#171717;font-weight:700;text-decoration:none}</style><h1>Confirma tu solicitud</h1><p>Abre Big Boy en el iPhone para verificar tu correo. Necesitas tener la app instalada.</p><a id="open" href="#">Abrir Big Boy</a><script>const match=location.hash.match(/^#account-request=([0-9a-f-]{36})\\.([0-9a-f-]{72})$/i);const button=document.getElementById('open');if(match){button.href='bigboyrules://account-request/verify?id='+encodeURIComponent(match[1])+'&token='+encodeURIComponent(match[2]);location.replace(button.href)}else{button.remove();document.querySelector('p').textContent='Este enlace no es válido. Solicita uno nuevo desde Big Boy.'}</script></html>`;
+const verificationLink=(id:string,token:string)=>`${url}/functions/v1/account-requests?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`;
 function passwordError(value:string,name:string,username:string) {
  if(value.length<8||value.length>128) return "La contraseña debe tener entre 8 y 128 caracteres.";
  if(!/[^\p{L}\p{N}\s\p{M}]/u.test(value)) return "Añade al menos un carácter especial a la contraseña.";
@@ -64,7 +63,11 @@ async function outcome(req:Record<string,any>) {
 }
 export default {async fetch(request:Request):Promise<Response>{
  if(request.method==='OPTIONS')return new Response('ok',{headers:cors});
- if(request.method==='GET')return new Response(verificationPage,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; navigate-to bigboyrules:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"}});
+ if(request.method==='GET'){
+  const params=new URL(request.url).searchParams,id=params.get('id')||'',token=params.get('token')||'';
+  if(!/^[0-9a-f-]{36}$/i.test(id)||!/^[0-9a-f-]{72}$/i.test(token))return json({error:'Enlace no válido.'},400);
+  return new Response(null,{status:302,headers:{Location:`bigboyrules://account-request/verify?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`,'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
+ }
  if(request.method!=='POST')return json({error:'Método no permitido.'},405);
  try {
  const body=await read(request),action=body.action;

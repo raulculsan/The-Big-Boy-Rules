@@ -9,10 +9,10 @@ El administrador nunca recibe la contraseña. Mientras espera aprobación, Auth
 usa una dirección interna temporal; el correo personal solo está en la solicitud
 protegida. Al aceptar se vincula ese correo a Auth. El login sigue siendo por @.
 
-El correo contiene un enlace HTTPS de Supabase con token en el fragmento (no se
-envía al servidor ni a logs de URLs). La página de enlace abre la app mediante
-`bigboyrules://account-request/verify`; el botón permite reintentar si iOS no
-la abre automáticamente. La persona pulsa Confirmar dentro de la app. El
+El correo contiene un enlace HTTPS de Supabase que redirige a
+`bigboyrules://account-request/verify`. El token de un solo uso pasa en la URL
+de redirección, así que puede figurar en registros de acceso de Supabase; caduca
+en 48 horas y no activa la cuenta por sí solo. La persona pulsa Confirmar dentro de la app. El
 servidor comprueba el hash y la caducidad (48 h), consume el
 token y avisa en el panel de notificaciones a los administradores. Solicitudes
 sin verificar no aparecen para aprobación. Cerrar el formulario borra sus campos.
