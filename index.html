@@ -977,8 +977,8 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         const register = () => {
-          // A downloaded release waits until the next app session, preserving
-          // the current document's exact dependencies while the user interacts.
+          // A downloaded release handles the next navigation; existing
+          // documents keep their controller and never reload mid-interaction.
           if (document.activeElement?.matches("input,textarea,[contenteditable=true]")) {
             setTimeout(schedule, 2000);
             return;

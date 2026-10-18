@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v342";
+const CACHE_NAME = "big-boy-rules-v343";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -235,8 +235,9 @@ async function installShell() {
       await cache.put(url.href, response);
     }
   }));
-  // Activate naturally once all clients using the old release have closed.
-  // skipWaiting/claim could pair an old document with a new executable shell.
+  // Make this release available on the next navigation, even if another tab
+  // stays open. Do not claim existing documents or reload an active session.
+  await self.skipWaiting();
 }
 self.addEventListener("install", event => event.waitUntil(installShell().catch(async error => {
   // A failed update leaves the previous complete release available offline.
@@ -331,9 +332,11 @@ function savePublicMedia(request, response) {
 }
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
-    // Natural activation guarantees that no controlled old document still
-    // needs its release cache. First-time visitors are controlled next visit.
-    const oldKeys = (await caches.keys()).filter(key => key.startsWith("big-boy-rules-v") && key !== CACHE_NAME);
+    // An open document can still use its previous controller. Keep that
+    // release's exact dependencies until the following update.
+    const previousKeys = (await caches.keys()).filter(key => /^big-boy-rules-v\d+$/.test(key) && key !== CACHE_NAME)
+      .sort((a,b) => Number(b.split('-v').at(-1)) - Number(a.split('-v').at(-1)));
+    const oldKeys = previousKeys.slice(1);
     const mediaCache = oldKeys.length ? await caches.open(MEDIA_CACHE_NAME) : null;
     for (const cacheKey of oldKeys) {
       const oldCache = await caches.open(cacheKey);
@@ -355,9 +358,20 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
-    // Each worker serves the HTML it installed with its exact core dependencies.
-    event.respondWith(caches.open(CACHE_NAME).then(async cache =>
-      await cache.match("./index.html") || fetch(request)));
+    // A refresh must not revert a network-loaded page to an older installed
+    // release. Versioned scripts remain exact; the installed HTML is reserved
+    // for offline use and is not overwritten by a partly downloaded release.
+    event.respondWith((async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      try {
+        const response = await fetch(request, {cache:"no-store", signal:controller.signal});
+        if (response.ok) return response;
+      } catch { /* Use the complete installed release when offline. */ }
+      finally { clearTimeout(timeout); }
+      const cache = await caches.open(CACHE_NAME);
+      return await cache.match(new URL("./index.html", self.registration.scope).href) || fetch(request);
+    })());
     return;
   }
   if (mediaPath(request)) {
