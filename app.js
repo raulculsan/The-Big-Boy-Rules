@@ -66,6 +66,7 @@ const db = backendReady
         persistSession: true,
         autoRefreshToken: true,
         storage: window.localStorage,
+        flowType: "pkce",
       },
     })
   : null;
@@ -816,6 +817,11 @@ function goTo(sectionId) {
     }, 120);
   });
 }
+
+document.getElementById("quickSecurityButton")?.addEventListener("click", () => {
+  closeProfileQuickMenu();
+  if (currentAuthUser && db) void globalThis.ClubAccountSecurity?.open(db, currentAuthUser);
+});
 
 function openProfileQuickMenu() {
   if (!currentUser) return;
@@ -3398,6 +3404,7 @@ document.getElementById('offlineAlbumAccess')?.addEventListener('click',event=>{
 });
 
 function showLogin() {
+  globalThis.ClubAccountSecurity?.reset();
   globalThis.ClubOnboarding?.reset();
   document.body.classList.remove("session-restoring");
   currentUser = null;
@@ -3523,6 +3530,17 @@ async function beginAuthenticatedSession(authUser) {
     openRequiredPasswordChange();
     return;
   }
+  // Finish identity/MFA before reading protected club tables. The status RPC and
+  // Auth APIs are intentionally available while the account is being secured.
+  let securityApproved;
+  try {
+    if (!globalThis.ClubAccountSecurity) throw new Error("No se pudo cargar la seguridad del acceso. Actualiza la aplicación e inténtalo de nuevo.");
+    securityApproved = await globalThis.ClubAccountSecurity.gate(db, verifiedUser);
+  } catch (securityError) {
+    showLogin();
+    throw securityError;
+  }
+  if (securityApproved === false) return;
   // Roles and account visibility must also come from the current server profile.
   const profile = await profileForAuthUser(verifiedUser);
   if (!profile) {
@@ -6927,6 +6945,9 @@ if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("l
     }
   } catch (error) {
     console.warn("No se pudo restaurar la sesión guardada:", error);
+    showLogin();
+    document.getElementById("loginError").textContent = error.message || "No se pudo comprobar el acceso. Vuelve a iniciar sesión.";
+    return;
   }
   showLogin();
 })();

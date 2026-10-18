@@ -37,6 +37,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=20260901-125" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="account-security.css?v=20261018-security-336" />
   <link rel="stylesheet" href="styles.css?v=20261016-improvements-319" />
   <link rel="stylesheet" href="club.css?v=20261015-release-300" />
   <link rel="stylesheet" href="spotify-player.css?v=20261014-balanced" />
@@ -638,6 +639,7 @@
   <div class="profile-quick-menu" id="profileQuickMenu" role="menu" aria-label="Opciones de la cuenta" aria-hidden="true" hidden>
     <div class="profile-quick-menu-heading"><span>MI CUENTA</span><strong>Opciones rápidas</strong></div>
     <button type="button" role="menuitem" id="quickHelpButton"><span class="profile-quick-menu-icon">?</span><span><strong>Ayuda y sugerencias</strong><small>Hablar con administración</small></span></button>
+    <button type="button" role="menuitem" id="quickSecurityButton"><span class="profile-quick-menu-icon">✓</span><span><strong>Seguridad de la cuenta</strong><small>Cuenta vinculada y autenticador</small></span></button>
     <button type="button" role="menuitem" class="danger" id="quickLogoutButton"><span class="profile-quick-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></span><span><strong>Cerrar sesión</strong><small>Salir de esta cuenta</small></span></button>
     <div class="profile-quick-menu-tip">Mantén pulsado tu perfil para abrir este menú.</div>
   </div>
@@ -964,7 +966,8 @@
   <script defer src="group-interactions.js?v=20261016-release-322"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
   <script defer src="admin-console.js?v=20261018-control-334"></script>
-  <script defer src="app.js?v=20261018-password-335"></script>
+  <script defer src="account-security.js?v=20261018-security-336"></script>
+  <script defer src="app.js?v=20261018-security-336"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
