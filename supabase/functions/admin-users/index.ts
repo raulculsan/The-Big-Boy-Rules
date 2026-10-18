@@ -1,3 +1,4 @@
+import {accountSecurityFailure} from "../_shared/account-security.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {createClient} from "jsr:@supabase/supabase-js@2";
 
@@ -93,8 +94,9 @@ export default {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const publicKey = Deno.env.get("SUPABASE_ANON_KEY");
     const authorization = request.headers.get("Authorization");
-    if (!supabaseUrl || !serviceRoleKey || !authorization) {
+    if (!supabaseUrl || !serviceRoleKey || !publicKey || !authorization) {
       return json({error: "Sesión no válida."}, 401);
     }
 
@@ -106,6 +108,15 @@ export default {
     if (authError || !user) return json({error: "Sesión no válida."}, 401);
     const body = await readBody(request);
     if (body instanceof Response) return body;
+    // Bootstrap only: a server-marked provisional account must replace its own
+    // password before the client opens OAuth/TOTP setup. getUser() fetched this
+    // app_metadata from Auth; request bodies and editable user_metadata cannot
+    // grant this exception. change-password accepts no target userId.
+    const provisionalPasswordChange = body.action === "change-password" && user.app_metadata?.must_change_password === true;
+    if (!provisionalPasswordChange) {
+      const securityFailure = await accountSecurityFailure(supabaseUrl, publicKey, authorization);
+      if (securityFailure) return json({error: securityFailure.error, code: securityFailure.code}, securityFailure.status);
+    }
     if (body.action === "change-password") {
       const {data: identity, error: identityError} = await adminClient.from("profiles")
         .select("username,display_name").eq("id", user.id).single();

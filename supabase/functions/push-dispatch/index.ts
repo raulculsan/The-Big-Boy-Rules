@@ -1,3 +1,4 @@
+import {accountSecurityFailure} from "../_shared/account-security.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {createClient} from "npm:@supabase/supabase-js@2.57.4";
 import webpush from "npm:web-push@3.6.7";
@@ -37,14 +38,17 @@ export default {
     if (request.method !== "POST") return json({error: "Método no permitido."}, 405);
     const url = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anon = Deno.env.get("SUPABASE_ANON_KEY");
     const publicKey = Deno.env.get("VAPID_PUBLIC_KEY");
     const privateKey = Deno.env.get("VAPID_PRIVATE_KEY");
     const authorization = request.headers.get("Authorization");
-    if (!url || !serviceKey || !authorization) return json({error: "Configuración incompleta."}, 500);
+    if (!url || !serviceKey || !anon || !authorization) return json({error: "Configuración incompleta."}, 500);
 
     const admin = createClient(url, serviceKey, {auth: {persistSession: false, autoRefreshToken: false}});
     const {data: {user}} = await admin.auth.getUser(authorization.replace(/^Bearer\s+/i, ""));
     if (!user) return json({error: "Sesión no válida."}, 401);
+    const securityFailure = await accountSecurityFailure(url, anon, authorization);
+    if (securityFailure) return json({error: securityFailure.error, code: securityFailure.code}, securityFailure.status);
     let input;
     try { input = await request.json(); } catch { return json({error: "Petición no válida."}, 400); }
     const {kind, entityId} = input || {};
