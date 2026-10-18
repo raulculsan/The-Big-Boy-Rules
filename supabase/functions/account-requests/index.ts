@@ -44,7 +44,8 @@ async function mail(email:string,subject:string,text:string,key:string,html?:str
   // Gmail requires a dedicated app password; never a personal account password.
   const {default:nodemailer}=await import('npm:nodemailer@10.1.6');
   const transport=nodemailer.createTransport({host:'smtp.gmail.com',port:465,secure:true,auth:{user:smtpUser,pass:smtpPassword},connectionTimeout:10000,greetingTimeout:10000,socketTimeout:15000,logger:false,debug:false,disableFileAccess:true,disableUrlAccess:true});
-  try{await transport.sendMail({from:{name:'Big Boy',address:smtpUser},to:email,subject,text,...(html?{html}:{}),messageId:`<${key}@bigboyrules.local>`});}finally{transport.close();}
+  // Let Nodemailer generate Message-ID; the previous .local value was unsuitable for outgoing mail.
+  try{await transport.sendMail({from:{name:'Big Boy',address:smtpUser},to:email,subject,text,...(html?{html}:{})});}finally{transport.close();}
   return;
  }
  const response=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':mailKey!,'Content-Type':'application/json'},body:JSON.stringify({sender:{name:'Big Boy',email:sender},to:[{email}],subject,textContent:text,...(html?{htmlContent:html}:{}),headers:{'X-Account-Request':key}}),signal:AbortSignal.timeout(12000)});
