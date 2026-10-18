@@ -61,6 +61,9 @@ body.superadmin-console-session #administracion { max-width:1160px; margin-inlin
 .control-diagnostics strong { font-size:13px; }
 .control-diagnostics small { color:var(--control-muted); font-size:11px; line-height:1.5; }
 .control-diagnostics>b { font-size:11px; color:var(--accent); }
+.admin-account-security { display:none; --control-border:var(--bb2-line-strong); --control-muted:var(--bb2-secondary); }
+body.superadmin-console-session .admin-account-security { display:flex; }
+.admin-account-security>svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
 .control-design-intro { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 0 22px; }
 .control-design-intro h3 { font-family:Inter,sans-serif; font-size:24px; font-weight:600; letter-spacing:-.04em; margin:0 0 8px; }
 .control-design-intro p { font-size:12px; color:var(--control-muted); line-height:1.6; margin:0; }

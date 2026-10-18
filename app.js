@@ -823,6 +823,10 @@ document.getElementById("quickSecurityButton")?.addEventListener("click", () => 
   if (currentAuthUser && db) void globalThis.ClubAccountSecurity?.open(db, currentAuthUser);
 });
 
+document.getElementById("adminSecurityButton")?.addEventListener("click", () => {
+  if (isSuperAdmin() && currentAuthUser && db) void globalThis.ClubAccountSecurity?.open(db, currentAuthUser);
+});
+
 function openProfileQuickMenu() {
   if (!currentUser) return;
   const menu = document.getElementById("profileQuickMenu");
