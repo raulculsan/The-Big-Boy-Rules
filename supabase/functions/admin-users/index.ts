@@ -13,6 +13,61 @@ const json = (body: Record<string, unknown>, status = 200) =>
     headers: {...corsHeaders, "content-type": "application/json; charset=utf-8"},
   });
 
+const maxRequestBytes = 8192;
+const actionFields: Record<string, readonly string[]> = {
+  create: ["action", "username", "displayName", "password"],
+  delete: ["action", "userId"],
+  rename: ["action", "userId", "username"],
+  "reset-password": ["action", "userId", "password"],
+};
+
+// Enforce the actual streamed size, including requests without Content-Length.
+async function readBody(request: Request): Promise<Record<string, string> | Response> {
+  if (!/^application\/json(?:\s*;|$)/i.test(request.headers.get("content-type") || "")) {
+    return json({error: "Envía la petición como JSON."}, 415);
+  }
+  if (Number(request.headers.get("content-length")) > maxRequestBytes) {
+    return json({error: "Petición demasiado grande."}, 413);
+  }
+  const reader = request.body?.getReader();
+  if (!reader) return json({error: "Petición no válida."}, 400);
+  let size = 0;
+  const chunks: Uint8Array[] = [];
+  try {
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxRequestBytes) {
+        await reader.cancel();
+        return json({error: "Petición demasiado grande."}, 413);
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    const value: unknown = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(bytes));
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return json({error: "Petición no válida."}, 400);
+    }
+    const fields = value as Record<string, unknown>;
+    const allowed = typeof fields.action === "string" && Object.hasOwn(actionFields, fields.action)
+      ? actionFields[fields.action] : undefined;
+    if (!allowed || Object.entries(fields).some(([key, field]) => !allowed.includes(key) || typeof field !== "string")) {
+      return json({error: "Acción o campos no válidos."}, 400);
+    }
+    if (fields.action !== "create" && (typeof fields.userId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(fields.userId))) {
+      return json({error: "El identificador del usuario no es válido."}, 400);
+    }
+    return fields as Record<string, string>;
+  } catch {
+    return json({error: "Petición no válida."}, 400);
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 export default {
   async fetch(request: Request): Promise<Response> {
     if (request.method === "OPTIONS") {
@@ -50,12 +105,8 @@ export default {
       return json({error: "No tienes permiso para administrar cuentas."}, 403);
     }
 
-    let body: Record<string, string>;
-    try {
-      body = await request.json();
-    } catch {
-      return json({error: "Petición no válida."}, 400);
-    }
+    const body = await readBody(request);
+    if (body instanceof Response) return body;
 
     if (body.action === "create") {
       if (!isSuperAdmin && !isClubAdmin) return json({error: "Solo los administradores pueden crear usuarios."}, 403);
