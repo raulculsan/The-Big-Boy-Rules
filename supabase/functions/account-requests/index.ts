@@ -10,8 +10,10 @@ const url=Deno.env.get("SUPABASE_URL") || "", serviceKey=Deno.env.get("SUPABASE_
 const client=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
 const mailKey=Deno.env.get("BREVO_API_KEY"), sender=Deno.env.get("BREVO_SENDER_EMAIL");
 const smtpUser=Deno.env.get("ACCOUNT_REQUESTS_GMAIL_USER"),smtpPassword=Deno.env.get("ACCOUNT_REQUESTS_GMAIL_APP_PASSWORD");
-const returnUrl=Deno.env.get("ACCOUNT_REQUESTS_WEB_URL"), adminEmail=Deno.env.get("ACCOUNT_REQUESTS_ADMIN_EMAIL");
-const configured=Boolean(((smtpUser && smtpPassword) || (mailKey && sender)) && adminEmail && returnUrl && /^https:\/\//.test(returnUrl));
+const adminEmail=Deno.env.get("ACCOUNT_REQUESTS_ADMIN_EMAIL");
+const configured=Boolean(((smtpUser && smtpPassword) || (mailKey && sender)) && adminEmail && /^https:\/\//.test(url));
+const verificationLink=(id:string,token:string)=>`${url}/functions/v1/account-requests#account-request=${id}.${token}`;
+const verificationPage=`<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Verificar solicitud · Big Boy</title><style>html{background:#0d1014;color:#f5f1e8;font:16px system-ui}body{max-width:420px;margin:12vh auto;padding:24px}h1{font-size:28px}p{line-height:1.6;color:#bfc5ca}a{display:inline-block;margin-top:12px;padding:15px 20px;border-radius:14px;background:#d8b971;color:#171717;font-weight:700;text-decoration:none}</style><h1>Confirma tu solicitud</h1><p>Abre Big Boy en el iPhone para verificar tu correo. Necesitas tener la app instalada.</p><a id="open" href="#">Abrir Big Boy</a><script>const match=location.hash.match(/^#account-request=([0-9a-f-]{36})\\.([0-9a-f-]{72})$/i);const button=document.getElementById('open');if(match){button.href='bigboyrules://account-request/verify?id='+encodeURIComponent(match[1])+'&token='+encodeURIComponent(match[2]);location.replace(button.href)}else{button.remove();document.querySelector('p').textContent='Este enlace no es válido. Solicita uno nuevo desde Big Boy.'}</script></html>`;
 function passwordError(value:string,name:string,username:string) {
  if(value.length<8||value.length>128) return "La contraseña debe tener entre 8 y 128 caracteres.";
  if(!/[^\p{L}\p{N}\s\p{M}]/u.test(value)) return "Añade al menos un carácter especial a la contraseña.";
@@ -52,16 +54,17 @@ async function mail(email:string,subject:string,text:string,key:string) {
 }
 async function notifyAdmin(req:Record<string,any>) {
  if(!adminEmail)throw new Error('Falta el correo de administración.');
- await mail(adminEmail,'Nueva solicitud de acceso a Big Boy',`Hay una solicitud con correo verificado pendiente de revisión.\n\n${req.display_name} · @${req.username}\n\nAbre Administración > Solicitudes de cuenta para aceptarla o rechazarla.\n${returnUrl}`,`account-request-${req.id}-admin`);
+ await mail(adminEmail,'Nueva solicitud de acceso a Big Boy',`Hay una solicitud con correo verificado pendiente de revisión.\n\n${req.display_name} · @${req.username}\n\nAbre Big Boy > Administración > Solicitudes de cuenta para aceptarla o rechazarla.`,`account-request-${req.id}-admin`);
  const {error}=await client.from('account_requests').update({admin_email_status:'sent'}).eq('id',req.id);if(error)throw error;
 }
 async function outcome(req:Record<string,any>) {
  const approved=req.status==='approved';
- await mail(req.email,approved?'Tu cuenta de Big Boy está lista':'Respuesta a tu solicitud de Big Boy',approved?`Hola ${req.display_name},\n\nTu solicitud ha sido aceptada. Ya puedes iniciar sesión como @${req.username} con la contraseña que elegiste.\n\n${returnUrl}`:`Hola ${req.display_name},\n\nLa administración ha rechazado tu solicitud de acceso a Big Boy. Si crees que se trata de un error, contacta con la administración del club.`,`account-request-${req.id}-${req.status}`);
+ await mail(req.email,approved?'Tu cuenta de Big Boy está lista':'Respuesta a tu solicitud de Big Boy',approved?`Hola ${req.display_name},\n\nTu solicitud ha sido aceptada. Abre Big Boy e inicia sesión como @${req.username} con la contraseña que elegiste.`:`Hola ${req.display_name},\n\nLa administración ha rechazado tu solicitud de acceso a Big Boy. Si crees que se trata de un error, contacta con la administración del club.`,`account-request-${req.id}-${req.status}`);
  const {error}=await client.from('account_requests').update({email_status:'sent',email_sent_at:new Date().toISOString()}).eq('id',req.id);if(error)throw error;
 }
 export default {async fetch(request:Request):Promise<Response>{
  if(request.method==='OPTIONS')return new Response('ok',{headers:cors});
+ if(request.method==='GET')return new Response(verificationPage,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; navigate-to bigboyrules:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"}});
  if(request.method!=='POST')return json({error:'Método no permitido.'},405);
  try {
  const body=await read(request),action=body.action;
@@ -92,14 +95,16 @@ export default {async fetch(request:Request):Promise<Response>{
   const {data:expired}=await client.from('account_requests').select('id,auth_user_id').eq('status','pending_email').lt('verification_expires_at',new Date().toISOString()).limit(20);
   for(const old of expired||[]){if(old.auth_user_id){const {error}=await client.auth.admin.deleteUser(old.auth_user_id);if(error)continue;}await client.from('account_requests').delete().eq('id',old.id).eq('status','pending_email');}
   // Auth hashes the chosen password. The ban plus absent profile prevent access.
-  const {data,error}=await client.auth.admin.createUser({email,password,email_confirm:false,ban_duration:'876000h',app_metadata:{account_request_pending:true},user_metadata:{display_name:name}});
+  // The reserved address suppresses the legacy profile trigger even when Auth
+  // inserts the user before it writes app_metadata. The real mail stays in the request.
+  const pendingEmail=`request-${crypto.randomUUID()}@pending.bigboyrules.local`;
+  const {data,error}=await client.auth.admin.createUser({email:pendingEmail,password,email_confirm:false,ban_duration:'876000h',app_metadata:{account_request_pending:true},user_metadata:{display_name:name}});
   if(error||!data.user)return json(accepted);
   const id=crypto.randomUUID(),token=crypto.randomUUID()+crypto.randomUUID();
   const {error:insertError}=await client.from('account_requests').insert({id,auth_user_id:data.user.id,username,display_name:name,email,verification_hash:await digest(token),verification_expires_at:new Date(Date.now()+48*3600000).toISOString()});
   if(insertError){await client.auth.admin.deleteUser(data.user.id);return json(accepted);}
   try{
-   const link=new URL(returnUrl!);link.hash=`account-request=${id}.${token}`;
-   await mail(email,'Confirma tu solicitud de Big Boy',`Hola ${name},\n\nConfirma tu correo para enviar a administración la solicitud de @${username}:\n\n${link.href}\n\nEl enlace caduca en 48 horas. La cuenta solo se activará si administración la acepta. Si no has solicitado una cuenta, ignora este correo.`,`account-request-${id}-verify`);
+   await mail(email,'Confirma tu solicitud de Big Boy',`Hola ${name},\n\nConfirma tu correo para enviar a administración la solicitud de @${username}:\n\n${verificationLink(id,token)}\n\nEl enlace abre Big Boy en tu iPhone y caduca en 48 horas. La cuenta solo se activará si administración la acepta. Si no has solicitado una cuenta, ignora este correo.`,`account-request-${id}-verify`);
   }catch{
    // Do not leave an unverified, unreachable account occupying this email.
    await client.auth.admin.deleteUser(data.user.id);await client.from('account_requests').delete().eq('id',id);
@@ -137,9 +142,8 @@ export default {async fetch(request:Request):Promise<Response>{
    .eq('id',req.id).eq('status','pending_email').eq('verification_hash',req.verification_hash)
    .select('id').maybeSingle();
   if(error||!updated)return json({error:'La solicitud cambió. Actualiza la lista.'},409);
-  const link=new URL(returnUrl!);link.hash=`account-request=${req.id}.${token}`;
   try{
-   await mail(req.email,'Confirma tu solicitud de Big Boy',`Hola ${req.display_name},\n\nConfirma tu correo para enviar a administración la solicitud de @${req.username}:\n\n${link.href}\n\nEl enlace caduca en 48 horas. Si recibiste un correo anterior, utiliza este nuevo enlace.`,`account-request-${req.id}-verify-${crypto.randomUUID()}`);
+   await mail(req.email,'Confirma tu solicitud de Big Boy',`Hola ${req.display_name},\n\nConfirma tu correo para enviar a administración la solicitud de @${req.username}:\n\n${verificationLink(req.id,token)}\n\nEl enlace abre Big Boy en tu iPhone y caduca en 48 horas. Si recibiste un correo anterior, utiliza este nuevo enlace.`,`account-request-${req.id}-verify-${crypto.randomUUID()}`);
   }catch{
    await client.from('account_requests')
     .update({verification_hash:req.verification_hash,verification_expires_at:req.verification_expires_at})
@@ -164,6 +168,7 @@ export default {async fetch(request:Request):Promise<Response>{
   const {data:claimed,error}=await client.from('account_requests').update({status:processing,reviewed_by:user.id}).eq('id',req.id).eq('status','pending').select('id').maybeSingle();if(error||!claimed)return json({error:'Otra persona está revisando esta solicitud.'},409);
  }else if(req.reviewed_by!==user.id)return json({error:'Esta revisión pertenece a otro administrador.'},409);
  if(action==='approve'){
+  const {error:emailError}=await client.auth.admin.updateUserById(req.auth_user_id,{email:req.email,email_confirm:true});if(emailError)return json({error:'No se pudo vincular el correo al usuario. Comprueba que no esté asociado a otra cuenta.'},409);
   const {error:profileError}=await client.rpc('account_request_create_profile',{p_id:req.id});if(profileError)return json({error:'No se pudo crear el perfil. Comprueba que el usuario siga disponible y vuelve a intentarlo.'},409);
   const {error}=await client.auth.admin.updateUserById(req.auth_user_id,{email_confirm:true,ban_duration:'none',app_metadata:{account_request_pending:false}});if(error)throw error;
  }else if(req.auth_user_id){const {error}=await client.auth.admin.deleteUser(req.auth_user_id);if(error)throw error;}

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		BBAA18102026033600000001 /* ClubAuthPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA18102026033600000002; };
+		BBAA18102026033600000003 /* ClubDeepLinkPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA18102026033600000004; };
 		BBAA16102026000100000001 /* ClubPushPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA16102026000100000002; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
@@ -25,6 +26,7 @@
 
 /* Begin PBXFileReference section */
 		BBAA18102026033600000002 /* ClubAuthPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubAuthPlugin.swift; sourceTree = "<group>"; };
+		BBAA18102026033600000004 /* ClubDeepLinkPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubDeepLinkPlugin.swift; sourceTree = "<group>"; };
 		BBAA16102026000100000002 /* ClubPushPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPushPlugin.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
@@ -80,6 +82,7 @@
 				BBAA02102026100900000002 /* ClubGalleryPlugin.swift */,
 				BBAA16102026000100000002 /* ClubPushPlugin.swift */,
 				BBAA18102026033600000002 /* ClubAuthPlugin.swift */,
+				BBAA18102026033600000004 /* ClubDeepLinkPlugin.swift */,
 				BBAA02022026090200000002 /* KeyboardHostViewController.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -207,6 +210,7 @@
 				BBAA02102026100900000001 /* ClubGalleryPlugin.swift in Sources */,
 				BBAA16102026000100000001 /* ClubPushPlugin.swift in Sources */,
 				BBAA18102026033600000001 /* ClubAuthPlugin.swift in Sources */,
+				BBAA18102026033600000003 /* ClubDeepLinkPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

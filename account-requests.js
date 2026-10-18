@@ -81,11 +81,23 @@
    if(!current){review?.close();review?.querySelector('.request-review-list')?.replaceChildren();document.querySelectorAll('[data-request-count]').forEach(n=>n.hidden=true);}else void refresh();
   }
   document.addEventListener('click',event=>{if(event.target.closest('[data-request-account]'))void openApplication();if(event.target.closest('[data-open-account-requests]'))void openReview();});
+  let confirmation=null,activeVerification='';
+  function showVerification(id,token) {
+   const key=`${id}.${token}`;if(activeVerification===key&&confirmation?.open)return;
+   activeVerification=key;
+   if(!confirmation){confirmation=makeDialog('Verificar correo');confirmation.insertAdjacentHTML('beforeend','<h2>Confirma tu correo.</h2><p class="request-intro">Verifica esta dirección para que administración reciba tu solicitud.</p><p class="request-feedback" role="status"></p><button type="button" class="login-submit" data-confirm-request>Confirmar solicitud</button>');
+    confirmation.querySelector('[data-confirm-request]').addEventListener('click',async event=>{if(busy)return;busy=true;event.target.disabled=true;const feedback=confirmation.querySelector('.request-feedback');try{const [id,token]=activeVerification.split('.');const result=await invoke('verify',{id,token});text(feedback,result.message);event.target.hidden=true;}catch(error){text(feedback,error.message);event.target.disabled=false;}finally{busy=false;}});
+   }
+   const button=confirmation.querySelector('[data-confirm-request]');button.hidden=false;button.disabled=false;text(confirmation.querySelector('.request-feedback'),'');
+   if(!confirmation.open)confirmation.showModal();
+  }
   const verification=location.hash.match(/^#account-request=([0-9a-f-]{36})\.([0-9a-f-]{72})$/i);
-  if(verification){
-   history.replaceState(null,'',location.pathname+location.search);
-   const confirm=makeDialog('Verificar correo');confirm.insertAdjacentHTML('beforeend','<h2>Confirma tu correo.</h2><p class="request-intro">Verifica esta dirección para que administración reciba tu solicitud.</p><p class="request-feedback" role="status"></p><button type="button" class="login-submit" data-confirm-request>Confirmar solicitud</button>');confirm.showModal();
-   confirm.querySelector('[data-confirm-request]').addEventListener('click',async event=>{if(busy)return;busy=true;event.target.disabled=true;const feedback=confirm.querySelector('.request-feedback');try{const result=await invoke('verify',{id:verification[1],token:verification[2]});text(feedback,result.message);event.target.hidden=true;}catch(error){text(feedback,error.message);event.target.disabled=false;}finally{busy=false;}});
+  if(verification){history.replaceState(null,'',location.pathname+location.search);showVerification(verification[1],verification[2]);}
+  if(window.Capacitor?.isNativePlatform?.()){
+   const bridge=window.Capacitor.registerPlugin('ClubDeepLink');
+   const handle=value=>{try{const link=new URL(value);if(link.protocol!=='bigboyrules:'||link.hostname!=='account-request'||link.pathname!=='/verify')return;const id=link.searchParams.get('id'),token=link.searchParams.get('token');if(/^[0-9a-f-]{36}$/i.test(id||'')&&/^[0-9a-f-]{72}$/i.test(token||''))showVerification(id,token);}catch{}};
+   void bridge.addListener('open',event=>handle(event.url));
+   void bridge.consume().then(event=>handle(event.url)).catch(()=>{});
   }
   return {sync,refresh};
  }

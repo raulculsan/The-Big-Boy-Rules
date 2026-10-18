@@ -61,6 +61,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         if ClubSpotifyPlugin.handleURL(url) { return true }
+        if ClubDeepLinkPlugin.handle(url) { return true }
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
     }
 

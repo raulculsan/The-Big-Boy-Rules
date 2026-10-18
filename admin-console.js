@@ -75,7 +75,7 @@
       <div data-control-panel="overview">
         <section class="control-overview" aria-label="Resumen del club"><article class="control-overview-lead"><span class="control-kicker">ESTADO DEL CLUB</span><strong>Administra el club.</strong><p>Gestiona las cuentas, prepara los próximos planes y ajusta la experiencia.</p><button type="button" data-control-action="design">Personalizar el club ${icon('paint')}</button></article><div class="control-metrics"><article><span>Cuentas del club</span><strong data-control-stat="members">—</strong><small>Usuarios visibles</small></article><article><span>Conectados</span><strong data-control-stat="online">—</strong><small>Presencia ahora</small></article><article><span>Próximos planes</span><strong data-control-stat="events">—</strong><small>Eventos programados</small></article><article><span>Equipo</span><strong data-control-stat="admins">—</strong><small>Administradores del club</small></article></div></section>
         <div class="control-section-label"><h3>Gestionar el club</h3><span>Accesos de trabajo</span></div>
-        <div class="control-workspaces">${[
+        <div class="control-workspaces"><button type="button" class="control-workspace" data-open-account-requests><span class="control-workspace-top"><i>${icon('people')}</i><small data-request-count hidden></small></span><strong>Solicitudes de cuenta</strong><span>Verifica el correo y decide quién entra al club.</span><b>Revisar accesos</b></button>${[
           ['people', 'admin-cuentas', '01', 'Cuentas y perfiles', 'Usuarios, contraseñas, sobres, monedas y regalos.', 'Cuentas'],
           ['calendar', 'calendario', '02', 'Agenda del club', 'Cumpleaños, eventos y asistencia.', 'Organizar'],
           ['chat', 'chat', '03', 'Conversaciones', 'Secciones, encuestas y mensajes automáticos.', 'Abrir chats'],
@@ -83,7 +83,6 @@
           ['cards', 'catalogo', '05', 'Colección', 'Consulta las cartas, rarezas y puntuaciones.', 'Ver catálogo'],
           ['help', 'ayuda', '06', 'Ayuda y solicitudes', 'Atiende los mensajes enviados por los miembros.', 'Atender']
         ].map(([symbol, route, number, title, description, action]) => `<button type="button" class="control-workspace" data-control-route="${route}"><span class="control-workspace-top"><i>${icon(symbol)}</i><small>${number}</small></span><strong>${title}</strong><span>${description}</span><b>${action}</b></button>`).join('')}</div>
-        <button type="button" class="control-diagnostics" data-open-account-requests>${icon('people')}<span><strong>Solicitudes de cuenta</strong><small>Revisa solicitudes, verifica su correo y decide el acceso.</small></span><b data-request-count hidden></b></button>
         <button type="button" class="control-diagnostics" data-control-route="admin-diagnostico">${icon('pulse')}<span><strong>Rendimiento y diagnóstico</strong><small>Tiempos de carga, pausas y estado de este dispositivo.</small></span><b>Consultar</b></button>
       </div>
       <div data-control-panel="design" hidden>
