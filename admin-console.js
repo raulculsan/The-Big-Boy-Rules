@@ -83,6 +83,7 @@
           ['cards', 'catalogo', '05', 'Colección', 'Consulta las cartas, rarezas y puntuaciones.', 'Ver catálogo'],
           ['help', 'ayuda', '06', 'Ayuda y solicitudes', 'Atiende los mensajes enviados por los miembros.', 'Atender']
         ].map(([symbol, route, number, title, description, action]) => `<button type="button" class="control-workspace" data-control-route="${route}"><span class="control-workspace-top"><i>${icon(symbol)}</i><small>${number}</small></span><strong>${title}</strong><span>${description}</span><b>${action}</b></button>`).join('')}</div>
+        <button type="button" class="control-diagnostics" data-open-account-requests>${icon('people')}<span><strong>Solicitudes de cuenta</strong><small>Revisa solicitudes, verifica su correo y decide el acceso.</small></span><b data-request-count hidden></b></button>
         <button type="button" class="control-diagnostics" data-control-route="admin-diagnostico">${icon('pulse')}<span><strong>Rendimiento y diagnóstico</strong><small>Tiempos de carga, pausas y estado de este dispositivo.</small></span><b>Consultar</b></button>
       </div>
       <div data-control-panel="design" hidden>
