@@ -3,7 +3,31 @@
   let options, state = null, busy = false, loading = false, failure = '', notice = '', generation = 0, request = null, profileTarget = null;
   const memberBanners = new Map();
   const memberBannerRequests = new Map(), memberBannerFetchedAt = new Map();
-  let membersTarget = null, memberObserver = null;
+  let membersTarget = null, memberObserver = null, memberBannerCacheOwner = null, memberBannerCacheSignature = '';
+  const memberBannerCacheKey = owner => `bb:member-banner-posters:v1:${options?.cacheNamespace || 'local'}:${owner}`;
+  function restoreMemberBannerPosters() {
+    const owner = options?.session();
+    if (!owner || memberBannerCacheOwner === owner) return;
+    memberBanners.clear(); memberBannerFetchedAt.clear();
+    memberBannerCacheOwner = owner; memberBannerCacheSignature = '';
+    try {
+      const cached = JSON.parse(localStorage.getItem(memberBannerCacheKey(owner)) || 'null');
+      if (!Array.isArray(cached?.banners) || !Number.isFinite(cached.savedAt) || Date.now() - cached.savedAt > 86400000) return;
+      for (const [id, banner] of cached.banners.slice(0, 200)) {
+        if (typeof id !== 'string' || (banner !== null && (typeof banner?.id !== 'string' || typeof banner?.name !== 'string' || typeof banner?.art_key !== 'string'))) continue;
+        memberBanners.set(id, banner && {id:banner.id, name:banner.name, art_key:banner.art_key});
+      }
+      // No fetched-at timestamps: cached artwork is always revalidated.
+    } catch { /* A missing/invalid cache only delays artwork until its RPC. */ }
+  }
+  function saveMemberBannerPosters() {
+    const owner = options?.session();
+    if (!owner || memberBannerCacheOwner !== owner) return;
+    const banners = [...memberBanners].slice(0, 200).map(([id, banner]) => [id, banner ? {id:String(banner.id), name:String(banner.name || ''), art_key:String(banner.art_key || '')} : null]);
+    const signature = JSON.stringify(banners);
+    if (signature === memberBannerCacheSignature) return;
+    try { localStorage.setItem(memberBannerCacheKey(owner), JSON.stringify({savedAt:Date.now(), banners})); memberBannerCacheSignature = signature; } catch {}
+  }
   const visibleMemberTiles = new Set(), observedMemberTiles = new Set();
   let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
   let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0;
@@ -492,9 +516,9 @@
     }
     return memberBanners.get(userId) || null;
   }
-  function memberPoster(banner) {
+  function memberPoster(banner, priority = false) {
     const image = {'alberto-galicia-anime-v1':'alberto-galicia-v1.webp', 'miguel-basket-bano-v1':'miguel-basket-v1.webp', 'miguel-moto-anime-v1':'miguel-moto-v1.webp'}[banner?.art_key];
-    if (image) return `<div class="banner-art member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/posters/${image}" width="720" height="240" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain"></div>`;
+    if (image) return `<div class="banner-art member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/posters/${image}" width="720" height="240" alt="" loading="${priority ? 'eager' : 'lazy'}" fetchpriority="${priority ? 'high' : 'auto'}" decoding="async" style="width:100%;height:100%;object-fit:contain"></div>`;
     return artwork(null, 'member-banner-art');
   }
   function memberArtwork(userId) {
@@ -510,7 +534,7 @@
     const changed = surface.dataset.bannerId !== key;
     const mode = animate ? 'animated' : 'poster';
     if (changed || !surface.firstElementChild || surface.dataset.bannerMode !== mode) {
-      surface.innerHTML = animate ? artwork(banner, 'member-banner-art') : memberPoster(banner);
+      surface.innerHTML = animate ? artwork(banner, 'member-banner-art') : memberPoster(banner, node.dataset.memberPriority === 'true');
       surface.dataset.bannerId = key;
       surface.dataset.bannerMode = mode;
     }
@@ -551,6 +575,7 @@
         const banners = new Map((records || []).map(record => [record.user_id,record.banner]));
         chunk.forEach(id => {memberBanners.set(id, banners.get(id) || null); memberBannerFetchedAt.set(id, Date.now());});
       }
+      saveMemberBannerPosters();
       paintProfile(); paintMembers();
     })().catch(() => {
       if (token === generation && session === options.session()) ids.forEach(id => memberBannerFetchedAt.set(id, Date.now()));
@@ -564,6 +589,7 @@
     return loadMemberBanners([userId], force);
   }
   function mountMembers(node) {
+    restoreMemberBannerPosters();
     if (membersTarget !== node) {
       memberObserver?.disconnect(); visibleMemberTiles.clear(); observedMemberTiles.clear(); membersTarget = node;
       memberObserver = typeof IntersectionObserver === 'function' ? new IntersectionObserver(entries => {
@@ -624,6 +650,7 @@
       const userId = options.session();
       memberBanners.set(userId, state.banners?.find(item => item.id === state.equipped_banner_id) || null);
       memberBannerFetchedAt.set(userId, Date.now());
+      saveMemberBannerPosters();
     }
     paintProfile();
     paintMembers();
@@ -934,6 +961,7 @@
     if (inventoryOwner) { try { localStorage.removeItem(inventoryCacheKey(inventoryOwner)); if(localStorage.getItem(offlineInventoryOwnerKey)===inventoryOwner)localStorage.removeItem(offlineInventoryOwnerKey); } catch {} }
     inventoryOwner = null; inventorySavedAt = 0;
     generation++; state = null; lastInventory = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear(); memberBannerRequests.clear(); memberBannerFetchedAt.clear();
+    memberBannerCacheOwner = null; memberBannerCacheSignature = '';
     memberObserver?.disconnect(); memberObserver = null; visibleMemberTiles.clear(); observedMemberTiles.clear();
     paintMembers(); membersTarget = null;
     duplicatesOpener = null;

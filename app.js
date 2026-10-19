@@ -590,10 +590,10 @@ function getMemberByAuthId(id) {
   return membersByAuthId.get(id);
 }
 
-function getAvatar(member, className = "avatar") {
+function getAvatar(member, className = "avatar", priority = false) {
   if (member?.avatarUrl) {
     const initial = escapeHtml(member?.name?.charAt(0).toUpperCase() || "U");
-    return `<div class="${className} has-image" data-avatar><span class="avatar-fallback" aria-hidden="true">${initial}</span><img src="${escapeHtml(member.avatarUrl)}" alt="Foto de ${escapeHtml(member.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></div>`;
+    return `<div class="${className} has-image" data-avatar><span class="avatar-fallback" aria-hidden="true">${initial}</span><img src="${escapeHtml(member.avatarUrl)}" alt="Foto de ${escapeHtml(member.name)}" loading="${priority ? "eager" : "lazy"}" fetchpriority="${priority ? "high" : "auto"}" decoding="async" referrerpolicy="no-referrer"></div>`;
   }
   return `<div class="${className}">${escapeHtml(member?.name?.charAt(0).toUpperCase() || "U")}</div>`;
 }
@@ -1192,12 +1192,25 @@ function renderFeatured() {
     </button>`).join(""));
 }
 
+let memberProfilesOwner = null, memberProfilesFailedOwner = null;
 function renderMembers() {
   const grid = document.getElementById("membersGrid");
   if (!grid) return;
-  updateSurfaceMarkup(grid, members.filter(member => !member.hidden).map(member => `
-    <button class="club-member" type="button" data-profile="${member.id}" data-member-banner-user="${escapeHtml(member.authId || '')}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
-      <div class="club-member-hero"><div class="club-member-banner" aria-hidden="true"></div>${getAvatar(member)}</div>
+  const pending = backendReady && currentAuthUser?.id && memberProfilesOwner !== currentAuthUser.id;
+  grid.setAttribute("aria-busy", String(Boolean(pending && memberProfilesFailedOwner !== currentAuthUser?.id)));
+  if (pending) {
+    if (memberProfilesFailedOwner === currentAuthUser.id) {
+      if (updateSurfaceMarkup(grid, '<p class="club-placeholder" role="status">No se pudieron cargar los miembros. <button type="button" class="text-button" data-members-retry>Reintentar</button></p>')) {
+        grid.querySelector('[data-members-retry]')?.addEventListener('click', () => { memberProfilesFailedOwner = null; renderMembers(); void loadRemoteProfiles(); });
+      }
+    } else {
+      updateSurfaceMarkup(grid, Array.from({length:2}, () => '<div class="club-member is-loading" aria-hidden="true"><div class="club-member-hero"><div class="club-member-banner"></div><div class="avatar"></div></div><span class="club-member-identity"><strong>&nbsp;</strong><small>&nbsp;</small></span></div>').join(''));
+    }
+    return;
+  }
+  updateSurfaceMarkup(grid, members.filter(member => !member.hidden).map((member, index) => `
+    <button class="club-member" type="button" data-profile="${member.id}" data-member-priority="${index < 2}" data-member-banner-user="${escapeHtml(member.authId || '')}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
+      <div class="club-member-hero"><div class="club-member-banner" aria-hidden="true"></div>${getAvatar(member, "avatar", index < 2)}</div>
       <span class="club-member-identity"><strong>${escapeHtml(member.name)}</strong><small>@${escapeHtml(member.username)}</small></span>
     </button>`).join(""));
   // Rebind after session resets even when identity markup is unchanged.
@@ -3274,8 +3287,13 @@ function refreshProfileSurfaces() {
   // Give each independent surface its own frame. A profile response used to
   // rebuild Home, every member, the inbox and administration in one task.
   const chatVisible = ["chat", "privados"].some(id => document.getElementById(id)?.classList.contains("active"));
+  const homeVisible = document.getElementById("inicio")?.classList.contains("active");
+  // Home's main content must not wait behind 300 ms idle slots (or be
+  // repeatedly cancelled when remote profiles arrive during startup).
+  if (homeVisible) renderMembers();
   const renders = chatVisible
     ? [renderMessages, renderPresence, renderFeatured, renderMembers, renderAdminPanel]
+    : homeVisible ? [renderFeatured, renderPresence, renderMessages, renderAdminPanel]
     : [renderFeatured, renderMembers, renderPresence, renderMessages, renderAdminPanel];
   for (const render of renders) runWhenIdle(() => {
     if (generation === profileSurfaceGeneration && currentAuthUser?.id === owner) render();
@@ -3342,6 +3360,7 @@ async function hydrateAuthenticatedData(authUser) {
 
 async function applyUserInterface(user, authUser = null, {restoring = false} = {}) {
   if (currentAuthUser?.id !== authUser?.id) {
+    memberProfilesOwner = null; memberProfilesFailedOwner = null;
     globalThis.ClubDrafts?.suspend();
     globalThis.ClubOnboarding?.reset();
     globalThis.BannerShop?.reset();
@@ -3384,8 +3403,8 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   document.body.classList.remove("session-restoring");
   runWhenIdle(() => { if (currentAuthUser?.id === authUser?.id && currentUser === user) globalThis.ClubOnboarding?.ready({userId:authUser?.id || `local:${user.id}`, navigate:goTo}); });
   if (backendReady && authUser) {
-    void globalThis.BannerShop?.refresh();
     void hydrateAuthenticatedData(authUser);
+    runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.BannerShop?.refresh(); });
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
     renderPresence();
@@ -3695,8 +3714,19 @@ function mergeRemoteProfile(profile, expectedAuthId = currentAuthUser?.id) {
 async function loadRemoteProfiles() {
   const generation = ++profileLoadGeneration;
   const authId = currentAuthUser?.id;
-  const {data, error} = await db.from("profiles").select("*").order("legacy_id");
-  if (error || generation !== profileLoadGeneration || currentAuthUser?.id !== authId) return;
+  let data, error;
+  try {
+    ({data, error} = await db.from("profiles").select("*").order("legacy_id"));
+  } catch (failure) {
+    error = failure || new Error("No se pudieron cargar los perfiles.");
+  }
+  if (generation !== profileLoadGeneration || currentAuthUser?.id !== authId) return;
+  if (error || !Array.isArray(data)) {
+    memberProfilesFailedOwner = authId;
+    renderMembers();
+    return;
+  }
+  memberProfilesOwner = authId; memberProfilesFailedOwner = null;
   const activeProfiles = data.filter(profile => !profile.is_hidden && profile.is_active !== false);
   const ids = new Set(activeProfiles.map(profile => Number(profile.legacy_id)));
   members = members.filter(member => ids.has(Number(member.id)));
@@ -6892,6 +6922,7 @@ globalThis.GroupInteractions?.init({
 });
 
 globalThis.BannerShop?.initialize({
+  cacheNamespace: config.supabaseUrl || "local",
   session: () => backendReady && currentAuthUser?.id,
   rpc: async (name, args) => {
     const owner = currentAuthUser?.id;

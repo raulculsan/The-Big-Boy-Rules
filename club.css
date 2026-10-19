@@ -103,6 +103,10 @@ body.authenticated .club-dashboard > .panel { min-width: 0; margin: 0; padding: 
 .club-member strong, .club-member small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .club-member strong { font-size: 15px; font-weight: 600; }
 .club-member small { color: var(--club-muted); font-size: 11px; margin-top: 3px; }
+.club-member.is-loading { pointer-events: none; cursor: default; }
+.club-member.is-loading .avatar { background: #282d34; }
+.club-member.is-loading .club-member-identity strong { width: 48%; border-radius: 5px; background: #282d34; }
+.club-member.is-loading .club-member-identity small { width: 32%; border-radius: 4px; background: #20252c; }
 body.chat-inbox-view .topbar { visibility: hidden; pointer-events: none; }
 body.authenticated .chat-inbox { background: var(--club-paper); box-shadow: none; border: 0; border-radius: 0; }
 .chat-inbox .private-contact { min-height: 90px; margin: 0; padding: 18px 8px; border: 0; border-bottom: 1px solid #ffffff09; border-radius: 0; box-shadow: none; background: transparent; }
