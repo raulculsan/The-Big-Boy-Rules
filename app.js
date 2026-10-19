@@ -707,6 +707,7 @@ let helpReturnPage = null;
 const pageBackPositions = new Map();
 
 function goTo(sectionId) {
+  globalThis.AdminConsole?.flushPresentation();
   const leavingPage = sections.find(section => section.classList.contains("active"));
   if (leavingPage) pageBackPositions.set(leavingPage.id, {...capturePagePosition(leavingPage.id), layout: capturePageBackLayout(leavingPage)});
   // A back button and its edge gesture resolve the same route and restore the
@@ -752,6 +753,7 @@ function goTo(sectionId) {
     section.classList.toggle("active", section.id === sectionId);
     section.inert = section.id !== sectionId;
   });
+  globalThis.AdminConsole?.flushPresentation();
   globalThis.CardAlbum?.didNavigate(sectionId, currentSection);
   globalThis.AdminGrants?.didNavigate(sectionId);
   adminConsole?.didNavigate(sectionId);
@@ -3100,7 +3102,7 @@ const adminConsole = globalThis.AdminConsole?.create({
     } finally { clearTimeout(timeout); }
     if (currentAuthUser?.id !== owner || !isSuperAdmin()) return;
     siteSettings = {...siteSettings, [key]: value};
-    adminConsole?.apply(siteSettings);
+    adminConsole?.apply(siteSettings, {persist: true});
     adminConsole?.sync();
     accountRequests?.sync();
   },
@@ -3419,7 +3421,7 @@ function showLogin() {
   currentUser = null;
   globalThis.ClubDrafts?.suspend();
   currentAuthUser = null;
-  adminConsole?.apply({});
+  adminConsole?.restorePresentation();
   adminConsole?.sync();
   accountRequests?.sync();
   globalThis.ClubMotion?.configure(null);
@@ -3475,7 +3477,7 @@ async function logoutCurrentUser() {
   currentUser = null;
   globalThis.ClubDrafts?.suspend();
   currentAuthUser = null;
-  adminConsole?.apply({});
+  adminConsole?.restorePresentation();
   adminConsole?.sync();
   accountRequests?.sync();
   globalThis.ClubMotion?.configure(null);
@@ -3496,7 +3498,7 @@ async function logoutCurrentUser() {
   homeEventsReady = !backendReady;
   homeSettingsReady = !backendReady;
   siteSettings = {};
-  adminConsole?.apply(siteSettings);
+  adminConsole?.restorePresentation();
   adminConsole?.sync();
   accountRequests?.sync();
   chatChannels = [];
@@ -4285,16 +4287,18 @@ async function loadSiteSettings() {
   const settingsTimeout = setTimeout(() => settingsController.abort(), 15000);
   let settingsResult;
   try { settingsResult = await db.from("site_settings").select("key,value").abortSignal(settingsController.signal); }
+  catch (error) { settingsResult = {data: null, error}; }
   finally { clearTimeout(settingsTimeout); }
   const {data, error} = settingsResult;
   if (currentAuthUser?.id !== settingsOwner) return;
   if (error) {
+    if (document.documentElement.dataset.clubPresentation === "pending") adminConsole?.apply({}, {deferLayout: true});
     if (!homeSettingsReady) document.getElementById("spotifyPlayer").innerHTML = '<div class="home-loading-state" role="status">No se pudo cargar la playlist. Comprueba la conexión.</div>';
     return;
   }
   homeSettingsReady = true;
   siteSettings = Object.fromEntries(data.map(item => [item.key, item.value]));
-  adminConsole?.apply(siteSettings);
+  adminConsole?.apply(siteSettings, {persist: true, deferLayout: true});
   adminConsole?.sync();
   accountRequests?.sync();
   renderSpotify();
@@ -6179,6 +6183,7 @@ function placePageBackSurface(node, frame, {fixedHeight = false} = {}) {
   node.style.setProperty("height", `${Math.max(1, fixedHeight ? frame.height : appRect.height - frame.top - frame.bottom)}px`);
 }
 function preparePageBackPreview(page) {
+  globalThis.AdminConsole?.flushPresentation();
   const target = pageBackDestination(page);
   const id = ["miembros", "noticias"].includes(target.id) ? "inicio" : target.id;
   const preview = document.getElementById(id);
@@ -6212,6 +6217,9 @@ function preparePageBackPreview(page) {
     const messages = preview.querySelector(".messages");
     if (messages && conversation.scrollTop != null) messages.scrollTop = conversation.scrollTop;
   }
+  // Resolve the absolute surface geometry before assigning its scroll. WebKit
+  // may otherwise clamp the inactive flex child against its previous height.
+  void preview.offsetHeight;
   preview.scrollTop = position.top || 0;
   if (position.inboxTop != null) preview.querySelector(".chat-inbox")?.scrollTo({top: position.inboxTop, behavior: "instant"});
   page.classList.add("page-back-source");
@@ -6238,6 +6246,9 @@ function cleanupPageBackPreview(gesture, {committed = false} = {}) {
     scene.preview.scrollTop = scene.scrollTop;
     scene.childScrolls.forEach(([node, top]) => { node.scrollTop = top; });
   }
+  // First-load settings may have arrived while the preview was onscreen.
+  // Resolve the loading surface only after the preview geometry is removed.
+  globalThis.AdminConsole?.flushPresentation({resolveInitial: true});
 }
 document.addEventListener("pointerdown", event => {
   if (!isMobileSidebar() || event.pointerType === "mouse" || !event.isPrimary || pageBackGesture || pageBackSettling) return;
