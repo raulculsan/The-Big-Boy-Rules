@@ -6217,7 +6217,7 @@ function preparePageBackPreview(page) {
   page.classList.add("page-back-source");
   return scene;
 }
-function cleanupPageBackPreview(gesture) {
+function cleanupPageBackPreview(gesture, {committed = false} = {}) {
   gesture.page.classList.remove("page-back-source");
   const scene = gesture.scene;
   if (!scene) return;
@@ -6232,8 +6232,12 @@ function cleanupPageBackPreview(gesture) {
   else scene.preview.setAttribute("style", scene.style);
   if (scene.ariaHidden == null) scene.preview.removeAttribute("aria-hidden");
   else scene.preview.setAttribute("aria-hidden", scene.ariaHidden);
-  scene.preview.scrollTop = scene.scrollTop;
-  scene.childScrolls.forEach(([node, top]) => { node.scrollTop = top; });
+  // A committed route has already restored its destination scroll. Reverting
+  // the preview snapshot here would briefly expose the wrong content again.
+  if (!committed) {
+    scene.preview.scrollTop = scene.scrollTop;
+    scene.childScrolls.forEach(([node, top]) => { node.scrollTop = top; });
+  }
 }
 document.addEventListener("pointerdown", event => {
   if (!isMobileSidebar() || event.pointerType === "mouse" || !event.isPrimary || pageBackGesture || pageBackSettling) return;
@@ -6255,6 +6259,7 @@ document.addEventListener("pointermove", event => {
   if (!gesture.tracking && (dx < 12 || dx < Math.abs(dy) * 1.4)) return;
   if (!gesture.tracking) {
     gesture.sourceTransform = gesture.page.style.transform;
+    gesture.sourceLayout = capturePageBackLayout(gesture.page);
     gesture.scene = preparePageBackPreview(gesture.page);
   }
   gesture.tracking = true;
@@ -6285,14 +6290,22 @@ async function finishPageBackGesture(event) {
       ], {duration: commit ? 180 : 150, easing: "cubic-bezier(.2,.7,.2,1)", fill: "both"}));
       await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
     }
+    // Keep the source offscreen and the live destination underneath until the
+    // back control commits its route. Cleanup-first exposes the departing page
+    // again and can persist its translated geometry for the next navigation.
+    if (commit && gesture.page.classList.contains("active")) gesture.back();
   } finally {
+    const committed = !gesture.page.classList.contains("active");
+    if (committed && gesture.sourceLayout) {
+      const saved = pageBackPositions.get(gesture.page.id);
+      if (saved) pageBackPositions.set(gesture.page.id, {...saved, layout: gesture.sourceLayout});
+    }
     animations.forEach(animation => animation.cancel());
     if (gesture.sourceTransform) gesture.page.style.transform = gesture.sourceTransform;
     else gesture.page.style.removeProperty("transform");
-    cleanupPageBackPreview(gesture);
+    cleanupPageBackPreview(gesture, {committed});
     pageBackSettling = false;
   }
-  if (commit && gesture.page.classList.contains("active")) gesture.back();
 }
 document.addEventListener("pointerup", finishPageBackGesture, {passive: true});
 document.addEventListener("pointercancel", finishPageBackGesture, {passive: true});
