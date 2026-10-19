@@ -100,13 +100,9 @@ Aplicar `20261019211000_verified_contact_recovery.sql` **antes** de publicar el 
 
 El remitente reutiliza los secretos de Gmail existentes de `account-requests`; no se necesita introducir otra credencial.
 
-### Activar la obligación para las cuentas anteriores
+### Contacto obligatorio para las cuentas anteriores
 
-La nueva columna `club_security.configuration.verified_contact_required` se despliega apagada para permitir comprobar primero el recorrido con un usuario legado y administración. Después de verificar el correo y el retorno en móvil, el propietario puede ejecutar:
-
-```sql
-update club_security.configuration set verified_contact_required=true, updated_at=now() where singleton;
-```
+`20261019230000_require_verified_contact.sql` activa `club_security.configuration.verified_contact_required` después de publicar la interfaz y la función de correo. Se aplicó al proyecto el 19 de octubre de 2026. Los clientes nativos deben actualizarse para mostrar la opción de correo personal.
 
 Una cuenta sin contacto podrá autenticarse y verá el formulario guiado de vinculación, pero no podrá leer datos de la app hasta verificar correo o Google. `account_security_status` y la función de envío/verificación permanecen accesibles para completar el paso. Se conserva la política de MFA existente. Reversión del requisito de contacto: cambiar esa columna a `false`; el bloqueo de solicitudes sin aprobar permanece activo.
 
