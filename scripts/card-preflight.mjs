@@ -4,6 +4,7 @@ import {resolve, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {runInNewContext} from 'node:vm';
 import {inflateSync} from 'node:zlib';
+import {readCardImage} from './read-card-image.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const editions = {Común:'common', Retro:'retro', Especial:'special', Épica:'epic', Legendaria:'legendary', 'Full Art':'full_art', 'Vice City':'vice_city'};
 const backNames = {common:'comun',retro:'retro',special:'especial',epic:'especial',legendary:'legendar',full_art:'full-art',vice_city:'vice-city'};
@@ -50,9 +51,9 @@ export async function preflightCards({strict=false}={}) {
     if(!Number.isFinite(card.width)||!Number.isFinite(card.height))issue(errors,card,'Faltan dimensiones del catálogo.');
     for(const face of ['front','back']){
       const path=card[face];
-      if(typeof path!=='string'||!/^icons\/cards\/[^/]+\.png$/.test(path)){issue(errors,card,`${face}: ruta local PNG inválida.`);continue;}
+      if(typeof path!=='string'||!/^icons\/cards\/[^/]+\.(?:png|jpe?g)$/.test(path)){issue(errors,card,`${face}: ruta local PNG/JPEG inválida.`);continue;}
       try {
-        if(!assets.has(path)){const data=await readFile(resolve(root,path));const info=png(data);assets.set(path,{...info,margins:margins(data,info),bytes:data.length});}
+        if(!assets.has(path)){const {data,bytes}=await readCardImage(resolve(root,path));const info=png(data);assets.set(path,{...info,margins:margins(data,info),bytes});}
         const info=assets.get(path);
         if(info.width<700||info.height<1100)issue(errors,card,`${face}: resolución insuficiente (${info.width}×${info.height}).`);
         if(face==='front'&&(Math.abs(info.width-card.width)>2||Math.abs(info.height-card.height)>2))issue(errors,card,`Dimensiones declaradas ${card.width}×${card.height}, imagen ${info.width}×${info.height}. Corrige el catálogo.`);

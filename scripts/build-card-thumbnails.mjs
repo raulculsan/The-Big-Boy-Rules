@@ -1,7 +1,7 @@
 /* Small list assets; the catalog's original front/back always remain untouched. */
 import {readFile, writeFile, mkdir, stat, unlink} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
-import {dirname, resolve, basename} from 'node:path';
+import {dirname, resolve, basename, extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,14 +20,14 @@ function run(command, args) {
 export async function buildCardThumbnails() {
   await mkdir(directory, {recursive: true});
   const catalog = await readFile(resolve(root, 'card-collection.js'), 'utf8');
-  const sources = [...new Set([...catalog.matchAll(/front:\s*['"](icons\/cards\/[^'"]+\.png)['"]/g)].map(match => match[1]))].sort();
+  const sources = [...new Set([...catalog.matchAll(/front:\s*['"](icons\/cards\/[^'"]+\.(?:png|jpe?g))['"]/g)].map(match => match[1]))].sort();
   let previous = {};
   try { previous = JSON.parse(await readFile(manifestFile, 'utf8')); } catch {}
   const manifest = {}, mapping = {};
   let generated = 0, originalBytes = 0, thumbnailBytes = 0;
   for (const source of sources) {
     const input = resolve(root, source), info = await stat(input);
-    const target = `icons/cards/thumbnails/${basename(source, '.png')}.jpg`, output = resolve(root, target);
+    const target = `icons/cards/thumbnails/${basename(source, extname(source))}.jpg`, output = resolve(root, target);
     const fingerprint = `${VERSION}:${WIDTH}:${QUALITY}:${info.size}:${info.mtimeMs}`;
     let exists = true;
     try { await stat(output); } catch { exists = false; }
@@ -46,8 +46,9 @@ export async function buildCardThumbnails() {
   }
   // Remove obsolete generated variants when a published design changes, without
   // touching originals or arbitrary files outside this generated directory.
+  const currentTargets = new Set(Object.values(manifest).map(entry => entry.target));
   for (const [source, entry] of Object.entries(previous)) {
-    if (manifest[source] || typeof entry.target !== 'string') continue;
+    if (manifest[source] || typeof entry.target !== 'string' || currentTargets.has(entry.target)) continue;
     const stale = resolve(root, entry.target);
     if (dirname(stale) !== directory || !stale.endsWith('.jpg')) continue;
     try { await unlink(stale); } catch (error) { if (error.code !== 'ENOENT') throw error; }

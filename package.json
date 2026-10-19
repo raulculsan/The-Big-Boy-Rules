@@ -15,9 +15,13 @@
     "ios:open": "npm run ios:sync && cap open ios",
     "postinstall": "node scripts/patch-capacitor-keyboard.mjs",
     "capacitor:copy:before": "node scripts/clean-generated-assets.mjs",
-    "capacitor:copy:after": "node scripts/clean-generated-assets.mjs --native"
+    "capacitor:copy:after": "node scripts/clean-generated-assets.mjs --native",
+    "android:sync": "npm run build && cap sync android",
+    "android:open": "npm run android:sync && cap open android",
+    "android:build": "npm run android:sync && node scripts/build-android.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.3",
     "@capacitor/core": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
     "@capacitor/keyboard": "^8.0.5",

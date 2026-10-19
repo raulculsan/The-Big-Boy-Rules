@@ -10310,3 +10310,11 @@ body.event-editor-open { overflow:hidden; overscroll-behavior:none; }
 html[data-reduced-motion="true"] *,html[data-reduced-motion="true"] *::before,html[data-reduced-motion="true"] *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-delay:0ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0ms!important}
 html[data-reduced-motion="true"] .full-art-foil,html[data-reduced-motion="true"] .pack-rarity-vfx{opacity:0!important}
 .motion-preference{grid-column:1/-1}.motion-preference[hidden]{display:none}
+
+/* Android supplies its actual system-bar/cutout insets; do not apply the iPhone minimum. */
+body.native-android.standalone-app {
+  --pwa-safe-top: env(safe-area-inset-top, 0px);
+  --pwa-safe-right: env(safe-area-inset-right, 0px);
+  --pwa-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --pwa-safe-left: env(safe-area-inset-left, 0px);
+}

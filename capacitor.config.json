@@ -11,6 +11,9 @@
       "resize": "none",
       "style": "DARK",
       "autoBackdropColor": "auto"
+    },
+    "SystemBars": {
+      "style": "DARK"
     }
   }
 }

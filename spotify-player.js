@@ -2,7 +2,7 @@
   'use strict';
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const playlistId = value => String(value || '').match(/(?:open\.spotify\.com\/playlist\/|spotify:playlist:)([A-Za-z0-9]+)/)?.[1] || '';
-  const native = () => window.Capacitor?.getPlatform?.() === 'ios';
+  const native = () => window.Capacitor?.isPluginAvailable?.('ClubSpotify') === true;
   let plugin, listener, initialization, configuration, host, playlist = '', owner = '', generation = 0, pending = false, notice = '';
   let state = {connected:false, configured:false, installed:false, linked:false};
   let receivedAt = Date.now(), lastStateRequest = 0, stateRequest = false, hostObserver = null, hostVisible = false, seeking = false;

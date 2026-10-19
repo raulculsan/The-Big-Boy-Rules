@@ -112,7 +112,8 @@ const CHAT_BACK_GESTURE = Object.freeze({
 const pageTitle = document.getElementById("pageTitle");
 const sections = [...document.querySelectorAll(".page-section")];
 const navLinks = [...document.querySelectorAll(".app-tab")];
-const isStandaloneApp = window.__bigboysNativeKeyboardLayout === true || window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+document.body.classList.toggle("native-android", window.Capacitor?.getPlatform?.() === "android");
+const isStandaloneApp = window.Capacitor?.isNativePlatform?.() === true || window.__bigboysNativeKeyboardLayout === true || window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 document.body.classList.toggle("standalone-app", isStandaloneApp);
 let mobileHeaderLastScrollY = Math.max(0, window.scrollY);
 let mobileHeaderScrollAnchor = mobileHeaderLastScrollY;
@@ -467,6 +468,7 @@ async function removeNativePushDevice() {
 }
 
 function pushSupported() {
+  if (window.Capacitor?.getPlatform?.() === "android") return false;
   return Boolean(nativePush()) || "serviceWorker" in navigator && "PushManager" in window && "Notification" in window && Boolean(config.vapidPublicKey);
 }
 
@@ -485,7 +487,7 @@ async function syncPushNotificationState() {
     button.disabled = true;
     if (testButton) testButton.hidden = true;
     button.textContent = "No disponible";
-    status.textContent = "Instala la PWA en un dispositivo compatible.";
+    status.textContent = window.Capacitor?.getPlatform?.() === "android" ? "Los avisos del teléfono estarán disponibles próximamente." : "Instala la PWA en un dispositivo compatible.";
     return;
   }
   if (nativePush()) {
@@ -4560,7 +4562,7 @@ window.visualViewport?.addEventListener("scroll", positionChatAttachmentMenu);
 
 async function openChatGallery(kind) {
   closeChatAttachmentMenu();
-  if (window.Capacitor?.getPlatform?.() !== "ios") {
+  if (!window.Capacitor?.isPluginAvailable?.("ClubGallery")) {
     const picker = attachmentContext(kind).mediaInput;
     picker.value = "";
     picker.click();
