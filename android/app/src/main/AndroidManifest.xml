@@ -34,6 +34,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="bigboyrules" android:host="auth" android:path="/callback" />
                 <data android:scheme="bigboyrules" android:host="account-request" android:path="/verify" />
+                <data android:scheme="bigboyrules" android:host="account-security" android:path="/reset" />
+                <data android:scheme="bigboyrules" android:host="account-security" android:path="/email" />
                 <data android:scheme="bigboyrules" android:host="spotify-callback" />
             </intent-filter>
         </activity>

@@ -20,6 +20,7 @@
       if (!button || busy) return;
       if (button.hasAttribute('data-security-close')) { if (!required) dialog.close(); }
       else if (button.dataset.provider) void run(() => link(button.dataset.provider));
+      else if (button.hasAttribute('data-security-email')) void run(linkEmail);
       else if (button.hasAttribute('data-security-enroll')) void run(enroll);
       else if (button.hasAttribute('data-security-refresh')) void run(refresh);
       else if (button.hasAttribute('data-security-logout')) void run(async () => { clearEnrollment(); localStorage.removeItem(PENDING_LINK); await client.auth.signOut(); location.reload(); });
@@ -51,6 +52,7 @@
   function providers() { return (policy?.enabled_providers || []).filter(p => ['google', 'apple'].includes(p)); }
   function linkedProviders() { return (user.identities || []).filter(i => ['google', 'apple'].includes(i.provider)).map(i => i.provider); }
   const securityIcons = {
+    email: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>',
     google: `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.89-1.74 2.98-4.3 2.98-7.36Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.24-2.51c-.9.6-2.05.96-3.38.96-2.6 0-4.81-1.76-5.6-4.12H3.05v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.4 13.92a6 6 0 0 1 0-3.84V7.49H3.05a10 10 0 0 0 0 9.02l3.35-2.59Z"/><path fill="#EA4335" d="M12 5.96c1.47 0 2.79.5 3.83 1.5L18.7 4.6A9.62 9.62 0 0 0 12 2a10 10 0 0 0-8.95 5.49l3.35 2.59C7.19 7.72 9.4 5.96 12 5.96Z"/></svg>`,
     apple: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 12.7c0-2 1.7-3 1.8-3.1-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.8-3.2.8s-1.7-.8-2.8-.8c-1.5 0-2.8.8-3.6 2.1-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.5 2.1 2.6 2.1 1 0 1.4-.7 2.7-.7s1.6.7 2.8.7 1.9-1 2.6-2c.8-1.2 1.1-2.3 1.1-2.4-.1 0-2.1-.8-2.1-3.7ZM14.4 6.6c.6-.8 1-1.9.9-3-.9 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2.1-.5 2.9-1.3Z"/></svg>`,
     authenticator: `<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m16 3 10 4v8c0 7-10 13-10 13S6 22 6 15V7l10-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><rect x="11" y="10" width="10" height="11" rx="2" fill="currentColor" fill-opacity=".14"/><g fill="currentColor"><circle cx="13" cy="13" r="1"/><circle cx="19" cy="13" r="1"/><circle cx="13" cy="17" r="1"/><circle cx="19" cy="17" r="1"/></g></svg>`
@@ -58,6 +60,19 @@
   function providerCard(provider, linked = false) {
     const name = provider === 'google' ? 'Google' : 'Apple';
     return `<article class="security-method security-method--${provider}"><div class="security-method-heading"><span class="security-brand security-brand--${provider}">${securityIcons[provider]}</span><div><h4>${name}</h4><span class="security-method-label">Cuenta vinculada</span></div><span class="security-badge${linked ? ' is-active' : ''}">${linked ? 'Vinculada' : 'Sin vincular'}</span></div><p>${linked ? `Tu cuenta de ${name} está asociada a este perfil.` : `Conecta tu cuenta de ${name} con tu perfil de Big Boy.`}</p>${linked ? '<div class="security-method-confirmation"><span aria-hidden="true">✓</span> Vinculación completada</div>' : `<button type="button" class="security-method-action" data-provider="${provider}">${securityIcons[provider]}<span>Vincular con ${name}</span></button>`}</article>`;
+  }
+  const escapeText=value=>String(value||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function emailCard(){
+    const active=policy?.email_verified===true;
+    return `<article class="security-method"><div class="security-method-heading"><span class="security-brand">${securityIcons.email}</span><div><h4>Correo personal</h4><span class="security-method-label">Recuperación de acceso</span></div><span class="security-badge${active?' is-active':''}">${active?'Verificado':'Pendiente'}</span></div><p>${active?escapeText(user.email):'Vincula tu correo para recuperar tu contraseña cuando lo necesites.'}</p><label class="security-email-label">Correo electrónico<input type="email" data-security-email-input autocomplete="email" maxlength="254" placeholder="tu@email.com"></label><button type="button" class="security-method-action" data-security-email>${active?'Cambiar correo':'Verificar correo'}</button><button type="button" class="security-text" data-security-refresh>Comprobar verificación</button></article>`;
+  }
+  async function linkEmail(){
+    const email=dialog.querySelector('[data-security-email-input]')?.value.trim();
+    if(!email||!/^\S+@\S+\.\S+$/.test(email))throw new Error('Introduce un correo electrónico válido.');
+    const result=await client.functions.invoke('account-requests',{body:{action:'link-email',email}});
+    if(result.error)throw new Error('No se pudo enviar el enlace. Espera unos minutos e inténtalo de nuevo.');
+    if(result.data?.error)throw new Error(result.data.error);
+    feedback(result.data.message);
   }
   function authenticatorCard(active = false) {
     return `<article class="security-method security-method--authenticator"><div class="security-method-heading"><span class="security-brand security-brand--authenticator">${securityIcons.authenticator}</span><div><h4>Authenticator</h4><span class="security-method-label">Verificación en dos pasos</span></div><span class="security-badge${active ? ' is-active' : ''}">${active ? 'Activado' : 'Pendiente'}</span></div><p>${active ? 'Tu acceso está protegido con los códigos de tu autenticador.' : 'Añade una segunda capa de protección con un código de 6 cifras.'}</p>${active ? '<div class="security-method-confirmation"><span aria-hidden="true">✓</span> Protección activada</div>' : '<button type="button" class="security-method-action" data-security-enroll>Configurar autenticador</button>'}<small class="security-method-note">Compatible con Google Authenticator, Microsoft Authenticator y 2FAS.</small></article>`;
@@ -69,13 +84,14 @@
     const result = await client.auth.getUser();
     if (result.error || result.data.user?.id !== user.id) throw new Error('La cuenta ha cambiado. Cierra sesión y vuelve a entrar.');
     user = result.data.user;
+    policy = await loadPolicy();
     const factors = await client.auth.mfa.listFactors();
     if (factors.error) throw factors.error;
     const verified = (factors.data.totp || []).filter(f => f.status === 'verified');
     const level = await client.auth.mfa.getAuthenticatorAssuranceLevel();
     if (level.error) throw level.error;
     const linked = linkedProviders();
-    const identityNeeded = policy?.enforcement_enabled === true && policy?.identity_link_required !== false && !linked.some(provider => providers().includes(provider));
+    const identityNeeded = policy?.verified_contact_required === true ? policy?.identity_linked !== true : policy?.enforcement_enabled === true && policy?.identity_link_required !== false && !linked.some(provider => providers().includes(provider));
     const mfaNeeded = policy?.enforcement_enabled === true && policy?.mfa_required !== false && !verified.length;
     const challengeNeeded = verified.length > 0 && level.data.currentLevel !== 'aal2';
     const content = dialog.querySelector('[data-security-content]');
@@ -84,14 +100,14 @@
       factorId = verified[0].id;
       content.innerHTML = codeForm('Confirma que eres tú', 'Introduce el código que aparece en tu aplicación de autenticación.');
     } else if (identityNeeded) {
-      content.innerHTML = `<div class="security-steps"><b>1 · Vincular cuenta</b><span>2 · Autenticador</span></div><h3>Vincula tu cuenta</h3><p>Conecta una cuenta personal con tu perfil de Big Boy.</p><div class="security-methods">${providers().map(p => providerCard(p)).join('')}</div>${!providers().length ? '<p>La vinculación se está preparando. Administración debe terminar la configuración.</p>' : ''}<button type="button" class="security-text" data-security-refresh>Ya la he vinculado · comprobar</button>`;
+      content.innerHTML = `<div class="security-steps"><b>1 · Vincular cuenta</b><span>2 · Autenticador</span></div><h3>Vincula tu cuenta</h3><p>Conecta una cuenta personal con tu perfil de Big Boy.</p><div class="security-methods">${providers().map(p => providerCard(p)).join('')}${emailCard()}</div>${!providers().length ? '<p>La vinculación se está preparando. Administración debe terminar la configuración.</p>' : ''}<button type="button" class="security-text" data-security-refresh>Ya la he vinculado · comprobar</button>`;
     } else if (mfaNeeded) {
       content.innerHTML = `<div class="security-steps"><b>1 · Cuenta vinculada</b><span>2 · Autenticador</span></div><h3>Protege cada acceso</h3><div class="security-methods">${authenticatorCard()}</div>`;
     } else if (management) {
       required = false;
       dialog.querySelector('[data-security-close]').hidden = false;
       const visibleProviders = [...new Set([...providers(), ...linked])];
-      content.innerHTML = `<h3 class="security-overview-title">Seguridad de la cuenta</h3><p class="security-overview-description">Gestiona cómo vinculas y proteges tu perfil.</p><div class="security-methods">${visibleProviders.map(p => providerCard(p, linked.includes(p))).join('')}${authenticatorCard(verified.length > 0)}</div>${verified.length ? '<p class="security-recovery-note">Si cambias de móvil, conserva tu autenticador o contacta con administración antes de perder el acceso.</p>' : ''}`;
+      content.innerHTML = `<h3 class="security-overview-title">Seguridad de la cuenta</h3><p class="security-overview-description">Gestiona cómo vinculas y proteges tu perfil.</p><div class="security-methods">${visibleProviders.map(p => providerCard(p, linked.includes(p))).join('')}${emailCard()}${authenticatorCard(verified.length > 0)}</div>${verified.length ? '<p class="security-recovery-note">Si cambias de móvil, conserva tu autenticador o contacta con administración antes de perder el acceso.</p>' : ''}`;
     } else {
       dialog.close();
       resume?.(true);

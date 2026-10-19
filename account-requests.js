@@ -2,6 +2,8 @@
 (() => {
  'use strict';
  function create(api) {
+  const GOOGLE_REQUEST='bb-google-application';
+  let googleApplicant=null;
   let applicant, review, busy=false, owner=null, generation=0, requests=[];
   const text=(node,value)=>{node.textContent=value;};
   async function invoke(action,values={}) {
@@ -19,17 +21,18 @@
   async function openApplication() {
    if(!applicant){
     applicant=makeDialog('Solicitar una cuenta');
-    applicant.insertAdjacentHTML('beforeend',`<h2>Solicita tu acceso.</h2><p class="request-intro">Cuéntanos quién eres. La administración revisará tu solicitud y recibirás su decisión por correo.</p><form class="account-request-form"><label>Tu nombre<input name="displayName" autocomplete="name" maxlength="60" required placeholder="Nombre y apellidos"></label><label>Correo electrónico<input name="email" type="email" autocomplete="email" maxlength="254" required placeholder="tu@email.com"></label><label>Nombre de usuario<div class="request-username"><span>@</span><input name="username" autocomplete="username" minlength="3" maxlength="32" pattern="[a-zA-Z0-9._-]{3,32}" required placeholder="tuusuario"></div></label><label>Contraseña<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label><small class="request-password-hint">Mínimo 8 caracteres y un símbolo. No puede contener tu nombre ni usuario.</small><label>Repite la contraseña<input name="confirmation" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label><label class="request-honeypot" aria-hidden="true">Web<input name="website" tabindex="-1" autocomplete="off"></label><p class="request-feedback" role="status" aria-live="polite"></p><button type="submit" class="login-submit">Enviar solicitud</button><small class="request-footnote">Te enviaremos un enlace para verificar tu correo. Tu cuenta se activará cuando administración la apruebe.</small></form>`);
+    applicant.insertAdjacentHTML('beforeend',`<h2>Solicita tu acceso.</h2><p class="request-intro">Cuéntanos quién eres. La administración revisará tu solicitud y recibirás su decisión por correo.</p><div class="request-identity-choice"><button type="button" data-request-google>Continuar con Google</button><span>o solicita acceso con tu correo</span></div><form class="account-request-form"><label>Tu nombre<input name="displayName" autocomplete="name" maxlength="60" required placeholder="Nombre y apellidos"></label><label>Correo electrónico<input name="email" type="email" autocomplete="email" maxlength="254" required placeholder="tu@email.com"></label><label>Nombre de usuario<div class="request-username"><span>@</span><input name="username" autocomplete="username" minlength="3" maxlength="32" pattern="[a-zA-Z0-9._-]{3,32}" required placeholder="tuusuario"></div></label><label>Contraseña<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label><small class="request-password-hint">Mínimo 8 caracteres y un símbolo. No puede contener tu nombre ni usuario.</small><label>Repite la contraseña<input name="confirmation" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label><label class="request-honeypot" aria-hidden="true">Web<input name="website" tabindex="-1" autocomplete="off"></label><p class="request-feedback" role="status" aria-live="polite"></p><button type="submit" class="login-submit">Enviar solicitud</button><small class="request-footnote">Te enviaremos un enlace para verificar tu correo. Tu cuenta se activará cuando administración la apruebe.</small></form>`);
     applicant.addEventListener('submit',async event=>{
      event.preventDefault();if(busy)return;const form=event.target,values=Object.fromEntries(new FormData(form)),feedback=form.querySelector('.request-feedback');
      if(values.password!==values.confirmation){text(feedback,'Las contraseñas no coinciden.');return;}
      delete values.confirmation;busy=true;form.querySelector('button').disabled=true;text(feedback,'Enviando…');
-     try{const result=await invoke('submit',values);form.reset();form.querySelectorAll('label,small,.request-password-hint,button').forEach(n=>n.hidden=true);text(feedback,result.message);feedback.classList.add('request-success');}
+     try{const result=await invoke(googleApplicant?'submit-google':'submit',googleApplicant?Object.fromEntries(Object.entries(values).filter(([k])=>k!=='email')):values);if(googleApplicant){googleApplicant=null;sessionStorage.removeItem(GOOGLE_REQUEST);await api.client.auth.signOut();}form.reset();form.querySelectorAll('label,small,.request-password-hint,button').forEach(n=>n.hidden=true);text(feedback,result.message);feedback.classList.add('request-success');}
      catch(error){text(feedback,error.message);}finally{busy=false;form.querySelector('button').disabled=false;}
     });
-    applicant.addEventListener('close',()=>{applicant.querySelector('form').reset();});
+    applicant.addEventListener('close',()=>{applicant.querySelector('form').reset();if(googleApplicant){googleApplicant=null;sessionStorage.removeItem(GOOGLE_REQUEST);void api.client.auth.signOut();}});
    }
    const form=applicant.querySelector('form');form.querySelectorAll('label,small,button').forEach(n=>n.hidden=false);form.querySelector('.request-feedback').classList.remove('request-success');text(form.querySelector('.request-feedback'),'');applicant.showModal();
+   const email=form.elements.email;email.readOnly=!!googleApplicant;if(googleApplicant){email.value=googleApplicant.email;form.querySelector('.request-footnote').textContent='Google ya ha verificado tu correo. Administración debe aprobar la solicitud antes de que puedas entrar.';}
    const submit=form.querySelector('[type=submit]');submit.disabled=true;
    try{const status=await invoke('configuration');if(!status.configured)text(form.querySelector('.request-feedback'),'La recepción de solicitudes se está preparando. Vuelve a intentarlo más tarde.');submit.disabled=!status.configured;}catch(error){text(form.querySelector('.request-feedback'),error.message);submit.disabled=true;}
   }
@@ -101,11 +104,48 @@
   if(verification){history.replaceState(null,'',location.pathname+location.search);showVerification(verification[1],verification[2]);}
   if(window.Capacitor?.isNativePlatform?.()){
    const bridge=window.Capacitor.registerPlugin('ClubDeepLink');
-   const handle=value=>{try{const link=new URL(value);if(link.protocol!=='bigboyrules:'||link.hostname!=='account-request'||link.pathname!=='/verify')return;const id=link.searchParams.get('id'),token=link.searchParams.get('token');if(/^[0-9a-f-]{36}$/i.test(id||'')&&/^[0-9a-f-]{72}$/i.test(token||''))showVerification(id,token);}catch{}};
+   const handle=value=>{handleIdentityLink(value);try{const link=new URL(value);if(link.protocol!=='bigboyrules:'||link.hostname!=='account-request'||link.pathname!=='/verify')return;const id=link.searchParams.get('id'),token=link.searchParams.get('token');if(/^[0-9a-f-]{36}$/i.test(id||'')&&/^[0-9a-f-]{72}$/i.test(token||''))showVerification(id,token);}catch{}};
    void bridge.addListener('open',event=>handle(event.url));
    void bridge.consume().then(event=>handle(event.url)).catch(()=>{});
   }
-  return {sync,refresh};
+  let recovery;
+  function showRecovery(flow='request',token=''){
+   if(!recovery){recovery=makeDialog('Recuperar acceso');recovery.addEventListener('submit',async event=>{
+    event.preventDefault();if(busy)return;const form=event.target,feedback=form.querySelector('.request-feedback'),values=Object.fromEntries(new FormData(form));
+    if(values.confirmation!==undefined&&values.password!==values.confirmation){text(feedback,'Las contraseñas no coinciden.');return;}
+    busy=true;form.querySelector('button').disabled=true;
+    try{const result=await invoke(form.dataset.flow==='reset'?'reset':form.dataset.flow==='email'?'confirm-email':'recover',form.dataset.flow==='reset'?{token:form.dataset.token,password:values.password}:form.dataset.flow==='email'?{token:form.dataset.token}:{email:values.email});text(feedback,result.message);form.querySelectorAll('label,button').forEach(n=>n.hidden=true);}
+    catch(error){text(feedback,error.message);}finally{busy=false;form.querySelector('button').disabled=false;}
+   });}
+   recovery.querySelector('[data-recovery-content]')?.remove();
+   const content=document.createElement('div');content.dataset.recoveryContent='';
+   content.innerHTML=`<h2>${flow==='reset'?'Elige tu nueva contraseña.':flow==='email'?'Confirma tu correo.':'Recupera tu acceso.'}</h2><p class="request-intro">${flow==='reset'?'Utiliza una contraseña de al menos 8 caracteres y un símbolo, sin tu nombre ni usuario.':flow==='email'?'Al confirmar, esta dirección quedará vinculada a tu cuenta.':'Te enviaremos un enlace seguro al correo que tengas vinculado.'}</p><form class="account-request-form" data-flow="${flow}">${flow==='reset'?'<label>Nueva contraseña<input name="password" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></label><label>Repite la contraseña<input name="confirmation" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></label>':flow==='email'?'':'<label>Correo electrónico<input name="email" type="email" maxlength="254" required autocomplete="email"></label>'}<p class="request-feedback" role="status"></p><button type="submit" class="login-submit">${flow==='reset'?'Guardar contraseña':flow==='email'?'Confirmar correo':'Enviar enlace'}</button></form>`;
+   content.querySelector('form').dataset.token=token;recovery.append(content);if(!recovery.open)recovery.showModal();
+  }
+  function handleIdentityLink(value){try{const link=new URL(value);if(link.protocol==='bigboyrules:'&&link.hostname==='account-security'&&['/reset','/email'].includes(link.pathname)&&/^[0-9a-f-]{72}$/i.test(link.searchParams.get('token')||''))showRecovery(link.pathname.slice(1),link.searchParams.get('token'));}catch{}}
+  const identityHash=location.hash.match(/^#account-(reset|email)=([0-9a-f-]{72})$/i);if(identityHash){history.replaceState(null,'',location.pathname+location.search);showRecovery(identityHash[1],identityHash[2]);}
+  const login=document.getElementById('loginForm');if(login&&!login.querySelector('[data-account-recover]')){const button=document.createElement('button');button.type='button';button.className='request-recovery-link';button.dataset.accountRecover='';button.textContent='¿Has olvidado tu contraseña?';login.append(button);}
+  document.addEventListener('click',event=>{if(event.target.closest('[data-account-recover]'))showRecovery();if(event.target.closest('[data-request-google]'))void startGoogle();});
+  async function startGoogle(){
+   if(busy)return;busy=true;
+   const feedback=applicant.querySelector('.request-feedback');
+   try{
+    const pending=JSON.stringify({at:Date.now()});sessionStorage.setItem(GOOGLE_REQUEST,pending);
+    const native=window.Capacitor?.isNativePlatform?.();
+    const {data,error}=await api.client.auth.signInWithOAuth({provider:'google',options:{redirectTo:native?'bigboyrules://auth/callback':`${location.origin}${location.pathname}`,skipBrowserRedirect:true,queryParams:{prompt:'select_account'}}});
+    if(error||!data.url)throw new Error('No se pudo iniciar Google.');
+    if(native){const bridge=window.Capacitor.registerPlugin('ClubAuth');const result=await bridge.authenticate({url:data.url});const link=new URL(result.url);if(link.protocol!=='bigboyrules:'||link.hostname!=='auth'||link.pathname!=='/callback')throw new Error('Respuesta de Google no válida.');const code=link.searchParams.get('code');if(!code)throw new Error('La vinculación se canceló.');const resultSession=await api.client.auth.exchangeCodeForSession(code);if(resultSession.error)throw resultSession.error;await handleAuthUser(resultSession.data.user);}
+    else location.assign(data.url);
+   }catch(error){sessionStorage.removeItem(GOOGLE_REQUEST);text(feedback,error.message);}finally{busy=false;}
+  }
+  async function handleAuthUser(user){
+   let pending;try{pending=JSON.parse(sessionStorage.getItem(GOOGLE_REQUEST)||'null');}catch{}
+   if(!pending)return false;
+   if(Date.now()-pending.at>15*60000){sessionStorage.removeItem(GOOGLE_REQUEST);await api.client.auth.signOut();return true;}
+   if(!user?.identities?.some(i=>i.provider==='google'))return false;
+   googleApplicant=user;await openApplication();return true;
+  }
+  return {sync,refresh,handleAuthUser};
  }
  globalThis.ClubAccountRequests={create};
 })();

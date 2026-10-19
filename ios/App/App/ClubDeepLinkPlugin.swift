@@ -14,14 +14,15 @@ final class ClubDeepLinkPlugin: CAPPlugin, CAPBridgedPlugin {
 
     static func handle(_ url: URL) -> Bool {
         guard url.scheme?.lowercased() == "bigboyrules",
-              url.host?.lowercased() == "account-request",
-              url.path == "/verify",
               let parts = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let id = parts.queryItems?.first(where: { $0.name == "id" })?.value,
               let token = parts.queryItems?.first(where: { $0.name == "token" })?.value,
-              id.range(of: "^[0-9a-f-]{36}$", options: .regularExpression) != nil,
               token.range(of: "^[0-9a-f-]{72}$", options: .regularExpression) != nil
         else { return false }
+        let host = url.host?.lowercased()
+        if host == "account-request" && url.path == "/verify" {
+            guard let id = parts.queryItems?.first(where: { $0.name == "id" })?.value,
+                  id.range(of: "^[0-9a-f-]{36}$", options: .regularExpression) != nil else { return false }
+        } else if host != "account-security" || !["/reset", "/email"].contains(url.path) { return false }
         DispatchQueue.main.async {
             pendingURL = url.absoluteString
             instance?.notifyListeners("open", data: ["url": url.absoluteString], retainUntilConsumed: true)

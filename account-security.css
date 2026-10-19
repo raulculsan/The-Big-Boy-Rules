@@ -38,3 +38,4 @@
 .account-security footer{border-color:#ffffff12;margin-top:22px}
 @media(hover:hover){.account-security .security-method-action:hover:not(:disabled){filter:brightness(1.08)}.account-security header button:hover{background:#ffffff10}}
 @media(max-width:380px){.account-security{padding:21px 17px}.account-security h2{font-size:20px}.account-security header small{font-size:8px}.security-method{padding:16px}.security-method-heading{gap:10px}.security-brand{width:42px;height:42px;border-radius:13px}.security-badge{font-size:8px;padding:4px 6px}.account-security .security-method h4{font-size:15px}.security-method-label{font-size:10px}}
+.security-email-label{display:grid;gap:8px;margin:16px 0 12px;color:#a6adba;font-size:11px}.account-security .security-email-label input{width:100%;min-height:44px;padding:11px 12px;border:1px solid #ffffff1c;border-radius:11px;background:#0d1117;color:#f3f4f6;font-size:14px}.account-security .security-brand>svg{width:26px;height:26px}

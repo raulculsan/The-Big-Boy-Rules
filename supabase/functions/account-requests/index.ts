@@ -5,7 +5,7 @@ const cors = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"
 const json = (value: unknown, status=200) => Response.json(value,{status,headers:{...cors,"Cache-Control":"no-store"}});
 const digest = async(value: string) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value)))).map(n=>n.toString(16).padStart(2,"0")).join("");
 const accepted = {ok:true,message:"Si los datos están disponibles, recibirás un correo para verificar tu solicitud. Revisa también la carpeta de spam."};
-const publicActions = new Set(["configuration","submit","verify","login"]);
+const publicActions = new Set(["configuration","submit","verify","login","recover","reset","confirm-email","submit-google"]);
 const url=Deno.env.get("SUPABASE_URL") || "", serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "", publicKey=Deno.env.get("SUPABASE_ANON_KEY") || "";
 const client=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
 const mailKey=Deno.env.get("BREVO_API_KEY"), sender=Deno.env.get("BREVO_SENDER_EMAIL");
@@ -34,7 +34,7 @@ async function read(request:Request) {
  const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
  const result=JSON.parse(new TextDecoder().decode(bytes));
  if(!result||Array.isArray(result)||typeof result!=='object'||Object.values(result).some(v=>typeof v!=='string'))throw new Error('Petición no válida.');
- const fields:Record<string,string[]>={configuration:['action'],submit:['action','email','username','displayName','password','website'],verify:['action','id','token'],login:['action','username','password'],list:['action'],approve:['action','id'],reject:['action','id'],retry:['action','id'],'retry-admin':['action','id'],'resend-verification':['action','id']};
+ const fields:Record<string,string[]>={configuration:['action'],submit:['action','email','username','displayName','password','website'],verify:['action','id','token'],login:['action','username','password'],list:['action'],approve:['action','id'],reject:['action','id'],retry:['action','id'],'retry-admin':['action','id'],'resend-verification':['action','id'],recover:['action','email'],reset:['action','token','password'], 'link-email':['action','email'], 'confirm-email':['action','token'], 'submit-google':['action','username','displayName','password','website']};
  if(!Object.hasOwn(fields,result.action)||Object.keys(result).some(k=>!fields[result.action].includes(k)))throw new Error('Petición no válida.');
  return result as Record<string,string>;
 }
@@ -71,10 +71,24 @@ async function outcome(req:Record<string,any>) {
  await mail(req.email,approved?'Tu cuenta de Big Boy está lista':'Respuesta a tu solicitud de Big Boy',approved?`Hola ${req.display_name},\n\nTu solicitud ha sido aceptada. Abre Big Boy e inicia sesión como @${req.username} con la contraseña que elegiste.`:`Hola ${req.display_name},\n\nLa administración ha rechazado tu solicitud de acceso a Big Boy. Si crees que se trata de un error, contacta con la administración del club.`,`account-request-${req.id}-${req.status}`);
  const {error}=await client.from('account_requests').update({email_status:'sent',email_sent_at:new Date().toISOString()}).eq('id',req.id);if(error)throw error;
 }
+const identityAccepted={ok:true,message:'Si esa dirección corresponde a una cuenta activa, recibirás un enlace para restablecer la contraseña.'};
+const appWeb='https://raulculsan.github.io/The-Big-Boy-Rules/';
+async function identityToken(userId:string,email:string,kind:string){
+ await client.from('account_identity_tokens').delete().lt('expires_at',new Date(Date.now()-86400000).toISOString());
+ const token=crypto.randomUUID()+crypto.randomUUID();
+ const {error}=await client.from('account_identity_tokens').insert({token_hash:await digest(token),user_id:userId,email,kind,expires_at:new Date(Date.now()+30*60000).toISOString()});if(error)throw error;
+ const link=`${url}/functions/v1/account-requests?flow=${kind}&token=${encodeURIComponent(token)}`;
+ await mail(email,kind==='reset'?'Restablece tu contraseña de Big Boy':'Confirma tu correo de Big Boy',`Pulsa el enlace para ${kind==='reset'?'elegir una nueva contraseña':'vincular este correo a tu cuenta'}:\n\n${link}\n\nCaduca en 30 minutos. Si no lo has solicitado, ignora este correo.`,crypto.randomUUID(),`<p>Has solicitado ${kind==='reset'?'restablecer tu contraseña':'vincular tu correo'} en Big Boy.</p><p><a href="${escapeMail(link)}">${kind==='reset'?'Elegir nueva contraseña':'Confirmar correo'}</a></p><p>El enlace caduca en 30 minutos. Si no lo has solicitado, ignora este correo.</p>`);
+}
 export default {async fetch(request:Request):Promise<Response>{
  if(request.method==='OPTIONS')return new Response('ok',{headers:cors});
  if(request.method==='GET'){
   const params=new URL(request.url).searchParams,id=params.get('id')||'',token=params.get('token')||'';
+  const flow=params.get('flow');
+  if(['reset','email'].includes(flow||'')&&/^[0-9a-f-]{72}$/i.test(token)){
+   const deep=`bigboyrules://account-security/${flow}?token=${encodeURIComponent(token)}`,web=`${appWeb}#account-${flow}=${encodeURIComponent(token)}`;
+   return new Response(`<!doctype html><html lang="es"><meta name="viewport" content="width=device-width"><title>Big Boy</title><body style="font:18px system-ui;background:#101317;color:white;padding:40px"><h1>Big Boy</h1><p>Continúa de forma segura en tu aplicación.</p><p><a style="color:#efce87" href="${deep}">Abrir Big Boy</a></p><p><a style="color:#efce87" href="${web}">Continuar en la web</a></p></body></html>`,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'"}});
+  }
   if(!/^[0-9a-f-]{36}$/i.test(id)||!/^[0-9a-f-]{72}$/i.test(token))return json({error:'Enlace no válido.'},400);
   return new Response(null,{status:302,headers:{Location:`bigboyrules://account-request/verify?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`,'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
  }
@@ -84,6 +98,62 @@ export default {async fetch(request:Request):Promise<Response>{
  const ip=request.headers.get('cf-connecting-ip')||request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
  if(publicActions.has(action)&&!await limit(`ip:${action}:${ip}`,action==='login'?30:action==='configuration'?120:10))return json({error:'Demasiados intentos. Espera unos minutos.'},429);
  if(action==='configuration')return json({configured});
+ if(action==='recover'){
+  const email=(body.email||'').trim().toLowerCase();
+  if(!/^\S+@\S+\.\S+$/.test(email)||email.length>254)return json(identityAccepted);
+  if(!await limit(`recovery:${email}`,3,3600))return json(identityAccepted);
+  const {data}=await client.rpc('account_recovery_user',{p_email:email});
+  if(data)EdgeRuntime.waitUntil(identityToken(data,email,'reset').catch(()=>{}));
+  return json(identityAccepted);
+ }
+ if(action==='reset'||action==='confirm-email'){
+  if(!/^[0-9a-f-]{72}$/i.test(body.token||''))return json({error:'Enlace no válido o caducado.'},400);
+  const kind=action==='reset'?'reset':'email';
+  const {data:token}=await client.from('account_identity_tokens').select('*').eq('token_hash',await digest(body.token)).eq('kind',kind).is('used_at',null).gt('expires_at',new Date().toISOString()).maybeSingle();
+  if(!token)return json({error:'Enlace no válido, utilizado o caducado.'},400);
+  const {data:profile}=await client.from('profiles').select('username,display_name').eq('id',token.user_id).maybeSingle();
+  if(!profile)return json({error:'La cuenta no está disponible.'},400);
+  if(kind==='reset'){const policy=passwordError(body.password||'',profile.display_name,profile.username);if(policy)return json({error:policy},400);}
+  const {data:claimed}=await client.from('account_identity_tokens').update({used_at:new Date().toISOString()}).eq('token_hash',token.token_hash).is('used_at',null).gt('expires_at',new Date().toISOString()).select('user_id').maybeSingle();
+  if(!claimed)return json({error:'Este enlace ya se ha utilizado.'},400);
+  const attributes=kind==='reset'?{password:body.password}:{email:token.email,email_confirm:true};
+  const {error}=await client.auth.admin.updateUserById(token.user_id,attributes);if(error)return json({error:'No se pudo completar. Solicita un enlace nuevo; el correo puede pertenecer a otra cuenta.'},409);
+  await client.from('account_identity_tokens').update({used_at:new Date().toISOString()}).eq('user_id',token.user_id).is('used_at',null);
+  return json({ok:true,message:kind==='reset'?'Contraseña actualizada. Ya puedes iniciar sesión.':'Correo verificado y vinculado a tu cuenta.'});
+ }
+ if(action==='link-email'){
+  const authorization=request.headers.get('authorization')||'';
+  const {data:{user}}=await client.auth.getUser(authorization.replace(/^Bearer\s+/i,''));
+  if(!user||user.app_metadata?.account_request_pending===true)return json({error:'Inicia sesión de nuevo.'},401);
+  const {data:profile}=await client.from('profiles').select('id').eq('id',user.id).maybeSingle();if(!profile)return json({error:'Cuenta no disponible.'},403);
+  const {data:factors,error:factorError}=await client.auth.admin.mfa.listFactors({userId:user.id});if(factorError)throw factorError;
+  let aal='';try{aal=JSON.parse(atob(authorization.replace(/^Bearer\s+/i,'').split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).aal;}catch{}
+  if(factors?.factors?.some(f=>f.status==='verified')&&aal!=='aal2')return json({error:'Confirma primero el código de tu autenticador.'},403);
+  const email=(body.email||'').trim().toLowerCase();
+  if(!/^\S+@\S+\.\S+$/.test(email)||email.length>254||email.endsWith('.local'))return json({error:'Introduce un correo personal válido.'},400);
+  if(!await limit(`identity:${user.id}`,3,3600))return json({error:'Espera antes de solicitar otro enlace.'},429);
+  await identityToken(user.id,email,'email');return json({ok:true,message:'Te hemos enviado un enlace. Confirma el correo y pulsa Comprobar.'});
+ }
+ if(action==='submit-google'){
+  if(!configured)return json({error:'La recepción de solicitudes se está preparando.'},503);
+  if(body.website)return json(accepted);
+  const authorization=request.headers.get('authorization')||'';
+  const {data:{user}}=await client.auth.getUser(authorization.replace(/^Bearer\s+/i,''));
+  const identity=user?.identities?.find(i=>i.provider==='google'&&i.identity_data?.email_verified===true);
+  if(!user||!identity||!user.email||user.app_metadata?.account_request_pending===true)return json({error:'Vuelve a verificar tu cuenta de Google.'},401);
+  const {data:existing}=await client.from('profiles').select('id').eq('id',user.id).maybeSingle();if(existing)return json({error:'Esta cuenta ya pertenece a un perfil del club. Inicia sesión con tu usuario habitual.'},409);
+  const username=(body.username||'').trim().toLowerCase(),name=(body.displayName||'').trim();
+  if(!/^[a-z0-9._-]{3,32}$/.test(username)||['admin','administrator','superadmin'].includes(username)||!name||name.length>60)return json({error:'Revisa tu nombre y usuario.'},400);
+  const policy=passwordError(body.password||'',name,username);if(policy)return json({error:policy},400);
+  if(!await limit(`google-submit:${user.id}`,3,86400))return json({error:'Espera antes de enviar otra solicitud.'},429);
+  const id=crypto.randomUUID();
+  const {error}=await client.from('account_requests').insert({id,auth_user_id:user.id,username,display_name:name,email:user.email,status:'pending_email'});if(error)return json({error:'No se puede enviar con esos datos. Comprueba si ya tienes una solicitud pendiente.'},409);
+  const {error:banError}=await client.auth.admin.updateUserById(user.id,{password:body.password,ban_duration:'876000h',app_metadata:{account_request_pending:true}});if(banError){await client.from('account_requests').delete().eq('id',id);throw banError;}
+  const {error:updateError}=await client.from('account_requests').update({status:'pending',verified_at:new Date().toISOString()}).eq('id',id);if(updateError)throw updateError;
+  try{await notifyAdmin({id,username,display_name:name});}catch{}
+  return json({ok:true,message:'Google vinculado. Solicitud enviada; recibirás por correo la decisión de administración.'});
+ }
+
  if(action==='login'){
   const username=(body.username||'').trim().toLowerCase();
   if(!/^[a-z0-9._-]{3,32}$/.test(username)||!body.password||body.password.length>128)return json({error:'Usuario o contraseña incorrectos.'},401);

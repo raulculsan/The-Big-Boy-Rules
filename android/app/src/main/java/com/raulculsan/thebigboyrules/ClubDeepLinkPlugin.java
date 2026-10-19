@@ -12,9 +12,13 @@ public class ClubDeepLinkPlugin extends Plugin {
     @Override protected void handleOnNewIntent(Intent intent) { receive(intent); }
     private void receive(Intent intent) {
         Uri uri = intent == null ? null : intent.getData();
-        if (uri == null || !"bigboyrules".equals(uri.getScheme()) || !"account-request".equals(uri.getHost()) || !"/verify".equals(uri.getPath())) return;
-        String id = uri.getQueryParameter("id"), token = uri.getQueryParameter("token");
-        if (id == null || token == null || !id.matches("[0-9a-f-]{36}") || !token.matches("[0-9a-f-]{72}")) return;
+        if (uri == null || !"bigboyrules".equals(uri.getScheme())) return;
+        String token = uri.getQueryParameter("token");
+        if (token == null || !token.matches("[0-9a-f-]{72}")) return;
+        if ("account-request".equals(uri.getHost()) && "/verify".equals(uri.getPath())) {
+            String id = uri.getQueryParameter("id");
+            if (id == null || !id.matches("[0-9a-f-]{36}")) return;
+        } else if (!"account-security".equals(uri.getHost()) || !("/reset".equals(uri.getPath()) || "/email".equals(uri.getPath()))) return;
         pending = uri.toString();
         notifyListeners("open", new JSObject().put("url", pending), true);
     }

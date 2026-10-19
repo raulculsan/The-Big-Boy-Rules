@@ -1039,7 +1039,7 @@ function resetChatBackGesture({settle = false} = {}) {
 
 function startChatBackGesture(event) {
   if (!isMobileSidebar() || event.pointerType === "mouse" || event.isPrimary === false || messageViewTransitioning || chatBackGesture) return;
-  if (event.target.closest(".message-form, button, a, input, textarea, select, audio, video, [contenteditable='true']")) return;
+  if (event.target.closest(".message-form, [data-message-bubble], button, a, input, textarea, select, audio, video, [contenteditable='true']")) return;
   const panel = event.target.closest("#privados.active.conversation-open .private-conversation, #chat.active.conversation-open .group-conversation");
   if (!panel || !event.target.closest(".messages, .chat-header")) return;
   const composer = document?.activeElement;
@@ -1512,6 +1512,7 @@ function renderGroupAvatarSurfaces() {
 
 function renderMessages() {
   reconcileMessageUI("group");
+  renderChatReplyComposer("group");
   globalThis.ChatThemes?.sync("group");
   const container = document.getElementById("messages");
   if (!backendReady) {
@@ -1539,6 +1540,7 @@ function renderMessages() {
         ${own ? "" : `<div class="message-head">
           <button class="message-author" data-profile="${message.member}">${escapeHtml(member?.name || "Miembro")}</button>
         </div>`}
+        ${renderChatQuote("group", message)}
         ${message.text ? `<p>${escapeHtml(message.text)}</p>` : ""}${attachment}
         <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>
         </div>
@@ -1548,6 +1550,98 @@ function renderMessages() {
   finishReading();
 }
 
+
+// Reply state belongs to a user and conversation; switching threads never leaks a quote.
+const chatReplies = new Map();
+function chatReplyKey(kind) { return `${currentAuthUser?.id || ""}:${kind}:${kind === "private" ? activePrivateMemberId : activeChatChannelId}`; }
+function chatReplyDescription(kind, message) {
+  const author = kind === "group" ? getMember(message.member) : getMemberByAuthId(message.senderId);
+  return {name: author?.name || "Miembro", text: String(message.text || message.body || (message.attachmentType?.startsWith("image/") ? "Imagen" : message.attachmentType?.startsWith("audio/") ? "Nota de voz" : message.attachmentType?.startsWith("video/") ? "Vídeo" : "Archivo adjunto")).slice(0, 180)};
+}
+function renderChatQuote(kind, message) {
+  if (!message.replyToId) return "";
+  const source = (kind === "private" ? privateMessages : messages).find(item => String(item.id) === String(message.replyToId));
+  const quote = source ? chatReplyDescription(kind, source) : {name: "Respuesta", text: "Mensaje anterior no disponible"};
+  return `<button type="button" class="chat-message-quote" data-chat-quote="${escapeHtml(String(message.replyToId))}" data-quote-kind="${kind}" aria-label="Ver mensaje al que responde"><strong>${escapeHtml(quote.name)}</strong><span>${escapeHtml(quote.text)}</span></button>`;
+}
+function renderChatReplyComposer(kind) {
+  const form = document.getElementById(kind === "private" ? "privateMessageForm" : "messageForm");
+  if (!form) return;
+  let preview = form.previousElementSibling;
+  if (!preview?.matches("[data-chat-reply-composer]")) {
+    preview = document.createElement("div"); preview.className = "chat-reply-composer";
+    preview.dataset.chatReplyComposer = kind; preview.setAttribute("role", "status"); preview.setAttribute("aria-live", "polite");
+    form.before(preview);
+  }
+  const reply = chatReplies.get(chatReplyKey(kind));
+  preview.hidden = !reply;
+  if (!reply) { preview.replaceChildren(); return; }
+  const source = contextMessage({kind, id: String(reply.id)});
+  if (!source) { chatReplies.delete(chatReplyKey(kind)); preview.hidden = true; preview.replaceChildren(); return; }
+  const quote = chatReplyDescription(kind, source);
+  preview.innerHTML = `<div><strong>Responder a ${escapeHtml(quote.name)}</strong><span>${escapeHtml(quote.text)}</span></div><button type="button" data-cancel-chat-reply="${kind}" aria-label="Cancelar respuesta">×</button>`;
+}
+function selectChatReply(target) {
+  const message = contextMessage(target);
+  const input = document.getElementById(target.kind === "private" ? "privateMessageInput" : "messageInput");
+  if (!message || !input || input.disabled) return;
+  chatReplies.set(chatReplyKey(target.kind), {id: message.id});
+  cancelMessageHold(); closeMessageMenu(); renderChatReplyComposer(target.kind);
+  input.focus({preventScroll: true});
+}
+document.addEventListener("click", event => {
+  const cancel = event.target.closest("[data-cancel-chat-reply]");
+  if (cancel) { const kind = cancel.dataset.cancelChatReply; chatReplies.delete(chatReplyKey(kind)); renderChatReplyComposer(kind); return; }
+  const quote = event.target.closest("[data-chat-quote]");
+  if (!quote) return;
+  const container = document.getElementById(quote.dataset.quoteKind === "private" ? "privateMessages" : "messages");
+  const source = [...container.querySelectorAll("[data-message-bubble]")].find(node => node.dataset.messageId === quote.dataset.chatQuote);
+  if (!source) return;
+  source.scrollIntoView({block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"});
+  source.classList.remove("chat-reply-highlight"); void source.offsetWidth; source.classList.add("chat-reply-highlight");
+  source.addEventListener("animationend", () => source.classList.remove("chat-reply-highlight"), {once: true});
+});
+
+let messageReplyGesture = null;
+function resetMessageReplyGesture(commit = false) {
+  const gesture = messageReplyGesture; messageReplyGesture = null;
+  if (!gesture) return;
+  gesture.bubble.style.removeProperty("--message-reply-offset");
+  gesture.bubble.classList.remove("is-reply-dragging", "is-reply-ready");
+  gesture.bubble.classList.add("is-reply-settling");
+  setTimeout(() => gesture.bubble.classList.remove("is-reply-settling"), 180);
+  if (gesture.tracking) messageClickSuppression = {bubble: gesture.bubble, released: true, until: performance.now() + 550};
+  if (commit && gesture.ready) selectChatReply({kind: gesture.bubble.dataset.messageKind, id: gesture.bubble.dataset.messageId});
+}
+document.addEventListener("pointerdown", event => {
+  resetMessageReplyGesture();
+  const bubble = event.target.closest("[data-message-bubble]");
+  if (!bubble || event.button !== 0 || event.isPrimary === false || event.target.closest("button, a, input, textarea, audio, video") || messageMenuTarget) return;
+  const input = document.getElementById(bubble.dataset.messageKind === "private" ? "privateMessageInput" : "messageInput");
+  if (!input || input.disabled) return;
+  messageReplyGesture = {bubble, pointerId: event.pointerId, x: event.clientX, y: event.clientY, tracking: false, ready: false};
+}, {passive: true});
+document.addEventListener("pointermove", event => {
+  const gesture = messageReplyGesture;
+  if (!gesture || event.pointerId !== gesture.pointerId) return;
+  const x = event.clientX - gesture.x, y = event.clientY - gesture.y;
+  if (!gesture.tracking) {
+    if (Math.abs(y) > 10 && Math.abs(y) > Math.abs(x) || x < -12) { resetMessageReplyGesture(); return; }
+    if (x < 12 || x < Math.abs(y) * 1.4) return;
+    gesture.tracking = true; cancelMessageHold(); closeMessageMenu();
+    gesture.bubble.classList.add("is-reply-dragging");
+    try { gesture.bubble.setPointerCapture(event.pointerId); } catch { /* Detached during live refresh. */ }
+  }
+  if (event.cancelable) event.preventDefault();
+  const offset = Math.max(0, Math.min(100, x > 64 ? 64 + (x - 64) * .25 : x));
+  gesture.ready = x >= 64 && Math.abs(y) < 64;
+  gesture.bubble.style.setProperty("--message-reply-offset", `${offset}px`);
+  gesture.bubble.classList.toggle("is-reply-ready", gesture.ready);
+}, {passive: false});
+document.addEventListener("pointerup", event => { if (messageReplyGesture?.pointerId === event.pointerId) resetMessageReplyGesture(true); }, {passive: true});
+document.addEventListener("pointercancel", () => resetMessageReplyGesture(), {passive: true});
+window.addEventListener("blur", () => resetMessageReplyGesture());
+document.addEventListener("scroll", event => { if (messageReplyGesture && event.target.contains?.(messageReplyGesture.bubble)) resetMessageReplyGesture(); }, {capture: true, passive: true});
 
 // Message actions use a stationary hold, leaving native vertical scrolling and
 // the existing horizontal chat gesture untouched until the hold completes.
@@ -1731,6 +1825,7 @@ function reconcileMessageUI(kind) {
   }
 }
 function showMessageMenu(bubble, x, y) {
+  resetMessageReplyGesture();
   cancelMessageHold();
   if (!bubble?.isConnected) return;
   const target = {kind: bubble.dataset.messageKind, id: bubble.dataset.messageId, bubble};
@@ -1741,7 +1836,7 @@ function showMessageMenu(bubble, x, y) {
   const own = (target.kind === "group" ? message.userId : message.senderId) === currentAuthUser.id;
   const canDelete = own || (target.kind === "group" && canManageSite());
   const menu = document.getElementById("messageContextMenu");
-  menu.innerHTML = `<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
+  menu.innerHTML = `<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="reply"><span aria-hidden="true">↩</span>Responder</button><button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
   messageMenuTarget = target; menu.hidden = false;
   positionChatMenu(menu, x, y);
   focusChatMenuSource(menu, bubble);
@@ -2440,6 +2535,7 @@ async function openPrivateConversation(memberId) {
 function renderPrivateConversation() {
   globalThis.ClubDrafts?.begin("privateMessageForm", activePrivateMemberId == null ? null : `member:${activePrivateMemberId}`);
   reconcileMessageUI("private");
+  renderChatReplyComposer("private");
   const member = getMember(activePrivateMemberId);
   const container = document.getElementById("privateMessages");
   const input = document.getElementById("privateMessageInput");
@@ -2481,6 +2577,7 @@ function renderPrivateConversation() {
     const own = message.senderId === currentAuthUser?.id;
     return `${conversationDayDivider(message.createdAt, items[index - 1]?.createdAt)}<div class="message private-message ${own ? "own own-message" : ""}">
       <div class="message-bubble" data-message-bubble data-message-kind="private" data-message-id="${escapeHtml(String(message.id))}" tabindex="0" role="button" aria-haspopup="menu" aria-label="Mensaje de ${escapeHtml(own ? currentUser?.name || "Tú" : member.name)}: ${escapeHtml(String(message.body || "Adjunto").slice(0, 160))}. Mantén pulsado para ver opciones">
+        ${renderChatQuote("private", message)}
         ${message.body ? `<p>${escapeHtml(message.body)}</p>` : ""}
         ${message.attachmentUrl ? renderMessageAttachment(message) : ""}
         <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>
@@ -3559,6 +3656,7 @@ async function beginAuthenticatedSession(authUser) {
   const {data, error} = await db.auth.getUser();
   if (error || !data.user || data.user.id !== authUser.id) throw new Error("La sesión ya no está disponible. Vuelve a iniciar sesión.");
   const verifiedUser = data.user;
+  if (await accountRequests?.handleAuthUser(verifiedUser)) { showLogin(); return; }
   if (verifiedUser.app_metadata?.must_change_password === true) {
     showLogin();
     currentAuthUser = verifiedUser;
@@ -3751,7 +3849,7 @@ async function loadMessages() {
   globalThis.ClubFeedback?.set(anchor, "loading", messages.length ? "Actualizando mensajes…" : "Cargando mensajes…");
   try {
     const {data, error} = await db.from("messages")
-      .select("id,user_id,legacy_id,channel_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at")
+      .select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at")
       .order("created_at").limit(200);
     if (owner !== currentAuthUser?.id) return;
     if (error) throw error;
@@ -3796,6 +3894,7 @@ function refreshGroupMessageSurfaces() {
 function mapMessage(item) {
   return {
     id: item.id, userId: item.user_id, member: item.legacy_id, channelId: item.channel_id, text: item.body,
+    replyToId: item.reply_to_id,
     attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
     createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp
@@ -4209,6 +4308,7 @@ function refreshPrivateMessageSurfaces() {
 function mapPrivateMessage(item) {
   return {
     id: item.id, senderId: item.sender_id, recipientId: item.recipient_id,
+    replyToId: item.reply_to_id,
     body: item.body, attachmentRef: item.attachment_url, attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
     createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp
@@ -4806,10 +4906,10 @@ async function sendMessage(text, file = null, attempt = {}) {
   }
   attempt.phase?.("Enviando mensaje…");
   const {data, error} = await db.from("messages").insert({
-    user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: channelId, body: text,
+    user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: channelId, body: text, reply_to_id: attempt.replyToId || null,
     attachment_url: attachmentUrl, attachment_name: file?.name || null,
     attachment_type: file?.type || null, attachment_size: file?.size || null
-  }).select("id,user_id,legacy_id,channel_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
+  }).select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
   if (error) throw error;
   dispatchPush("group_message", data.id);
   return mapMessage(data);
@@ -4932,10 +5032,10 @@ async function sendPrivateMessage(text, file = null, attempt = {}) {
   }
   attempt.phase?.("Enviando mensaje…");
   const {data, error} = await db.from("private_messages").insert({
-    sender_id: currentAuthUser.id, recipient_id: recipient.authId, body: text,
+    sender_id: currentAuthUser.id, recipient_id: recipient.authId, body: text, reply_to_id: attempt.replyToId || null,
     attachment_url: attachmentUrl, attachment_name: file?.name || null,
     attachment_type: file?.type || null, attachment_size: file?.size || null
-  }).select("id,sender_id,recipient_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
+  }).select("id,sender_id,recipient_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
   if (error) throw error;
   dispatchPush("private_message", data.id);
   const message = mapPrivateMessage(data);
@@ -5005,7 +5105,7 @@ async function shareMediaToChat(form) {
         user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: channel.id, body,
         attachment_url: attachmentUrl, attachment_name: attachmentName,
         attachment_type: attachmentType, attachment_size: null
-      }).select("id,user_id,legacy_id,channel_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
+      }).select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
       if (error) throw error;
       if (!messages.some(message => String(message.id) === String(data.id))) messages.push(mapMessage(data));
       closeShareMedia();
@@ -5018,7 +5118,7 @@ async function shareMediaToChat(form) {
         sender_id: currentAuthUser.id, recipient_id: member.authId, body,
         attachment_url: attachmentUrl, attachment_name: attachmentName,
         attachment_type: attachmentType, attachment_size: null
-      }).select("id,sender_id,recipient_id,body,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
+      }).select("id,sender_id,recipient_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
       if (error) throw error;
       if (!privateMessages.some(message => String(message.id) === String(data.id))) privateMessages.push(mapPrivateMessage(data));
       closeShareMedia();
@@ -6400,7 +6500,8 @@ document.getElementById("messageContextMenu").addEventListener("click", event =>
   const target = messageMenuTarget;
   if (!action || !contextMessage(target)) return;
   closeMessageMenu(event.detail === 0);
-  if (action === "info") showMessageInfo({...target, restoreFocus: event.detail === 0});
+  if (action === "reply") selectChatReply(target);
+  else if (action === "info") showMessageInfo({...target, restoreFocus: event.detail === 0});
   else if (action === "edit") (target.kind === "group" ? editGroupMessage : editPrivateMessage)(target.id);
   else if (action === "delete") (target.kind === "group" ? deleteGroupMessage : deletePrivateMessage)(target.id);
 });
@@ -6534,7 +6635,7 @@ async function submitChatMessage(kind, event, retry = null) {
   const authId = currentAuthUser?.id;
   const sameSession = () => authId && currentAuthUser?.id === authId;
   const sameConversation = () => sameSession() && key === chatSendKey(kind);
-  const attempt = retry || {destination, value, file};
+  const attempt = retry || {destination, value, file, replyToId: chatReplies.get(chatReplyKey(kind))?.id || null};
   Object.assign(attempt, {sending: true, error: "", label: file ? "Preparando archivo…" : "Enviando mensaje…", phase(label) {
     if (!sameSession()) throw new Error("La sesión ha cambiado.");
     this.label = label;
@@ -6555,6 +6656,9 @@ async function submitChatMessage(kind, event, retry = null) {
     chatSendAttempts.delete(key);
     if (sentMessage) globalThis.ClubDrafts?.clearSent(form.id, draftToken, value);
     if (sentMessage && sameConversation()) {
+      if (String(chatReplies.get(chatReplyKey(kind))?.id || "") === String(attempt.replyToId || "")) {
+        chatReplies.delete(chatReplyKey(kind)); renderChatReplyComposer(kind);
+      }
       if (input.value === value) input.value = "";
       if (pendingChatFile(kind) === file) clearPendingChatFile(kind);
     }

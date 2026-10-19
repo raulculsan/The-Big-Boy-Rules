@@ -87,3 +87,27 @@ Referencias de compatibilidad: Supabase publica un ejemplo oficial con Nodemaile
 Sus límites excluyen los puertos 25 y 587, no el 465 utilizado aquí
 (https://supabase.com/docs/guides/functions/limits). La entrega real requiere
 validación tras cargar el app password.
+
+## Correo personal, solicitudes Google y recuperación (2026-10-19)
+
+Aplicar `20261019211000_verified_contact_recovery.sql` **antes** de publicar el botón de solicitud con Google. La migración impide que un alta OAuth cree un perfil automáticamente y deniega acceso a datos/RPC a cualquier JWT sin perfil aprobado. El control de las Edge Functions debe seguir verificando `accountSecurityFailure` o un perfil aprobado antes de usar service-role.
+
+- `link-email` requiere sesión de un perfil existente y AAL2 si tiene autenticador verificado. Envía un enlace a la dirección nueva; no cambia el correo hasta confirmar posesión.
+- `confirm-email` y `reset` consumen de forma atómica un token aleatorio de un solo uso, guardado únicamente con SHA-256 y caducidad de 30 minutos. Los tokens nunca se entregan al panel administrador ni al cliente que solicita el email.
+- `recover` responde igual exista o no el correo; el envío se ejecuta en segundo plano. Solo admite correo confirmado o identidad Google/Apple verificada de un perfil aprobado. No inicia sesión ni desactiva MFA.
+- `submit-google` verifica la sesión OAuth en servidor, exige identidad Google con email verificado, guarda una solicitud y bloquea el usuario Auth hasta aprobación. No guarda la contraseña en las tablas. Cerrar el formulario cierra esa sesión provisional.
+- Los enlaces HTTPS ofrecen abrir la app instalada (`bigboyrules://account-security/reset` o `/email`) o continuar en la web. iOS y Android validan ruta y formato del token.
+
+El remitente reutiliza los secretos de Gmail existentes de `account-requests`; no se necesita introducir otra credencial.
+
+### Activar la obligación para las cuentas anteriores
+
+La nueva columna `club_security.configuration.verified_contact_required` se despliega apagada para permitir comprobar primero el recorrido con un usuario legado y administración. Después de verificar el correo y el retorno en móvil, el propietario puede ejecutar:
+
+```sql
+update club_security.configuration set verified_contact_required=true, updated_at=now() where singleton;
+```
+
+Una cuenta sin contacto podrá autenticarse y verá el formulario guiado de vinculación, pero no podrá leer datos de la app hasta verificar correo o Google. `account_security_status` y la función de envío/verificación permanecen accesibles para completar el paso. Se conserva la política de MFA existente. Reversión del requisito de contacto: cambiar esa columna a `false`; el bloqueo de solicitudes sin aprobar permanece activo.
+
+Fuentes de API: [OAuth](https://supabase.com/docs/reference/javascript/auth-signinwithoauth), [PKCE](https://supabase.com/docs/guides/auth/sessions/pkce-flow), [identidades](https://supabase.com/docs/guides/auth/identities), [actualización administrativa](https://supabase.com/docs/reference/javascript/auth-admin-updateuserbyid).
