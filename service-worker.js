@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v348";
+const CACHE_NAME = "big-boy-rules-v349";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -11,7 +11,7 @@ const APP_SHELL = [
   "./styles.css?v=20261016-improvements-319",
   "./visual-system.css?v=20261019-home-preview-347",
   "./notifications.css?v=20261015-notifications-polls-307",
-  "./club.css?v=20261019-members-startup-348",
+  "./club.css?v=20261019-pack-opening-349",
   "./icons/mascot/chota-v2/chota-poses.png",
   "./icons/mascot/chota-v2/chota-talk.png",
   "./news.css?v=20261014-home-scroll-291",
@@ -38,7 +38,7 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20260903-130",
   "./admin-console.js?v=20261018-control-342",
   "./admin-console.css?v=20261018-control-337",
-  "./app.js?v=20261019-members-startup-348",
+  "./app.js?v=20261019-pack-opening-349",
   "./spotify-player.js?v=20261017-bounded-reconnect-331",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261016-release-323",
@@ -47,7 +47,7 @@ const APP_SHELL = [
   "./onboarding.css?v=20261016-improvements-319",
   "./admin-grants.js?v=20261018-password-335",
   "./admin-grants.css?v=20261009-213",
-  "./banner-shop.js?v=20261019-members-startup-348",
+  "./banner-shop.js?v=20261019-pack-opening-349",
   "./banner-shop.css?v=20261019-pack-summary-345",
   "./collection-social.js?v=20261016-release-322",
   "./collection-social.css?v=20261015-mutual-trades-305",
