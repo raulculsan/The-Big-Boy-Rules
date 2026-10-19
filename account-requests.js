@@ -31,7 +31,7 @@
     });
     applicant.addEventListener('close',()=>{applicant.querySelector('form').reset();if(googleApplicant){googleApplicant=null;sessionStorage.removeItem(GOOGLE_REQUEST);void api.client.auth.signOut();}});
    }
-   const form=applicant.querySelector('form');form.querySelectorAll('label,small,button').forEach(n=>n.hidden=false);form.querySelector('.request-feedback').classList.remove('request-success');text(form.querySelector('.request-feedback'),'');applicant.showModal();
+   const form=applicant.querySelector('form');form.querySelectorAll('label,small,button').forEach(n=>n.hidden=false);form.querySelector('.request-feedback').classList.remove('request-success');text(form.querySelector('.request-feedback'),'');if(!applicant.open)applicant.showModal();
    const email=form.elements.email;email.readOnly=!!googleApplicant;if(googleApplicant){email.value=googleApplicant.email;form.querySelector('.request-footnote').textContent='Google ya ha verificado tu correo. Administración debe aprobar la solicitud antes de que puedas entrar.';}
    const submit=form.querySelector('[type=submit]');submit.disabled=true;
    try{const status=await invoke('configuration');if(!status.configured)text(form.querySelector('.request-feedback'),'La recepción de solicitudes se está preparando. Vuelve a intentarlo más tarde.');submit.disabled=!status.configured;}catch(error){text(form.querySelector('.request-feedback'),error.message);submit.disabled=true;}

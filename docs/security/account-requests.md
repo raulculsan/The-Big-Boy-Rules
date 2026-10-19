@@ -71,9 +71,12 @@ una nueva solicitud; se borra primero la credencial bloqueada. Las solicitudes
 revisadas se conservan como historial administrativo (máximo 100 en la vista).
 Definir una política de retención antes de abrir el registro al público.
 
-No activar registro abierto de Supabase Auth. Mantener desactivado el signup
-público, ya que el único alta autorizada pasa por la función service_role.
-No desbloquear manualmente usuarios `account_request_pending=true`.
+El alta de Supabase Auth está activada para que Google pueda crear una identidad
+provisional. Una identidad nueva no obtiene perfil automáticamente y el control
+previo a cada petición más RLS impiden leer datos del club sin un perfil aprobado.
+El alta por correo dentro de Big Boy sigue pasando por la función de solicitudes
+y la aprobación administrativa. No desbloquear manualmente usuarios
+`account_request_pending=true`.
 
 ## Validación pendiente antes de apertura
 

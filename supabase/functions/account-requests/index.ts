@@ -139,7 +139,7 @@ export default {async fetch(request:Request):Promise<Response>{
   if(body.website)return json(accepted);
   const authorization=request.headers.get('authorization')||'';
   const {data:{user}}=await client.auth.getUser(authorization.replace(/^Bearer\s+/i,''));
-  const identity=user?.identities?.find(i=>i.provider==='google'&&i.identity_data?.email_verified===true);
+  const identity=user?.identities?.find(i=>i.provider==='google'&&String(i.identity_data?.email_verified)==='true');
   if(!user||!identity||!user.email||user.app_metadata?.account_request_pending===true)return json({error:'Vuelve a verificar tu cuenta de Google.'},401);
   const {data:existing}=await client.from('profiles').select('id').eq('id',user.id).maybeSingle();if(existing)return json({error:'Esta cuenta ya pertenece a un perfil del club. Inicia sesión con tu usuario habitual.'},409);
   const username=(body.username||'').trim().toLowerCase(),name=(body.displayName||'').trim();
