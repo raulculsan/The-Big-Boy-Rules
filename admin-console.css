@@ -227,3 +227,26 @@ html[data-club-accent] body {
 html[data-club-accent] body.light { --bb2-gold:var(--club-accent-light); --bb2-gold-soft:var(--club-accent-light-soft); }
 body.light .control-phone-preview { --preview-accent:var(--preview-tone-light,#866119); }
 body.light .control-publish-bar button[type=submit] { color:white; }
+
+/* Server-managed shop economy */
+.control-economy {padding-block:12px 28px}
+.control-economy-form {display:grid;gap:18px}
+.control-economy-form .control-editor-section {padding:24px;border:1px solid var(--line, #ffffff18);border-radius:22px;background:var(--panel,#15171b)}
+.control-odds-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-top:20px}
+.control-odds-grid label {display:grid;gap:8px;font-size:13px;color:var(--muted,#aaa)}
+.control-odds-grid label>span {display:flex;align-items:center;gap:8px}
+.control-economy input {box-sizing:border-box;width:100%;min-width:0;padding:12px;border:1px solid #ffffff26;border-radius:12px;background:#ffffff09;color:inherit;font:inherit}
+.control-odds-total {color:var(--club-accent-color,#dbba73);font-weight:650}
+.control-odds-total.is-invalid {color:#f5a58e}
+.control-economy .control-price-row {display:flex;justify-content:space-between;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid #ffffff12}
+.control-price-row>span:first-child {display:grid;gap:5px}
+.control-price-row small {font-size:12px;color:var(--muted,#aaa)}
+.control-price-input {display:grid;gap:4px;flex:0 0 115px;text-align:right}
+.control-price-input input {text-align:right}
+.control-economy .control-publish-bar {position:static;flex-wrap:wrap}
+.control-economy button {touch-action:manipulation}
+[data-economy-feedback] {font-size:14px;color:var(--muted,#aaa);min-height:1.5em}
+@media(max-width:600px){.control-economy-form .control-editor-section{padding:18px}.control-price-row{gap:12px}.control-price-input{flex-basis:95px}.control-economy .control-publish-bar button{width:100%}}
+
+.control-tabs {overflow-x:auto}
+.control-tabs button {flex-shrink:0;white-space:nowrap}

@@ -71,11 +71,11 @@
     let owner = null, saved = normalize(), draft = {...saved}, dirty = false, busy = false, ready = false;
     mount.innerHTML = `
       <header class="control-heading"><div class="control-brand"><span class="control-emblem">BB<span>CONTROL</span></span><div><span class="control-kicker">THE BIG BOY RULES</span><h2>Tu centro de control.</h2><p>Contenido, personas y experiencia del club.</p></div></div><span class="control-access">Control total</span></header>
-      <nav class="control-tabs" aria-label="Secciones del centro de control"><button type="button" data-control-tab="overview" aria-pressed="true">Vista general</button><button type="button" data-control-tab="requests" aria-pressed="false">Solicitudes<span data-request-count hidden></span></button><button type="button" data-control-tab="design" aria-pressed="false">Personalización<span data-control-unsaved hidden></span></button><button type="button" data-control-action="preview">${icon('eye')}<span>Ver el club</span></button></nav>
+      <nav class="control-tabs" aria-label="Secciones del centro de control"><button type="button" data-control-tab="overview" aria-pressed="true">Vista general</button><button type="button" data-control-tab="requests" aria-pressed="false">Solicitudes<span data-request-count hidden></span></button><button type="button" data-control-tab="economy" aria-pressed="false">Tienda y sobres</button><button type="button" data-control-tab="design" aria-pressed="false">Personalización<span data-control-unsaved hidden></span></button><button type="button" data-control-action="preview">${icon('eye')}<span>Ver el club</span></button></nav>
       <div data-control-panel="overview">
         <section class="control-overview" aria-label="Resumen del club"><article class="control-overview-lead"><span class="control-kicker">ESTADO DEL CLUB</span><strong>Administra el club.</strong><p>Gestiona las cuentas, prepara los próximos planes y ajusta la experiencia.</p><button type="button" data-control-action="design">Personalizar el club ${icon('paint')}</button></article><div class="control-metrics"><article><span>Cuentas del club</span><strong data-control-stat="members">—</strong><small>Usuarios visibles</small></article><article><span>Conectados</span><strong data-control-stat="online">—</strong><small>Presencia ahora</small></article><article><span>Próximos planes</span><strong data-control-stat="events">—</strong><small>Eventos programados</small></article><article><span>Equipo</span><strong data-control-stat="admins">—</strong><small>Administradores del club</small></article></div></section>
         <div class="control-section-label"><h3>Gestionar el club</h3><span>Accesos de trabajo</span></div>
-        <div class="control-workspaces"><button type="button" class="control-workspace" data-control-tab="requests"><span class="control-workspace-top"><i>${icon('people')}</i><small data-request-count hidden></small></span><strong>Solicitudes de cuenta</strong><span>Verifica el correo y decide quién entra al club.</span><b>Revisar accesos</b></button>${[
+        <div class="control-workspaces"><button type="button" class="control-workspace" data-control-tab="requests"><span class="control-workspace-top"><i>${icon('people')}</i><small data-request-count hidden></small></span><strong>Solicitudes de cuenta</strong><span>Verifica el correo y decide quién entra al club.</span><b>Revisar accesos</b></button><button type="button" class="control-workspace" data-control-tab="economy"><span class="control-workspace-top"><i>${icon('cards')}</i><small>ECONOMÍA</small></span><strong>Tienda y sobres</strong><span>Modifica los precios y las probabilidades de cada rareza.</span><b>Configurar</b></button>${[
           ['people', 'admin-cuentas', '01', 'Cuentas y perfiles', 'Usuarios, contraseñas, sobres, monedas y regalos.', 'Cuentas'],
           ['calendar', 'calendario', '02', 'Agenda del club', 'Cumpleaños, eventos y asistencia.', 'Organizar'],
           ['chat', 'chat', '03', 'Conversaciones', 'Secciones, encuestas y mensajes automáticos.', 'Abrir chats'],
@@ -89,8 +89,12 @@
         <div class="request-section-heading"><div><span class="control-kicker">ACCESO AL CLUB</span><h3>Solicitudes</h3><p>Revisa quién quiere entrar y decide cuándo activar su cuenta.</p></div><button type="button" data-request-refresh>Actualizar</button></div>
         <div data-request-review><p class="request-intro">Las solicitudes aparecen al enviarse. Para aceptar una cuenta, su correo debe estar verificado.</p><p class="request-feedback" role="status" aria-live="polite"></p><div class="request-review-list"></div></div>
       </section>
+      <section data-control-panel="economy" class="control-economy" hidden aria-label="Tienda y sobres">
+        <div class="control-design-intro"><div><span class="control-kicker">ECONOMÍA DEL CLUB</span><h3>Tienda y sobres</h3><p>Precios en monedas y probabilidades de cada rareza para todos los usuarios.</p></div><button type="button" data-economy-reload>Actualizar datos</button></div>
+        <div data-economy-content></div><p data-economy-feedback role="status" aria-live="polite"></p>
+      </section>
       <div data-control-panel="design" hidden>
-        <div class="control-design-intro"><div><h3>Personalización del club.</h3><p>Los cambios se publican para todos en la web y en el iPhone.</p></div><div class="control-settings-sync"><span data-control-settings-state>Esperando configuración</span><button type="button" data-control-action="reload">Sincronizar</button></div></div>
+        <div class="control-design-intro"><div><h3>Personalización del club.</h3><p>Los cambios se publican para todos en Android, iPhone y web.</p></div><div class="control-settings-sync"><span data-control-settings-state>Esperando configuración</span><button type="button" data-control-action="reload">Sincronizar</button></div></div>
         <form id="clubPresentationForm" class="control-editor">
           <div class="control-editor-fields">
             <section class="control-editor-section"><header><i>${icon('paint')}</i><div><h4>Identidad y aspecto</h4><p>Una misma personalidad en cada pantalla.</p></div></header>
@@ -115,13 +119,81 @@
         </form>
       </div>
       <footer class="control-session"><span>Sesión de administración · <b data-control-username></b></span><button type="button" data-control-action="logout">Cerrar sesión ${icon('logout')}</button></footer>`;
-    const form = mount.querySelector('form'), fields = form.elements;
+    const form = mount.querySelector('#clubPresentationForm'), fields = form.elements;
     const dock = document.createElement('nav');
     dock.id = 'superAdminDock'; dock.className = 'control-dock'; dock.hidden = true; dock.setAttribute('aria-label', 'Navegación de administración');
     dock.innerHTML = [['panel', 'administracion', 'Panel'], ['people', 'admin-cuentas', 'Cuentas'], ['calendar', 'calendario', 'Agenda'], ['eye', 'inicio', 'Ver club']].map(([symbol, route, label]) => `<button type="button" data-control-route="${route}">${icon(symbol)}<span>${label}</span></button>`).join('');
     document.body.append(dock);
     const feedback = mount.querySelector('[data-control-feedback]');
+    const economyContent = mount.querySelector('[data-economy-content]');
+    const economyFeedback = mount.querySelector('[data-economy-feedback]');
+    const economyReload = mount.querySelector('[data-economy-reload]');
+    const rarityLabels = {common:'Común',retro:'Retro',special:'Especial',epic:'Épica',legendary:'Legendaria',full_art:'Full Art',vice_city:'Vice City'};
+    const safe = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let economy = null, economyBusy = false, economyOwner = null, economyRequest = 0;
+    async function economyRPC(name, args) {
+      const result = await api.rpc(name, args);
+      if (result.error) throw result.error;
+      return result.data;
+    }
+    function drawEconomy() {
+      if (!economy) return;
+      const products = (rows, kind) => rows.map(item => `<label class="control-price-row"><span><strong>${safe(item.name)}</strong><small>${item.active ? 'En tienda' : 'Fuera de catálogo'}${item.minimum_price ? ` · mínimo ${safe(item.minimum_price)} monedas` : ''}</small></span><span class="control-price-input"><input type="number" inputmode="numeric" min="${item.minimum_price || 0}" max="1000000" step="1" required aria-label="Precio de ${safe(item.name)}" data-price-kind="${kind}" data-price-id="${safe(item.id)}" value="${safe(item.price)}"><small>monedas</small></span></label>`).join('') || '<p>Aún no hay artículos.</p>';
+      economyContent.innerHTML = `<form class="control-economy-form"><section class="control-editor-section"><header><i>${icon('cards')}</i><div><h4>Probabilidades de los sobres</h4><p>6 cartas: 3 miembros o personajes, 2 objetos y 1 ubicación. No se repiten cartas dentro del sobre.</p></div></header><div class="control-odds-grid">${Object.entries(rarityLabels).map(([key, label]) => `<label>${label}<span><input type="number" inputmode="decimal" min="0" max="100" step="0.01" required data-rarity="${key}" aria-label="Porcentaje ${label}" value="${safe(economy.probabilities[key])}"><b>%</b></span></label>`).join('')}</div><p class="control-odds-total" data-economy-total></p><p class="control-field-note">Porcentajes base por carta. En cada categoría se reparten entre las rarezas disponibles; si una rareza se agota, se ajustan proporcionalmente. Puedes poner 0 para desactivarla.</p></section><section class="control-editor-section"><header><i>${icon('paint')}</i><div><h4>Banners de perfil</h4><p>Precio de cada diseño en monedas.</p></div></header>${products(economy.banners, 'banner')}</section><section class="control-editor-section"><header><i>${icon('trophy')}</i><div><h4>Vales del club</h4><p>Precio para desbloquear cada premio.</p></div></header>${products(economy.vouchers, 'voucher')}</section><footer class="control-publish-bar"><div><strong>Publicar para todo el club</strong><small>Los sobres ya abiertos conservan sus cartas.</small></div><button type="submit" data-economy-save>Guardar precios y porcentajes</button></footer></form>`;
+      economyContent.querySelector('form').addEventListener('input', updateEconomyTotal);
+      economyContent.querySelector('form').addEventListener('submit', saveEconomy);
+      updateEconomyTotal();
+    }
+    function updateEconomyTotal() {
+      const inputs = [...economyContent.querySelectorAll('[data-rarity]')];
+      const total = inputs.reduce((sum, input) => sum + Math.round(Number(input.value) * 100), 0);
+      const valid = total === 10000 && inputs.every(input => input.value !== '' && input.validity.valid);
+      const label = economyContent.querySelector('[data-economy-total]');
+      label.textContent = `Total: ${(total / 100).toLocaleString('es-ES', {maximumFractionDigits:2})}%${valid ? ' · Listo para guardar' : ' · Debe sumar 100%'}`;
+      label.classList.toggle('is-invalid', !valid);
+      economyContent.querySelector('[data-economy-save]').disabled = economyBusy || !valid;
+    }
+    async function loadEconomy() {
+      if (!api.allowed() || economyBusy) return;
+      const actor = api.owner(), request = ++economyRequest;
+      economyBusy = true; economyReload.disabled = true;
+      economyFeedback.textContent = 'Cargando precios y probabilidades…';
+      try {
+        const data = await economyRPC('admin_get_club_economy');
+        if (!api.allowed() || api.owner() !== actor || request !== economyRequest) return;
+        economyOwner = actor; economy = data; drawEconomy();
+        economyFeedback.textContent = 'Los cambios se aplican al guardar.';
+      } catch (error) {
+        if (api.owner() === actor && request === economyRequest) economyFeedback.textContent = ['PGRST202','42883'].includes(error.code) ? 'Falta activar la configuración de tienda en el servidor.' : error.message || 'No se pudieron cargar los datos.';
+      } finally {
+        if (request === economyRequest) { economyBusy = false; economyReload.disabled = false; if (economy) updateEconomyTotal(); }
+      }
+    }
+    async function saveEconomy(event) {
+      event.preventDefault();
+      if (economyBusy || !api.allowed() || economyOwner !== api.owner() || !event.target.reportValidity()) return;
+      const actor = api.owner(), request = ++economyRequest;
+      const probabilities = Object.fromEntries([...economyContent.querySelectorAll('[data-rarity]')].map(input => [input.dataset.rarity, Number(input.value)]));
+      const prices = [...economyContent.querySelectorAll('[data-price-id]')].map(input => ({kind:input.dataset.priceKind,id:input.dataset.priceId,price:Number(input.value)}));
+      economyBusy = true; economyReload.disabled = true;
+      economyContent.querySelectorAll('input,button').forEach(input => {input.disabled = true;});
+      economyFeedback.textContent = 'Guardando para Android, iPhone y web…';
+      try {
+        const data = await economyRPC('admin_save_club_economy', {p_revision:economy.revision,p_probabilities:probabilities,p_prices:prices});
+        if (!api.allowed() || api.owner() !== actor || request !== economyRequest) return;
+        economy = data; drawEconomy();
+        economyFeedback.textContent = 'Guardado. Los nuevos precios y porcentajes ya están activos.';
+        Promise.resolve(api.refreshShop?.()).catch(() => {});
+      } catch (error) {
+        if (api.owner() === actor && request === economyRequest) economyFeedback.textContent = error.message || 'No se guardó. Comprueba la conexión y vuelve a intentarlo.';
+      } finally {
+        if (request === economyRequest) { economyBusy = false; economyReload.disabled = false; economyContent.querySelectorAll('input,button').forEach(input => {input.disabled = false;}); if (economy) updateEconomyTotal(); }
+      }
+    }
+    economyReload.addEventListener('click', loadEconomy);
+
     function view(tab) {
+      if (tab === 'economy') loadEconomy();
       if (tab === 'requests') document.dispatchEvent(new Event('club-account-requests-open'));
       for (const node of mount.querySelectorAll('[data-control-panel]')) node.hidden = node.dataset.controlPanel !== tab;
       for (const node of mount.querySelectorAll('[data-control-tab]')) node.setAttribute('aria-pressed', String(node.dataset.controlTab === tab));
@@ -211,7 +283,7 @@
         document.body.classList.toggle('superadmin-console-session', allowed);
         const shellLabel = document.querySelector('.topbar-title .eyebrow');
         if (shellLabel) shellLabel.textContent = allowed ? 'CONSOLA DE ADMINISTRACIÓN' : 'COMUNIDAD PRIVADA';
-        if (!allowed) { owner = null; dirty = false; busy = false; ready = false; saved = normalize(); draft = {...saved}; fill(draft); view('overview'); return; }
+        if (!allowed) { ++economyRequest; economy = null; economyOwner = null; economyBusy = false; economyContent.replaceChildren(); economyFeedback.textContent = ''; economyReload.disabled = false; owner = null; dirty = false; busy = false; ready = false; saved = normalize(); draft = {...saved}; fill(draft); view('overview'); return; }
         const nextOwner = api.owner();
         if (owner !== nextOwner) { owner = nextOwner; dirty = false; busy = false; ready = false; view('overview'); }
         updateStats();

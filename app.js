@@ -3091,6 +3091,8 @@ const accountRequests = globalThis.ClubAccountRequests?.create({client: db, canM
 
 const adminConsole = globalThis.AdminConsole?.create({
   allowed: isSuperAdmin,
+  rpc: (name, args) => db.rpc(name, args),
+  refreshShop: () => globalThis.BannerShop?.refresh(true),
   owner: () => currentAuthUser?.id,
   username: () => currentUser?.username || "admin",
   settings: () => siteSettings,
