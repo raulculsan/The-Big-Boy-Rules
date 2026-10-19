@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v343";
+const CACHE_NAME = "big-boy-rules-v344";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -47,8 +47,8 @@ const APP_SHELL = [
   "./onboarding.css?v=20261016-improvements-319",
   "./admin-grants.js?v=20261018-password-335",
   "./admin-grants.css?v=20261009-213",
-  "./banner-shop.js?v=20261016-release-323",
-  "./banner-shop.css?v=20261015-social-301",
+  "./banner-shop.js?v=20261019-pack-motion-344",
+  "./banner-shop.css?v=20261019-pack-motion-344",
   "./collection-social.js?v=20261016-release-322",
   "./collection-social.css?v=20261015-mutual-trades-305",
   "./pending-actions.js?v=20261016-release-322",
@@ -108,6 +108,7 @@ const APP_SHELL = [
   "./icons/cards/card-touch-legendary.json?v=20260905-153",
   "./icons/cards/card-touch-retro.json?v=20261007-163",
   "./icons/cards/pack-opening.json?v=20260904-150",
+  "./icons/cards/pack-seal-flare-v2.png",
   "./icons/cards/jose-enrique-fernandez-cruz-comun-86-v4.jpg",
   "./icons/cards/jose-enrique-fernandez-cruz-full-art-93-v3.jpg",
   "./icons/cards/reverso-full-art-unificado-v1.jpg",
