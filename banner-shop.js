@@ -264,7 +264,7 @@
       reveal.phase = 'opening';
       revealDialog.style.setProperty('--pack-opening-duration', `${openingDuration}ms`);
       revealDialog.classList.add('is-opening-pack');
-      // Use the JPEG shell retained by native packaging; the PNG is removed.
+      // RGBA cutout is preserved by native packaging so the wrapper has no matte.
       const back = escape(card(cards[0].card_id)?.back || 'icons/cards/reverso-comun-unificado-v1.jpg');
       const fan = cards.slice(1).map((_, index) => {
         const lane = index - (cards.length - 2) / 2;
@@ -274,7 +274,7 @@
         const angle = index * Math.PI * 2 / 14;
         return `<i class="pack-opening-spark" style="--spark-x:${Math.round(Math.cos(angle) * 120)}px;--spark-y:${Math.round(Math.sin(angle) * 95)}px;--spark-delay:${index % 3 * 22}ms"></i>`;
       }).join('');
-      revealDialog.querySelector('.pack-reveal-stage').insertAdjacentHTML('beforeend', `<div class="pack-opening-wrap" aria-hidden="true"><span class="pack-opening-aura"></span><span class="pack-opening-ring"></span><div class="pack-opening-deck">${fan}</div><svg class="pack-opening-wrapper" viewBox="120 95 780 1345"><defs><image id="packOpeningArt" href="icons/cards/sobre-los-nuestros-v1.jpg" width="1024" height="1536"/><clipPath id="packOpeningSeal"><path d="M136 115H880V182H138Z"/></clipPath><clipPath id="packOpeningLeft"><path d="M138 182H510V1420H137V1370L156 1300L157 275Z"/></clipPath><clipPath id="packOpeningRight"><path d="M510 182H879L868 240L858 1290L882 1370V1420H510Z"/></clipPath></defs><g class="pack-opening-left"><use href="#packOpeningArt" clip-path="url(#packOpeningLeft)"/></g><g class="pack-opening-right"><use href="#packOpeningArt" clip-path="url(#packOpeningRight)"/></g><g class="pack-opening-seal"><use href="#packOpeningArt" clip-path="url(#packOpeningSeal)"/></g></svg><span class="pack-opening-cut"></span><img class="pack-opening-flare" src="icons/cards/pack-seal-flare-v2.png" width="768" height="256" alt="" draggable="false"><span class="pack-opening-particles">${sparks}</span></div>`);
+      revealDialog.querySelector('.pack-reveal-stage').insertAdjacentHTML('beforeend', `<div class="pack-opening-wrap" aria-hidden="true"><span class="pack-opening-aura"></span><span class="pack-opening-ring"></span><div class="pack-opening-deck">${fan}</div><svg class="pack-opening-wrapper" viewBox="120 95 780 1345"><defs><image id="packOpeningArt" href="icons/cards/sobre-los-nuestros-recortado-v2.png" width="1024" height="1536"/><clipPath id="packOpeningSeal"><path d="M136 115H880V182H138Z"/></clipPath><clipPath id="packOpeningLeft"><path d="M138 182H510V1420H137V1370L156 1300L157 275Z"/></clipPath><clipPath id="packOpeningRight"><path d="M510 182H879L868 240L858 1290L882 1370V1420H510Z"/></clipPath></defs><g class="pack-opening-left"><use href="#packOpeningArt" clip-path="url(#packOpeningLeft)"/></g><g class="pack-opening-right"><use href="#packOpeningArt" clip-path="url(#packOpeningRight)"/></g><g class="pack-opening-seal"><use href="#packOpeningArt" clip-path="url(#packOpeningSeal)"/></g></svg><span class="pack-opening-cut"></span><img class="pack-opening-flare" src="icons/cards/pack-seal-flare-v2.png" width="768" height="256" alt="" draggable="false"><span class="pack-opening-particles">${sparks}</span></div>`);
       const current = reveal; revealTimer = setTimeout(() => finishRevealMotion(current), openingDuration);
     }
   }

@@ -66,7 +66,7 @@ body.collection-card-open,body.pack-preview-open { overflow:hidden; }
 .packs-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:40px; align-items:start; padding-bottom:26px; }
 .packs-display { position:relative; display:flex; flex-direction:column; align-items:center; padding:26px 16px 64px; overflow:hidden; border:1px solid #d9b66725; border-radius:28px; background:radial-gradient(ellipse at center,#d5a83d09,transparent 70%),#090a0c; }
 .packs-display-edition { color:#bfa36c; font-size:9px; letter-spacing:.2em; text-align:center; }
-.packs-art { display:block; width:min(100%,330px); height:auto; aspect-ratio:2/3; object-fit:contain; margin:10px auto; mix-blend-mode:lighten; }
+.packs-art { display:block; width:min(100%,330px); height:auto; aspect-ratio:2/3; object-fit:contain; margin:10px auto;  }
 .packs-art-button{display:block;width:min(100%,330px);padding:0;margin:10px auto;border:0;background:transparent;cursor:pointer}
 .packs-art-button .packs-art{width:100%;max-width:none;margin:0}
 .packs-art-button:disabled{cursor:default;opacity:.65}

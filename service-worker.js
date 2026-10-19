@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v349";
+const CACHE_NAME = "big-boy-rules-v350";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -47,7 +47,7 @@ const APP_SHELL = [
   "./onboarding.css?v=20261016-improvements-319",
   "./admin-grants.js?v=20261018-password-335",
   "./admin-grants.css?v=20261009-213",
-  "./banner-shop.js?v=20261019-pack-opening-349",
+  "./banner-shop.js?v=20261019-pack-transparent-350",
   "./banner-shop.css?v=20261019-pack-summary-345",
   "./collection-social.js?v=20261016-release-322",
   "./collection-social.css?v=20261015-mutual-trades-305",
@@ -75,7 +75,7 @@ const APP_SHELL = [
   "./icons/banners/alberto-galicia-member-bg-v1.png",
   "./icons/banners/alberto-galicia-member-figures-v1.png",
   "./daily-packs.js?v=20261010-251",
-  "./packs.css?v=20261016-improvements-319",
+  "./packs.css?v=20261019-pack-transparent-350",
   "./card-thumbnails.js?v=20261016-juan-manuel-321",
   "./card-media.js?v=20261016-release-322",
   "./card-collection.js?v=20261016-release-322",
@@ -187,7 +187,7 @@ const APP_SHELL = [
   "./icons/cards/pistola-de-balines-especial-v1.jpg",
   "./icons/cards/mochila-carhartt-especial-v1.jpg",
   "./icons/cards/reverso-legendario-unificado-v1.jpg",
-  "./icons/cards/sobre-los-nuestros-v1.jpg?v=20260903-139",
+  "./icons/cards/sobre-los-nuestros-recortado-v2.png",
   "./trophy-motion.js?v=20260904-150",
   "./trophy-unlock.js?v=20260903-138",
   "./vendor/lottie-light.min.js?v=5.13.0",

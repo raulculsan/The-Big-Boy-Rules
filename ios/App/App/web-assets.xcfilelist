@@ -85,6 +85,7 @@ $(SRCROOT)/App/public/icons/cards/reverso-full-art-unificado-v1.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-legendario-unificado-v1.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-retro-unificado-v1.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-vice-city-unificado-v1.jpg
+$(SRCROOT)/App/public/icons/cards/sobre-los-nuestros-recortado-v2.png
 $(SRCROOT)/App/public/icons/cards/sobre-los-nuestros-v1.jpg
 $(SRCROOT)/App/public/icons/cards/thumbnails/abelias-comun-v1.jpg
 $(SRCROOT)/App/public/icons/cards/thumbnails/abrantes-metro-comun-v1.jpg

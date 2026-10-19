@@ -97,6 +97,7 @@ $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/reve
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/reverso-legendario-unificado-v1.jpg
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/reverso-retro-unificado-v1.jpg
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/reverso-vice-city-unificado-v1.jpg
+$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/sobre-los-nuestros-recortado-v2.png
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/sobre-los-nuestros-v1.jpg
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thumbnails/abelias-comun-v1.jpg
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thumbnails/abrantes-metro-comun-v1.jpg
