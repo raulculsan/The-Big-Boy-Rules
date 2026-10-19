@@ -545,7 +545,7 @@ body.authenticated .app-tab.active { color: var(--bb2-gold-soft); }
 
 /* Composition v4: apply the Figma frame hierarchy to live, dynamic content.
    Scroll owners, native safe areas and gesture transforms stay untouched. */
-body.authenticated #inicio.active {
+body.authenticated #inicio:is(.active, .page-back-preview) {
   display: grid;
   grid-template-columns: minmax(0,1fr) minmax(280px,.75fr);
   grid-template-areas: "welcome welcome" "search search" "plans music" "members members" "news news";
@@ -553,6 +553,8 @@ body.authenticated #inicio.active {
   align-content: start;
   gap: 26px;
 }
+/* The edge-back destination uses the same grid and ordering before it becomes active. */
+body.authenticated #inicio.page-back-preview { display: grid !important; }
 body.authenticated #inicio > .club-welcome { grid-area: welcome; margin: 6px 0 0; padding-bottom: 22px; border-bottom: 1px solid var(--bb2-line-strong); }
 body.authenticated #inicio .club-welcome h2 { font-size: clamp(38px,5vw,54px); font-weight: 700; }
 body.authenticated #inicio > .club-search { grid-area: search; margin: 0; }
@@ -619,7 +621,7 @@ body.authenticated .tab-selection-indicator { background: var(--bb2-gold-dark); 
 body.authenticated .tab-selection-indicator::after { display: none; }
 body.authenticated .app-tab.active { color: var(--bb2-gold-soft); }
 @media (max-width: 760px) {
-  body.authenticated #inicio.active { grid-template-columns: minmax(0,1fr); grid-template-areas: "welcome" "search" "plans" "members" "music" "news"; grid-template-rows: repeat(6,max-content); gap: 22px; }
+  body.authenticated #inicio:is(.active, .page-back-preview) { grid-template-columns: minmax(0,1fr); grid-template-areas: "welcome" "search" "plans" "members" "music" "news"; grid-template-rows: repeat(6,max-content); gap: 22px; }
   body.authenticated #inicio .club-welcome { padding-bottom: 18px; flex-direction: row; align-items: center; }
   body.authenticated #inicio .club-welcome h2 { font-size: 38px; }
   body.authenticated #inicio .club-welcome .eyebrow { font-size: 9px; }

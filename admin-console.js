@@ -27,51 +27,8 @@
     result.density = value.density === 'compact' ? 'compact' : 'comfortable';
     return result;
   }
-  // Persist only the normalized public appearance, never site settings, tokens,
-  // playlist credentials or account permissions. Each backend has its own cache.
-  const cacheKey = (() => {
-    try { return `bigboy:club-presentation:v1:${new URL(globalThis.BIG_BOY_CONFIG?.supabaseUrl).origin}`; }
-    catch { return null; }
-  })();
-  let presentationReady = false, pendingPresentation = null;
-  function readPresentation() {
-    try {
-      const stored = cacheKey && JSON.parse(localStorage.getItem(cacheKey));
-      return stored && typeof stored === 'object' && !Array.isArray(stored) ? normalize(stored) : null;
-    } catch { return null; }
-  }
-  function restorePresentation() {
-    const cached = readPresentation();
-    if (cached) return apply({[SETTING_KEY]: cached});
-    if (!cacheKey || !globalThis.supabase || !globalThis.BIG_BOY_CONFIG?.supabasePublishableKey) return apply({});
-    presentationReady = false;
-    pendingPresentation = null;
-    document.documentElement.dataset.clubPresentation = 'pending';
-    return null;
-  }
-  function flushPresentation({resolveInitial = false} = {}) {
-    if (!pendingPresentation) return;
-    // A visible Home (including its swipe preview) keeps one layout for the
-    // whole visit. Apply refreshed geometry before it is revealed next time.
-    const home = document.getElementById('inicio');
-    if (home?.matches('.page-back-preview') || (home?.matches('.active') && !(resolveInitial && !presentationReady))) return;
-    const value = pendingPresentation;
-    pendingPresentation = null;
-    apply({[SETTING_KEY]: value});
-  }
-  function apply(settings, {persist = false, deferLayout = false} = {}) {
+  function apply(settings) {
     const value = normalize(settings?.[SETTING_KEY]);
-    if (persist && cacheKey) {
-      try { localStorage.setItem(cacheKey, JSON.stringify(value)); } catch { /* Private browsing may disable storage. */ }
-    }
-    const home = document.getElementById('inicio');
-    if (deferLayout && (home?.matches('.page-back-preview') || (presentationReady && home?.matches('.active')))) {
-      pendingPresentation = value;
-      return value;
-    }
-    presentationReady = true;
-    pendingPresentation = null;
-    document.documentElement.dataset.clubPresentation = 'ready';
     const palette = PALETTES[value.accent], root = document.documentElement;
     root.dataset.clubAccent = value.accent;
     root.style.setProperty('--club-accent-color', palette.color);
@@ -277,12 +234,10 @@
     let instance;
     return {
       apply,
-      restorePresentation,
       sync() { if (api.allowed()) (instance ||= createConsole(api)).sync(); else instance?.sync(); },
       didNavigate(id) { instance?.didNavigate?.(id); },
       refreshStats() { instance?.refreshStats?.(); },
     };
   }
-  globalThis.AdminConsole = Object.freeze({create, apply, restorePresentation, flushPresentation});
-  restorePresentation();
+  globalThis.AdminConsole = Object.freeze({create, apply});
 })();

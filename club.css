@@ -599,13 +599,12 @@ body.authenticated .app > .page-back-preview {
   flex: none !important; min-height: 0 !important; max-width: none !important;
   margin: 0 !important; box-sizing: border-box; pointer-events: none !important;
   background-color: var(--club-paper, #0b0c10); animation: none !important;
-  contain: paint; isolation: isolate;
 }
 body.authenticated .app > .page-back-source {
   position: relative; z-index: 2; isolation: isolate;
   background-color: var(--club-paper, #0b0c10); will-change: transform;
 }
-.page-back-preview, .page-back-preview * { animation: none !important; transition: none !important; }
+.page-back-preview, .page-back-preview * { animation: none !important; }
 .page-back-source { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .page-back-chat-preview :is(.messages-hub, .private-chat-layout) { display: block !important; height: 100% !important; min-height: 0 !important; margin: 0 !important; }
 .page-back-chat-preview :is(.chat-inbox, .private-contacts) { display: none !important; }
