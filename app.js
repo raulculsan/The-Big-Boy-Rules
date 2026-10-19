@@ -1836,7 +1836,7 @@ function showMessageMenu(bubble, x, y) {
   const own = (target.kind === "group" ? message.userId : message.senderId) === currentAuthUser.id;
   const canDelete = own || (target.kind === "group" && canManageSite());
   const menu = document.getElementById("messageContextMenu");
-  menu.innerHTML = `<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="reply"><span aria-hidden="true">↩</span>Responder</button><button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
+  menu.innerHTML = `<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="reply">Responder</button><button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
   messageMenuTarget = target; menu.hidden = false;
   positionChatMenu(menu, x, y);
   focusChatMenuSource(menu, bubble);
