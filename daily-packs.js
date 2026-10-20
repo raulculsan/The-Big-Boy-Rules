@@ -46,8 +46,8 @@
     const known = data != null;
     const count = known ? new Intl.NumberFormat('es-ES').format(data.available) : '—';
     if (status === 'ready') return {count, label:data.available===1?'sobre guardado':'sobres guardados',
-      heading:data.credited?'Sobre diario recibido':'Saldo de sobres actualizado',
-      message:'El siguiente sobre diario estará disponible mañana.', filled:true};
+      heading:data.credited?`${data.credited_packs || 1} ${(data.credited_packs || 1) === 1 ? 'sobre recibido' : 'sobres recibidos'}`:'Saldo de sobres actualizado',
+      message:Number.isSafeInteger(data.streak_days) ? `Racha de ${data.streak_days} ${data.streak_days === 1 ? 'día' : 'días'} · ${data.daily_reward_packs} ${data.daily_reward_packs === 1 ? 'sobre diario' : 'sobres diarios'}.` : 'El siguiente sobre diario estará disponible mañana.', filled:true};
     if (status === 'unavailable') return {count, label:'sobres guardados', heading:'Recarga diaria no configurada',
       message:'La recarga diaria no está activada en el servidor.', filled:false};
     if (status === 'error') return {count, label:known?'sobres · última sincronización':'sobres guardados',
@@ -85,6 +85,13 @@
       if(button) {button.disabled=state.status==='loading';button.textContent=state.status==='loading'?'Sincronizando…':state.status==='error'?'Reintentar':'Actualizar saldo';}
       const next = state.status === 'ready' ? new Intl.DateTimeFormat('es-ES',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}).format(new Date(state.data.next_reset_at)) : 'Pendiente de sincronización';
       text('packsNextReset',next);
+      const info=document.getElementById('packsInfoPanel');
+      if(info) {
+        let rewards=info.querySelector('[data-pack-progression]');
+        if(!rewards) {rewards=document.createElement('p');rewards.className='pack-rarity-odds';rewards.dataset.packProgression='';info.append(rewards);}
+        const streak=state.data?.streak_days, allowance=state.data?.daily_reward_packs;
+        rewards.textContent=(Number.isSafeInteger(streak) ? `Tu racha: ${streak} ${streak === 1 ? 'día' : 'días'} · ${allowance} ${allowance === 1 ? 'sobre hoy' : 'sobres hoy'}. ` : '')+'Racha: 1–2 días → 1 sobre; 3–6 → 2; 7–13 → 3; 14–29 → 4; 30 o más → 5. Trofeos: bronce 1 · plata 2 · oro 4 · platino 6 sobres.';
+      }
       const panel=document.getElementById('packsDailyPanel');
       if(panel) panel.dataset.state=state.status;
     };

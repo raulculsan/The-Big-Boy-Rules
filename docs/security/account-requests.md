@@ -110,3 +110,23 @@ El remitente reutiliza los secretos de Gmail existentes de `account-requests`; n
 Una cuenta sin contacto podrá autenticarse y verá el formulario guiado de vinculación, pero no podrá leer datos de la app hasta verificar correo o Google. `account_security_status` y la función de envío/verificación permanecen accesibles para completar el paso. Se conserva la política de MFA existente. Reversión del requisito de contacto: cambiar esa columna a `false`; el bloqueo de solicitudes sin aprobar permanece activo.
 
 Fuentes de API: [OAuth](https://supabase.com/docs/reference/javascript/auth-signinwithoauth), [PKCE](https://supabase.com/docs/guides/auth/sessions/pkce-flow), [identidades](https://supabase.com/docs/guides/auth/identities), [actualización administrativa](https://supabase.com/docs/reference/javascript/auth-admin-updateuserbyid).
+
+## Acceso de cuentas anteriores y contacto obligatorio (20 octubre 2026)
+
+Aplicar `20261020100000_legacy_contact_access.sql` **antes** de desplegar
+`account-requests --no-verify-jwt`; después publicar `app.js` y
+`account-security.js` y sincronizar los assets nativos.
+
+El acceso público resuelve el @ en servidor y conserva la contraseña habitual.
+También acepta correo. Solo si GoTrue devuelve `email_not_confirmed` para un
+perfil existente aprobado, prepara la confirmación técnica de Auth con la marca
+privada `contact_verification_pending` y vuelve a ejecutar el password grant con
+la misma contraseña. GoTrue comprueba la contraseña antes de ese error
+([implementación oficial](https://github.com/supabase/auth/blob/master/internal/api/token.go)).
+No se emiten tokens manuales ni se confirma la propiedad del correo del club.
+
+Mientras exista esa marca, el correo no satisface el gate ni permite recuperar
+la contraseña. Solo un enlace de verificación de correo consumido elimina la
+marca; una identidad Google/Apple verificada también permite completar el gate.
+El usuario queda en la pantalla de vinculación hasta disponer de una opción.
+Las dos opciones son alternativas, y la segunda se muestra como opcional.

@@ -116,7 +116,8 @@ export default {async fetch(request:Request):Promise<Response>{
   if(kind==='reset'){const policy=passwordError(body.password||'',profile.display_name,profile.username);if(policy)return json({error:policy},400);}
   const {data:claimed}=await client.from('account_identity_tokens').update({used_at:new Date().toISOString()}).eq('token_hash',token.token_hash).is('used_at',null).gt('expires_at',new Date().toISOString()).select('user_id').maybeSingle();
   if(!claimed)return json({error:'Este enlace ya se ha utilizado.'},400);
-  const attributes=kind==='reset'?{password:body.password}:{email:token.email,email_confirm:true};
+  const {data:currentAccount,error:accountError}=await client.auth.admin.getUserById(token.user_id);if(accountError||!currentAccount.user)return json({error:'La cuenta ya no está disponible.'},400);
+  const attributes=kind==='reset'?{password:body.password}:{email:token.email,email_confirm:true,app_metadata:{...currentAccount.user.app_metadata,contact_verification_pending:false}};
   const {error}=await client.auth.admin.updateUserById(token.user_id,attributes);if(error)return json({error:'No se pudo completar. Solicita un enlace nuevo; el correo puede pertenecer a otra cuenta.'},409);
   await client.from('account_identity_tokens').update({used_at:new Date().toISOString()}).eq('user_id',token.user_id).is('used_at',null);
   return json({ok:true,message:kind==='reset'?'Contraseña actualizada. Ya puedes iniciar sesión.':'Correo verificado y vinculado a tu cuenta.'});
@@ -155,15 +156,31 @@ export default {async fetch(request:Request):Promise<Response>{
  }
 
  if(action==='login'){
-  const username=(body.username||'').trim().toLowerCase();
-  if(!/^[a-z0-9._-]{3,32}$/.test(username)||!body.password||body.password.length>128)return json({error:'Usuario o contraseña incorrectos.'},401);
-  if(!await limit(`login:${username}`,20,900))return json({error:'Demasiados intentos. Espera unos minutos.'},429);
-  const {data:profile}=await client.from('profiles').select('id').eq('username',username).maybeSingle();
-  let email=`${username}@bigboyrules.local`;
-  if(profile){const {data}=await client.auth.admin.getUserById(profile.id);email=data.user?.email||email;if(data.user?.app_metadata?.account_request_pending===true)return json({error:'Usuario o contraseña incorrectos.'},401);}
+  const identifier=(body.username||'').trim().toLowerCase().replace(/^@/,'');
+  const isEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+  if((!isEmail&&!/^[a-z0-9._-]{3,32}$/.test(identifier))||identifier.length>254||!body.password||body.password.length>128)return json({error:'Usuario o contraseña incorrectos.'},401);
+  if(!await limit(`login:${identifier}`,20,900))return json({error:'Demasiados intentos. Espera unos minutos.'},429);
+  // Service-role lookup works before the contact gate; it never returns profile
+  // data. Email login is checked against the authenticated user's profile below.
+  const {data:profile}=isEmail?{data:null}:await client.from('profiles').select('id').eq('username',identifier).maybeSingle();
+  const {data:account}=profile?await client.auth.admin.getUserById(profile.id):{data:{user:null}};
+  const target=account.user;
+  if(target?.app_metadata?.account_request_pending===true)return json({error:'Usuario o contraseña incorrectos.'},401);
+  const email=isEmail?identifier:target?.email||`${identifier}@bigboyrules.local`;
   const auth=createClient(url,publicKey,{auth:{persistSession:false,autoRefreshToken:false}});
-  const {data,error}=await auth.auth.signInWithPassword({email,password:body.password});
-  if(error||!data.session||!profile)return json({error:'Usuario o contraseña incorrectos.'},401);
+  let {data,error}=await auth.auth.signInWithPassword({email,password:body.password});
+  if(error?.code==='email_not_confirmed'&&profile&&target&&!target.email_confirmed_at){
+   // Legacy approved users must reach the linking screen using their original
+   // password. Auth confirmation here is NOT contact verification: the server
+   // gate and recovery lookup exclude this marked address until its owner
+   // clicks our verification link. Retry GoTrue's password grant afterwards.
+   const {error:prepareError}=await client.auth.admin.updateUserById(target.id,{email_confirm:true,app_metadata:{...target.app_metadata,contact_verification_pending:true}});
+   if(prepareError)throw new Error('No se pudo preparar el acceso. Inténtalo de nuevo.');
+   ({data,error}=await auth.auth.signInWithPassword({email,password:body.password}));
+  }
+  if(error||!data.session||!data.user)return json({error:'Usuario o contraseña incorrectos.'},401);
+  const {data:approved}=await client.from('profiles').select('id').eq('id',data.user.id).maybeSingle();
+  if(!approved||data.user.app_metadata?.account_request_pending===true){await auth.auth.signOut();return json({error:'Usuario o contraseña incorrectos.'},401);}
   return json({session:{access_token:data.session.access_token,refresh_token:data.session.refresh_token}});
  }
  if(action==='submit'){

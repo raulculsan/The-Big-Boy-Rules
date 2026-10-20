@@ -30,7 +30,18 @@
   }
   const visibleMemberTiles = new Set(), observedMemberTiles = new Set();
   let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
-  let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0;
+  let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0, shopResetTimer;
+  const dailyBanners = () => Array.isArray(state?.daily_banner_ids)
+    ? state.daily_banner_ids.map(id => state.banners?.find(banner => banner.id === id)).filter(Boolean).slice(0, 5)
+    : (state?.banners || []).filter(banner => banner.in_daily_shop !== false).slice(0, 5);
+  function scheduleShopReset() {
+    clearTimeout(shopResetTimer);
+    const delay = Date.parse(state?.shop_next_reset_at) - Date.now();
+    if (!Number.isFinite(delay) || delay < 0) return;
+    shopResetTimer = setTimeout(() => {
+      if (options?.session() && el('bannerShopDialog')?.open && !document.hidden) void refresh();
+    }, Math.min(delay + 250, 2147483647));
+  }
   const offlineInventoryOwnerKey = 'bb:album-inventory:last-owner';
   const inventoryCacheKey = owner => `bb:album-inventory:v1:${owner}`;
   function restoreInventory(owner) {
@@ -462,6 +473,8 @@
   }
   function artwork(banner, extra = '') {
     // Only known artwork keys become styles; future Krita exports are added here.
+    const panorama = {'madrid-medianoche-v1':'madrid-medianoche-v1.jpg','costa-atlantica-v1':'costa-atlantica-v1.jpg'}[banner?.art_key];
+    if (panorama) return `<div class="banner-art banner-panorama ${extra}" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/${panorama}" width="2172" height="724" alt="" loading="lazy" decoding="async"></div>`;
     if (banner?.art_key === 'alberto-galicia-anime-v1') return galiciaArtwork(banner, extra, false, extra.includes('member-banner-art'));
     if (banner?.art_key === 'miguel-basket-bano-v1') {
       const poses = ['00', '00a', '01', '01a', '02', '02a', '03'].map((frame, index) => `<image class="banner-basket-pose banner-basket-pose-${index}" href="icons/banners/miguel-basket-miguel-${frame}-v1.png" width="2172" height="724"/>`).join('');
@@ -518,8 +531,8 @@
     return memberBanners.get(userId) || null;
   }
   function memberPoster(banner, priority = false) {
-    const image = {'alberto-galicia-anime-v1':'alberto-galicia-v1.webp', 'miguel-basket-bano-v1':'miguel-basket-v1.webp', 'miguel-moto-anime-v1':'miguel-moto-v1.webp'}[banner?.art_key];
-    if (image) return `<div class="banner-art member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/posters/${image}" width="720" height="240" alt="" loading="${priority ? 'eager' : 'lazy'}" fetchpriority="${priority ? 'high' : 'auto'}" decoding="async" style="width:100%;height:100%;object-fit:contain"></div>`;
+    const image = {'alberto-galicia-anime-v1':'posters/alberto-galicia-v1.webp', 'miguel-basket-bano-v1':'posters/miguel-basket-v1.webp', 'miguel-moto-anime-v1':'posters/miguel-moto-v1.webp', 'madrid-medianoche-v1':'madrid-medianoche-v1.jpg', 'costa-atlantica-v1':'costa-atlantica-v1.jpg'}[banner?.art_key];
+    if (image) return `<div class="banner-art member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/${image}" width="2172" height="724" alt="" loading="${priority ? 'eager' : 'lazy'}" fetchpriority="${priority ? 'high' : 'auto'}" decoding="async" style="width:100%;height:100%;object-fit:contain"></div>`;
     return artwork(null, 'member-banner-art');
   }
   function memberArtwork(userId) {
@@ -676,13 +689,24 @@
     if (el('packsInfoBalance')) el('packsInfoBalance').textContent = state ? String(state.available_packs?.length ?? 0) : '—';
     if (el('packsInfoCoins')) el('packsInfoCoins').textContent = state ? `${Number(state.balance).toLocaleString('es-ES')} monedas` : '—';
     if (el('packRarityOdds')) el('packRarityOdds').textContent = state?.rarity_probabilities ? Object.keys(rarityNames).filter(rarity => state.rarity_probabilities[rarity] != null).map(rarity => `${rarityNames[rarity]} ${state.rarity_probabilities[rarity]}%`).join(' · ') : 'Probabilidades disponibles al sincronizar.';
+    const shopHeading = el('shopBannersPanel')?.querySelector('.shop-section-heading');
+    if (shopHeading) {
+      const title = shopHeading.querySelector('h3'), subtitle = shopHeading.querySelector('p');
+      if (title) title.textContent = 'Selección de hoy';
+      if (subtitle) {
+        const reset = Date.parse(state?.shop_next_reset_at);
+        subtitle.textContent = state && Number.isFinite(reset)
+          ? `${dailyBanners().length} diseños · cambia a las ${new Intl.DateTimeFormat('es-ES', {hour:'2-digit', minute:'2-digit'}).format(new Date(reset))}`
+          : 'Hasta 5 diseños elegidos cada día.';
+      }
+    }
     const container = el('bannerShopItems');
     if (container) {
       // Wallet and inventory refreshes must not recreate animated SVG banners.
-      const signature = JSON.stringify(state?.banners || null);
+      const signature = JSON.stringify(state ? dailyBanners() : null);
       if (container.dataset.signature !== signature) {
         container.dataset.signature = signature;
-        container.innerHTML = state ? ((state.banners || []).map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1'].includes(banner.art_key) ? 'BANNER ANIMADO' : 'BANNER DE PERFIL'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? '✓ Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Tu tienda está a un paso</strong><p>Conéctate para cargar los diseños del club.</p></div>';
+        container.innerHTML = state ? (dailyBanners().map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1'].includes(banner.art_key) ? 'BANNER ANIMADO' : 'BANNER DE PERFIL'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? '✓ Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Tu tienda está a un paso</strong><p>Conéctate para cargar los diseños del club.</p></div>';
       }
       container.querySelectorAll('[data-banner-action]').forEach(button => {
         const banner = state?.banners?.find(item => item.id === button.dataset.bannerId);
@@ -702,7 +726,7 @@
       });
     }
     el('bannerShopItems')?.setAttribute('aria-busy', String(busy || loading));
-    document.querySelectorAll('[data-shop-banner-count]').forEach(node => {node.textContent = state ? state.banners?.length || 0 : '—';});
+    document.querySelectorAll('[data-shop-banner-count]').forEach(node => {node.textContent = state ? dailyBanners().length : '—';});
     document.querySelectorAll('[data-shop-voucher-count]').forEach(node => {node.textContent = state ? state.vouchers?.length || 0 : '—';});
     if (el('bannerUnequip')) el('bannerUnequip').disabled = busy || loading || !state?.equipped_banner_id || !online();
     renderInventory();
@@ -737,7 +761,7 @@
         // covers profile mounting and reconnect, not just packs navigation.
         await options?.synchronizePacks?.(forceDaily);
         if (token !== generation || user !== options.session()) return;
-        const data = await rpc('get_banner_shop_state'); if (token === generation && user === options.session()) {state = data; saveInventory(user, data.cards); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
+        const data = await rpc('get_banner_shop_state'); if (token === generation && user === options.session()) {state = data; scheduleShopReset(); saveInventory(user, data.cards); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
       catch (error) { if (token === generation) {failure = errorMessage(error); render();} }
       finally {if (token === generation) {loading = false; request = null; render();}}
     })();
@@ -951,9 +975,13 @@
       if (membersTarget?.isConnected) mountMembers(membersTarget);
     });
     window.addEventListener('offline', render);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && options?.session() && el('bannerShopDialog')?.open && Date.parse(state?.shop_next_reset_at) <= Date.now()) void refresh();
+    });
     render();
   }
   function reset() {
+    clearTimeout(shopResetTimer);
     closeEditor();
     el('profileBannerOptions').replaceChildren();
     delete el('profileBannerOptions').dataset.signature;

@@ -1603,13 +1603,30 @@ document.addEventListener("click", event => {
 });
 
 let messageReplyGesture = null;
+const messageReplySpringTimers = new WeakMap();
+function stopMessageReplySpring(bubble) {
+  clearTimeout(messageReplySpringTimers.get(bubble));
+  messageReplySpringTimers.delete(bubble);
+  bubble.classList.remove("is-reply-springing");
+  bubble.style.removeProperty("--message-reply-start");
+  bubble.style.removeProperty("--message-reply-start-scale");
+}
 function resetMessageReplyGesture(commit = false) {
   const gesture = messageReplyGesture; messageReplyGesture = null;
   if (!gesture) return;
-  gesture.bubble.style.removeProperty("--message-reply-offset");
-  gesture.bubble.classList.remove("is-reply-dragging", "is-reply-ready");
-  gesture.bubble.classList.add("is-reply-settling");
-  setTimeout(() => gesture.bubble.classList.remove("is-reply-settling"), 180);
+  const bubble = gesture.bubble;
+  const offset = Number.parseFloat(bubble.style.getPropertyValue("--message-reply-offset")) || 0;
+  const scale = Number.parseFloat(bubble.style.getPropertyValue("--message-reply-scale")) || 1;
+  bubble.style.setProperty("--message-reply-start", `${offset}px`);
+  bubble.style.setProperty("--message-reply-start-scale", String(scale));
+  bubble.classList.remove("is-reply-dragging", "is-reply-ready");
+  bubble.classList.toggle("is-reply-springing", gesture.tracking && offset > 0);
+  bubble.style.removeProperty("--message-reply-offset");
+  bubble.style.removeProperty("--message-reply-scale");
+  if (gesture.tracking && offset > 0) {
+    const timer = setTimeout(() => stopMessageReplySpring(bubble), 510);
+    messageReplySpringTimers.set(bubble, timer);
+  } else stopMessageReplySpring(bubble);
   if (gesture.tracking) messageClickSuppression = {bubble: gesture.bubble, released: true, until: performance.now() + 550};
   if (commit && gesture.ready) selectChatReply({kind: gesture.bubble.dataset.messageKind, id: gesture.bubble.dataset.messageId});
 }
@@ -1617,6 +1634,7 @@ document.addEventListener("pointerdown", event => {
   resetMessageReplyGesture();
   const bubble = event.target.closest("[data-message-bubble]");
   if (!bubble || event.button !== 0 || event.isPrimary === false || event.target.closest("button, a, input, textarea, audio, video") || messageMenuTarget) return;
+  stopMessageReplySpring(bubble);
   const input = document.getElementById(bubble.dataset.messageKind === "private" ? "privateMessageInput" : "messageInput");
   if (!input || input.disabled) return;
   messageReplyGesture = {bubble, pointerId: event.pointerId, x: event.clientX, y: event.clientY, tracking: false, ready: false};
@@ -1636,6 +1654,7 @@ document.addEventListener("pointermove", event => {
   const offset = Math.max(0, Math.min(100, x > 64 ? 64 + (x - 64) * .25 : x));
   gesture.ready = x >= 64 && Math.abs(y) < 64;
   gesture.bubble.style.setProperty("--message-reply-offset", `${offset}px`);
+  gesture.bubble.style.setProperty("--message-reply-scale", String(1 + Math.min(offset / 2000, .05)));
   gesture.bubble.classList.toggle("is-reply-ready", gesture.ready);
 }, {passive: false});
 document.addEventListener("pointerup", event => { if (messageReplyGesture?.pointerId === event.pointerId) resetMessageReplyGesture(true); }, {passive: true});
@@ -3340,11 +3359,19 @@ function loadAchievements() {
           rule:rulesResult.error ? previousRules.get(String(item.id)) : rules.get(String(item.id)),
         }));
         const visibleAchievementIds = new Set(achievements.map(item=>String(item.id)));
+        const previousOwnAwards = new Set(achievementAwards.filter(item => item.userId === userId).map(item => String(item.id)));
+        const hadAchievementSnapshot = achievementsLoaded;
         achievementAwards = (awardsResult.data || []).filter(item=>visibleAchievementIds.has(String(item.achievement_id))).map(item => ({
           id:item.id, achievementId:item.achievement_id, userId:item.user_id,
           awardedBy:item.awarded_by, awardedAt:item.awarded_at,
         }));
         globalThis.TrophyUnlock?.observe(userId, achievements, achievementAwards);
+        if (hadAchievementSnapshot && achievementAwards.some(item => item.userId === userId && !previousOwnAwards.has(String(item.id)))) {
+          // Trophy packs are granted in the database. Refresh the local counters
+          // once when an award first appears, without coupling to shop onChange.
+          void globalThis.BannerShop?.refresh?.(true);
+          void globalThis.DailyPacks?.refresh?.(true);
+        }
         achievementsLoaded = true;
         const progressError = rulesResult.error || progressResult.error || (achievementVisitFailed ? {code:"VISIT_RETRY"} : null);
         if (progressError) {
@@ -3688,18 +3715,19 @@ async function beginAuthenticatedSession(authUser) {
 
 async function login(username, password) {
   if (!backendReady) throw new Error("No se puede conectar con el servicio de acceso. Inténtalo de nuevo cuando haya conexión.");
-  const email = `${normalizeUsername(username)}@bigboyrules.local`;
-  let {data, error} = await db.auth.signInWithPassword({email, password});
-  if (error) {
-    // Approved applications use a real verified email; the server resolves it
-    // privately from the public username. Existing club aliases keep working.
-    const result = await db.functions.invoke("account-requests", {body: {action: "login", username: normalizeUsername(username), password}});
-    if (result.error || !result.data?.session) throw new Error("Usuario o contraseña incorrectos.");
-    const restored = await db.auth.setSession(result.data.session);
-    if (restored.error || !restored.data.user) throw new Error("No se pudo iniciar sesión. Inténtalo de nuevo.");
-    data = restored.data;
-  }
-  await beginAuthenticatedSession(data.user);
+  // Resolve usernames on the server: the Auth email can change when linking a
+  // real address. A stale session must not be attached to this public endpoint.
+  const response = await fetch(`${config.supabaseUrl}/functions/v1/account-requests`, {
+    method: "POST",
+    headers: {"Content-Type":"application/json", apikey:config.supabasePublishableKey},
+    body: JSON.stringify({action:"login", username:String(username || "").trim().toLowerCase().replace(/^@/, ""), password}),
+    signal: AbortSignal.timeout(20000)
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.session) throw new Error(result.error || "No se pudo iniciar sesión. Inténtalo de nuevo.");
+  const restored = await db.auth.setSession(result.session);
+  if (restored.error || !restored.data.user) throw new Error("No se pudo iniciar sesión. Inténtalo de nuevo.");
+  await beginAuthenticatedSession(restored.data.user);
 }
 
 function openRequiredPasswordChange() {

@@ -448,16 +448,27 @@ html[data-input-modality="pointer"] body.authenticated :is(.private-conversation
 
 /* Message reply uses horizontal intent only; vertical scrolling stays native. */
 body.authenticated .message [data-message-bubble] { touch-action: pan-y pinch-zoom; }
-body.authenticated .message [data-message-bubble].is-reply-dragging,
-body.authenticated .message [data-message-bubble].is-reply-settling { transform: translate3d(var(--message-reply-offset, 0px), 0, 0); }
-body.authenticated .message [data-message-bubble].is-reply-dragging { transition: none; will-change: transform; }
-body.authenticated .message [data-message-bubble].is-reply-settling { transition: transform 160ms cubic-bezier(.2,.8,.2,1); }
-body.authenticated .message [data-message-bubble].is-reply-dragging::before {
-  content: ''; position: absolute; inset-inline-start: -12px; top: calc(50% - 14px);
-  width: 3px; height: 28px; border-radius: 3px;
-  background: var(--gold, #e4ce96); opacity: .45;
+body.authenticated .message [data-message-bubble].is-reply-dragging {
+  transform: translate3d(var(--message-reply-offset, 0px), 0, 0) scaleX(var(--message-reply-scale, 1));
+  transform-origin: left center; transition: none; will-change: transform;
 }
-body.authenticated .message [data-message-bubble].is-reply-ready::before { opacity: 1; }
+body.authenticated .message [data-message-bubble].is-reply-springing {
+  transform-origin: left center; animation: chatReplySpring 480ms both;
+}
+body.authenticated .message [data-message-bubble].is-reply-dragging::before {
+  content: ''; position: absolute; inset-inline-start: calc(-1 * var(--message-reply-offset, 0px)); top: calc(50% - 5px);
+  width: var(--message-reply-offset, 0px); height: 10px; border-radius: 999px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold, #e4ce96) 42%, #1c2027));
+  opacity: .55; pointer-events: none;
+}
+body.authenticated .message [data-message-bubble].is-reply-ready::before { opacity: .85; }
+@keyframes chatReplySpring {
+  0% { transform: translate3d(var(--message-reply-start, 0px), 0, 0) scaleX(var(--message-reply-start-scale, 1)); }
+  47% { transform: translate3d(-9px, 0, 0) scaleX(.975); }
+  70% { transform: translate3d(5px, 0, 0) scaleX(1.012); }
+  86% { transform: translate3d(-2px, 0, 0) scaleX(.995); }
+  100% { transform: translate3d(0, 0, 0) scaleX(1); }
+}
 .message-context-menu button[data-message-action="reply"] { padding-inline-start: 41px; }
 .chat-message-quote {
   display: grid; gap: 3px; width: 100%; min-width: 0; margin: 2px 0 7px; padding: 8px 10px;
@@ -481,6 +492,6 @@ body.authenticated .message [data-message-bubble].is-reply-ready::before { opaci
 .chat-reply-highlight { animation: chatReplyHighlight 900ms ease-out; }
 @keyframes chatReplyHighlight { from { filter: brightness(1.55); } to { filter: brightness(1); } }
 @media (prefers-reduced-motion: reduce) {
-  body.authenticated .message [data-message-bubble].is-reply-settling { transition: none; }
+  body.authenticated .message [data-message-bubble].is-reply-springing { animation: none; }
   .chat-reply-highlight { animation-duration: 1ms; }
 }

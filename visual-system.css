@@ -363,6 +363,7 @@ body.authenticated :is(.collection-catalog-trigger,.card-album-trigger,.duplicat
 html[data-reduced-motion="true"] .modal-backdrop.open > :is(.modal,.profile-editor-modal,.achievement-assignment-modal) { animation: none; }
 
 
+
 /* Screen composition, matching the editable Big Boy 2.0 frames.
    Keep the scroll owners and live gesture surfaces in their module styles. */
 body.authenticated #inicio .club-welcome {
@@ -649,3 +650,25 @@ body.authenticated #inicio .club-event-open > time { display: inline-flex; align
 body.authenticated #inicio .club-event-open > time strong { font-size: 13px; line-height: 1.2; }
 body.authenticated #inicio .club-event-open > time small { font-size: 10px; }
 body.authenticated #inicio .club-event-with-tigreton > .tigreton-agenda { width: 90px; }
+
+/* Fewer decorative marks, clearer hierarchy and restrained navigation motion. */
+body.authenticated .topbar::after { display: none; }
+body.authenticated .topbar-title .eyebrow,
+body.authenticated #inicio .club-welcome .eyebrow { display: none; }
+body.authenticated .top-actions > .icon-button,
+body.authenticated .top-actions .notification-button {
+  border-color: transparent;
+  background: transparent;
+  transition: background-color 180ms var(--bb2-ease), color 180ms var(--bb2-ease);
+}
+body.authenticated .top-actions > .icon-button:active,
+body.authenticated .top-actions .notification-button:active { background: var(--bb2-raised); }
+body.authenticated .floating-tab-bar { box-shadow: 0 8px 24px #00000022; }
+body.authenticated .tab-selection-indicator { transition-duration: 210ms; }
+@media (min-width: 900px) {
+  body.authenticated .floating-tab-bar .app-tab:not(.profile-tab) > svg { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.authenticated .top-actions > .icon-button,
+  body.authenticated .top-actions .notification-button { transition: none; }
+}

@@ -329,6 +329,14 @@
 @media(max-width:600px){#bannerShopDialog{inset:0;width:100%;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0;padding:0}#bannerShopDialog .shop-topbar{padding:calc(var(--pwa-safe-top,env(safe-area-inset-top,0px)) + 10px) 20px 10px}#bannerShopDialog .shop-content{padding:25px 20px calc(var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px)) + 24px)}#bannerShopDialog .shop-intro{gap:12px;margin-bottom:24px;align-items:flex-start}#bannerShopDialog #bannerShopTitle{font-size:38px}#bannerShopDialog .shop-kicker{font-size:8px;letter-spacing:.12em}#bannerShopDialog .shop-intro p{max-width:175px;font-size:12px}#bannerShopDialog .shop-wallet{margin-top:20px;padding:11px 12px;border-radius:12px}#bannerShopDialog .banner-shop-balance{font-size:12px}#bannerShopDialog .shop-wallet svg{width:18px;height:18px}#bannerShopDialog .shop-wallet strong{gap:5px}#bannerShopDialog .shop-navigation{box-sizing:border-box;width:100%;margin-bottom:22px}#bannerShopDialog .shop-navigation button{flex:1;padding:10px 12px}#bannerShopDialog .banner-shop-items{grid-template-columns:minmax(0,1fr);gap:18px}#bannerShopDialog .shop-card-content{padding:16px 17px}#bannerShopDialog .banner-shop-item h3{font-size:20px}#bannerShopDialog .shop-card-purchase{margin-top:16px}#bannerShopDialog .shop-section-heading h3{font-size:17px}}
 @media(prefers-reduced-motion:reduce){#bannerShopDialog[open]{animation:none}#bannerShopDialog button{transition:none}}
 
+/* Wide original artwork fills profile, shop and member headers without side gaps. */
+.banner-panorama{background:#172433;aspect-ratio:3/1}
+.banner-panorama img{display:block;width:100%;height:100%;object-fit:cover;animation:banner-panorama-breathe 20s ease-in-out infinite alternate}
+.banner-panorama::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 32%,#fff5e313 49%,transparent 65%);background-size:200% 100%;animation:banner-panorama-light 12s ease-in-out infinite}
+@keyframes banner-panorama-breathe{from{transform:scale(1)}to{transform:scale(1.045)}}
+@keyframes banner-panorama-light{0%,30%{background-position:100% 0;opacity:0}48%{opacity:1}70%,100%{background-position:-100% 0;opacity:0}}
+@media(prefers-reduced-motion:reduce){.banner-panorama img,.banner-panorama::after{animation:none}}
+
 /* Rapid pack taps advance cards without triggering browser double-tap zoom. */
 .pack-reveal-card{touch-action:none}
 .packs-art-button{touch-action:manipulation}
