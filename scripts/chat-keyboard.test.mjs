@@ -73,7 +73,7 @@ function sender() {
     currentAuthUser:{id:'u1'},
     navigator:{onLine:true},
     console:{warn(){}},
-    chatSendAttempts,
+    chatSendAttempts, chatReplies:new Map(), chatReplyKey:kind=>kind, renderChatReplyComposer(){},
     document:{getElementById:id=>id==='privateMessageForm'?form:null},
     activeAudioRecording:null,activePrivateMemberId:2,activeChatChannelId:1,
     pendingChatFile:()=>null,privateMessages:[],messages:[],

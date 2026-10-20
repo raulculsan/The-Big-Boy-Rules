@@ -1575,11 +1575,12 @@ function renderChatReplyComposer(kind) {
   }
   const reply = chatReplies.get(chatReplyKey(kind));
   preview.hidden = !reply;
-  if (!reply) { preview.replaceChildren(); return; }
+  if (!reply) { preview.replaceChildren(); preview._replyMarkup = null; return; }
   const source = contextMessage({kind, id: String(reply.id)});
-  if (!source) { chatReplies.delete(chatReplyKey(kind)); preview.hidden = true; preview.replaceChildren(); return; }
+  if (!source) { chatReplies.delete(chatReplyKey(kind)); preview.hidden = true; preview.replaceChildren(); preview._replyMarkup = null; return; }
   const quote = chatReplyDescription(kind, source);
-  preview.innerHTML = `<div><strong>Responder a ${escapeHtml(quote.name)}</strong><span>${escapeHtml(quote.text)}</span></div><button type="button" data-cancel-chat-reply="${kind}" aria-label="Cancelar respuesta">×</button>`;
+  const markup = `<div><strong>Responder a ${escapeHtml(quote.name)}</strong><span>${escapeHtml(quote.text)}</span></div><button type="button" data-cancel-chat-reply="${kind}" aria-label="Cancelar respuesta">×</button>`;
+  if (preview._replyMarkup !== markup) { preview.innerHTML = markup; preview._replyMarkup = markup; }
 }
 function selectChatReply(target) {
   const message = contextMessage(target);
@@ -1608,57 +1609,74 @@ function stopMessageReplySpring(bubble) {
   clearTimeout(messageReplySpringTimers.get(bubble));
   messageReplySpringTimers.delete(bubble);
   bubble.classList.remove("is-reply-springing");
-  bubble.style.removeProperty("--message-reply-start");
-  bubble.style.removeProperty("--message-reply-start-scale");
+  for (const property of ["--message-reply-start", "--message-reply-start-scale", "--message-reply-offset", "--message-reply-scale"])
+    bubble.style.removeProperty(property);
+}
+function paintMessageReplyGesture(gesture) {
+  gesture.frame = 0;
+  if (messageReplyGesture !== gesture || !gesture.bubble.isConnected) return;
+  // Only transforms change during a drag. Width/position are read once, before
+  // any drag styles, rather than triggering layout for every pointer sample.
+  gesture.bubble.style.setProperty("--message-reply-offset", `${gesture.offset}px`);
+  gesture.bubble.style.setProperty("--message-reply-scale", String(gesture.scale));
+  gesture.bubble.classList.toggle("is-reply-ready", gesture.ready);
 }
 function resetMessageReplyGesture(commit = false) {
-  const gesture = messageReplyGesture; messageReplyGesture = null;
+  const gesture = messageReplyGesture;
+  messageReplyGesture = null;
   if (!gesture) return;
+  if (gesture.frame) cancelAnimationFrame(gesture.frame);
   const bubble = gesture.bubble;
-  const offset = Number.parseFloat(bubble.style.getPropertyValue("--message-reply-offset")) || 0;
-  const scale = Number.parseFloat(bubble.style.getPropertyValue("--message-reply-scale")) || 1;
-  bubble.style.setProperty("--message-reply-start", `${offset}px`);
-  bubble.style.setProperty("--message-reply-start-scale", String(scale));
+  // Release capture before opening the keyboard. Otherwise a live render or
+  // viewport resize can strand the pointer on an old message element.
+  try { if (bubble.hasPointerCapture(gesture.pointerId)) bubble.releasePointerCapture(gesture.pointerId); } catch { /* Detached by realtime. */ }
+  const spring = gesture.tracking && gesture.offset > 0 && bubble.isConnected;
+  bubble.style.setProperty("--message-reply-start", `${gesture.offset}px`);
+  bubble.style.setProperty("--message-reply-start-scale", String(gesture.scale));
   bubble.classList.remove("is-reply-dragging", "is-reply-ready");
-  bubble.classList.toggle("is-reply-springing", gesture.tracking && offset > 0);
+  bubble.classList.toggle("is-reply-springing", spring);
   bubble.style.removeProperty("--message-reply-offset");
   bubble.style.removeProperty("--message-reply-scale");
-  if (gesture.tracking && offset > 0) {
-    const timer = setTimeout(() => stopMessageReplySpring(bubble), 510);
-    messageReplySpringTimers.set(bubble, timer);
-  } else stopMessageReplySpring(bubble);
-  if (gesture.tracking) messageClickSuppression = {bubble: gesture.bubble, released: true, until: performance.now() + 550};
-  if (commit && gesture.ready) selectChatReply({kind: gesture.bubble.dataset.messageKind, id: gesture.bubble.dataset.messageId});
+  if (spring) messageReplySpringTimers.set(bubble, setTimeout(() => stopMessageReplySpring(bubble), 540));
+  else stopMessageReplySpring(bubble);
+  if (gesture.tracking) messageClickSuppression = {bubble, released: true, until: performance.now() + 550};
+  if (commit && gesture.tracking && gesture.ready && bubble.isConnected)
+    selectChatReply({kind: bubble.dataset.messageKind, id: bubble.dataset.messageId});
 }
 document.addEventListener("pointerdown", event => {
+  // A second finger cancels the reply rather than starting a new gesture.
+  if (event.isPrimary === false) { resetMessageReplyGesture(); return; }
   resetMessageReplyGesture();
   const bubble = event.target.closest("[data-message-bubble]");
-  if (!bubble || event.button !== 0 || event.isPrimary === false || event.target.closest("button, a, input, textarea, audio, video") || messageMenuTarget) return;
-  stopMessageReplySpring(bubble);
+  if (!bubble || event.button !== 0 || event.target.closest("button:not([data-chat-image]), a, input, textarea, audio, video") || messageMenuTarget) return;
   const input = document.getElementById(bubble.dataset.messageKind === "private" ? "privateMessageInput" : "messageInput");
   if (!input || input.disabled) return;
-  messageReplyGesture = {bubble, pointerId: event.pointerId, x: event.clientX, y: event.clientY, tracking: false, ready: false};
+  stopMessageReplySpring(bubble);
+  const width = Math.max(80, bubble.getBoundingClientRect().width);
+  messageReplyGesture = {bubble, pointerId: event.pointerId, x: event.clientX, y: event.clientY,
+    width, offset: 0, scale: 1, frame: 0, tracking: false, ready: false};
 }, {passive: true});
 document.addEventListener("pointermove", event => {
   const gesture = messageReplyGesture;
   if (!gesture || event.pointerId !== gesture.pointerId) return;
+  if (!gesture.bubble.isConnected || event.buttons === 0) { resetMessageReplyGesture(); return; }
   const x = event.clientX - gesture.x, y = event.clientY - gesture.y;
   if (!gesture.tracking) {
-    if (Math.abs(y) > 10 && Math.abs(y) > Math.abs(x) || x < -12) { resetMessageReplyGesture(); return; }
+    if ((Math.abs(y) > 10 && Math.abs(y) > Math.abs(x)) || x < -12) { resetMessageReplyGesture(); return; }
     if (x < 12 || x < Math.abs(y) * 1.4) return;
-    gesture.tracking = true; cancelMessageHold(); closeMessageMenu();
+    gesture.tracking = true; cancelMessageHold();
     gesture.bubble.classList.add("is-reply-dragging");
     try { gesture.bubble.setPointerCapture(event.pointerId); } catch { /* Detached during live refresh. */ }
   }
   if (event.cancelable) event.preventDefault();
-  const offset = Math.max(0, Math.min(100, x > 64 ? 64 + (x - 64) * .25 : x));
+  gesture.offset = Math.max(0, Math.min(96, x > 64 ? 64 + (x - 64) * .22 : x));
+  gesture.scale = 1 + Math.min(gesture.offset / gesture.width, .32);
   gesture.ready = x >= 64 && Math.abs(y) < 64;
-  gesture.bubble.style.setProperty("--message-reply-offset", `${offset}px`);
-  gesture.bubble.style.setProperty("--message-reply-scale", String(1 + Math.min(offset / 2000, .05)));
-  gesture.bubble.classList.toggle("is-reply-ready", gesture.ready);
+  if (!gesture.frame) gesture.frame = requestAnimationFrame(() => paintMessageReplyGesture(gesture));
 }, {passive: false});
 document.addEventListener("pointerup", event => { if (messageReplyGesture?.pointerId === event.pointerId) resetMessageReplyGesture(true); }, {passive: true});
-document.addEventListener("pointercancel", () => resetMessageReplyGesture(), {passive: true});
+document.addEventListener("pointercancel", event => { if (messageReplyGesture?.pointerId === event.pointerId) resetMessageReplyGesture(); }, {passive: true});
+document.addEventListener("lostpointercapture", event => { if (messageReplyGesture?.pointerId === event.pointerId) resetMessageReplyGesture(); }, {passive: true});
 window.addEventListener("blur", () => resetMessageReplyGesture());
 document.addEventListener("scroll", event => { if (messageReplyGesture && event.target.contains?.(messageReplyGesture.bubble)) resetMessageReplyGesture(); }, {capture: true, passive: true});
 
@@ -1815,12 +1833,14 @@ function closeMessageMenu(restoreFocus = false) {
   const target = messageMenuTarget;
   messageMenuTarget = null;
   const menu = document.getElementById("messageContextMenu");
+  if (!menu || (!target && menu.hidden)) return;
   animateChatMenu(menu, false);
   if (!isEditableAppTarget(document.activeElement)) window.getSelection()?.removeAllRanges();
   if (target?.bubble?.isConnected && restoreFocus) target.bubble.focus({preventScroll: true});
   else if (menu.contains(document.activeElement) || document.activeElement === target?.bubble) document.activeElement.blur();
 }
 function closeMessageUI() {
+  resetMessageReplyGesture();
   closeInboxContextMenu();
   for (const id of ["messageContextMenu", "inboxContextMenu"]) {
     const menu = document.getElementById(id);
@@ -1985,27 +2005,42 @@ function preserveConversationReading(container, key) {
     }
   };
 }
+const chatLatestScrollWork = new WeakMap();
 function scrollConversationToLatest(container) {
   if (!container) return;
+  // Realtime refreshes can happen before old delayed scrolls/media listeners
+  // settle. Cancel that work instead of accumulating it over a long chat.
+  chatLatestScrollWork.get(container)?.();
+  const controller = new AbortController();
+  const timers = [];
+  let frame = 0;
+  const cleanup = () => {
+    controller.abort();
+    if (frame) cancelAnimationFrame(frame);
+    timers.forEach(clearTimeout);
+  };
+  chatLatestScrollWork.set(container, cleanup);
   const requestId = String((Number(container.dataset.latestScrollRequest) || 0) + 1);
   container.dataset.latestScrollRequest = requestId;
   const apply = () => {
-    if (container.dataset.latestScrollRequest !== requestId || container.dataset.readerScrolled === requestId) return;
+    if (!container.isConnected || container.dataset.latestScrollRequest !== requestId || container.dataset.readerScrolled === requestId) return;
     container.scrollTop = container.scrollHeight;
   };
   if (container._stopLatestScroll) container.removeEventListener("scroll", container._stopLatestScroll);
   container._stopLatestScroll = () => {
-    if (container.scrollHeight - container.clientHeight - container.scrollTop > 80) container.dataset.readerScrolled = requestId;
+    if (container.scrollHeight - container.clientHeight - container.scrollTop > 80) {
+      container.dataset.readerScrolled = requestId;
+      cleanup();
+    }
   };
-  container.addEventListener("scroll", container._stopLatestScroll, {passive: true});
+  container.addEventListener("scroll", container._stopLatestScroll, {passive: true, signal: controller.signal});
   apply();
-  requestAnimationFrame(() => {
-    apply();
-    requestAnimationFrame(apply);
-  });
-  [90, 240, 520].forEach(delay => window.setTimeout(apply, delay));
+  frame = requestAnimationFrame(() => { frame = 0; apply(); });
+  timers.push(setTimeout(apply, 90));
   container.querySelectorAll("img, video, audio").forEach(media => {
-    ["load", "loadedmetadata", "durationchange"].forEach(type => media.addEventListener(type, apply, {once: true}));
+    const image = media.tagName === "IMG";
+    if (image ? media.complete : media.readyState >= 1) return;
+    media.addEventListener(image ? "load" : "loadedmetadata", apply, {once: true, signal: controller.signal});
   });
 }
 
@@ -2152,6 +2187,7 @@ function setChatMessageMarkup(container, markup) {
     images.push(image);
     retained.set(source, images);
   });
+  if (messageReplyGesture && container.contains(messageReplyGesture.bubble)) resetMessageReplyGesture();
   container.innerHTML = markup;
   container.querySelectorAll("[data-chat-thumbnail]").forEach(image => {
     const cached = retained.get(image.dataset.imageSource)?.shift();

@@ -330,11 +330,11 @@
 @media(prefers-reduced-motion:reduce){#bannerShopDialog[open]{animation:none}#bannerShopDialog button{transition:none}}
 
 /* Wide original artwork fills profile, shop and member headers without side gaps. */
-.banner-panorama{background:#172433;aspect-ratio:3/1}
-.banner-panorama img{display:block;width:100%;height:100%;object-fit:cover;animation:banner-panorama-breathe 20s ease-in-out infinite alternate}
-.banner-panorama::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 32%,#fff5e313 49%,transparent 65%);background-size:200% 100%;animation:banner-panorama-light 12s ease-in-out infinite}
+.banner-panorama{background-color:#172433;background-size:cover;background-position:center;aspect-ratio:3/1;min-width:0}
+.banner-panorama img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;animation:banner-panorama-breathe 20s ease-in-out infinite alternate}
+.banner-panorama::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 32%,#fff5e313 49%,transparent 65%);animation:banner-panorama-light 12s ease-in-out infinite}
 @keyframes banner-panorama-breathe{from{transform:scale(1)}to{transform:scale(1.045)}}
-@keyframes banner-panorama-light{0%,30%{background-position:100% 0;opacity:0}48%{opacity:1}70%,100%{background-position:-100% 0;opacity:0}}
+@keyframes banner-panorama-light{0%,30%{transform:translateX(-65%);opacity:0}48%{opacity:1}70%,100%{transform:translateX(65%);opacity:0}}
 @media(prefers-reduced-motion:reduce){.banner-panorama img,.banner-panorama::after{animation:none}}
 
 /* Rapid pack taps advance cards without triggering browser double-tap zoom. */

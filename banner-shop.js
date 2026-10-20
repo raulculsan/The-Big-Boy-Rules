@@ -473,8 +473,14 @@
   }
   function artwork(banner, extra = '') {
     // Only known artwork keys become styles; future Krita exports are added here.
-    const panorama = {'madrid-medianoche-v1':'madrid-medianoche-v1.jpg','costa-atlantica-v1':'costa-atlantica-v1.jpg'}[banner?.art_key];
-    if (panorama) return `<div class="banner-art banner-panorama ${extra}" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/${panorama}" width="2172" height="724" alt="" loading="lazy" decoding="async"></div>`;
+    const panorama = {
+      'madrid-medianoche-v1': 'icons/banners/madrid-medianoche-v1.jpg',
+      'costa-atlantica-v1': 'icons/banners/costa-atlantica-v1.jpg'
+    }[banner?.art_key];
+    // Native WebKit can defer lazy images inside a dialog even after showModal().
+    // The fixed-ratio surface and eager image give every shop tile real geometry;
+    // the same local bitmap is also a CSS fallback while the image decodes.
+    if (panorama) return `<div class="banner-art banner-panorama ${extra}" style="background-image:url('${panorama}')" role="img" aria-label="${escape(banner.name)}"><img src="${panorama}" width="2172" height="724" alt="" loading="eager" decoding="async"></div>`;
     if (banner?.art_key === 'alberto-galicia-anime-v1') return galiciaArtwork(banner, extra, false, extra.includes('member-banner-art'));
     if (banner?.art_key === 'miguel-basket-bano-v1') {
       const poses = ['00', '00a', '01', '01a', '02', '02a', '03'].map((frame, index) => `<image class="banner-basket-pose banner-basket-pose-${index}" href="icons/banners/miguel-basket-miguel-${frame}-v1.png" width="2172" height="724"/>`).join('');

@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v357";
+const CACHE_NAME = "big-boy-rules-v358";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,7 +9,7 @@ const APP_SHELL = [
   "./app-health.js?v=20261017-startup-logs-331",
   "./app-health.css?v=20261016-improvements-319",
   "./styles.css?v=20261020-polish-357",
-  "./visual-system.css?v=20261020-polish-357",
+  "./visual-system.css?v=20261020-minimal-358",
   "./notifications.css?v=20261015-notifications-polls-307",
   "./club.css?v=20261019-pack-opening-349",
   "./icons/mascot/chota-v2/chota-poses.png",
@@ -18,7 +18,7 @@ const APP_SHELL = [
   "./achievement-admin.css?v=20261011-256",
   "./achievement-progress.js?v=20261010-244",
   "./achievement-admin.js?v=20261010-244",
-  "./chat.css?v=20261020-polish-357",
+  "./chat.css?v=20261020-minimal-358",
   "./chat-themes.css?v=20261012-277",
   "./chat-themes.js?v=20261010-241",
   "./chat-theme-catalog.json?v=20261010-241",
@@ -38,7 +38,7 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20260903-130",
   "./admin-console.js?v=20261019-economy-351",
   "./admin-console.css?v=20261019-economy-351",
-  "./app.js?v=20261020-polish-357",
+  "./app.js?v=20261020-minimal-358",
   "./spotify-player.js?v=20261017-bounded-reconnect-331",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261016-release-323",
@@ -47,8 +47,8 @@ const APP_SHELL = [
   "./onboarding.css?v=20261016-improvements-319",
   "./admin-grants.js?v=20261018-password-335",
   "./admin-grants.css?v=20261009-213",
-  "./banner-shop.js?v=20261020-polish-357",
-  "./banner-shop.css?v=20261020-polish-357",
+  "./banner-shop.js?v=20261020-minimal-358",
+  "./banner-shop.css?v=20261020-minimal-358",
   "./collection-social.js?v=20261016-release-322",
   "./collection-social.css?v=20261015-mutual-trades-305",
   "./pending-actions.js?v=20261016-release-322",
@@ -262,6 +262,7 @@ const mediaPath = request => {
 let shellUrls;
 let mediaWrite = Promise.resolve();
 let mediaEntries = new Map();
+let mediaIndexReady = false;
 // Reconcile keys cheaply on writes, but read response metadata only for entries
 // this worker has not seen. Worker restarts rebuild this index lazily once.
 async function reconcileMediaEntries(cache) {
@@ -307,7 +308,12 @@ function savePublicMedia(request, response) {
     headers.set("x-big-boy-cache-bytes", String(blob.size));
     headers.set("x-big-boy-cache-time", String(Date.now()));
     const cache = await caches.open(MEDIA_CACHE_NAME);
-    await reconcileMediaEntries(cache);
+    // A worker can process several image requests in one session. Rebuilding
+    // the whole Cache API index for every image made pack reveals expensive.
+    if (!mediaIndexReady) {
+      await reconcileMediaEntries(cache);
+      mediaIndexReady = true;
+    }
     // Reinsertion refreshes FIFO order without a costly write on each hit.
     const mediaUrl = new URL(request.url || request, workerScope()).href;
     const mediaRequest = typeof Request === "function" ? new Request(mediaUrl) : {url:mediaUrl};
@@ -326,6 +332,7 @@ function savePublicMedia(request, response) {
   }).catch(error => {
     // A partial Cache API failure may invalidate the index. Rebuild next time.
     mediaEntries = new Map();
+    mediaIndexReady = false;
     throw error;
   });
   // Cache failures must not break rendering or prevent an update activating.
@@ -333,19 +340,24 @@ function savePublicMedia(request, response) {
 }
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
-    // An open document can still use its previous controller. Keep that
-    // release's exact dependencies until the following update.
+    // An open document can still use its previous controller. Keep only the
+    // immediately preceding release's exact dependencies.
     const previousKeys = (await caches.keys()).filter(key => /^big-boy-rules-v\d+$/.test(key) && key !== CACHE_NAME)
       .sort((a,b) => Number(b.split('-v').at(-1)) - Number(a.split('-v').at(-1)));
-    const oldKeys = previousKeys.slice(1);
-    const mediaCache = oldKeys.length ? await caches.open(MEDIA_CACHE_NAME) : null;
-    for (const cacheKey of oldKeys) {
-      const oldCache = await caches.open(cacheKey);
-      const requests = await oldCache.keys();
-      for (const req of requests) {
-        if (!mediaPath(req) || await mediaCache.match(req)) continue;
-        const res = await oldCache.match(req);
-        if (res) await savePublicMedia(req, res);
+    const currentVersion = Number(CACHE_NAME.split('-v').at(-1));
+    const oldKeys = previousKeys.filter(key => Number(key.split('-v').at(-1)) !== currentVersion - 1);
+    // One bounded migration covers users updating from the old image-in-shell
+    // scheme. Once the dedicated media cache has artwork, skip the scan on
+    // every later app update.
+    if (oldKeys.length) {
+      const mediaCache = await caches.open(MEDIA_CACHE_NAME);
+      if (!(await mediaCache.keys()).length) {
+        const oldCache = await caches.open(oldKeys[0]);
+        const requests = (await oldCache.keys()).filter(mediaPath).slice(0, 8);
+        for (const request of requests) {
+          const response = await oldCache.match(request);
+          if (response) await savePublicMedia(request, response);
+        }
       }
     }
     await Promise.all(oldKeys.map(key => caches.delete(key)));

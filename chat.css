@@ -449,25 +449,25 @@ html[data-input-modality="pointer"] body.authenticated :is(.private-conversation
 /* Message reply uses horizontal intent only; vertical scrolling stays native. */
 body.authenticated .message [data-message-bubble] { touch-action: pan-y pinch-zoom; }
 body.authenticated .message [data-message-bubble].is-reply-dragging {
-  transform: translate3d(var(--message-reply-offset, 0px), 0, 0) scaleX(var(--message-reply-scale, 1));
+  transform: translate3d(calc(var(--message-reply-offset, 0px) * .16), 0, 0) scaleX(var(--message-reply-scale, 1)) scaleY(.98);
   transform-origin: left center; transition: none; will-change: transform;
 }
+/* Own bubbles expand towards the available space on their left, keeping their
+   right edge inside the screen. The bubble itself deforms, without a fake tail. */
+body.authenticated .message.own [data-message-bubble].is-reply-dragging {
+  transform-origin: right center;
+  transform: translate3d(calc(var(--message-reply-offset, 0px) * .06), 0, 0) scaleX(var(--message-reply-scale, 1)) scaleY(.98);
+}
 body.authenticated .message [data-message-bubble].is-reply-springing {
-  transform-origin: left center; animation: chatReplySpring 480ms both;
+  transform-origin: left center; animation: chatReplySpring 510ms both; will-change: transform;
 }
-body.authenticated .message [data-message-bubble].is-reply-dragging::before {
-  content: ''; position: absolute; inset-inline-start: calc(-1 * var(--message-reply-offset, 0px)); top: calc(50% - 5px);
-  width: var(--message-reply-offset, 0px); height: 10px; border-radius: 999px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold, #e4ce96) 42%, #1c2027));
-  opacity: .55; pointer-events: none;
-}
-body.authenticated .message [data-message-bubble].is-reply-ready::before { opacity: .85; }
+body.authenticated .message.own [data-message-bubble].is-reply-springing { transform-origin: right center; }
 @keyframes chatReplySpring {
-  0% { transform: translate3d(var(--message-reply-start, 0px), 0, 0) scaleX(var(--message-reply-start-scale, 1)); }
-  47% { transform: translate3d(-9px, 0, 0) scaleX(.975); }
-  70% { transform: translate3d(5px, 0, 0) scaleX(1.012); }
-  86% { transform: translate3d(-2px, 0, 0) scaleX(.995); }
-  100% { transform: translate3d(0, 0, 0) scaleX(1); }
+  0% { transform: translate3d(calc(var(--message-reply-start, 0px) * .12), 0, 0) scaleX(var(--message-reply-start-scale, 1)) scaleY(.98); }
+  42% { transform: translate3d(-4px, 0, 0) scaleX(.91) scaleY(1.04); }
+  65% { transform: translate3d(2px, 0, 0) scaleX(1.045) scaleY(.985); }
+  82% { transform: translate3d(-1px, 0, 0) scaleX(.985) scaleY(1.008); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
 }
 .message-context-menu button[data-message-action="reply"] { padding-inline-start: 41px; }
 .chat-message-quote {

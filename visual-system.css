@@ -672,3 +672,209 @@ body.authenticated .tab-selection-indicator { transition-duration: 210ms; }
   body.authenticated .top-actions > .icon-button,
   body.authenticated .top-actions .notification-button { transition: none; }
 }
+
+/* Minimal / 2026.10.20
+   Flat, neutral surfaces and editorial spacing replace the nested gold cards.
+   Do not transform a page/scroll owner: navigation and gestures own that space. */
+:root {
+  --bb2-canvas: #101112;
+  --bb2-panel: #191b1d;
+  --bb2-raised: #222427;
+  --bb2-hover: #2a2d30;
+  --bb2-line: #ffffff0f;
+  --bb2-line-strong: #ffffff21;
+  --bb2-ink: #f4f4f1;
+  --bb2-secondary: #b6b9bb;
+  --bb2-muted: #929699;
+  --bb2-gold: #d0b883;
+  --bb2-gold-soft: #e1cca1;
+  --bb2-gold-dark: #4c4434;
+  --bb2-radius: 14px;
+  --bb2-control-radius: 10px;
+  --bb2-shadow: none;
+}
+body.light {
+  --bb2-canvas: #f7f7f4;
+  --bb2-panel: #ffffff;
+  --bb2-raised: #eeeeeb;
+  --bb2-hover: #e7e7e3;
+  --bb2-line: #14171b10;
+  --bb2-line-strong: #14171b25;
+  --bb2-ink: #191c1f;
+  --bb2-secondary: #51575b;
+  --bb2-muted: #687075;
+  --bb2-gold: #7d601f;
+  --bb2-gold-soft: #795b21;
+}
+body.authenticated { background: var(--bb2-canvas); }
+body.authenticated .noise { display: none; }
+body.authenticated :is(.panel-heading h3,.section-intro h2,.packs-heading h2,.club-calendar-heading h2,.club-profile-identity h2) {
+  font-weight: 600;
+  letter-spacing: -.035em;
+}
+body.authenticated .topbar { padding-bottom: 16px; border-bottom: 1px solid var(--bb2-line); }
+body.authenticated .topbar-title h1 { font-size: clamp(23px,3vw,30px); letter-spacing: -.05em; }
+body.authenticated :is(.primary-button,.secondary-button,.packs-sync,.text-button) { font-weight: 550; text-shadow: none; }
+body.authenticated .primary-button { background: var(--bb2-ink); color: var(--bb2-canvas); border-color: transparent; box-shadow: none; }
+body.authenticated .secondary-button { background: transparent; border-color: var(--bb2-line-strong); }
+body.authenticated :is(.floating-tab-bar,.notifications-dropdown,.chat-header,.message-form,.club-profile,.club-search .search-hub-box,.inbox-search) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body.authenticated .floating-tab-bar { padding: 6px; border-radius: 16px; background: var(--bb2-panel); border-color: var(--bb2-line-strong); box-shadow: 0 4px 20px #0002; }
+body.authenticated .tab-selection-indicator { background: var(--bb2-hover); border-radius: 10px; box-shadow: none; }
+body.authenticated .app-tab { color: var(--bb2-muted); }
+body.authenticated .app-tab.active { color: var(--bb2-ink); }
+
+/* Home: plans, members, music and news read as sections, not nested windows. */
+body.authenticated #inicio:is(.active,.page-back-preview) { gap: 30px; }
+body.authenticated #inicio .club-welcome { padding-bottom: 0; margin: 0; border: 0; }
+body.authenticated #inicio .club-welcome h2 { font-size: clamp(32px,4vw,46px); font-weight: 550; }
+body.authenticated #inicio .club-welcome .status-pill { border: 0; background: transparent; padding: 6px 0; color: var(--bb2-muted); }
+body.authenticated #inicio .club-search .search-hub-box { min-height: 48px; border: 0; border-radius: 12px; background: var(--bb2-panel); }
+body.authenticated #inicio .club-search input { height: 48px; }
+body.authenticated #inicio .club-dashboard > .club-plans { padding: 0; border: 0; border-radius: 0; background: transparent; }
+body.authenticated #inicio .club-plans .panel-heading h3 { font-size: 17px; text-transform: none; letter-spacing: -.025em; color: var(--bb2-ink); }
+body.authenticated #inicio .club-event-with-tigreton { padding: 14px 0; border-top: 1px solid var(--bb2-line-strong); border-bottom: 1px solid var(--bb2-line); }
+body.authenticated #inicio .club-event-open > time { padding: 0; border: 0; background: transparent; color: var(--bb2-muted); }
+body.authenticated #inicio .club-event-details > strong { font-size: clamp(18px,2vw,23px); font-weight: 550; }
+body.authenticated #inicio .club-event-countdown { padding: 0; background: transparent; border: 0; color: var(--bb2-gold); }
+body.authenticated #inicio .club-calendar-link { margin-top: 10px; padding-top: 8px; border: 0; color: var(--bb2-secondary); }
+body.authenticated #inicio .home-members-section > .panel-heading h3 { font-size: 23px; font-weight: 550; }
+body.authenticated #inicio .members-grid { gap: 16px; padding-bottom: 10px; scrollbar-color: var(--bb2-line-strong) transparent; }
+body.authenticated #inicio .club-member { border: 0; border-radius: 12px; background: var(--bb2-panel); box-shadow: none; }
+body.authenticated #inicio .club-member .club-member-hero .avatar { outline: 0; border-width: 3px; box-shadow: none; }
+body.authenticated #inicio .club-member-identity { padding: 9px 16px 17px; }
+body.authenticated #inicio .club-member strong { font-size: 16px; font-weight: 550; }
+body.authenticated #inicio .club-member small { font-size: 12px; color: var(--bb2-muted); }
+body.authenticated #inicio .club-dashboard > .spotify-panel { padding: 20px; border: 0; border-radius: 14px; background: var(--bb2-panel); }
+body.authenticated .club-spotify-player { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+body.authenticated .spotify-track strong { font-size: 17px; font-weight: 550; }
+body.authenticated .spotify-art { border-radius: 8px; box-shadow: none; }
+body.authenticated .spotify-controls button { background: transparent; border-color: transparent; box-shadow: none; }
+body.authenticated .spotify-controls .spotify-toggle { background: #1ed760; color: #07140b; box-shadow: none; }
+body.authenticated :is(.spotify-authorize,.spotify-account button,.spotify-queue>button) { border-radius: 10px; font-weight: 500; }
+
+/* Inbox: quiet separators and open rows, retaining every action and badge. */
+body.authenticated .chat-inbox .inbox-tools { padding-bottom: 18px; }
+body.authenticated .chat-inbox .bb2-inbox-heading h2 { font-size: 32px; font-weight: 550; }
+body.authenticated .chat-inbox .inbox-search { border: 0; background: var(--bb2-panel); border-radius: 12px; }
+body.authenticated .chat-inbox .inbox-filters { padding: 0; border-radius: 0; background: transparent; gap: 16px; }
+body.authenticated .chat-inbox .inbox-filters button { padding: 10px 2px; border-radius: 0; border-bottom: 2px solid transparent; font-size: 13px; font-weight: 500; }
+body.authenticated .chat-inbox .inbox-filters button[aria-pressed="true"] { border-bottom-color: var(--bb2-ink); background: transparent; color: var(--bb2-ink); }
+body.authenticated .chat-inbox .unified-chat-list { gap: 0; }
+body.authenticated .chat-inbox .unified-chat-list .private-contact { min-height: 84px; padding: 17px 0; border: 0; border-bottom: 1px solid var(--bb2-line); border-radius: 0; background: transparent; }
+body.authenticated .chat-inbox .unified-chat-list .private-contact.has-unread { background: transparent; border-color: var(--bb2-line); }
+body.authenticated .chat-inbox .private-contact-copy strong { font-size: 15px; font-weight: 550; }
+body.authenticated .chat-inbox .private-contact-copy small { font-size: 13px; color: var(--bb2-muted); }
+body.authenticated .chat-inbox .private-contact-copy time { color: var(--bb2-muted); }
+body.authenticated .chat-header { background: var(--bb2-canvas); box-shadow: none; }
+body.authenticated .message-form { box-shadow: none; border-color: var(--bb2-line); }
+
+/* Collection: art owns the color; surrounding controls remain neutral. */
+body.authenticated #sobres .packs-display { border: 0; border-radius: 14px; background: var(--bb2-panel); }
+body.authenticated #sobres .packs-art-button { filter: none; }
+body.authenticated #sobres .packs-display-edition { color: var(--bb2-muted); font-weight: 500; }
+body.authenticated .bb2-pack-copy h3 { font-size: clamp(26px,3vw,36px); font-weight: 550; }
+body.authenticated .bb2-album-entry { padding: 22px; border: 0; border-radius: 14px; background: var(--bb2-panel); gap: 15px; }
+body.authenticated .bb2-album-entry > strong { font-size: 24px; font-weight: 550; }
+body.authenticated .bb2-album-pages { gap: 8px; }
+body.authenticated .bb2-album-pages i { background: var(--bb2-raised); border-color: var(--bb2-line-strong); border-radius: 6px; }
+body.authenticated .bb2-album-pages i:nth-child(1),body.authenticated .bb2-album-pages i:nth-child(2),body.authenticated .bb2-album-pages i:nth-child(4) { background: #d0b88325; border-color: #d0b88340; }
+body.authenticated #sobres .packs-daily-panel { padding: 20px 0; border: 0; border-top: 1px solid var(--bb2-line); border-radius: 0; background: transparent; }
+body.authenticated :is(.collection-card-meta,.collection-card-hint) { text-transform: none; letter-spacing: 0; color: var(--bb2-muted); }
+body.authenticated .collection-card-tile > strong { font-size: 14px; font-weight: 550; }
+body.authenticated .collection-card-grid { gap: 26px 18px; }
+body.authenticated :is(.collection-catalog-trigger,.card-album-trigger,.duplicate-cards-trigger) { border-color: transparent; background: var(--bb2-panel); color: var(--bb2-secondary); border-radius: 10px; }
+body.authenticated .card-album-header { border-color: var(--bb2-line); }
+body.authenticated .card-album-header h2 { font-weight: 550; }
+
+/* Profile and calendar use open sections; banner and identity stay together. */
+body.authenticated .club-profile { border: 0; border-radius: 0; background: transparent; padding: 20px 0; box-shadow: none; }
+body.authenticated .club-profile-identity h2 { font-size: clamp(26px,4vw,34px); font-weight: 550; }
+body.authenticated .club-profile-bio { color: var(--bb2-secondary); line-height: 1.65; }
+body.authenticated .club-profile .profile-tags span { padding: 4px 0; margin-right: 12px; border: 0; background: transparent; }
+body.authenticated .club-profile .profile-edit-compact { border-color: var(--bb2-line-strong); background: transparent; border-radius: 10px; }
+body.authenticated #perfil .profile-achievements { padding: 24px 0; border: 0; border-top: 1px solid var(--bb2-line); border-radius: 0; background: transparent; }
+body.authenticated #perfil .profile-feed-heading h3 { font-size: 21px; font-weight: 550; }
+body.authenticated #calendario .calendar-month-panel,body.authenticated #calendario .calendar-agenda-panel { border: 0; border-radius: 14px; background: var(--bb2-panel); }
+body.authenticated #calendario .calendar-grid { border: 0; border-radius: 14px; background: var(--bb2-panel); }
+body.authenticated #calendario .calendar-day { border-radius: 9px; }
+body.authenticated #calendario .calendar-day.selected { background: var(--bb2-hover); border: 1px solid var(--bb2-line-strong); }
+body.authenticated #calendario .calendar-day.today > .calendar-day-number { color: var(--bb2-canvas); background: var(--bb2-ink); }
+body.authenticated #calendario .calendar-navigation .icon-button { border-color: transparent; background: transparent; }
+
+/* Store: consistent tile scale, no oversized featured card or patterned chrome. */
+body.authenticated #bannerShopDialog { border-radius: 18px; background: var(--bb2-canvas); box-shadow: 0 12px 40px #0005; }
+body.authenticated #bannerShopDialog::backdrop { background: #0009; -webkit-backdrop-filter: none; backdrop-filter: none; }
+body.authenticated #bannerShopDialog .shop-topbar { background: var(--bb2-canvas); -webkit-backdrop-filter: none; backdrop-filter: none; }
+body.authenticated #bannerShopDialog .shop-brand { color: var(--bb2-ink); }
+body.authenticated #bannerShopDialog .shop-content { padding: 28px; }
+body.authenticated #bannerShopDialog .shop-kicker { text-transform: none; letter-spacing: 0; color: var(--bb2-muted); font-size: 12px; }
+body.authenticated #bannerShopDialog #bannerShopTitle { font-size: clamp(30px,5vw,40px); font-weight: 550; }
+body.authenticated #bannerShopDialog .shop-wallet { border: 0; border-radius: 10px; background: var(--bb2-panel); }
+body.authenticated #bannerShopDialog .shop-navigation { padding: 0; border: 0; border-radius: 0; background: transparent; gap: 22px; }
+body.authenticated #bannerShopDialog .shop-navigation button { border-radius: 0; padding-inline: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--bb2-muted); }
+body.authenticated #bannerShopDialog .shop-navigation button[aria-selected="true"] { background: transparent; border-bottom-color: var(--bb2-ink); color: var(--bb2-ink); box-shadow: none; }
+body.authenticated #bannerShopDialog .banner-shop-items { gap: 22px; }
+body.authenticated #bannerShopDialog .banner-shop-item { grid-column: auto; border: 0; border-radius: 12px; background: var(--bb2-panel); box-shadow: none; }
+body.authenticated #bannerShopDialog :is(.shop-card-content,.is-featured .shop-card-content) { padding: 18px; }
+body.authenticated #bannerShopDialog :is(.banner-shop-item h3,.is-featured h3) { font-size: 20px; font-weight: 550; }
+body.authenticated #bannerShopDialog .shop-card-labels { font-size: 9px; letter-spacing: .04em; }
+body.authenticated #bannerShopDialog .shop-purchase-button { border: 0; border-radius: 9px; background: var(--bb2-ink); color: var(--bb2-canvas); font-weight: 550; }
+body.authenticated #bannerShopDialog .is-equipped .shop-purchase-button { background: var(--bb2-hover); color: var(--bb2-secondary); }
+body.authenticated #bannerShopDialog .shop-voucher-art { background: var(--bb2-raised); border: 0; }
+body.authenticated #bannerShopDialog .reward-voucher-mark { transform: none; box-shadow: none; background: transparent; border-color: var(--bb2-line-strong); }
+
+/* News: images and headlines carry emphasis; metadata and actions recede. */
+body.authenticated #inicio > #noticias { border: 0; border-top: 1px solid var(--bb2-line-strong); border-radius: 0; background: transparent; }
+body.authenticated #noticias .club-news-heading { padding: 22px 0; }
+body.authenticated #noticias .club-news-heading h3 { font-size: 23px; font-weight: 550; }
+body.authenticated #noticias .club-news-heading .news-collapse-button { color: var(--bb2-secondary); border: 0; background: transparent; border-radius: 8px; }
+body.authenticated #noticias .news-tabs { border: 0; border-radius: 0; padding: 0; gap: 18px; background: transparent; }
+body.authenticated #noticias .news-tab { padding-inline: 0; border-radius: 0; border-bottom: 2px solid transparent; color: var(--bb2-muted); font-weight: 500; }
+body.authenticated #noticias .news-tab.active { background: transparent; color: var(--bb2-ink); border-bottom-color: var(--bb2-ink); }
+body.authenticated #noticias .news-card { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+body.authenticated #noticias .news-media { border-radius: 10px; }
+body.authenticated #noticias .news-card-body { padding: 18px 0; }
+body.authenticated #noticias .news-card h3 a { color: var(--bb2-ink); font-weight: 550; }
+body.authenticated #noticias .news-card-meta > span { color: var(--bb2-muted); font-weight: 500; }
+body.authenticated #noticias .news-summary { color: var(--bb2-secondary); }
+body.authenticated #noticias .news-card-actions > a { color: var(--bb2-secondary); font-weight: 500; }
+body.authenticated #noticias .news-share-button,body.authenticated #noticias #refreshNewsButton { border: 0; background: transparent; color: var(--bb2-secondary); }
+body.authenticated #noticias .news-latest { padding-top: 18px; border-top: 1px solid var(--bb2-line); gap: 16px; }
+body.authenticated #noticias .news-latest .news-card-body { padding: 0; }
+
+/* Short feedback only. Large blurred surfaces never run during a gesture. */
+@media (hover:hover) and (pointer:fine) {
+  body.authenticated #inicio .club-member:hover { background: var(--bb2-raised); }
+  body.authenticated .chat-inbox .unified-chat-list .private-contact:hover { background: var(--bb2-panel); }
+  body.authenticated #bannerShopDialog .banner-shop-item:hover { background: var(--bb2-raised); }
+}
+@media (max-width:760px) {
+  body.authenticated #inicio:is(.active,.page-back-preview) { gap: 26px; }
+  body.authenticated #inicio .club-welcome h2 { font-size: 34px; }
+  body.authenticated #inicio .club-dashboard > .spotify-panel { padding: 18px; }
+  body.authenticated #inicio .members-grid { grid-auto-columns: min(86%,340px); }
+  body.authenticated #bannerShopDialog { border-radius: 0; }
+  body.authenticated #bannerShopDialog .shop-content { padding: 24px 20px; }
+  body.authenticated #bannerShopDialog .shop-topbar { padding-inline: 20px; }
+  body.authenticated .collection-card-grid { gap: 22px 13px; }
+  body.authenticated .chat-inbox .unified-chat-list .private-contact { min-height: 82px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  body.authenticated .banner-panorama img,body.authenticated .banner-panorama::after { animation: none; }
+}
+html[data-reduced-motion="true"] body.authenticated .banner-panorama img,html[data-reduced-motion="true"] body.authenticated .banner-panorama::after { animation: none; }
+body.authenticated .spotify-controls button { color: var(--bb2-ink); }
+body.authenticated .spotify-controls .spotify-toggle { color: #07140b; }
+body.authenticated :is(.spotify-track>span:last-child,.spotify-queue>p,.spotify-queue-heading>span,.spotify-queue li>div span,.spotify-queue-duration,.spotify-queue-number) { color: var(--bb2-muted); }
+body.authenticated :is(.spotify-track strong,.spotify-queue-heading strong,.spotify-queue li>div strong,.spotify-account button,.spotify-authorize,.spotify-queue>button) { color: var(--bb2-ink); }
+body.authenticated :is(.spotify-account button,.spotify-authorize,.spotify-queue>button) { border-color: var(--bb2-line-strong); background: var(--bb2-raised); }
+body.authenticated #bannerShopDialog .shop-item-kind { color: var(--bb2-muted); letter-spacing: .05em; font-weight: 500; }
+body.authenticated .top-actions svg { width: 20px; height: 20px; }
+body.authenticated .admin-settings-entry { border-radius: 12px; background: transparent; box-shadow: none; }
+body.authenticated .admin-settings-symbol { border-radius: 0; background: transparent; color: var(--bb2-secondary); }
+body.authenticated .admin-summary > * { border: 0; border-radius: 12px; background: var(--bb2-panel); }
+body.authenticated :is(.profile-editor-modal,.achievement-assignment-modal,.modal) { border-color: var(--bb2-line-strong); background-color: var(--bb2-panel); box-shadow: 0 12px 40px #0004; }
+body.authenticated :is(.modal-heading h2,.profile-editor-modal h2) { font-weight: 550; letter-spacing: -.035em; }
