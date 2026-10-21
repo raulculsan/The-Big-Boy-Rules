@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v365";
+const CACHE_NAME = "big-boy-rules-v366";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -77,9 +77,9 @@ const APP_SHELL = [
   "./icons/banners/alberto-galicia-member-figures-v1.webp",
   "./daily-packs.js?v=20261020-polish-357",
   "./packs.css?v=20261021-halloween-365",
-  "./card-thumbnails.js?v=20261021-halloween-365",
+  "./card-thumbnails.js?v=20261021-halloween-jose-366",
   "./card-media.js?v=20261021-performance-363",
-  "./card-collection.js?v=20261021-halloween-365",
+  "./card-collection.js?v=20261021-halloween-jose-366",
   "./icons/cards/raul-culsan-gonzalez-full-art-92-playa-v5.jpg",
   "./icons/cards/ruben-king-vice-city-96-v2.jpg",
   "./icons/cards/cristobal-fabrik-vice-city-91-v2.jpg",

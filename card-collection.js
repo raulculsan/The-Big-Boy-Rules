@@ -2,6 +2,13 @@
 (() => {
   const catalog = Object.freeze([
     Object.freeze({
+      id: 'jose-enrique-fernandez-cruz-halloween', collection: 'los-nuestros-01',
+      kind: 'Miembro', name: 'JOSE ENRIQUE FERNANDEZ CRUZ', edition: 'Halloween', rarity: 'halloween', score: 97,
+      front: 'icons/cards/jose-enrique-fernandez-cruz-halloween-97-v1.png',
+      back: 'icons/cards/reverso-halloween-v1.png',
+      width: 948, height: 1660
+    }),
+    Object.freeze({
       id: 'daniel-gonzalez-motos-halloween', collection: 'los-nuestros-01',
       kind: 'Miembro', name: 'DANIEL GONZALEZ MOTOS', edition: 'Halloween', rarity: 'halloween', score: 96,
       front: 'icons/cards/daniel-gonzalez-motos-halloween-96-v2.png',

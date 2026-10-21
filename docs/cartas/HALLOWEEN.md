@@ -17,3 +17,5 @@ Marco de metal ennegrecido y cobre, interior ciruela/índigo, tipografía marfil
 Cada carta tendrá escenario y composición propios. Daniel aparece vestido de fantasma en un vestíbulo sobrenatural. No reutilizar ese entorno en las siguientes cartas. Evitar tintar uniformemente todo el arte de naranja o morado.
 
 El nombre, el tipo y los puntos se componen sobre el marco sin cubrir cara ni manos. El reverso mantiene BB/HALLOWEEN y no incluye al personaje.
+
+- José Enrique Fernández Cruz, 97 PTS: `icons/cards/jose-enrique-fernandez-cruz-halloween-97-v1.png`. Comparte el 1 % de la rareza Halloween con Daniel; no añade probabilidad.

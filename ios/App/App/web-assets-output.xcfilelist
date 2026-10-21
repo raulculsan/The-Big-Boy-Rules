@@ -130,6 +130,7 @@ $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thum
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thumbnails/jeringuilla-comun-v1.jpg
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thumbnails/jose-enrique-fernandez-cruz-comun-86-v4.jpg
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thumbnails/jose-enrique-fernandez-cruz-full-art-93-v3.jpg
+$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thumbnails/jose-enrique-fernandez-cruz-halloween-97-v1.jpg
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thumbnails/josefa-valcarcel-epica-v1.jpg
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thumbnails/juan-carlos-vega-quevedo-comun-78-v1.jpg
 $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public/icons/cards/thumbnails/juan-carlos-vega-quevedo-retro-87-v1.jpg
