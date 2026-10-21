@@ -52,7 +52,7 @@
   <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
   <link rel="stylesheet" href="collection-social.css?v=20261015-mutual-trades-305" />
   <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
-  <link rel="stylesheet" href="visual-system.css?v=20261021-pwa-inset-374" />
+  <link rel="stylesheet" href="visual-system.css?v=20261021-pwa-viewport-375" />
   <link rel="stylesheet" href="clubhouse.css?v=20261021-chota-room-371" />
 </head>
 <body>
@@ -953,11 +953,11 @@
   <script defer src="daily-packs.js?v=20261021-activity-packs-372"></script>
   <script defer src="collection-motion.js?v=20261021-halloween-365"></script>
   <script defer src="card-thumbnails.js?v=20261021-halloween-jose-366"></script>
-  <script defer src="card-media.js?v=20261021-pwa-inset-374"></script>
+  <script defer src="card-media.js?v=20261021-pwa-viewport-375"></script>
   <script defer src="card-collection.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
-  <script defer src="collection-social.js?v=20261021-pwa-inset-374"></script>
+  <script defer src="collection-social.js?v=20261021-pwa-viewport-375"></script>
   <script defer src="album.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="banner-shop.js?v=20261021-dynamic-cards-367"></script>
@@ -969,24 +969,91 @@
   <script defer src="app.js?v=20261021-activity-packs-372"></script>
   <script>
     if ("serviceWorker" in navigator) {
+      // Asset revisions identify the document actually on screen, including an
+      // older document restored by iOS while a newer worker is already active.
+      const documentRelease = Math.max(0, ...Array.from(document.querySelectorAll("link[href],script[src]"), element =>
+        Number(new URL(element.src || element.href, location.href).searchParams.get("v")?.match(/-(\d+)$/)?.[1]) || 0));
+      document.documentElement.dataset.appRelease = String(documentRelease);
+      let registration, pendingRelease = 0, lastCheck = 0;
+      const dirtyFields = new Map();
+      let safeUntil = Date.now() + 30000, scheduled = false;
+      const editable = element => element?.matches?.("input:not([type=button]):not([type=submit]):not([type=checkbox]):not([type=radio]),textarea,[contenteditable=true]");
+      const interacted = () => { safeUntil = 0; };
+      for (const type of ["pointerdown", "keydown", "scroll"]) document.addEventListener(type, interacted, {capture:true, passive:true});
+      document.addEventListener("beforeinput", event => {
+        const field = event.target;
+        if (editable(field) && !dirtyFields.has(field)) dirtyFields.set(field, field.value ?? field.textContent);
+      }, true);
+      document.addEventListener("input", event => {
+        const field = event.target;
+        if (editable(field) && !dirtyFields.has(field)) dirtyFields.set(field, field.defaultValue ?? "");
+      }, true);
+      const applyUpdate = () => {
+        if (!pendingRelease || document.hidden || Date.now() > safeUntil || editable(document.activeElement)) return;
+        if (document.querySelector("dialog[open],.modal-backdrop.open")) return;
+        for (const [field, initial] of dirtyFields) {
+          if (!field.isConnected) { dirtyFields.delete(field); continue; }
+          if (field.getClientRects().length && (field.value ?? field.textContent) !== initial) return;
+        }
+        // A failed offline navigation must not cause a refresh loop on resume.
+        try {
+          if (sessionStorage.getItem("bb-pwa-auto-release") === String(pendingRelease)) return;
+          sessionStorage.setItem("bb-pwa-auto-release", String(pendingRelease));
+        } catch {}
+        location.reload();
+      };
+      const inspectWorker = worker => {
+        if (!worker) return;
+        const channel = new MessageChannel();
+        const timer = setTimeout(() => channel.port1.close(), 1500);
+        channel.port1.onmessage = event => {
+          clearTimeout(timer); channel.port1.close();
+          const release = Number(String(event.data?.release || "").match(/-v(\d+)$/)?.[1]);
+          if (release > documentRelease) { pendingRelease = release; setTimeout(applyUpdate, 150); }
+        };
+        try { worker.postMessage({type:"BB_GET_RELEASE"}, [channel.port2]); }
+        catch { clearTimeout(timer); channel.port1.close(); }
+      };
+      const watchWorker = worker => {
+        if (!worker) return;
+        const inspect = () => { if (worker.state === "activated") inspectWorker(worker); };
+        worker.addEventListener("statechange", inspect); inspect();
+      };
+      const checkUpdate = () => {
+        applyUpdate();
+        if (!registration) return;
+        inspectWorker(registration.active);
+        if (Date.now() - lastCheck < 60000 || !navigator.onLine) return;
+        lastCheck = Date.now();
+        void registration.update().catch(() => {});
+      };
+      const resume = () => { safeUntil = Date.now() + 15000; checkUpdate(); };
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) resume(); });
+      window.addEventListener("pageshow", event => { if (event.persisted) resume(); });
+      window.addEventListener("online", checkUpdate);
       window.addEventListener("load", () => {
         const register = () => {
-          // A downloaded release handles the next navigation; existing
-          // documents keep their controller and never reload mid-interaction.
-          if (document.activeElement?.matches("input,textarea,[contenteditable=true]")) {
+          if (editable(document.activeElement)) {
             setTimeout(schedule, 2000);
             return;
           }
           navigator.serviceWorker.register("./service-worker.js", {scope:"./", updateViaCache:"none"})
+            .then(value => {
+              registration = value;
+              registration.addEventListener("updatefound", () => watchWorker(registration.installing));
+              watchWorker(registration.installing);
+              checkUpdate();
+            })
             .catch(error => console.warn("No se pudo activar el modo PWA:", error));
         };
         const schedule = () => {
-          if (window.requestIdleCallback) requestIdleCallback(register, {timeout:10000});
-          else setTimeout(register, 2000);
+          if (window.requestIdleCallback) requestIdleCallback(register, {timeout:3000});
+          else setTimeout(register, 500);
         };
-        const afterLaunch = () => setTimeout(schedule, 8000);
+        const afterLaunch = () => { if (!scheduled) { scheduled = true; setTimeout(schedule, 1000); } };
         if (document.documentElement.dataset.launchReady === "true") afterLaunch();
         else document.addEventListener("bb:launch-ready", afterLaunch, {once:true});
+        setTimeout(afterLaunch, 10000);
       });
     }
   </script>

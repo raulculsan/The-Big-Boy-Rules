@@ -939,9 +939,6 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
 }
 @media (max-width:760px) {
   body.authenticated { --tab-safe-bottom: var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px)); }
-  /* iOS may retain a toolbar-sized inset when a home-screen PWA resumes. The
-     dock reserves only the home indicator, rather than raising its entire row. */
-  body.authenticated.standalone-app:not(.native-android) { --tab-safe-bottom: clamp(0px,var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px)),34px); }
   body.authenticated .app > .topbar { height: calc(56px + var(--pwa-safe-top,0px)); padding: var(--pwa-safe-top,0px) 18px 0; }
   body.authenticated .app > .page-section,
   body.authenticated.standalone-app .app > .page-section { padding-top: 14px; padding-bottom: calc(80px + env(safe-area-inset-bottom,0px)); }
@@ -956,6 +953,17 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
   body.authenticated .floating-tab-bar .app-tab { box-sizing: border-box; height: 48px; min-height: 48px; padding: 4px; }
   body.authenticated .floating-tab-bar .tab-selection-indicator { bottom: calc(var(--tab-shell-padding) + var(--tab-safe-bottom)); }
   body.authenticated .profile-tab-photo { width: 34px; height: 34px; flex-basis: 34px; line-height: 28px; }
+  @supports (-webkit-touch-callout: none) {
+    /* The iOS inset can include invisible Safari controls even if standalone
+       detection differs between installed shortcuts. */
+    body.authenticated:not(.native-android) { --tab-safe-bottom: clamp(0px,var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px)),34px); }
+    /* WebKit 254868: standalone fixed-bottom coordinates may exclude the safe
+       area while legacy 100vh includes the complete home-screen window. */
+    body.authenticated.standalone-app:not(.native-android) .floating-tab-bar { top: calc(100vh - 58px - var(--tab-safe-bottom)); bottom: auto; }
+    @media (display-mode: standalone) {
+      body.authenticated:not(.native-android) .floating-tab-bar { top: calc(100vh - 58px - var(--tab-safe-bottom)); bottom: auto; }
+    }
+  }
 }
 
 @media (max-width:760px) {
