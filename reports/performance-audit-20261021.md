@@ -21,7 +21,9 @@ Scope: shared JavaScript/runtime and delivered artwork for desktop web, mobile w
 | Native cache eviction result | Entire retained blob collection (budget 32 MiB) | Metadata only |
 | Hidden chat/admin tasks in Home hydration | 4 | 0 |
 
-The WebP dimensions are unchanged, so reduced transfer/package bytes do not imply equivalent decoded-memory reduction. The fallback dimension reduction does reduce its bitmap pixel count by 89.0% if decoded. Final package/APK size must be measured after the production build.
+The WebP dimensions are unchanged, so reduced transfer/package bytes do not imply equivalent decoded-memory reduction. The fallback dimension reduction does reduce its bitmap pixel count by 89.0% if decoded.
+
+After packaging, the web delivery tree contains 83,543,065 bytes (303 files). Each native web tree contains 35,436,626 bytes (229 files), down from roughly 54 MiB on disk before this pass. The Android debug APK builds at 58,687,271 bytes. The earlier APK was not an equivalent clean baseline, so no APK percentage improvement is claimed.
 
 ## Existing controls verified in code
 
@@ -34,3 +36,5 @@ The WebP dimensions are unchanged, so reduced transfer/package bytes do not impl
 ## Validation and limits
 
 Syntax checks completed for modified JavaScript and build scripts; git whitespace check clean. Generation checked dimensions and alpha equality for every optimized image. Runtime source references were checked for old converted PNG filenames, including the dynamic basketball pose template. No test suite was run and no on-device timing is claimed. IndexedDB upgrade/offline artwork, reduced-motion banners, first chat entry, and rapid reply gestures still need normal browser/device checks after integration. Existing reply gesture logic was not changed.
+
+The local unauthenticated web shell logged `shell-ready` at 243 ms on its first desktop-sized load and 121 ms on a cached 390×844 reload. These are smoke measurements of different cache states, not a before/after comparison or a measurement of authenticated Home. No console error or warning appeared in that local session. Xcode CLI compilation could not start because the environment denies SwiftPM cache writes and CoreSimulatorService failed to initialize; Android `assembleDebug` completed successfully.
