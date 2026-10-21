@@ -766,7 +766,8 @@
         // covers profile mounting and reconnect, not just packs navigation.
         await options?.synchronizePacks?.(forceDaily);
         if (token !== generation || user !== options.session()) return;
-        const data = await rpc('get_banner_shop_state'); if (token === generation && user === options.session()) {state = {...data, banners:(data.banners || []).filter(banner => banner.id !== 'banner-de-prueba'), daily_banner_ids:Array.isArray(data.daily_banner_ids) ? data.daily_banner_ids.filter(id => id !== 'banner-de-prueba') : undefined, equipped_banner_id:data.equipped_banner_id === 'banner-de-prueba' ? null : data.equipped_banner_id}; scheduleShopReset(); saveInventory(user, data.cards); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
+        const catalogRefresh = globalThis.CardCatalogSync?.refresh();
+        const data = await rpc('get_banner_shop_state'); if ((data.cards || []).some(item => !card(item.card_id))) await catalogRefresh; if (token === generation && user === options.session()) {state = {...data, banners:(data.banners || []).filter(banner => banner.id !== 'banner-de-prueba'), daily_banner_ids:Array.isArray(data.daily_banner_ids) ? data.daily_banner_ids.filter(id => id !== 'banner-de-prueba') : undefined, equipped_banner_id:data.equipped_banner_id === 'banner-de-prueba' ? null : data.equipped_banner_id}; scheduleShopReset(); saveInventory(user, data.cards); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
       catch (error) { if (token === generation) {failure = errorMessage(error); render();} }
       finally {if (token === generation) {loading = false; request = null; render();}}
     })();
@@ -844,6 +845,8 @@
       state = null;
       if (name === 'open_owned_card_pack') {
         const draws = data.cards || (data.card ? [data.card] : []);
+        if (draws.some(item => !card(item.card_id))) await globalThis.CardCatalogSync?.refresh(true);
+        if (token !== generation || user !== options.session()) return;
         el('ownedPackResult').textContent = `${draws.length} cartas guardadas en tu colección.`;
         startReveal(draws);
         await options.synchronizePacks?.(true);
@@ -1004,5 +1007,6 @@
     revealDialog.close(); el('duplicatesDialog')?.close();
     el('bannerShopDialog')?.close(); if (el('ownedPackResult')) el('ownedPackResult').replaceChildren(); render();
   }
+  document.addEventListener('bb:card-catalog-updated', () => {if (options && (revealDialog.open || el('duplicatesDialog')?.open || el('sobres')?.classList.contains('active'))) render();});
   globalThis.BannerShop = Object.freeze({initialize, offlineInventory, forgetOfflineInventory, refresh, openEditor, closeEditor, mountProfile, mountMembers, memberArtwork, artwork, reset});
 })();

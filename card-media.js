@@ -8,7 +8,9 @@
   const inflight = new Map(), objectURLs = new Map();
   const canonical = value => value?.startsWith(base) ? value.slice(base.length) : value;
   const source = value => native && manifest[value] ? new URL(manifest[value], base).href : value;
-  const originals = new Map(Object.keys(manifest).map(key => [source(key), key]));
+  const originals = new Map(native ? Object.keys(manifest).map(key => [source(key), key]) : []);
+  const remoteFallbacks = new Map();
+  function register(url, fallback) {if (typeof url === 'string' && url.startsWith('https://')) {originals.set(url,url);if (fallback && fallback !== url) remoteFallbacks.set(url,fallback);}}
   function db() {
     if (!database) database = new Promise((resolve, reject) => {
       const request = indexedDB.open('bb-card-art-v1', 2);
@@ -96,10 +98,11 @@
   }
   function hydrate(image) {
     const value = image.getAttribute('src');
+    if (image.dataset.cardMedia && value === remoteFallbacks.get(image.dataset.cardMedia)) return;
     const original = originals.get(value);
     if (!original || (image.dataset.cardMedia === value && inflight.has(value))) return;
     image.dataset.cardMedia = value;
-    const fallback = globalThis.CardThumbnails?.[original];
+    const fallback = remoteFallbacks.get(value) || globalThis.CardThumbnails?.[original];
     if (fallback) image.src = fallback;
     void art(value).then(blob => {
       if (!image.isConnected || image.dataset.cardMedia !== value) return;
@@ -112,8 +115,8 @@
       releaseUnused();
     }).catch(() => { delete image.dataset.cardMedia; /* Packaged preview stays available offline. */ });
   }
-  globalThis.CardMedia = Object.freeze({native, source, canonical});
-  if (!native) return;
+  globalThis.CardMedia = Object.freeze({native, source, canonical, register});
+  // Remote published artwork uses the same bounded disk cache on web and native.
   const observer = new MutationObserver(records => {
     for (const record of records) {
       if (record.type === 'attributes') hydrate(record.target);

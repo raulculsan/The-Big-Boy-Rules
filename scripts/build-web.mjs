@@ -43,6 +43,7 @@ const sources = [
   "card-thumbnails.js",
   "card-media.js",
   "card-collection.js",
+  "card-catalog-sync.js",
   "collection-motion.js",
   "collection-social.js",
   "collection-social.css",

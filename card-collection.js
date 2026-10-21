@@ -1,6 +1,6 @@
 /* Published designs, not a user's inventory. Pack awards stay server-owned. */
 (() => {
-  const catalog = Object.freeze([
+  const catalog = [
     Object.freeze({
       id: 'jose-enrique-fernandez-cruz-halloween', collection: 'los-nuestros-01',
       kind: 'Miembro', name: 'JOSE ENRIQUE FERNANDEZ CRUZ', edition: 'Halloween', rarity: 'halloween', score: 97,
@@ -549,7 +549,8 @@
     })
   ].map(card => Object.freeze({...card,
     front: globalThis.CardMedia?.source(card.front) || card.front
-  })));
+  }));
+  const bundledCatalog = [...catalog];
   const dialog = document.getElementById('collectionCardDialog');
   const grid = document.getElementById('collectionCardGrid');
   if (!dialog || !grid) return;
@@ -652,7 +653,7 @@
     const index = rarityOrder.indexOf(card.edition);
     return index < 0 ? rarityOrder.length : index;
   };
-  const catalogOrder = [...catalog].sort((a, b) =>
+  const catalogOrder = () => [...catalog].sort((a, b) =>
     rarityRank(a) - rarityRank(b)
     || Number(b.score != null) - Number(a.score != null)
     || (a.score != null && b.score != null ? b.score - a.score : 0)
@@ -668,13 +669,13 @@
     if (image.getAttribute('src') !== original) image.src = original;
   }, true);
   // Thumbnail lookup falls back safely for a not-yet-generated future design.
-  const thumbnail = card => globalThis.CardThumbnails?.[globalThis.CardMedia?.canonical(card?.front) || card?.front] || card?.front || '';
+  const thumbnail = card => card?.thumbnail || globalThis.CardThumbnails?.[globalThis.CardMedia?.canonical(card?.front) || card?.front] || card?.front || '';
   let catalogRendered = false;
   function renderCatalog() {
   if (catalogRendered) return;
   catalogRendered = true;
   const fragment = document.createDocumentFragment();
-  for (const card of catalogOrder) {
+  for (const card of catalogOrder()) {
     const button = document.createElement('button');
     button.type = 'button'; button.className = 'collection-card-tile';
     button.setAttribute('aria-label', `Ver carta de ${accessibleDescription(card)}`);
@@ -691,18 +692,27 @@
     button.addEventListener('click', () => open(card, button));
     fragment.append(button);
   }
-  grid.append(fragment);
+  grid.replaceChildren(fragment);
   }
   // A hidden catalog must not create/decode dozens of images at launch.
   const catalogPage = document.getElementById('catalogo');
   const catalogObserver = new MutationObserver(() => {
     if (!catalogPage.classList.contains('active')) return;
     renderCatalog();
-    catalogObserver.disconnect();
   });
   if (catalogPage?.classList.contains('active')) renderCatalog();
-  else if (catalogPage) catalogObserver.observe(catalogPage, {attributes:true, attributeFilter:['class']});
-  globalThis.CardCollection = Object.freeze({catalog, thumbnail, close, open(cardId, button) {
+  if (catalogPage) catalogObserver.observe(catalogPage, {attributes:true, attributeFilter:['class']});
+  function applyPublished(designs) {
+    const next = new Map(bundledCatalog.map(card => [card.id, card]));
+    for (const card of designs) next.set(card.id, Object.freeze(card));
+    const cards = [...next.values()];
+    if (JSON.stringify(cards) === JSON.stringify(catalog)) return;
+    catalog.splice(0, catalog.length, ...cards);
+    catalogRendered = false;
+    if (catalogPage?.classList.contains('active')) renderCatalog();
+    document.dispatchEvent(new CustomEvent('bb:card-catalog-updated', {detail:{collections:[...new Map(cards.map(card => [card.collection || 'los-nuestros-01',{id:card.collection || 'los-nuestros-01',name:card.collectionName || 'Los nuestros · Colección 01'}])).values()]}}));
+  }
+  globalThis.CardCollection = Object.freeze({catalog, bundledCatalog:Object.freeze(bundledCatalog), applyPublished, thumbnail, close, open(cardId, button) {
     const card = catalog.find(item => item.id === cardId);
     if (card) open(card, button);
   }});
