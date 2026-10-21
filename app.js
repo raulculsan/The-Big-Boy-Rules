@@ -1652,7 +1652,7 @@ function activateMessageReplyGesture(gesture, event, capture = true) {
   gesture.tracking = true;
   cancelMessageHold();
   gesture.bubble.classList.add("is-reply-dragging");
-  if (capture) {
+  if (capture && gesture.source === "pointer") {
     try { gesture.bubble.setPointerCapture(event.pointerId); } catch { /* Detached during live refresh. */ }
   }
   return true;
@@ -1665,7 +1665,9 @@ function resetMessageReplyGesture(commit = false) {
   const bubble = gesture.bubble;
   // Release capture before opening the keyboard. Otherwise a live render or
   // viewport resize can strand the pointer on an old message element.
-  try { if (bubble.hasPointerCapture(gesture.pointerId)) bubble.releasePointerCapture(gesture.pointerId); } catch { /* Detached by realtime. */ }
+  if (gesture.source === "pointer") {
+    try { if (bubble.hasPointerCapture(gesture.pointerId)) bubble.releasePointerCapture(gesture.pointerId); } catch { /* Detached by realtime. */ }
+  }
   const spring = gesture.tracking && gesture.offset > 0 && bubble.isConnected;
   bubble.style.setProperty("--message-reply-start", `${gesture.offset}px`);
   bubble.style.setProperty("--message-reply-start-scale", String(gesture.scale));
@@ -1679,46 +1681,92 @@ function resetMessageReplyGesture(commit = false) {
   if (commit && gesture.tracking && gesture.ready && bubble.isConnected)
     selectChatReply({kind: bubble.dataset.messageKind, id: bubble.dataset.messageId});
 }
-document.addEventListener("pointerdown", event => {
-  // A second finger cancels the reply rather than starting a new gesture.
-  if (event.isPrimary === false) { resetMessageReplyGesture(); return; }
+// Touch owns its complete lifecycle. WebKit can cancel the compatibility
+// pointer stream when it starts panning; preventing pointermove cannot prevent
+// that. An active touchmove listener claims only horizontal drags, and touchend
+// supplies the release even when pointerup/capture have already disappeared.
+const messageReplyUsesTouchEvents = "ontouchstart" in window;
+function beginMessageReplyGesture(target, point, source, id) {
   resetMessageReplyGesture();
-  const bubble = event.target.closest("[data-message-bubble]");
-  if (!bubble || event.button !== 0 || event.target.closest("button:not([data-chat-image]):not([data-chat-quote]), a, input, textarea, audio, video") || messageMenuTarget) return;
+  const bubble = target.closest("[data-message-bubble]");
+  if (!bubble || target.closest("button:not([data-chat-image]):not([data-chat-quote]), a, input, textarea, audio, video") || messageMenuTarget) return;
   const input = document.getElementById(bubble.dataset.messageKind === "private" ? "privateMessageInput" : "messageInput");
   if (!input || input.disabled) return;
   stopMessageReplySpring(bubble);
   const width = Math.max(80, bubble.getBoundingClientRect().width);
-  messageReplyGesture = {bubble, pointerId: event.pointerId, x: event.clientX, y: event.clientY,
-    width, offset: 0, scale: 1, frame: 0, tracking: false, ready: false, armed: false, peakX: 0,
-    samples: [{x: event.clientX, time: event.timeStamp ?? performance.now()}]};
+  messageReplyGesture = {bubble, source, pointerId: source === "pointer" ? id : null, touchId: source === "touch" ? id : null,
+    x: point.clientX, y: point.clientY, width, offset: 0, scale: 1, frame: 0, tracking: false, ready: false, armed: false, peakX: 0,
+    samples: [{x: point.clientX, time: point.timeStamp ?? performance.now()}]};
+}
+function moveMessageReplyGesture(gesture, point, event) {
+  if (!gesture.bubble.isConnected) { resetMessageReplyGesture(); return; }
+  const x = point.clientX - gesture.x, y = point.clientY - gesture.y;
+  if (Math.hypot(x, y) > 11) cancelMessageHold();
+  if (!gesture.tracking) {
+    if ((Math.abs(y) > 10 && Math.abs(y) > Math.abs(x)) || x < -12) { resetMessageReplyGesture(); return; }
+    if (!activateMessageReplyGesture(gesture, point)) return;
+  }
+  // A noncancelable touchmove means native scrolling already won. Do not turn
+  // the end of a scroll into a reply, even if its later movement is horizontal.
+  if (gesture.source === "touch" && !event.cancelable) { resetMessageReplyGesture(); return; }
+  if (event.cancelable) event.preventDefault();
+  sampleMessageReplyGesture(gesture, point);
+  if (!gesture.frame) gesture.frame = requestAnimationFrame(() => paintMessageReplyGesture(gesture));
+}
+function finishMessageReplyGesture(gesture, point) {
+  // A short flick may have no move events. Resolve intent from its release;
+  // always resample so a deliberate pull back still cancels an armed reply.
+  if (activateMessageReplyGesture(gesture, point, false)) sampleMessageReplyGesture(gesture, point);
+  resetMessageReplyGesture(true);
+}
+function messageReplyTouchPoint(touch, event) {
+  return {clientX: touch.clientX, clientY: touch.clientY, timeStamp: event.timeStamp};
+}
+document.addEventListener("touchstart", event => {
+  if (event.touches.length !== 1) { resetMessageReplyGesture(); cancelMessageHold(); return; }
+  const touch = event.changedTouches[0];
+  if (touch) beginMessageReplyGesture(event.target, messageReplyTouchPoint(touch, event), "touch", touch.identifier);
+}, {passive: true});
+// Scope the blocking listener to the transcripts so unrelated pages retain
+// their native fast scrolling. touch-action: pan-y still permits vertical scroll.
+for (const container of [document.getElementById("messages"), document.getElementById("privateMessages")]) {
+  container?.addEventListener("touchmove", event => {
+    const gesture = messageReplyGesture;
+    if (!gesture || gesture.source !== "touch") return;
+    if (event.touches.length !== 1) { resetMessageReplyGesture(); return; }
+    const touch = [...event.changedTouches].find(item => item.identifier === gesture.touchId);
+    if (touch) moveMessageReplyGesture(gesture, messageReplyTouchPoint(touch, event), event);
+  }, {passive: false});
+}
+document.addEventListener("touchend", event => {
+  const gesture = messageReplyGesture;
+  if (!gesture || gesture.source !== "touch") return;
+  const touch = [...event.changedTouches].find(item => item.identifier === gesture.touchId);
+  if (!touch) return;
+  if (event.touches.length) { resetMessageReplyGesture(); return; }
+  finishMessageReplyGesture(gesture, messageReplyTouchPoint(touch, event));
+}, {passive: true});
+document.addEventListener("touchcancel", event => {
+  if (messageReplyGesture?.source === "touch" && [...event.changedTouches].some(touch => touch.identifier === messageReplyGesture.touchId)) resetMessageReplyGesture();
+}, {passive: true});
+document.addEventListener("pointerdown", event => {
+  if (event.pointerType === "touch" && messageReplyUsesTouchEvents) return;
+  if (event.isPrimary === false || event.button !== 0) { resetMessageReplyGesture(); return; }
+  beginMessageReplyGesture(event.target, event, "pointer", event.pointerId);
 }, {passive: true});
 document.addEventListener("pointermove", event => {
   const gesture = messageReplyGesture;
-  if (!gesture || event.pointerId !== gesture.pointerId) return;
-  // WebKit can report a terminal touch move with buttons=0 before pointerup.
-  // Only use that signal to cancel an actual mouse drag.
-  if (!gesture.bubble.isConnected || (event.pointerType === "mouse" && event.buttons === 0)) { resetMessageReplyGesture(); return; }
-  const x = event.clientX - gesture.x, y = event.clientY - gesture.y;
-  if (!gesture.tracking) {
-    if ((Math.abs(y) > 10 && Math.abs(y) > Math.abs(x)) || x < -12) { resetMessageReplyGesture(); return; }
-    if (!activateMessageReplyGesture(gesture, event)) return;
-  }
-  if (event.cancelable) event.preventDefault();
-  sampleMessageReplyGesture(gesture, event);
-  if (!gesture.frame) gesture.frame = requestAnimationFrame(() => paintMessageReplyGesture(gesture));
+  if (!gesture || gesture.source !== "pointer" || event.pointerId !== gesture.pointerId) return;
+  if (event.pointerType === "mouse" && event.buttons === 0) { resetMessageReplyGesture(); return; }
+  moveMessageReplyGesture(gesture, event, event);
 }, {passive: false});
 document.addEventListener("pointerup", event => {
   const gesture = messageReplyGesture;
-  if (gesture?.pointerId !== event.pointerId) return;
-  // A fast swipe may have no move events at all. Establish horizontal intent
-  // from the release too, without trying to capture an already released pointer.
-  // Always resample here so a deliberate pull back still cancels the reply.
-  if (activateMessageReplyGesture(gesture, event, false)) sampleMessageReplyGesture(gesture, event);
-  resetMessageReplyGesture(true);
+  if (gesture?.source === "pointer" && gesture.pointerId === event.pointerId) finishMessageReplyGesture(gesture, event);
 }, {passive: true});
-document.addEventListener("pointercancel", event => { if (messageReplyGesture?.pointerId === event.pointerId) resetMessageReplyGesture(); }, {passive: true});
-document.addEventListener("lostpointercapture", event => { if (messageReplyGesture?.pointerId === event.pointerId) resetMessageReplyGesture(); }, {passive: true});
+for (const type of ["pointercancel", "lostpointercapture"]) document.addEventListener(type, event => {
+  if (messageReplyGesture?.source === "pointer" && messageReplyGesture.pointerId === event.pointerId) resetMessageReplyGesture();
+}, {passive: true});
 window.addEventListener("blur", () => resetMessageReplyGesture());
 document.addEventListener("scroll", event => { if (messageReplyGesture && event.target.contains?.(messageReplyGesture.bubble)) resetMessageReplyGesture(); }, {capture: true, passive: true});
 
