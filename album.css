@@ -118,3 +118,5 @@
 .offline-album-access{display:grid;gap:5px;width:100%;margin-top:12px;padding:13px 15px;background:#d8bd8010;border:1px solid #d8bd8030;border-radius:12px;color:inherit;text-align:left}.offline-album-access[hidden]{display:none}.offline-album-access strong{font-size:13px}.offline-album-access small{color:#9297a3;font-size:10px;line-height:1.5}
 body.offline-album-mode #album{visibility:visible;position:fixed;inset:0;z-index:9001;overflow:auto;overscroll-behavior:contain;background:#101217;padding:calc(env(safe-area-inset-top) + 20px) 16px calc(env(safe-area-inset-bottom) + 20px);margin:0;box-sizing:border-box;width:100%;height:100dvh;max-width:none;}
 body.offline-album-mode #album .card-album{max-width:1000px;margin:0 auto}body.offline-album-mode #album [data-duplicates-open]{display:none}body.offline-album-mode #collectionCardDialog{z-index:9002}
+
+.card-album-leaf[data-rarity=halloween]{--album-accent:#e2b77e;border-color:#b37d4866;border-left-color:#c28d5577}.card-album-tabs button[data-album-rarity=halloween][aria-pressed=true]{background:#a9682428;border-color:#d5aa70;color:#f2d6a5}

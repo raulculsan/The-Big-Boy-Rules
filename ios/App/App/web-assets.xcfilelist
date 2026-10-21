@@ -73,6 +73,7 @@ $(SRCROOT)/App/public/icons/cards/reverso-comun-unificado-v1.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-especial-unificado-v1.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-especial-unificado-v2.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-full-art-unificado-v1.jpg
+$(SRCROOT)/App/public/icons/cards/reverso-halloween-v1.png
 $(SRCROOT)/App/public/icons/cards/reverso-legendario-unificado-v1.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-retro-unificado-v1.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-vice-city-unificado-v1.jpg
@@ -106,6 +107,7 @@ $(SRCROOT)/App/public/icons/cards/thumbnails/cuba-epica-v1.jpg
 $(SRCROOT)/App/public/icons/cards/thumbnails/cubo-de-alitas-kfc-legendario-v1.jpg
 $(SRCROOT)/App/public/icons/cards/thumbnails/daniel-gonzalez-motos-comun-80-v4.jpg
 $(SRCROOT)/App/public/icons/cards/thumbnails/daniel-gonzalez-motos-full-art-87-v1.jpg
+$(SRCROOT)/App/public/icons/cards/thumbnails/daniel-gonzalez-motos-halloween-96-v2.jpg
 $(SRCROOT)/App/public/icons/cards/thumbnails/el-retiro-especial-v1.jpg
 $(SRCROOT)/App/public/icons/cards/thumbnails/estadio-santiago-bernabeu-retro-v1.jpg
 $(SRCROOT)/App/public/icons/cards/thumbnails/estadio-vicente-calderon-retro-v1.jpg

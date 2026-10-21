@@ -200,3 +200,6 @@ body.authenticated .topbar .top-actions{flex-shrink:0;gap:5px}
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* Halloween: moonlight and ember particles; one-shot, transform/opacity only. */
+.reveal-haunted-moon{inset:5% 2%;border-radius:50%;background:radial-gradient(ellipse,#f3d6a244,transparent 65%);animation-name:reveal-bloom!important}.reveal-haunted-ring{inset:8px;border:2px solid #dca45c;border-radius:28px;box-shadow:0 0 20px #b86d3388,inset 0 0 15px #b86d3355;animation-name:reveal-wave!important}.reveal-haunted-ember{left:var(--x);top:var(--y);width:5px;height:9px;background:#ffc16a;border-radius:60% 10% 50% 10%;box-shadow:0 0 6px #f29844;animation-name:reveal-shard!important}

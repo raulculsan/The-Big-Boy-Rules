@@ -6,8 +6,8 @@ import {runInNewContext} from 'node:vm';
 import {inflateSync} from 'node:zlib';
 import {readCardImage} from './read-card-image.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const editions = {Común:'common', Retro:'retro', Especial:'special', Épica:'epic', Legendaria:'legendary', 'Full Art':'full_art', 'Vice City':'vice_city'};
-const backNames = {common:'comun',retro:'retro',special:'especial',epic:'especial',legendary:'legendar',full_art:'full-art',vice_city:'vice-city'};
+const editions = {Común:'common', Retro:'retro', Especial:'special', Épica:'epic', Legendaria:'legendary', 'Full Art':'full_art', 'Vice City':'vice_city', Halloween:'halloween'};
+const backNames = {common:'comun',retro:'retro',special:'especial',epic:'especial',legendary:'legendar',full_art:'full-art',vice_city:'vice-city',halloween:'halloween'};
 const legacyFormats = new Map([['raul-culsan-gonzalez-full-art','985x1597'],['hospital-12-de-octubre-comun','986x1596'],['caonabo-alberto-full-art','985x1597'],['carlos-gonzalez-motos-full-art','985x1596'],['mario-salvatierra-medina-full-art','985x1597'],['cuba-epica','985x1596'],['titulacion-comun','985x1597'],['satisfyer-comun','986x1596']]);
 function png(data) {
   if (data.length < 33 || data.toString('hex',0,8) !== '89504e470d0a1a0a') throw new Error('Archivo PNG inválido');

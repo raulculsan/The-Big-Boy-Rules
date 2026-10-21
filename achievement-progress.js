@@ -23,7 +23,7 @@
     const plural = Number(rule.target) !== 1;
     if (rule.metric === 'daily_packs_earned') return `Consigue ${goal} ${plural ? 'sobres diarios' : 'sobre diario'}`;
     if (rule.metric === 'cards_acquired') {
-      const editions = plural ? {common:'comunes',special:'especiales',epic:'épicas',legendary:'legendarias',retro:'retro',full_art:'Full Art',vice_city:'Vice City'} : {common:'común',special:'especial',epic:'épica',legendary:'legendaria',retro:'retro',full_art:'Full Art',vice_city:'Vice City'};
+      const editions = plural ? {common:'comunes',special:'especiales',epic:'épicas',legendary:'legendarias',retro:'retro',full_art:'Full Art',vice_city:'Vice City',halloween:'Halloween'} : {common:'común',special:'especial',epic:'épica',legendary:'legendaria',retro:'retro',full_art:'Full Art',vice_city:'Vice City',halloween:'Halloween'};
       const kinds = {member:'miembros',object:'objetos',location:'ubicaciones'};
       const filters = [rule.edition && editions[rule.edition], rule.kind && `de ${kinds[rule.kind]}`].filter(Boolean).join(' ');
       const scope = rule.collectionKey ? ` · ${rule.collectionName || rule.collectionKey}` : ' · Todas las colecciones';

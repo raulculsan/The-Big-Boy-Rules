@@ -159,7 +159,7 @@
     window.addEventListener('hashchange',()=>{if(dialog.open)dialog.close();});
   }
   // One-shot rarity reveal. A separate lifecycle keeps navigation independent of VFX.
-  const packRevealDurations={common:650,retro:1000,special:1200,epic:1450,legendary:1750,full_art:2000,vice_city:2400};
+  const packRevealDurations={common:650,retro:1000,special:1200,epic:1450,legendary:1750,full_art:2000,vice_city:2400,halloween:2200};
   function playPackReveal(stage,edition,{peak=false}={}) {
     if(!stage||(globalThis.ClubMotion?.media || window.matchMedia?.('(prefers-reduced-motion: reduce)')).matches)return ()=>{};
     const rarity=Object.hasOwn(packRevealDurations,edition)?edition:'common';
@@ -174,6 +174,7 @@
       epic:'<i class="reveal-shockwave"></i><i class="reveal-shockwave reveal-shockwave-echo"></i>'+particle('reveal-crystal',12),
       legendary:'<i class="reveal-sunburst"></i><i class="reveal-gold-ring"></i>'+particle('reveal-gold-spark',20),
       full_art:'<i class="reveal-prism-a"></i><i class="reveal-prism-b"></i><i class="reveal-prism-c"></i>'+particle('reveal-prism-star',16),
+      halloween:'<i class="reveal-haunted-moon"></i><i class="reveal-haunted-ring"></i>'+particle('reveal-haunted-ember',14),
       vice_city:'<i class="reveal-neon-sun"></i><i class="reveal-neon-grid"></i><i class="reveal-neon-horizon"></i><i class="reveal-neon-pulse"></i>'+particle('reveal-neon-streak',18)
     };
     host.innerHTML=scenes[rarity];stage.prepend(host);

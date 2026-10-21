@@ -1,10 +1,10 @@
 /* The catalog defines slots; only the server inventory fills them. */
 (() => {
-  const rarities = [{key:'common',label:'Común',capacity:[12,4,4]}, {key:'retro',label:'Retro',capacity:[8,6,6]}, {key:'special',label:'Especial',capacity:[6,7,7]}, {key:'epic',label:'Épica',capacity:[6,7,7]}, {key:'legendary',label:'Legendaria',capacity:[6,7,7]}, {key:'full_art',label:'Full Art',capacity:[10,5,5]}, {key:'vice_city',label:'Vice City',capacity:[10,5,5]}];
+  const rarities = [{key:'common',label:'Común',capacity:[12,4,4]}, {key:'retro',label:'Retro',capacity:[8,6,6]}, {key:'special',label:'Especial',capacity:[6,7,7]}, {key:'epic',label:'Épica',capacity:[6,7,7]}, {key:'legendary',label:'Legendaria',capacity:[6,7,7]}, {key:'full_art',label:'Full Art',capacity:[10,5,5]}, {key:'vice_city',label:'Vice City',capacity:[10,5,5]}, {key:'halloween',label:'Halloween',capacity:[10,5,5]}];
   const kinds = [{key:'miembros',label:'Miembros'}, {key:'ubicaciones',label:'Ubicaciones'}, {key:'objetos',label:'Objetos'}];
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const normalize = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const rarityOf = item => ({common:'common',comun:'common',retro:'retro',special:'special',especial:'special',epic:'epic',epica:'epic',legendary:'legendary',legendaria:'legendary','full art':'full_art',full_art:'full_art','vice city':'vice_city',vice_city:'vice_city'}[normalize(item.rarity || item.edition)] || 'common');
+  const rarityOf = item => ({common:'common',comun:'common',retro:'retro',special:'special',especial:'special',epic:'epic',epica:'epic',legendary:'legendary',legendaria:'legendary','full art':'full_art',full_art:'full_art','vice city':'vice_city',vice_city:'vice_city',halloween:'halloween'}[normalize(item.rarity || item.edition)] || 'common');
   const icon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M5 8h4M5 11h4M15 8h4M15 11h4"/></svg>';
   let collections = [{id:'los-nuestros-01',name:'Los nuestros · Colección 01'}], selectedCollection = 'los-nuestros-01';
   let query = '', kindFilter = '', rarityFilter = '', ownershipFilter = '', allSlots = [];

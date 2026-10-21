@@ -2,6 +2,13 @@
 (() => {
   const catalog = Object.freeze([
     Object.freeze({
+      id: 'daniel-gonzalez-motos-halloween', collection: 'los-nuestros-01',
+      kind: 'Miembro', name: 'DANIEL GONZALEZ MOTOS', edition: 'Halloween', rarity: 'halloween', score: 96,
+      front: 'icons/cards/daniel-gonzalez-motos-halloween-96-v2.png',
+      back: 'icons/cards/reverso-halloween-v1.png',
+      width: 948, height: 1660
+    }),
+    Object.freeze({
       id: 'juan-manuel-perez-saldana-comun', collection: 'los-nuestros-01',
       kind: 'Personaje', name: 'JUAN MANUEL PEREZ SALDAÑA', edition: 'Común', rarity: 'common', score: 81,
       front: 'icons/cards/juan-manuel-perez-saldana-comun-81-v1.jpg',
@@ -633,7 +640,7 @@
     }
   });
   window.addEventListener('hashchange', close);
-  const rarityOrder = ['Vice City', 'Full Art', 'Legendaria', 'Épica', 'Especial', 'Retro', 'Común'];
+  const rarityOrder = ['Halloween', 'Vice City', 'Full Art', 'Legendaria', 'Épica', 'Especial', 'Retro', 'Común'];
   const rarityRank = card => {
     const index = rarityOrder.indexOf(card.edition);
     return index < 0 ? rarityOrder.length : index;

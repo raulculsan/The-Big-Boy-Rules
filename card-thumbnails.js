@@ -28,6 +28,7 @@ globalThis.CardThumbnails = Object.freeze({
   "icons/cards/cubo-de-alitas-kfc-legendario-v1.jpg": "icons/cards/thumbnails/cubo-de-alitas-kfc-legendario-v1.jpg",
   "icons/cards/daniel-gonzalez-motos-comun-80-v4.jpg": "icons/cards/thumbnails/daniel-gonzalez-motos-comun-80-v4.jpg",
   "icons/cards/daniel-gonzalez-motos-full-art-87-v1.jpg": "icons/cards/thumbnails/daniel-gonzalez-motos-full-art-87-v1.jpg",
+  "icons/cards/daniel-gonzalez-motos-halloween-96-v2.png": "icons/cards/thumbnails/daniel-gonzalez-motos-halloween-96-v2.jpg",
   "icons/cards/el-retiro-especial-v1.jpg": "icons/cards/thumbnails/el-retiro-especial-v1.jpg",
   "icons/cards/estadio-santiago-bernabeu-retro-v1.jpg": "icons/cards/thumbnails/estadio-santiago-bernabeu-retro-v1.jpg",
   "icons/cards/estadio-vicente-calderon-retro-v1.jpg": "icons/cards/thumbnails/estadio-vicente-calderon-retro-v1.jpg",
