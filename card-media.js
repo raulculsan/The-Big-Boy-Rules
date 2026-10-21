@@ -113,7 +113,18 @@
       }
       entry.images.add(image); image.src = entry.objectURL;
       releaseUnused();
-    }).catch(() => { delete image.dataset.cardMedia; /* Packaged preview stays available offline. */ });
+    }).catch(() => {
+      if (image.dataset.cardMedia !== value) return;
+      delete image.dataset.cardMedia;
+      // A newly published card may have an unavailable thumbnail. Its generic
+      // placeholder is not a usable preview: retry the original face once.
+      const originalFace = image.dataset.cardOriginal;
+      if (image.isConnected && originalFace && originalFace !== value && fallback?.endsWith('card-art-unavailable.svg')) {
+        delete image.dataset.cardOriginal;
+        image.src = originalFace;
+      }
+      /* A real packaged preview stays available offline. */
+    });
   }
   globalThis.CardMedia = Object.freeze({native, source, canonical, register});
   // Remote published artwork uses the same bounded disk cache on web and native.

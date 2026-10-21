@@ -91,6 +91,16 @@
         if(!rewards) {rewards=document.createElement('p');rewards.className='pack-rarity-odds';rewards.dataset.packProgression='';info.append(rewards);}
         const streak=state.data?.streak_days, allowance=state.data?.daily_reward_packs;
         rewards.textContent=(Number.isSafeInteger(streak) ? `Tu racha: ${streak} ${streak === 1 ? 'día' : 'días'} · ${allowance} ${allowance === 1 ? 'sobre hoy' : 'sobres hoy'}. ` : '')+'Racha: 1–2 días → 1 sobre; 3–6 → 2; 7–13 → 3; 14–29 → 4; 30 o más → 5. Trofeos: bronce 1 · plata 2 · oro 4 · platino 6 sobres.';
+        let activities=info.querySelector('[data-pack-activities]');
+        const enabled=state.data?.activity_reward_limit===3;
+        if(enabled&&!activities){activities=document.createElement('p');activities.className='pack-rarity-odds';activities.dataset.packActivities='';info.append(activities);}
+        if(activities){
+          activities.hidden=!enabled;
+          if(enabled){
+            const earned=state.data.activity_rewards||{}, completed=['message','poll','event'].filter(key=>earned[key]===true).length;
+            activities.textContent=`3 sobres extra cada día: +1 por tu primer mensaje en un grupo, +1 por votar en una encuesta y +1 por responder a un plan nuevo. Hoy: ${completed}/3 conseguidos. Se suman automáticamente; cambiar una respuesta no da otro sobre. El día se reinicia a las 00:00, hora de Madrid.`;
+          }
+        }
       }
       const panel=document.getElementById('packsDailyPanel');
       if(panel) panel.dataset.state=state.status;
@@ -99,5 +109,11 @@
     document.getElementById('packsSyncButton')?.addEventListener('click',()=>void ui.refresh(true));
     render(ui.snapshot());
   }
-  globalThis.DailyPacks=Object.freeze({createStore,presentation,initialize,updateBalance,refresh:(...args)=>ui?.refresh(...args),reset:()=>ui?.reset()});
+  function activityCompleted(kind) {
+    const data=ui?.snapshot().data;
+    if(!['message','poll','event'].includes(kind)||data?.activity_reward_limit!==3)return;
+    if(data.activity_rewards?.[kind]===true&&Date.parse(data.next_reset_at)>Date.now())return;
+    void ui.refresh(true);
+  }
+  globalThis.DailyPacks=Object.freeze({createStore,presentation,initialize,updateBalance,activityCompleted,refresh:(...args)=>ui?.refresh(...args),reset:()=>ui?.reset()});
 })();

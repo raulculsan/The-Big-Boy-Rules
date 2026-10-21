@@ -99,6 +99,7 @@
       const {error}=await query(config.db.rpc('respond_to_event',{p_event_id:state.eventId,p_occurrence:state.occurrence,p_response:response}));
       if(error)throw error;if(version!==epoch)return;
       state.fetchedAt=Date.now();state.rows=[...(state.rows||[]).filter(row=>row.user_id!==id),{user_id:id,response,event_id:state.eventId,occurrence:state.occurrence}];
+      globalThis.DailyPacks?.activityCompleted?.('event');
     }catch(error){if(version===epoch)state.error=message(error);}finally{if(version===epoch){state.pending=false;renderAttendance(key);}}
   }
   function dismissPlan() {
@@ -217,6 +218,7 @@
     let succeeded=false;
     try{
       const {error}=await query(config.db.rpc('vote_group_poll',{p_poll_id:pollId,p_channel_id:mount.channelId,p_option_id:optionId}));if(error)throw error;succeeded=true;
+      globalThis.DailyPacks?.activityCompleted?.('poll');
     }catch(error){if(pollMount===mount)mount.error=message(error);}finally{locks.delete(pollId);if(pollMount===mount){renderPolls();if(succeeded)void refreshPolls();}}
   }
   async function closePoll(pollId) {

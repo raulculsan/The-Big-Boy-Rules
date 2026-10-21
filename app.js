@@ -830,7 +830,7 @@ function goTo(sectionId) {
       if (sectionId === "inicio" && currentUser) renderSpotify();
       if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
       if (sectionId === "ayuda" && currentUser) loadHelpCenter();
-      if (sectionId === "sobres" && currentUser) void globalThis.BannerShop?.refresh(true);
+      if (sectionId === "sobres" && currentUser) { void globalThis.BannerShop?.refresh(true); void globalThis.DailyPacks?.refresh(true); }
       if (["perfil", "administracion", "admin-logros", "crear-logro", "asignar-logro"].includes(sectionId) && currentUser && !achievementsLoaded) loadAchievements();
     }, 120);
   });
@@ -2857,6 +2857,10 @@ function tigretonFallback(event, date) {
 }
 const tigretonComments = new Map();
 const tigretonRequests = new Map();
+const chotaRequestControllers = new Set();
+function isChotaSleeping(now = new Date()) { return now.getHours() < 6; }
+let chotaSleeping = isChotaSleeping();
+let chotaSleepTimer = 0;
 let chotaCommentSequence = 0;
 let tigretonRenderedKey = "";
 // One visible pet at a time: pause offscreen and cancel every timer on a rerender.
@@ -2884,7 +2888,7 @@ function ensureChotaSprites() {
 function mountTigretonMotion(reactToPlan, event, date) {
   tigretonMotion?.destroy();
   tigretonMotion = null;
-  const pet = document.querySelector("#upcomingEvents .tigreton-agenda");
+  const pet = document.querySelector("#clubhouseContent .tigreton-agenda");
   if (!pet) return;
   tigretonMotion = createTigretonMotion(pet, reactToPlan, event, date);
   if (document.getElementById("chotaViewer")?.open) tigretonMotion.pause();
@@ -2906,7 +2910,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     rest: [[0, 2], [18, 2], [19, 3], [20, 3], [21, 3], [22, 5], [23, 6], [22, 6], [23, 6], [22, 5], [21, 3], [20, 3], [19, 3], [18, 2], [0, 3]],
   };
   let inView = false, timer = 0, frameTimer = 0, animations = [], destroyed = false, lastGesture = "", paused = false, spriteRequest = 0;
-  const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches;
+  const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping();
   function setFrame(frame) {
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
   }
@@ -2916,7 +2920,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     clearTimeout(frameTimer);
     animations.forEach(animation => animation.cancel());
     animations = [];
-    pet.classList.remove("is-awake");
+    pet.classList.remove("is-awake", "is-sleeping");
     character.classList.remove("is-speaking");
     setFrame(0);
   }
@@ -2997,6 +3001,12 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   }
   function refresh() {
     stop();
+    if (!destroyed && isChotaSleeping()) {
+      // Hold the fully reclined frame, including with reduced motion enabled.
+      pet.classList.add("is-sleeping");
+      setFrame(22);
+      return;
+    }
     if (active()) { pet.classList.add("is-awake"); schedule(); }
   }
   const observer = new IntersectionObserver(entries => {
@@ -3005,11 +3015,13 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     if (inView && reactToPlan) { reactToPlan = false; play(isBirthday || (isToday && !isCall) ? "jump" : "greet"); }
   }, {threshold: .25});
   observer.observe(pet);
+  refresh();
   document.addEventListener("visibilitychange", refresh);
   tigretonReducedMotion.addEventListener("change", refresh);
   return {
     play,
     speak,
+    refresh,
     stopSpeaking: refresh,
     pause() { paused = true; refresh(); },
     resume() { paused = false; refresh(); },
@@ -3037,8 +3049,8 @@ function showChotaCommentResult(bubble, comment) {
   bubble.setAttribute("aria-busy", "false");
 }
 function openChotaViewer(trigger) {
-  const next = ClubModel.upcomingEvents(groupEvents)[0];
-  if (!next) return;
+  if (isChotaSleeping()) return;
+  const next = chotaRoomContext();
   let viewer = document.getElementById("chotaViewer");
   if (!viewer) {
     viewer = document.createElement("dialog");
@@ -3051,8 +3063,8 @@ function openChotaViewer(trigger) {
       if (event.target === viewer) { viewer.close(); return; }
       if (event.target.closest("[data-chota-close]")) viewer.close();
       const action = event.target.closest("[data-chota-action]");
-      if (action) {
-        const next = ClubModel.upcomingEvents(groupEvents)[0];
+      if (action && !isChotaSleeping()) {
+        const next = chotaRoomContext();
         const status = viewer.querySelector(".chota-viewer-status");
         if (next) {
           const contextKey = tigretonContextKey(next.event, next.date);
@@ -3063,7 +3075,7 @@ function openChotaViewer(trigger) {
           chotaViewerMotion?.stopSpeaking();
           chotaViewerMotion?.play(actionName);
           void loadTigretonComment(next.event, next.date, contextKey, actionName).then(result => {
-            if (!viewer.open || viewer.dataset.contextKey !== contextKey || viewer.dataset.requestKey !== requestKey || tigretonRenderedKey !== contextKey) return;
+            if (isChotaSleeping() || !viewer.open || viewer.dataset.contextKey !== contextKey || viewer.dataset.requestKey !== requestKey || tigretonRenderedKey !== contextKey) return;
             showChotaCommentResult(status, result.comment);
             chotaViewerMotion?.speak(result.comment, actionName);
           });
@@ -3093,11 +3105,13 @@ function openChotaViewer(trigger) {
   const key = tigretonContextKey(next.event, next.date);
   viewer.dataset.contextKey = key;
   delete viewer.dataset.requestKey;
-  if (!viewer.children.length) viewer.innerHTML = `<header class="chota-viewer-heading"><div><small>AGENDA DEL CLUB</small><h2 id="chotaViewerTitle">El Chota</h2></div><button type="button" data-chota-close aria-label="Cerrar">×</button></header>
+  if (!viewer.children.length) viewer.innerHTML = `<header class="chota-viewer-heading"><div><small>LA SEDE DEL CLUB</small><h2 id="chotaViewerTitle">El Chota</h2></div><button type="button" data-chota-close aria-label="Cerrar">×</button></header>
     <p class="chota-viewer-plan">${escapeHtml(next.event.title)}</p>
+    <div class="chota-viewer-room-scene">
+    <img class="chota-viewer-room-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="" aria-hidden="true" decoding="async">
     <div class="tigreton-agenda chota-viewer-pet">
     <div class="chota-viewer-bubble-slot"><div class="tigreton-bubble chota-viewer-status" role="status" aria-live="polite" aria-atomic="true" hidden></div></div>
-    <div class="chota-character-row"><button class="chota-viewer-touch" type="button" data-chota-action="nod" aria-label="Tocar a El Chota">${tigretonSpriteMarkup()}</button></div></div>
+    <div class="chota-character-row"><button class="chota-viewer-touch" type="button" data-chota-action="nod" aria-label="Tocar a El Chota">${tigretonSpriteMarkup()}</button></div></div></div>
     <div class="chota-viewer-actions"><button type="button" data-chota-action="nod" >Saludar</button><button type="button" data-chota-action="shuffle">Pasitos</button><button type="button" data-chota-action="celebrate">Celebrar</button><button type="button" data-chota-action="doze">Descansar</button></div>`;
   viewer.querySelector(".chota-viewer-plan").textContent = next.event.title;
   viewer.querySelector(".chota-viewer-status").hidden = true;
@@ -3115,8 +3129,9 @@ function openChotaViewer(trigger) {
 }
 // A tap shows an agenda comment; releasing a held mascot opens its separate scene.
 function showChotaAgendaComment(trigger) {
-  const next = ClubModel.upcomingEvents(groupEvents)[0];
-  const bubble = trigger.closest(".club-event-with-tigreton")?.querySelector(".tigreton-bubble");
+  if (isChotaSleeping()) return;
+  const next = chotaRoomContext();
+  const bubble = trigger.closest(".clubhouse-room, .club-event-with-tigreton")?.querySelector(".tigreton-bubble");
   if (!next || !bubble) return;
   if (trigger.getAttribute("aria-expanded") === "true") {
     delete trigger.dataset.commentRequest;
@@ -3132,7 +3147,7 @@ function showChotaAgendaComment(trigger) {
   showChotaCommentLoading(bubble);
   const key = tigretonContextKey(next.event, next.date);
   void loadTigretonComment(next.event, next.date, key).then(result => {
-    if (!trigger.isConnected || trigger.dataset.commentRequest !== requestKey || tigretonRenderedKey !== key || trigger.getAttribute("aria-expanded") !== "true") return;
+    if (isChotaSleeping() || !trigger.isConnected || trigger.dataset.commentRequest !== requestKey || tigretonRenderedKey !== key || trigger.getAttribute("aria-expanded") !== "true") return;
     showChotaCommentResult(bubble, result.comment);
     tigretonMotion?.speak(result.comment);
   });
@@ -3170,12 +3185,13 @@ document.addEventListener("pointerdown", event => {
   if (!event.isPrimary) { cancelChotaPress(true); return; }
   const target = event.target.closest("[data-chota-open]");
   if (!target || event.button !== 0) return;
+  if (isChotaSleeping()) { cancelChotaPress(true); return; }
   cancelChotaPress(true);
   chotaClickSuppression = null;
   chotaPress = {target, x: event.clientX, y: event.clientY, pointerId: event.pointerId, started: event.timeStamp, armed: false, holdTimer: 0};
   const press = chotaPress;
   press.holdTimer = setTimeout(() => {
-    if (chotaPress !== press || document.hidden) return;
+    if (isChotaSleeping() || chotaPress !== press || document.hidden) return;
     press.armed = true;
     target.classList.add("chota-hold-ready");
   }, CHOTA_HOLD_MS);
@@ -3191,7 +3207,7 @@ document.addEventListener("pointerup", event => {
   const held = press.armed && event.timeStamp - press.started >= CHOTA_HOLD_MS;
   const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y) > 10;
   cancelChotaPress(held || moved);
-  if (!held || moved || !press.target.isConnected || document.hidden) return;
+  if (isChotaSleeping() || !held || moved || !press.target.isConnected || document.hidden) return;
   // Opening only after release avoids moving the active touch into a modal.
   event.preventDefault();
   openChotaViewer(press.target);
@@ -3223,8 +3239,10 @@ function tigretonContextKey(event, date) {
   return JSON.stringify([currentAuthUser?.id || "", tigretonDayKey(), tigretonDayKey(date), event.id, event.title, event.description, event.startsAt, event.endsAt, event.location, event.eventType]);
 }
 async function loadTigretonComment(event, date, contextKey, action = "agenda") {
+  if (isChotaSleeping()) return {comment: "", source: "agenda"};
   const key = action === "agenda" ? contextKey : JSON.stringify([contextKey, action]);
   const fallback = () => ({comment: action === "agenda" ? tigretonFallback(event, date) : chotaActionComment(action, event, date), source: "agenda"});
+  if (event.eventType === "clubhouse") return {comment: action === "agenda" ? "La agenda está libre. Por aquí me quedo hasta el próximo plan." : ({nod: "Ey, ya estás por casa.", shuffle: "Voy a estirar las piernas un rato.", celebrate: "¡Así se entra en la sede!", doze: "Me quedo descansando por aquí."}[action] || "Ey, ya estás por casa."), source: "agenda"};
   if (!db || !currentAuthUser) return fallback();
   // Share an in-flight call, but never pin one AI sentence for the entire day.
   if (tigretonRequests.has(key)) return tigretonRequests.get(key);
@@ -3233,6 +3251,7 @@ async function loadTigretonComment(event, date, contextKey, action = "agenda") {
   const variation = previous ? (previous.variation + 1) % 12 : Math.floor(Math.random() * 12);
   const request = (async () => {
     const controller = new AbortController();
+    chotaRequestControllers.add(controller);
     const timeout = setTimeout(() => controller.abort(), 4500);
     try {
       const {data, error} = await db.functions.invoke("tigreton-agenda", {
@@ -3247,42 +3266,102 @@ async function loadTigretonComment(event, date, contextKey, action = "agenda") {
       return fallback();
     } finally {
       clearTimeout(timeout);
+      chotaRequestControllers.delete(controller);
       tigretonRequests.delete(key);
     }
   })();
   tigretonRequests.set(key, request);
   return request;
 }
-function renderUpcomingEvents() {
-  if (!homeEventsReady) {
-    document.getElementById("upcomingEvents").innerHTML = '<div class="home-loading-state" role="status">Cargando agenda…</div>';
-    return;
+// The room reads the agenda already in memory; it never adds a startup request.
+let clubhouseObserver = null;
+function chotaRoomContext() {
+  return ClubModel.upcomingEvents(groupEvents)[0] || {event: {id: "clubhouse-idle", title: "La agenda está libre", eventType: "clubhouse"}, date: new Date()};
+}
+function renderClubhouse(upcoming) {
+  const content = document.getElementById("clubhouseContent");
+  if (!content) return;
+  clubhouseObserver?.disconnect();
+  const next = upcoming[0];
+  const birthday = next?.event.eventType === "birthday";
+  const hour = new Date().getHours();
+  const moment = hour < 7 || hour >= 22 ? "night" : hour < 19 ? "day" : "evening";
+  const time = document.getElementById("clubhouseTime");
+  if (time) time.textContent = moment === "night" ? "Una noche en la sede" : moment === "day" ? "Hoy en la sede" : "Cae la tarde";
+  const days = next ? tigretonDaysUntil(next.date) : 0;
+  const countdown = !next ? "" : days === 0 ? "Es hoy" : days === 1 ? "Mañana" : `En ${days} días`;
+  const date = next ? next.date.toLocaleDateString("es-ES", {day: "numeric", month: "short"}).replace(".", "") : "";
+  const schedule = next ? (birthday ? "Cumpleaños" : conversationTimeFormatter.format(next.date)) : "";
+  const plan = next ? `<button class="clubhouse-plan" type="button" data-calendar-date="${tigretonDayKey(next.date)}" aria-label="Ver plan: ${escapeHtml(next.event.title)}"><span class="clubhouse-note-label">Próximo plan</span><strong>${escapeHtml(next.event.title)}</strong><span class="clubhouse-plan-date">${escapeHtml(date)} · ${escapeHtml(schedule)}</span><span class="clubhouse-plan-countdown">${countdown}</span></button>` : `<div class="clubhouse-plan clubhouse-plan-empty"><span class="clubhouse-note-label">La agenda</span><strong>${homeEventsReady ? "El próximo plan está por llegar" : "Consultando la agenda…"}</strong>${homeEventsReady ? '<button type="button" data-go="calendario">Ver calendario</button>' : ""}</div>`;
+  content.innerHTML = `<div class="clubhouse-room${birthday ? " is-birthday" : ""}" data-time="${moment}">
+    <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="async" fetchpriority="low">
+    <div class="clubhouse-lamplight" aria-hidden="true"></div><div class="clubhouse-dust" aria-hidden="true"><i></i><i></i><i></i></div>
+    ${birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ""}
+    ${plan}
+    <div class="clubhouse-memory"><span class="clubhouse-memory-label">Recuerdos del club</span><svg viewBox="0 0 40 32" aria-hidden="true"><path d="M4 8h8l3-5h10l3 5h8v21H4z"/><circle cx="20" cy="18" r="7"/></svg><strong>Aún no hay recuerdos compartidos</strong><span>Este sitio será para vuestra próxima foto.</span></div>
+    <div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small><button type="button" class="chota-expand" data-chota-expand aria-label="Ver a El Chota en pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 21h5v-5m0 5-7-7M16 3h5v5m0-5-7 7M8 21H3v-5m0 5 7-7"/></svg></button></div>
+    <div class="tigreton-bubble clubhouse-bubble" hidden role="status" aria-live="polite" aria-atomic="true"></div>
+  </div>`;
+  const room = content.firstElementChild;
+  clubhouseObserver = new IntersectionObserver(entries => room.classList.toggle("is-in-view", entries[0].isIntersecting), {threshold: .15});
+  clubhouseObserver.observe(room);
+  syncChotaSleepControls();
+}
+function syncChotaSleepControls() {
+  const sleeping = isChotaSleeping();
+  document.querySelectorAll("[data-chota-open], [data-chota-expand], [data-chota-action]").forEach(button => {
+    button.disabled = sleeping;
+    button.setAttribute("aria-disabled", String(sleeping));
+    if (button.matches("[data-chota-open]")) {
+      button.setAttribute("aria-label", sleeping ? "El Chota está durmiendo hasta las 06:00" : "Mostrar comentario de El Chota sobre el próximo plan");
+      if (sleeping) { delete button.dataset.commentRequest; button.setAttribute("aria-expanded", "false"); }
+    }
+    if (button.matches("[data-chota-expand]")) button.hidden = sleeping;
+  });
+  document.querySelector("#clubhouseContent .clubhouse-room")?.classList.toggle("is-sleeping", sleeping);
+  if (sleeping) {
+    document.querySelectorAll(".clubhouse-bubble, .chota-viewer-status").forEach(bubble => { bubble.hidden = true; bubble.setAttribute("aria-busy", "false"); });
   }
+}
+function refreshChotaSleepSchedule() {
+  clearTimeout(chotaSleepTimer);
+  const now = new Date();
+  const sleeping = isChotaSleeping(now);
+  if (sleeping !== chotaSleeping) {
+    chotaSleeping = sleeping;
+    cancelChotaPress(true);
+    if (sleeping) {
+      chotaRequestControllers.forEach(controller => controller.abort());
+      const viewer = document.getElementById("chotaViewer");
+      if (viewer?.open) viewer.close();
+    }
+    syncChotaSleepControls();
+    tigretonMotion?.refresh();
+    chotaViewerMotion?.refresh();
+  }
+  // One boundary timeout; the existing foreground check also catches clock changes.
+  const boundary = new Date(now);
+  if (sleeping) boundary.setHours(6, 0, 0, 0);
+  else { boundary.setDate(boundary.getDate() + 1); boundary.setHours(0, 0, 0, 0); }
+  chotaSleepTimer = setTimeout(refreshChotaSleepSchedule, Math.max(100, boundary.getTime() - now.getTime()));
+}
+function renderUpcomingEvents() {
   cancelChotaPress(true);
   const upcoming = ClubModel.upcomingEvents(groupEvents);
   const previousPlanKey = tigretonRenderedKey;
-  tigretonRenderedKey = upcoming.length ? tigretonContextKey(upcoming[0].event, upcoming[0].date) : "";
-  document.getElementById("upcomingEvents").innerHTML = upcoming.length ? upcoming.map(({event, date}, index) => {
-    const key = tigretonDayKey(date);
-    const days = tigretonDaysUntil(date);
-    const countdown = tigretonDayKey(date) < tigretonDayKey() ? "En curso" : days === 0 ? "¡Es hoy!" : days === 1 ? "Queda 1 día" : `Quedan ${days} días`;
-    const saved = index === 0 ? tigretonComments.get(tigretonRenderedKey) : null;
-    return `<${index === 0 ? "div" : "button"} class="club-event ${index === 0 ? "club-event-with-tigreton" : ""}" ${index === 0 ? "" : `type="button" data-calendar-date="${key}"`}>
-      ${index === 0 ? `<button class="club-event-open" type="button" data-calendar-date="${key}">` : ""}
-      <time datetime="${key}"><strong>${date.getDate()}</strong><small>${date.toLocaleDateString("es-ES", {month: "short"}).replace(".", "")}</small></time>
-      <span class="club-event-details"><strong>${escapeHtml(event.title)}</strong><small class="club-event-schedule">${event.eventType === "birthday" ? "Cumpleaños · Todo el día" : conversationTimeFormatter.format(date)}</small>${event.location ? `<small class="club-event-location">${escapeHtml(event.location)}</small>` : ""}${index === 0 ? `<span class="club-event-countdown">${countdown}</span>` : ""}</span>
-      ${index === 0 ? `</button><span class="tigreton-agenda" data-comment-source="${saved?.source || "agenda"}"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small><button type="button" class="chota-expand" data-chota-expand aria-label="Ver a El Chota en pantalla completa" title="Ampliar a El Chota"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 21h5v-5m0 5-7-7M16 3h5v5m0-5-7 7M8 21H3v-5m0 5 7-7"/></svg></button></span><span class="tigreton-bubble" hidden role="status" aria-live="polite" aria-atomic="true"><span class="tigreton-comment">${escapeHtml(saved?.comment || tigretonFallback(event, date))}</span></span>` : ""}
-    </${index === 0 ? "div" : "button"}>`;
-  }).join("") : `<div class="club-plans-empty"><strong>No hay próximos planes</strong><p>Los planes y cumpleaños del club aparecerán aquí.</p></div>`;
+  const context = chotaRoomContext();
+  tigretonRenderedKey = tigretonContextKey(context.event, context.date);
+  renderClubhouse(upcoming);
   const viewer = document.getElementById("chotaViewer");
   if (viewer?.open && viewer.dataset.contextKey !== tigretonRenderedKey) viewer.close();
-  mountTigretonMotion(previousPlanKey !== tigretonRenderedKey, upcoming[0]?.event, upcoming[0]?.date);
-  if (upcoming.length && previousPlanKey !== tigretonRenderedKey && currentAuthUser) {
+  mountTigretonMotion(previousPlanKey !== tigretonRenderedKey, context.event, context.date);
+  if (homeEventsReady && upcoming.length && previousPlanKey !== tigretonRenderedKey && currentAuthUser) {
     const expected = tigretonRenderedKey, first = upcoming[0];
     const warm = () => { if (!document.hidden && expected === tigretonRenderedKey && !tigretonComments.has(expected)) void loadTigretonComment(first.event, first.date, expected); };
     if (window.requestIdleCallback) requestIdleCallback(warm,{timeout:2500}); else setTimeout(warm,900);
   }
 }
+
 let tigretonLastDay = tigretonDayKey();
 function refreshTigretonDay() {
   const today = tigretonDayKey();
@@ -3292,8 +3371,10 @@ function refreshTigretonDay() {
   renderUpcomingEvents();
   void loadCalendarChatAnnouncements();
 }
-setInterval(() => { if (!document.hidden) { refreshTigretonDay(); renderGroupChatEventNotice(); } }, 30000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) { refreshTigretonDay(); renderGroupChatEventNotice(); if (currentAuthUser && backendReady) { void loadCalendarChatAnnouncements(); void loadChannelAutomations({visit: true}); } } });
+refreshChotaSleepSchedule();
+setInterval(() => { if (!document.hidden) { refreshChotaSleepSchedule(); refreshTigretonDay(); renderGroupChatEventNotice(); } }, 30000);
+window.addEventListener("focus", refreshChotaSleepSchedule);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { refreshChotaSleepSchedule(); refreshTigretonDay(); renderGroupChatEventNotice(); if (currentAuthUser && backendReady) { void loadCalendarChatAnnouncements(); void loadChannelAutomations({visit: true}); } } });
 
 let activeCalendarDay = null;
 
@@ -3886,6 +3967,9 @@ async function beginAuthenticatedSession(authUser) {
 
 async function login(username, password) {
   if (!backendReady) throw new Error("No se puede conectar con el servicio de acceso. Inténtalo de nuevo cuando haya conexión.");
+  // A password sign-in starts a new flow. An abandoned Google-link attempt
+  // must not sign out this user when the account security gate opens.
+  localStorage.removeItem("bb-identity-link");
   // Resolve usernames on the server: the Auth email can change when linking a
   // real address. A stale session must not be attached to this public endpoint.
   const response = await fetch(`${config.supabaseUrl}/functions/v1/account-requests`, {
@@ -4597,7 +4681,10 @@ async function loadCalendarChatAnnouncements({sync = true} = {}) {
 async function loadGroupEvents() {
   const {data, error} = await db.from("group_events").select("*").order("starts_at");
   if (error) {
-    if (!homeEventsReady) document.getElementById("upcomingEvents").innerHTML = '<div class="home-loading-state" role="status">No se pudo cargar la agenda. Vuelve a intentarlo al recuperar la conexión.</div>';
+    if (!homeEventsReady) {
+      const agendaLabel = document.querySelector("#clubhouseContent .clubhouse-plan strong");
+      if (agendaLabel) agendaLabel.textContent = "No se pudo cargar la agenda";
+    }
     return;
   }
   homeEventsReady = true;
@@ -5113,6 +5200,7 @@ async function sendMessage(text, file = null, attempt = {}) {
   }).select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
   if (error) throw error;
   dispatchPush("group_message", data.id);
+  globalThis.DailyPacks?.activityCompleted?.('message');
   return mapMessage(data);
 }
 
@@ -5309,6 +5397,7 @@ async function shareMediaToChat(form) {
       }).select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
       if (error) throw error;
       if (!messages.some(message => String(message.id) === String(data.id))) messages.push(mapMessage(data));
+      globalThis.DailyPacks?.activityCompleted?.('message');
       closeShareMedia();
       activeChatChannelId = channel.id;
       openGroupConversation(channel.id);

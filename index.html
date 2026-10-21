@@ -52,7 +52,8 @@
   <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
   <link rel="stylesheet" href="collection-social.css?v=20261015-mutual-trades-305" />
   <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
-  <link rel="stylesheet" href="visual-system.css?v=20261021-compact-364" />
+  <link rel="stylesheet" href="visual-system.css?v=20261021-pwa-trades-373" />
+  <link rel="stylesheet" href="clubhouse.css?v=20261021-chota-room-371" />
 </head>
 <body>
 
@@ -193,11 +194,10 @@
         </div>
       </section>
       <div class="club-dashboard">
-        <article class="panel club-plans" aria-labelledby="clubPlansTitle">
-          <div class="panel-heading"><div><h3 id="clubPlansTitle"><button class="club-heading-link" data-go="calendario" type="button" aria-label="Próximos planes: abrir calendario">Próximos planes</button></h3></div></div>
-          <div id="upcomingEvents" aria-live="polite"><p class="club-placeholder">Consultando la agenda…</p></div>
-          <button class="club-calendar-link" data-go="calendario" type="button">Ver calendario</button>
-        </article>
+        <section class="clubhouse" aria-labelledby="clubhouseTitle">
+          <div class="clubhouse-heading"><h3 id="clubhouseTitle">La sede del club</h3><span id="clubhouseTime">El Chota está en casa</span></div>
+          <div id="clubhouseContent" class="clubhouse-content"></div>
+        </section>
         <article class="panel spotify-panel">
           <div class="panel-heading"><div><span class="eyebrow">SPOTIFY</span><h3>Nuestra música</h3></div><button class="text-button admin-only" id="editSpotifyButton" type="button">Vincular playlist</button></div>
           <div id="spotifyPlayer"></div>
@@ -950,23 +950,23 @@
   <script defer src="tab-navigation.js?v=20260903-130"></script>
   <script defer src="trophy-motion.js?v=20260904-150"></script>
   <script defer src="trophy-unlock.js?v=20260903-138"></script>
-  <script defer src="daily-packs.js?v=20261020-polish-357"></script>
+  <script defer src="daily-packs.js?v=20261021-activity-packs-372"></script>
   <script defer src="collection-motion.js?v=20261021-halloween-365"></script>
   <script defer src="card-thumbnails.js?v=20261021-halloween-jose-366"></script>
-  <script defer src="card-media.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="card-media.js?v=20261021-pwa-trades-373"></script>
   <script defer src="card-collection.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
-  <script defer src="collection-social.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="collection-social.js?v=20261021-pwa-trades-373"></script>
   <script defer src="album.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="banner-shop.js?v=20261021-dynamic-cards-367"></script>
-  <script defer src="group-interactions.js?v=20261016-release-322"></script>
+  <script defer src="group-interactions.js?v=20261021-activity-packs-372"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
-  <script defer src="admin-console.js?v=20261021-halloween-365"></script>
+  <script defer src="admin-console.js?v=20261021-clubhouse-369"></script>
   <script defer src="account-security.js?v=20261021-email-359"></script>
   <script defer src="account-requests.js?v=20261021-email-359"></script>
-  <script defer src="app.js?v=20261021-deferred-364"></script>
+  <script defer src="app.js?v=20261021-activity-packs-372"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

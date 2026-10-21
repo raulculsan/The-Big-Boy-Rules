@@ -948,9 +948,9 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
   body.authenticated #inicio .club-event-details > strong { font-size: 18px; }
   body.authenticated #inicio .club-member-identity { padding-bottom: 14px; }
   body.authenticated .floating-tab-bar,
-  body.authenticated.mobile-header-hidden:not(.chat-focus) .floating-tab-bar { left: 0; right: auto; bottom: 0; width: 100%; min-height: calc(60px + env(safe-area-inset-bottom,0px)); --tab-shell-padding: 5px; padding: 5px 5px calc(5px + env(safe-area-inset-bottom,0px)); border-radius: 0; transform: none; }
-  body.authenticated .floating-tab-bar .app-tab { min-height: 48px; padding: 4px; }
-  body.authenticated .floating-tab-bar .tab-selection-indicator { bottom: calc(var(--tab-shell-padding) + env(safe-area-inset-bottom,0px)); }
+  body.authenticated.mobile-header-hidden:not(.chat-focus) .floating-tab-bar { left: 0; right: auto; bottom: 0; width: 100%; height: calc(58px + var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px))); min-height: 0; grid-template-rows: 48px; align-content: start; --tab-shell-padding: 5px; padding: 5px 5px calc(5px + var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px))); border-radius: 0; transform: none; }
+  body.authenticated .floating-tab-bar .app-tab { box-sizing: border-box; height: 48px; min-height: 48px; padding: 4px; }
+  body.authenticated .floating-tab-bar .tab-selection-indicator { bottom: calc(var(--tab-shell-padding) + var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px))); }
   body.authenticated .profile-tab-photo { width: 34px; height: 34px; flex-basis: 34px; line-height: 28px; }
 }
 

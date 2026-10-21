@@ -10,7 +10,7 @@
   });
   const DEFAULTS = Object.freeze({
     clubName: 'The Big Boy Rules', homeTitle: 'Inicio', membersTitle: 'Miembros',
-    plansTitle: 'Próximos planes', newsTitle: 'Al día', musicTitle: 'Nuestra música',
+    plansTitle: 'La sede del club', newsTitle: 'Al día', musicTitle: 'Nuestra música',
     accent: 'gold', density: 'comfortable', showNews: true, showPlans: true,
     showMusic: true, announcementEnabled: false, announcementTitle: '', announcementText: ''
   });
@@ -40,11 +40,10 @@
     setText('#inicio .club-welcome .eyebrow', value.clubName);
     setText('#inicio .club-welcome h2', value.homeTitle);
     setText('#clubMembersTitle', value.membersTitle);
-    setText('#clubPlansTitle button', value.plansTitle);
-    document.querySelector('#clubPlansTitle button')?.setAttribute('aria-label', `${value.plansTitle}: abrir calendario`);
+    setText('#clubhouseTitle', value.plansTitle === 'Próximos planes' ? 'La sede del club' : value.plansTitle);
     setText('#clubNewsTitle', value.newsTitle);
     setText('#inicio .spotify-panel h3', value.musicTitle);
-    for (const [selector, key] of [['#noticias', 'showNews'], ['#inicio .club-plans', 'showPlans'], ['#inicio .spotify-panel', 'showMusic']]) document.querySelector(selector)?.classList.toggle('club-section-disabled', !value[key]);
+    for (const [selector, key] of [['#noticias', 'showNews'], ['#inicio .clubhouse', 'showPlans'], ['#inicio .spotify-panel', 'showMusic']]) document.querySelector(selector)?.classList.toggle('club-section-disabled', !value[key]);
     const dashboard = document.querySelector('#inicio .club-dashboard');
     dashboard?.classList.toggle('club-dashboard-single', value.showMusic !== value.showPlans);
     dashboard?.classList.toggle('club-section-disabled', !value.showMusic && !value.showPlans);
@@ -104,7 +103,7 @@
             </section>
             <section class="control-editor-section"><header><i>${icon('panel')}</i><div><h4>Pantalla de inicio</h4><p>Elige los nombres y qué secciones se muestran.</p></div></header>
               <div class="control-field-pair"><label>Título principal<input name="homeTitle" maxlength="36" required></label><label>Sección de miembros<input name="membersTitle" maxlength="36" required></label></div>
-              ${[['plansTitle', 'showPlans', 'Agenda'], ['musicTitle', 'showMusic', 'Spotify'], ['newsTitle', 'showNews', 'Noticias']].map(([key, toggle, label]) => `<div class="control-section-setting"><label>${label}<input name="${key}" maxlength="36" required></label><label class="control-switch"><input name="${toggle}" type="checkbox"><span></span><b>Visible</b></label></div>`).join('')}
+              ${[['plansTitle', 'showPlans', 'Sede del club'], ['musicTitle', 'showMusic', 'Spotify'], ['newsTitle', 'showNews', 'Noticias']].map(([key, toggle, label]) => `<div class="control-section-setting"><label>${label}<input name="${key}" maxlength="36" required></label><label class="control-switch"><input name="${toggle}" type="checkbox"><span></span><b>Visible</b></label></div>`).join('')}
               <p class="control-field-note">La visibilidad afecta al inicio; el calendario y las demás funciones siguen disponibles desde su navegación.</p>
             </section>
             <section class="control-editor-section"><header><i>${icon('chat')}</i><div><h4>Aviso del club</h4><p>Un mensaje destacado al entrar en Inicio.</p></div></header>
