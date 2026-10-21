@@ -949,7 +949,7 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
   body.authenticated #inicio .club-event-details > strong { font-size: 18px; }
   body.authenticated #inicio .club-member-identity { padding-bottom: 14px; }
   body.authenticated .floating-tab-bar,
-  body.authenticated.mobile-header-hidden:not(.chat-focus) .floating-tab-bar { left: 0; right: auto; bottom: 0; width: 100%; height: calc(58px + var(--tab-safe-bottom)); min-height: 0; grid-template-rows: 48px; align-content: start; --tab-shell-padding: 5px; padding: 5px 5px calc(5px + var(--tab-safe-bottom)); border-radius: 0; transform: none; }
+  body.authenticated.mobile-header-hidden:not(.chat-focus) .floating-tab-bar { top: auto; left: 0; right: auto; bottom: 0; width: 100%; height: calc(58px + var(--tab-safe-bottom)); min-height: 0; grid-template-rows: 48px; align-content: start; --tab-shell-padding: 5px; padding: 5px 5px calc(5px + var(--tab-safe-bottom)); border-radius: 0; transform: none; contain: none; }
   body.authenticated .floating-tab-bar .app-tab { box-sizing: border-box; height: 48px; min-height: 48px; padding: 4px; }
   body.authenticated .floating-tab-bar .tab-selection-indicator { bottom: calc(var(--tab-shell-padding) + var(--tab-safe-bottom)); }
   body.authenticated .profile-tab-photo { width: 34px; height: 34px; flex-basis: 34px; line-height: 28px; }
@@ -957,12 +957,12 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
     /* The iOS inset can include invisible Safari controls even if standalone
        detection differs between installed shortcuts. */
     body.authenticated:not(.native-android) { --tab-safe-bottom: clamp(0px,var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px)),34px); }
-    /* WebKit 254868: standalone fixed-bottom coordinates may exclude the safe
-       area while legacy 100vh includes the complete home-screen window. */
-    body.authenticated.standalone-app:not(.native-android) .floating-tab-bar { top: calc(100vh - 58px - var(--tab-safe-bottom)); bottom: auto; }
-    @media (display-mode: standalone) {
-      body.authenticated:not(.native-android) .floating-tab-bar { top: calc(100vh - 58px - var(--tab-safe-bottom)); bottom: auto; }
-    }
+    /* The scroll shell and dock share the measured visible window. Mixing a
+       100%-high clipping root with a separately positioned vh dock clips it. */
+    html[data-pwa-viewport="ios"] { height: calc(var(--pwa-window-height,100dvh) + var(--pwa-window-top,0px)); min-height: 0; overflow: hidden; }
+    html[data-pwa-viewport="ios"] body.authenticated { top: var(--pwa-window-top,0px); right: 0; bottom: auto; left: 0; height: var(--pwa-window-height,100dvh); min-height: 0; }
+    html[data-pwa-viewport="ios"] body.authenticated:not(.chat-focus):not(.achievement-management-open):not(.superadmin-console-session) .app { position: absolute; inset: 0; height: 100%; }
+    html[data-pwa-viewport="ios"] body.authenticated .floating-tab-bar { position: absolute; top: auto; bottom: 0; contain: none; }
   }
 }
 

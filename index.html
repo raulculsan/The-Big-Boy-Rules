@@ -52,7 +52,7 @@
   <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
   <link rel="stylesheet" href="collection-social.css?v=20261015-mutual-trades-305" />
   <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
-  <link rel="stylesheet" href="visual-system.css?v=20261021-pwa-viewport-375" />
+  <link rel="stylesheet" href="visual-system.css?v=20261022-pwa-shell-376" />
   <link rel="stylesheet" href="clubhouse.css?v=20261021-chota-room-371" />
 </head>
 <body>
@@ -953,11 +953,11 @@
   <script defer src="daily-packs.js?v=20261021-activity-packs-372"></script>
   <script defer src="collection-motion.js?v=20261021-halloween-365"></script>
   <script defer src="card-thumbnails.js?v=20261021-halloween-jose-366"></script>
-  <script defer src="card-media.js?v=20261021-pwa-viewport-375"></script>
+  <script defer src="card-media.js?v=20261022-pwa-shell-376"></script>
   <script defer src="card-collection.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
-  <script defer src="collection-social.js?v=20261021-pwa-viewport-375"></script>
+  <script defer src="collection-social.js?v=20261022-pwa-shell-376"></script>
   <script defer src="album.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="banner-shop.js?v=20261021-dynamic-cards-367"></script>
@@ -968,6 +968,34 @@
   <script defer src="account-requests.js?v=20261021-email-359"></script>
   <script defer src="app.js?v=20261021-activity-packs-372"></script>
   <script>
+    (() => {
+      const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+      const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+      if (!ios || !standalone || !/^https?:$/.test(location.protocol)) return;
+      const root = document.documentElement;
+      let frame = 0;
+      root.dataset.pwaViewport = "ios";
+      const sync = () => {
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const viewport = window.visualViewport;
+          if (viewport && Math.abs(viewport.scale - 1) > .01) return;
+          const height = Math.round(viewport?.height || innerHeight);
+          const top = Math.max(0, Math.round(viewport?.offsetTop || 0));
+          if (height <= 0) return;
+          for (const [name, value] of [["--pwa-window-height", `${height}px`], ["--pwa-window-top", `${top}px`]]) {
+            if (root.style.getPropertyValue(name) !== value) root.style.setProperty(name, value);
+          }
+        });
+      };
+      window.addEventListener("resize", sync, {passive:true});
+      window.visualViewport?.addEventListener("resize", sync, {passive:true});
+      window.visualViewport?.addEventListener("scroll", sync, {passive:true});
+      window.addEventListener("pageshow", sync);
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) { sync(); setTimeout(sync, 200); } });
+      sync();
+    })();
     if ("serviceWorker" in navigator) {
       // Asset revisions identify the document actually on screen, including an
       // older document restored by iOS while a newer worker is already active.
