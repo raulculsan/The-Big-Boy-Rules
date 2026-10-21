@@ -1637,8 +1637,13 @@ function sampleMessageReplyGesture(gesture, event) {
   gesture.peakX = Math.max(gesture.peakX, x);
   gesture.offset = Math.max(0, Math.min(96, x > 64 ? 64 + (x - 64) * .22 : x));
   gesture.scale = 1 + Math.min(gesture.offset / gesture.width, .24);
-  const flick = x >= 32 && velocity >= .5;
-  gesture.ready = (x >= 64 || flick) && Math.abs(y) < 64 && gesture.peakX - x < 24;
+  // Arm from the movement, not the speed of the final release sample. A quick
+  // flick naturally slows (or pauses) before pointerup and must still reply.
+  if (x >= 44 || (x >= 28 && velocity >= .35)) gesture.armed = true;
+  // Allow normal diagonal drift after horizontal intent locks. Only a clear
+  // pull back towards the starting point cancels an already armed reply.
+  const returned = x < 14 || gesture.peakX - x > Math.max(28, gesture.peakX * .55);
+  gesture.ready = gesture.armed && !returned && Math.abs(y) < Math.max(80, x);
 }
 function activateMessageReplyGesture(gesture, event, capture = true) {
   if (gesture.tracking) return true;
@@ -1685,13 +1690,15 @@ document.addEventListener("pointerdown", event => {
   stopMessageReplySpring(bubble);
   const width = Math.max(80, bubble.getBoundingClientRect().width);
   messageReplyGesture = {bubble, pointerId: event.pointerId, x: event.clientX, y: event.clientY,
-    width, offset: 0, scale: 1, frame: 0, tracking: false, ready: false, peakX: 0,
+    width, offset: 0, scale: 1, frame: 0, tracking: false, ready: false, armed: false, peakX: 0,
     samples: [{x: event.clientX, time: event.timeStamp ?? performance.now()}]};
 }, {passive: true});
 document.addEventListener("pointermove", event => {
   const gesture = messageReplyGesture;
   if (!gesture || event.pointerId !== gesture.pointerId) return;
-  if (!gesture.bubble.isConnected || event.buttons === 0) { resetMessageReplyGesture(); return; }
+  // WebKit can report a terminal touch move with buttons=0 before pointerup.
+  // Only use that signal to cancel an actual mouse drag.
+  if (!gesture.bubble.isConnected || (event.pointerType === "mouse" && event.buttons === 0)) { resetMessageReplyGesture(); return; }
   const x = event.clientX - gesture.x, y = event.clientY - gesture.y;
   if (!gesture.tracking) {
     if ((Math.abs(y) > 10 && Math.abs(y) > Math.abs(x)) || x < -12) { resetMessageReplyGesture(); return; }
