@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v373";
+const CACHE_NAME = "big-boy-rules-v374";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -10,7 +10,7 @@ const APP_SHELL = [
   "./app-health.js?v=20261017-startup-logs-331",
   "./app-health.css?v=20261016-improvements-319",
   "./styles.css?v=20261020-polish-357",
-  "./visual-system.css?v=20261021-pwa-trades-373",
+  "./visual-system.css?v=20261021-pwa-inset-374",
   "./notifications.css?v=20261015-notifications-polls-307",
   "./club.css?v=20261021-performance-363",
   "./clubhouse.css?v=20261021-chota-room-371",
@@ -52,7 +52,7 @@ const APP_SHELL = [
   "./admin-grants.css?v=20261009-213",
   "./banner-shop.js?v=20261021-dynamic-cards-367",
   "./banner-shop.css?v=20261021-performance-363",
-  "./collection-social.js?v=20261021-pwa-trades-373",
+  "./collection-social.js?v=20261021-pwa-inset-374",
   "./collection-social.css?v=20261015-mutual-trades-305",
   "./pending-actions.js?v=20261016-release-322",
   "./pending-actions.css?v=20261016-release-322",
@@ -80,7 +80,7 @@ const APP_SHELL = [
   "./daily-packs.js?v=20261021-activity-packs-372",
   "./packs.css?v=20261021-halloween-365",
   "./card-thumbnails.js?v=20261021-halloween-jose-366",
-  "./card-media.js?v=20261021-pwa-trades-373",
+  "./card-media.js?v=20261021-pwa-inset-374",
   "./card-collection.js?v=20261021-dynamic-cards-367",
   "./card-catalog-sync.js?v=20261021-dynamic-cards-367",
   "./icons/cards/card-art-unavailable.svg",
