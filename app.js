@@ -1626,10 +1626,31 @@ function paintMessageReplyGesture(gesture) {
 }
 function sampleMessageReplyGesture(gesture, event) {
   const x = event.clientX - gesture.x, y = event.clientY - gesture.y;
+  const now = event.timeStamp ?? performance.now();
+  gesture.samples.push({x: event.clientX, time: now});
+  // Include the release sample: WebKit may deliver a short flick as just a
+  // pointerdown and pointerup, without any intermediate pointermove.
+  gesture.samples = gesture.samples.filter(sample => now - sample.time <= 120);
+  const first = gesture.samples[0];
+  const elapsed = now - first.time;
+  const velocity = elapsed > 0 ? (event.clientX - first.x) / elapsed : 0;
   gesture.peakX = Math.max(gesture.peakX, x);
   gesture.offset = Math.max(0, Math.min(96, x > 64 ? 64 + (x - 64) * .22 : x));
   gesture.scale = 1 + Math.min(gesture.offset / gesture.width, .24);
-  gesture.ready = x >= 64 && Math.abs(y) < 64 && gesture.peakX - x < 24;
+  const flick = x >= 32 && velocity >= .5;
+  gesture.ready = (x >= 64 || flick) && Math.abs(y) < 64 && gesture.peakX - x < 24;
+}
+function activateMessageReplyGesture(gesture, event, capture = true) {
+  if (gesture.tracking) return true;
+  const x = event.clientX - gesture.x, y = event.clientY - gesture.y;
+  if (x < 10 || x < Math.abs(y) * 1.25) return false;
+  gesture.tracking = true;
+  cancelMessageHold();
+  gesture.bubble.classList.add("is-reply-dragging");
+  if (capture) {
+    try { gesture.bubble.setPointerCapture(event.pointerId); } catch { /* Detached during live refresh. */ }
+  }
+  return true;
 }
 function resetMessageReplyGesture(commit = false) {
   const gesture = messageReplyGesture;
@@ -1664,7 +1685,8 @@ document.addEventListener("pointerdown", event => {
   stopMessageReplySpring(bubble);
   const width = Math.max(80, bubble.getBoundingClientRect().width);
   messageReplyGesture = {bubble, pointerId: event.pointerId, x: event.clientX, y: event.clientY,
-    width, offset: 0, scale: 1, frame: 0, tracking: false, ready: false, peakX: 0};
+    width, offset: 0, scale: 1, frame: 0, tracking: false, ready: false, peakX: 0,
+    samples: [{x: event.clientX, time: event.timeStamp ?? performance.now()}]};
 }, {passive: true});
 document.addEventListener("pointermove", event => {
   const gesture = messageReplyGesture;
@@ -1673,10 +1695,7 @@ document.addEventListener("pointermove", event => {
   const x = event.clientX - gesture.x, y = event.clientY - gesture.y;
   if (!gesture.tracking) {
     if ((Math.abs(y) > 10 && Math.abs(y) > Math.abs(x)) || x < -12) { resetMessageReplyGesture(); return; }
-    if (x < 12 || x < Math.abs(y) * 1.4) return;
-    gesture.tracking = true; cancelMessageHold();
-    gesture.bubble.classList.add("is-reply-dragging");
-    try { gesture.bubble.setPointerCapture(event.pointerId); } catch { /* Detached during live refresh. */ }
+    if (!activateMessageReplyGesture(gesture, event)) return;
   }
   if (event.cancelable) event.preventDefault();
   sampleMessageReplyGesture(gesture, event);
@@ -1685,9 +1704,10 @@ document.addEventListener("pointermove", event => {
 document.addEventListener("pointerup", event => {
   const gesture = messageReplyGesture;
   if (gesture?.pointerId !== event.pointerId) return;
-  // Mobile browsers can coalesce the last move into pointerup. Decide from
-  // the release position so pulling back cancels instead of replying anyway.
-  if (gesture.tracking) sampleMessageReplyGesture(gesture, event);
+  // A fast swipe may have no move events at all. Establish horizontal intent
+  // from the release too, without trying to capture an already released pointer.
+  // Always resample here so a deliberate pull back still cancels the reply.
+  if (activateMessageReplyGesture(gesture, event, false)) sampleMessageReplyGesture(gesture, event);
   resetMessageReplyGesture(true);
 }, {passive: true});
 document.addEventListener("pointercancel", event => { if (messageReplyGesture?.pointerId === event.pointerId) resetMessageReplyGesture(); }, {passive: true});

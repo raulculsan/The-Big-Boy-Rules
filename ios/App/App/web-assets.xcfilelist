@@ -1,6 +1,12 @@
+$(SRCROOT)/App/public/account-requests.css
+$(SRCROOT)/App/public/account-requests.js
+$(SRCROOT)/App/public/account-security.css
+$(SRCROOT)/App/public/account-security.js
 $(SRCROOT)/App/public/achievement-admin.css
 $(SRCROOT)/App/public/achievement-admin.js
 $(SRCROOT)/App/public/achievement-progress.js
+$(SRCROOT)/App/public/admin-console.css
+$(SRCROOT)/App/public/admin-console.js
 $(SRCROOT)/App/public/admin-grants.css
 $(SRCROOT)/App/public/admin-grants.js
 $(SRCROOT)/App/public/album.css
@@ -38,6 +44,8 @@ $(SRCROOT)/App/public/icons/banners/alberto-galicia-figures-v1.png
 $(SRCROOT)/App/public/icons/banners/alberto-galicia-member-bg-v1.png
 $(SRCROOT)/App/public/icons/banners/alberto-galicia-member-figures-v1.png
 $(SRCROOT)/App/public/icons/banners/alberto-galicia-member-v1.png
+$(SRCROOT)/App/public/icons/banners/costa-atlantica-v1.jpg
+$(SRCROOT)/App/public/icons/banners/madrid-medianoche-v1.jpg
 $(SRCROOT)/App/public/icons/banners/miguel-basket-bano-bg-v1.png
 $(SRCROOT)/App/public/icons/banners/miguel-basket-bano-v1.png
 $(SRCROOT)/App/public/icons/banners/miguel-basket-miguel-00-v1.png
@@ -77,6 +85,7 @@ $(SRCROOT)/App/public/icons/cards/luca-de-tena-especial-reverso-v1.jpg
 $(SRCROOT)/App/public/icons/cards/mario-salvatierra-medina-comun-81-reverso-v1.jpg
 $(SRCROOT)/App/public/icons/cards/miguel-angel-jimenez-sanchez-normal-83-reverso-v1.jpg
 $(SRCROOT)/App/public/icons/cards/pack-opening.json
+$(SRCROOT)/App/public/icons/cards/pack-seal-flare-v2.png
 $(SRCROOT)/App/public/icons/cards/raul-culsan-gonzalez-normal-83-reverso-v2.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-comun-unificado-v1.jpg
 $(SRCROOT)/App/public/icons/cards/reverso-especial-unificado-v1.jpg

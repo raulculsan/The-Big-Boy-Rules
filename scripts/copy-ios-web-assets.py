@@ -8,8 +8,11 @@ source = Path(os.environ["SRCROOT"]) / "App" / "public"
 destination = Path(os.environ["TARGET_BUILD_DIR"]) / os.environ["UNLOCALIZED_RESOURCES_FOLDER_PATH"] / "public"
 numbered = re.compile(r"(?: \d+)+(?=\.[^.]+$)")
 text_extensions = {".html", ".js", ".css", ".json", ".webmanifest", ".svg", ".xml", ".md"}
-manifest = Path(os.environ["SRCROOT"]) / "App" / "web-assets.xcfilelist"
-files = [Path(line.replace("$(SRCROOT)", os.environ["SRCROOT"])) for line in manifest.read_text().splitlines() if line]
+# Capacitor's delivered tree is authoritative. A checked-in xcfilelist can lag
+# behind a newly added banner, silently producing a successful but incomplete
+# build. The build phase declares this directory as an input so discovery also
+# works with Xcode's script sandbox enabled.
+files = sorted(path for path in source.rglob("*") if path.is_file())
 references = "\n".join(
     path.read_text(encoding="utf-8") for path in files
     if path.suffix in text_extensions and not numbered.search(path.name)
