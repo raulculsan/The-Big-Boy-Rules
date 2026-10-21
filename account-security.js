@@ -3,7 +3,7 @@
   const PENDING_LINK = 'bb-identity-link';
   const LINK_LIFETIME_MS = 15 * 60 * 1000;
   let client, user, policy, resume, factorId, enrollment, busy = false;
-  let required = false, management = false, dialog;
+  let required = false, management = false, dialog, emailPending = false;
   const native = () => window.Capacitor?.isNativePlatform?.() === true;
   const feedback = text => { dialog.querySelector('[data-security-feedback]').textContent = text; };
   function mount() {
@@ -72,6 +72,7 @@
     const result=await client.functions.invoke('account-requests',{body:{action:'link-email',email}});
     if(result.error){let detail='';try{detail=(await result.error.context?.json())?.error||'';}catch{}throw new Error(detail||'No se pudo enviar el enlace. Espera unos minutos e inténtalo de nuevo.');}
     if(result.data?.error)throw new Error(result.data.error);
+    emailPending = email.toLowerCase();
     feedback(result.data.message);
   }
   function authenticatorCard(active = false) {
@@ -93,6 +94,7 @@
     const linked = linkedProviders();
     // Either verified email OR a verified external identity satisfies contact linking.
     const contactReady = policy?.identity_linked === true || policy?.email_verified === true;
+    if (policy?.email_verified === true && user.email?.toLowerCase() === emailPending) emailPending = false;
     const identityNeeded = (policy?.verified_contact_required === true || (policy?.enforcement_enabled === true && policy?.identity_link_required !== false)) && !contactReady;
     const mfaNeeded = policy?.enforcement_enabled === true && policy?.mfa_required !== false && !verified.length;
     const challengeNeeded = verified.length > 0 && level.data.currentLevel !== 'aal2';
@@ -116,7 +118,10 @@
       resume = null;
       return;
     }
-    if (!dialog.open) dialog.showModal();
+    // An email/reset link must remain above the account gate when a saved
+    // session is restored in the same browser. Its confirmation resumes us.
+    const accountAction = document.querySelector('.account-request-dialog[open] form[data-flow="email"], .account-request-dialog[open] form[data-flow="reset"]');
+    if (!dialog.open && !accountAction) dialog.showModal();
     document.documentElement.classList.remove('auth-session-hint');
     document.body.classList.remove('session-restoring');
     window.completeInitialLaunch?.();
@@ -210,6 +215,19 @@
     }
     return Array.isArray(result.data) ? result.data[0] : result.data;
   }
+  // Confirmation may happen in the mail browser or in another app tab.
+  // Refresh only a visible pending flow, never poll or rebuild a closed dialog.
+  const refreshPendingEmail = () => {
+    if (client && user && dialog?.open && !busy && emailPending) void run(refresh);
+  };
+  const refreshConfirmedContact = () => {
+    if (client && user && !busy && (required || dialog?.open)) void run(refresh);
+  };
+  document.addEventListener('club-contact-confirmed', refreshConfirmedContact);
+  document.addEventListener('club-account-action-closed', () => { if (required) refreshConfirmedContact(); });
+  window.addEventListener('storage', event => { if (event.key === 'bb-contact-confirmed') refreshPendingEmail(); });
+  window.addEventListener('focus', refreshPendingEmail);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshPendingEmail(); });
   window.ClubAccountSecurity = {
     async gate(db, authUser) {
       client = db; user = authUser; management = false; required = true;
@@ -226,6 +244,6 @@
       if (!dialog.open) dialog.showModal();
       await run(async () => { policy = await loadPolicy(); await refresh(); });
     },
-    reset() { resume?.(false); resume = null; required = false; dialog?.close(); clearEnrollment(); }
+    reset() { emailPending = false; resume?.(false); resume = null; required = false; dialog?.close(); clearEnrollment(); }
   };
 })();

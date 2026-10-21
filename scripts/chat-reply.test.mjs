@@ -45,7 +45,7 @@ test('reply coalesces high-frequency drag samples and releases capture before se
   assert.equal(f.styles.size, 0, 'no per-event style writes before animation frame');
   f.flush();
   assert.ok(Number(f.styles.get('--message-reply-scale')) > 1.2, 'bubble visibly deforms');
-  f.fire('pointerup');
+  f.fire('pointerup', {clientX: 211});
   assert.deepEqual(f.calls, ['release', ['reply', '12', false]]);
   assert.ok(f.classes.has('is-reply-springing'));
   assert.equal(f.frames.size, 0);
@@ -77,7 +77,7 @@ test('cancel, lost capture, detached message and second finger clean up without 
 test('unrelated pointer release cannot commit the current reply', () => {
   const f = replyFixture(); f.fire('pointerdown'); f.fire('pointermove', {clientX: 80});
   f.fire('pointerup', {pointerId: 2}); assert.equal(f.calls.length, 0);
-  f.fire('pointerup'); assert.equal(f.calls.filter(call => Array.isArray(call)).length, 1);
+  f.fire('pointerup', {clientX: 80}); assert.equal(f.calls.filter(call => Array.isArray(call)).length, 1);
 });
 
 test('realtime refresh replaces pending scroll work instead of accumulating media callbacks', () => {

@@ -32,8 +32,8 @@
   let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
   let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0, shopResetTimer;
   const dailyBanners = () => Array.isArray(state?.daily_banner_ids)
-    ? state.daily_banner_ids.map(id => state.banners?.find(banner => banner.id === id)).filter(Boolean).slice(0, 5)
-    : (state?.banners || []).filter(banner => banner.in_daily_shop !== false).slice(0, 5);
+    ? state.daily_banner_ids.map(id => state.banners?.find(banner => banner.id === id)).filter(banner => banner && banner.id !== 'banner-de-prueba').slice(0, 5)
+    : (state?.banners || []).filter(banner => banner.id !== 'banner-de-prueba' && banner.in_daily_shop !== false).slice(0, 5);
   function scheduleShopReset() {
     clearTimeout(shopResetTimer);
     const delay = Date.parse(state?.shop_next_reset_at) - Date.now();
@@ -496,8 +496,7 @@
       const wheels = `<svg class="banner-moto-wheels" viewBox="0 0 1312 1199" fill="none"><g transform="translate(503 929) rotate(8) scale(.47 1)"><g class="banner-moto-wheel-spin"><circle r="145" class="banner-moto-wheel-rim"/><g class="banner-moto-wheel-spokes">${spokes}</g><circle r="156" class="banner-moto-wheel-tread"/></g></g><g transform="translate(962 916) rotate(8) scale(.43 .67)"><g class="banner-moto-wheel-spin is-front"><circle r="145" class="banner-moto-wheel-rim"/><g class="banner-moto-wheel-spokes">${spokes}</g><circle r="156" class="banner-moto-wheel-tread"/></g></g></svg>`;
       return `<div class="banner-art banner-miguel-moto ${extra}" role="img" aria-label="${escape(banner.name || 'Miguel en moto por la ciudad')}"><div class="banner-moto-city banner-moto-far" aria-hidden="true"></div><div class="banner-moto-clouds" aria-hidden="true"><i></i><i></i></div><div class="banner-moto-city banner-moto-mid" aria-hidden="true"></div><div class="banner-moto-city banner-moto-near" aria-hidden="true"></div><div class="banner-moto-city banner-moto-near banner-moto-near-delayed" aria-hidden="true"></div><div class="banner-moto-road" aria-hidden="true">${Array.from({length: 12}, (_, i) => `<i class="banner-moto-lane ${i > 5 ? 'is-right' : ''}" style="--phase:${i % 6}"></i>`).join('')}</div><div class="banner-moto-rider-group" aria-hidden="true"><div class="banner-moto-shadow"></div><div class="banner-moto-rider-plane"><img class="banner-moto-rider" src="icons/banners/miguel-moto-rider-v2.png" width="1312" height="1199" alt="" decoding="async">${wheels}<img class="banner-moto-hair" src="icons/banners/miguel-moto-rider-v2.png" width="1312" height="1199" alt="" decoding="async"><svg class="banner-moto-wind" viewBox="0 0 1312 1199" fill="none"><path d="M710 43 Q684 27 669 42 M729 29 Q711 13 693 25 M693 64 Q670 53 658 65"/></svg></div></div><div class="banner-moto-light" aria-hidden="true"></div></div>`;
     }
-    const style = banner?.art_key === 'banner-de-prueba' ? 'banner-trial' : 'banner-neutral';
-    return `<div class="banner-art ${style} ${extra}" role="img" aria-label="${escape(banner?.name || 'Banner de perfil')}"><span>BB</span></div>`;
+    return `<div class="banner-art banner-neutral ${extra}" role="img" aria-label="${escape(banner?.name || 'Banner de perfil')}"><span>BB</span></div>`;
   }
   function paintProfile() {
     if (!profileTarget?.node.isConnected) return;
@@ -767,7 +766,7 @@
         // covers profile mounting and reconnect, not just packs navigation.
         await options?.synchronizePacks?.(forceDaily);
         if (token !== generation || user !== options.session()) return;
-        const data = await rpc('get_banner_shop_state'); if (token === generation && user === options.session()) {state = data; scheduleShopReset(); saveInventory(user, data.cards); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
+        const data = await rpc('get_banner_shop_state'); if (token === generation && user === options.session()) {state = {...data, banners:(data.banners || []).filter(banner => banner.id !== 'banner-de-prueba'), daily_banner_ids:Array.isArray(data.daily_banner_ids) ? data.daily_banner_ids.filter(id => id !== 'banner-de-prueba') : undefined, equipped_banner_id:data.equipped_banner_id === 'banner-de-prueba' ? null : data.equipped_banner_id}; scheduleShopReset(); saveInventory(user, data.cards); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
       catch (error) { if (token === generation) {failure = errorMessage(error); render();} }
       finally {if (token === generation) {loading = false; request = null; render();}}
     })();

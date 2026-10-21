@@ -95,7 +95,11 @@
    const key=`${id}.${token}`;if(activeVerification===key&&confirmation?.open)return;
    activeVerification=key;
    if(!confirmation){confirmation=makeDialog('Verificar correo');confirmation.insertAdjacentHTML('beforeend','<h2>Confirma tu correo.</h2><p class="request-intro">Verifica esta dirección para que administración reciba tu solicitud.</p><p class="request-feedback" role="status"></p><button type="button" class="login-submit" data-confirm-request>Confirmar solicitud</button>');
-    confirmation.querySelector('[data-confirm-request]').addEventListener('click',async event=>{if(busy)return;busy=true;event.target.disabled=true;const feedback=confirmation.querySelector('.request-feedback');try{const [id,token]=activeVerification.split('.');const result=await invoke('verify',{id,token});text(feedback,result.message);event.target.hidden=true;}catch(error){text(feedback,error.message);event.target.disabled=false;}finally{busy=false;}});
+    confirmation.querySelector('[data-confirm-request]').addEventListener('click',async event=>{if(busy)return;busy=true;event.target.disabled=true;const feedback=confirmation.querySelector('.request-feedback');try{const [id,token]=activeVerification.split('.');const result=await invoke('verify',{id,token});text(feedback,result.message);event.target.hidden=true;confirmation.querySelector('[data-open-native]')?.remove();}catch(error){text(feedback,error.message);event.target.disabled=false;}finally{busy=false;}});
+   }
+   confirmation.querySelector('[data-open-native]')?.remove();
+   if(!window.Capacitor?.isNativePlatform?.()){
+    const open=document.createElement('a');open.dataset.openNative='';open.className='request-recovery-link';open.textContent='Abrir en la app';open.href=`bigboyrules://account-request/verify?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`;confirmation.append(open);
    }
    const button=confirmation.querySelector('[data-confirm-request]');button.hidden=false;button.disabled=false;text(confirmation.querySelector('.request-feedback'),'');
    if(!confirmation.open)confirmation.showModal();
@@ -110,20 +114,31 @@
   }
   let recovery;
   function showRecovery(flow='request',token=''){
-   if(!recovery){recovery=makeDialog('Recuperar acceso');recovery.addEventListener('submit',async event=>{
+   if(!recovery){recovery=makeDialog('Recuperar acceso');recovery.addEventListener('close',()=>document.dispatchEvent(new CustomEvent('club-account-action-closed')));recovery.addEventListener('submit',async event=>{
     event.preventDefault();if(busy)return;const form=event.target,feedback=form.querySelector('.request-feedback'),values=Object.fromEntries(new FormData(form));
     if(values.confirmation!==undefined&&values.password!==values.confirmation){text(feedback,'Las contraseñas no coinciden.');return;}
     busy=true;form.querySelector('button').disabled=true;
-    try{const result=await invoke(form.dataset.flow==='reset'?'reset':form.dataset.flow==='email'?'confirm-email':'recover',form.dataset.flow==='reset'?{token:form.dataset.token,password:values.password}:form.dataset.flow==='email'?{token:form.dataset.token}:{email:values.email});text(feedback,result.message);form.querySelectorAll('label,button').forEach(n=>n.hidden=true);}
+    try{const result=await invoke(form.dataset.flow==='reset'?'reset':form.dataset.flow==='email'?'confirm-email':'recover',form.dataset.flow==='reset'?{token:form.dataset.token,password:values.password}:form.dataset.flow==='email'?{token:form.dataset.token}:{email:values.email});text(feedback,result.message);form.querySelectorAll('label,button').forEach(n=>n.hidden=true);recovery.querySelector('[data-open-native]')?.remove();delete form.dataset.token;if(form.dataset.flow==='email'){document.dispatchEvent(new CustomEvent('club-contact-confirmed'));try{localStorage.setItem('bb-contact-confirmed',String(Date.now()));}catch{}}}
     catch(error){text(feedback,error.message);}finally{busy=false;form.querySelector('button').disabled=false;}
    });}
    recovery.querySelector('[data-recovery-content]')?.remove();
    const content=document.createElement('div');content.dataset.recoveryContent='';
    content.innerHTML=`<h2>${flow==='reset'?'Elige tu nueva contraseña.':flow==='email'?'Confirma tu correo.':'Recupera tu acceso.'}</h2><p class="request-intro">${flow==='reset'?'Utiliza una contraseña de al menos 8 caracteres y un símbolo, sin tu nombre ni usuario.':flow==='email'?'Al confirmar, esta dirección quedará vinculada a tu cuenta.':'Te enviaremos un enlace seguro al correo que tengas vinculado.'}</p><form class="account-request-form" data-flow="${flow}">${flow==='reset'?'<label>Nueva contraseña<input name="password" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></label><label>Repite la contraseña<input name="confirmation" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></label>':flow==='email'?'':'<label>Correo electrónico<input name="email" type="email" maxlength="254" required autocomplete="email"></label>'}<p class="request-feedback" role="status"></p><button type="submit" class="login-submit">${flow==='reset'?'Guardar contraseña':flow==='email'?'Confirmar correo':'Enviar enlace'}</button></form>`;
-   content.querySelector('form').dataset.token=token;recovery.append(content);if(!recovery.open)recovery.showModal();
+   content.querySelector('form').dataset.token=token;
+   if(token&&!window.Capacitor?.isNativePlatform?.()){
+    const open=document.createElement('a');open.dataset.openNative='';open.className='request-recovery-link';open.textContent='Abrir en la app';open.href=`bigboyrules://account-security/${flow}?token=${encodeURIComponent(token)}`;content.append(open);
+   }
+   recovery.append(content);if(!recovery.open)recovery.showModal();
   }
   function handleIdentityLink(value){try{const link=new URL(value);if(link.protocol==='bigboyrules:'&&link.hostname==='account-security'&&['/reset','/email'].includes(link.pathname)&&/^[0-9a-f-]{72}$/i.test(link.searchParams.get('token')||''))showRecovery(link.pathname.slice(1),link.searchParams.get('token'));}catch{}}
-  const identityHash=location.hash.match(/^#account-(reset|email)=([0-9a-f-]{72})$/i);if(identityHash){history.replaceState(null,'',location.pathname+location.search);showRecovery(identityHash[1],identityHash[2]);}
+  function handleAccountHash(){
+   const identityHash=location.hash.match(/^#account-(reset|email)=([0-9a-f-]{72})$/i);
+   const requestHash=location.hash.match(/^#account-request=([0-9a-f-]{36})\.([0-9a-f-]{72})$/i);
+   if(!identityHash&&!requestHash)return;
+   history.replaceState(null,'',location.pathname+location.search);
+   if(identityHash)showRecovery(identityHash[1],identityHash[2]);else showVerification(requestHash[1],requestHash[2]);
+  }
+  handleAccountHash();window.addEventListener('hashchange',handleAccountHash);
   const login=document.getElementById('loginForm');if(login&&!login.querySelector('[data-account-recover]')){const button=document.createElement('button');button.type='button';button.className='request-recovery-link';button.dataset.accountRecover='';button.textContent='¿Has olvidado tu contraseña?';login.append(button);}
   document.addEventListener('click',event=>{if(event.target.closest('[data-account-recover]'))showRecovery();if(event.target.closest('[data-request-google]'))void startGoogle();});
   async function startGoogle(){
