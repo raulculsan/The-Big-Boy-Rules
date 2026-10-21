@@ -460,8 +460,8 @@ body.authenticated .club-calendar-page .calendar-grid { padding: 10px 0; border:
 .tigreton-countdown { display: block; font-size: 11px; font-weight: 750; line-height: 1.35; color: #79500c; }
 .tigreton-comment { display: block; margin-top: 2px; font-size: 10px; font-weight: 400; line-height: 1.35; overflow-wrap: anywhere; }
 .tigreton-sprite { display: block; position: relative; width: 70px; height: 70px; margin-top: 10px; }
-.tigreton-character { position: absolute; inset: 0; z-index: 1; transform-origin: 50% 92%; background: url("icons/mascot/chota-v2/chota-poses.png") 0 0 / 600% 400% no-repeat; image-rendering: pixelated; }
-.tigreton-character.is-speaking { background-image: url("icons/mascot/chota-v2/chota-talk.png"); background-size: 300% 100%; }
+.tigreton-character { position: absolute; inset: 0; z-index: 1; transform-origin: 50% 92%; background: url("icons/mascot/chota-v2/chota-poses.webp") 0 0 / 600% 400% no-repeat; image-rendering: pixelated; }
+.tigreton-character.is-speaking { background-image: url("icons/mascot/chota-v2/chota-talk.webp"); background-size: 300% 100%; }
 .tigreton-sleep-mark, .tigreton-spark { position: absolute; right: -4px; top: 14px; z-index: 2; opacity: 0; pointer-events: none; font-weight: 750; line-height: 1; }
 .tigreton-sleep-mark { font-size: 11px; color: #f4ebd6; }
 .tigreton-spark { right: -6px; top: 27px; font-size: 14px; color: var(--club-gold); }

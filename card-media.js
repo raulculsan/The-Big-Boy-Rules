@@ -4,15 +4,28 @@
   const manifest = globalThis.CardDelivery || {};
   const base = 'https://raulculsan.github.io/The-Big-Boy-Rules/';
   const limit = 32 * 1024 * 1024;
-  let database;
+  let database, cacheWrites = Promise.resolve();
   const inflight = new Map(), objectURLs = new Map();
   const canonical = value => value?.startsWith(base) ? value.slice(base.length) : value;
   const source = value => native && manifest[value] ? new URL(manifest[value], base).href : value;
   const originals = new Map(Object.keys(manifest).map(key => [source(key), key]));
   function db() {
     if (!database) database = new Promise((resolve, reject) => {
-      const request = indexedDB.open('bb-card-art-v1', 1);
-      request.onupgradeneeded = () => request.result.createObjectStore('art', {keyPath:'url'});
+      const request = indexedDB.open('bb-card-art-v1', 2);
+      request.onupgradeneeded = event => {
+        const connection = request.result, transaction = request.transaction;
+        if (!connection.objectStoreNames.contains('art')) connection.createObjectStore('art', {keyPath:'url'});
+        const metadata = connection.createObjectStore('metadata', {keyPath:'url'});
+        // Upgrade old caches one entry at a time. Never materialise the complete
+        // artwork cache as an array of blobs just to calculate its budget.
+        if (event.oldVersion) transaction.objectStore('art').openCursor().onsuccess = cursorEvent => {
+          const cursor = cursorEvent.target.result;
+          if (!cursor) return;
+          const value = cursor.value;
+          metadata.put({url:value.url, bytes:value.bytes || value.blob?.size || 0, touched:value.touched || 0});
+          cursor.continue();
+        };
+      };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
@@ -27,18 +40,26 @@
       request.onerror = () => reject(request.error);
     });
   }
-  async function retain(url, blob) {
-    if (blob.size > limit) return;
+  function retain(url, blob) {
+    if (blob.size > limit) return Promise.resolve();
+    const task = cacheWrites.catch(() => {}).then(() => writeArtwork(url, blob));
+    cacheWrites = task;
+    return task;
+  }
+  async function writeArtwork(url, blob) {
     const connection = await db();
     await new Promise((resolve, reject) => {
-      const transaction = connection.transaction('art', 'readwrite'), store = transaction.objectStore('art');
-      store.put({url, blob, bytes:blob.size, touched:Date.now()});
-      const request = store.getAll();
+      const transaction = connection.transaction(['art', 'metadata'], 'readwrite');
+      const store = transaction.objectStore('art'), metadata = transaction.objectStore('metadata');
+      const entry = {url, bytes:blob.size, touched:Date.now()};
+      store.put({...entry, blob});
+      metadata.put(entry);
+      const request = metadata.getAll();
       request.onsuccess = () => {
         let total = request.result.reduce((sum, entry) => sum + entry.bytes, 0);
         for (const entry of request.result.sort((a,b) => a.touched - b.touched)) {
           if (total <= limit) break;
-          store.delete(entry.url); total -= entry.bytes;
+          store.delete(entry.url); metadata.delete(entry.url); total -= entry.bytes;
         }
       };
       transaction.oncomplete = resolve;
@@ -66,13 +87,12 @@
   }
   function releaseUnused() {
     for (const [url, entry] of objectURLs) {
-      if ([...entry.images].some(image => image.isConnected && image.src === entry.objectURL)) continue;
+      for (const image of entry.images) if (!image.isConnected || image.src !== entry.objectURL) entry.images.delete(image);
+      if (entry.images.size) continue;
       URL.revokeObjectURL(entry.objectURL); objectURLs.delete(url);
     }
-    while (objectURLs.size > 12) {
-      const [url, entry] = objectURLs.entries().next().value;
-      URL.revokeObjectURL(entry.objectURL); objectURLs.delete(url);
-    }
+    // Connected images own their URL until removed/replaced. Evicting a visible
+    // thirteenth image revoked its live resource and could show a broken card.
   }
   function hydrate(image) {
     const value = image.getAttribute('src');

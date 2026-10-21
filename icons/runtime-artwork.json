@@ -1,0 +1,110 @@
+{
+  "icons/banners/alberto-galicia-bg-v1.png": {
+    "source": "icons/banners/alberto-galicia-bg-v1.png",
+    "target": "icons/banners/alberto-galicia-bg-v1.webp",
+    "lossless": false,
+    "digest": "56c75071fdf772f4fb90f95c65ba33bbb5eb165088bb59070f45086c12cb913d"
+  },
+  "icons/banners/alberto-galicia-member-bg-v1.png": {
+    "source": "icons/banners/alberto-galicia-member-bg-v1.png",
+    "target": "icons/banners/alberto-galicia-member-bg-v1.webp",
+    "lossless": false,
+    "digest": "b1d99feeee9c6d8a82509a78800ab53fd0aaef909036786e9d472df43f35d7b8"
+  },
+  "icons/banners/alberto-galicia-figures-v1.png": {
+    "source": "icons/banners/alberto-galicia-figures-v1.png",
+    "target": "icons/banners/alberto-galicia-figures-v1.webp",
+    "lossless": false,
+    "digest": "b620201ce2a64b53679b12eb5d0717e16d55d30b6d0447d214f4105ffdd83eea"
+  },
+  "icons/banners/alberto-galicia-member-figures-v1.png": {
+    "source": "icons/banners/alberto-galicia-member-figures-v1.png",
+    "target": "icons/banners/alberto-galicia-member-figures-v1.webp",
+    "lossless": false,
+    "digest": "e25bcbef86e05a169455516667e3edddae398e34be51022b12431117203cb5d1"
+  },
+  "icons/banners/alberto-galicia-expression-v2.png": {
+    "source": "icons/banners/alberto-galicia-expression-v2.png",
+    "target": "icons/banners/alberto-galicia-expression-v2.webp",
+    "lossless": false,
+    "digest": "2a48cc2c43d2fd8311d48f345c57ca8bbe85fc344c8102cce7124c0ff44f0c9e"
+  },
+  "icons/banners/miguel-basket-bano-bg-v1.png": {
+    "source": "icons/banners/miguel-basket-bano-bg-v1.png",
+    "target": "icons/banners/miguel-basket-bano-bg-v1.webp",
+    "lossless": false,
+    "digest": "3851e5d0d4f726f5178b542d2e9ca0d32552ea13eaa54d94d286cc54ccab93c5"
+  },
+  "icons/banners/miguel-moto-city-v1.png": {
+    "source": "icons/banners/miguel-moto-city-v1.png",
+    "target": "icons/banners/miguel-moto-city-v1.webp",
+    "lossless": false,
+    "digest": "4631cd1f83383eb8562d709425bf4e5b43658ab1c0fad28dba0b8c70610debaa"
+  },
+  "icons/banners/miguel-moto-rider-v2.png": {
+    "source": "icons/banners/miguel-moto-rider-v2.png",
+    "target": "icons/banners/miguel-moto-rider-v2.webp",
+    "lossless": false,
+    "digest": "a8132a4c0bdae0e8b44917134b7ad1f852855d61e8ba181ffd3c841db65946a3"
+  },
+  "icons/banners/miguel-moto-clouds-v1.png": {
+    "source": "icons/banners/miguel-moto-clouds-v1.png",
+    "target": "icons/banners/miguel-moto-clouds-v1.webp",
+    "lossless": false,
+    "digest": "4dbc771b460acc17a4b4a6bc9a2ae475884b889fc8b92256f280eca7a9c7e57a"
+  },
+  "icons/banners/miguel-basket-miguel-00-v1.png": {
+    "source": "icons/banners/miguel-basket-miguel-00-v1.png",
+    "target": "icons/banners/miguel-basket-miguel-00-v1.webp",
+    "lossless": false,
+    "digest": "e81defa516dc4e5a1608b9308a1b94f7bd316b1c5ac40944a75674ef10241874"
+  },
+  "icons/banners/miguel-basket-miguel-00a-v1.png": {
+    "source": "icons/banners/miguel-basket-miguel-00a-v1.png",
+    "target": "icons/banners/miguel-basket-miguel-00a-v1.webp",
+    "lossless": false,
+    "digest": "f0dc3a61ae8f1ca754692073d07015303bee546d405997171b53633665684f95"
+  },
+  "icons/banners/miguel-basket-miguel-01-v1.png": {
+    "source": "icons/banners/miguel-basket-miguel-01-v1.png",
+    "target": "icons/banners/miguel-basket-miguel-01-v1.webp",
+    "lossless": false,
+    "digest": "4a9f0cd9fd7bea53e5d540bf14801acb6dfa0dafcbabf3d33abddc79e21d4f79"
+  },
+  "icons/banners/miguel-basket-miguel-01a-v1.png": {
+    "source": "icons/banners/miguel-basket-miguel-01a-v1.png",
+    "target": "icons/banners/miguel-basket-miguel-01a-v1.webp",
+    "lossless": false,
+    "digest": "4dab7a64f0ea65709395a62ead775e1c87d86379035fe80baf453de6d372c165"
+  },
+  "icons/banners/miguel-basket-miguel-02-v1.png": {
+    "source": "icons/banners/miguel-basket-miguel-02-v1.png",
+    "target": "icons/banners/miguel-basket-miguel-02-v1.webp",
+    "lossless": false,
+    "digest": "fa0ab80f5164c931e11f15578301d39dd0a83abdd083c1a450322d0a1c487513"
+  },
+  "icons/banners/miguel-basket-miguel-02a-v1.png": {
+    "source": "icons/banners/miguel-basket-miguel-02a-v1.png",
+    "target": "icons/banners/miguel-basket-miguel-02a-v1.webp",
+    "lossless": false,
+    "digest": "d51bc8f31126f6bf88b424ecba7a5a00368789e599beb353013f3bef3294e341"
+  },
+  "icons/banners/miguel-basket-miguel-03-v1.png": {
+    "source": "icons/banners/miguel-basket-miguel-03-v1.png",
+    "target": "icons/banners/miguel-basket-miguel-03-v1.webp",
+    "lossless": false,
+    "digest": "9bfe6b3f823d9cca8cd99232c97c8a7d44e47d0220b4c4c80fbcf0a44d439af2"
+  },
+  "icons/mascot/chota-v2/chota-poses.png": {
+    "source": "icons/mascot/chota-v2/chota-poses.png",
+    "target": "icons/mascot/chota-v2/chota-poses.webp",
+    "lossless": true,
+    "digest": "e6e9af8b641f19f6f836327af954e36c3787bb29eab552656ce25c59d2b59824"
+  },
+  "icons/mascot/chota-v2/chota-talk.png": {
+    "source": "icons/mascot/chota-v2/chota-talk.png",
+    "target": "icons/mascot/chota-v2/chota-talk.webp",
+    "lossless": true,
+    "digest": "67eb0ac8beb1fd753ce725765d6f289bb7200de5503afd595bbc47e115d1ce86"
+  }
+}

@@ -754,6 +754,8 @@ function goTo(sectionId) {
     section.classList.toggle("active", section.id === sectionId);
     section.inert = section.id !== sectionId;
   });
+  // Realtime keeps data current while hidden; build the inbox only on entry.
+  if (sectionId === "chat") renderPrivateContacts();
   globalThis.CardAlbum?.didNavigate(sectionId, currentSection);
   globalThis.AdminGrants?.didNavigate(sectionId);
   adminConsole?.didNavigate(sectionId);
@@ -2831,8 +2833,8 @@ const chotaSpritesReady = {talk: false, poses: false};
 function ensureChotaSprites() {
   if (!chotaSpritesRequest) {
     chotaSpritesRequest = new Promise(resolve => runWhenIdle(() => {
-      chotaTalkSprite.src = "icons/mascot/chota-v2/chota-talk.png";
-      chotaPoseSprite.src = "icons/mascot/chota-v2/chota-poses.png";
+      chotaTalkSprite.src = "icons/mascot/chota-v2/chota-talk.webp";
+      chotaPoseSprite.src = "icons/mascot/chota-v2/chota-poses.webp";
       Promise.allSettled([
         chotaTalkSprite.decode().then(() => { chotaSpritesReady.talk = chotaTalkSprite.naturalWidth > 0; }),
         chotaPoseSprite.decode().then(() => { chotaSpritesReady.poses = chotaPoseSprite.naturalWidth > 0; })
@@ -3540,15 +3542,14 @@ function refreshProfileSurfaces() {
   if (currentUser) applyUserHeader(currentUser);
   // Give each independent surface its own frame. A profile response used to
   // rebuild Home, every member, the inbox and administration in one task.
-  const chatVisible = ["chat", "privados"].some(id => document.getElementById(id)?.classList.contains("active"));
   const homeVisible = document.getElementById("inicio")?.classList.contains("active");
   // Home's main content must not wait behind 300 ms idle slots (or be
   // repeatedly cancelled when remote profiles arrive during startup).
   if (homeVisible) renderMembers();
-  const renders = chatVisible
-    ? [renderMessages, renderPresence, renderFeatured, renderMembers, renderAdminPanel]
-    : homeVisible ? [renderFeatured, renderPresence, renderMessages, renderAdminPanel]
-    : [renderFeatured, renderMembers, renderPresence, renderMessages, renderAdminPanel];
+  const renders = homeVisible ? [renderFeatured, renderPresence] : [renderFeatured, renderMembers, renderPresence];
+  if (document.getElementById("chat")?.matches(".active.conversation-open")) renders.unshift(renderMessages);
+  if (document.getElementById("privados")?.classList.contains("active")) renders.unshift(renderPrivateConversation);
+  if (["administracion", "admin-cuentas"].some(id => document.getElementById(id)?.classList.contains("active"))) renders.push(renderAdminPanel);
   for (const render of renders) runWhenIdle(() => {
     if (generation === profileSurfaceGeneration && currentAuthUser?.id === owner) render();
   });
@@ -3647,9 +3648,11 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   refreshProfileSurfaces();
   runWhenIdle(() => { if (currentAuthUser?.id === authUser?.id) renderCalendar(); });
   runWhenIdle(() => { if (currentAuthUser?.id === authUser?.id) renderSpotify(); });
-  for (const render of [renderPrivateContacts, renderPrivateConversation, renderNotifications, renderHelpCenter, renderAdminAchievements]) {
+  for (const render of [renderNotifications, renderHelpCenter, renderAdminAchievements]) {
     runWhenIdle(() => { if (currentUser === user) render(); });
   }
+  if (document.getElementById("chat")?.classList.contains("active")) runWhenIdle(() => { if (currentUser === user) renderPrivateContacts(); });
+  if (document.getElementById("privados")?.classList.contains("active")) runWhenIdle(() => { if (currentUser === user) renderPrivateConversation(); });
   if (restoring) {
     document.body.classList.add("session-restoring");
     return;
@@ -4035,9 +4038,11 @@ function scheduleChatSurfaces({group = false, privateConversation = false, conta
     if (chatSurfaceRefresh !== pending) return;
     chatSurfaceRefresh = null;
     if (currentAuthUser?.id !== owner) return;
-    if (pending.group) renderMessages();
-    if (pending.privateConversation) renderPrivateConversation();
-    if (pending.contacts) renderPrivateContacts();
+    // Keep the data hot without reconciling hundreds of hidden message nodes.
+    // Opening a conversation already renders its current data synchronously.
+    if (pending.group && document.getElementById("chat")?.matches(".active.conversation-open")) renderMessages();
+    if (pending.privateConversation && document.getElementById("privados")?.classList.contains("active")) renderPrivateConversation();
+    if (pending.contacts && document.getElementById("chat")?.classList.contains("active")) renderPrivateContacts();
   });
 }
 
@@ -4608,7 +4613,7 @@ function connectRealtime() {
       onlineUsers = Object.values(state).flat().filter(Boolean)
         .filter((item, index, list) => list.findIndex(other => other.user_id === item.user_id) === index);
       renderPresence();
-      renderAdminPanel();
+      if (["administracion", "admin-cuentas"].some(id => document.getElementById(id)?.classList.contains("active"))) renderAdminPanel();
     })
     .subscribe(async status => {
       if (status === "SUBSCRIBED") {

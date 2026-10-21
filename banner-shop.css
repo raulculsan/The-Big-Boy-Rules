@@ -26,7 +26,7 @@
 .club-member-banner .banner-neutral{background:radial-gradient(ellipse at 90% 10%,#d9b66722,transparent 65%),linear-gradient(135deg,#252a34,#171c22)}
 .club-member-banner .banner-art>span{position:absolute;right:14px;bottom:8px;font-size:42px;letter-spacing:-4px;color:#d9b66744;text-shadow:none}
 .banner-miguel-moto{background:#344b65;contain:paint;--road-horizon:72%;--road-center:58%}
-.banner-moto-city{position:absolute;inset:0;background:url("icons/banners/miguel-moto-city-v1.png") center center/cover no-repeat;transform-origin:var(--road-center) var(--road-horizon);pointer-events:none}
+.banner-moto-city{position:absolute;inset:0;background:url("icons/banners/miguel-moto-city-v1.webp") center center/cover no-repeat;transform-origin:var(--road-center) var(--road-horizon);pointer-events:none}
 .banner-moto-far{animation:banner-moto-horizon 14s ease-in-out infinite alternate;will-change:transform}
 .banner-moto-mid{mask-image:linear-gradient(transparent 25%,#000 48%,#000 68%,transparent 75%);-webkit-mask-image:linear-gradient(transparent 25%,#000 48%,#000 68%,transparent 75%);animation:banner-moto-buildings 7s ease-in-out infinite alternate;will-change:transform}
 .banner-moto-near{mask-image:linear-gradient(transparent 69%,#000 79%);-webkit-mask-image:linear-gradient(transparent 69%,#000 79%);animation:banner-moto-forward 3s linear infinite;will-change:transform,opacity}
@@ -50,7 +50,7 @@
 .banner-moto-hair{position:absolute;inset:0;width:100%;height:100%;clip-path:polygon(51.3% 5.8%,53.8% 1.9%,56.8% .7%,61.4% 1.4%,65.1% 3.1%,66.3% 6.5%,65.3% 8.3%,61% 6.8%,57.3% 6.1%,53.4% 8.1%);transform-origin:59% 7%;animation:banner-moto-hair-wind .34s ease-in-out infinite alternate;will-change:transform}
 .banner-moto-wind path{stroke:#b87835;stroke-width:4;stroke-linecap:round;opacity:.8;transform-origin:718px 52px;animation:banner-moto-hair-strands .38s ease-in-out infinite alternate}
 .banner-moto-clouds{position:absolute;inset:-4% 0 40%;overflow:hidden;pointer-events:none;opacity:.65;mask-image:linear-gradient(#000 70%,transparent);-webkit-mask-image:linear-gradient(#000 70%,transparent)}
-.banner-moto-clouds i{position:absolute;inset:0 auto 0 0;width:200%;background:url("icons/banners/miguel-moto-clouds-v1.png") left top/50% 100% repeat-x;animation:banner-moto-cloud-drift 36s linear infinite;will-change:transform}
+.banner-moto-clouds i{position:absolute;inset:0 auto 0 0;width:200%;background:url("icons/banners/miguel-moto-clouds-v1.webp") left top/50% 100% repeat-x;animation:banner-moto-cloud-drift 36s linear infinite;will-change:transform}
 .banner-moto-clouds i+i{opacity:.35;animation-duration:55s;animation-direction:reverse;transform:scaleY(.7)}
 @keyframes banner-moto-wheel-turn{to{transform:rotate(-360deg)}}
 @keyframes banner-moto-hair-wind{from{transform:translate(-.6px,-.15px) skewX(-3deg) rotate(-.8deg)}to{transform:translate(.7px,-.45px) skewX(4deg) rotate(1.2deg)}}
