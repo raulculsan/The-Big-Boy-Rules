@@ -5,15 +5,17 @@
 -- get_banner_shop_state(): {balance,cards:[{card_id,quantity,edition,kind}],
 --   card_catalog:[{card_id,edition,kind}],available_packs:[{id,earned_day,collection_key}],
 --   banners:[{id,name,description,art_key,price,owned,equipped}],equipped_banner_id,
---   discard_rewards:{common:1,retro:2,special:2,epic:3,legendary:5}}
+--   discard_rewards:{common:1,retro:2,special:2,epic:3,legendary:5,full_art:8,vice_city:10}}
 -- open_owned_card_pack(target_pack_id bigint DEFAULT NULL):
---   {pack_id,cards:[{card_id,edition,kind,quantity}],balance}; seis cartas; NULL abre el más antiguo.
+--   {pack_id,cards:[{card_id,edition,kind,quantity}],balance}; 3 miembros, 2 objetos, 1 ubicación; NULL abre el más antiguo.
 -- discard_duplicate_card(target_card_id text,copies integer DEFAULT 1):
 --   {card_id,quantity,coins_earned,balance}; conserva siempre una copia.
 -- discard_all_duplicate_cards():
 --   {copies_discarded,cards_affected,coins_earned,balance,cards:[{card_id,quantity,copies_discarded,coins_earned}]};
 --   conserva una copia de cada carta; sin repetidas devuelve ceros y cards:[].
 -- buy_profile_banner(target_banner_id text): {banner_id,owned:true,purchased,balance}
+-- unlock_reward_voucher(target_voucher_id text): {voucher_id,owned_quantity,balance}
+-- redeem_reward_voucher(target_voucher_id text): {voucher_id,reward_type,reward_amount,pack_id,balance}
 -- equip_profile_banner(target_banner_id text DEFAULT NULL): {equipped_banner_id}; NULL quita el banner.
 -- get_member_profile_banner(target_user_id uuid): {id,name,description,art_key} o null.
 -- Errores RPC no modifican nada. Comprar de nuevo es idempotente; abrir un sobre
@@ -66,6 +68,34 @@ create table if not exists public.member_pack_card_awards (
   card_id text not null references public.achievement_card_catalog(id),
   created_at timestamptz not null default clock_timestamp()
 );
+create table if not exists public.reward_voucher_catalog (
+  id text primary key,
+  name text not null,
+  description text not null default '',
+  price integer not null check (price >= 0),
+  reward_type text not null check (reward_type in ('pack','coins','banner')),
+  reward_amount integer not null default 1 check (reward_amount > 0),
+  reward_banner_id text references public.profile_banner_catalog(id),
+  active boolean not null default true,
+  check (reward_type<>'coins' or price>=reward_amount),
+  check ((reward_type='banner' and reward_banner_id is not null) or (reward_type<>'banner' and reward_banner_id is null))
+);
+create table if not exists public.member_owned_reward_vouchers (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  voucher_id text not null references public.reward_voucher_catalog(id),
+  quantity integer not null check (quantity > 0),
+  primary key (user_id,voucher_id)
+);
+create table if not exists public.member_voucher_ledger (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  voucher_id text not null references public.reward_voucher_catalog(id),
+  action text not null check (action in ('unlock','redeem')),
+  coins_delta bigint not null default 0,
+  reward_type text,
+  reward_amount integer,
+  created_at timestamptz not null default clock_timestamp()
+);
 
 -- Preserve previous one-card pack records as draw 1; future packs record six draws.
 alter table public.member_pack_card_awards add column if not exists draw_index integer not null default 1;
@@ -80,7 +110,7 @@ end $$;
 -- Shared odds for every individual draw, independent of how many cards a rarity has.
 create or replace function public.card_pack_rarity_weights()
 returns table (edition text, weight integer) language sql immutable set search_path = public, pg_temp as $$
-  values ('common',70),('retro',12),('special',10),('epic',6),('legendary',2);
+  values ('common',137),('retro',24),('special',20),('epic',12),('legendary',4),('full_art',2),('vice_city',1);
 $$;
 revoke all on function public.card_pack_rarity_weights() from public, anon, authenticated;
 
@@ -92,10 +122,15 @@ alter table public.member_owned_banners enable row level security;
 alter table public.member_equipped_banners enable row level security;
 alter table public.member_coin_ledger enable row level security;
 alter table public.member_pack_card_awards enable row level security;
+alter table public.reward_voucher_catalog enable row level security;
+alter table public.member_owned_reward_vouchers enable row level security;
+alter table public.member_voucher_ledger enable row level security;
 revoke all on public.profile_banner_catalog, public.member_card_inventory,
   public.member_coin_wallets, public.member_owned_banners, public.member_equipped_banners,
-  public.member_coin_ledger, public.member_pack_card_awards from public, anon, authenticated;
+  public.member_coin_ledger, public.member_pack_card_awards, public.reward_voucher_catalog,
+  public.member_owned_reward_vouchers, public.member_voucher_ledger from public, anon, authenticated;
 revoke all on sequence public.member_coin_ledger_id_seq from public, anon, authenticated;
+revoke all on sequence public.member_voucher_ledger_id_seq from public, anon, authenticated;
 
 insert into public.profile_banner_catalog(id,name,description,art_key,price)
   values ('banner-de-prueba','Banner de prueba','Banner para la cabecera del perfil durante las pruebas.','banner-de-prueba',1)
@@ -105,6 +140,11 @@ insert into public.profile_banner_catalog(id,name,description,art_key,price,acti
   values ('miguel-moto-anime-v1','Miguel · Ruta urbana','Miguel Ángel Jiménez Sánchez recorre la ciudad en moto. Banner anime animado.','miguel-moto-anime-v1',1,true)
   on conflict (id) do update set name=excluded.name,description=excluded.description,
     art_key=excluded.art_key,price=excluded.price,active=excluded.active;
+
+insert into public.reward_voucher_catalog(id,name,description,price,reward_type,reward_amount,active)
+  values ('vale-sobre-01','Vale de sobre','Canjéalo por un sobre con seis cartas.',25,'pack',1,true)
+  on conflict (id) do update set name=excluded.name,description=excluded.description,
+    price=excluded.price,reward_type=excluded.reward_type,reward_amount=excluded.reward_amount,active=excluded.active;
 
 insert into public.profile_banner_catalog(id,name,description,art_key,price,active)
   values ('miguel-basket-bano-v1','Miguel · Triple al váter','Miguel Ángel lanza emojis a canasta en el baño. Banner anime animado.','miguel-basket-bano-v1',1,true)
@@ -154,8 +194,67 @@ begin
       from public.profile_banner_catalog b left join public.member_owned_banners o on o.banner_id=b.id and o.user_id=actor
       left join public.member_equipped_banners e on e.banner_id=b.id and e.user_id=actor where b.active or o.banner_id is not null),'[]'::jsonb),
     'equipped_banner_id',(select banner_id from public.member_equipped_banners where user_id=actor),
-    'discard_rewards',jsonb_build_object('common',1,'retro',2,'special',2,'epic',3,'legendary',5)
+    'vouchers',coalesce((select jsonb_agg(jsonb_build_object('id',v.id,'name',v.name,'description',v.description,'price',v.price,
+      'reward_type',v.reward_type,'reward_amount',v.reward_amount,'reward_banner_id',v.reward_banner_id,
+      'owned_quantity',coalesce(o.quantity,0)) order by v.id)
+      from public.reward_voucher_catalog v left join public.member_owned_reward_vouchers o on o.voucher_id=v.id and o.user_id=actor
+      where v.active or o.quantity is not null),'[]'::jsonb),
+    'discard_rewards',jsonb_build_object('common',1,'retro',2,'special',2,'epic',3,'legendary',5,'full_art',8,'vice_city',10)
   );
+end;
+$$;
+
+create or replace function public.unlock_reward_voucher(target_voucher_id text)
+returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  actor uuid := public.lock_banner_shop_actor();
+  voucher public.reward_voucher_catalog%rowtype;
+  new_balance bigint;
+  new_quantity integer;
+begin
+  select * into voucher from public.reward_voucher_catalog where id=target_voucher_id and active for share;
+  if not found then raise exception 'El vale no está disponible.'; end if;
+  select balance into new_balance from public.member_coin_wallets where user_id=actor;
+  if new_balance<voucher.price then raise exception 'No tienes suficientes monedas.'; end if;
+  update public.member_coin_wallets set balance=balance-voucher.price where user_id=actor returning balance into new_balance;
+  insert into public.member_owned_reward_vouchers(user_id,voucher_id,quantity) values (actor,voucher.id,1)
+    on conflict (user_id,voucher_id) do update set quantity=public.member_owned_reward_vouchers.quantity+1
+    returning quantity into new_quantity;
+  insert into public.member_voucher_ledger(user_id,voucher_id,action,coins_delta,reward_type,reward_amount)
+    values (actor,voucher.id,'unlock',-voucher.price,voucher.reward_type,voucher.reward_amount);
+  return jsonb_build_object('voucher_id',voucher.id,'owned_quantity',new_quantity,'balance',new_balance);
+end;
+$$;
+
+create or replace function public.redeem_reward_voucher(target_voucher_id text)
+returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  actor uuid := public.lock_banner_shop_actor();
+  voucher public.reward_voucher_catalog%rowtype;
+  owned integer;
+  new_balance bigint;
+  awarded_pack_id bigint;
+begin
+  select quantity into owned from public.member_owned_reward_vouchers where user_id=actor and voucher_id=target_voucher_id for update;
+  if coalesce(owned,0)<1 then raise exception 'No tienes este vale disponible.'; end if;
+  select * into voucher from public.reward_voucher_catalog where id=target_voucher_id;
+  if not found then raise exception 'El premio de este vale ya no está disponible.'; end if;
+  if voucher.reward_type='pack' then
+    insert into public.card_packs(user_id,earned_day,collection_key,source)
+      values (actor,current_date,'los-nuestros-01','voucher') returning id into awarded_pack_id;
+  elsif voucher.reward_type='coins' then
+    update public.member_coin_wallets set balance=balance+voucher.reward_amount where user_id=actor returning balance into new_balance;
+  elsif voucher.reward_type='banner' then
+    insert into public.member_owned_banners(user_id,banner_id) values (actor,voucher.reward_banner_id)
+      on conflict (user_id,banner_id) do nothing;
+  end if;
+  if owned=1 then delete from public.member_owned_reward_vouchers where user_id=actor and voucher_id=target_voucher_id;
+  else update public.member_owned_reward_vouchers set quantity=quantity-1 where user_id=actor and voucher_id=target_voucher_id;
+  end if;
+  insert into public.member_voucher_ledger(user_id,voucher_id,action,coins_delta,reward_type,reward_amount)
+    values (actor,voucher.id,'redeem',case when voucher.reward_type='coins' then voucher.reward_amount else 0 end,voucher.reward_type,voucher.reward_amount);
+  return jsonb_build_object('voucher_id',voucher.id,'reward_type',voucher.reward_type,'reward_amount',voucher.reward_amount,
+    'pack_id',awarded_pack_id,'balance',coalesce(new_balance,(select balance from public.member_coin_wallets where user_id=actor)));
 end;
 $$;
 
@@ -168,6 +267,9 @@ declare
   card public.achievement_card_catalog%rowtype;
   new_quantity integer;
   draw_number integer;
+  selected_kind text;
+  kind_quota record;
+  draw_kinds text[] := array['member','member','member','object','object','location'];
   drawn_cards jsonb := '[]'::jsonb;
   drawn_ids text[] := '{}'::text[];
 begin
@@ -175,18 +277,32 @@ begin
     and (target_pack_id is null or id=target_pack_id) and collection_key='los-nuestros-01'
     order by earned_day,id limit 1 for update;
   if not found then raise exception 'No tienes ese sobre disponible para abrir.'; end if;
-  if (select count(*) from public.achievement_card_catalog where active) < 6 then
-    raise exception 'La colección necesita al menos seis cartas distintas para abrir un sobre.';
-  end if;
-  -- Choose rarity, then a uniform active card not yet drawn in this pack.
-  -- Exhausted rarities are excluded and remaining probabilities renormalized.
-  -- All inventory writes and pack consumption commit together or roll back together.
+  -- Check every category before awarding anything. Only drawable rarities count.
+  for kind_quota in select * from (values
+    ('member',3,'miembros'),('object',2,'objetos'),('location',1,'ubicación')
+  ) as quotas(kind,required,label) loop
+    if (select count(*) from public.achievement_card_catalog c
+      where c.active and c.kind=kind_quota.kind and exists (
+        select 1 from public.card_pack_rarity_weights() w where w.edition=c.edition and w.weight>0
+      )) < kind_quota.required then
+      raise exception 'La colección necesita al menos % cartas distintas de % para abrir un sobre.',
+        kind_quota.required,kind_quota.label;
+    end if;
+  end loop;
+  -- Exactly 3 members, 2 objects and 1 location, all with distinct IDs.
+  -- Choose weighted rarity within the required category, then a uniform card.
+  -- Unavailable/exhausted rarities in that category are excluded and weights renormalized.
+  -- Inventory writes and pack consumption commit together or roll back together.
   for draw_number in 1..6 loop
+    selected_kind := draw_kinds[draw_number];
     select v.edition into selected_edition from public.card_pack_rarity_weights() v
-      where exists (select 1 from public.achievement_card_catalog c where c.active and c.edition=v.edition and not (c.id=any(drawn_ids)))
+      where v.weight>0 and exists (select 1 from public.achievement_card_catalog c
+        where c.active and c.kind=selected_kind and c.edition=v.edition and not (c.id=any(drawn_ids)))
       order by -ln(greatest(random(),0.000000000001))/v.weight limit 1;
-    select * into card from public.achievement_card_catalog where active and edition=selected_edition and not (id=any(drawn_ids)) order by random() limit 1 for share;
-    if not found then raise exception 'No hay cartas disponibles en la colección.'; end if;
+    select * into card from public.achievement_card_catalog
+      where active and kind=selected_kind and edition=selected_edition and not (id=any(drawn_ids))
+      order by random() limit 1 for share;
+    if not found then raise exception 'No hay cartas disponibles de esta categoría en la colección.'; end if;
     drawn_ids := array_append(drawn_ids,card.id);
     insert into public.member_pack_card_awards(pack_id,draw_index,user_id,card_id) values (saved_pack.id,draw_number,actor,card.id);
     insert into public.member_card_inventory(user_id,card_id,quantity) values (actor,card.id,1)
@@ -212,7 +328,7 @@ begin
   if copies is null or copies < 1 then raise exception 'La cantidad de copias no es válida.'; end if;
   select quantity into held from public.member_card_inventory where user_id=actor and card_id=target_card_id for update;
   if held is null or copies >= held then raise exception 'Solo puedes descartar cartas repetidas; conserva una copia.'; end if;
-  select case edition when 'common' then 1 when 'retro' then 2 when 'special' then 2 when 'epic' then 3 when 'legendary' then 5 end
+  select case edition when 'common' then 1 when 'retro' then 2 when 'special' then 2 when 'epic' then 3 when 'legendary' then 5 when 'full_art' then 8 when 'vice_city' then 10 end
     into reward from public.achievement_card_catalog where id=target_card_id;
   earned := copies::bigint * reward;
   update public.member_card_inventory set quantity=quantity-copies where user_id=actor and card_id=target_card_id;
@@ -241,7 +357,7 @@ begin
   select balance into new_balance from public.member_coin_wallets where user_id=actor;
   for duplicate in
     select i.card_id,i.quantity,
-      case c.edition when 'common' then 1 when 'retro' then 2 when 'special' then 2 when 'epic' then 3 when 'legendary' then 5 end as reward
+      case c.edition when 'common' then 1 when 'retro' then 2 when 'special' then 2 when 'epic' then 3 when 'legendary' then 5 when 'full_art' then 8 when 'vice_city' then 10 end as reward
     from public.member_card_inventory i
     join public.achievement_card_catalog c on c.id=i.card_id
     where i.user_id=actor and i.quantity>1
@@ -323,9 +439,11 @@ $$;
 
 revoke all on function public.get_banner_shop_state(), public.open_owned_card_pack(bigint),
   public.discard_duplicate_card(text,integer), public.discard_all_duplicate_cards(), public.buy_profile_banner(text),
-  public.equip_profile_banner(text), public.get_member_profile_banner(uuid) from public, anon, authenticated;
+  public.equip_profile_banner(text), public.get_member_profile_banner(uuid),
+  public.unlock_reward_voucher(text), public.redeem_reward_voucher(text) from public, anon, authenticated;
 grant execute on function public.get_banner_shop_state(), public.open_owned_card_pack(bigint),
   public.discard_duplicate_card(text,integer), public.discard_all_duplicate_cards(), public.buy_profile_banner(text),
-  public.equip_profile_banner(text), public.get_member_profile_banner(uuid) to authenticated;
+  public.equip_profile_banner(text), public.get_member_profile_banner(uuid),
+  public.unlock_reward_voucher(text), public.redeem_reward_voucher(text) to authenticated;
 notify pgrst, 'reload schema';
 commit;

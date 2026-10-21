@@ -72,10 +72,10 @@ body.light {
   --border: var(--bb2-line);
 }
 body { background: var(--bb2-canvas); color: var(--bb2-ink); }
-.login-screen { background: radial-gradient(ellipse at 10% 10%,#dbba730c,transparent 55%),var(--bb2-canvas); }
+.login-screen { background: var(--bb2-canvas); }
 .login-shell { border-color: var(--bb2-line-strong); border-radius: 28px; background: var(--bb2-panel); box-shadow: 0 28px 90px #00000035; backdrop-filter: none; }
 .login-shell::before,.login-brand-panel::after,.login-background { display: none; }
-.login-brand-panel { background: linear-gradient(145deg,#1b222a,#11161c); border-color: var(--bb2-line); }
+.login-brand-panel { background: var(--bb2-raised); border-color: var(--bb2-line); }
 .login-brand-copy h2 { font-family: "Inter",sans-serif; font-weight: 650; font-size: clamp(32px,4vw,48px); line-height: 1.08; letter-spacing: -.05em; }
 .login-brand-copy h2 em { font-style: normal; color: var(--bb2-gold); }
 .login-brand-copy p,.login-subtitle { color: var(--bb2-muted); line-height: 1.65; }
@@ -223,7 +223,7 @@ body.authenticated .club-dashboard > .panel {
   padding: 22px;
   border-color: #83cf9b16;
   border-radius: 18px;
-  background: linear-gradient(135deg,#17251d,#101a16 72%);
+  background: var(--bb2-panel);
   box-shadow: none;
 }
 .spotify-art { border-radius: 13px; box-shadow: 0 6px 18px #00000028; }
@@ -419,7 +419,7 @@ body.authenticated #inicio .club-search .search-result:focus {
 body.authenticated #inicio #noticias {
   border-color: var(--bb2-line-strong);
   border-radius: 20px;
-  background: linear-gradient(115deg,var(--bb2-raised),var(--bb2-panel));
+  background: var(--bb2-panel);
 }
 body.authenticated #inicio .club-news-heading { padding: 18px 20px; }
 body.authenticated #inicio .club-news-heading h3 { font-size: 21px; letter-spacing: -.035em; }
@@ -436,7 +436,7 @@ body.authenticated #inicio .club-dashboard > .panel {
   padding: 20px;
 }
 body.authenticated #inicio .club-dashboard > .spotify-panel {
-  background: linear-gradient(145deg,#14231d,var(--bb2-panel) 80%);
+  background: var(--bb2-panel);
   border-color: #6cbb8c25;
 }
 body.authenticated #inicio .club-dashboard .panel-heading h3 { font-size: 22px; }
@@ -466,7 +466,7 @@ body.authenticated #inicio .club-member small { font-size: 13px; margin-top: 5px
 body.authenticated #sobres .packs-display {
   border-color: var(--bb2-line-strong);
   border-radius: 28px;
-  background: radial-gradient(ellipse at 50% 55%,#dbba731b,transparent 65%),var(--bb2-panel);
+  background: var(--bb2-panel);
 }
 body.authenticated #sobres .packs-display-edition {
   padding: 8px 12px;
@@ -878,3 +878,90 @@ body.authenticated .admin-settings-symbol { border-radius: 0; background: transp
 body.authenticated .admin-summary > * { border: 0; border-radius: 12px; background: var(--bb2-panel); }
 body.authenticated :is(.profile-editor-modal,.achievement-assignment-modal,.modal) { border-color: var(--bb2-line-strong); background-color: var(--bb2-panel); box-shadow: 0 12px 40px #0004; }
 body.authenticated :is(.modal-heading h2,.profile-editor-modal h2) { font-weight: 550; letter-spacing: -.035em; }
+
+/* Compact shell: the club's people and next plan own the first fold.
+   Safe-area and gesture scroll owners remain in club.css. */
+:root { --bb2-shadow: none; --bb2-nav-clearance: 78px; }
+body.authenticated .topbar {
+  height: 64px;
+  margin-bottom: 0;
+  padding: 0 max(24px, calc((100vw - 1120px) / 2));
+  border-bottom-color: var(--bb2-line);
+  background: var(--bb2-canvas);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body.authenticated .topbar-title h1 { margin: 0; font-size: 18px; }
+body.authenticated .page-section { padding-top: 22px; padding-bottom: calc(var(--bb2-nav-clearance) + 24px); }
+body.authenticated #inicio:is(.active,.page-back-preview) { gap: 18px; padding-top: 18px; }
+body.authenticated #inicio > .club-welcome { margin: 0; padding: 0; border: 0; min-height: 36px; }
+body.authenticated #inicio .club-welcome h2 { margin: 0; font-size: 28px; line-height: 1.2; font-weight: 600; }
+body.authenticated #inicio .club-welcome .status-pill { min-height: 28px; padding: 4px 0; border: 0; background: transparent; }
+body.authenticated #inicio .club-search .search-hub-box { min-height: 46px; border-radius: 10px; }
+body.authenticated #inicio .club-search input { height: 46px; }
+body.authenticated #inicio .club-dashboard > :is(.club-plans,.spotify-panel) { padding: 18px; border-color: var(--bb2-line); background: var(--bb2-panel); box-shadow: none; }
+body.authenticated #inicio .club-plans .panel-heading { margin-bottom: 10px; }
+body.authenticated #inicio .club-plans .panel-heading h3 { font-size: 16px; line-height: 1.3; letter-spacing: -.02em; text-transform: none; color: var(--bb2-ink); }
+body.authenticated #inicio .club-heading-link { min-height: 32px; }
+body.authenticated #inicio .club-calendar-link { min-height: 40px; margin-top: 10px; padding-top: 8px; }
+body.authenticated #inicio .home-members-section > .panel-heading h3 { font-size: 22px; }
+body.authenticated #inicio .home-members-section > .panel-heading { margin-bottom: 12px; }
+body.authenticated #inicio .club-member { box-shadow: none; }
+body.authenticated .floating-tab-bar {
+  bottom: 0;
+  width: min(600px,100vw);
+  min-height: 64px;
+  border: 0;
+  border-top: 1px solid var(--bb2-line-strong);
+  border-radius: 0;
+  background: var(--bb2-canvas);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body.authenticated .tab-selection-indicator { background: var(--bb2-panel); border: 0; border-radius: 10px; box-shadow: none; }
+body.authenticated .app-tab { min-height: 48px; }
+body.authenticated .profile-tab-photo { box-shadow: none; }
+body.authenticated :is(.panel,.admin-member-card,.help-request-item,.admin-achievement-card,.admin-settings-entry,.profile-stats > div) { background: var(--bb2-panel); box-shadow: none; }
+body.authenticated :is(.primary-button,.send-button) { background: var(--bb2-gold); box-shadow: none; }
+body.authenticated .club-spotify-player { background: var(--bb2-panel); border-color: var(--bb2-line); box-shadow: none; }
+body.authenticated .spotify-panel .eyebrow { display: none; }
+body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
+#spotifyPlayer { min-height: 120px; }
+#spotifyPlayer:has(iframe) { min-height: 394px; }
+.club-section-disabled { display: none !important; }
+.feature-load-notice { position: fixed; z-index: 6000; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom,0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; width: min(90vw,560px); padding: 16px; border: 1px solid var(--bb2-line-strong); border-radius: 12px; color: var(--bb2-ink); background: var(--bb2-raised); box-shadow: 0 8px 24px #0004; font: 13px/1.5 var(--font-body,sans-serif); }
+.feature-load-notice button { flex-shrink: 0; min-height: 44px; padding: 0 10px; border: 0; color: var(--bb2-ink); background: transparent; font: inherit; cursor: pointer; }
+@media (min-width:761px) {
+  body.authenticated { padding-bottom: 0; }
+  body.authenticated .floating-tab-bar { --tab-shell-padding: 6px; padding: 6px; box-sizing: border-box; }
+  body.authenticated .app-tab { max-width: 155px; }
+}
+@media (max-width:760px) {
+  body.authenticated .app > .topbar { height: calc(56px + var(--pwa-safe-top,0px)); padding: var(--pwa-safe-top,0px) 18px 0; }
+  body.authenticated .app > .page-section,
+  body.authenticated.standalone-app .app > .page-section { padding-top: 14px; padding-bottom: calc(80px + env(safe-area-inset-bottom,0px)); }
+  body.authenticated #inicio:is(.active,.page-back-preview) { gap: 16px; padding-inline: 18px; }
+  body.authenticated #inicio .club-welcome h2 { font-size: 25px; }
+  body.authenticated #inicio > .club-welcome { min-height: 30px; }
+  body.authenticated #inicio .club-dashboard > .club-plans { padding: 15px; }
+  body.authenticated #inicio .club-event-details > strong { font-size: 18px; }
+  body.authenticated #inicio .club-member-identity { padding-bottom: 14px; }
+  body.authenticated .floating-tab-bar,
+  body.authenticated.mobile-header-hidden:not(.chat-focus) .floating-tab-bar { left: 0; right: auto; bottom: 0; width: 100%; min-height: calc(60px + env(safe-area-inset-bottom,0px)); --tab-shell-padding: 5px; padding: 5px 5px calc(5px + env(safe-area-inset-bottom,0px)); border-radius: 0; transform: none; }
+  body.authenticated .floating-tab-bar .app-tab { min-height: 48px; padding: 4px; }
+  body.authenticated .floating-tab-bar .tab-selection-indicator { bottom: calc(var(--tab-shell-padding) + env(safe-area-inset-bottom,0px)); }
+  body.authenticated .profile-tab-photo { width: 34px; height: 34px; flex-basis: 34px; line-height: 28px; }
+}
+
+@media (max-width:760px) {
+  /* Reserve the navigation's own strip instead of placing it over member artwork. */
+  body.authenticated:not(.chat-focus):not(.achievement-management-open):not(.superadmin-console-session) .app { box-sizing: border-box; padding-bottom: calc(60px + env(safe-area-inset-bottom,0px)); }
+  body.authenticated:not(.chat-focus):not(.achievement-management-open):not(.superadmin-console-session) .app > .page-section { padding-bottom: 24px; }
+}
+
+/* The offline entry is available before the optional album stylesheet is loaded. */
+.offline-album-access { display: grid; gap: 5px; width: 100%; margin-top: 12px; padding: 13px 15px; border: 1px solid var(--bb2-line-strong); border-radius: 12px; background: var(--bb2-raised); color: var(--bb2-ink); text-align: left; }
+.offline-album-access[hidden] { display: none; }
+.offline-album-access strong { font-size: 13px; }
+.offline-album-access small { color: var(--bb2-secondary); font-size: 11px; line-height: 1.5; }

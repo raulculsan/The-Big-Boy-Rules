@@ -20,7 +20,7 @@ body.superadmin-console-session #administracion { max-width:1160px; margin-inlin
 #superAdminConsole svg, .control-dock svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
 .control-heading { display:flex; gap:20px; align-items:flex-start; justify-content:space-between; margin-bottom:26px; }
 .control-brand { display:flex; gap:20px; align-items:center; }
-.control-emblem { display:flex; flex-direction:column; align-items:center; justify-content:center; width:76px; height:86px; color:var(--accent); border:1px solid var(--control-border); border-radius:18px; background:linear-gradient(145deg,var(--bb2-raised),var(--bb2-panel)); font-family:Anton,sans-serif; font-size:36px; line-height:1; }
+.control-emblem { display:flex; flex-direction:column; align-items:center; justify-content:center; width:76px; height:86px; color:var(--accent); border:1px solid var(--control-border); border-radius:18px; background:var(--bb2-raised); font-family:Anton,sans-serif; font-size:36px; line-height:1; }
 .control-emblem span { margin-top:9px; font-family:Inter,sans-serif; font-size:8px; letter-spacing:.2em; }
 .control-kicker { font-size:10px; letter-spacing:.15em; font-weight:700; color:var(--control-muted); }
 .control-heading h2 { margin:8px 0 7px; font-size:clamp(25px,3.5vw,38px); line-height:1.12; font-family:Inter,sans-serif; font-weight:650; letter-spacing:-.05em; }
@@ -34,7 +34,7 @@ body.superadmin-console-session #administracion { max-width:1160px; margin-inlin
 .control-tabs svg { width:17px!important; height:17px!important; }
 [data-control-unsaved] { width:5px; height:5px; border-radius:50%; background:var(--accent); }
 .control-overview { display:grid; grid-template-columns:.95fr 1.05fr; gap:20px; }
-.control-overview-lead { border:1px solid var(--control-border); border-radius:22px; background:linear-gradient(125deg,var(--surface-2),var(--surface)); padding:27px; position:relative; overflow:hidden; }
+.control-overview-lead { border:1px solid var(--control-border); border-radius:22px; background:var(--surface-2); padding:27px; position:relative; overflow:hidden; }
 .control-overview-lead:after { content:"BB"; font-family:Anton,sans-serif; position:absolute; right:-8px; bottom:-38px; font-size:165px; color:var(--accent); opacity:.035; pointer-events:none; transform:rotate(-8deg); }
 .control-overview-lead>strong { display:block; font-size:27px; font-weight:600; margin:18px 0 10px; letter-spacing:-.04em; }
 .control-overview-lead p { color:var(--control-muted); max-width:310px; font-size:13px; line-height:1.7; }
@@ -114,14 +114,14 @@ body.superadmin-console-session .admin-account-security { display:flex; }
 .control-phone-preview section>span { display:block; font-size:6px; letter-spacing:.1em; color:var(--muted); margin-bottom:7px; }
 .control-phone-preview section>strong { font-size:10px; display:block; overflow-wrap:anywhere; }
 .control-preview-news { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:10px; }
-.control-preview-news>i { height:46px; border-radius:7px; border:1px solid var(--control-border); background:linear-gradient(135deg,var(--surface-3),var(--surface)); }
+.control-preview-news>i { height:46px; border-radius:7px; border:1px solid var(--control-border); background:var(--surface-3); }
 .control-preview-dashboard { display:flex; gap:8px; }
 .control-preview-dashboard>section { flex:1; min-width:0; padding:12px 9px; border-radius:10px; border:1px solid var(--control-border); background:var(--surface); }
 .control-preview-dashboard section>i { display:block; width:90%; height:3px; margin-top:12px; border-radius:5px; background:var(--surface-3); }
 .control-preview-dashboard section>i:last-child { width:60%; background:var(--preview-accent); opacity:.6; }
 .control-preview-record { width:30px; height:30px; border:8px solid var(--surface-3); background:var(--preview-accent); border-radius:50%; margin:15px auto 0; }
 .control-preview-people { display:flex; gap:8px; margin-top:12px; }
-.control-preview-people i { width:calc((100% - 16px)/3); height:58px; border:1px solid var(--control-border); border-radius:10px; background:linear-gradient(165deg,var(--surface-3) 45%,var(--surface) 45%); position:relative; }
+.control-preview-people i { width:calc((100% - 16px)/3); height:58px; border:1px solid var(--control-border); border-radius:10px; background:var(--surface-3); position:relative; }
 .control-preview-people i:before { content:""; position:absolute; left:9px; top:19px; width:17px; height:17px; border:2px solid var(--preview-accent); background:var(--surface-2); border-radius:50%; }
 .control-preview-notice { padding:10px; background:var(--surface); border:1px solid var(--control-border); border-left:2px solid var(--preview-accent); border-radius:8px; margin:-8px 0 18px; overflow-wrap:anywhere; }
 .control-preview-notice>small { font-size:5px; color:var(--preview-accent); }
@@ -250,3 +250,9 @@ body.light .control-publish-bar button[type=submit] { color:white; }
 
 .control-tabs {overflow-x:auto}
 .control-tabs button {flex-shrink:0;white-space:nowrap}
+
+/* Administrative surfaces use tone and alignment rather than decorative depth. */
+#superAdminConsole :is(.control-emblem,.control-card,.control-overview-card,.control-stat,.control-section,.control-preview,.control-field,.control-economy-card) { background: var(--bb2-panel); box-shadow: none; }
+#superAdminConsole .control-emblem { background: var(--bb2-raised); }
+#superAdminConsole .control-tabs button[aria-pressed="true"] { box-shadow: none; }
+#superAdminConsole :is(input,textarea,select) { box-shadow: none; background: var(--bb2-raised); }

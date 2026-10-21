@@ -1,10 +1,10 @@
 # Regla de composición para banners
 
-Todos los banners nuevos deben llenar de borde a borde la cabecera de cada tarjeta de **Miembros**. No deben quedar franjas laterales ni rellenos borrosos. La persona, el objeto o la acción principal deben seguir visibles junto a la foto de perfil superpuesta.
+Los banners conservan su composición panorámica original **3:1** en Miembros y llenan la cabecera de borde a borde. No añadir recortes, estiramientos, franjas laterales, fondos borrosos ni versiones compactas que cambien la escena.
 
-- Preparar una composición compacta cuando el arte panorámico no encaje. Conservar el archivo editable de Krita y exportar las capas necesarias para la animación.
-- Adaptar la escena al ancho variable de las tarjetas sin cortar elementos importantes. Revisar como mínimo 172 × 96 y 198 × 96 px en móvil, y 338 × 118 px en escritorio.
-- Mantener la animación alineada con la composición compacta. Comprobar también la cabecera del perfil y el estado con movimiento reducido.
-- Hacer la comprobación visual en la aplicación antes de sincronizar iOS.
-
-Las composiciones compactas de Alberto y del baño en `banner-shop.js` son ejemplos de esta regla.
+- La cabecera de Miembros usa `aspect-ratio: 3 / 1` y altura automática. En móvil las tarjetas ocupan una columna; en escritorio el ancho mínimo es 330 px.
+- Mantener la foto de perfil superpuesta en la esquina inferior izquierda y la identidad debajo del arte.
+- Exportar fondos y capas animadas con el mismo lienzo panorámico y coordenadas. Los originales actuales usan 2172 × 724 px.
+- Adaptar el contenedor al arte original. No recomponer los originales del baño o Galicia para estrecharlos.
+- Revisar como mínimo anchos de pantalla de 320 y 390 px, escritorio y la cabecera del perfil, incluyendo movimiento reducido.
+- Comprobar visualmente los originales animados antes de sincronizar iOS.

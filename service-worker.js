@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v363";
+const CACHE_NAME = "big-boy-rules-v364";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,10 +6,11 @@ const APP_SHELL = [
   "./account-security.css?v=20261019-identity-353",
   "./account-requests.js?v=20261021-email-359",
   "./account-requests.css?v=20261019-identity-353",
+  "./feature-loader.js?v=20261021-deferred-364",
   "./app-health.js?v=20261017-startup-logs-331",
   "./app-health.css?v=20261016-improvements-319",
   "./styles.css?v=20261020-polish-357",
-  "./visual-system.css?v=20261020-minimal-358",
+  "./visual-system.css?v=20261021-compact-364",
   "./notifications.css?v=20261015-notifications-polls-307",
   "./club.css?v=20261021-performance-363",
   "./icons/mascot/chota-v2/chota-poses.webp",
@@ -37,9 +38,9 @@ const APP_SHELL = [
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20260903-130",
   "./admin-console.js?v=20261019-economy-351",
-  "./admin-console.css?v=20261019-economy-351",
-  "./app.js?v=20261021-performance-363",
-  "./spotify-player.js?v=20261017-bounded-reconnect-331",
+  "./admin-console.css?v=20261021-compact-364",
+  "./app.js?v=20261021-deferred-364",
+  "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261016-release-323",
   "./album.css?v=20261016-release-323",

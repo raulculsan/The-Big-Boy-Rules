@@ -10,30 +10,39 @@ alter table public.achievement_rules add constraint achievement_rules_metric_che
 -- Catálogo de identificadores, sin fotos ni datos privados; solo el servidor puede modificarlo.
 create table if not exists public.achievement_card_catalog (
   id text primary key,
-  edition text not null check (edition in ('common','special','epic','legendary','retro')),
+  edition text not null check (edition in ('common','special','epic','legendary','retro','full_art','vice_city')),
   kind text not null check (kind in ('member','location','object')),
   active boolean not null default true
 );
 alter table public.achievement_card_catalog drop constraint if exists achievement_card_catalog_edition_check;
 alter table public.achievement_card_catalog add constraint achievement_card_catalog_edition_check
-  check (edition in ('common','special','epic','legendary','retro'));
+  check (edition in ('common','special','epic','legendary','retro','full_art','vice_city'));
 alter table public.achievement_card_catalog drop constraint if exists achievement_card_catalog_kind_check;
 alter table public.achievement_card_catalog add constraint achievement_card_catalog_kind_check
   check (kind in ('member','location','object'));
 alter table public.achievement_card_catalog enable row level security;
 revoke all on public.achievement_card_catalog from public, anon, authenticated;
 insert into public.achievement_card_catalog(id,edition,kind) values
+  ('ruben-king-vice-city','vice_city','member'),
+  ('jose-enrique-fernandez-cruz-full-art','full_art','member'),
   ('jose-enrique-fernandez-cruz-normal','common','member'),
   ('miguel-angel-jimenez-sanchez-normal','common','member'),
   ('lizzy-machado-yong-comun','common','member'),
+  ('lizzy-machado-yong-full-art','full_art','member'),
   ('raul-culsan-gonzalez-normal','common','member'),
+  ('raul-culsan-gonzalez-full-art','full_art','member'),
   ('mario-salvatierra-medina-comun','common','member'),
+  ('mario-salvatierra-medina-full-art','full_art','member'),
   ('almudena-de-diego-matilla-comun','common','member'),
+  ('almudena-de-diego-matilla-full-art','full_art','member'),
   ('caonabo-alberto-normal','common','member'),
   ('alberto-velasco-normal','common','member'),
+  ('alberto-velasco-full-art','full_art','member'),
   ('carlos-gonzalez-motos-normal','common','member'),
+  ('carlos-gonzalez-motos-full-art','full_art','member'),
   ('felipe-hp-normal','common','member'),
   ('daniel-gonzalez-motos-normal','common','member'),
+  ('daniel-gonzalez-motos-full-art','full_art','member'),
   ('juan-manuel-perez-saldana-retro','retro','member'),
   ('juan-carlos-vega-quevedo-retro','retro','member'),
   ('carlos-sanchez-rodriguez-retro','retro','member'),
@@ -44,17 +53,23 @@ insert into public.achievement_card_catalog(id,edition,kind) values
   ('carabanchel-legendaria','legendary','location'),
   ('galicia-legendaria','legendary','location'),
   ('josefa-valcarcel-epica','epic','location'),
+  ('cuba-epica','epic','location'),
   ('mesena-retro','retro','location'),
   ('contrato-de-trabajo-comun','common','object'),
+  ('titulacion-comun','common','object'),
+  ('justificante-medico-comun','common','object'),
   ('lata-de-red-bull-comun','common','object'),
   ('cafe-del-santander-comun','common','object'),
   ('test-de-embarazo-positivo-comun','common','object'),
   ('vater-comun','common','object'),
+  ('satisfyer-comun','common','object'),
   ('la-biblia-epica','epic','object'),
   ('sombrero-militar-epico','epic','object'),
+  ('gafas-vision-nocturna-epicas','epic','object'),
   ('bote-de-nutella-epico','epic','object'),
   ('ceviche-epico','epic','object'),
   ('locker-luca-de-tena-legendario','legendary','object'),
+  ('cruz-anticristo-legendaria','legendary','object'),
   ('big-mac-legendario','legendary','object'),
   ('cubo-de-alitas-kfc-legendario','legendary','object'),
   ('trofeo-champions-legendario','legendary','object'),

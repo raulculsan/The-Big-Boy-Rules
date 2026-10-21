@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BBAA18102026033600000001 /* ClubAuthPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA18102026033600000002; };
-		BBAA18102026033600000003 /* ClubDeepLinkPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA18102026033600000004; };
-		BBAA16102026000100000001 /* ClubPushPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA16102026000100000002; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -19,15 +16,15 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		BBAA02022026090200000001 /* KeyboardHostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA02022026090200000002 /* KeyboardHostViewController.swift */; };
-		BBAA02102026100800000001 /* ClubSpotifyPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA02102026100800000002; };
-		BBAA02102026100800000003 /* SpotifyiOS in Frameworks */ = {isa = PBXBuildFile; productRef = BBAA02102026100800000004; };
-		BBAA02102026100900000001 /* ClubGalleryPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA02102026100900000002; };
+		BBAA02102026100800000001 /* ClubSpotifyPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA02102026100800000002 /* ClubSpotifyPlugin.swift */; };
+		BBAA02102026100800000003 /* SpotifyiOS in Frameworks */ = {isa = PBXBuildFile; productRef = BBAA02102026100800000004 /* SpotifyiOS */; };
+		BBAA02102026100900000001 /* ClubGalleryPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA02102026100900000002 /* ClubGalleryPlugin.swift */; };
+		BBAA16102026000100000001 /* ClubPushPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA16102026000100000002 /* ClubPushPlugin.swift */; };
+		BBAA18102026033600000001 /* ClubAuthPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA18102026033600000002 /* ClubAuthPlugin.swift */; };
+		BBAA18102026033600000003 /* ClubDeepLinkPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA18102026033600000004 /* ClubDeepLinkPlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		BBAA18102026033600000002 /* ClubAuthPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubAuthPlugin.swift; sourceTree = "<group>"; };
-		BBAA18102026033600000004 /* ClubDeepLinkPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubDeepLinkPlugin.swift; sourceTree = "<group>"; };
-		BBAA16102026000100000002 /* ClubPushPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPushPlugin.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -42,6 +39,9 @@
 		BBAA02022026090200000002 /* KeyboardHostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardHostViewController.swift; sourceTree = "<group>"; };
 		BBAA02102026100800000002 /* ClubSpotifyPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubSpotifyPlugin.swift; sourceTree = "<group>"; };
 		BBAA02102026100900000002 /* ClubGalleryPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubGalleryPlugin.swift; sourceTree = "<group>"; };
+		BBAA16102026000100000002 /* ClubPushPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPushPlugin.swift; sourceTree = "<group>"; };
+		BBAA18102026033600000002 /* ClubAuthPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubAuthPlugin.swift; sourceTree = "<group>"; };
+		BBAA18102026033600000004 /* ClubDeepLinkPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubDeepLinkPlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -149,7 +149,7 @@
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
-				BBAA02102026100800000005 /* Spotify iOS SDK */,
+				BBAA02102026100800000005 /* XCRemoteSwiftPackageReference "ios-sdk" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -180,18 +180,21 @@
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
-			files = ();
+			files = (
+			);
+			inputFileListPaths = (
+				"$(SRCROOT)/App/web-assets.xcfilelist",
+			);
 			inputPaths = (
 				"$(SRCROOT)/App/public",
 				"$(SRCROOT)/App/web-assets.xcfilelist",
 				"$(SRCROOT)/../../scripts/copy-ios-web-assets.py",
 			);
-			inputFileListPaths = (
-				"$(SRCROOT)/App/web-assets.xcfilelist",
-			);
 			name = "Copy web assets without conflict copies";
 			outputFileListPaths = (
 				"$(SRCROOT)/App/web-assets-output.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -371,7 +374,10 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				OTHER_LDFLAGS = "$(inherited) -ObjC";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.raulculsan.thebigboyrules;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -395,7 +401,10 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				OTHER_LDFLAGS = "$(inherited) -ObjC";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.raulculsan.thebigboyrules;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
@@ -435,19 +444,26 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		BBAA02102026100800000005 /* Spotify iOS SDK */ = {
+		BBAA02102026100800000005 /* XCRemoteSwiftPackageReference "ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/spotify/ios-sdk.git";
-			requirement = {kind = exactVersion; version = 5.0.1; };
+			requirement = {
+				kind = exactVersion;
+				version = 5.0.1;
+			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		BBAA02102026100800000004 /* SpotifyiOS */ = {isa = XCSwiftPackageProductDependency; package = BBAA02102026100800000005; productName = SpotifyiOS; };
 		4D22ABE82AF431CB00220026 /* CapApp-SPM */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
 			productName = "CapApp-SPM";
+		};
+		BBAA02102026100800000004 /* SpotifyiOS */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BBAA02102026100800000005 /* XCRemoteSwiftPackageReference "ios-sdk" */;
+			productName = SpotifyiOS;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

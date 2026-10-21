@@ -17,6 +17,7 @@ const output = resolve(root, "www");
 const sources = [
   "index.html",
   "app-health.js",
+  "feature-loader.js",
   "app-health.css",
   "styles.css",
   "visual-system.css",

@@ -8,7 +8,7 @@ rows in `auth.mfa_factors`; `user_metadata` and client flags never grant access.
 ## Deploy and configure before activating
 
 1. Apply `20261018210000_account_security.sql` first. Then deploy `admin-users`,
-   `push-dispatch`, and `tigreton-agenda` **including** the local
+   `push-dispatch`, `tigreton-agenda`, and `tigreton-voice` **including** the local
    `_shared/account-security.ts` import. Deploy the frontend afterwards. The new
    Edge code fails closed if the RPC is absent, so reversing the order interrupts
    those functions even while enforcement is off.
@@ -73,7 +73,7 @@ The status RPC returns only the caller's security state, including
 `linked_providers`, `identity_linked`, `mfa_enrolled`, `current_aal`, `access_allowed`.
 It accepts no target user ID and exposes no MFA secret or profile data.
 
-After checking provider callbacks, authenticator recovery, all three active Edge functions,
+After checking provider callbacks, authenticator recovery, all four Edge functions,
 old-client handling and a completed control account, activate explicitly:
 
 ```sql
@@ -96,8 +96,6 @@ does not itself count as the application's second factor.
 - Edge functions check `assert_account_security()` with the **incoming user JWT**
   after `auth.getUser()` and before privileged profile reads/writes. Checking with
   a service-role client would lose the caller's identity/AAL and is forbidden.
-- The older `tigreton-voice` function is not included in this release. Keep it
-  disabled; before reactivating voice, deploy its user-JWT security check too.
 - SQL owner, service-role maintenance, and scheduled server jobs retain their
   existing authority. Never expose the service key or add a browser-accessible
   proxy without the user-JWT check. Direct database connections are operator-only.

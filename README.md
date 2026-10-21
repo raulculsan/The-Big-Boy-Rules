@@ -7,6 +7,10 @@ real, mensajes privados, calendario administrado por Kike y noticias actuales.
 
 Para crear banners nuevos, seguir la [regla de composición de Miembros](artwork/banners/README.md).
 
+Para crear cartas Full Art, seguir la [configuración aprobada de diseño, rareza y animación](docs/cartas/FULL_ART.md).
+
+Los sobres nuevos contienen **3 miembros, 2 objetos y 1 ubicación**, sin repetir cartas. En instalaciones existentes, ejecutar `supabase-pack-kind-distribution.sql` después de configurar la tienda; mantiene los pesos de rareza y los sobres ya abiertos.
+
 ## Activar las funciones compartidas
 
 La interfaz puede abrirse sin backend para revisar el diseño y editar un perfil
@@ -74,5 +78,10 @@ Nunca copies la clave `service_role` en la web.
 - Noticias obtiene titulares actuales mediante los feeds de Google News y abre
   siempre la fuente original.
 
-Sin las claves de Supabase, las credenciales provisionales de la demo local
-siguen siendo usuario en minúsculas y contraseña `bigboy2026`.
+La aplicación requiere Supabase Auth para iniciar sesión; no acepta
+credenciales locales de demostración.
+
+## Mapa del proyecto
+
+Consulta [arquitectura y recursos](docs/architecture/runtime.md) para localizar
+cada módulo, regenerar miniaturas y entender el empaquetado web/iOS.

@@ -25,11 +25,11 @@ function sweep(target,name,width,color,opacity,offset=0,angle=24,reverse=false) 
   layer.ks.p.k[0].o={x:[1/3],y:[1/3]};layer.ks.p.k[0].i={x:[2/3],y:[2/3]};
   layer.ks.r=fixed(angle);target.layers.push(layer);
 }
-const special=base('Los nuestros · Especial · nácar',400,700,61);
-sweep(special,'Nácar violeta',76,[.66,.51,1],10,-48);
-sweep(special,'Nácar azul hielo',54,[.40,.88,1],14,16);
-sweep(special,'Luz perlada',14,[.92,.98,1],22,42);
-sweep(special,'Velo frío',164,[.64,.76,1],4);
+const special=base('Los nuestros · Especial · platino y turquesa',400,700,61);
+sweep(special,'Platino cepillado',64,[.86,.93,.93],10,-48,18);
+sweep(special,'Turquesa satinado',42,[.32,.75,.69],11,16,18);
+sweep(special,'Bisel de plata',9,[.95,1,.99],20,42,18);
+sweep(special,'Velo aguamarina',142,[.49,.82,.76],3,0,18);
 const legendary=base('Los nuestros · Legendaria · oro facetado',400,700,61);
 // Small four-point facets light at separate gesture positions, not flashing loops.
 for(const [i,x,y,t] of [[0,34,135,17],[1,365,360,30],[2,55,575,43]]) {
@@ -63,9 +63,10 @@ sweep(retro,'Contrarreflejo carmesí',46,[.68,.18,.16],7,-245,-14,true);
 sweep(retro,'Pátina ámbar',134,[.77,.48,.23],3,0,18);
 const foils=[['card-touch',shine],['card-touch-special',special],['card-touch-legendary',legendary],['card-touch-retro',retro]];
 for(const [,json] of foils)json.layers.forEach((l,i)=>l.ind=i+1);
-await Promise.all(foils.map(([name,json])=>writeFile(new URL(name+'.json',root),JSON.stringify(json))));
-console.log('Lottie: común, especial (nácar), legendaria (oro facetado) y retro (cobre envejecido)');
-if(process.argv.includes('--foil-only'))process.exit(0);
+const selectedFoils=process.argv.includes('--special-only')?foils.filter(([name])=>name==='card-touch-special'):foils;
+await Promise.all(selectedFoils.map(([name,json])=>writeFile(new URL(name+'.json',root),JSON.stringify(json))));
+console.log('Lottie: '+selectedFoils.map(([name])=>name).join(', '));
+if(process.argv.includes('--foil-only')||process.argv.includes('--special-only'))process.exit(0);
 const pack=base('Los nuestros · apertura · vista previa',480,640,145);
 pack.assets=[{id:'pack',w:1024,h:1536,u:'',p:'sobre-los-nuestros-v1.png',e:0},{id:'reverse',w:948,h:1659,u:'',p:'jose-enrique-fernandez-cruz-normal-86-reverso-v1.png',e:0}];
 const bitmap=(id,name,p,scale)=>({ddd:0,ty:2,nm:name,refId:id,sr:1,ks:{...transform(p),s:fixed([scale,scale,100])},ao:0,ip:0,op:145,st:0,bm:0});

@@ -11,6 +11,7 @@ const port = Number(process.env.TBBR_DEV_PORT || 5173);
 const clients = new Set();
 const allowedFiles = new Set([
   "index.html",
+  "feature-loader.js",
   "styles.css",
   "club.css",
   "club-model.js",

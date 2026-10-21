@@ -9,3 +9,15 @@ vendor/* 3.*
 vendor/* 4.*
 vendor/* 5.*
 icons/cards/* 2.png
+
+# Local credentials and generated inspection/build material
+.env
+.env.*
+!.env.example
+*.trace/
+*.kra~
+*.jks
+*.keystore
+supabase/.temp/
+__pycache__/
+.taste-skill/

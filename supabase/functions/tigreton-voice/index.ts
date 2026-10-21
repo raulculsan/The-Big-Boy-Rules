@@ -1,3 +1,4 @@
+import {accountSecurityFailure} from "../_shared/account-security.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {createClient} from "npm:@supabase/supabase-js@2.57.4";
 
@@ -71,6 +72,8 @@ export default {
     const db = createClient(url, anon, {global: {headers: {Authorization: authorization}}, auth: {persistSession: false, autoRefreshToken: false}});
     const {data: {user}, error: authError} = await db.auth.getUser();
     if (authError || !user) return json({error: "Sesión no válida."}, 401);
+    const securityFailure = await accountSecurityFailure(url, anon, authorization);
+    if (securityFailure) return json({error: securityFailure.error, code: securityFailure.code}, securityFailure.status);
     const {data: profile} = await db.from("profiles").select("id, is_hidden").eq("id", user.id).maybeSingle();
     if (!profile || profile.is_hidden) return json({error: "Perfil no disponible."}, 403);
     let body;

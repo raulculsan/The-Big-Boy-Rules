@@ -707,8 +707,21 @@ async function transitionMessageView(update, {back = false} = {}) {
 
 let helpReturnPage = null;
 const pageBackPositions = new Map();
+let featureNavigationRequest = 0;
 
 function goTo(sectionId) {
+  const featureRequest = ++featureNavigationRequest;
+  // Keep the current screen painted while an optional section's code/styles load.
+  // Chat navigation remains synchronous because its push/pop gesture owns the frame.
+  if (globalThis.ClubFeatures && !globalThis.ClubFeatures.routeReady(sectionId)) {
+    void globalThis.ClubFeatures.forRoute(sectionId).then(() => {
+      if (featureRequest === featureNavigationRequest) goTo(sectionId);
+    }).catch(error => {
+      if (featureRequest === featureNavigationRequest) globalThis.ClubFeatures.feedback(error.message, () => goTo(sectionId));
+    });
+    return;
+  }
+  void globalThis.ClubFeatures?.forRoute(sectionId).catch(error => globalThis.ClubFeatures.feedback(error.message));
   const leavingPage = sections.find(section => section.classList.contains("active"));
   if (leavingPage) pageBackPositions.set(leavingPage.id, {...capturePagePosition(leavingPage.id), layout: capturePageBackLayout(leavingPage)});
   // A back button and its edge gesture resolve the same route and restore the
@@ -814,6 +827,7 @@ function goTo(sectionId) {
         // A WebKit history quota must never stop rendering or refreshing the tab.
         if (error.name !== "SecurityError") throw error;
       }
+      if (sectionId === "inicio" && currentUser) renderSpotify();
       if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
       if (sectionId === "ayuda" && currentUser) loadHelpCenter();
       if (sectionId === "sobres" && currentUser) void globalThis.BannerShop?.refresh(true);
@@ -1475,18 +1489,42 @@ function spotifyEmbedUrl(value = "") {
   return match ? `https://open.spotify.com/embed/playlist/${match[1]}?utm_source=generator&theme=0` : "";
 }
 
+let spotifyViewportObserver = null;
+let spotifyMountRequest = 0;
+function spotifySurfaceVisible(player) {
+  if (!currentUser || document.hidden || !document.getElementById("inicio")?.classList.contains("active") || player.closest(".club-section-disabled")) return false;
+  const rect = player.getBoundingClientRect();
+  const page = document.getElementById("inicio").getBoundingClientRect();
+  return rect.width > 0 && rect.top < Math.min(window.innerHeight, page.bottom) + 80 && rect.bottom > Math.max(0, page.top);
+}
 function renderSpotify() {
+  const player = document.getElementById("spotifyPlayer");
+  const editor = document.getElementById("editSpotifyButton");
+  if (!spotifyViewportObserver && typeof IntersectionObserver === "function") {
+    spotifyViewportObserver = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) renderSpotify();
+    }, {rootMargin:"80px 0px"});
+    spotifyViewportObserver.observe(player);
+  }
   if (!homeSettingsReady) {
-    document.getElementById("spotifyPlayer").innerHTML = '<div class="home-loading-state" role="status">Cargando playlist…</div>';
-    document.getElementById("editSpotifyButton").hidden = true;
+    if (!player.childElementCount) player.innerHTML = '<div class="home-loading-state" role="status">Cargando playlist…</div>';
+    editor.hidden = true;
     return;
   }
-  document.getElementById("editSpotifyButton").hidden = false;
+  editor.hidden = false;
   const url = siteSettings.spotify_playlist || "";
-  const player = document.getElementById("spotifyPlayer");
-  globalThis.ClubSpotify?.mount(player, url, currentAuthUser?.id || "");
-  document.getElementById("editSpotifyButton").textContent = spotifyEmbedUrl(url) ? "Cambiar playlist" : "Vincular playlist";
+  editor.textContent = spotifyEmbedUrl(url) ? "Cambiar playlist" : "Vincular playlist";
+  if (!spotifySurfaceVisible(player)) return;
+  const owner = currentAuthUser?.id || "", token = ++spotifyMountRequest;
+  void globalThis.ClubFeatures?.load("spotify").then(() => {
+    if (token !== spotifyMountRequest || owner !== (currentAuthUser?.id || "") || !spotifySurfaceVisible(player)) return;
+    return globalThis.ClubSpotify?.mount(player, url, owner);
+  }).catch(() => {
+    if (token !== spotifyMountRequest) return;
+    player.innerHTML = '<div class="home-loading-state" role="status">No se pudo cargar Spotify. <button type="button" data-spotify-retry>Cargar de nuevo</button></div>';
+  });
 }
+document.addEventListener("click", event => { if (event.target.closest("[data-spotify-retry]")) renderSpotify(); });
 
 function groupAvatarMarkup(className = "chat-group-avatar") {
   const avatarUrl = siteSettings.group_avatar_url || "";
@@ -3682,10 +3720,14 @@ function updateOfflineAlbumAccess() {
 window.addEventListener('online',updateOfflineAlbumAccess);
 window.addEventListener('offline',updateOfflineAlbumAccess);
 document.addEventListener('bb:offline-album-change',updateOfflineAlbumAccess);
-document.getElementById('offlineAlbumAccess')?.addEventListener('click',event=>{
+document.getElementById('offlineAlbumAccess')?.addEventListener('click',async event=>{
   if(currentAuthUser || currentUser || navigator.onLine!==false)return;
-  const snapshot=globalThis.BannerShop?.offlineInventory();
-  if(snapshot)globalThis.CardAlbum?.openOffline(snapshot,event.currentTarget);
+  const snapshot=globalThis.BannerShop?.offlineInventory(), trigger=event.currentTarget;
+  if (!snapshot) return;
+  try {
+    await globalThis.ClubFeatures?.load('collection');
+    if (!currentAuthUser && !currentUser) globalThis.CardAlbum?.openOffline(snapshot,trigger);
+  } catch (error) { globalThis.ClubFeatures?.feedback(error.message); }
 });
 
 function showLogin() {
