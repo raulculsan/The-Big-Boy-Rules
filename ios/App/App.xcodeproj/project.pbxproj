@@ -190,9 +190,6 @@
 				"$(SRCROOT)/App/web-assets.xcfilelist",
 			);
 			name = "Copy web assets without conflict copies";
-			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/public",
-			);
 			outputFileListPaths = (
 				"$(SRCROOT)/App/web-assets-output.xcfilelist",
 			);
