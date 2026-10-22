@@ -1,0 +1,75 @@
+/* Room objects share the illustration's floor plane; nothing blocks the mascot. */
+.chota-room-props { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }
+.chota-room-prop { position:absolute; line-height:0; transform-origin:center; }
+.chota-room-prop svg { display:block; width:100%; height:auto; overflow:visible; }
+.chota-room-football { left:16%; top:77%; width:7.5%; transform:rotate(-9deg); }
+.chota-room-skateboard { left:71%; top:80%; width:18%; transform:rotate(9deg); }
+.chota-room-robot-vacuum { left:63%; top:88%; width:10%; animation:chota-vacuum-clean 35s linear infinite; animation-play-state:paused; will-change:auto; }
+.chota-props-moving .chota-room-robot-vacuum { animation-play-state:running; will-change:transform; }
+.chota-vacuum-brush { transform-box:fill-box; transform-origin:20% 50%; animation:chota-vacuum-brush .6s linear infinite; animation-play-state:paused; }
+.chota-props-moving .chota-vacuum-brush { animation-play-state:running; }
+.chota-viewer-room-scene .chota-viewer-pet { z-index:3; }
+.chota-viewer-room-scene .chota-room-football { width:7.5%; }
+.chota-viewer-room-scene .chota-room-skateboard { width:18%; }
+@keyframes chota-vacuum-clean {
+  0%,3% { transform:translate(0,0) rotate(0deg); }
+  6% { transform:translate(0,0) rotate(178deg); }
+  29% { transform:translate(-380%,-25%) rotate(178deg); }
+  32% { transform:translate(-380%,-25%) rotate(90deg); }
+  40% { transform:translate(-390%,-120%) rotate(90deg); }
+  43% { transform:translate(-390%,-120%) rotate(0deg); }
+  66% { transform:translate(0,-120%) rotate(0deg); }
+  69% { transform:translate(0,-120%) rotate(-90deg); }
+  78% { transform:translate(0,-15%) rotate(-90deg); }
+  82%,100% { transform:translate(0,0) rotate(0deg); }
+}
+@keyframes chota-vacuum-brush { to { transform:rotate(360deg); } }
+#shopChotaPanel { padding-top:4px; }
+.chota-shop-intro { display:flex; align-items:baseline; justify-content:space-between; gap:18px; margin:0 0 22px; }
+.chota-shop-intro h3 { margin:0 0 7px; color:#f4f1e9; font-size:20px; letter-spacing:-.025em; }
+.chota-shop-intro p { margin:0; max-width:500px; color:#aaaeb5; font-size:13px; line-height:1.6; }
+.chota-shop-items { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.chota-shop-item { min-width:0; background:#191b1f; border-radius:12px; overflow:hidden; }
+.chota-shop-object { position:relative; display:grid; place-items:center; height:170px; background:#242526; }
+.chota-shop-object::after { content:""; position:absolute; left:12%; right:12%; bottom:21%; height:1px; background:#ffffff10; }
+.chota-shop-object svg { position:relative; z-index:1; display:block; width:105px; max-height:116px; }
+.chota-shop-skateboard svg { width:185px; max-width:85%; }
+.chota-shop-robot-vacuum svg { width:145px; }
+.chota-shop-object .chota-vacuum-brush { animation:none; }
+.chota-shop-copy { padding:18px; }
+.chota-shop-copy h4 { margin:0 0 8px; color:#f5f2eb; font-size:18px; font-weight:650; letter-spacing:-.025em; }
+.chota-shop-copy p { margin:0; min-height:63px; color:#a7abb2; font-size:13px; line-height:1.6; }
+.chota-shop-purchase { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:20px; }
+.chota-shop-purchase > span { color:#b7b4ad; font-size:12px; }
+.chota-shop-purchase strong { margin-right:4px; color:#ecd19a; font-size:22px; font-weight:600; font-variant-numeric:tabular-nums; }
+.chota-shop-purchase button, .chota-shop-empty button { min-height:44px; padding:10px 16px; border:0; border-radius:7px; background:#e7c991; color:#201e19; font:650 13px var(--font-body,sans-serif); cursor:pointer; touch-action:manipulation; }
+.chota-shop-purchase button:disabled { cursor:default; opacity:.42; }
+.chota-shop-item.is-owned .chota-shop-purchase { color:#abb5a6; }
+.chota-shop-item.is-owned .chota-shop-purchase button { background:#30372f; color:#becbb6; opacity:1; }
+.chota-shop-item.is-owned .chota-shop-purchase > span { color:#b4bfae; }
+#chotaShopStatus { margin:0 0 16px; color:#d9c496; font-size:13px; line-height:1.5; }
+#chotaShopStatus:empty { display:none; }
+#chotaShopStatus.is-error { color:#e7a997; }
+.chota-shop-empty { grid-column:1/-1; padding:30px 0; color:#b6bac1; }
+.chota-shop-empty strong { display:block; color:#f4f1e9; font-size:18px; }
+.chota-shop-empty p { max-width:440px; font-size:13px; line-height:1.6; }
+@media(max-width:700px) {
+  .chota-shop-items { grid-template-columns:1fr; gap:14px; }
+  .chota-shop-item { display:grid; grid-template-columns:minmax(112px,32%) minmax(0,1fr); }
+  .chota-shop-object { height:100%; min-height:194px; }
+  .chota-shop-object svg { width:82px; max-width:82%; }
+  .chota-shop-skateboard svg { width:130px; max-width:94%; transform:rotate(-24deg); }
+  .chota-shop-robot-vacuum svg { width:105px; }
+  .chota-shop-copy { padding:17px 15px; }
+  .chota-shop-copy h4 { font-size:17px; }
+  .chota-shop-copy p { min-height:0; font-size:12px; line-height:1.5; }
+  .chota-shop-purchase { margin-top:17px; flex-wrap:wrap; gap:9px; }
+  .chota-shop-purchase button { margin-left:auto; padding-inline:13px; }
+  .chota-shop-purchase strong { font-size:20px; }
+  .chota-shop-intro { margin-bottom:16px; }
+  .chota-shop-intro h3 { font-size:18px; }
+  #bannerShopDialog .shop-navigation { width:100%; box-sizing:border-box; }
+  #bannerShopDialog .shop-navigation button { min-width:0; padding-inline:10px; }
+}
+@media(prefers-reduced-motion:reduce) { .chota-room-robot-vacuum,.chota-vacuum-brush { animation:none; } }
+html[data-reduced-motion="true"] .chota-room-robot-vacuum,html[data-reduced-motion="true"] .chota-vacuum-brush { animation:none; }

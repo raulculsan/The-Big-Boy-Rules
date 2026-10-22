@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="theme-color" content="#0b0b0d" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="stylesheet" href="app-health.css?v=20261016-improvements-319">
+  <script defer src="app-health.js?v=20261017-startup-logs-331"></script>
+  <style id="startup-paint">
+    html, body { background:#08090c; color:#f4f1e9; }
+    #pageLoader { position:fixed; inset:0; z-index:9999; display:grid; place-items:center; background:#08090c; }
+    #pageLoader.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+    #pageLoader .loader-emblem { display:grid; place-items:center; gap:8px; color:#d3b46a; font-family:Georgia,serif; }
+    #pageLoader .loader-emblem strong { font-size:64px; }
+    #pageLoader .loader-emblem span, #pageLoader .loader-emblem small { font:10px system-ui; letter-spacing:3px; }
+  </style>
+  <meta name="application-name" content="The Big Boy Rules" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Big Boy Rules" />
+  <script>
+    (() => {
+      try {
+        const cachedProfile = JSON.parse(localStorage.getItem("bb-auth-profile") || "null");
+        const hasSupabaseSession = Object.keys(localStorage).some(key =>
+          key.startsWith("sb-") && key.endsWith("-auth-token") && localStorage.getItem(key)
+        );
+        const hasLocalSession = Boolean(localStorage.getItem("bb-auth-session"));
+        if ((cachedProfile?.profile && hasSupabaseSession) || hasLocalSession) {
+          document.documentElement.classList.add("auth-session-hint");
+        }
+      } catch {}
+    })();
+  </script>
+  <title>The Big Boy Rules</title>
+  <link rel="manifest" href="manifest.webmanifest?v=20260901-125" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="account-requests.css?v=20261019-identity-353" />
+  <link rel="stylesheet" href="account-security.css?v=20261019-identity-353" />
+  <link rel="stylesheet" href="styles.css?v=20261020-polish-357" />
+  <link rel="stylesheet" href="chat.css?v=20261021-replies-359" />
+  <link rel="stylesheet" href="chat-themes.css?v=20261012-277" />
+  <link rel="stylesheet" href="packs.css?v=20261021-halloween-365" />
+  <link rel="stylesheet" href="achievement-admin.css?v=20261011-256" />
+  <link rel="stylesheet" href="club.css?v=20261021-performance-363" />
+  <link rel="stylesheet" href="banner-shop.css?v=20261021-performance-363" />
+  <link rel="stylesheet" href="onboarding.css?v=20261016-improvements-319" />
+  <link rel="stylesheet" href="news.css?v=20261014-home-scroll-291" />
+  <link rel="stylesheet" href="pending-actions.css?v=20261016-release-322" />
+  <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
+  <link rel="stylesheet" href="collection-social.css?v=20261022-trade-art-377" />
+  <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
+  <link rel="stylesheet" href="visual-system.css?v=20261022-pwa-shell-376" />
+  <link rel="stylesheet" href="clubhouse.css?v=20261021-chota-room-371" />
+  <link rel="stylesheet" href="chota-shop.css?v=20261022-chota-shop-378" />
+</head>
+<body>
+
+  <section class="login-screen" id="loginScreen">
+    <div class="login-background">
+      <span class="login-orbit orbit-one"></span>
+      <span class="login-orbit orbit-two"></span>
+      <span class="login-orbit orbit-three"></span>
+    </div>
+
+    <div class="login-shell">
+      <div class="login-brand-panel">
+        <div class="login-seal">
+          <span>THE BIG BOY</span>
+          <strong>BB</strong>
+          <small>RULES · PRIVATE CLUB</small>
+        </div>
+        <div class="login-brand-copy">
+          <span class="eyebrow">MEMBERS ONLY</span>
+          <h2>The Big Boy<br><em>Rules.</em></h2>
+          <p>Un espacio privado para los miembros de The Big Boy Rules.</p>
+        </div>
+      </div>
+
+      <div class="login-form-panel">
+        <form class="login-form" id="loginForm">
+          <span class="eyebrow">ACCESO PRIVADO</span>
+          <h1>Iniciar sesión</h1>
+          <p class="login-subtitle">Introduce tus credenciales para acceder al grupo.</p>
+
+          <label>
+            <span>Usuario</span>
+            <input id="loginUsername" name="username" autocomplete="username" placeholder="Ej. kike" required>
+          </label>
+
+          <label>
+            <span>Contraseña</span>
+            <div class="password-field">
+              <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+              <button type="button" id="togglePassword" aria-label="Mostrar contraseña">◉</button>
+            </div>
+          </label>
+
+          <div class="login-options">
+            <span class="persistent-session-label">✓ Sesión guardada en este dispositivo</span>
+          </div>
+
+          <div class="login-error" id="loginError" role="alert"></div>
+          <button class="login-submit" type="submit">Entrar al club</button>
+          <button type="button" class="account-request-link" data-request-account>Solicitar una cuenta</button>
+          <button type="button" id="offlineAlbumAccess" class="offline-album-access" hidden><strong>Ver álbum guardado</strong><small>Última colección de este dispositivo · Solo lectura</small></button>
+
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <div class="noise"></div>
+  <div class="aurora aurora-one"></div>
+  <div class="aurora aurora-two"></div>
+  <div class="gold-grid"></div>
+  <div class="cursor-glow" id="cursorGlow"></div>
+  <div class="page-loader" id="pageLoader">
+    <div class="loader-emblem">
+      <span>THE BIG BOY</span>
+      <strong>BB</strong>
+      <small>RULES</small>
+    </div>
+  </div>
+
+  <main class="app">
+    <header class="topbar">
+      <div class="topbar-title">
+        <span class="eyebrow">COMUNIDAD PRIVADA</span>
+        <h1 id="pageTitle">The Big Boy Rules</h1>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button packs-top-button monochrome-top-button" id="packsTopButton" type="button" data-go="sobres" aria-label="Abrir mis sobres. Saldo pendiente de sincronización" title="Mis sobres">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 7h16M4 17h16m-9-5 4-3 4 3-4 3-4-3Z"/></svg>
+          <span id="packsHomeBalance" class="packs-top-count" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
+        </button>
+        <div class="notifications-wrap">
+          <button class="icon-button notification-button monochrome-top-button" id="notificationsButton" type="button" aria-label="Abrir notificaciones" aria-expanded="false" title="Notificaciones">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="notification-count" id="notificationCount" hidden>0</span>
+          </button>
+          <div class="notifications-backdrop" id="notificationsBackdrop" hidden></div>
+          <section class="notifications-dropdown" id="notificationsDropdown" role="dialog" aria-modal="true" aria-labelledby="notificationsTitle" aria-hidden="true" inert>
+            <div class="notifications-heading">
+              <div><span class="eyebrow">AVISOS</span><h2 id="notificationsTitle">Notificaciones</h2><span id="notificationsUnreadSummary">Todo al día</span></div>
+              <button id="closeNotifications" class="notifications-close" type="button" aria-label="Cerrar notificaciones"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+            </div>
+            <div class="notifications-toolbar">
+              <div class="notifications-filters" role="group" aria-label="Filtrar notificaciones"><button type="button" data-notification-filter="all" aria-pressed="true">Todas</button><button type="button" data-notification-filter="unread" aria-pressed="false">No leídas <span id="notificationsFilterCount">0</span></button></div>
+              <div class="notifications-heading-actions"><button id="markAllNotificationsRead" type="button" aria-label="Marcar todas como leídas" title="Marcar todas como leídas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 12 5 5L19 6M12 17l9-9"/></svg></button><button id="clearAllNotifications" class="danger" type="button" aria-label="Limpiar todas las notificaciones" title="Limpiar todas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg></button></div>
+            </div>
+            <button type="button" class="notifications-pending-entry" data-pending-actions><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h12M9 12h12M9 19h12M2 5l2 2 3-4M2 12l2 2 3-4M2 19l2 2 3-4"/></svg><span><strong>Pendientes</strong><small>Intercambios, encuestas y asistencia</small></span><b data-pending-count hidden>0</b></button>
+            <div class="notifications-list" id="notificationsList" aria-label="Actividad reciente"></div>
+            <details class="notifications-settings">
+              <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Configurar mis avisos</span><span class="notifications-chevron" aria-hidden="true">⌄</span></summary>
+              <div class="push-notification-settings">
+                <small id="pushNotificationStatus">Comprueba si tu dispositivo es compatible.</small>
+                <div class="push-notification-actions"><button id="pushNotificationTestButton" type="button" hidden>Probar</button><button id="pushNotificationButton" type="button">Activar</button></div>
+              </div>
+              <div class="notification-preferences"><div class="notification-preferences-heading"><span>TUS CATEGORÍAS</span><small>En esta cuenta</small></div><div id="notificationPreferenceOptions"></div><p id="notificationPreferencesStatus" role="status" aria-live="polite">Cargando tus preferencias…</p><button id="retryNotificationPreferences" type="button" hidden>Reintentar</button></div>
+            </details>
+          </section>
+        </div>
+        <button class="icon-button admin-only admin-crown-button monochrome-top-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración">♛</button>
+      </div>
+    </header>
+
+    <section class="page-section active club-home" id="inicio">
+      <div class="club-welcome">
+        <div><span class="eyebrow">THE BIG BOY RULES</span><h2>Inicio</h2></div>
+        <span class="status-pill" id="heroOnlineStatus"><i></i> Conectando</span>
+      </div>
+      <aside class="club-admin-announcement" id="clubAdminAnnouncement" aria-label="Aviso del club" hidden><span>CLUB</span><div><strong></strong><p></p></div></aside>
+      <div class="club-search">
+        <label class="search-hub-box" for="globalSearchInput">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="globalSearchInput" type="search" placeholder="Buscar miembros" aria-label="Buscar miembros" autocomplete="off">
+        </label>
+        <div class="search-results search-hub-results" id="searchResults" aria-live="polite" hidden></div>
+      </div>
+      <section class="home-news-section is-collapsed" id="noticias" aria-labelledby="clubNewsTitle">
+        <div class="club-news-heading">
+          <div><h3 id="clubNewsTitle">Al día</h3><p>Deportes, España y el mundo</p></div>
+          <button class="news-collapse-button" id="toggleNewsButton" type="button" aria-expanded="false" aria-controls="newsCollapsible"><span>Ver noticias</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        </div>
+        <div class="news-collapsible" id="newsCollapsible" hidden>
+          <div class="news-toolbar"><div class="news-tabs" aria-label="Categorías de noticias">
+            <button class="news-tab active" type="button" data-news-category="deportes">Deportes</button>
+            <button class="news-tab" type="button" data-news-category="espana">España</button>
+            <button class="news-tab" type="button" data-news-category="mundo">Mundo</button>
+          </div><button class="text-button" id="refreshNewsButton" type="button" aria-label="Actualizar noticias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 18 17"/></svg><span>Actualizar</span></button></div>
+          <div class="news-status" id="newsStatus" aria-live="polite"></div>
+          <div class="news-grid" id="newsGrid"></div>
+        </div>
+      </section>
+      <div class="club-dashboard">
+        <section class="clubhouse" aria-labelledby="clubhouseTitle">
+          <div class="clubhouse-heading"><h3 id="clubhouseTitle">La sede del club</h3><span id="clubhouseTime">El Chota está en casa</span></div>
+          <div id="clubhouseContent" class="clubhouse-content"></div>
+        </section>
+        <article class="panel spotify-panel">
+          <div class="panel-heading"><div><span class="eyebrow">SPOTIFY</span><h3>Nuestra música</h3></div><button class="text-button admin-only" id="editSpotifyButton" type="button">Vincular playlist</button></div>
+          <div id="spotifyPlayer"></div>
+        </article>
+      </div>
+      <section class="home-members-section" id="miembros" aria-labelledby="clubMembersTitle">
+        <div class="panel-heading"><div><span class="eyebrow">EL CLUB</span><h3 id="clubMembersTitle">Miembros</h3></div></div>
+        <div class="members-grid" id="membersGrid"></div>
+      </section>
+    </section>
+
+    <section class="page-section packs-page" id="sobres" aria-labelledby="packsTitle">
+      <header class="packs-heading">
+        <button class="packs-back" type="button" data-go="inicio" aria-label="Volver a Inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+        <div><span class="eyebrow">TU COLECCIÓN PERSONAL</span><h2 id="packsTitle" tabindex="-1">Los nuestros.</h2></div>
+        <button type="button" class="collection-catalog-trigger" data-go="catalogo" aria-label="Ver todas las cartas de la colección"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6 9-3 4 13-9 3zM15 5h5v16H10v-2"/><path d="m7 9 5-1M8 12l5-1"/></svg></button>
+        <button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span data-duplicates-count>0</span></button>
+      </header>
+      <div class="packs-layout">
+        <div class="packs-display">
+          <div class="bb2-pack-copy"><span class="packs-display-edition">BIG BOYS · COLECCIÓN 01</span><h3>Tu próxima<br>apertura.</h3><span class="bb2-pack-action">Toca el sobre para abrir</span></div>
+          <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-los-nuestros-recortado-v2.png" width="1024" height="1536" loading="lazy" decoding="async" alt=""></button>
+          <span id="packsCount" class="packs-count-badge" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
+          <button type="button" class="packs-info-trigger" id="packsInfoTrigger" aria-label="Información y saldo de sobres" aria-expanded="false" aria-controls="packsInfoPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button>
+          <aside class="packs-info-panel" id="packsInfoPanel" hidden aria-labelledby="packsInfoTitle"><strong id="packsInfoTitle">Información del sobre</strong><p><span>Sobres disponibles</span><b id="packsInfoBalance">—</b></p><p><span>Monedas</span><b id="packsInfoCoins">—</b></p><p class="pack-rarity-odds" id="packRarityOdds">Actualiza para consultar las probabilidades.</p></aside>
+          <div id="ownedPackResult" class="owned-pack-result packs-screen-reader" aria-live="polite"></div>
+        </div>
+        <div class="packs-information">
+          <button type="button" class="bb2-album-entry" data-card-album aria-label="Abrir mi álbum de cartas"><span class="eyebrow">COLECCIÓN ORIGINAL</span><strong>Mi álbum</strong><span class="bb2-album-pages" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="bb2-album-label">Ver mis cartas</span></button>
+          <section class="packs-daily-panel" id="packsDailyPanel" aria-labelledby="packsStatusTitle" data-state="idle">
+            <span class="eyebrow" id="packsDailyLabel">SOBRE DIARIO</span>
+            <h3 id="packsStatusTitle">Sobres disponibles</h3>
+            <progress id="packsDailyProgress" max="1" value="0" aria-label="Recarga del sobre diario"></progress>
+            <p id="packsStatusMessage" role="status">Saldo sincronizado con tu cuenta.</p>
+            <div class="packs-reset"><span>Próximo acceso diario</span><strong id="packsNextReset">Pendiente de sincronización</strong><small>Hora de Madrid</small></div>
+            <button class="packs-sync" type="button" id="packsSyncButton">Actualizar saldo</button>
+          </section>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="page-section collection-catalog-page" id="catalogo" aria-labelledby="collectionCatalogTitle">
+      <header class="packs-heading">
+        <button class="packs-back" type="button" data-go="sobres" aria-label="Volver a sobres"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+        <div><span class="eyebrow">COLECCIÓN 01 · LOS NUESTROS</span><h2 id="collectionCatalogTitle" tabindex="-1">Cartas de la colección</h2></div>
+      </header>
+      <p class="collection-catalog-note">Todas las cartas de Los nuestros, ordenadas por rareza y media.</p>
+      <div class="collection-card-grid" id="collectionCardGrid"></div>
+    </section>
+
+    <section class="page-section" id="chat">
+      <div class="messages-hub reveal">
+        <aside class="panel chat-inbox">
+          <div class="inbox-tools">
+            <header class="bb2-inbox-heading"><span class="eyebrow">EL CLUB</span><h2>Chats</h2></header>
+            <label class="inbox-search" for="inboxSearchInput">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="inboxSearchInput" type="search" placeholder="Buscar conversación" aria-label="Buscar conversación o miembro" autocomplete="off">
+            </label>
+            <div class="inbox-filters" role="group" aria-label="Filtrar conversaciones">
+              <button type="button" data-inbox-filter="all" aria-pressed="true">Todos</button>
+              <button type="button" data-inbox-filter="unread" aria-pressed="false">No leídos</button>
+              <button type="button" data-inbox-filter="favorites" aria-pressed="false">Favoritos</button>
+              <button type="button" data-inbox-filter="groups" aria-pressed="false">Grupos</button>
+              <button type="button" data-inbox-filter="new" aria-pressed="false">Nuevo chat</button>
+            </div>
+          </div>
+          <div id="privateContacts" class="unified-chat-list"></div>
+          <p class="inbox-empty" id="inboxEmpty" role="status" hidden></p>
+          <div class="inbox-context-menu" id="inboxContextMenu" role="menu" hidden>
+            <button id="inboxFavoriteAction" type="button" role="menuitem"></button>
+          </div>
+        </aside>
+
+        <article class="panel chat-panel group-conversation">
+          <div class="chat-channel-bar">
+            <div class="chat-channels" id="chatChannels"></div>
+            <button class="channel-add-button admin-only" id="addChatChannelButton" type="button" title="Añadir sección">＋ Sección</button>
+          </div>
+          <div class="chat-header">
+            <div class="chat-header-main">
+              <button class="chat-back-button" type="button" data-chat-back aria-label="Volver atrás"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button>
+              <button class="group-header-avatar" id="editGroupAvatarButton" type="button" aria-label="Foto del grupo" title="Foto del grupo">
+                <span class="chat-group-avatar" data-group-avatar aria-hidden="true"><b>BB</b><i></i></span>
+              </button>
+              <div>
+                <h3 id="activeChannelName"># general</h3>
+                <p id="activeChannelDescription" class="channel-description" hidden></p><span class="online-label" id="chatOnlineStatus"><i></i> 0 conectados</span>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" id="editChatChannelButton" class="channel-settings-button" hidden>Configurar sección</button>
+          <button type="button" id="groupEventNotice" class="group-event-notice" aria-label="Ver próximo evento y asistencia" aria-haspopup="dialog" hidden></button>
+          <div id="groupPolls" class="group-polls-shelf" aria-label="Encuestas del grupo"></div>
+          <div class="messages" id="messages">
+            <div class="empty-state">Accede para consultar el chat.</div>
+          </div>
+
+          <form class="message-form" id="messageForm">
+            <button type="button" class="composer-tool-button composer-camera-button" id="captureMessageCameraButton" aria-label="Abrir cámara" title="Cámara">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6.5 9.4 4h5.2L16 6.5h2.5A2.5 2.5 0 0 1 21 9v8.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5V9a2.5 2.5 0 0 1 2.5-2.5Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            </button>
+            <input id="messageInput" type="text" placeholder="Mensaje..." autocomplete="off" autocapitalize="sentences" enterkeyhint="send" />
+            <button type="button" class="composer-tool-button record-audio-button" id="recordGroupAudioButton" aria-label="Grabar nota de voz" title="Grabar nota de voz">
+              <svg class="record-microphone-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
+              <svg class="record-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3.5-6.5Z"/><path d="m11.5 13.5 4-4"/></svg>
+            </button>
+            <button type="button" class="composer-tool-button" id="attachMessageMediaButton" aria-label="Abrir galería" title="Galería">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m5 18 5-5 3 3 2-2 4 4"/></svg>
+            </button>
+            <button type="button" class="attach-button composer-tool-button" id="attachMessageButton" aria-label="Archivos y GIFs" title="Archivos y GIFs" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></button>
+            <button class="send-button composer-send-button" type="submit" aria-label="Enviar mensaje"><span>Enviar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.4-5.6Z"/><path d="m11.6 13.4 3.3-3.3"/></svg></button>
+            <button type="button" class="recording-action recording-delete" id="cancelGroupAudioButton" aria-label="Descartar nota de voz" title="Descartar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button>
+            <span class="recording-time" id="groupRecordingTime" hidden>00:00</span>
+            <span class="recording-wave" id="groupRecordingWave" aria-hidden="true" hidden><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <button type="button" class="recording-action recording-pause" id="pauseGroupAudioButton" aria-label="Pausar grabación" title="Pausar" hidden><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7v10M15 7v10"/></svg><svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 9 5-9 5Z"/></svg></button>
+            <input id="messageCameraAttachment" type="file" accept="image/*,video/*" capture="environment" hidden>
+            <input id="messageAttachment" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <input id="messageGifAttachment" type="file" accept="image/gif,.gif" hidden>
+            <input id="messageMediaAttachment" type="file" accept="image/*,video/*" hidden>
+          </form>
+          <div class="chat-send-status" id="messageSendStatus" hidden>
+            <span data-send-label role="status" aria-live="polite" aria-atomic="true"></span>
+            <button type="button" data-retry-send hidden>Reintentar</button>
+            <button type="button" data-dismiss-send aria-label="Ocultar aviso de envío" hidden>×</button>
+          </div>
+          <div class="attachment-preview" id="messageAttachmentPreview" hidden></div>
+        </article>
+
+      </div>
+    </section>
+
+    <section class="page-section channel-setup-page" id="seccion-chat" aria-labelledby="channelSetupTitle">
+      <header class="channel-setup-heading"><button type="button" id="channelSetupBack" class="channel-back" aria-label="Volver al chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><span>BIGBOYS · SECCIONES</span></header>
+      <div class="channel-setup-intro"><div class="channel-setup-symbol" aria-hidden="true">#</div><h2 id="channelSetupTitle">Nueva sección</h2><p>Un espacio del grupo, con sus propias reglas.</p></div>
+      <form id="channelSetupForm" class="channel-setup-form">
+        <div class="channel-setup-card"><span class="channel-card-step">01 · IDENTIDAD</span><label>Nombre de la sección<input name="channelName" maxlength="32" placeholder="avisos-del-club" required autocomplete="off"><small>Se mostrará con #. Usa un nombre corto y reconocible.</small></label><label>Descripción<textarea name="description" maxlength="500" rows="3" placeholder="¿Qué se comparte en esta sección?"></textarea></label></div>
+        <div class="channel-setup-card"><span class="channel-card-step">02 · PERMISOS</span><label class="channel-switch"><span><strong>Solo visualización</strong><small>Los miembros pueden leer. Solo administración puede enviar mensajes, archivos y audios.</small></span><input name="readOnly" type="checkbox" role="switch"></label></div>
+        <div class="channel-automation-heading"><span class="channel-card-step">03 · AUTOMATIZACIONES</span><h3>Mensajes que llegan a tiempo</h3><p>Se publican aunque la aplicación esté cerrada. Horarios recurrentes de Madrid.</p></div>
+<div class="channel-setup-card channel-rule" data-automation="once"><label class="channel-switch"><span><strong>Programar un mensaje</strong><small>Un envío en la fecha y hora que elijas.</small></span><input type="checkbox" data-rule="enabled" role="switch"></label><div class="channel-rule-fields"><label>Fecha y hora<input type="datetime-local" data-rule="date"></label><label>Mensaje<textarea data-rule="body" maxlength="1200" rows="3" placeholder="Escribe el mensaje…"></textarea></label></div></div><div class="channel-setup-card channel-rule" data-automation="recurring"><label class="channel-switch"><span><strong>Mensaje recurrente</strong><small>Una rutina diaria o semanal para esta sección.</small></span><input type="checkbox" data-rule="enabled" role="switch"></label><div class="channel-rule-fields"><div class="channel-rule-grid"><label>Frecuencia<select data-rule="cadence"><option value="daily">Cada día</option><option value="weekly">Cada semana</option></select></label><label>Hora · Madrid<input type="time" data-rule="time" value="09:00"></label><label hidden>Día<select data-rule="weekday"><option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option></select></label></div><label>Mensaje<textarea data-rule="body" maxlength="1200" rows="3" placeholder="Escribe el mensaje…"></textarea></label></div></div><div class="channel-setup-card channel-rule" data-automation="visit"><label class="channel-switch"><span><strong>Al entrar en la aplicación</strong><small>Se publica una vez al día por miembro al abrir la app. Usa {nombre} para saludarle.</small></span><input type="checkbox" data-rule="enabled" role="switch"></label><div class="channel-rule-fields"><label>Mensaje<textarea data-rule="body" maxlength="1200" rows="3" placeholder="Escribe el mensaje…"></textarea></label></div></div><p id="channelSetupStatus" class="channel-setup-status" role="status" aria-live="polite"></p><button type="submit" class="channel-save">Guardar sección</button><p class="channel-setup-footnote">Los mensajes automáticos aparecen identificados como tales.</p></form></section>
+    <section class="page-section" id="privados">
+      <div class="private-chat-layout">
+        <article class="panel private-conversation">
+          <div class="chat-header" id="privateChatHeader">
+            <div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>
+          </div>
+          <div class="messages" id="privateMessages">
+            <div class="empty-state">Selecciona un miembro para comenzar una conversación privada.</div>
+          </div>
+          <form class="message-form" id="privateMessageForm">
+            <button type="button" class="composer-tool-button composer-camera-button" id="capturePrivateMessageCameraButton" aria-label="Abrir cámara" title="Cámara" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6.5 9.4 4h5.2L16 6.5h2.5A2.5 2.5 0 0 1 21 9v8.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5V9a2.5 2.5 0 0 1 2.5-2.5Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            </button>
+            <input id="privateMessageInput" type="text" maxlength="1200" placeholder="Mensaje..." autocomplete="off" autocapitalize="sentences" enterkeyhint="send" disabled>
+            <button type="button" class="composer-tool-button record-audio-button" id="recordPrivateAudioButton" aria-label="Grabar nota de voz" title="Grabar nota de voz" disabled>
+              <svg class="record-microphone-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
+              <svg class="record-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3.5-6.5Z"/><path d="m11.5 13.5 4-4"/></svg>
+            </button>
+            <button type="button" class="composer-tool-button" id="attachPrivateMessageMediaButton" aria-label="Abrir galería" title="Galería" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m5 18 5-5 3 3 2-2 4 4"/></svg>
+            </button>
+            <button type="button" class="attach-button composer-tool-button" id="attachPrivateMessageButton" aria-label="Archivos y GIFs" title="Archivos y GIFs" aria-haspopup="menu" aria-expanded="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></button>
+            <button class="send-button composer-send-button" type="submit" aria-label="Enviar mensaje" disabled><span>Enviar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3.4-5.6Z"/><path d="m11.6 13.4 3.3-3.3"/></svg></button>
+            <button type="button" class="recording-action recording-delete" id="cancelPrivateAudioButton" aria-label="Descartar nota de voz" title="Descartar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button>
+            <span class="recording-time" id="privateRecordingTime" hidden>00:00</span>
+            <span class="recording-wave" id="privateRecordingWave" aria-hidden="true" hidden><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <button type="button" class="recording-action recording-pause" id="pausePrivateAudioButton" aria-label="Pausar grabación" title="Pausar" hidden><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7v10M15 7v10"/></svg><svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 9 5-9 5Z"/></svg></button>
+            <input id="privateMessageCameraAttachment" type="file" accept="image/*,video/*" capture="environment" hidden>
+            <input id="privateMessageAttachment" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <input id="privateMessageGifAttachment" type="file" accept="image/gif,.gif" hidden>
+            <input id="privateMessageMediaAttachment" type="file" accept="image/*,video/*" hidden>
+          </form>
+          <div class="chat-send-status" id="privateMessageSendStatus" hidden>
+            <span data-send-label role="status" aria-live="polite" aria-atomic="true"></span>
+            <button type="button" data-retry-send hidden>Reintentar</button>
+            <button type="button" data-dismiss-send aria-label="Ocultar aviso de envío" hidden>×</button>
+          </div>
+          <div class="attachment-preview" id="privateMessageAttachmentPreview" hidden></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="page-section" id="perfil">
+      <button class="back-button" type="button" data-profile-back>← Volver a miembros</button>
+      <div id="profileContent"></div>
+    </section>
+
+    <section class="page-section club-calendar-page" id="calendario">
+      <div class="club-calendar-heading"><div><span class="eyebrow">EL CLUB · AGENDA</span><h2>Calendario</h2></div><button class="secondary-button" id="calendarTodayButton" type="button">Hoy</button></div>
+      <div class="calendar-actions">
+        <button class="secondary-button" id="addBirthdayButton" type="button">Añadir mi cumpleaños</button>
+        <button class="primary-button admin-only" id="addEventButton" type="button">＋ Crear un plan</button>
+      </div>
+      <div class="calendar-layout">
+        <div class="calendar-month-panel panel">
+          <div class="calendar-toolbar"><div class="calendar-navigation">
+            <button class="icon-button" id="previousMonthButton" type="button" aria-label="Mes anterior">‹</button>
+            <h3 id="calendarMonthTitle"></h3>
+            <button class="icon-button" id="nextMonthButton" type="button" aria-label="Mes siguiente">›</button>
+          </div></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <p class="calendar-legend"><span><i></i>Planes</span><span><i class="birthday"></i>Cumpleaños</span></p>
+        </div>
+        <aside class="panel calendar-agenda-panel">
+          <div class="calendar-agenda-heading"><span class="eyebrow">TU DÍA</span><span id="calendarDayCount" class="calendar-count"></span></div>
+          <h3 id="calendarSelectedTitle"></h3>
+          <div id="calendarSelectedEvents" class="calendar-selected-events"></div>
+          <div class="calendar-month-agenda"><div class="calendar-agenda-heading"><span class="eyebrow">ESTE MES</span><span id="calendarMonthCount" class="calendar-count"></span></div><div id="calendarEventList"></div></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="page-section" id="administracion">
+      <div id="superAdminConsole" hidden></div>
+      <button type="button" class="control-diagnostics admin-account-security" id="adminSecurityButton"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></svg><span><strong>Seguridad de la cuenta</strong><small>Verifica tu correo o vincula Google y configura el autenticador.</small></span><b>Gestionar</b></button>
+      <button type="button" class="request-admin-entry" data-open-account-requests><span><strong>Solicitudes de cuenta</strong><small>Revisa nuevos accesos al club.</small></span><span data-request-count hidden></span></button>
+      <div id="standardAdminPanel">
+      <div class="section-intro">
+        <div>
+          <span class="eyebrow">CONTROL DEL CLUB</span>
+          <h2>Administración.</h2>
+        </div>
+        <div class="admin-heading-actions"><button class="admin-settings-gear admin-only" type="button" data-go="admin-configuracion" aria-label="Configuración de administración" title="Configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 3-.7 2.3-2 .9-2.2-.6-2 3.4L4.2 11v2L2.6 15l2 3.4 2.2-.6 2 .9.7 2.3h4.9l.7-2.3 2-.9 2.2.6 2-3.4-1.6-2v-2l1.6-2-2-3.4-2.2.6-2-.9-.7-2.3Z"/><circle cx="12" cy="12" r="3.2"/></svg></button></div>
+      </div>
+
+      <div class="admin-summary" id="adminSummary"></div>
+      <button class="secondary-button admin-help-entry" type="button" data-go="ayuda">Atender ayuda</button>
+      </div>
+    </section>
+
+    <section class="page-section achievement-admin-page admin-settings-page" id="admin-configuracion">
+      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="administracion" aria-label="Volver a administración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Configuración</h2></div><span aria-hidden="true"></span></header>
+      <div class="achievement-page-content"><div class="admin-settings-list"><button class="admin-settings-entry" type="button" data-go="admin-diagnostico"><span class="admin-settings-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></span><span><strong>Rendimiento y diagnóstico</strong><small>Tiempos de carga, pausas y estado de la app.</small></span><svg class="admin-settings-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+<button class="admin-settings-entry" type="button" data-go="admin-logros"><span class="admin-settings-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v5a4 4 0 0 1-8 0V3Zm0 2H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4m-4 1v6m-4 3h8"/></svg></span><span><strong>Configuración de logros</strong><small>Crear, asignar y gestionar los logros del club.</small></span><svg class="admin-settings-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+<button class="admin-settings-entry" type="button" data-go="admin-cuentas"><span class="admin-settings-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21v-3a7 7 0 0 1 14 0v3m3-14v6m-3-3h6"/></svg></span><span><strong>Control de cuentas</strong><small>Crear usuarios y gestionar perfiles, sobres y monedas.</small></span><svg class="admin-settings-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+</div></div>
+    </section>
+
+    <section class="page-section achievement-admin-page admin-settings-page" id="admin-diagnostico">
+      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="admin-configuracion" aria-label="Volver a configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Rendimiento y diagnóstico</h2></div><span aria-hidden="true"></span></header>
+      <div class="achievement-page-content health-tools">
+        <div class="health-dashboard-heading"><div><span class="eyebrow">EN ESTE DISPOSITIVO</span><p>Mediciones locales durante el uso de la app.</p></div><button type="button" class="secondary-button" onclick="ClubHealth.show()">Actualizar</button></div>
+        <div id="healthDashboard"></div>
+        <p class="health-note">Las pausas se estiman mientras la app está visible. Los tamaños de imágenes externas pueden no estar disponibles. Solo se guardan datos técnicos; nunca mensajes, contraseñas ni direcciones.</p>
+        <div class="health-actions"><button type="button" class="secondary-button" onclick="ClubHealth.export()">Compartir diagnóstico</button><button type="button" class="text-button" onclick="ClubHealth.clear()">Limpiar registro</button></div>
+        <p id="healthSummary" role="status" aria-live="polite"></p><details class="health-json"><summary>Ver datos técnicos</summary><textarea id="healthReport" readonly rows="10" aria-label="Diagnóstico local"></textarea></details>
+      </div>
+    </section>
+
+    <section class="page-section achievement-admin-page admin-settings-page" id="admin-cuentas">
+      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="admin-configuracion" aria-label="Volver a configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Control de cuentas</h2></div><span aria-hidden="true"></span></header>
+      <div class="achievement-page-content admin-accounts-content">
+      <details class="panel superadmin-tools admin-tool-disclosure" id="superAdminTools">
+        <summary class="panel-heading">
+          <div>
+            <span class="eyebrow">CONTROL DE CUENTAS</span>
+            <h3>Crear un usuario</h3>
+          </div>
+          <span class="admin-disclosure-icon" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="admin-tool-content">
+          <form class="admin-create-user-form" id="createUserForm">
+            <label>Usuario<input id="newUsername" name="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]+" autocomplete="off"></label>
+            <label>Nombre visible<input id="newDisplayName" name="displayName" required maxlength="60" autocomplete="off"></label>
+            <small id="newPasswordRules">Entre 8 y 128 caracteres, un símbolo (!, @, #) y sin el nombre, apellidos ni usuario.</small>
+            <label>Contraseña temporal<input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" aria-describedby="newPasswordRules" autocomplete="new-password"></label>
+            <button class="primary-button" type="submit">Crear usuario</button>
+          </form>
+          <p class="form-feedback" id="createUserFeedback" aria-live="polite"></p>
+        </div>
+      </details>
+
+      <article class="panel admin-users-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">CUENTAS REGISTRADAS</span>
+            <h3>Usuarios del club</h3>
+          </div>
+          <span class="admin-badge">Pulsa un usuario para gestionarlo</span>
+        </div>
+        <div class="admin-member-list" id="adminUsersTable"></div>
+      </article>
+      </div>
+    </section>
+
+    <section class="page-section admin-account-page" id="editar-usuario" aria-label="Editar usuario"></section>
+
+    <section class="page-section achievement-admin-page" id="admin-logros">
+      <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="admin-configuracion" aria-label="Volver a configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Configuración de logros</h2></div><span aria-hidden="true"></span></header>
+      <div class="achievement-page-content">
+        <div class="achievement-library-intro"><div><span class="eyebrow">CADA RECONOCIMIENTO CUENTA</span><h3>Un lugar para destacar.</h3><p>Reconoce a un miembro o crea un objetivo que el club pueda conquistar.</p></div><button class="primary-button" id="newAchievementButton" type="button"><span aria-hidden="true">＋</span> Crear logro</button></div>
+        <div class="achievement-library-stats" id="achievementLibraryStats"></div>
+        <div class="achievement-library-tools"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" id="achievementLibrarySearch" placeholder="Buscar un logro" aria-label="Buscar un logro" autocomplete="off"></label><select id="achievementLibraryTier" aria-label="Filtrar por rango"><option value="all">Todos los rangos</option><option value="bronze">Bronce</option><option value="silver">Plata</option><option value="gold">Oro</option><option value="platinum">Platino</option></select></div>
+        <p class="form-feedback" id="achievementLibraryFeedback" role="status"></p>
+        <div class="achievement-library" id="adminAchievementsList"></div>
+      </div>
+    </section>
+
+    <section class="page-section achievement-admin-page" id="crear-logro">
+      <header class="achievement-page-header"><button class="achievement-back" id="cancelAchievementCreate" type="button" aria-label="Volver a los logros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>CONFIGURACIÓN DE LOGROS</small><h2>Crear un logro</h2></div><span aria-hidden="true"></span></header>
+      <form class="achievement-page-content achievement-editor-layout" id="achievementForm">
+        <aside class="achievement-editor-preview" id="achievementCreatePreview" aria-label="Vista previa del logro"></aside>
+        <fieldset class="achievement-editor-fields" id="achievementCreateFields">
+          <div class="achievement-form-section"><div class="achievement-step"><span>01</span><div><h3>Dale una identidad</h3><p>Un nombre y una historia que merezcan recordarse.</p></div></div>
+            <label class="achievement-field" for="achievementName">Nombre<input id="achievementName" minlength="2" maxlength="70" required placeholder="Ej. Leyenda de la temporada" autocomplete="off"></label>
+            <label class="achievement-field" for="achievementDescription">Descripción<textarea id="achievementDescription" maxlength="240" rows="3" placeholder="¿Qué hace especial este reconocimiento?"></textarea><small id="achievementDescriptionCount">0 / 240</small></label>
+            <fieldset class="achievement-rank-picker"><legend>Elige el rango</legend><div id="achievementTierChoices"></div></fieldset>
+          </div>
+          <div class="achievement-form-section"><div class="achievement-step"><span>02</span><div><h3>Cómo se consigue</h3><p>Un reconocimiento personal o un reto para todos.</p></div></div>
+            <fieldset class="achievement-mode-picker"><legend>Tipo de logro</legend>
+              <label><input type="radio" name="achievementMode" value="manual" checked><span><strong>Asignación manual</strong><small>Tú decides quién lo merece.</small></span></label>
+              <label><input type="radio" id="achievementAutomaticMode" name="achievementMode" value="automatic"><span><strong>Objetivo automático</strong><small>Se consigue con la actividad en la app.</small></span></label>
+            </fieldset>
+            <p id="achievementAutomationStatus" class="achievement-section-hint" role="status"></p>
+            <button type="button" class="achievement-connection-check" id="achievementCheckConnection" hidden>Comprobar de nuevo</button>
+            <div id="achievementAutomaticFields" hidden>
+              <label class="achievement-field" for="achievementMetric">Actividad<select id="achievementMetric" disabled><option value="group_messages">Mensajes en el grupo</option><option value="group_active_days">Días de participación</option><option value="profile_completed">Completar el perfil</option></select></label>
+              <p id="achievementMetricHint" class="achievement-section-hint"></p>
+              <div id="achievementAcquisitionScope" class="achievement-acquisition-scope" hidden>
+                <label class="achievement-field" for="achievementCollection">Colección<select id="achievementCollection"><option value="">Todas las colecciones</option></select></label>
+                <label class="achievement-field" for="achievementEdition">Rareza<select id="achievementEdition"><option value="">Todas las rarezas</option><option value="common">Común</option><option value="special">Especial</option><option value="epic">Épica</option><option value="legendary">Legendaria</option><option value="retro">Retro</option><option value="full_art">Full Art</option><option value="vice_city">Vice City</option></select></label>
+                <label class="achievement-field" for="achievementKind">Tipo de carta<select id="achievementKind"><option value="">Todos los tipos</option><option value="member">Miembros</option><option value="object">Objetos</option><option value="location">Ubicaciones</option></select></label>
+              </div>
+              <label class="achievement-field" for="achievementTarget">Meta<input id="achievementTarget" type="number" inputmode="numeric" min="1" max="100000" step="1" value="10" disabled required></label>
+              <p class="achievement-rule-note">Para todos los miembros, también los nuevos. Mensajes y participación suman como máximo una vez al día, desde la creación del logro. Las cartas conseguidas y los días registrados también cuentan para los objetivos nuevos. La meta queda fijada al crearlo.</p>
+            </div>
+          </div>
+          <div class="achievement-form-section" id="achievementManualRecipients"><div class="achievement-step"><span>03</span><div><h3>Elige a quién reconocer</h3><p>Puedes seleccionar uno o varios miembros.</p></div></div>
+            <div class="achievement-people-picker" id="achievementCreatePicker"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" placeholder="Buscar por nombre o usuario" aria-label="Buscar miembros para el nuevo logro" data-picker-search autocomplete="off"></label><div class="achievement-picker-tools"><button type="button" data-picker-all>Seleccionar visibles</button><button type="button" data-picker-clear>Limpiar selección</button><span data-picker-count role="status"></span></div><div class="achievement-people-list" id="achievementMembers"></div><p class="achievement-picker-empty" data-picker-empty hidden>No hay miembros que coincidan con tu búsqueda.</p></div>
+          </div>
+          <footer class="achievement-editor-footer"><p class="form-feedback" id="achievementFeedback" role="status"></p><button class="primary-button" type="submit">Crear y asignar logro</button></footer>
+        </fieldset>
+      </form>
+    </section>
+
+    <section class="page-section achievement-admin-page" id="asignar-logro">
+      <header class="achievement-page-header"><button class="achievement-back" id="closeAchievementAssignment" type="button" aria-label="Volver a los logros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>CONFIGURACIÓN DE LOGROS</small><h2>Asignar logro</h2></div><span aria-hidden="true"></span></header>
+      <form class="achievement-page-content achievement-assignment-layout" id="achievementAssignmentForm">
+        <div class="achievement-assignment-summary" id="achievementAssignmentSummary"></div>
+        <fieldset class="achievement-editor-fields" id="achievementAssignmentFields">
+          <div class="achievement-form-section"><h3>¿Quién se lo ha ganado?</h3><p class="achievement-section-hint">Marca los miembros que tendrán este logro. Desmarcar a alguien retirará su asignación al guardar.</p>
+            <div class="achievement-people-picker" id="achievementAssignPicker"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" placeholder="Buscar por nombre o usuario" aria-label="Buscar miembros para asignar" data-picker-search autocomplete="off"></label><div class="achievement-picker-tools"><button type="button" data-picker-all>Seleccionar visibles</button><button type="button" data-picker-clear>Limpiar selección</button><span data-picker-count role="status"></span></div><div class="achievement-people-list" id="achievementAssignmentMembers"></div><p class="achievement-picker-empty" data-picker-empty hidden>No hay miembros que coincidan con tu búsqueda.</p></div>
+          </div>
+          <footer class="achievement-editor-footer"><p class="achievement-selection-review" id="achievementAssignmentReview" role="status"></p><p class="form-feedback" id="achievementAssignmentFeedback" role="status"></p><button class="primary-button" type="submit">Guardar asignaciones</button></footer>
+        </fieldset>
+      </form>
+    </section>
+
+    <section class="page-section" id="ayuda">
+      <div class="section-intro help-center-intro">
+        <div><span class="eyebrow">CENTRO DE AYUDA</span><h2 id="helpCenterTitle">Ayuda y sugerencias.</h2></div>
+        <p id="helpCenterDescription">Crea una petición privada para el equipo de administración y sigue aquí todas sus respuestas.</p>
+      </div>
+
+      <div class="help-center-layout">
+        <aside class="panel help-requests-panel">
+          <form class="help-create-form" id="helpRequestForm">
+            <div class="panel-heading"><div><span class="eyebrow">NUEVA PETICIÓN</span><h3>¿En qué podemos ayudarte?</h3></div></div>
+            <label><span>Motivo</span><select id="helpRequestType"><option value="help">Necesito ayuda</option><option value="suggestion">Quiero hacer una sugerencia</option><option value="complaint">Quiero comunicar una queja</option></select></label>
+            <label><span>Mensaje</span><textarea id="helpRequestMessage" maxlength="2000" rows="4" placeholder="Cuéntanos qué ha ocurrido o qué te gustaría mejorar..." required></textarea></label>
+            <div class="form-feedback" id="helpRequestFeedback" role="status"></div>
+            <button class="primary-button" type="submit">Enviar petición</button>
+          </form>
+
+          <div class="help-inbox-heading">
+            <div><span class="eyebrow" id="helpInboxEyebrow">MIS PETICIONES</span><h3>Bandeja de ayuda</h3></div>
+            <span class="help-request-count" id="helpRequestCount">0</span>
+          </div>
+          <div class="help-status-tabs" id="helpStatusTabs" role="tablist" aria-label="Filtrar peticiones">
+            <button class="active" type="button" data-help-filter="all">Todas</button>
+            <button type="button" data-help-filter="new">Nuevas</button>
+            <button type="button" data-help-filter="in_progress">En proceso</button>
+            <button type="button" data-help-filter="answered">Respondidas</button>
+            <button type="button" data-help-filter="closed">Cerradas</button>
+          </div>
+          <div class="help-request-list" id="helpRequestList"><div class="empty-state compact">Todavía no hay peticiones.</div></div>
+        </aside>
+
+        <article class="panel help-conversation-panel" id="helpConversationPanel">
+          <div class="help-conversation-empty" id="helpConversationEmpty"><strong>Selecciona una petición</strong><span>Aquí aparecerá la conversación independiente con administración.</span></div>
+          <div class="help-conversation" id="helpConversation" hidden>
+            <header class="help-conversation-header">
+              <div><span class="eyebrow" id="helpConversationMeta">PETICIÓN</span><h3 id="helpConversationTitle">Ayuda</h3><small id="helpConversationAuthor"></small></div>
+              <label class="help-admin-status" id="helpAdminStatus" hidden><span>Estado</span><select id="helpRequestStatus"><option value="new">Nueva</option><option value="in_progress">En proceso</option><option value="answered">Respondida</option><option value="closed">Cerrada</option></select></label>
+              <span class="help-status-badge" id="helpMemberStatus"></span>
+            </header>
+            <div class="help-message-list" id="helpMessageList"></div>
+            <div class="help-closed-notice" id="helpClosedNotice" hidden><span aria-hidden="true">✓</span><div><strong>Petición cerrada</strong><small>Esta conversación ha finalizado y ya no admite nuevas respuestas.</small></div></div>
+            <form class="help-reply-form" id="helpReplyForm">
+              <textarea id="helpReplyMessage" maxlength="2000" rows="2" placeholder="Escribe una respuesta..." required></textarea>
+              <button class="primary-button" type="submit">Enviar</button>
+            </form>
+            <div class="form-feedback" id="helpReplyFeedback" role="status"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="floating-tab-bar" id="floatingTabBar" aria-label="Navegación principal">
+    <span class="tab-selection-indicator" aria-hidden="true"></span>
+    <a class="app-tab active" href="#inicio" data-section="inicio" aria-label="Inicio" aria-current="page" title="Inicio">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v10h-6v-6H9v6H3Z"/></svg><span>Inicio</span>
+    </a>
+    <a class="app-tab" href="#chat" data-section="chat" aria-label="Mensajes" title="Mensajes">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4-.9L3 21l1.7-4.6A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 9h8M8 13h5"/></svg><i class="tab-alert" id="chatTabAlert" aria-hidden="true" hidden></i><span>Chats</span>
+    </a>
+    <a class="app-tab" href="#calendario" data-section="calendario" aria-label="Calendario" title="Calendario">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 11h18M8 15h2M14 15h2M8 18h2"/></svg><span>Calendario</span>
+    </a>
+    <a class="app-tab profile-tab" href="#perfil" data-section="perfil" aria-label="Mi perfil" aria-haspopup="menu" aria-expanded="false" title="Mi perfil · mantén pulsado para más opciones">
+      <span class="profile-tab-photo" id="bottomNavAvatar" aria-hidden="true">U</span><span>Perfil</span>
+    </a>
+  </nav>
+
+  <dialog class="achievement-admin-confirm" id="achievementAdminConfirm" aria-labelledby="achievementConfirmTitle" aria-describedby="achievementConfirmDescription">
+    <span class="eyebrow">LOGROS DEL CLUB</span>
+    <h2 id="achievementConfirmTitle">Confirmar cambios</h2>
+    <p id="achievementConfirmDescription"></p>
+    <div>
+      <button class="secondary-button" id="achievementConfirmCancel" type="button" autofocus>Seguir editando</button>
+      <button class="primary-button" id="achievementConfirmAccept" type="button">Guardar cambios</button>
+    </div>
+  </dialog>
+
+  <dialog class="achievement-detail" id="achievementDetail" aria-labelledby="achievementDetailTitle" aria-describedby="achievementDetailDescription">
+    <button class="achievement-detail-close" id="closeAchievementDetail" type="button" aria-label="Cerrar detalle del logro">×</button>
+    <div id="achievementDetailContent" aria-live="polite"></div>
+  </dialog>
+
+  <dialog class="achievement-challenges-dialog" id="achievementChallengesDialog" aria-labelledby="achievementChallengesPanelTitle">
+    <header><div><span>PROGRESO PERSONAL</span><strong>Camino a tus próximos trofeos</strong></div><button type="button" id="closeAchievementChallenges" aria-label="Cerrar próximos logros">×</button></header>
+    <div id="achievementChallengesContent" aria-live="polite"></div>
+  </dialog>
+
+  <div class="profile-quick-menu" id="profileQuickMenu" role="menu" aria-label="Opciones de la cuenta" aria-hidden="true" hidden>
+    <div class="profile-quick-menu-heading"><span>MI CUENTA</span><strong>Opciones rápidas</strong></div>
+    <button type="button" role="menuitem" id="quickHelpButton"><span class="profile-quick-menu-icon">?</span><span><strong>Ayuda y sugerencias</strong><small>Hablar con administración</small></span></button>
+    <button type="button" role="menuitem" id="quickSecurityButton"><span class="profile-quick-menu-icon">✓</span><span><strong>Seguridad de la cuenta</strong><small>Correo o Google y autenticador</small></span></button>
+    <button type="button" role="menuitem" class="danger" id="quickLogoutButton"><span class="profile-quick-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></span><span><strong>Cerrar sesión</strong><small>Salir de esta cuenta</small></span></button>
+    <div class="profile-quick-menu-tip">Mantén pulsado tu perfil para abrir este menú.</div>
+  </div>
+
+  <div class="modal-backdrop" id="profileEditor" aria-hidden="true">
+    <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditorTitle">
+      <div class="modal-heading">
+        <div>
+          <span class="eyebrow">MI PERFIL</span>
+          <h2 id="profileEditorTitle">Editar perfil</h2>
+        </div>
+        <button class="icon-button profile-editor-back" id="closeProfileEditor" type="button" aria-label="Volver al perfil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      </div>
+      <form id="profileForm" class="profile-form">
+        <div class="avatar-editor">
+          <div class="avatar avatar-preview" id="avatarPreview">U</div>
+          <div class="avatar-actions">
+            <label class="secondary-button file-button">
+              Editar foto
+              <input id="profileAvatar" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            </label>
+            <button class="text-button danger-text" id="removeAvatarButton" type="button">Sin foto</button>
+          </div>
+          <small>JPG, PNG o WebP · máximo 3 MB</small>
+          <div class="avatar-cropper" id="avatarCropper" hidden>
+            <div class="avatar-crop-stage" id="avatarCropStage">
+              <canvas id="avatarCropCanvas" width="480" height="480" aria-label="Encuadre de la foto de perfil"></canvas>
+              <span class="avatar-crop-guide" aria-hidden="true"></span>
+            </div>
+            <div class="avatar-crop-controls">
+              <label for="avatarZoom">
+                <span>Tamaño</span>
+                <input id="avatarZoom" type="range" min="1" max="3" value="1" step="0.01">
+              </label>
+              <button class="text-button" id="resetAvatarCrop" type="button">Centrar</button>
+              <small>Arrastra la foto para moverla y usa el control para acercarla.</small>
+            </div>
+          </div>
+        </div>
+        <label>
+          <span>Nombre</span>
+          <input id="profileName" maxlength="40" required>
+        </label>
+        <div class="admin-profile-fields" id="adminProfileFields" hidden>
+          <div class="admin-profile-fields-heading"><span>GESTIÓN DE CUENTA</span><small>Solo visible para administradores</small></div>
+          <label id="profileUsernameField">
+            <span>Usuario (@)</span>
+            <input id="profileUsername" maxlength="32" autocomplete="off">
+            <small id="profileUsernameHelp">Entre 3 y 32 caracteres; letras, números, punto, guion o guion bajo.</small>
+          </label>
+          <label id="profileRoleField">
+            <span>Rango</span>
+            <select id="profileRole"><option value="member">Miembro</option><option value="admin">Administrador</option></select>
+          </label>
+        </div>
+        <section class="profile-admin-actions" id="profileAdminActions" hidden>
+          <div class="profile-admin-actions-heading"><span>ACCIONES DE ADMINISTRACIÓN</span><small>Gestiona esta cuenta desde aquí</small></div>
+          <div class="profile-admin-action-grid">
+            <button class="secondary-button" id="adminViewProfileButton" type="button">Ver perfil público</button>
+            <button class="secondary-button" id="adminMessageProfileButton" type="button">Enviar mensaje</button>
+            <button class="secondary-button" id="adminResetProfilePasswordButton" type="button">Editar usuario</button>
+            <button class="secondary-button danger" id="adminDeleteProfileButton" type="button">Eliminar usuario</button>
+          </div>
+        </section>
+        <label>
+          <span>Apodo</span>
+          <input id="profileNickname" maxlength="50" required>
+        </label>
+        <label>
+          <span>País</span>
+          <select id="profileFlag">
+            <option value="">Sin bandera</option>
+            <option value="🇪🇸">🇪🇸 España</option>
+            <option value="🇬🇶">🇬🇶 Guinea Ecuatorial</option>
+            <option value="🇦🇷">🇦🇷 Argentina</option>
+            <option value="🇧🇴">🇧🇴 Bolivia</option>
+            <option value="🇨🇱">🇨🇱 Chile</option>
+            <option value="🇨🇴">🇨🇴 Colombia</option>
+            <option value="🇨🇷">🇨🇷 Costa Rica</option>
+            <option value="🇨🇺">🇨🇺 Cuba</option>
+            <option value="🇩🇴">🇩🇴 República Dominicana</option>
+            <option value="🇪🇨">🇪🇨 Ecuador</option>
+            <option value="🇸🇻">🇸🇻 El Salvador</option>
+            <option value="🇬🇹">🇬🇹 Guatemala</option>
+            <option value="🇭🇳">🇭🇳 Honduras</option>
+            <option value="🇲🇽">🇲🇽 México</option>
+            <option value="🇳🇮">🇳🇮 Nicaragua</option>
+            <option value="🇵🇦">🇵🇦 Panamá</option>
+            <option value="🇵🇾">🇵🇾 Paraguay</option>
+            <option value="🇵🇪">🇵🇪 Perú</option>
+            <option value="🇵🇷">🇵🇷 Puerto Rico</option>
+            <option value="🇺🇾">🇺🇾 Uruguay</option>
+            <option value="🇻🇪">🇻🇪 Venezuela</option>
+            <option value="🇵🇹">🇵🇹 Portugal</option>
+            <option value="🇫🇷">🇫🇷 Francia</option>
+            <option value="🇮🇹">🇮🇹 Italia</option>
+            <option value="🇩🇪">🇩🇪 Alemania</option>
+            <option value="🇬🇧">🇬🇧 Reino Unido</option>
+            <option value="🇺🇸">🇺🇸 Estados Unidos</option>
+          </select>
+        </label>
+        <label>
+          <span>Bio</span>
+          <textarea id="profileBio" maxlength="350" rows="5" required></textarea>
+          <small><span id="bioCount">0</span>/350</small>
+        </label>
+        <section class="profile-banner-settings" id="profileBannerSettings" hidden>
+          <button class="profile-banner-row" id="profileBannerToggle" type="button" aria-expanded="false" aria-controls="profileBannerPicker"><span><strong>Banners</strong><small id="profileBannerSelection">Sin banner</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+          <div id="profileBannerPicker" class="profile-banner-picker" hidden>
+            <p class="profile-banner-help">Elige uno de tus banners comprados. Se aplica al seleccionarlo.</p>
+            <p id="profileBannerStatus" role="status" aria-live="polite"></p>
+            <div id="profileBannerOptions" class="profile-banner-options"></div>
+            <button id="profileBannerRetry" class="text-button" type="button" hidden>Reintentar</button>
+          </div>
+        </section>
+        <label>
+          <span>Intereses (separados por comas)</span>
+          <input id="profileTags" maxlength="120" placeholder="Música, viajes, deporte">
+        </label>
+        <div class="form-feedback" id="profileFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelProfileEditor" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop required-password-backdrop" id="requiredPasswordChange" aria-hidden="true">
+    <div class="profile-editor-modal required-password-modal" role="dialog" aria-modal="true" aria-labelledby="requiredPasswordTitle">
+      <div class="modal-heading">
+        <div>
+          <span class="eyebrow">SEGURIDAD DE LA CUENTA</span>
+          <h2 id="requiredPasswordTitle">Crea tu propia contraseña</h2>
+        </div>
+      </div>
+      <p class="required-password-intro">Has iniciado sesión con la contraseña provisional. Para continuar, escribe una nueva contraseña y confírmala por segunda vez.</p>
+      <form id="requiredPasswordChangeForm" class="profile-form">
+        <label>
+          <span>Nueva contraseña</span>
+          <input id="requiredNewPassword" type="password" minlength="8" maxlength="128" aria-describedby="requiredPasswordRules" autocomplete="new-password" required>
+        </label>
+        <label>
+          <span>Confirma de nuevo la contraseña</span>
+          <input id="requiredNewPasswordConfirmation" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
+        </label>
+        <small id="requiredPasswordRules">Entre 8 y 128 caracteres, al menos un símbolo (!, @, #) y sin tu nombre, apellidos ni usuario.</small>
+        <div class="form-feedback" id="requiredPasswordFeedback" role="status" aria-live="polite"></div>
+        <button class="primary-button required-password-submit" type="submit">Confirmar y continuar</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="shareMediaModal" aria-hidden="true">
+    <div class="profile-editor-modal share-media-modal" role="dialog" aria-modal="true" aria-labelledby="shareMediaTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">COMPARTIR EN UN CHAT</span><h2 id="shareMediaTitle">Compartir noticia</h2></div>
+        <button class="icon-button" id="closeShareMediaModal" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="shareMediaForm" class="profile-form">
+        <label><span>Enviar a</span><select id="shareDestinationType"><option value="group">Chat grupal</option><option value="private">Chat privado</option></select></label>
+        <label><span id="shareDestinationLabel">Canal del grupo</span><select id="shareDestination" required></select></label>
+        <div class="share-media-preview" id="shareMediaPreview"></div>
+        <div class="form-feedback" id="shareMediaFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelShareMedia" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Compartir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop calendar-day-modal-backdrop" id="calendarDayModal" aria-hidden="true">
+    <div class="profile-editor-modal calendar-day-modal" role="dialog" aria-modal="true" aria-labelledby="calendarDayTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">AGENDA DEL DÍA</span><h2 id="calendarDayTitle">Eventos</h2></div>
+        <button class="icon-button" id="closeCalendarDayModal" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <div class="calendar-day-detail-list" id="calendarDayDetailList"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop calendar-editor-backdrop" id="eventEditor" aria-hidden="true">
+    <div class="profile-editor-modal calendar-editor" role="dialog" aria-modal="true" aria-labelledby="eventEditorTitle">
+      <div class="modal-heading"><div><span class="eyebrow">EL CLUB · AGENDA</span><h2 id="eventEditorTitle">Nuevo evento</h2></div><button class="icon-button" id="closeEventEditor" type="button" aria-label="Cerrar">×</button></div>
+      <p class="calendar-editor-intro" id="eventEditorIntro">Un buen plan empieza por una fecha.</p>
+      <form id="eventForm" class="profile-form calendar-event-form">
+        <input id="eventId" type="hidden">
+        <div id="eventTypeField" class="event-kind-picker">
+          <select id="eventType" aria-label="Tipo de fecha" hidden><option value="event">Evento del grupo</option><option value="birthday">Cumpleaños</option></select>
+          <button type="button" data-event-kind="event" aria-pressed="true"><span class="event-kind-icon">◇</span><span><strong>Plan del club</strong><small>Nos juntamos</small></span></button>
+          <button type="button" data-event-kind="birthday" aria-pressed="false"><span class="event-kind-icon">✦</span><span><strong>Cumpleaños</strong><small>Lo celebramos</small></span></button>
+        </div>
+        <label class="event-title-field"><span id="eventTitleLabel">¿Qué vamos a hacer?</span><input id="eventTitle" maxlength="80" required placeholder="Cena, escapada, partido…"></label>
+        <div class="event-date-fields" id="eventDateFields">
+          <label><span>Comienza</span><input id="eventStartsAt" type="datetime-local" required></label>
+          <label><span>Termina <small>opcional</small></span><input id="eventEndsAt" type="datetime-local"></label>
+        </div>
+        <label id="birthdayDateField" hidden><span>El día que celebramos</span><input id="birthdayDate" type="date"></label>
+        <div class="birthday-all-day-note" id="birthdayAllDayNote" hidden><span>✦</span><div><strong>Una fecha para recordar</strong><small>Todo el día, cada año. Lo guardamos en la agenda del club.</small></div></div>
+        <label><span>¿Dónde quedamos? <small>opcional</small></span><input id="eventLocation" maxlength="120" placeholder="Un sitio, una dirección…"></label>
+        <label><span id="eventDescriptionLabel">Los detalles <small>opcional</small></span><textarea id="eventDescription" maxlength="500" rows="3" placeholder="Todo lo que el grupo necesita saber"></textarea></label>
+        <div class="form-feedback" id="eventFeedback" role="status" aria-live="polite"></div>
+        <div class="modal-actions event-modal-actions"><button class="text-button danger-text" id="deleteEventButton" type="button" hidden>Eliminar</button><button class="secondary-button" id="cancelEventEditor" type="button">Cancelar</button><button class="primary-button" type="submit" id="eventSaveButton">Crear plan</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="groupAvatarEditor" aria-hidden="true">
+    <div class="profile-editor-modal compact-dialog group-avatar-editor" role="dialog" aria-modal="true" aria-labelledby="groupAvatarEditorTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">CHAT DEL GRUPO</span><h2 id="groupAvatarEditorTitle">Foto del grupo</h2></div>
+        <button class="icon-button profile-editor-back" id="closeGroupAvatarEditor" type="button" aria-label="Volver al chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      </div>
+      <form id="groupAvatarForm" class="profile-form group-avatar-page-form">
+        <div class="group-avatar-preview" id="groupAvatarPreview"><b>BB</b></div>
+        <label class="secondary-button group-avatar-file-button">
+          Elegir una foto
+          <input id="groupAvatarInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+        </label>
+        <small class="group-avatar-help">JPG, PNG o WebP · máximo 3 MB. Se mostrará en la bandeja y la cabecera del chat.</small>
+        <div class="form-feedback" id="groupAvatarFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="text-button danger-text" id="removeGroupAvatarButton" type="button">Quitar foto</button>
+          <button class="secondary-button" id="cancelGroupAvatarEditor" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Guardar foto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="spotifyEditor" aria-hidden="true">
+    <div class="profile-editor-modal" role="dialog" aria-modal="true" aria-labelledby="spotifyEditorTitle">
+      <div class="modal-heading">
+        <div><span class="eyebrow">SPOTIFY</span><h2 id="spotifyEditorTitle">Vincular playlist</h2></div>
+        <button class="icon-button" id="closeSpotifyEditor" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="spotifyForm" class="profile-form">
+        <label>
+          <span>Enlace público de la playlist</span>
+          <input id="spotifyPlaylistUrl" type="url" placeholder="https://open.spotify.com/playlist/..." required>
+          <small>Abre la playlist en Spotify, pulsa Compartir y copia su enlace.</small>
+        </label>
+        <div class="form-feedback" id="spotifyFeedback" role="status"></div>
+        <div class="modal-actions">
+          <button class="text-button danger-text" id="removeSpotifyButton" type="button">Quitar playlist</button>
+          <button class="secondary-button" id="cancelSpotifyEditor" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Guardar playlist</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-mark">BB</div>
+    <div>
+      <strong>THE BIG BOY RULES</strong>
+      <small>PRIVATE CLUB · EST. 2026</small>
+    </div>
+    <span>LOYALTY · BROTHERHOOD · LEGACY</span>
+  </footer>
+
+  <dialog class="collection-card-dialog" id="collectionCardDialog" aria-labelledby="collectionCardTitle">
+    <div class="collection-card-detail">
+      <header><span class="eyebrow">LOS NUESTROS · CATÁLOGO</span><button id="collectionCardClose" class="packs-back" type="button" aria-label="Cerrar carta" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+      <h2 id="collectionCardTitle">Carta del club</h2>
+      <div class="collection-card-perspective"><div class="collection-card-tilt" id="collectionCardTilt" tabindex="0" role="group" aria-label="Carta interactiva" aria-describedby="collectionCardGestureHint"><div class="collection-card-stage" id="collectionCardStage">
+        <img id="collectionCardFront" class="collection-card-face" width="948" height="1659" decoding="async" alt="">
+        <img id="collectionCardBack" class="collection-card-face collection-card-reverse" width="948" height="1659" decoding="async" alt="" aria-hidden="true">
+      </div><div id="collectionCardFoil" class="collection-card-foil" aria-hidden="true"></div></div></div>
+      <p id="collectionCardGestureHint" class="collection-gesture-hint">Arrastra para mover · desliza a un lado para girar</p>
+      <div id="collectionCardError" class="collection-card-error" role="alert" hidden>No se ha podido cargar una de las caras. <button type="button" id="collectionCardRetry">Reintentar</button></div>
+      <p id="collectionCardStatus" role="status">Común · 86 puntos</p>
+      <button type="button" id="collectionCardFlip" class="packs-sync" aria-controls="collectionCardStage" aria-pressed="false">Ver reverso</button>
+    </div>
+  </dialog>
+
+  <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle"><header class="banner-shop-heading"><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2><button type="button" data-duplicates-close aria-label="Cerrar repetidas">✕</button></header><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Descartar todas</button><div id="ownedCardInventory" class="owned-card-inventory"></div></dialog>
+
+  <dialog id="bannerShopDialog" class="banner-shop-dialog" aria-labelledby="bannerShopTitle">
+    <header class="banner-shop-heading shop-topbar"><span class="shop-brand">BB <span>STORE</span></span><button id="bannerShopClose" type="button" aria-label="Cerrar tienda">×</button></header>
+    <div class="shop-content">
+      <section class="shop-intro"><div><span class="shop-kicker">EL CLUB · PERSONALIZACIÓN</span><h2 id="bannerShopTitle">Tienda</h2><p>Banners, objetos para El Chota y premios del club.</p></div><div class="shop-wallet"><span>Tu saldo</span><strong><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.8 8.5h-4a2 2 0 0 0 0 4h2.4a2 2 0 0 1 0 4H9M12 6v12"/></svg><span id="bannerShopBalance" class="banner-shop-balance">— monedas</span></strong></div></section>
+      <div class="shop-navigation" role="tablist" aria-label="Secciones de la tienda"><button type="button" id="shopBannersTab" role="tab" aria-selected="true" aria-controls="shopBannersPanel" data-shop-tab="banners">Banners <span data-shop-banner-count>—</span></button><button type="button" id="shopChotaTab" role="tab" aria-selected="false" aria-controls="shopChotaPanel" tabindex="-1" data-shop-tab="chota">El Chota <span data-shop-chota-count>—</span></button><button type="button" id="shopVouchersTab" role="tab" aria-selected="false" aria-controls="shopVouchersPanel" tabindex="-1" data-shop-tab="vouchers">Vales <span data-shop-voucher-count>—</span></button></div>
+      <p id="bannerShopStatus" class="shop-status" role="status" aria-live="polite"></p>
+      <section id="shopBannersPanel" role="tabpanel" aria-labelledby="shopBannersTab"><header class="shop-section-heading"><div><h3>Para tu perfil</h3><p>Vista completa de cada diseño.</p></div><button id="bannerUnequip" class="shop-text-button" type="button" disabled>Quitar banner</button></header><div id="bannerShopItems" class="banner-shop-items"></div></section>
+      <section id="shopChotaPanel" role="tabpanel" aria-labelledby="shopChotaTab" hidden><header class="chota-shop-intro"><div><h3>Cosas para su habitación</h3><p>Cada compra encuentra su sitio en la sede. El robot aspirador recorrerá el suelo mientras limpia.</p></div></header><p id="chotaShopStatus" role="status" aria-live="polite"></p><div id="chotaShopItems" class="chota-shop-items"></div></section>
+      <section id="shopVouchersPanel" class="reward-voucher-shop" role="tabpanel" aria-labelledby="shopVouchersTab" hidden><header class="shop-section-heading"><div><h3 id="rewardVoucherTitle">Premios del club</h3><p>Desbloquea un vale y canjéalo cuando quieras.</p></div></header><div id="rewardVoucherItems" class="banner-shop-items"></div></section>
+    </div>
+  </dialog>
+
+  <dialog id="chatImageViewer" aria-label="Imagen del chat">
+    <button type="button" id="closeChatImageViewer" aria-label="Cerrar imagen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    <div id="chatImageViewerStage"></div>
+    <p id="chatImageViewerStatus" role="status" hidden></p>
+  </dialog>
+  <div id="messageContextMenu" class="message-context-menu" role="menu" aria-label="Opciones del mensaje" hidden></div>
+  <dialog id="messageInfoDialog" class="message-info-dialog" aria-labelledby="messageInfoTitle">
+    <div class="message-info-heading"><div><span class="eyebrow">CONVERSACIÓN</span><h2 id="messageInfoTitle">Información del mensaje</h2></div><button type="button" id="closeMessageInfo" aria-label="Cerrar información">×</button></div>
+    <div id="messageInfoContent"></div>
+  </dialog>
+  <script defer src="vendor/supabase.js?v=20260901-125"></script>
+  <script defer src="config.js?v=20261008-210"></script>
+  <script defer src="feature-loader.js?v=20261021-halloween-365"></script>
+  <script defer src="club-model.js?v=20260902-126"></script>
+  <script defer src="chat-motion.js?v=20260902-128"></script>
+  <script defer src="vendor/capacitor.js?v=8.5.0"></script>
+  <script defer src="chat-keyboard.js?v=20261016-improvements-319"></script>
+  <script defer src="tab-navigation.js?v=20260903-130"></script>
+  <script defer src="trophy-motion.js?v=20260904-150"></script>
+  <script defer src="trophy-unlock.js?v=20260903-138"></script>
+  <script defer src="daily-packs.js?v=20261021-activity-packs-372"></script>
+  <script defer src="collection-motion.js?v=20261021-halloween-365"></script>
+  <script defer src="card-thumbnails.js?v=20261021-halloween-jose-366"></script>
+  <script defer src="card-media.js?v=20261022-pwa-shell-376"></script>
+  <script defer src="card-collection.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
+  <script defer src="collection-social.js?v=20261022-pwa-shell-376"></script>
+  <script defer src="album.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="onboarding.js?v=20261016-improvements-319"></script>
+  <script defer src="banner-shop.js?v=20261022-member-motion-378"></script>
+  <script defer src="chota-shop.js?v=20261022-chota-shop-378"></script>
+  <script defer src="group-interactions.js?v=20261021-activity-packs-372"></script>
+  <script defer src="pending-actions.js?v=20261016-release-322"></script>
+  <script defer src="admin-console.js?v=20261022-chota-shop-378"></script>
+  <script defer src="account-security.js?v=20261021-email-359"></script>
+  <script defer src="account-requests.js?v=20261021-email-359"></script>
+  <script defer src="app.js?v=20261022-chota-shop-378"></script>
+  <script>
+    (() => {
+      const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+      const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+      if (!ios || !standalone || !/^https?:$/.test(location.protocol)) return;
+      const root = document.documentElement;
+      let frame = 0;
+      root.dataset.pwaViewport = "ios";
+      const sync = () => {
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const viewport = window.visualViewport;
+          if (viewport && Math.abs(viewport.scale - 1) > .01) return;
+          const height = Math.round(viewport?.height || innerHeight);
+          const top = Math.max(0, Math.round(viewport?.offsetTop || 0));
+          if (height <= 0) return;
+          for (const [name, value] of [["--pwa-window-height", `${height}px`], ["--pwa-window-top", `${top}px`]]) {
+            if (root.style.getPropertyValue(name) !== value) root.style.setProperty(name, value);
+          }
+        });
+      };
+      window.addEventListener("resize", sync, {passive:true});
+      window.visualViewport?.addEventListener("resize", sync, {passive:true});
+      window.visualViewport?.addEventListener("scroll", sync, {passive:true});
+      window.addEventListener("pageshow", sync);
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) { sync(); setTimeout(sync, 200); } });
+      sync();
+    })();
+    if ("serviceWorker" in navigator) {
+      // Asset revisions identify the document actually on screen, including an
+      // older document restored by iOS while a newer worker is already active.
+      const documentRelease = Math.max(0, ...Array.from(document.querySelectorAll("link[href],script[src]"), element =>
+        Number(new URL(element.src || element.href, location.href).searchParams.get("v")?.match(/-(\d+)$/)?.[1]) || 0));
+      document.documentElement.dataset.appRelease = String(documentRelease);
+      let registration, pendingRelease = 0, lastCheck = 0;
+      const dirtyFields = new Map();
+      let safeUntil = Date.now() + 30000, scheduled = false;
+      const editable = element => element?.matches?.("input:not([type=button]):not([type=submit]):not([type=checkbox]):not([type=radio]),textarea,[contenteditable=true]");
+      const interacted = () => { safeUntil = 0; };
+      for (const type of ["pointerdown", "keydown", "scroll"]) document.addEventListener(type, interacted, {capture:true, passive:true});
+      document.addEventListener("beforeinput", event => {
+        const field = event.target;
+        if (editable(field) && !dirtyFields.has(field)) dirtyFields.set(field, field.value ?? field.textContent);
+      }, true);
+      document.addEventListener("input", event => {
+        const field = event.target;
+        if (editable(field) && !dirtyFields.has(field)) dirtyFields.set(field, field.defaultValue ?? "");
+      }, true);
+      const applyUpdate = () => {
+        if (!pendingRelease || document.hidden || Date.now() > safeUntil || editable(document.activeElement)) return;
+        if (document.querySelector("dialog[open],.modal-backdrop.open")) return;
+        for (const [field, initial] of dirtyFields) {
+          if (!field.isConnected) { dirtyFields.delete(field); continue; }
+          if (field.getClientRects().length && (field.value ?? field.textContent) !== initial) return;
+        }
+        // A failed offline navigation must not cause a refresh loop on resume.
+        try {
+          if (sessionStorage.getItem("bb-pwa-auto-release") === String(pendingRelease)) return;
+          sessionStorage.setItem("bb-pwa-auto-release", String(pendingRelease));
+        } catch {}
+        location.reload();
+      };
+      const inspectWorker = worker => {
+        if (!worker) return;
+        const channel = new MessageChannel();
+        const timer = setTimeout(() => channel.port1.close(), 1500);
+        channel.port1.onmessage = event => {
+          clearTimeout(timer); channel.port1.close();
+          const release = Number(String(event.data?.release || "").match(/-v(\d+)$/)?.[1]);
+          if (release > documentRelease) { pendingRelease = release; setTimeout(applyUpdate, 150); }
+        };
+        try { worker.postMessage({type:"BB_GET_RELEASE"}, [channel.port2]); }
+        catch { clearTimeout(timer); channel.port1.close(); }
+      };
+      const watchWorker = worker => {
+        if (!worker) return;
+        const inspect = () => { if (worker.state === "activated") inspectWorker(worker); };
+        worker.addEventListener("statechange", inspect); inspect();
+      };
+      const checkUpdate = () => {
+        applyUpdate();
+        if (!registration) return;
+        inspectWorker(registration.active);
+        if (Date.now() - lastCheck < 60000 || !navigator.onLine) return;
+        lastCheck = Date.now();
+        void registration.update().catch(() => {});
+      };
+      const resume = () => { safeUntil = Date.now() + 15000; checkUpdate(); };
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) resume(); });
+      window.addEventListener("pageshow", event => { if (event.persisted) resume(); });
+      window.addEventListener("online", checkUpdate);
+      window.addEventListener("load", () => {
+        const register = () => {
+          if (editable(document.activeElement)) {
+            setTimeout(schedule, 2000);
+            return;
+          }
+          navigator.serviceWorker.register("./service-worker.js", {scope:"./", updateViaCache:"none"})
+            .then(value => {
+              registration = value;
+              registration.addEventListener("updatefound", () => watchWorker(registration.installing));
+              watchWorker(registration.installing);
+              checkUpdate();
+            })
+            .catch(error => console.warn("No se pudo activar el modo PWA:", error));
+        };
+        const schedule = () => {
+          if (window.requestIdleCallback) requestIdleCallback(register, {timeout:3000});
+          else setTimeout(register, 500);
+        };
+        const afterLaunch = () => { if (!scheduled) { scheduled = true; setTimeout(schedule, 1000); } };
+        if (document.documentElement.dataset.launchReady === "true") afterLaunch();
+        else document.addEventListener("bb:launch-ready", afterLaunch, {once:true});
+        setTimeout(afterLaunch, 10000);
+      });
+    }
+  </script>
+</body>
+</html>

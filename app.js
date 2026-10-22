@@ -2865,6 +2865,7 @@ let chotaCommentSequence = 0;
 let tigretonRenderedKey = "";
 // One visible pet at a time: pause offscreen and cancel every timer on a rerender.
 let tigretonMotion = null;
+let tigretonMotionPet = null;
 const tigretonReducedMotion = (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)"));
 // Decode optional animation sheets only when a pose needs them and editing is idle.
 // Keep the resting pose while a shared request prepares the sheet.
@@ -2886,9 +2887,11 @@ function ensureChotaSprites() {
   return chotaSpritesRequest;
 }
 function mountTigretonMotion(reactToPlan, event, date) {
+  const pet = document.querySelector("#clubhouseContent .tigreton-agenda");
+  if (pet && pet === tigretonMotionPet && tigretonMotion && !reactToPlan) { tigretonMotion.refresh(); return; }
   tigretonMotion?.destroy();
   tigretonMotion = null;
-  const pet = document.querySelector("#clubhouseContent .tigreton-agenda");
+  tigretonMotionPet = pet;
   if (!pet) return;
   tigretonMotion = createTigretonMotion(pet, reactToPlan, event, date);
   if (document.getElementById("chotaViewer")?.open) tigretonMotion.pause();
@@ -3095,6 +3098,7 @@ function openChotaViewer(trigger) {
       document.querySelector("main.app")?.removeAttribute("aria-hidden");
       delete viewer.dataset.requestKey;
       chotaViewerMotion?.pause();
+      globalThis.ChotaShop?.unmountRoom(viewer.querySelector(".chota-viewer-room-scene"));
       tigretonMotion?.resume();
       const focusTarget = chotaViewerTrigger?.isConnected ? chotaViewerTrigger : document.querySelector("[data-chota-open]");
       focusTarget?.focus({preventScroll: true});
@@ -3119,6 +3123,7 @@ function openChotaViewer(trigger) {
   tigretonMotion?.pause();
   document.body.classList.add("chota-viewer-open");
   viewer.show();
+  globalThis.ChotaShop?.mountRoom(viewer.querySelector(".chota-viewer-room-scene"));
   document.querySelector("main.app")?.setAttribute("aria-hidden", "true");
   if (!chotaViewerMotion || chotaViewerMotionKey !== key) {
     chotaViewerMotion?.destroy();
@@ -3273,7 +3278,7 @@ async function loadTigretonComment(event, date, contextKey, action = "agenda") {
   tigretonRequests.set(key, request);
   return request;
 }
-// The room reads the agenda already in memory; it never adds a startup request.
+// The agenda is already in memory; owned room objects hydrate separately while idle.
 let clubhouseObserver = null;
 function chotaRoomContext() {
   return ClubModel.upcomingEvents(groupEvents)[0] || {event: {id: "clubhouse-idle", title: "La agenda está libre", eventType: "clubhouse"}, date: new Date()};
@@ -3281,7 +3286,6 @@ function chotaRoomContext() {
 function renderClubhouse(upcoming) {
   const content = document.getElementById("clubhouseContent");
   if (!content) return;
-  clubhouseObserver?.disconnect();
   const next = upcoming[0];
   const birthday = next?.event.eventType === "birthday";
   const hour = new Date().getHours();
@@ -3292,6 +3296,14 @@ function renderClubhouse(upcoming) {
   const countdown = !next ? "" : days === 0 ? "Es hoy" : days === 1 ? "Mañana" : `En ${days} días`;
   const date = next ? next.date.toLocaleDateString("es-ES", {day: "numeric", month: "short"}).replace(".", "") : "";
   const schedule = next ? (birthday ? "Cumpleaños" : conversationTimeFormatter.format(next.date)) : "";
+  const signature = JSON.stringify([moment, homeEventsReady, birthday, next?.event.id, next?.event.title, next?.event.description, next?.event.eventType, days, date, schedule]);
+  if (content.dataset.roomSignature === signature && content.firstElementChild) {
+    globalThis.ChotaShop?.mountRoom(content.firstElementChild);
+    syncChotaSleepControls();
+    return;
+  }
+  clubhouseObserver?.disconnect();
+  content.dataset.roomSignature = signature;
   const plan = next ? `<button class="clubhouse-plan" type="button" data-calendar-date="${tigretonDayKey(next.date)}" aria-label="Ver plan: ${escapeHtml(next.event.title)}"><span class="clubhouse-note-label">Próximo plan</span><strong>${escapeHtml(next.event.title)}</strong><span class="clubhouse-plan-date">${escapeHtml(date)} · ${escapeHtml(schedule)}</span><span class="clubhouse-plan-countdown">${countdown}</span></button>` : `<div class="clubhouse-plan clubhouse-plan-empty"><span class="clubhouse-note-label">La agenda</span><strong>${homeEventsReady ? "El próximo plan está por llegar" : "Consultando la agenda…"}</strong>${homeEventsReady ? '<button type="button" data-go="calendario">Ver calendario</button>' : ""}</div>`;
   content.innerHTML = `<div class="clubhouse-room${birthday ? " is-birthday" : ""}" data-time="${moment}">
     <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="async" fetchpriority="low">
@@ -3305,6 +3317,7 @@ function renderClubhouse(upcoming) {
   const room = content.firstElementChild;
   clubhouseObserver = new IntersectionObserver(entries => room.classList.toggle("is-in-view", entries[0].isIntersecting), {threshold: .15});
   clubhouseObserver.observe(room);
+  globalThis.ChotaShop?.mountRoom(room);
   syncChotaSleepControls();
 }
 function syncChotaSleepControls() {
@@ -3455,7 +3468,7 @@ const accountRequests = globalThis.ClubAccountRequests?.create({client: db, canM
 const adminConsole = globalThis.AdminConsole?.create({
   allowed: isSuperAdmin,
   rpc: (name, args) => db.rpc(name, args),
-  refreshShop: () => globalThis.BannerShop?.refresh(true),
+  refreshShop: () => Promise.all([globalThis.BannerShop?.refresh(true), globalThis.ChotaShop?.refresh(true)]),
   owner: () => currentAuthUser?.id,
   username: () => currentUser?.username || "admin",
   settings: () => siteSettings,
@@ -3738,6 +3751,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ClubDrafts?.suspend();
     globalThis.ClubOnboarding?.reset();
     globalThis.BannerShop?.reset();
+    globalThis.ChotaShop?.reset();
     globalThis.AdminGrants?.reset();
     globalThis.GroupInteractions?.reset();
     globalThis.PendingActions?.reset();
@@ -3825,6 +3839,7 @@ function showLogin() {
   globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
+  globalThis.ChotaShop?.reset();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
   globalThis.PendingActions?.reset();
@@ -3857,6 +3872,7 @@ async function logoutCurrentUser() {
   globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
+  globalThis.ChotaShop?.reset();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
   globalThis.PendingActions?.reset();
@@ -7331,6 +7347,13 @@ globalThis.BannerShop?.initialize({
   synchronizePacks: force => globalThis.DailyPacks?.refresh(force),
   openInventory: () => goTo("sobres"),
   navigate: goTo,
+});
+
+globalThis.ChotaShop?.initialize({
+  cacheNamespace: config.supabaseUrl || "local",
+  session: () => backendReady && currentAuthUser?.id,
+  rpc: (name, args) => db.rpc(name, args),
+  refreshWallet: () => globalThis.BannerShop?.refresh(),
 });
 
 globalThis.CollectionSocial?.configurePush(dispatchPush);

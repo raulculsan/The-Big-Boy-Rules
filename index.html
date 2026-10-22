@@ -54,6 +54,7 @@
   <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
   <link rel="stylesheet" href="visual-system.css?v=20261022-pwa-shell-376" />
   <link rel="stylesheet" href="clubhouse.css?v=20261021-chota-room-371" />
+  <link rel="stylesheet" href="chota-shop.css?v=20261022-chota-shop-378" />
 </head>
 <body>
 
@@ -922,10 +923,11 @@
   <dialog id="bannerShopDialog" class="banner-shop-dialog" aria-labelledby="bannerShopTitle">
     <header class="banner-shop-heading shop-topbar"><span class="shop-brand">BB <span>STORE</span></span><button id="bannerShopClose" type="button" aria-label="Cerrar tienda">×</button></header>
     <div class="shop-content">
-      <section class="shop-intro"><div><span class="shop-kicker">EL CLUB · PERSONALIZACIÓN</span><h2 id="bannerShopTitle">Tienda</h2><p>Banners animados y premios del club.</p></div><div class="shop-wallet"><span>Tu saldo</span><strong><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.8 8.5h-4a2 2 0 0 0 0 4h2.4a2 2 0 0 1 0 4H9M12 6v12"/></svg><span id="bannerShopBalance" class="banner-shop-balance">— monedas</span></strong></div></section>
-      <div class="shop-navigation" role="tablist" aria-label="Secciones de la tienda"><button type="button" id="shopBannersTab" role="tab" aria-selected="true" aria-controls="shopBannersPanel" data-shop-tab="banners">Banners <span data-shop-banner-count>—</span></button><button type="button" id="shopVouchersTab" role="tab" aria-selected="false" aria-controls="shopVouchersPanel" tabindex="-1" data-shop-tab="vouchers">Vales <span data-shop-voucher-count>—</span></button></div>
+      <section class="shop-intro"><div><span class="shop-kicker">EL CLUB · PERSONALIZACIÓN</span><h2 id="bannerShopTitle">Tienda</h2><p>Banners, objetos para El Chota y premios del club.</p></div><div class="shop-wallet"><span>Tu saldo</span><strong><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.8 8.5h-4a2 2 0 0 0 0 4h2.4a2 2 0 0 1 0 4H9M12 6v12"/></svg><span id="bannerShopBalance" class="banner-shop-balance">— monedas</span></strong></div></section>
+      <div class="shop-navigation" role="tablist" aria-label="Secciones de la tienda"><button type="button" id="shopBannersTab" role="tab" aria-selected="true" aria-controls="shopBannersPanel" data-shop-tab="banners">Banners <span data-shop-banner-count>—</span></button><button type="button" id="shopChotaTab" role="tab" aria-selected="false" aria-controls="shopChotaPanel" tabindex="-1" data-shop-tab="chota">El Chota <span data-shop-chota-count>—</span></button><button type="button" id="shopVouchersTab" role="tab" aria-selected="false" aria-controls="shopVouchersPanel" tabindex="-1" data-shop-tab="vouchers">Vales <span data-shop-voucher-count>—</span></button></div>
       <p id="bannerShopStatus" class="shop-status" role="status" aria-live="polite"></p>
       <section id="shopBannersPanel" role="tabpanel" aria-labelledby="shopBannersTab"><header class="shop-section-heading"><div><h3>Para tu perfil</h3><p>Vista completa de cada diseño.</p></div><button id="bannerUnequip" class="shop-text-button" type="button" disabled>Quitar banner</button></header><div id="bannerShopItems" class="banner-shop-items"></div></section>
+      <section id="shopChotaPanel" role="tabpanel" aria-labelledby="shopChotaTab" hidden><header class="chota-shop-intro"><div><h3>Cosas para su habitación</h3><p>Cada compra encuentra su sitio en la sede. El robot aspirador recorrerá el suelo mientras limpia.</p></div></header><p id="chotaShopStatus" role="status" aria-live="polite"></p><div id="chotaShopItems" class="chota-shop-items"></div></section>
       <section id="shopVouchersPanel" class="reward-voucher-shop" role="tabpanel" aria-labelledby="shopVouchersTab" hidden><header class="shop-section-heading"><div><h3 id="rewardVoucherTitle">Premios del club</h3><p>Desbloquea un vale y canjéalo cuando quieras.</p></div></header><div id="rewardVoucherItems" class="banner-shop-items"></div></section>
     </div>
   </dialog>
@@ -960,13 +962,14 @@
   <script defer src="collection-social.js?v=20261022-pwa-shell-376"></script>
   <script defer src="album.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
-  <script defer src="banner-shop.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="banner-shop.js?v=20261022-member-motion-378"></script>
+  <script defer src="chota-shop.js?v=20261022-chota-shop-378"></script>
   <script defer src="group-interactions.js?v=20261021-activity-packs-372"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
-  <script defer src="admin-console.js?v=20261021-clubhouse-369"></script>
+  <script defer src="admin-console.js?v=20261022-chota-shop-378"></script>
   <script defer src="account-security.js?v=20261021-email-359"></script>
   <script defer src="account-requests.js?v=20261021-email-359"></script>
-  <script defer src="app.js?v=20261021-activity-packs-372"></script>
+  <script defer src="app.js?v=20261022-chota-shop-378"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;

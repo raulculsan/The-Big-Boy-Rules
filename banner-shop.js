@@ -548,8 +548,10 @@
     const key = String(banner?.id || '');
     const surface = node.querySelector('.club-member-banner');
     if (!surface) return;
-    const withinBudget = !memberObserver || [...visibleMemberTiles].slice(0, 2).includes(node);
-    const animate = withinBudget && !document.hidden && !(globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).matches;
+    // Every visible carousel tile keeps its live scene. A fixed first-two
+    // budget can leave an entering tile on its poster after another tile exits.
+    const visible = !memberObserver || visibleMemberTiles.has(node);
+    const animate = visible && !document.hidden && !(globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).matches;
     const changed = surface.dataset.bannerId !== key;
     const mode = animate ? 'animated' : 'poster';
     if (changed || !surface.firstElementChild || surface.dataset.bannerMode !== mode) {
@@ -613,9 +615,12 @@
       memberObserver?.disconnect(); visibleMemberTiles.clear(); observedMemberTiles.clear(); membersTarget = node;
       memberObserver = typeof IntersectionObserver === 'function' ? new IntersectionObserver(entries => {
         for (const entry of entries) {
-          if (entry.isIntersecting) visibleMemberTiles.add(entry.target); else visibleMemberTiles.delete(entry.target);
-          paintMember(entry.target);
+          if (entry.isIntersecting && entry.intersectionRect.width > 0 && entry.intersectionRect.height > 0) visibleMemberTiles.add(entry.target);
+          else visibleMemberTiles.delete(entry.target);
         }
+        // Process the complete visibility snapshot before painting. WebKit can
+        // report entering cards before exiting cards during a horizontal swipe.
+        paintMembers();
       }) : null;
     }
     const tiles = [...node.querySelectorAll('[data-member-banner-user]')];
