@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v378";
+const CACHE_NAME = "big-boy-rules-v379";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -14,8 +14,8 @@ const APP_SHELL = [
   "./notifications.css?v=20261015-notifications-polls-307",
   "./club.css?v=20261021-performance-363",
   "./clubhouse.css?v=20261021-chota-room-371",
-  "./chota-shop.js?v=20261022-chota-shop-378",
-  "./chota-shop.css?v=20261022-chota-shop-378",
+  "./chota-shop.js?v=20261022-room-props-379",
+  "./chota-shop.css?v=20261022-room-props-379",
   "./icons/clubhouse/club-room-v1.webp",
   "./icons/mascot/chota-v2/chota-poses.webp",
   "./icons/mascot/chota-v2/chota-talk.webp",
@@ -264,7 +264,7 @@ const mediaPath = request => {
   const url = new URL(request.url || request, scopeUrl);
   if (url.origin !== scopeUrl.origin || !url.pathname.startsWith(scopeUrl.pathname)) return false;
   const path = url.pathname.slice(scopeUrl.pathname.length);
-  return /^icons\/(?:cards|banners|trophies|chat-backgrounds|mascot)\/[^?]+\.(?:png|webp|jpg|jpeg|svg|json)$/i.test(path);
+  return /^icons\/(?:cards|banners|trophies|chat-backgrounds|mascot|clubhouse)\/[^?]+\.(?:png|webp|jpg|jpeg|svg|json)$/i.test(path);
 };
 let shellUrls;
 let mediaWrite = Promise.resolve();
