@@ -1,0 +1,108 @@
+/* One illustrated room, with real agenda data placed on its physical objects. */
+.clubhouse { margin: 0; min-width: 0; align-self: start; }
+.clubhouse-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.clubhouse-heading h3 { margin: 0; color: var(--club-text, #f4f1e9); font: 650 20px/1.2 var(--font-body, sans-serif); letter-spacing: -.025em; }
+.clubhouse-heading > span { color: var(--club-muted, #a7abb3); font-size: 12px; }
+.clubhouse-content { width: min(100%, 680px); margin-inline: auto; }
+.clubhouse-room { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; isolation: isolate; border-radius: 18px; background: #171b20; contain: layout paint; }
+.clubhouse-art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
+.clubhouse-sky { position:absolute; left:83.984375%; top:0; width:13.4765625%; height:39.0625%; z-index:0; pointer-events:none; -webkit-mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; }
+.clubhouse-sky > i { position:absolute; inset:0; display:block; background:url("icons/clubhouse/club-room-v1.webp") 97.06546275% 0 / 742.0289855% 256% no-repeat; transition:opacity 30s linear; }
+.clubhouse-sky-dawn { opacity:var(--club-sky-dawn,0); filter:sepia(1) saturate(1.45) hue-rotate(325deg) brightness(1.05); }
+.clubhouse-sky-day { opacity:var(--club-sky-day,0); filter:sepia(1) saturate(1.45) hue-rotate(155deg) brightness(1.15); }
+.clubhouse-sky-evening { opacity:var(--club-sky-evening,0); }
+.clubhouse-sky-night { opacity:var(--club-sky-night,0); filter:sepia(1) saturate(1.7) hue-rotate(175deg) brightness(.34); }
+.clubhouse-sky-stars { position:absolute; inset:0; opacity:var(--club-sky-night,0); background:radial-gradient(circle .6px at 37.2% 23%,#d9e5ff 70%,transparent),radial-gradient(circle .8px at 72.1% 19.5%,#f3eddb 70%,transparent),radial-gradient(circle .5px at 52% 48.6%,#cbdcff 70%,transparent),radial-gradient(circle .7px at 74.3% 55%,#e8efff 70%,transparent),radial-gradient(circle .5px at 14.9% 53.8%,#f1e9d5 70%,transparent); transition:opacity 30s linear; }
+.clubhouse-room::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #0b1021; opacity: 0; transition: opacity .4s; }
+.clubhouse-room[data-time="night"]::after { opacity: .12; }
+.clubhouse-plan { position: absolute; z-index: 2; left: 19%; top: 23%; width: 32%; height: 19%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; margin: 0; padding: 10px; border: 0; border-radius: 1px; background: #f1e0b5; color: #292621; text-align: left; font-family: inherit; transform: rotate(-2deg); cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.clubhouse-plan::before { content: ""; position: absolute; width: 8px; height: 8px; left: 48%; top: -3px; background: #bd6136; border: 2px solid #753a26; border-radius: 50%; }
+.clubhouse-note-label { font-size: clamp(9px, 1.7vw, 12px); line-height: 1.2; color: #645a42; }
+.clubhouse-plan > strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-shrink: 0; font-size: clamp(11px, 2.15vw, 16px); line-height: 1.2; font-weight: 750; overflow-wrap: anywhere; }
+.clubhouse-plan-date { font-size: clamp(8px, 1.6vw, 12px); line-height: 1.25; }
+.clubhouse-plan-countdown { font-size: clamp(9px, 1.7vw, 13px); line-height: 1.15; font-weight: 750; color: #8a3f21; }
+.clubhouse-plan:active { transform: rotate(-2deg) scale(.97); }
+.clubhouse-plan-empty { cursor: default; gap: 9px; }
+.clubhouse-plan-empty > button { min-height: 28px; padding: 0; border: 0; border-bottom: 1px solid currentColor; border-radius: 0; background: transparent; color: #58452a; font-family: inherit; font-size: clamp(9px, 1.6vw, 12px); font-weight: 600; line-height: 1.2; cursor: pointer; }
+.clubhouse-memory { position: absolute; z-index: 2; top: 19.1%; left: 58.7%; width: 19.1%; height: 18.5%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 7px; padding: 5px; box-sizing: border-box; color: #443c33; text-align: center; transform: rotate(2deg); }
+.clubhouse-memory-label { font-size: clamp(8px, 1.4vw, 11px); line-height: 1.2; }
+.clubhouse-memory svg { width: 28%; max-height: 30px; min-height: 16px; fill: none; stroke: #726454; stroke-width: 1.5; }
+.clubhouse-memory strong { font-size: clamp(8px, 1.45vw, 12px); line-height: 1.25; font-weight: 650; }
+.clubhouse-memory > span:last-child { font-size: clamp(7px, 1.2vw, 10px); line-height: 1.25; }
+.clubhouse-room .clubhouse-pet { position: absolute; z-index: 3; left: 36%; bottom: 15%; width: 28%; display: flex; flex-direction: column; align-items: center; }
+.clubhouse-room .tigreton-sprite { width: 100%; height: auto; aspect-ratio: 1; margin: 0; border-radius: 0; }
+.clubhouse-room .tigreton-character { filter: drop-shadow(2px 4px 0 #0002); }
+.clubhouse-room .tigreton-name { width: auto; margin: 0; padding: 4px 9px; color: #fff4da; background: #252223d9; border-radius: 2px; font-size: clamp(10px, 1.8vw, 13px); line-height: 1.25; }
+.clubhouse-room .chota-expand { position: absolute; right: -3px; bottom: 0; width: 44px; height: 44px; display: grid; place-items: center; padding: 13px; border: 0; background: transparent; color: #f0d6a1; cursor: pointer; }
+.clubhouse-room .chota-expand svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.clubhouse-room .chota-expand[hidden] { display: none; }
+.clubhouse-pet.is-sleeping .tigreton-sprite { cursor: default; opacity: 1; transform: none; }
+.clubhouse-pet.is-sleeping .tigreton-sleep-mark { opacity: .85; right: 10%; top: 45%; }
+.clubhouse-room .clubhouse-bubble { position: absolute; z-index: 4; left: 24%; bottom: 43%; max-width: 55%; max-height: 22%; overflow-y: auto; padding: 9px 12px; border: 1px solid #302a23; border-radius: 13px 13px 13px 3px; box-shadow: none; }
+.clubhouse-bubble .tigreton-comment { margin: 0; font-size: clamp(11px, 2vw, 14px); line-height: 1.4; }
+.clubhouse-bubble::after { right: auto; left: 25%; border-width: 1px; }
+.clubhouse-lamplight { position: absolute; z-index: 1; width: 14%; height: 9%; top: 5%; left: 34%; background: #ffd17b; opacity: 0; mix-blend-mode: soft-light; pointer-events: none; animation: clubhouse-light 6s ease-in-out infinite; animation-play-state: paused; }
+.clubhouse-dust { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.clubhouse-dust i { position: absolute; top: 48%; left: 40%; width: 2px; height: 2px; background: #ffe3a9; opacity: 0; animation: clubhouse-dust 10s linear infinite; animation-play-state: paused; }
+.clubhouse-dust i:nth-child(2) { left: 56%; top: 60%; animation-delay: -4s; }
+.clubhouse-dust i:nth-child(3) { left: 67%; top: 45%; animation-delay: -7s; }
+.clubhouse-room.is-in-view .clubhouse-lamplight, .clubhouse-room.is-in-view .clubhouse-dust i { animation-play-state: running; }
+.clubhouse-bunting { position: absolute; z-index: 2; top: 12%; left: 20%; width: 55%; height: 22px; display: flex; justify-content: space-between; border-top: 1px solid #c9ad74; transform: rotate(3deg); pointer-events: none; }
+.clubhouse-bunting i { width: 10%; height: 100%; background: #d6a252; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.clubhouse-bunting i:nth-child(2n) { background: #945341; }
+.clubhouse :is(button, a):focus-visible { outline: 2px solid #f5cb7e; outline-offset: 3px; }
+/* The expanded mascot stays inside the same room; its full square scene is never cropped. */
+.chota-viewer { isolation: isolate; gap: 12px; background: #15191e; }
+.chota-viewer::before { content: ""; position: fixed; inset: -28px; z-index: 0; background: url("icons/clubhouse/club-room-v1.webp") center / cover no-repeat; filter: blur(20px) brightness(.3); pointer-events: none; }
+.chota-viewer > * { position: relative; z-index: 1; }
+.chota-viewer-heading { text-shadow: 0 2px 8px #0009; }
+.chota-viewer-heading button { background: #171b20e8; border-color: #f0d6a138; }
+.chota-viewer-plan { margin: 0; color: #f2e3c5; text-shadow: 0 1px 5px #000; }
+.chota-viewer-room-scene { position: relative; flex: none; align-self: center; width: min(100%, calc(100dvh - 280px), 760px); aspect-ratio: 1; margin-block: auto; overflow: hidden; isolation: isolate; border-radius: 16px; background: #171b20; }
+.chota-viewer-room-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
+.chota-viewer-room-scene .chota-viewer-pet { position: absolute; inset: 0; min-height: 0; }
+.chota-viewer-room-scene .chota-character-row { position: absolute; bottom: 13%; left: 26%; width: 48%; max-width: none; }
+.chota-viewer-room-scene .chota-viewer-touch { display: block; width: 100%; margin: 0; padding: 0; border-radius: 0; }
+.chota-viewer-room-scene .tigreton-sprite { width: 100%; max-width: none; height: auto; aspect-ratio: 1; }
+.chota-viewer-room-scene .chota-viewer-bubble-slot { position: absolute; left: 6%; bottom: 64%; width: 88%; height: auto; max-height: 38%; padding: 0; }
+.chota-viewer-room-scene .tigreton-bubble { max-width: min(100%, 340px); margin: 0; padding: 10px 13px; border: 1px solid #493826; box-shadow: 0 3px 0 #0002; }
+.chota-viewer-actions { width: min(100%, 600px); align-self: center; }
+.chota-viewer-actions button { background: #171b20ed; border-color: #f0d6a138; }
+.chota-viewer-actions button:active { background: #5e4229; }
+@media (max-width: 600px) {
+  .chota-viewer { padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right)); gap: 10px; }
+  .chota-viewer-room-scene { width: min(100%, calc(100dvh - 282px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); border-radius: 12px; }
+  .chota-viewer-room-scene .chota-character-row { left: 24%; width: 52%; }
+  .chota-viewer-room-scene .tigreton-bubble { padding: 8px 10px; font-size: 12px; }
+  .chota-viewer-room-scene .chota-viewer-comment { max-height: 90px; }
+}
+@media (max-height: 560px) and (min-width: 601px) {
+  .chota-viewer { overflow-y: auto; }
+  .chota-viewer-room-scene { width: min(100%, 340px); margin-block: 8px; }
+}
+@keyframes clubhouse-light { 0%, 100% { opacity: .02; } 45% { opacity: .1; } 55% { opacity: .06; } }
+@keyframes clubhouse-dust { 0% { transform: translate(0, 0); opacity: 0; } 20%, 75% { opacity: .45; } 100% { transform: translate(13px, -48px); opacity: 0; } }
+@media (min-width: 1000px) { .clubhouse-content { width: min(100%, 600px); } }
+@media (max-width: 600px) {
+  .clubhouse { margin: 0; }
+  .clubhouse-heading { gap: 8px; margin-bottom: 10px; }
+  .clubhouse-heading h3 { font-size: 18px; }
+  .clubhouse-heading > span { font-size: 10px; }
+  .clubhouse-room { border-radius: 12px; }
+  .clubhouse-plan { padding: 7px 8px; gap: 4px; top: 22%; height: 21%; }
+  .clubhouse-plan .clubhouse-note-label { display: none; }
+  .clubhouse-plan > strong { font-size: 12px; }
+  .clubhouse-plan-date { font-size: 9px; }
+  .clubhouse-plan-countdown { font-size: 10px; }
+  .clubhouse-memory { gap: 4px; top: 18.4%; height: 20%; }
+  .clubhouse-memory > span:last-child { display: none; }
+  .clubhouse-room .clubhouse-pet { left: 34%; bottom: 14%; width: 32%; }
+  .clubhouse-room .clubhouse-bubble { left: 19%; bottom: 47%; max-width: 64%; max-height: 25%; padding: 7px 9px; }
+  .clubhouse-room .chota-expand { right: -17px; bottom: -7px; }
+  .clubhouse-bunting { height: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clubhouse-lamplight, .clubhouse-dust i { animation: none !important; }
+  .clubhouse-room::after, .clubhouse-plan, .clubhouse-sky > i, .clubhouse-sky-stars { transition: none; }
+}
+html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars) { transition:none; }

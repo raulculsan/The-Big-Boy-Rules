@@ -3,9 +3,16 @@
 .chota-room-prop { position:absolute; line-height:0; transform-origin:50% 90%; }
 .chota-room-prop img { display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none; }
 .chota-room-football { left:20%; top:79%; width:7%; }
-.chota-room-skateboard { left:67%; top:79%; width:19%; }
+.chota-room-skateboard { left:82.7%; top:56%; width:10.5%; transform:rotate(14deg); transform-origin:25% 94%; }
 .chota-room-robot-vacuum { left:45%; top:84%; width:10%; animation:chota-vacuum-clean 28s linear infinite; animation-play-state:paused; }
 .chota-props-moving .chota-room-robot-vacuum { animation-play-state:running; }
+.chota-vacuum-body { position:relative; z-index:1; -webkit-mask:url("icons/clubhouse/props/vacuum-body-mask.svg") 0 0 / 100% 100%; mask:url("icons/clubhouse/props/vacuum-body-mask.svg") 0 0 / 100% 100%; }
+.chota-vacuum-brush { position:absolute; z-index:0; left:12%; top:61%; width:21%; height:31.5%; transform:scaleY(.48); transform-origin:50% 50%; }
+.chota-vacuum-brush--right { left:62%; top:66%; }
+.chota-vacuum-brush svg { display:block; width:100%; height:100%; animation:chota-vacuum-brush-spin .46s linear infinite; animation-play-state:paused; }
+.chota-vacuum-brush--right svg { animation-direction:reverse; }
+.chota-props-moving .chota-vacuum-brush svg { animation-play-state:running; }
+@keyframes chota-vacuum-brush-spin { to { transform:rotate(360deg); } }
 .chota-viewer-room-scene .chota-viewer-pet { z-index:3; }
 @keyframes chota-vacuum-clean {
   0%,7% { transform:translate3d(0,0,0); }
@@ -61,5 +68,5 @@
   #bannerShopDialog .shop-navigation { width:100%; box-sizing:border-box; }
   #bannerShopDialog .shop-navigation button { min-width:0; padding-inline:10px; }
 }
-@media(prefers-reduced-motion:reduce) { .chota-room-robot-vacuum { animation:none; } }
-html[data-reduced-motion="true"] .chota-room-robot-vacuum { animation:none; }
+@media(prefers-reduced-motion:reduce) { .chota-room-robot-vacuum, .chota-vacuum-brush svg { animation:none; } }
+html[data-reduced-motion="true"] :is(.chota-room-robot-vacuum,.chota-vacuum-brush svg) { animation:none; }

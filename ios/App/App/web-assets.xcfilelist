@@ -192,7 +192,10 @@ $(SRCROOT)/App/public/icons/chat-backgrounds/vice-city.svg
 $(SRCROOT)/App/public/icons/clubhouse/club-room-v1.webp
 $(SRCROOT)/App/public/icons/clubhouse/props/football-v2.png
 $(SRCROOT)/App/public/icons/clubhouse/props/robot-vacuum-v2.png
+$(SRCROOT)/App/public/icons/clubhouse/props/skateboard-leaning-v3.png
 $(SRCROOT)/App/public/icons/clubhouse/props/skateboard-v2.png
+$(SRCROOT)/App/public/icons/clubhouse/props/vacuum-body-mask.svg
+$(SRCROOT)/App/public/icons/clubhouse/window-sky-mask.svg
 $(SRCROOT)/App/public/icons/icon-192.png
 $(SRCROOT)/App/public/icons/icon-512.png
 $(SRCROOT)/App/public/icons/icon-maskable-512.png

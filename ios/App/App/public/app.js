@@ -3113,6 +3113,7 @@ function openChotaViewer(trigger) {
     <p class="chota-viewer-plan">${escapeHtml(next.event.title)}</p>
     <div class="chota-viewer-room-scene">
     <img class="chota-viewer-room-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="" aria-hidden="true" decoding="async">
+    ${clubhouseSkyMarkup()}
     <div class="tigreton-agenda chota-viewer-pet">
     <div class="chota-viewer-bubble-slot"><div class="tigreton-bubble chota-viewer-status" role="status" aria-live="polite" aria-atomic="true" hidden></div></div>
     <div class="chota-character-row"><button class="chota-viewer-touch" type="button" data-chota-action="nod" aria-label="Tocar a El Chota">${tigretonSpriteMarkup()}</button></div></div></div>
@@ -3124,6 +3125,7 @@ function openChotaViewer(trigger) {
   document.body.classList.add("chota-viewer-open");
   viewer.show();
   globalThis.ChotaShop?.mountRoom(viewer.querySelector(".chota-viewer-room-scene"));
+  syncClubhouseDaylight();
   document.querySelector("main.app")?.setAttribute("aria-hidden", "true");
   if (!chotaViewerMotion || chotaViewerMotionKey !== key) {
     chotaViewerMotion?.destroy();
@@ -3280,6 +3282,40 @@ async function loadTigretonComment(event, date, contextKey, action = "agenda") {
 }
 // The agenda is already in memory; owned room objects hydrate separately while idle.
 let clubhouseObserver = null;
+function clubhouseSkyMarkup() {
+  return '<div class="clubhouse-sky" aria-hidden="true"><i class="clubhouse-sky-dawn"></i><i class="clubhouse-sky-day"></i><i class="clubhouse-sky-evening"></i><i class="clubhouse-sky-night"></i><span class="clubhouse-sky-stars"></span></div>';
+}
+function clubhouseDaylight(now = new Date()) {
+  // Seasonal daylight at the club's latitude, driven by the device's local clock.
+  const year = now.getFullYear();
+  const day = (Date.UTC(year, now.getMonth(), now.getDate()) - Date.UTC(year, 0, 0)) / 86400000;
+  const declination = 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + day) / 365.25);
+  const latitude = 40.4168 * Math.PI / 180;
+  const daylightHours = 24 * Math.acos((Math.sin(-.833 * Math.PI / 180) - Math.sin(latitude) * Math.sin(declination)) / (Math.cos(latitude) * Math.cos(declination))) / Math.PI;
+  const standardOffset = Math.max(new Date(year, 0, 1).getTimezoneOffset(), new Date(year, 6, 1).getTimezoneOffset());
+  const summerShift = (standardOffset - now.getTimezoneOffset()) / 60;
+  const orbit = 2 * Math.PI * (day - 81) / 364;
+  const equationOfTime = 9.87 * Math.sin(2 * orbit) - 7.53 * Math.cos(orbit) - 1.5 * Math.sin(orbit);
+  const solarNoon = 13.2469 + summerShift - equationOfTime / 60;
+  const sunrise = solarNoon - daylightHours / 2, sunset = solarNoon + daylightHours / 2;
+  const stops = [[0,"night"],[sunrise-.75,"night"],[sunrise+.05,"dawn"],[sunrise+.9,"day"],[sunset-1.2,"day"],[sunset-.15,"evening"],[sunset+.7,"night"],[24,"night"]];
+  const hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  const index = Math.max(1, stops.findIndex(stop => stop[0] >= hour));
+  const [start, from] = stops[index-1], [end, to] = stops[index];
+  const mix = Math.max(0, Math.min(1, (hour-start) / (end-start || 1)));
+  const weights = {dawn:0,day:0,evening:0,night:0};
+  weights[from] += 1-mix; weights[to] += mix;
+  return {weights, moment:mix < .5 ? from : to};
+}
+function syncClubhouseDaylight(now = new Date()) {
+  const {weights, moment} = clubhouseDaylight(now);
+  document.querySelectorAll(".clubhouse-room, .chota-viewer-room-scene").forEach(room => {
+    room.dataset.time = moment;
+    for (const [name, weight] of Object.entries(weights)) room.style.setProperty(`--club-sky-${name}`, weight.toFixed(4));
+  });
+  const time = document.getElementById("clubhouseTime");
+  if (time) time.textContent = {night:"Una noche en la sede",dawn:"Amanece en la sede",day:"Hoy en la sede",evening:"Cae la tarde"}[moment];
+}
 function chotaRoomContext() {
   return ClubModel.upcomingEvents(groupEvents)[0] || {event: {id: "clubhouse-idle", title: "La agenda está libre", eventType: "clubhouse"}, date: new Date()};
 }
@@ -3288,17 +3324,15 @@ function renderClubhouse(upcoming) {
   if (!content) return;
   const next = upcoming[0];
   const birthday = next?.event.eventType === "birthday";
-  const hour = new Date().getHours();
-  const moment = hour < 7 || hour >= 22 ? "night" : hour < 19 ? "day" : "evening";
-  const time = document.getElementById("clubhouseTime");
-  if (time) time.textContent = moment === "night" ? "Una noche en la sede" : moment === "day" ? "Hoy en la sede" : "Cae la tarde";
+  const {moment} = clubhouseDaylight();
   const days = next ? tigretonDaysUntil(next.date) : 0;
   const countdown = !next ? "" : days === 0 ? "Es hoy" : days === 1 ? "Mañana" : `En ${days} días`;
   const date = next ? next.date.toLocaleDateString("es-ES", {day: "numeric", month: "short"}).replace(".", "") : "";
   const schedule = next ? (birthday ? "Cumpleaños" : conversationTimeFormatter.format(next.date)) : "";
-  const signature = JSON.stringify([moment, homeEventsReady, birthday, next?.event.id, next?.event.title, next?.event.description, next?.event.eventType, days, date, schedule]);
+  const signature = JSON.stringify([homeEventsReady, birthday, next?.event.id, next?.event.title, next?.event.description, next?.event.eventType, days, date, schedule]);
   if (content.dataset.roomSignature === signature && content.firstElementChild) {
     globalThis.ChotaShop?.mountRoom(content.firstElementChild);
+    syncClubhouseDaylight();
     syncChotaSleepControls();
     return;
   }
@@ -3307,6 +3341,7 @@ function renderClubhouse(upcoming) {
   const plan = next ? `<button class="clubhouse-plan" type="button" data-calendar-date="${tigretonDayKey(next.date)}" aria-label="Ver plan: ${escapeHtml(next.event.title)}"><span class="clubhouse-note-label">Próximo plan</span><strong>${escapeHtml(next.event.title)}</strong><span class="clubhouse-plan-date">${escapeHtml(date)} · ${escapeHtml(schedule)}</span><span class="clubhouse-plan-countdown">${countdown}</span></button>` : `<div class="clubhouse-plan clubhouse-plan-empty"><span class="clubhouse-note-label">La agenda</span><strong>${homeEventsReady ? "El próximo plan está por llegar" : "Consultando la agenda…"}</strong>${homeEventsReady ? '<button type="button" data-go="calendario">Ver calendario</button>' : ""}</div>`;
   content.innerHTML = `<div class="clubhouse-room${birthday ? " is-birthday" : ""}" data-time="${moment}">
     <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="async" fetchpriority="low">
+    ${clubhouseSkyMarkup()}
     <div class="clubhouse-lamplight" aria-hidden="true"></div><div class="clubhouse-dust" aria-hidden="true"><i></i><i></i><i></i></div>
     ${birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ""}
     ${plan}
@@ -3318,6 +3353,7 @@ function renderClubhouse(upcoming) {
   clubhouseObserver = new IntersectionObserver(entries => room.classList.toggle("is-in-view", entries[0].isIntersecting), {threshold: .15});
   clubhouseObserver.observe(room);
   globalThis.ChotaShop?.mountRoom(room);
+  syncClubhouseDaylight();
   syncChotaSleepControls();
 }
 function syncChotaSleepControls() {
@@ -3339,6 +3375,7 @@ function syncChotaSleepControls() {
 function refreshChotaSleepSchedule() {
   clearTimeout(chotaSleepTimer);
   const now = new Date();
+  syncClubhouseDaylight(now);
   const sleeping = isChotaSleeping(now);
   if (sleeping !== chotaSleeping) {
     chotaSleeping = sleeping;
