@@ -2923,7 +2923,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     clearTimeout(frameTimer);
     animations.forEach(animation => animation.cancel());
     animations = [];
-    pet.classList.remove("is-awake", "is-sleeping");
+    pet.classList.remove("is-awake", "is-sleeping", "is-sleep-reacting");
     character.classList.remove("is-speaking");
     setFrame(0);
   }
@@ -3012,6 +3012,28 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     }
     if (active()) { pet.classList.add("is-awake"); schedule(); }
   }
+  function reactSleeping() {
+    if (destroyed || paused || !inView || document.hidden || !isChotaSleeping() || tigretonReducedMotion.matches || pet.classList.contains("is-sleep-reacting")) return;
+    refresh();
+    pet.classList.add("is-sleep-reacting");
+    animations.push(character.animate([
+      {transform:"translateY(0) rotate(0deg)"},
+      {transform:"translateY(-.7%) rotate(-.7deg)",offset:.28},
+      {transform:"translateY(.3%) rotate(.35deg)",offset:.58},
+      {transform:"translateY(0) rotate(0deg)"}
+    ], {duration:760,easing:"ease-in-out"}));
+    // Both poses keep the eyes shut; their ear/head shift is a brief sleepy stir.
+    const frames = [[22,80],[23,150],[22,90],[23,110],[22,330]];
+    let index = 0;
+    function advanceSleepStir() {
+      if (destroyed || paused || !inView || document.hidden || !isChotaSleeping()) { refresh(); return; }
+      if (index >= frames.length) { refresh(); return; }
+      const [frame, duration] = frames[index++];
+      setFrame(frame);
+      frameTimer = setTimeout(advanceSleepStir, duration);
+    }
+    advanceSleepStir();
+  }
   const observer = new IntersectionObserver(entries => {
     inView = entries[0].isIntersecting;
     refresh();
@@ -3024,6 +3046,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   return {
     play,
     speak,
+    reactSleeping,
     refresh,
     stopSpeaking: refresh,
     pause() { paused = true; refresh(); },
@@ -3039,10 +3062,32 @@ function tigretonSpriteMarkup(interactive = false) {
 let chotaViewerMotion = null;
 let chotaViewerMotionKey = "";
 let chotaViewerTrigger = null;
+let chotaBubbleFrame = 0;
+function positionChotaBubbles() {
+  chotaBubbleFrame = 0;
+  document.querySelectorAll(".clubhouse-bubble:not([hidden]), .chota-viewer-status:not([hidden])").forEach(bubble => {
+    const room = bubble.closest(".clubhouse-room, .chota-viewer-room-scene");
+    const sprite = room?.querySelector(".tigreton-sprite");
+    if (!sprite || !room.clientWidth) return;
+    const roomBox = room.getBoundingClientRect(), spriteBox = sprite.getBoundingClientRect();
+    const anchorX = spriteBox.left - roomBox.left + spriteBox.width * .52;
+    const anchorY = spriteBox.top - roomBox.top + spriteBox.height * .16;
+    const width = bubble.offsetWidth, height = bubble.offsetHeight;
+    const left = Math.max(8, Math.min(room.clientWidth - width - 8, anchorX - width * .6));
+    bubble.style.left = `${left}px`;
+    bubble.style.top = `${Math.max(8, anchorY - height - 14)}px`;
+    bubble.style.setProperty("--chota-tail-x", `${Math.max(8, Math.min(width - 26, anchorX - left - 9))}px`);
+  });
+}
+function queueChotaBubblePosition() {
+  if (!chotaBubbleFrame) chotaBubbleFrame = requestAnimationFrame(positionChotaBubbles);
+}
+window.addEventListener("resize", queueChotaBubblePosition, {passive:true});
 function showChotaCommentLoading(bubble) {
   bubble.setAttribute("aria-busy", "true");
   bubble.innerHTML = '<span class="chota-loading-label">El Chota está pensando</span><span class="chota-loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>';
   bubble.hidden = false;
+  queueChotaBubblePosition();
 }
 function showChotaCommentResult(bubble, comment) {
   const text = document.createElement("span");
@@ -3050,6 +3095,7 @@ function showChotaCommentResult(bubble, comment) {
   text.textContent = comment;
   bubble.replaceChildren(text);
   bubble.setAttribute("aria-busy", "false");
+  queueChotaBubblePosition();
 }
 function openChotaViewer(trigger) {
   if (isChotaSleeping()) return;
@@ -3136,7 +3182,7 @@ function openChotaViewer(trigger) {
 }
 // A tap shows an agenda comment; releasing a held mascot opens its separate scene.
 function showChotaAgendaComment(trigger) {
-  if (isChotaSleeping()) return;
+  if (isChotaSleeping()) { tigretonMotion?.reactSleeping(); return; }
   const next = chotaRoomContext();
   const bubble = trigger.closest(".clubhouse-room, .club-event-with-tigreton")?.querySelector(".tigreton-bubble");
   if (!next || !bubble) return;
@@ -3192,7 +3238,7 @@ document.addEventListener("pointerdown", event => {
   if (!event.isPrimary) { cancelChotaPress(true); return; }
   const target = event.target.closest("[data-chota-open]");
   if (!target || event.button !== 0) return;
-  if (isChotaSleeping()) { cancelChotaPress(true); return; }
+  if (isChotaSleeping()) { cancelChotaPress(true); chotaClickSuppression = null; return; }
   cancelChotaPress(true);
   chotaClickSuppression = null;
   chotaPress = {target, x: event.clientX, y: event.clientY, pointerId: event.pointerId, started: event.timeStamp, armed: false, holdTimer: 0};
@@ -3359,10 +3405,11 @@ function renderClubhouse(upcoming) {
 function syncChotaSleepControls() {
   const sleeping = isChotaSleeping();
   document.querySelectorAll("[data-chota-open], [data-chota-expand], [data-chota-action]").forEach(button => {
-    button.disabled = sleeping;
-    button.setAttribute("aria-disabled", String(sleeping));
+    const sleepTouch = button.matches("[data-chota-open]");
+    button.disabled = sleeping && !sleepTouch;
+    button.setAttribute("aria-disabled", String(sleeping && !sleepTouch));
     if (button.matches("[data-chota-open]")) {
-      button.setAttribute("aria-label", sleeping ? "El Chota está durmiendo hasta las 06:00" : "Mostrar comentario de El Chota sobre el próximo plan");
+      button.setAttribute("aria-label", sleeping ? "Tocar suavemente a El Chota dormido; descansa hasta las 06:00" : "Mostrar comentario de El Chota sobre el próximo plan");
       if (sleeping) { delete button.dataset.commentRequest; button.setAttribute("aria-expanded", "false"); }
     }
     if (button.matches("[data-chota-expand]")) button.hidden = sleeping;

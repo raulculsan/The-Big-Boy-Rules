@@ -3,7 +3,9 @@
 .chota-room-prop { position:absolute; line-height:0; transform-origin:50% 90%; }
 .chota-room-prop img { display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none; }
 .chota-room-football { left:20%; top:79%; width:7%; }
-.chota-room-skateboard { left:82.7%; top:56%; width:10.5%; transform:rotate(14deg); transform-origin:25% 94%; }
+.chota-room-skateboard { left:82.1%; top:61%; width:10.5%; transform:rotate(14deg); transform-origin:25% 94%; }
+.chota-room-skateboard::before { content:""; position:absolute; z-index:-1; left:9%; bottom:0; width:57%; height:7%; border-radius:50%; background:#1b0d0be6; filter:blur(1.2px); transform:rotate(-14deg) scaleX(1.25); }
+.chota-room-skateboard img { filter:drop-shadow(-1px 1px 1px #1f100db3); }
 .chota-room-robot-vacuum { left:45%; top:84%; width:10%; animation:chota-vacuum-clean 28s linear infinite; animation-play-state:paused; }
 .chota-props-moving .chota-room-robot-vacuum { animation-play-state:running; }
 .chota-vacuum-body { position:relative; z-index:1; -webkit-mask:url("icons/clubhouse/props/vacuum-body-mask.svg") 0 0 / 100% 100%; mask:url("icons/clubhouse/props/vacuum-body-mask.svg") 0 0 / 100% 100%; }
