@@ -10,8 +10,9 @@ numbered = re.compile(r"(?: \d+)+(?=\.[^.]+$)")
 text_extensions = {".html", ".js", ".css", ".json", ".webmanifest", ".svg", ".xml", ".md"}
 # Capacitor's delivered tree is authoritative. A checked-in xcfilelist can lag
 # behind a newly added banner, silently producing a successful but incomplete
-# build. The build phase declares this directory as an input so discovery also
-# works with Xcode's script sandbox enabled.
+# build. After adding resources, regenerate both xcfilelists with
+# writeIOSAssetManifest: Xcode's script sandbox requires each discovered file
+# to be declared even when the public directory is also an input.
 files = sorted(path for path in source.rglob("*") if path.is_file())
 references = "\n".join(
     path.read_text(encoding="utf-8") for path in files
