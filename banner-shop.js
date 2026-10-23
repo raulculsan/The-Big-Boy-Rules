@@ -29,6 +29,41 @@
     try { localStorage.setItem(memberBannerCacheKey(owner), JSON.stringify({savedAt:Date.now(), banners})); memberBannerCacheSignature = signature; } catch {}
   }
   const visibleMemberTiles = new Set(), observedMemberTiles = new Set();
+  const bannerVideos = new Set(), visibleBannerVideos = new WeakSet();
+  const bannerMotionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+  let bannerVideoObserver;
+  function updateBannerVideo(video) {
+    if (!video.isConnected) {
+      bannerVideoObserver?.unobserve(video); bannerVideos.delete(video);
+      video.pause(); video.removeAttribute('src'); video.load();
+      return;
+    }
+    if (document.hidden || bannerMotionPreference.matches || !visibleBannerVideos.has(video)) {video.pause(); return;}
+    if (!video.getAttribute('src')) video.src = video.dataset.bannerSrc;
+    void video.play().catch(() => {}); // The poster remains visible if playback is unavailable.
+  }
+  function registerBannerVideos(root = document) {
+    bannerVideos.forEach(updateBannerVideo);
+    root.querySelectorAll('video[data-banner-src]').forEach(video => {
+      if (bannerVideos.has(video)) return;
+      bannerVideos.add(video); video.muted = true;
+      video.addEventListener('loadeddata', () => video.classList.add('is-ready'), {once:true});
+      video.addEventListener('error', () => {
+        if (!video.isConnected || !video.getAttribute('src') || video.dataset.remoteTried) return;
+        video.dataset.remoteTried = 'true'; video.src = video.dataset.bannerRemote;
+        if (visibleBannerVideos.has(video) && !document.hidden && !bannerMotionPreference.matches) void video.play().catch(() => {});
+      });
+      if ('IntersectionObserver' in globalThis) {
+        bannerVideoObserver ||= new IntersectionObserver(entries => entries.forEach(entry => {
+          if (entry.isIntersecting) visibleBannerVideos.add(entry.target); else visibleBannerVideos.delete(entry.target);
+          updateBannerVideo(entry.target);
+        }), {threshold:0.01});
+        bannerVideoObserver.observe(video);
+      } else {visibleBannerVideos.add(video); updateBannerVideo(video);}
+    });
+  }
+  document.addEventListener('visibilitychange', () => bannerVideos.forEach(updateBannerVideo));
+  bannerMotionPreference.addEventListener('change', () => bannerVideos.forEach(updateBannerVideo));
   let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
   let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0, shopResetTimer;
   const dailyBanners = () => Array.isArray(state?.daily_banner_ids)
@@ -472,6 +507,11 @@
     return `<div class="banner-art banner-alberto-galicia ${extra}" role="img" aria-label="${escape(banner.name || 'Alberto Velasco con sus cabras en Galicia')}"><img class="banner-galicia-fallback" src="icons/banners/${compact ? 'alberto-galicia-member-v1.png' : 'posters/alberto-galicia-v1.webp'}" width="${sceneWidth}" height="724" alt="" decoding="async" aria-hidden="true"><svg class="banner-galicia-scene" viewBox="0 0 ${sceneWidth} 724" preserveAspectRatio="${sceneFit}" aria-hidden="true" focusable="false"><defs><clipPath id="${id}-alberto"><rect width="545" height="724"/></clipPath><clipPath id="${id}-head"><polygon points="${head}"/></clipPath><clipPath id="${id}-torso"><rect y="155" width="545" height="395"/></clipPath><clipPath id="${id}-legs"><rect y="535" width="545" height="189"/></clipPath><mask id="${id}-body" maskUnits="userSpaceOnUse" x="0" y="0" width="545" height="724"><rect width="545" height="724" fill="white"/><polygon points="${head}" fill="black"/></mask><radialGradient id="${id}-cloud-fade"><stop offset="45%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><radialGradient id="${id}-foliage-fade"><stop offset="50%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><radialGradient id="${id}-expression-fade"><stop offset="65%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><mask id="${id}-expression" maskUnits="userSpaceOnUse" x="357" y="62" width="126" height="152"><ellipse cx="420" cy="138" rx="63" ry="76" fill="url(#${id}-expression-fade)"/></mask>${cloudDefs}${foliageDefs}${goatDefs}</defs>${background}${clouds}${foliageArt(true)}${birds}<g class="banner-galicia-alberto" clip-path="url(#${id}-alberto)"><g clip-path="url(#${id}-legs)">${figure}</g><g class="banner-galicia-torso"><g clip-path="url(#${id}-torso)" mask="url(#${id}-body)">${figure}</g></g><g class="banner-galicia-head"><g clip-path="url(#${id}-head)">${figure}${expression}</g></g></g>${goatArt}${foliageArt(false)}<g class="banner-galicia-grass">${grass}</g><g class="banner-galicia-breeze"><path d="M730 473 Q820 441 917 460"/><path d="M1460 269 Q1530 245 1616 256"/></g></svg></div>`;
   }
   function artwork(banner, extra = '') {
+    if (banner?.art_key === 'fufi-supervuelo-v1') {
+      const base = 'icons/banners/fufi-supervuelo-v1/';
+      const remote = 'https://nfvggpgeypkkqceivkaq.supabase.co/storage/v1/object/public/group-media/banners/fufi-supervuelo-v1.mp4';
+      return `<div class="banner-art banner-fufi-flight ${extra}" role="img" aria-label="${escape(banner.name || 'Fufi volando entre nubes')}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}fufi-supervuelo-v1.mp4" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
+    }
     // Only known artwork keys become styles; future Krita exports are added here.
     const panorama = {
       'madrid-medianoche-v1': 'icons/banners/madrid-medianoche-v1.jpg',
@@ -528,6 +568,7 @@
       node.querySelector('[data-banner-shop]')?.setAttribute('aria-label', `Abrir tienda de banners. ${coins()}`);
       node.querySelector('[data-wallet]')?.setAttribute('aria-label', `Saldo: ${coins()}`);
     }
+    registerBannerVideos(node);
   }
   function memberBanner(userId) {
     if (userId && userId === options?.session() && state) {
@@ -536,6 +577,7 @@
     return memberBanners.get(userId) || null;
   }
   function memberPoster(banner, priority = false) {
+    if (banner?.art_key === 'fufi-supervuelo-v1') return `<div class="banner-art banner-fufi-flight member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/fufi-supervuelo-v1/poster.jpg" width="1440" height="480" alt="" loading="${priority ? 'eager' : 'lazy'}" decoding="async"></div>`;
     const image = {'alberto-galicia-anime-v1':'posters/alberto-galicia-v1.webp', 'miguel-basket-bano-v1':'posters/miguel-basket-v1.webp', 'miguel-moto-anime-v1':'posters/miguel-moto-v1.webp', 'madrid-medianoche-v1':'madrid-medianoche-v1.jpg', 'costa-atlantica-v1':'costa-atlantica-v1.jpg'}[banner?.art_key];
     if (image) return `<div class="banner-art member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/${image}" width="2172" height="724" alt="" loading="${priority ? 'eager' : 'lazy'}" fetchpriority="${priority ? 'high' : 'auto'}" decoding="async" style="width:100%;height:100%;object-fit:contain"></div>`;
     return artwork(null, 'member-banner-art');
@@ -561,6 +603,7 @@
     }
     // Offscreen tiles retain one poster, releasing SVG masks and compositor layers.
     // Visible tiles keep the complete 2172 × 724 composition and original aspect.
+    registerBannerVideos(surface);
   }
   globalThis.ClubMotion?.media.addEventListener('change', () => paintMembers());
   function paintMembers() {
@@ -656,6 +699,7 @@
     el('profileBannerStatus').textContent = failure || (busy ? 'Aplicando banner…' : loading ? 'Cargando tus banners…' : !online() ? 'Conéctate para elegir tu banner.' : notice || (state && !(state.banners || []).some(banner => banner.owned) ? 'Todavía no tienes banners comprados.' : ''));
     el('profileBannerRetry').hidden = !failure && (loading || !!state);
     el('profileBannerRetry').disabled = busy || loading || !online();
+    registerBannerVideos(list);
   }
   function openEditor(own) {
     el('profileBannerSettings').hidden = !own;
@@ -716,7 +760,7 @@
       const signature = JSON.stringify(state ? dailyBanners() : null);
       if (container.dataset.signature !== signature) {
         container.dataset.signature = signature;
-        container.innerHTML = state ? (dailyBanners().map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1'].includes(banner.art_key) ? 'BANNER ANIMADO' : 'BANNER DE PERFIL'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? '✓ Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Tu tienda está a un paso</strong><p>Conéctate para cargar los diseños del club.</p></div>';
+        container.innerHTML = state ? (dailyBanners().map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1', 'fufi-supervuelo-v1'].includes(banner.art_key) ? 'BANNER ANIMADO' : 'BANNER DE PERFIL'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? '✓ Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Tu tienda está a un paso</strong><p>Conéctate para cargar los diseños del club.</p></div>';
       }
       container.querySelectorAll('[data-banner-action]').forEach(button => {
         const banner = state?.banners?.find(item => item.id === button.dataset.bannerId);
@@ -740,6 +784,7 @@
     document.querySelectorAll('[data-shop-voucher-count]').forEach(node => {node.textContent = state ? state.vouchers?.length || 0 : '—';});
     if (el('bannerUnequip')) el('bannerUnequip').disabled = busy || loading || !state?.equipped_banner_id || !online();
     renderInventory();
+    registerBannerVideos();
   }
   function renderInventory() {
     const inventory = el('ownedCardInventory');

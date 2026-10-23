@@ -104,6 +104,11 @@ const excluded = new Set([
   // in source control, rather than packaging duplicate high-resolution scenes.
   resolve(root, 'icons/banners/alberto-galicia-anime-preview-v1.png'),
   resolve(root, 'icons/banners/miguel-basket-bano-v1.png'),
+  // Fufi runs from the small MP4/JPEG pair; retain review exports only as sources.
+  ...await Promise.all(['fufi-supervuelo-v1.gif', 'poster.png', 'preview.html'].map(async name => {
+    const path = resolve(root, 'icons/banners/fufi-supervuelo-v1', name);
+    return await stat(path).then(() => path, () => null);
+  })).then(paths => paths.filter(Boolean)),
   ...await findUnreferencedNumberedCopies([resolve(root, "icons"), resolve(root, "vendor")], references),
   ...await findSupersededCardArtwork(root, references)
 ]);

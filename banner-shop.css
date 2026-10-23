@@ -25,6 +25,12 @@
 .club-member-banner .member-banner-art{width:100%;height:100%;border-radius:0;pointer-events:none}
 .club-member-banner .banner-neutral{background:radial-gradient(ellipse at 90% 10%,#d9b66722,transparent 65%),linear-gradient(135deg,#252a34,#171c22)}
 .club-member-banner .banner-art>span{position:absolute;right:14px;bottom:8px;font-size:42px;letter-spacing:-4px;color:#d9b66744;text-shadow:none}
+.banner-fufi-flight{width:100%;height:auto;aspect-ratio:3/1;background:#1286e9;contain:paint}
+.banner-fufi-flight>img,.banner-fufi-flight>video{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.banner-fufi-flight>video{opacity:0}
+.banner-fufi-flight>video.is-ready{opacity:1}
+.profile-banner-hero:has(.banner-fufi-flight){height:auto;aspect-ratio:3/1}
+@media(prefers-reduced-motion:reduce){.banner-fufi-flight>video{display:none}}
 .banner-miguel-moto{background:#344b65;contain:paint;--road-horizon:72%;--road-center:58%}
 .banner-moto-city{position:absolute;inset:0;background:url("icons/banners/miguel-moto-city-v1.webp") center center/cover no-repeat;transform-origin:var(--road-center) var(--road-horizon);pointer-events:none}
 .banner-moto-far{animation:banner-moto-horizon 14s ease-in-out infinite alternate;will-change:transform}
