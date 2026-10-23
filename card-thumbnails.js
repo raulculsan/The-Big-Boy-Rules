@@ -46,6 +46,7 @@ globalThis.CardThumbnails = Object.freeze({
   "icons/cards/jose-enrique-fernandez-cruz-comun-86-v4.jpg": "icons/cards/thumbnails/jose-enrique-fernandez-cruz-comun-86-v4.jpg",
   "icons/cards/jose-enrique-fernandez-cruz-full-art-93-v3.jpg": "icons/cards/thumbnails/jose-enrique-fernandez-cruz-full-art-93-v3.jpg",
   "icons/cards/jose-enrique-fernandez-cruz-halloween-97-v1.png": "icons/cards/thumbnails/jose-enrique-fernandez-cruz-halloween-97-v1.jpg",
+  "icons/cards/jose-enrique-fernandez-cruz-vice-city-98-v2.png": "icons/cards/thumbnails/jose-enrique-fernandez-cruz-vice-city-98-v2.jpg",
   "icons/cards/josefa-valcarcel-epica-v1.jpg": "icons/cards/thumbnails/josefa-valcarcel-epica-v1.jpg",
   "icons/cards/juan-carlos-vega-quevedo-comun-78-v1.jpg": "icons/cards/thumbnails/juan-carlos-vega-quevedo-comun-78-v1.jpg",
   "icons/cards/juan-carlos-vega-quevedo-retro-87-v1.jpg": "icons/cards/thumbnails/juan-carlos-vega-quevedo-retro-87-v1.jpg",

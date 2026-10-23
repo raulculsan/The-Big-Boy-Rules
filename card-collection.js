@@ -2,6 +2,13 @@
 (() => {
   const catalog = [
     Object.freeze({
+      id: 'jose-enrique-fernandez-cruz-vice-city', collection: 'los-nuestros-01',
+      kind: 'Miembro', name: 'JOSE ENRIQUE FERNANDEZ CRUZ', edition: 'Vice City', rarity: 'vice_city', score: 98,
+      front: 'icons/cards/jose-enrique-fernandez-cruz-vice-city-98-v2.png',
+      back: 'icons/cards/reverso-vice-city-unificado-v1.png',
+      width: 948, height: 1660
+    }),
+    Object.freeze({
       id: 'jose-enrique-fernandez-cruz-halloween', collection: 'los-nuestros-01',
       kind: 'Miembro', name: 'JOSE ENRIQUE FERNANDEZ CRUZ', edition: 'Halloween', rarity: 'halloween', score: 97,
       front: 'icons/cards/jose-enrique-fernandez-cruz-halloween-97-v1.png',
