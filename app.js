@@ -7471,9 +7471,10 @@ globalThis.ChotaGames?.initialize({
     if (error) throw error;
     return data;
   },
-  submitScore: async (_game, score, sessionId) => {
-    const {data, error} = await db.rpc('submit_chota_game_score', {game_session_id: sessionId, submitted_score: score});
+  submitScore: async (_game, score, sessionId, completed) => {
+    const {data, error} = await db.rpc('submit_chota_game_score', {game_session_id: sessionId, submitted_score: score, completed_round: completed === true});
     if (error) throw error;
+    if (data?.reward_status === 'awarded') void globalThis.DailyPacks?.refresh(true);
     return data;
   },
   leaderboard: async game => {
