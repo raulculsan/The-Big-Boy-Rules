@@ -9,7 +9,8 @@
   let collections = [{id:'los-nuestros-01',name:'Los nuestros · Colección 01'}], selectedCollection = 'los-nuestros-01';
   let query = '', kindFilter = '', rarityFilter = '', ownershipFilter = '', allSlots = [];
   let savedAt = 0, isolatedOffline = false;
-  let inventory = null, loading = false, failure = '', page = 0, slots = [], refresh, navigate, opener, returnSection = 'sobres', renderedSlots = '';
+  const slotsPerPage = 5;
+  let inventory = null, loading = false, failure = '', page = 0, slots = [], pages = [], refresh, navigate, opener, returnSection = 'sobres', renderedSlots = '';
   const dialog = document.createElement('section');
   dialog.id = 'album'; dialog.className = 'page-section card-album-page'; dialog.hidden = true; dialog.setAttribute('aria-labelledby','cardAlbumTitle');
   dialog.innerHTML = `<div class="card-album"><header class="card-album-header"><div><span class="eyebrow"><span data-album-collection-name>LOS NUESTROS · COLECCIÓN 01</span></span><h2 id="cardAlbumTitle" tabindex="-1">Mi álbum</h2></div><button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span data-duplicates-count>0</span></button><button type="button" class="packs-back" data-album-close aria-label="Volver de álbum">←</button></header><p id="cardAlbumSummary" class="card-album-summary"></p><div id="cardAlbumStatus" role="status" aria-live="polite"><span data-album-status-message></span><button type="button" data-album-retry hidden>Reintentar</button></div><section class="collection-season-strip" data-collection-seasons></section><div class="card-album-tools"><label class="album-collection-select"><span>Colección</span><select data-album-collection aria-label="Colección"></select></label><label class="album-card-search"><span aria-hidden="true">⌕</span><input type="search" data-album-search placeholder="Buscar carta" aria-label="Buscar carta por nombre" autocomplete="off"></label><details class="album-filter-panel"><summary>Filtros<span data-album-filter-count></span></summary><div class="album-filter-fields"><label>Rareza<select data-album-filter="rarity"><option value="">Todas</option>${rarities.map(r => `<option value="${r.key}">${r.label}</option>`).join('')}</select></label><label>Tipo<select data-album-filter="kind"><option value="">Todos</option><option value="Miembro">Miembros</option><option value="Personaje">Personajes</option><option value="Ubicación">Ubicaciones</option><option value="Objeto">Objetos</option></select></label><label>Estado<select data-album-filter="ownership"><option value="">Todas las cartas</option><option value="missing">Me faltan</option><option value="owned">Conseguidas</option></select></label><button type="button" data-album-clear>Limpiar filtros</button></div></details></div><nav class="card-album-tabs" aria-label="Rarezas del álbum">${rarities.map(r => `<button type="button" data-album-rarity="${r.key}">${r.label}</button>`).join('')}</nav><div class="card-album-page-viewport"><section id="cardAlbumLeaf" class="card-album-leaf" aria-labelledby="cardAlbumPageTitle"><h3 id="cardAlbumPageTitle"></h3><div id="cardAlbumSlots" class="card-album-slots"></div></section></div><nav class="card-album-page-controls" aria-label="Páginas del álbum"><div class="card-album-compass-heading"><span>PÁGINAS</span><span id="cardAlbumPageCount" class="card-album-page-count" role="status" aria-live="polite"></span></div><div class="card-album-compass"><span class="card-album-compass-needle" aria-hidden="true"></span><div id="cardAlbumPageCompass" class="card-album-compass-track" aria-label="Seleccionar página"></div></div></nav></div>`;
@@ -37,6 +38,17 @@
     const filtering = query || kindFilter || rarityFilter || ownershipFilter;
     const normalizedQuery = normalize(query), normalizedKind = normalize(kindFilter);
     slots = filtering ? allSlots.filter(slot => slot.design && (!query || normalize(slot.design.name).includes(normalizedQuery)) && (!kindFilter || normalize(slot.design.kind) === normalizedKind) && (!rarityFilter || slot.rarity.key === rarityFilter) && (!ownershipFilter || (ownershipFilter === 'owned' ? owned.get(slot.design.id) > 0 : !(owned.get(slot.design.id) > 0)))) : allSlots;
+    // Every rarity starts a fresh leaf, including when filters leave only a
+    // few cards. Slot numbers and collection totals stay independent of pages.
+    pages = [];
+    for (const slot of slots) {
+      let leaf = pages[pages.length - 1];
+      if (!leaf || leaf.length === slotsPerPage || leaf[0].rarity.key !== slot.rarity.key) {
+        leaf = [];
+        pages.push(leaf);
+      }
+      leaf.push(slot);
+    }
     const selector = dialog.querySelector('[data-album-collection]');
     const options = collections.map(c => `<option value="${escape(c.id)}">${escape(c.name)}</option>`).join('');
     if (selector.innerHTML !== options) selector.innerHTML = options;
@@ -65,9 +77,9 @@
     if (!isOpen() && !prepare) return;
     if (turning) {pendingRender = true; return;}
     const owned = new Map((inventory || []).map(item => [item.card_id, Number(item.quantity)]));
-    const totalPages = Math.max(1,Math.ceil(slots.length / 5));
+    const totalPages = Math.max(1,pages.length);
     page = Math.min(page, Math.max(0,totalPages - 1));
-    const visible = slots.slice(page * 5, page * 5 + 5), rarity = visible[0]?.rarity;
+    const visible = pages[page] || [], rarity = visible[0]?.rarity;
     document.getElementById('cardAlbumSummary').textContent = inventory ? `${slots.filter(slot => slot.design && owned.get(slot.design.id) > 0).length} cartas conseguidas · ${slots.length} huecos` : `${slots.length} huecos · colección pendiente de sincronización`;
     const status = document.getElementById('cardAlbumStatus');
     // Refreshing a populated album must not insert a new row and move the page.
@@ -94,7 +106,7 @@
     // Small list thumbnails decode to ~0.9 MiB. Warm only two sequentially
     // and cancel when navigation changes; originals decode only in the viewer.
     const generation = ++warmGeneration;
-    const neighbors = slots.slice((page + 1) * 5,(page + 2) * 5)
+    const neighbors = (pages[page + 1] || [])
       .filter(slot => slot.design && owned.get(slot.design.id) && !warmedImages.has(globalThis.CardCollection.thumbnail(slot.design)))
       .slice(0,2);
     void (async () => {
@@ -208,7 +220,7 @@
     sheet.append(face,back,shade); return sheet;
   }
   async function turn(destination) {
-    const target = Math.max(0,Math.min(Math.ceil(slots.length / 5) - 1,destination));
+    const target = Math.max(0,Math.min(pages.length - 1,destination));
     if (turning) {if (isOpen()) compassQueued = target; return;}
     if (target === page || !isOpen()) return;
     stopTurn();
@@ -367,7 +379,7 @@
     if (event.target.closest('[data-album-close]')) close();
     if (event.target.closest('[data-album-retry]')) void refresh?.();
     const tab = event.target.closest('[data-album-rarity]');
-    if (tab && !tab.disabled) turn(Math.floor(slots.findIndex(slot => slot.rarity.key === tab.dataset.albumRarity) / 5));
+    if (tab && !tab.disabled) turn(pages.findIndex(leaf => leaf[0]?.rarity.key === tab.dataset.albumRarity));
     if (event.target.closest('[data-album-clear]')) {query = kindFilter = rarityFilter = ownershipFilter = ''; dialog.querySelector('[data-album-search]').value = ''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value = ''); changeFilters();}
     const card = event.target.closest('[data-album-card]');
     if (card) {
