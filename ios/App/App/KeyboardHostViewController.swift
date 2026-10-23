@@ -58,6 +58,7 @@ final class ClubBridgeViewController: CAPBridgeViewController {
 
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
+        bridge?.registerPluginInstance(ClubPlanWidgetPlugin())
         bridge?.registerPluginInstance(ClubSpotifyPlugin())
         bridge?.registerPluginInstance(ClubGalleryPlugin())
         bridge?.registerPluginInstance(ClubPushPlugin())

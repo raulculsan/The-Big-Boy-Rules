@@ -4,4 +4,5 @@
     <string name="title_activity_main">The Big Boy Rules</string>
     <string name="package_name">com.raulculsan.thebigboyrules</string>
     <string name="custom_url_scheme">bigboyrules</string>
+    <string name="club_widget_description">El Chota y la cuenta atrás del próximo plan del club</string>
 </resources>

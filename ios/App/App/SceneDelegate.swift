@@ -17,8 +17,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.makeKeyAndVisible()
 
         let spotifyCallback = connectionOptions.urlContexts.contains { ClubSpotifyPlugin.handleURL($0.url) }
+        let planCallback = connectionOptions.urlContexts.contains { ClubPlanWidgetPlugin.handle($0.url) }
         let accountCallback = connectionOptions.urlContexts.contains { ClubDeepLinkPlugin.handle($0.url) }
-        if !spotifyCallback && !accountCallback {
+        if !spotifyCallback && !accountCallback && !planCallback {
             SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
         }
     }
@@ -32,7 +33,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        let remaining = Set(URLContexts.filter { !ClubSpotifyPlugin.handleURL($0.url) && !ClubDeepLinkPlugin.handle($0.url) })
+        let remaining = Set(URLContexts.filter { !ClubSpotifyPlugin.handleURL($0.url) && !ClubDeepLinkPlugin.handle($0.url) && !ClubPlanWidgetPlugin.handle($0.url) })
         if !remaining.isEmpty { SceneDelegateProxy.shared.scene(scene, openURLContexts: remaining) }
     }
 

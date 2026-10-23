@@ -2785,7 +2785,7 @@ function calendarEventMarkup(event, compact = false) {
   const birthday = event.eventType === "birthday";
   return `<article class="calendar-agenda-event ${birthday ? "birthday" : ""} ${compact ? "compact" : ""}">
     <time class="calendar-event-date" datetime="${escapeHtml(event.startsAt)}"><strong>${date.getDate()}</strong><span>${date.toLocaleDateString("es-ES", {month: "short"})}</span></time>
-    <div class="calendar-event-copy"><span class="calendar-event-type">${birthday ? "Cumpleaños · Todo el día" : conversationTimeFormatter.format(date)}</span><h4>${escapeHtml(event.title)}</h4>${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}${!compact && event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}${!compact && !birthday && event.endsAt ? `<p>Hasta ${new Date(event.endsAt).toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"})}</p>` : ""}${canEditCalendarEvent(event) ? `<button type="button" class="calendar-edit-event" data-edit-calendar-event="${escapeHtml(event.id)}">Editar</button>` : ""}${!compact ? globalThis.GroupInteractions?.attendanceMarkup(event, activeCalendarDay) || "" : ""}</div>
+    <div class="calendar-event-copy"><span class="calendar-event-type">${birthday ? "Cumpleaños · Todo el día" : conversationTimeFormatter.format(date)}</span><h4>${escapeHtml(event.title)}</h4>${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}${!compact && event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}${!compact && !birthday && event.endsAt ? `<p>Hasta ${new Date(event.endsAt).toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"})}</p>` : ""}${canEditCalendarEvent(event) ? `<button type="button" class="calendar-edit-event" data-edit-calendar-event="${escapeHtml(event.id)}">Editar</button>` : ""}${!compact ? `<button type="button" class="club-live-event-link" data-club-live-event="${escapeHtml(event.id)}" data-occurrence="${escapeHtml(activeCalendarDay)}">Plan en directo</button>${globalThis.GroupInteractions?.attendanceMarkup(event, activeCalendarDay) || ""}` : ""}</div>
   </article>`;
 }
 
@@ -3378,6 +3378,7 @@ function renderClubhouse(upcoming) {
   const signature = JSON.stringify([homeEventsReady, birthday, next?.event.id, next?.event.title, next?.event.description, next?.event.eventType, days, date, schedule]);
   if (content.dataset.roomSignature === signature && content.firstElementChild) {
     globalThis.ChotaShop?.mountRoom(content.firstElementChild);
+    globalThis.ChotaGames?.mount(content.querySelector("#chotaArcadeEntry"));
     syncClubhouseDaylight();
     syncChotaSleepControls();
     return;
@@ -3394,11 +3395,12 @@ function renderClubhouse(upcoming) {
     <div class="clubhouse-memory"><span class="clubhouse-memory-label">Recuerdos del club</span><svg viewBox="0 0 40 32" aria-hidden="true"><path d="M4 8h8l3-5h10l3 5h8v21H4z"/><circle cx="20" cy="18" r="7"/></svg><strong>Aún no hay recuerdos compartidos</strong><span>Este sitio será para vuestra próxima foto.</span></div>
     <div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small><button type="button" class="chota-expand" data-chota-expand aria-label="Ver a El Chota en pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 21h5v-5m0 5-7-7M16 3h5v5m0-5-7 7M8 21H3v-5m0 5 7-7"/></svg></button></div>
     <div class="tigreton-bubble clubhouse-bubble" hidden role="status" aria-live="polite" aria-atomic="true"></div>
-  </div>`;
+  </div><div class="clubhouse-experiences">${next ? `<button type="button" class="clubhouse-live-link" data-club-live-event="${escapeHtml(next.event.id)}">Abrir plan en directo</button>` : ""}<div id="chotaArcadeEntry"></div></div>`;
   const room = content.firstElementChild;
   clubhouseObserver = new IntersectionObserver(entries => room.classList.toggle("is-in-view", entries[0].isIntersecting), {threshold: .15});
   clubhouseObserver.observe(room);
   globalThis.ChotaShop?.mountRoom(room);
+  globalThis.ChotaGames?.mount(content.querySelector("#chotaArcadeEntry"));
   syncClubhouseDaylight();
   syncChotaSleepControls();
 }
@@ -3449,6 +3451,11 @@ function renderUpcomingEvents() {
   const context = chotaRoomContext();
   tigretonRenderedKey = tigretonContextKey(context.event, context.date);
   renderClubhouse(upcoming);
+  globalThis.PlanWidget?.sync(upcoming[0]?.event && {
+    id: String(upcoming[0].event.id), title: upcoming[0].event.title,
+    startAt: upcoming[0].date.toISOString(), endAt: upcoming[0].event.endsAt || null,
+    location: upcoming[0].event.location || ""
+  });
   const viewer = document.getElementById("chotaViewer");
   if (viewer?.open && viewer.dataset.contextKey !== tigretonRenderedKey) viewer.close();
   mountTigretonMotion(previousPlanKey !== tigretonRenderedKey, context.event, context.date);
@@ -3494,6 +3501,7 @@ function openCalendarDay(dateValue) {
       ${event.location ? `<p>⌖ ${escapeHtml(event.location)}</p>` : ""}
       ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
       ${canEditCalendarEvent(event) ? `<button class="secondary-button" type="button" data-edit-calendar-event="${event.id}">Editar</button>` : ""}
+      <button class="club-live-event-link" type="button" data-club-live-event="${escapeHtml(event.id)}" data-occurrence="${escapeHtml(dateValue)}">Plan en directo</button>
       ${globalThis.GroupInteractions?.attendanceMarkup(event, dateValue) || ""}
     </article>`).join("") : `<div class="empty-state compact"><strong>No hay nada programado</strong><span>Este día no tiene eventos ni cumpleaños.</span></div>`;
   void globalThis.GroupInteractions?.hydrateAttendance(document.getElementById("calendarDayDetailList"));
@@ -3836,6 +3844,9 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ClubOnboarding?.reset();
     globalThis.BannerShop?.reset();
     globalThis.ChotaShop?.reset();
+    globalThis.ChotaGames?.reset();
+    globalThis.ClubLive?.reset();
+    globalThis.PlanWidget?.clear();
     globalThis.AdminGrants?.reset();
     globalThis.GroupInteractions?.reset();
     globalThis.PendingActions?.reset();
@@ -3924,6 +3935,9 @@ function showLogin() {
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
   globalThis.ChotaShop?.reset();
+  globalThis.ChotaGames?.reset();
+  globalThis.ClubLive?.reset();
+  globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
   globalThis.PendingActions?.reset();
@@ -3957,6 +3971,9 @@ async function logoutCurrentUser() {
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
   globalThis.ChotaShop?.reset();
+  globalThis.ChotaGames?.reset();
+  globalThis.ClubLive?.reset();
+  globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
   globalThis.PendingActions?.reset();
@@ -7438,6 +7455,44 @@ globalThis.ChotaShop?.initialize({
   session: () => backendReady && currentAuthUser?.id,
   rpc: (name, args) => db.rpc(name, args),
   refreshWallet: () => globalThis.BannerShop?.refresh(),
+});
+
+globalThis.ChotaGames?.initialize({
+  session: () => backendReady && currentAuthUser?.id,
+  getOwnedItems: () => globalThis.ChotaShop?.refresh(),
+  openShop: () => {
+    document.querySelector('[data-banner-shop]')?.click();
+    document.getElementById('shopChotaTab')?.click();
+  },
+  startGame: async game => {
+    const {data, error} = await db.rpc('start_chota_game', {target_game: game});
+    if (error) throw error;
+    return data;
+  },
+  submitScore: async (_game, score, sessionId) => {
+    const {data, error} = await db.rpc('submit_chota_game_score', {game_session_id: sessionId, submitted_score: score});
+    if (error) throw error;
+    return data;
+  },
+  leaderboard: async game => {
+    const {data, error} = await db.rpc('get_chota_game_leaderboard', {target_game: game});
+    if (error) throw error;
+    return data;
+  },
+});
+
+globalThis.ClubLive?.init({
+  db,
+  getUser: () => currentAuthUser,
+  getEvents: () => groupEvents,
+  getMember: getMemberByAuthId,
+  canManage: canManageSite,
+});
+
+globalThis.PlanWidget?.onOpen?.(eventId => {
+  const event = groupEvents.find(item => String(item.id) === String(eventId));
+  if (event) globalThis.ClubLive?.open(event);
+  else goTo('calendario');
 });
 
 globalThis.CollectionSocial?.configurePush(dispatchPush);

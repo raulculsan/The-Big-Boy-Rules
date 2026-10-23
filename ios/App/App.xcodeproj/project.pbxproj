@@ -22,8 +22,24 @@
 		BBAA16102026000100000001 /* ClubPushPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA16102026000100000002 /* ClubPushPlugin.swift */; };
 		BBAA18102026033600000001 /* ClubAuthPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA18102026033600000002 /* ClubAuthPlugin.swift */; };
 		BBAA18102026033600000003 /* ClubDeepLinkPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBAA18102026033600000004 /* ClubDeepLinkPlugin.swift */; };
+
+        C10723000000000000000001 = {isa = PBXBuildFile; fileRef = C10723000000000000000011; };
+        C10723000000000000000002 = {isa = PBXBuildFile; fileRef = C10723000000000000000012; };
+        C10723000000000000000003 = {isa = PBXBuildFile; fileRef = C10723000000000000000012; };
+        C10723000000000000000004 = {isa = PBXBuildFile; fileRef = C10723000000000000000013; };
+        C10723000000000000000005 = {isa = PBXBuildFile; fileRef = C10723000000000000000014; };
+        C10723000000000000000006 = {isa = PBXBuildFile; fileRef = C10723000000000000000015; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+        C10723000000000000000033 = {isa = PBXContainerItemProxy; containerPortal = 504EC2FC1FED79650016851F; proxyType = 1; remoteGlobalIDString = C10723000000000000000040; remoteInfo = ClubPlanWidget; };
+/* End PBXContainerItemProxy section */
+/* Begin PBXCopyFilesBuildPhase section */
+        C10723000000000000000034 = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (C10723000000000000000006, ); name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXCopyFilesBuildPhase section */
+/* Begin PBXTargetDependency section */
+        C10723000000000000000035 = {isa = PBXTargetDependency; target = C10723000000000000000040; targetProxy = C10723000000000000000033; };
+/* End PBXTargetDependency section */
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
@@ -42,6 +58,12 @@
 		BBAA16102026000100000002 /* ClubPushPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPushPlugin.swift; sourceTree = "<group>"; };
 		BBAA18102026033600000002 /* ClubAuthPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubAuthPlugin.swift; sourceTree = "<group>"; };
 		BBAA18102026033600000004 /* ClubDeepLinkPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubDeepLinkPlugin.swift; sourceTree = "<group>"; };
+
+        C10723000000000000000011 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPlanWidgetPlugin.swift; sourceTree = "<group>"; };
+        C10723000000000000000012 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPlanAttributes.swift; sourceTree = "<group>"; };
+        C10723000000000000000013 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPlanWidget.swift; sourceTree = "<group>"; };
+        C10723000000000000000014 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+        C10723000000000000000015 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClubPlanWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,13 +76,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+        C10723000000000000000032 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
-				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
+				C10723000000000000000020 /* ClubPlanWidget */,
+                958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
 			);
@@ -70,6 +94,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+                C10723000000000000000015 /* ClubPlanWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -77,7 +102,9 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
-				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
+				C10723000000000000000011,
+                C10723000000000000000012,
+                9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
 				BBAA02102026100800000002 /* ClubSpotifyPlugin.swift */,
 				BBAA02102026100900000002 /* ClubGalleryPlugin.swift */,
 				BBAA16102026000100000002 /* ClubPushPlugin.swift */,
@@ -96,6 +123,8 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+
+        C10723000000000000000020 = {isa = PBXGroup; children = (C10723000000000000000013, C10723000000000000000014, ); path = ClubPlanWidget; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -107,10 +136,11 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				BBAA02102026101300000001 /* Copy web assets without conflict copies */,
+                C10723000000000000000034,
 			);
 			buildRules = (
 			);
-			dependencies = (
+			dependencies = (C10723000000000000000035,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -121,6 +151,7 @@
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
 		};
+        C10723000000000000000040 = {isa = PBXNativeTarget; buildConfigurationList = C10723000000000000000050; buildPhases = (C10723000000000000000030, C10723000000000000000032, C10723000000000000000031, ); buildRules = (); dependencies = (); name = ClubPlanWidget; productName = ClubPlanWidget; productReference = C10723000000000000000015; productType = "com.apple.product-type.app-extension"; };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -156,6 +187,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+                C10723000000000000000040,
 			);
 		};
 /* End PBXProject section */
@@ -173,6 +205,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+        C10723000000000000000031 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (C10723000000000000000005, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -207,7 +240,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				C10723000000000000000001,
+                C10723000000000000000002,
+                504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 				BBAA02022026090200000001 /* KeyboardHostViewController.swift in Sources */,
 				BBAA02102026100800000001 /* ClubSpotifyPlugin.swift in Sources */,
@@ -218,6 +253,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+        C10723000000000000000030 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (C10723000000000000000003, C10723000000000000000004, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
@@ -364,6 +400,7 @@
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+                CODE_SIGN_ENTITLEMENTS = App/ClubWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RDHV5U4W9M;
@@ -391,6 +428,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+                CODE_SIGN_ENTITLEMENTS = App/ClubWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RDHV5U4W9M;
@@ -413,6 +451,8 @@
 			};
 			name = Release;
 		};
+        C10723000000000000000051 = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; CODE_SIGN_ENTITLEMENTS = ClubPlanWidget/ClubPlanWidget.entitlements; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = RDHV5U4W9M; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_FILE = ClubPlanWidget/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", ); MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.raulculsan.thebigboyrules.ClubPlanWidget; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+        C10723000000000000000052 = {isa = XCBuildConfiguration; buildSettings = {APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; CODE_SIGN_ENTITLEMENTS = ClubPlanWidget/ClubPlanWidget.entitlements; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = RDHV5U4W9M; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_FILE = ClubPlanWidget/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", ); MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.raulculsan.thebigboyrules.ClubPlanWidget; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -434,6 +474,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+        C10723000000000000000050 = {isa = XCConfigurationList; buildConfigurations = (C10723000000000000000051, C10723000000000000000052, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
