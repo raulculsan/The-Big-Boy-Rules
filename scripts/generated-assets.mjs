@@ -17,11 +17,14 @@ async function filesIn(directory, recursive = true) {
   return files;
 }
 
-export async function readAssetReferences(directories, {rootFilesOnly} = {}) {
+export async function readAssetReferences(directories, {rootFilesOnly, deliveryOnly = false} = {}) {
   const references = [];
   for (const directory of directories) {
     for (const path of await filesIn(directory, directory !== rootFilesOnly)) {
       if (!numberedCopy.test(basename(path)) && textExtensions.has(extname(path))) {
+        // Authoring documents and embedded card SVG masters are not executable
+        // dependencies. Their filenames must not keep exported duplicates alive.
+        if (deliveryOnly && (extname(path) === ".md" || (extname(path) === ".svg" && /[/\\]icons[/\\]cards[/\\]/.test(path)))) continue;
         references.push(await readFile(path, "utf8"));
       }
     }
@@ -106,4 +109,20 @@ export async function writeIOSAssetManifest(directory) {
   }
   const outputs = [...directories, ...files.map(path => join("public", relative(directory, path)))];
   await writeFile(join(dirname(directory), "web-assets-output.xcfilelist"), outputs.map(path => `$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/${path}`).join("\n") + "\n");
+}
+
+// Card SVG masters embed the original bitmap and layout for editing. Runtime
+// cards use the published raster export; omit only masters with a real sibling
+// export and no reference from executable CSS/JS/HTML or dependency manifests.
+export async function findCardAuthoringMasters(directory, references) {
+  const masters = [];
+  for (const path of await filesIn(join(directory, "icons/cards"), false)) {
+    if (extname(path) !== ".svg" || references.includes(basename(path)) || references.includes(encodeURIComponent(basename(path)))) continue;
+    for (const extension of [".png", ".jpg", ".jpeg"]) {
+      try {
+        if ((await stat(path.slice(0, -4) + extension)).isFile()) { masters.push(path); break; }
+      } catch (error) { if (error.code !== "ENOENT") throw error; }
+    }
+  }
+  return masters;
 }

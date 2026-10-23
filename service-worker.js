@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v384";
+const CACHE_NAME = "big-boy-rules-v385";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -49,10 +49,10 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20260903-130",
   "./admin-console.js?v=20261022-chota-shop-378",
   "./admin-console.css?v=20261021-compact-364",
-  "./app.js?v=20261023-arcade-rewards-384",
+  "./app.js?v=20261023-performance-385",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
-  "./album.js?v=20261021-dynamic-cards-367",
+  "./album.js?v=20261023-performance-385",
   "./album.css?v=20261021-halloween-365",
   "./onboarding.js?v=20261016-improvements-319",
   "./onboarding.css?v=20261016-improvements-319",
@@ -274,6 +274,17 @@ const mediaPath = request => {
 };
 let shellUrls;
 let mediaWrite = Promise.resolve();
+// A stale illustration can be requested by several cards/views at once. Share
+// its refresh so each frame does not start another download and cache rewrite.
+const mediaRevalidations = new Map();
+function revalidatePublicMedia(request) {
+  const key = request.url;
+  if (mediaRevalidations.has(key)) return mediaRevalidations.get(key);
+  const pending = fetch(request).then(response => savePublicMedia(request, response))
+    .catch(() => {}).finally(() => mediaRevalidations.delete(key));
+  mediaRevalidations.set(key, pending);
+  return pending;
+}
 let mediaEntries = new Map();
 let mediaIndexReady = false;
 // Reconcile keys cheaply on writes, but read response metadata only for entries
@@ -409,7 +420,7 @@ self.addEventListener("fetch", event => {
       const cache = await caches.open(MEDIA_CACHE_NAME), cached = await cache.match(request);
       const fresh = cached && Date.now() - Number(cached.headers.get("x-big-boy-cache-time")) < MEDIA_FRESH_MS;
       if (cached) {
-        if (!fresh) event.waitUntil(fetch(request).then(response => savePublicMedia(request,response)).catch(() => {}));
+        if (!fresh) event.waitUntil(revalidatePublicMedia(request));
         return cached;
       }
       const response = await fetch(request);

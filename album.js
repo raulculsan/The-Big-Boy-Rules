@@ -18,8 +18,16 @@
   const isOpen = () => dialog.classList.contains('active') && !dialog.hidden;
   function buildSlots() {
     const catalog = (globalThis.CardCollection?.catalog || []).filter(item => (item.collection || 'los-nuestros-01') === selectedCollection);
+    // Partition once: the former nested filters repeatedly normalized every
+    // design for all 24 rarity/kind combinations on each album opening.
+    const grouped = new Map();
+    for (const design of catalog) {
+      const key = `${rarityOf(design)}:${design.folder || 'miembros'}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(design);
+    }
     allSlots = rarities.flatMap(rarity => kinds.flatMap((kind, index) => {
-      const designs = catalog.filter(item => rarityOf(item) === rarity.key && (item.folder || 'miembros') === kind.key);
+      const designs = grouped.get(`${rarity.key}:${kind.key}`) || [];
       return Array.from({length:Math.max(rarity.capacity[index], designs.length)}, (_, position) => ({rarity,kind,design:designs[position] || null}));
     })).map((slot,index) => ({...slot,number:index + 1}));
     applyFilters();
@@ -27,7 +35,8 @@
   function applyFilters() {
     const owned = new Map((inventory || []).map(item => [item.card_id,Number(item.quantity)]));
     const filtering = query || kindFilter || rarityFilter || ownershipFilter;
-    slots = filtering ? allSlots.filter(slot => slot.design && (!query || normalize(slot.design.name).includes(normalize(query))) && (!kindFilter || normalize(slot.design.kind) === normalize(kindFilter)) && (!rarityFilter || slot.rarity.key === rarityFilter) && (!ownershipFilter || (ownershipFilter === 'owned' ? owned.get(slot.design.id) > 0 : !(owned.get(slot.design.id) > 0)))) : allSlots;
+    const normalizedQuery = normalize(query), normalizedKind = normalize(kindFilter);
+    slots = filtering ? allSlots.filter(slot => slot.design && (!query || normalize(slot.design.name).includes(normalizedQuery)) && (!kindFilter || normalize(slot.design.kind) === normalizedKind) && (!rarityFilter || slot.rarity.key === rarityFilter) && (!ownershipFilter || (ownershipFilter === 'owned' ? owned.get(slot.design.id) > 0 : !(owned.get(slot.design.id) > 0)))) : allSlots;
     const selector = dialog.querySelector('[data-album-collection]');
     const options = collections.map(c => `<option value="${escape(c.id)}">${escape(c.name)}</option>`).join('');
     if (selector.innerHTML !== options) selector.innerHTML = options;

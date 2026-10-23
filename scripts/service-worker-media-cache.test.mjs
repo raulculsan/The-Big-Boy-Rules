@@ -41,3 +41,11 @@ test('media cache uses exact version URLs, ignores API calls, and bounds entry c
   assert.ok(await media.match('./icons/cards/card-v121.png?v=2'));
   assert.equal(await h.dispatch('fetch',{method:'GET',url:origin+'api/private-messages',destination:''}),undefined);
 });
+test('concurrent stale artwork requests share one background refresh',async()=>{
+  const h=setup(),media=await h.caches.open('big-boy-rules-public-media-v1');
+  const url=origin+'icons/cards/shared-v1.jpg';
+  await media.put(url,new Response('cached art',{headers:{'x-big-boy-cache-time':'0','x-big-boy-cache-bytes':'10'}}));
+  const responses=await Promise.all(Array.from({length:12},()=>h.dispatch('fetch',{method:'GET',url,destination:'image'})));
+  assert.deepEqual(await Promise.all(responses.map(response=>response.text())),Array(12).fill('cached art'));
+  assert.equal(h.fetched.length,1,'one download/cache write for simultaneous views of the same stale artwork');
+});

@@ -1,7 +1,7 @@
 import {cp, mkdir, rm, stat} from "node:fs/promises";
 import {dirname, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
-import {findUnreferencedNumberedCopies, findSupersededCardArtwork, readAssetReferences, pruneGeneratedCopies} from "./generated-assets.mjs";
+import {findUnreferencedNumberedCopies, findSupersededCardArtwork, findCardAuthoringMasters, readAssetReferences, pruneGeneratedCopies} from "./generated-assets.mjs";
 
 import {optimizePackagedCards} from "./optimize-packaged-cards.mjs";
 
@@ -96,9 +96,10 @@ await rm(output, {recursive: true, force: true});
 await mkdir(output, {recursive: true});
 
 // Package published card versions and retain sources; dynamic animation assets stay intact.
-const references = await readAssetReferences([root, resolve(root, "icons"), resolve(root, "vendor")], {rootFilesOnly: root});
+const references = await readAssetReferences([root, resolve(root, "icons"), resolve(root, "vendor")], {rootFilesOnly: root, deliveryOnly: true});
 const excluded = new Set([
   ...runtimeOriginals.map(path => resolve(root, path)),
+  ...await findCardAuthoringMasters(root, references),
   // Static fallbacks use the small complete poster; retain authoring PNGs only
   // in source control, rather than packaging duplicate high-resolution scenes.
   resolve(root, 'icons/banners/alberto-galicia-anime-preview-v1.png'),

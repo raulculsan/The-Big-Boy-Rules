@@ -50,6 +50,7 @@ let members = baseMembers.map((item, index) => ({
 }));
 let membersById = new Map();
 let membersByAuthId = new Map();
+const memberSearchText = new WeakMap();
 
 function rebuildMemberIndexes() {
   membersById = new Map(members.map(member => [Number(member.id), member]));
@@ -361,7 +362,9 @@ function scheduleIdleStartup() {
     }
   };
   if ("requestIdleCallback" in window) window.requestIdleCallback(run, {timeout:idleStartupQueue[0].timeout});
-  else window.setTimeout(run, 300);
+  // WebKit versions without requestIdleCallback still yield a frame and obey
+  // the editing guard; a fixed 300 ms per queued task delayed the whole startup.
+  else window.setTimeout(run, 32);
 }
 
 function debounce(callback, delay = 90) {
@@ -1190,9 +1193,12 @@ async function openGroupConversation(channelId = activeChatChannelId) {
 // DOM nodes (decoded avatars, banner animations and scroll/focus state).
 const surfaceMarkup = new WeakMap();
 function updateSurfaceMarkup(node, markup) {
-  if (!node || surfaceMarkup.get(node) === markup) return false;
+  if (!node) return false;
+  const previous = surfaceMarkup.get(node);
+  if (previous?.markup === markup && previous.count === node.childNodes.length
+    && previous.first === node.firstChild && previous.last === node.lastChild) return false;
   node.innerHTML = markup;
-  surfaceMarkup.set(node, markup);
+  surfaceMarkup.set(node, {markup, count: node.childNodes.length, first: node.firstChild, last: node.lastChild});
   return true;
 }
 
@@ -1592,6 +1598,17 @@ function renderMessages() {
 
 
 // Reply state belongs to a user and conversation; switching threads never leaks a quote.
+// Histories are replaced on remote updates and appended on local sends. Index
+// once per snapshot instead of scanning every message for every quoted reply.
+const chatMessageIndexes = new WeakMap();
+function chatMessageIndex(items) {
+  let entry = chatMessageIndexes.get(items);
+  if (!entry || entry.length !== items.length) {
+    entry = {length: items.length, byId: new Map(items.map(item => [String(item.id), item]))};
+    chatMessageIndexes.set(items, entry);
+  }
+  return entry.byId;
+}
 const chatReplies = new Map();
 function chatReplyKey(kind) { return `${currentAuthUser?.id || ""}:${kind}:${kind === "private" ? activePrivateMemberId : activeChatChannelId}`; }
 function chatReplyDescription(kind, message) {
@@ -1600,7 +1617,7 @@ function chatReplyDescription(kind, message) {
 }
 function renderChatQuote(kind, message) {
   if (!message.replyToId) return "";
-  const source = (kind === "private" ? privateMessages : messages).find(item => String(item.id) === String(message.replyToId));
+  const source = chatMessageIndex(kind === "private" ? privateMessages : messages).get(String(message.replyToId));
   const quote = source ? chatReplyDescription(kind, source) : {name: "Respuesta", text: "Mensaje anterior no disponible"};
   return `<button type="button" class="chat-message-quote" data-chat-quote="${escapeHtml(String(message.replyToId))}" data-quote-kind="${kind}" aria-label="Ver mensaje al que responde"><strong>${escapeHtml(quote.name)}</strong><span>${escapeHtml(quote.text)}</span></button>`;
 }
@@ -1824,13 +1841,14 @@ function contextMessage(target) {
   if (!currentAuthUser || !target) return null;
   if (target.kind === "group") {
     if (!document.getElementById("chat").classList.contains("active") || !document.getElementById("chat").classList.contains("conversation-open")) return null;
-    return messages.find(item => String(item.id) === target.id && String(item.channelId || "") === String(activeChatChannelId || "")) || null;
+    const message = chatMessageIndex(messages).get(target.id);
+    return message && String(message.channelId || "") === String(activeChatChannelId || "") ? message : null;
   }
   const peer = getMember(activePrivateMemberId);
   if (!peer || !document.getElementById("privados").classList.contains("active") || !document.getElementById("privados").classList.contains("conversation-open")) return null;
-  return privateMessages.find(item => String(item.id) === target.id &&
-    ((item.senderId === currentAuthUser.id && item.recipientId === peer.authId) ||
-    (item.senderId === peer.authId && item.recipientId === currentAuthUser.id))) || null;
+  const message = chatMessageIndex(privateMessages).get(target.id);
+  return message && ((message.senderId === currentAuthUser.id && message.recipientId === peer.authId) ||
+    (message.senderId === peer.authId && message.recipientId === currentAuthUser.id)) ? message : null;
 }
 // One lifecycle for both long-press menus, including interrupted/repeated holds.
 const chatMenuMotion = new WeakMap();
@@ -2094,6 +2112,8 @@ const notificationDateFormatter = new Intl.DateTimeFormat("es-ES", {day: "numeri
 
 const conversationDayFormatter = new Intl.DateTimeFormat("es-ES", {day: "numeric", month: "long", year: "numeric"});
 const messageDateFormatter = new Intl.DateTimeFormat("es-ES", {day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"});
+const newsDateFormatter = new Intl.DateTimeFormat("es-ES", {day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"});
+const shortMonthFormatter = new Intl.DateTimeFormat("es-ES", {month: "short"});
 // Bounded by timestamps, so repeated renders reuse parsing and locale strings
 // without retaining whole messages or growing with a long-running session.
 const chatDateCache = new Map();
@@ -2732,7 +2752,7 @@ function renderPrivateConversation() {
   document.getElementById("privados").classList.toggle("conversation-open", Boolean(member));
   if (!member) {
     const emptyPrivateHeader = document.getElementById("privateChatHeader");
-    emptyPrivateHeader.innerHTML = `<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>`;
+    updateSurfaceMarkup(emptyPrivateHeader, `<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>`);
     container.innerHTML = `<div class="empty-state">Selecciona un miembro para comenzar una conversación privada.</div>`;
     input.disabled = true;
     submit.disabled = true;
@@ -2745,14 +2765,14 @@ function renderPrivateConversation() {
     return;
   }
   const privateHeader = document.getElementById("privateChatHeader");
-  privateHeader.innerHTML = `
+  updateSurfaceMarkup(privateHeader, `
     <div class="private-chat-person">
       <button class="chat-back-button private-conversation-back" type="button" data-private-back aria-label="Volver a conversaciones"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button>
       <button type="button" class="private-chat-avatar" data-profile="${escapeHtml(String(member.id))}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
         ${getAvatar(member)}
       </button>
       <div><h3>${escapeHtml(member.name)}</h3><span class="chat-username">@${escapeHtml(member.username)}</span></div>
-    </div>`;
+    </div>`);
   globalThis.ChatThemes?.sync("private");
   const finishReading = preserveConversationReading(container, `private:${member.id}`);
   const items = privateMessages.filter(message =>
@@ -2784,8 +2804,8 @@ function calendarEventMarkup(event, compact = false) {
   const date = new Date(event.startsAt);
   const birthday = event.eventType === "birthday";
   return `<article class="calendar-agenda-event ${birthday ? "birthday" : ""} ${compact ? "compact" : ""}">
-    <time class="calendar-event-date" datetime="${escapeHtml(event.startsAt)}"><strong>${date.getDate()}</strong><span>${date.toLocaleDateString("es-ES", {month: "short"})}</span></time>
-    <div class="calendar-event-copy"><span class="calendar-event-type">${birthday ? "Cumpleaños · Todo el día" : conversationTimeFormatter.format(date)}</span><h4>${escapeHtml(event.title)}</h4>${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}${!compact && event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}${!compact && !birthday && event.endsAt ? `<p>Hasta ${new Date(event.endsAt).toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"})}</p>` : ""}${canEditCalendarEvent(event) ? `<button type="button" class="calendar-edit-event" data-edit-calendar-event="${escapeHtml(event.id)}">Editar</button>` : ""}${!compact ? `<button type="button" class="club-live-event-link" data-club-live-event="${escapeHtml(event.id)}" data-occurrence="${escapeHtml(activeCalendarDay)}">Plan en directo</button>${globalThis.GroupInteractions?.attendanceMarkup(event, activeCalendarDay) || ""}` : ""}</div>
+    <time class="calendar-event-date" datetime="${escapeHtml(event.startsAt)}"><strong>${date.getDate()}</strong><span>${shortMonthFormatter.format(date)}</span></time>
+    <div class="calendar-event-copy"><span class="calendar-event-type">${birthday ? "Cumpleaños · Todo el día" : conversationTimeFormatter.format(date)}</span><h4>${escapeHtml(event.title)}</h4>${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}${!compact && event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}${!compact && !birthday && event.endsAt ? `<p>Hasta ${conversationTimeFormatter.format(new Date(event.endsAt))}</p>` : ""}${canEditCalendarEvent(event) ? `<button type="button" class="calendar-edit-event" data-edit-calendar-event="${escapeHtml(event.id)}">Editar</button>` : ""}${!compact ? `<button type="button" class="club-live-event-link" data-club-live-event="${escapeHtml(event.id)}" data-occurrence="${escapeHtml(activeCalendarDay)}">Plan en directo</button>${globalThis.GroupInteractions?.attendanceMarkup(event, activeCalendarDay) || ""}` : ""}</div>
   </article>`;
 }
 
@@ -2808,6 +2828,15 @@ function renderCalendar() {
   renderUpcomingEvents();
   const year = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
+  const monthLabel = calendarDate.toLocaleDateString("es-ES", {month: "long"});
+  const eventsByDay = new Map();
+  for (const event of groupEvents) {
+    const date = new Date(event.startsAt);
+    if (date.getMonth() !== month || event.eventType !== "birthday" && date.getFullYear() !== year) continue;
+    const day = date.getDate();
+    if (!eventsByDay.has(day)) eventsByDay.set(day, []);
+    eventsByDay.get(day).push(event);
+  }
   document.getElementById("calendarMonthTitle").textContent = calendarDate.toLocaleDateString("es-ES", {month: "long", year: "numeric"});
   const ownBirthday = groupEvents.find(event => event.eventType === "birthday" && event.createdBy === currentAuthUser?.id);
   const birthdayButton = document.getElementById("addBirthdayButton");
@@ -2823,16 +2852,13 @@ function renderCalendar() {
   cells += Array.from({length: firstWeekday}, () => `<div class="calendar-day outside" aria-hidden="true"></div>`).join("");
   for (let day = 1; day <= days; day += 1) {
     const date = new Date(year, month, day);
-    const events = groupEvents.filter(event => eventOccursOn(event, date));
+    const events = eventsByDay.get(day) || [];
     const calendarKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    cells += `<button class="calendar-day ${dateKey(date) === todayKey ? "today" : ""} ${events.length ? "has-events" : ""}" type="button" data-calendar-date="${calendarKey}" ${dateKey(date) === todayKey ? 'aria-current="date"' : ""} aria-label="${day} de ${calendarDate.toLocaleDateString("es-ES", {month: "long"})}, ${events.length} eventos${events.length ? `: ${escapeHtml(events.map(event => event.title).join(", "))}` : ""}"><span class="calendar-day-number">${day}</span><span class="calendar-dots" aria-hidden="true">${events.slice(0, 3).map(event => `<i class="${event.eventType === "birthday" ? "birthday" : ""}"></i>`).join("")}</span></button>`;
+    cells += `<button class="calendar-day ${dateKey(date) === todayKey ? "today" : ""} ${events.length ? "has-events" : ""}" type="button" data-calendar-date="${calendarKey}" ${dateKey(date) === todayKey ? 'aria-current="date"' : ""} aria-label="${day} de ${monthLabel}, ${events.length} eventos${events.length ? `: ${escapeHtml(events.map(event => event.title).join(", "))}` : ""}"><span class="calendar-day-number">${day}</span><span class="calendar-dots" aria-hidden="true">${events.slice(0, 3).map(event => `<i class="${event.eventType === "birthday" ? "birthday" : ""}"></i>`).join("")}</span></button>`;
   }
   cells += Array.from({length: (7 - ((firstWeekday + days) % 7)) % 7}, () => `<div class="calendar-day outside" aria-hidden="true"></div>`).join("");
   document.getElementById("calendarGrid").innerHTML = cells;
-  const monthEvents = groupEvents.filter(event => {
-    const date = new Date(event.startsAt);
-    return date.getMonth() === month && (event.eventType === "birthday" || date.getFullYear() === year);
-  }).sort((a, b) => new Date(a.startsAt).getDate() - new Date(b.startsAt).getDate());
+  const monthEvents = [...eventsByDay.entries()].sort(([a], [b]) => a - b).flatMap(([, events]) => events);
   document.getElementById("calendarMonthCount").textContent = monthEvents.length;
   document.getElementById("calendarEventList").innerHTML = monthEvents.length ? monthEvents.map(event => calendarEventMarkup(event, true)).join("") : `<p class="calendar-month-empty">Todavía no hay fechas en la agenda.</p>`;
   renderCalendarSelectedDay();
@@ -3538,23 +3564,32 @@ function formatEventDate(value) {
   return new Date(value).toLocaleString("es-ES", {weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"});
 }
 
+function searchableMemberText(member) {
+  const text = `${member.name} ${member.username} ${member.nickname}`;
+  let entry = memberSearchText.get(member);
+  if (entry?.text !== text) {
+    entry = {text, normalized: normalizeUsername(text)};
+    memberSearchText.set(member, entry);
+  }
+  return entry.normalized;
+}
 function performSearch(query) {
   const term = normalizeUsername(query);
   document.getElementById("searchResults").hidden = !term;
   if (!term) {
-    document.getElementById("searchResults").innerHTML = "";
+    updateSurfaceMarkup(document.getElementById("searchResults"), "");
     return;
   }
   const results = members
-    .filter(member => !member.hidden && normalizeUsername(`${member.name} ${member.username} ${member.nickname}`).includes(term))
+    .filter(member => !member.hidden && searchableMemberText(member).includes(term))
     .slice(0, 20);
-  document.getElementById("searchResults").innerHTML = results.length ? results.map(member => {
+  updateSurfaceMarkup(document.getElementById("searchResults"), results.length ? results.map(member => {
     const detail = `@${member.username}${member.nickname ? ` · ${member.nickname}` : ""}`;
     return `<button type="button" class="search-result member-search-result" data-profile="${member.id}">
       ${getAvatar(member, "avatar small")}
       <span class="search-result-copy"><strong>${escapeHtml(member.name)}</strong><small>${escapeHtml(detail)}</small></span>
     </button>`;
-  }).join("") : `<div class="empty-state compact">No hay miembros para “${escapeHtml(query)}”.</div>`;
+  }).join("") : `<div class="empty-state compact">No hay miembros para “${escapeHtml(query)}”.</div>`);
 }
 
 const accountRequests = globalThis.ClubAccountRequests?.create({client: db, canManage: canManageSite, owner: () => currentAuthUser?.id});
@@ -6473,7 +6508,7 @@ function renderNews(items, feedTitle, refreshedAt = Date.now()) {
   globalThis.ClubFeedback?.set(grid, "ready", "");
   grid.removeAttribute("aria-busy");
   const categoryName = {deportes: "Deportes", espana: "España", mundo: "Mundo"}[activeNewsCategory] || "Actualidad";
-  grid.innerHTML = sortedItems.map((item, index) => {
+  updateSurfaceMarkup(grid, sortedItems.map((item, index) => {
     const source = item.source || "Medio de comunicación";
     const cleanTitle = item.title.endsWith(` - ${source}`) ? item.title.slice(0, -(source.length + 3)) : item.title;
     item.cleanTitle = cleanTitle;
@@ -6493,7 +6528,7 @@ function renderNews(items, feedTitle, refreshedAt = Date.now()) {
       ${summary && index < 3 && summary !== cleanTitle ? `<p class="news-summary">${escapeHtml(summary)}</p>` : ""}
       <div class="news-card-actions"><a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Leer noticia</a>${!isSuperAdmin() ? `<button class="media-share-button news-share-button" type="button" data-share-news="${index}" aria-label="Compartir: ${escapeHtml(cleanTitle)}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg></button>` : ""}</div></div>
     </article>`;
-  }).join("") || '<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Actualiza para consultar las últimas noticias.</span></div>';
+  }).join("") || '<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Actualiza para consultar las últimas noticias.</span></div>');
 }
 
 function newsTimestamp(value) {
@@ -6509,7 +6544,7 @@ function formatNewsDate(value) {
   const timestamp = newsTimestamp(value);
   if (!timestamp) return "Fecha no disponible";
   const date = new Date(timestamp);
-  return date.toLocaleString("es-ES", {day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"});
+  return newsDateFormatter.format(date);
 }
 
 function formatMessageDate(value) {
