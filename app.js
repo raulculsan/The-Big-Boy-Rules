@@ -3384,6 +3384,7 @@ function syncClubhouseDaylight(now = new Date()) {
   const {weights, moment} = clubhouseDaylight(now);
   document.querySelectorAll(".clubhouse-room, .chota-viewer-room-scene").forEach(room => {
     room.dataset.time = moment;
+    room.classList.toggle("is-sleeping", isChotaSleeping(now));
     for (const [name, weight] of Object.entries(weights)) room.style.setProperty(`--club-sky-${name}`, weight.toFixed(4));
   });
   const time = document.getElementById("clubhouseTime");
@@ -3447,7 +3448,7 @@ function syncChotaSleepControls() {
     }
     if (button.matches("[data-chota-expand]")) button.hidden = sleeping;
   });
-  document.querySelector("#clubhouseContent .clubhouse-room")?.classList.toggle("is-sleeping", sleeping);
+  document.querySelectorAll(".clubhouse-room, .chota-viewer-room-scene").forEach(room => room.classList.toggle("is-sleeping", sleeping));
   if (sleeping) {
     document.querySelectorAll(".clubhouse-bubble, .chota-viewer-status").forEach(bubble => { bubble.hidden = true; bubble.setAttribute("aria-busy", "false"); });
   }
