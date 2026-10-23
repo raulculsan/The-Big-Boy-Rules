@@ -24,6 +24,12 @@
 .clubhouse-room.is-sleeping :is(.clubhouse-plan, .clubhouse-memory, .clubhouse-bunting, .clubhouse-live-icon, #chotaArcadeEntry, .chota-room-props) { filter:brightness(.58) saturate(.45); }
 :is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping .tigreton-character { filter:brightness(.72) saturate(.7) drop-shadow(2px 4px 0 #0005); }
 
+/* Transparent seasonal objects share the room's original 1024px coordinates.
+   The agenda, memory photograph and mascot stay above this decorative layer. */
+.clubhouse-seasonal { position:absolute; inset:0; z-index:1; pointer-events:none; user-select:none; }
+.clubhouse-seasonal > img { display:block; width:100%; height:100%; object-fit:contain; }
+:is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping .clubhouse-seasonal { filter:brightness(.4) saturate(.4); }
+
 .clubhouse-plan { position: absolute; z-index: 2; left: 19%; top: 23%; width: 32%; height: 19%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; margin: 0; padding: 10px; border: 0; border-radius: 1px; background: #f1e0b5; color: #292621; text-align: left; font-family: inherit; transform: rotate(-2deg); cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .clubhouse-plan::before { content: ""; position: absolute; width: 8px; height: 8px; left: 48%; top: -3px; background: #bd6136; border: 2px solid #753a26; border-radius: 50%; }
 .clubhouse-note-label { font-size: clamp(9px, 1.7vw, 12px); line-height: 1.2; color: #645a42; }

@@ -3187,6 +3187,7 @@ function openChotaViewer(trigger) {
     <div class="chota-viewer-room-scene">
     <img class="chota-viewer-room-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="" aria-hidden="true" decoding="async">
     ${clubhouseSkyMarkup()}
+    ${clubhouseSeasonalMarkup()}
     <div class="tigreton-agenda chota-viewer-pet">
     <div class="chota-viewer-bubble-slot"><div class="tigreton-bubble chota-viewer-status" role="status" aria-live="polite" aria-atomic="true" hidden></div></div>
     <div class="chota-character-row"><button class="chota-viewer-touch" type="button" data-chota-action="nod" aria-label="Tocar a El Chota">${tigretonSpriteMarkup()}</button></div></div></div>
@@ -3358,6 +3359,25 @@ let clubhouseObserver = null;
 function clubhouseSkyMarkup() {
   return '<div class="clubhouse-sky" aria-hidden="true"><i class="clubhouse-sky-dawn"></i><i class="clubhouse-sky-day"></i><i class="clubhouse-sky-evening"></i><i class="clubhouse-sky-night"></i><span class="clubhouse-sky-stars"></span></div>';
 }
+function clubhouseSeasonalMarkup() {
+  return '<div class="clubhouse-seasonal" aria-hidden="true"></div>';
+}
+function clubhouseSeason(now = new Date()) {
+  // Whole months, using the same local clock as the room and the sleep schedule.
+  return ({1:"valentine",9:"halloween",11:"christmas"})[now.getMonth()] || "normal";
+}
+function syncClubhouseSeason(room, season) {
+  if (room.dataset.season === season) return;
+  const layer = room.querySelector(".clubhouse-seasonal");
+  if (!layer) return;
+  room.dataset.season = season;
+  if (season === "normal") { layer.replaceChildren(); return; }
+  const decoration = new Image(1024, 1024);
+  decoration.alt = "";
+  decoration.decoding = "async";
+  decoration.src = `icons/clubhouse/decor-${season}-v1.svg`;
+  layer.replaceChildren(decoration);
+}
 function clubhouseDaylight(now = new Date()) {
   // Seasonal daylight at the club's latitude, driven by the device's local clock.
   const year = now.getFullYear();
@@ -3382,8 +3402,10 @@ function clubhouseDaylight(now = new Date()) {
 }
 function syncClubhouseDaylight(now = new Date()) {
   const {weights, moment} = clubhouseDaylight(now);
+  const season = clubhouseSeason(now);
   document.querySelectorAll(".clubhouse-room, .chota-viewer-room-scene").forEach(room => {
     room.dataset.time = moment;
+    syncClubhouseSeason(room, season);
     room.classList.toggle("is-sleeping", isChotaSleeping(now));
     for (const [name, weight] of Object.entries(weights)) room.style.setProperty(`--club-sky-${name}`, weight.toFixed(4));
   });
@@ -3418,6 +3440,7 @@ function renderClubhouse(upcoming) {
   content.innerHTML = `<div class="clubhouse-room${birthday ? " is-birthday" : ""}" data-time="${moment}">
     <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="async" fetchpriority="low">
     ${clubhouseSkyMarkup()}
+    ${clubhouseSeasonalMarkup()}
     <div class="clubhouse-lamplight" aria-hidden="true"></div><div class="clubhouse-dust" aria-hidden="true"><i></i><i></i><i></i></div>
     ${birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ""}
     ${plan}
