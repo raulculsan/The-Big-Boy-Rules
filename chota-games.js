@@ -22,7 +22,7 @@
     if(!container)return;
     root=container;
     root.classList.add('chota-arcade-entry');
-    root.innerHTML='<button type="button" data-chota-arcade><img src="icons/clubhouse/props/football-v2.png" alt="" loading="lazy" draggable="false"><span><strong>Un rato con El Chota</strong><small>Pelota, skate y marcas personales</small></span><span class="chota-arcade-entry-action">Jugar</span></button>';
+    root.innerHTML='<button type="button" data-chota-arcade aria-label="Juegos de El Chota" title="Juegos de El Chota"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M8 6h12c3 0 4 3 5 9s-2 7-5 3l-2-2h-8l-2 2c-3 4-6 3-5-3S5 6 8 6Z"/><path d="M8 9v6m-3-3h6"/><circle cx="19" cy="10" r="1"/><circle cx="22" cy="13" r="1"/></svg></button>';
     root.querySelector('button').addEventListener('click',open);
   }
   function stop(){cancelAnimationFrame(frame);frame=0;round=null;}
@@ -64,7 +64,7 @@
     const stage=body().querySelector('.chota-arcade-stage'), canvas=stage.querySelector('canvas'),ctx=canvas.getContext('2d');
     if(!ctx){briefing(id);return;}
     const dpr=Math.min(devicePixelRatio||1,2);canvas.width=600*dpr;canvas.height=450*dpr;ctx.scale(dpr,dpr);ctx.imageSmoothingEnabled=false;
-    const r=round={id,token,actor:user(),score:0,time:0,last:0,ball:{x:300,y:160,vy:0,vx:20},jump:0,vy:0,x:300,y:300,obstacles:[],spawn:.5,cleared:0,drag:null,crumbs:Array.from({length:20},(_,i)=>({x:65+(i%5)*115+Math.random()*20,y:125+Math.floor(i/5)*75+Math.random()*20,active:true}))};
+    const r=round={id,token,actor:user(),score:0,time:0,last:0,ball:{x:300,y:160,vy:0,vx:20},jump:0,vy:0,skateAir:0,skateLanding:0,x:300,y:300,obstacles:[],spawn:.5,cleared:0,drag:null,crumbs:Array.from({length:20},(_,i)=>({x:65+(i%5)*115+Math.random()*20,y:125+Math.floor(i/5)*75+Math.random()*20,active:true}))};
     r.serverSession=config.startGame?Promise.resolve().then(()=>config.startGame(id)).catch(()=>null):Promise.resolve(null);
     r.art=new Image();r.art.src=`icons/clubhouse/props/${games[id].art}`;r.pet=new Image();r.pet.src='icons/mascot/chota-v2/chota-poses.webp';
     const point=e=>{const b=canvas.getBoundingClientRect();return{x:(e.clientX-b.left)/b.width*600,y:(e.clientY-b.top)/b.height*450};};
@@ -74,7 +74,7 @@
       if(e.type==='keydown'&&id==='robot-vacuum'){e.preventDefault();r.x=Math.max(38,Math.min(562,r.x+(e.key==='ArrowRight'?24:e.key==='ArrowLeft'?-24:0)));r.y=Math.max(110,Math.min(408,r.y+(e.key==='ArrowDown'?24:e.key==='ArrowUp'?-24:0)));return;}
       e.preventDefault();const p=e.type==='keydown'?{x:r.ball.x,y:r.ball.y}:point(e);
       if(id==='football'&&Math.hypot(p.x-r.ball.x,p.y-r.ball.y)<62){r.ball.vy=-330-Math.min(r.score*4,120);r.ball.vx=(r.ball.x-p.x)*4+(Math.random()-.5)*70;r.score++;}
-      else if(id==='skateboard'&&r.jump===0){r.vy=500;r.jump=1;}
+      else if(id==='skateboard'&&r.jump===0){r.vy=500;r.jump=1;r.skateAir=0;r.skateLanding=0;}
       else if(id==='robot-vacuum'){r.drag=e.pointerId;stage.setPointerCapture?.(e.pointerId);r.x=Math.max(38,Math.min(562,p.x));r.y=Math.max(110,Math.min(408,p.y));}
     }
     stage.addEventListener('pointerdown',act);stage.addEventListener('keydown',act);
@@ -96,7 +96,8 @@
   function update(r,dt){
     if(r.id==='football'){r.ball.vy+=470*dt;r.ball.y+=r.ball.vy*dt;r.ball.x+=r.ball.vx*dt;if(r.ball.x<30||r.ball.x>570){r.ball.x=Math.max(30,Math.min(570,r.ball.x));r.ball.vx*=-1;}}
     if(r.id==='skateboard'){
-      if(r.jump>0){r.vy-=1200*dt;r.jump=Math.max(0,r.jump+r.vy*dt);}
+      r.skateLanding=Math.max(0,r.skateLanding-dt);
+      if(r.jump>0){r.skateAir+=dt;r.vy-=1200*dt;r.jump=Math.max(0,r.jump+r.vy*dt);if(r.jump===0){r.skateLanding=.25;r.vy=0;}}
       r.spawn-=dt;if(r.spawn<=0){r.obstacles.push({x:660,passed:false});r.spawn=1.15+Math.random()*.6;}
       for(const o of r.obstacles){o.x-=(220+r.time*3)*dt;if(!o.passed&&o.x<110){o.passed=true;r.score++;}if(o.x<184&&o.x>112&&r.jump<43){finish(r);return;}}
       r.obstacles=r.obstacles.filter(o=>o.x>-50);
@@ -111,13 +112,59 @@
     const pet=(x,y,w,h)=>{if(r.pet.complete&&r.pet.naturalWidth)ctx.drawImage(r.pet,0,0,r.pet.naturalWidth/6,r.pet.naturalHeight/4,x,y,w,h);};
     if(r.id==='football'){pet(235,265,140,140);image(r.art,r.ball.x-31,r.ball.y-31,62,62);}
     if(r.id==='skateboard'){
-      ctx.fillStyle='#b87a38';ctx.fillRect(0,387,600,4);pet(98,255-r.jump,112,112);image(r.art,90,351-r.jump,120,62);
+      ctx.fillStyle='#b87a38';ctx.fillRect(0,387,600,4);
+      // Track marks move at obstacle speed, so the rider travels through the room.
+      ctx.fillStyle='#d2ab652a';const track=(r.time*240)%100;for(let x=-100;x<650;x+=100)ctx.fillRect(x-track,400,36,2);
+      drawSkater(ctx,r);
       for(const o of r.obstacles){ctx.fillStyle='#bb8648';ctx.fillRect(o.x,344,45,43);ctx.strokeStyle='#6c4828';ctx.lineWidth=4;ctx.strokeRect(o.x+3,347,39,37);ctx.beginPath();ctx.moveTo(o.x+5,349);ctx.lineTo(o.x+40,381);ctx.stroke();}
     }
     if(r.id==='robot-vacuum'){
       for(const c of r.crumbs)if(c.active){ctx.fillStyle='#e4bd6b';ctx.fillRect(c.x,c.y,6,5);ctx.fillRect(c.x+9,c.y+5,4,4);}
       image(r.art,r.x-48,r.y-32,96,64);
     }
+  }
+  function drawSkater(ctx,r){
+    const airborne=r.jump>0;
+    const approach=r.obstacles.some(o=>o.x>205&&o.x<310);
+    const landing=r.skateLanding>0?Math.sin(r.skateLanding/.25*Math.PI):0;
+    const pop=airborne?Math.max(0,1-r.skateAir/.16):0;
+    const tuck=airborne?Math.sin(Math.min(1,r.skateAir/.8)*Math.PI)*.38:0;
+    const crouch=Math.min(1,(approach&&!airborne?.32:0)+landing*.85+pop*.8+tuck);
+    const ride=airborne?0:Math.sin(r.time*13)*.8;
+    // One local coordinate system keeps the shoes, deck and body together.
+    const tilt=airborne?Math.max(-.2,Math.min(.16,-r.vy*.0004)):Math.sin(r.time*8)*.009;
+    ctx.save();ctx.fillStyle=`rgba(0,0,0,${.27-r.jump*.0012})`;ctx.beginPath();ctx.ellipse(153,390,57-r.jump*.13,6-r.jump*.018,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.save();ctx.translate(153,375-r.jump+ride);ctx.rotate(tilt);
+    // A side-on pixel deck gives both shoes a visible, level contact surface.
+    for(const x of [-36,36]){
+      ctx.fillStyle='#16151a';ctx.fillRect(x-4,1,8,5);ctx.fillStyle='#8e2020';ctx.beginPath();ctx.arc(x,5,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#f16945';ctx.lineWidth=2;ctx.stroke();
+      ctx.save();ctx.translate(x,5);ctx.rotate(r.time*22);ctx.strokeStyle='#f5bd92';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-3,0);ctx.lineTo(3,0);ctx.moveTo(0,-3);ctx.lineTo(0,3);ctx.stroke();ctx.restore();
+    }
+    ctx.fillStyle='#a86d34';ctx.beginPath();ctx.moveTo(-60,-12);ctx.lineTo(-48,-7);ctx.lineTo(48,-7);ctx.lineTo(60,-12);ctx.lineTo(57,-7);ctx.lineTo(46,-2);ctx.lineTo(-46,-2);ctx.lineTo(-57,-7);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#29282d';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-58,-12);ctx.lineTo(-46,-8);ctx.lineTo(46,-8);ctx.lineTo(58,-12);ctx.stroke();
+    const hipY=-51+crouch*15,lean=airborne?-5:Math.sin(r.time*3)*2;
+    // Articulated jeans bend at the knee; the original Jordan pixels stay on deck.
+    const leg=(hipX,kneeX,footX,colour)=>{
+      ctx.lineJoin='bevel';ctx.lineCap='butt';ctx.strokeStyle='#182336';ctx.lineWidth=22;ctx.beginPath();ctx.moveTo(hipX+lean,hipY-5);ctx.lineTo(kneeX,hipY+18-crouch*5);ctx.lineTo(footX,-15);ctx.stroke();
+      ctx.strokeStyle=colour;ctx.lineWidth=16;ctx.stroke();ctx.strokeStyle='#6390bb';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(hipX+lean-3,hipY);ctx.lineTo(kneeX-4,hipY+17-crouch*5);ctx.stroke();
+    };
+    leg(6,29+crouch*10,25,'#315b89');leg(-13,-27-crouch*12,-25,'#3f6d9e');
+    if(r.pet.complete&&r.pet.naturalWidth){
+      const fw=r.pet.naturalWidth/6,fh=r.pet.naturalHeight/4;
+      const cut=(col,x,y,w,h,dx,dy,dw,dh)=>ctx.drawImage(r.pet,col*fw+x/256*fw,2*fh+y/256*fh,w/256*fw,h/256*fh,dx,dy,dw,dh);
+      // Anticipation, balance in the air, and landing use distinct original poses.
+      // Never crossfade pixel faces: one solid sprite stays sharp in every frame.
+      ctx.save();ctx.translate(lean,hipY);ctx.rotate(airborne?-.07:Math.sin(r.time*4)*.015);
+      if(crouch>.5)cut(1,26,44,200,158,-66,-88,112,88);
+      else if(airborne)cut(2,26,18,200,170,-66,-95,112,95);
+      else cut(0,26,24,200,162,-66,-91,112,91);
+      ctx.restore();
+      // Shoe samples from the idle sprite retain the mascot's exact footwear.
+      ctx.drawImage(r.pet,82/256*fw,212/256*fh,54/256*fw,30/256*fh,-43,-23,34,18);
+      ctx.drawImage(r.pet,139/256*fw,212/256*fh,61/256*fw,30/256*fh,10,-23,38,18);
+    }
+    ctx.restore();
+    if(landing>.3){ctx.save();ctx.globalAlpha=landing*.35;ctx.strokeStyle='#dfb67d';ctx.lineWidth=2;for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(153+side*49,384);ctx.lineTo(153+side*(61+(1-landing)*17),380);ctx.stroke();}ctx.restore();}
   }
   async function finish(r){
     if(round!==r)return;
