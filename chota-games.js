@@ -45,11 +45,20 @@
     try{inventory=await owned();}catch{inventory=new Set();}
     if(token!==serial||actor!==user()||!dialog)return;
     const best=scores();
-    body().innerHTML=`<div class="chota-arcade-intro"><h2>¿Una partida?</h2><p>Los objetos de su habitación también se juegan.</p></div><div class="chota-arcade-games">${Object.entries(games).map(([id,g])=>`<button class="chota-arcade-game" type="button" data-game="${id}" ${inventory.has(id)?'':'data-locked="true"'}><img src="icons/clubhouse/props/${g.art}" alt="" draggable="false"><span><strong>${g.name}</strong><small>${inventory.has(id)?`Tu marca: ${Number(best[id])||0} · 30 s`:`Consigue ${g.item.toLowerCase()} en la tienda`}</small></span><b>${inventory.has(id)?'Jugar':'Tienda'}</b></button>`).join('')}</div><p class="chota-arcade-footnote">Completa una partida de cada juego para ganar 1 sobre al día por juego. Hasta 3 sobres diarios, sin gastar monedas.</p>`;
+    body().innerHTML=`<div class="chota-arcade-intro"><h2>¿Una partida?</h2><p>Los objetos de su habitación también se juegan.</p></div><section class="club-weekly-challenge" data-weekly-challenge aria-live="polite"><p>Cargando reto de la semana…</p></section><div class="chota-arcade-games">${Object.entries(games).map(([id,g])=>`<button class="chota-arcade-game" type="button" data-game="${id}" ${inventory.has(id)?'':'data-locked="true"'}><img src="icons/clubhouse/props/${g.art}" alt="" draggable="false"><span><strong>${g.name}</strong><small>${inventory.has(id)?`Tu marca: ${Number(best[id])||0} · 30 s`:`Consigue ${g.item.toLowerCase()} en la tienda`}</small></span><b>${inventory.has(id)?'Jugar':'Tienda'}</b></button>`).join('')}</div><p class="chota-arcade-footnote">Completa una partida de cada juego para ganar 1 sobre al día por juego. Hasta 3 sobres diarios, sin gastar monedas.</p>`;
+    void weeklyChallenge(body().querySelector('[data-weekly-challenge]'));
     body().querySelectorAll('[data-game]').forEach(button=>button.addEventListener('click',()=>{
       if(button.dataset.locked){if(config.openShop){close();config.openShop();}else{body().querySelector('.chota-arcade-footnote').textContent='Encontrarás sus objetos en Tienda → El Chota.';}return;}
       briefing(button.dataset.game);
     }));
+  }
+  async function weeklyChallenge(node){
+    if(!node||!config.rpc)return;const actor=user();
+    try{const {data,error}=await config.rpc('get_chota_weekly_challenge');if(error)throw error;if(!node.isConnected||actor!==user())return;
+      const game=games[data.game];
+      node.innerHTML=`<div class="club-weekly-heading"><span>RETO DE LA SEMANA</span><small>Hasta ${new Date(data.ends_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</small></div><h3>${esc(game?.name||'El reto del club')}</h3><p>Consigue ${Number(data.target)} puntos. Cuando ${Number(data.club_goal)} miembros lo consigan, cada participante que supere el reto recibe ${Number(data.club_reward_packs)} sobres.</p><div class="club-weekly-progress"><progress value="${Math.min(Number(data.participants)||0,Number(data.club_goal)||3)}" max="${Number(data.club_goal)||3}"></progress><span>${Number(data.participants)||0}/${Number(data.club_goal)||3} miembros · Tu marca: ${Number(data.my_best)||0}</span></div><ol class="club-weekly-ranking">${(data.leaderboard||[]).slice(0,10).map((r,i)=>`<li><span>${i+1}. ${esc(r.name||'Miembro')}</span><strong>${Number(r.score)||0}</strong></li>`).join('')||'<li>Aún no hay marcas esta semana.</li>'}</ol>${data.reward_claimed?'<p>Recompensa recibida</p>':data.club_complete&&Number(data.my_best)>=Number(data.target)?'<button type="button" data-weekly-claim>Recoger sobres</button>':'<p>Las partidas guardadas cuentan automáticamente para este reto.</p>'}`;
+      node.querySelector('[data-weekly-claim]')?.addEventListener('click',async e=>{e.target.disabled=true;try{const r=await config.rpc('claim_chota_weekly_reward');if(r.error)throw r.error;void globalThis.DailyPacks?.refresh(true);await weeklyChallenge(node);}catch{e.target.disabled=false;e.target.textContent='Reintentar recompensa';}});
+    }catch{if(node.isConnected)node.innerHTML='<p>El reto semanal no está disponible. Puedes seguir jugando y guardar tus marcas.</p>';}
   }
   const body=()=>dialog?.querySelector('[data-arcade-body]');
   function briefing(id){

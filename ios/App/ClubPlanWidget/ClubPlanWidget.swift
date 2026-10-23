@@ -9,6 +9,7 @@ struct PlanEntry: TimelineEntry {
     var title = "La sede te espera"
     var start: Date?
     var end: Date?
+    var packCount = 0
     var active: Bool { if let start, let end { return date >= start && date < end }; return false }
     var link: URL { var parts = URLComponents(string: "bigboyrules://plan")!; parts.queryItems = [URLQueryItem(name: "id", value: id)]; return parts.url! }
 }
@@ -19,17 +20,19 @@ struct PlanProvider: TimelineProvider {
         let entry = read()
         var entries = [entry]
         if let start = entry.start, start > entry.date {
-            var live = entry; live = PlanEntry(date: start, id: live.id, title: live.title, start: live.start, end: live.end); entries.append(live)
+            var live = entry; live = PlanEntry(date: start, id: live.id, title: live.title, start: live.start, end: live.end, packCount: live.packCount); entries.append(live)
         }
-        if let end = entry.end, end > entry.date { entries.append(PlanEntry(date: end)) }
+        if let end = entry.end, end > entry.date { entries.append(PlanEntry(date: end, packCount: entry.packCount)) }
         completion(Timeline(entries: entries, policy: .after(Date().addingTimeInterval(1800))))
     }
     private func read() -> PlanEntry {
         let now = Date()
-        guard let plan = UserDefaults(suiteName: "group.com.raulculsan.thebigboyrules")?.dictionary(forKey: "nextPlan"),
+        let defaults = UserDefaults(suiteName: "group.com.raulculsan.thebigboyrules")
+        let packs = max(0, defaults?.integer(forKey: "availablePacks") ?? 0)
+        guard let plan = defaults?.dictionary(forKey: "nextPlan"),
               let title = plan["title"] as? String, let start = plan["startAt"] as? Double,
-              let end = plan["endAt"] as? Double, end > now.timeIntervalSince1970 else { return PlanEntry(date: now) }
-        return PlanEntry(date: now, id: plan["id"] as? String ?? "", title: title, start: Date(timeIntervalSince1970: start), end: Date(timeIntervalSince1970: end))
+              let end = plan["endAt"] as? Double, end > now.timeIntervalSince1970 else { return PlanEntry(date: now, packCount: packs) }
+        return PlanEntry(date: now, id: plan["id"] as? String ?? "", title: title, start: Date(timeIntervalSince1970: start), end: Date(timeIntervalSince1970: end), packCount: packs)
     }
 }
 struct PlanWidgetView: View {
@@ -46,6 +49,8 @@ struct PlanWidgetView: View {
                     else { Text(start, style: .relative).font(.system(size: 13, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.7)) }
                     Text(start, format: .dateTime.day().month(.abbreviated).hour().minute()).font(.caption2).foregroundStyle(.white.opacity(0.55))
                 } else { Text("Abre la agenda para organizar el siguiente.").font(.caption).foregroundStyle(.white.opacity(0.65)) }
+                Label(entry.packCount == 1 ? "1 sobre disponible" : "\(entry.packCount) sobres disponibles", systemImage: "rectangle.stack.fill")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(accent).lineLimit(1).minimumScaleFactor(0.8)
             }
             if family != .systemSmall {
                 Image("Chota").resizable().interpolation(.none).scaledToFit().frame(width: 80, height: 110).accessibilityHidden(true)
@@ -61,7 +66,7 @@ struct ClubNextPlanWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: PlanProvider()) { PlanWidgetView(entry: $0) }
             .configurationDisplayName("El Chota y tu próximo plan")
-            .description("La cuenta atrás del próximo plan del club.")
+            .description("El próximo plan y tus sobres disponibles junto a El Chota.")
             .supportedFamilies([.systemSmall, .systemMedium])
     }
 }

@@ -34,6 +34,8 @@ public class ClubPlanWidgetProvider extends AppWidgetProvider {
             detail = countdown + " · " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, new Locale("es", "ES")).format(new Date(start));
         }
         view.setTextViewText(R.id.widget_detail, detail);
+        int packs = Math.max(0, data.getInt("packs", 0));
+        view.setTextViewText(R.id.widget_packs, packs == 1 ? "1 sobre disponible" : packs + " sobres disponibles");
         Uri link = new Uri.Builder().scheme("bigboyrules").authority("plan").appendQueryParameter("id", hasPlan ? data.getString("id", "") : "").build();
         Intent launch = new Intent(context, MainActivity.class).setAction(Intent.ACTION_VIEW).setData(link).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         view.setOnClickPendingIntent(R.id.widget_root, PendingIntent.getActivity(context, 718, launch, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));

@@ -64,6 +64,7 @@
       if (node) {node.textContent = count; node.setAttribute('aria-label', label); if (id === 'packsHomeBalance') node.style.fontSize = `${Math.min(9, 30 / Math.max(1, count.length))}px`;}
     }
     document.getElementById('packsTopButton')?.setAttribute('aria-label', `Abrir mis sobres de la colección Los nuestros. ${label}`);
+    globalThis.PlanWidget?.updatePacks?.(available);
   }
 
   let ui;
@@ -115,5 +116,5 @@
     if(data.activity_rewards?.[kind]===true&&Date.parse(data.next_reset_at)>Date.now())return;
     void ui.refresh(true);
   }
-  globalThis.DailyPacks=Object.freeze({createStore,presentation,initialize,updateBalance,activityCompleted,refresh:(...args)=>ui?.refresh(...args),reset:()=>ui?.reset()});
+  globalThis.DailyPacks=Object.freeze({createStore,presentation,initialize,updateBalance,activityCompleted,snapshot:()=>ui?.snapshot(),refresh:(...args)=>ui?.refresh(...args),reset:()=>ui?.reset()});
 })();

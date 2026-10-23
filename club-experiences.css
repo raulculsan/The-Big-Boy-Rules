@@ -12,3 +12,36 @@
 .calendar-day-detail-card .club-live-event-link { display:flex; width:max-content; }
 @media(max-width:640px) { .clubhouse-heading-actions { gap:8px; flex-wrap:wrap; } .clubhouse-heading-actions #clubhouseTime { font-size:10px; } .clubhouse-heading-actions [data-club-memory-map] { font-size:11px; } .clubhouse-room .clubhouse-live-icon { top:calc(43% - 44px); } }
 @media(prefers-reduced-motion:reduce) { .clubhouse-live-icon { transition:none; } }
+/* The room's photo is a physical part of its paper frame. */
+.clubhouse-memory:has(.clubhouse-memory-photo){padding:0;overflow:hidden}
+.clubhouse-memory-photo{display:flex;width:100%;height:100%;flex-direction:column;border:0;background:#ddc8ac;color:#3f3328;padding:0;cursor:pointer;font:inherit;touch-action:manipulation}
+.clubhouse-memory-photo img{width:100%;height:calc(100% - 19px);min-height:0;object-fit:cover;flex:1}
+.clubhouse-memory-photo span{display:block;width:100%;padding:3px;font-size:clamp(7px,1.15vw,10px);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.club-live-highlight{margin:16px 0;padding:12px 0 12px 16px;border-left:2px solid #bc9863;color:#ece1cf;white-space:pre-wrap;font-size:18px;line-height:1.5}
+.club-live-recap-attendees{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.club-live-recap-attendees span{font-size:12px;padding:5px 9px;border-radius:20px;background:#25272a;color:#ccc}
+.club-live-photos figure{min-width:0}
+.club-live-photos figure>button{font-size:12px;padding:8px 0;border-bottom:1px solid #78654b}
+.club-live-photos figure>button[aria-pressed=true]{color:#e6c58b}
+.club-live-photos figure form{display:flex;gap:6px;align-items:center;margin-top:7px}
+.club-live-photos figure form input{min-width:0;width:100%;font-size:12px}
+.club-live-photos figure form button{flex-shrink:0;font-size:11px}
+.club-weekly-challenge,.collection-season{border-top:1px solid #555045;border-bottom:1px solid #373632;padding:21px 0;margin:18px 0 24px;color:var(--text,#eee)}
+.club-weekly-heading,.collection-season-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.club-weekly-heading>span,.collection-season-top>span{font-size:10px;letter-spacing:.15em;font-weight:700;color:#c5a97b}
+.club-weekly-heading small,.collection-season-top small{color:#999;font-size:11px}
+.club-weekly-challenge h3,.collection-season h3{font-size:25px;line-height:1.12;font-weight:650;letter-spacing:-.035em;margin:14px 0 10px}
+.club-weekly-challenge p,.collection-season p{font-size:13px;line-height:1.6;color:#aaa;margin:8px 0 16px;max-width:65ch}
+.club-weekly-progress,.collection-season-meter{display:flex;align-items:center;gap:14px;margin:18px 0;font-size:12px;color:#ccc}
+.club-weekly-progress progress,.collection-season-meter progress{width:100%;height:4px;accent-color:#c9a76a;flex:1;min-width:60px;border:0;background:#343331}
+.club-weekly-progress span,.collection-season-meter strong{flex-shrink:0;font-size:11px;font-weight:500}
+.club-weekly-ranking{list-style:none;padding:0;margin:15px 0}
+.club-weekly-ranking li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #ffffff0e;font-size:13px}
+.club-weekly-challenge button,.collection-season button{border:1px solid #8d7758;border-radius:8px;background:#c9ad7c;color:#191815;font-weight:650;padding:11px 14px;cursor:pointer;touch-action:manipulation}
+.collection-season-strip:empty{display:none}
+.collection-season-bottom{display:flex;align-items:center;justify-content:space-between;gap:14px;color:#bdb39f;font-size:12px}
+.collection-season-unavailable{font-size:12px;color:#999}
+@media(max-width:540px){.collection-season h3{font-size:23px}.collection-season-bottom{align-items:flex-start;flex-direction:column}.club-weekly-progress{flex-wrap:wrap}.club-weekly-progress span{width:100%}.club-live-highlight{font-size:16px}}
+.club-weekly-progress progress::-webkit-progress-bar,.collection-season-meter progress::-webkit-progress-bar{background:#343331}
+.club-weekly-progress progress::-webkit-progress-value,.collection-season-meter progress::-webkit-progress-value{background:#c9a76a}
+.club-weekly-progress progress::-moz-progress-bar,.collection-season-meter progress::-moz-progress-bar{background:#c9a76a}

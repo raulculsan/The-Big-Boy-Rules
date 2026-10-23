@@ -38,13 +38,16 @@ final class ClubPlanWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
         guard let id = call.getString("id"), id.count <= 64,
               let title = call.getString("title"), !title.isEmpty,
               let startMS = call.getDouble("startAt"), let endMS = call.getDouble("endAt"),
-              startMS.isFinite, endMS.isFinite, endMS > startMS else {
+              startMS.isFinite, endMS.isFinite, (endMS > startMS || (id.isEmpty && startMS == 0 && endMS == 0)) else {
             call.reject("Plan no válido"); return
         }
+        let packCount = max(0, min(999999, call.getInt("packCount") ?? 0))
+        defaults?.set(packCount, forKey: "availablePacks")
         let start = Date(timeIntervalSince1970: startMS / 1000)
         let end = Date(timeIntervalSince1970: endMS / 1000)
         let safeTitle = String(title.prefix(100))
-        defaults?.set(["id": id, "title": safeTitle, "startAt": startMS / 1000, "endAt": endMS / 1000], forKey: "nextPlan")
+        if id.isEmpty { defaults?.removeObject(forKey: "nextPlan") }
+        else { defaults?.set(["id": id, "title": safeTitle, "startAt": startMS / 1000, "endAt": endMS / 1000], forKey: "nextPlan") }
         WidgetCenter.shared.reloadTimelines(ofKind: "ClubNextPlan")
         if #available(iOS 16.2, *) {
             Task { @MainActor in
@@ -70,6 +73,7 @@ final class ClubPlanWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func clear(_ call: CAPPluginCall) {
         defaults?.removeObject(forKey: "nextPlan")
+        defaults?.removeObject(forKey: "availablePacks")
         WidgetCenter.shared.reloadTimelines(ofKind: "ClubNextPlan")
         if #available(iOS 16.2, *) {
             Task { for activity in Activity<ClubPlanAttributes>.activities { await activity.end(nil, dismissalPolicy: .immediate) } }

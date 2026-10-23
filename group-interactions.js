@@ -152,7 +152,7 @@
     return `<article class="group-poll-card" data-poll-id="${escape(poll.id)}"><header><span class="group-poll-eyebrow"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 15V9m7 6V3m7 12v-5"/></svg>Encuesta</span><span class="group-poll-state">${closed?'Cerrada':writable?'Abierta':'Solo lectura'}</span></header><h3>${escape(poll.question)}</h3><div class="group-poll-options">${options.map(option=>{
       const count=votes.filter(vote=>vote.option_id===option.id).length, percentage=total?Math.round(count/total*100):0, selected=own===option.id;
       return `<button type="button" class="group-poll-option ${selected?'is-chosen':''}" data-poll-vote="${escape(option.id)}" aria-pressed="${selected}" ${closed||pending||!userId()||!writable?'disabled':''}><span class="group-poll-fill" style="--poll-share:${percentage}%" aria-hidden="true"></span><span class="group-poll-option-label"><i aria-hidden="true">${selected?'✓':''}</i>${escape(option.label)}</span><b>${percentage}<small>%</small></b><span class="sr-only"> · ${count} ${count===1?'voto':'votos'}</span></button>`;
-    }).join('')}</div><footer><span>${total} ${total===1?'voto':'votos'}${own?' · Has votado':''}</span>${!closed&&canClose?`<button type="button" data-poll-close ${pending?'disabled':''}>Cerrar encuesta</button>`:''}</footer></article>`;
+    }).join('')}</div><footer><span>${total} ${total===1?'voto':'votos'}${own?' · Has votado':''}</span>${config?.canCreatePlan?.()&&total?`<button type="button" data-poll-plan>Crear plan con el resultado</button>`:""}${!closed&&canClose?`<button type="button" data-poll-close ${pending?'disabled':''}>Cerrar encuesta</button>`:''}</footer></article>`;
   }
   function dismissPollViewer() {
     if (pollViewer?.open) pollViewer.close();
@@ -283,6 +283,13 @@
     if(target.hasAttribute('data-poll-open'))openPollViewer();
     else if(target.hasAttribute('data-poll-refresh'))void refreshPolls();
     else if(target.hasAttribute('data-poll-vote'))void vote(target.closest('[data-poll-id]').dataset.pollId,target.dataset.pollVote);
+    else if(target.hasAttribute('data-poll-plan')) {
+      const poll=pollMount.polls.find(p=>String(p.id)===target.closest('[data-poll-id]').dataset.pollId);
+      const options=[...(poll?.group_poll_options||[])];
+      const counts=options.map(option=>({option,count:(poll.group_poll_votes||[]).filter(v=>v.option_id===option.id).length})).sort((a,b)=>b.count-a.count);
+      const winners=counts.filter(row=>row.count===counts[0]?.count).map(row=>row.option.label);
+      dismissPollViewer();config.createPlan?.({title:poll.question,description:`Resultado de la encuesta: ${winners.join(' · ')}. Revisa fecha, hora y lugar antes de publicar.`,location:winners.length===1?winners[0]:''});
+    }
     else if(target.hasAttribute('data-poll-close'))void closePoll(target.closest('[data-poll-id]').dataset.pollId);
   });
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(pollMount?.node.isConnected)void refreshPolls();for(const state of attendance.values())state.fetchedAt=0;void hydrateAttendance();}});

@@ -219,6 +219,7 @@ let notificationPreferences = null, notificationPreferencesOwner = null, notific
 let newsNoticePending = false;
 let privateMessages = [];
 let groupEvents = [];
+let pendingWidgetEventId = null;
 let calendarChatAnnouncements = [];
 let channelAutomationMessages = [];
 let calendarChatSyncDay = "";
@@ -2023,7 +2024,7 @@ function showMessageMenu(bubble, x, y) {
   const own = (target.kind === "group" ? message.userId : message.senderId) === currentAuthUser.id;
   const canDelete = own || (target.kind === "group" && canManageSite());
   const menu = document.getElementById("messageContextMenu");
-  menu.innerHTML = `<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="reply">Responder</button><button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
+  menu.innerHTML = `<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="reply">Responder</button>${target.kind === "group" && canManageSite() && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="plan">Crear plan</button>' : ""}<button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
   messageMenuTarget = target; menu.hidden = false;
   positionChatMenu(menu, x, y);
   focusChatMenuSource(menu, bubble);
@@ -3405,6 +3406,7 @@ function renderClubhouse(upcoming) {
   if (content.dataset.roomSignature === signature && content.firstElementChild) {
     globalThis.ChotaShop?.mountRoom(content.firstElementChild);
     globalThis.ChotaGames?.mount(content.querySelector("#chotaArcadeEntry"));
+    globalThis.ClubLive?.mountRoom?.(content.querySelector(".clubhouse-memory"));
     syncClubhouseDaylight();
     syncChotaSleepControls();
     return;
@@ -3425,6 +3427,7 @@ function renderClubhouse(upcoming) {
     <div class="tigreton-bubble clubhouse-bubble" hidden role="status" aria-live="polite" aria-atomic="true"></div>
   </div>`;
   const room = content.firstElementChild;
+  globalThis.ClubLive?.mountRoom?.(content.querySelector(".clubhouse-memory"));
   clubhouseObserver = new IntersectionObserver(entries => room.classList.toggle("is-in-view", entries[0].isIntersecting), {threshold: .15});
   clubhouseObserver.observe(room);
   globalThis.ChotaShop?.mountRoom(room);
@@ -3473,16 +3476,22 @@ function refreshChotaSleepSchedule() {
   chotaSleepTimer = setTimeout(refreshChotaSleepSchedule, Math.max(100, boundary.getTime() - now.getTime()));
 }
 function renderUpcomingEvents() {
+  if (pendingWidgetEventId && homeEventsReady && currentAuthUser) {
+    const pendingId = pendingWidgetEventId; pendingWidgetEventId = null;
+    const pendingEvent = groupEvents.find(item => String(item.id) === pendingId);
+    if (pendingEvent) requestAnimationFrame(() => globalThis.GroupInteractions?.openPlan(pendingEvent));
+    else goTo("calendario");
+  }
   cancelChotaPress(true);
   const upcoming = ClubModel.upcomingEvents(groupEvents);
   const previousPlanKey = tigretonRenderedKey;
   const context = chotaRoomContext();
   tigretonRenderedKey = tigretonContextKey(context.event, context.date);
   renderClubhouse(upcoming);
-  globalThis.PlanWidget?.sync(upcoming[0]?.event && {
-    id: String(upcoming[0].event.id), title: upcoming[0].event.title,
-    startAt: upcoming[0].date.toISOString(), endAt: upcoming[0].event.endsAt || null,
-    location: upcoming[0].event.location || ""
+  globalThis.PlanWidget?.sync({
+    id: upcoming[0]?.event ? String(upcoming[0].event.id) : "", title: upcoming[0]?.event.title || "",
+    startAt: upcoming[0]?.date?.toISOString() || null, endAt: upcoming[0]?.event.endsAt || null,
+    location: upcoming[0]?.event.location || "", packCount: globalThis.DailyPacks?.snapshot()?.data?.available
   });
   const viewer = document.getElementById("chotaViewer");
   if (viewer?.open && viewer.dataset.contextKey !== tigretonRenderedKey) viewer.close();
@@ -3883,6 +3892,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ChotaShop?.reset();
     globalThis.ChotaGames?.reset();
     globalThis.ClubLive?.reset();
+    globalThis.ClubSeasons?.reset();
     globalThis.PlanWidget?.clear();
     globalThis.AdminGrants?.reset();
     globalThis.GroupInteractions?.reset();
@@ -3974,6 +3984,7 @@ function showLogin() {
   globalThis.ChotaShop?.reset();
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
+  globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
@@ -4010,6 +4021,7 @@ async function logoutCurrentUser() {
   globalThis.ChotaShop?.reset();
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
+  globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
@@ -5626,7 +5638,7 @@ function syncEventEditorViewport() {
   else if (bounds.top < top) scroller.scrollTop -= top - bounds.top;
 }
 
-function openEventEditor(eventId = null, requestedType = "event") {
+function openEventEditor(eventId = null, requestedType = "event", draft = null) {
   globalThis.ClubDrafts?.flush();
   const event = groupEvents.find(item => String(item.id) === String(eventId));
   const eventType = event?.eventType || requestedType;
@@ -5651,6 +5663,11 @@ function openEventEditor(eventId = null, requestedType = "event") {
   document.getElementById("eventFeedback").textContent = "";
   document.getElementById("deleteEventButton").hidden = !event || !canEditCalendarEvent(event);
   globalThis.ClubDrafts?.begin("eventForm", event ? `event:${event.id}` : `new:${eventType}`, {reopen:true});
+  if (draft && !event) {
+    document.getElementById("eventTitle").value = String(draft.title || "").slice(0, 160);
+    document.getElementById("eventDescription").value = String(draft.description || "").slice(0, 2000);
+    document.getElementById("eventLocation").value = String(draft.location || "").slice(0, 200);
+  }
   updateEventEditorType();
   const modal = document.getElementById("eventEditor");
   document.body.classList.add("event-editor-open");
@@ -6944,7 +6961,8 @@ document.getElementById("messageContextMenu").addEventListener("click", event =>
   const target = messageMenuTarget;
   if (!action || !contextMessage(target)) return;
   closeMessageMenu(event.detail === 0);
-  if (action === "reply") selectChatReply(target);
+  if (action === "plan") { const message = contextMessage(target); openEventEditor(null, "event", {title: (message.text || message.body || "").slice(0, 160), description: message.text || message.body || ""}); }
+  else if (action === "reply") selectChatReply(target);
   else if (action === "info") showMessageInfo({...target, restoreFocus: event.detail === 0});
   else if (action === "edit") (target.kind === "group" ? editGroupMessage : editPrivateMessage)(target.id);
   else if (action === "delete") (target.kind === "group" ? deleteGroupMessage : deletePrivateMessage)(target.id);
@@ -7471,6 +7489,8 @@ globalThis.GroupInteractions?.init({
   getChannelId: () => activeChatChannelId,
   canWriteChannel: channelId => !chatChannels.find(channel => String(channel.id) === String(channelId))?.readOnly || canManageSite(),
   getMember: getMemberByAuthId,
+  canCreatePlan: canManageSite,
+  createPlan: draft => openEventEditor(null, "event", draft),
 });
 
 globalThis.BannerShop?.initialize({
@@ -7501,6 +7521,7 @@ globalThis.ChotaGames?.initialize({
     document.querySelector('[data-banner-shop]')?.click();
     document.getElementById('shopChotaTab')?.click();
   },
+  rpc: (name, args) => db.rpc(name, args),
   startGame: async game => {
     const {data, error} = await db.rpc('start_chota_game', {target_game: game});
     if (error) throw error;
@@ -7527,9 +7548,12 @@ globalThis.ClubLive?.init({
   canManage: canManageSite,
 });
 
+globalThis.ClubSeasons?.initialize({db, session: () => currentAuthUser?.id, refreshPacks: () => globalThis.DailyPacks?.refresh(true), openAlbum: () => globalThis.CardAlbum?.open()});
+
 globalThis.PlanWidget?.onOpen?.(eventId => {
+  if (!homeEventsReady || !currentAuthUser) { pendingWidgetEventId = String(eventId); return; }
   const event = groupEvents.find(item => String(item.id) === String(eventId));
-  if (event) globalThis.ClubLive?.open(event);
+  if (event) globalThis.GroupInteractions?.openPlan(event);
   else goTo('calendario');
 });
 

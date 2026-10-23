@@ -4,6 +4,7 @@
     <TextView android:id="@+id/widget_eyebrow" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="EL CHOTA · PRÓXIMO PLAN" android:textColor="#F9AA43" android:textSize="10sp" android:textStyle="bold" android:letterSpacing="0.08" />
     <TextView android:id="@+id/widget_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="La sede te espera" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" android:maxLines="2" android:ellipsize="end" />
     <TextView android:id="@+id/widget_detail" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:textColor="#B9BEC5" android:textSize="12sp" android:maxLines="2" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_packs" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="0 sobres disponibles" android:textColor="#F9AA43" android:textSize="12sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" />
   </LinearLayout>
   <ImageView android:layout_width="75dp" android:layout_height="100dp" android:layout_marginStart="8dp" android:src="@drawable/chota_widget" android:scaleType="fitCenter" android:contentDescription="El Chota" />
 </LinearLayout>

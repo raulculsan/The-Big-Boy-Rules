@@ -25,12 +25,13 @@ public class ClubPlanWidgetPlugin extends Plugin {
     @PluginMethod public void sync(PluginCall call) {
         String id = call.getString("id", ""), title = call.getString("title", "");
         Double start = call.getDouble("startAt"), end = call.getDouble("endAt");
-        if (id.length() > 64 || title.isEmpty() || start == null || end == null || !Double.isFinite(start) || !Double.isFinite(end) || end <= start) {
+        if (id.length() > 64 || title.isEmpty() || start == null || end == null || !Double.isFinite(start) || !Double.isFinite(end) || (end <= start && !(id.isEmpty() && start == 0 && end == 0))) {
             call.reject("Plan no válido"); return;
         }
         getContext().getSharedPreferences(ClubPlanWidgetProvider.PREFS, 0).edit()
             .putString("id", id).putString("title", title.substring(0, Math.min(100, title.length())))
-            .putLong("start", start.longValue()).putLong("end", end.longValue()).apply();
+            .putLong("start", start.longValue()).putLong("end", end.longValue())
+            .putInt("packs", Math.max(0, Math.min(999999, call.getInt("packCount", 0)))).apply();
         ClubPlanWidgetProvider.refresh(getContext());
         call.resolve(new JSObject().put("available", true));
     }
