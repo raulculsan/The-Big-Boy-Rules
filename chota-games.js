@@ -2,10 +2,17 @@
 (() => {
   'use strict';
   const games = {
-    football: {name:'Toques en la sede',item:'Pelota',art:'football-v2.png',help:'Toca el balón para mantenerlo en el aire. El lado que toques cambia su dirección. Suma todos los toques que puedas en 30 segundos.'},
-    skateboard: {name:'Salta con El Chota',item:'Skate',art:'skateboard-v2.png',help:'Toca la pista para saltar las cajas. Cada caja superada suma un punto. Tienes 30 segundos.'},
-    'robot-vacuum': {name:'La última miga',item:'Roomba',art:'robot-vacuum-v2.png',help:'Arrastra para guiar la roomba. Esquiva los muebles y la bola de polvo, que te frena. Recoge 30 migas en 30 segundos.'}
+    football: {name:'Toques en la sede',item:'Pelota',art:'football-v2.png',levelStep:5,unit:'toques',help:'Toca el balón para mantenerlo en el aire. El lado que toques cambia su dirección. Cada 5 toques subes de nivel: más velocidad y más viento. Tienes 30 segundos.'},
+    skateboard: {name:'Salta con El Chota',item:'Skate',art:'skateboard-v2.png',levelStep:3,unit:'saltos',help:'Toca la pista para saltar las cajas. Cada 3 cajas superadas subes de nivel: la pista acelera y los obstáculos llegan más seguidos. Tienes 30 segundos.'},
+    'robot-vacuum': {name:'La última miga',item:'Roomba',art:'robot-vacuum-v2.png',levelStep:6,unit:'migas',help:'Arrastra para guiar la roomba y recoge 30 migas en 30 segundos. Cada 6 migas subes de nivel y el polvo se vuelve más rápido y numeroso. Tienes 3 vidas: cada golpe de polvo quita una. El tercer golpe termina la partida.'}
   };
+  const maxLevel=5;
+  const levelFor=(id,score)=>Math.min(maxLevel,1+Math.floor(score/games[id].levelStep));
+  const levelTarget=r=>r.level<maxLevel?r.level*games[r.id].levelStep:null;
+  function advanceLevel(r){
+    const level=levelFor(r.id,r.score);
+    if(level>r.level){r.level=level;r.levelNotice=1.25;}
+  }
   let config = {}, dialog = null, round = null, frame = 0, root = null, previousFocus = null, serial = 0, holdTimer = 0;
   const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const user = () => String(config.session?.() || 'guest');
@@ -84,11 +91,11 @@
   }
   function start(id){
     stop();const token=++serial;
-    body().innerHTML=`<div class="chota-arcade-score"><div><span>Puntos</span><strong data-score>0</strong></div><h2>${games[id].name}</h2><div><span>Tiempo</span><strong data-clock>30</strong></div></div><div class="chota-arcade-stage" role="application" aria-label="${esc(games[id].help)}" tabindex="0"><canvas aria-label="Zona de juego"></canvas><span class="chota-arcade-hint">${id==='football'?'Toca el balón':id==='skateboard'?'Toca para saltar':'Arrastra para limpiar'}</span></div><button type="button" class="chota-arcade-secondary" data-abandon>Terminar partida</button>`;
+    body().innerHTML=`<div class="chota-arcade-score"><div><span>Puntos</span><strong data-score>0</strong></div><h2>${games[id].name}</h2><div><span>Tiempo</span><strong data-clock>30</strong></div></div><div class="chota-arcade-round-status"><div class="chota-arcade-level"><strong data-level>Nivel 1</strong><progress data-level-progress value="0" max="${games[id].levelStep}" aria-label="Progreso al siguiente nivel"></progress><span data-level-next>${games[id].levelStep} ${games[id].unit} para nivel 2</span></div>${id==='robot-vacuum'?'<div class="chota-arcade-lives" data-lives role="img" aria-label="3 vidas restantes">'+Array.from({length:3},()=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20S3 14.7 3 8.7A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 9 3.7C21 14.7 12 20 12 20Z"/></svg>').join('')+'</div>':''}</div><div class="chota-arcade-stage" role="application" aria-label="${esc(games[id].help)}" tabindex="0"><canvas aria-label="Zona de juego"></canvas><span class="chota-arcade-hint">${id==='football'?'Toca el balón':id==='skateboard'?'Toca para saltar':'Arrastra para limpiar'}</span></div><button type="button" class="chota-arcade-secondary" data-abandon>Terminar partida</button>`;
     const stage=body().querySelector('.chota-arcade-stage'), canvas=stage.querySelector('canvas'),ctx=canvas.getContext('2d');
     if(!ctx){briefing(id);return;}
     const dpr=Math.min(devicePixelRatio||1,2);canvas.width=600*dpr;canvas.height=450*dpr;ctx.scale(dpr,dpr);ctx.imageSmoothingEnabled=false;
-    const r=round={id,token,actor:user(),score:0,time:0,last:0,completed:false,lastHit:-1,misses:0,ball:{x:300,y:140,vy:0,vx:85},jump:0,vy:0,skateAir:0,skateLanding:0,x:300,y:370,target:{x:300,y:370},stunned:0,hazardHit:-2,furniture:[{x:126,y:205,w:76,h:72},{x:366,y:280,w:98,h:55},{x:390,y:132,w:62,h:65}],obstacles:[],spawn:.5,cleared:0,drag:null,crumbs:[]};
+    const r=round={id,token,actor:user(),score:0,level:1,levelNotice:0,time:0,last:0,completed:false,endReason:'',lastHit:-1,misses:0,ball:{x:300,y:140,vy:0,vx:85},jump:0,vy:0,skateAir:0,skateLanding:0,x:300,y:370,target:{x:300,y:370},lives:3,invulnerable:.9,stunned:0,hazards:[{phase:-1.55,x:82,y:185,age:0},{phase:1.2,x:505,y:228,age:0},{phase:3.2,x:287,y:258,age:0}],furniture:[{x:126,y:205,w:76,h:72},{x:366,y:280,w:98,h:55},{x:390,y:132,w:62,h:65}],obstacles:[],spawn:.5,cleared:0,drag:null,crumbs:[]};
     r.crumbs=Array.from({length:30},()=>{let c;do{c={x:55+Math.random()*490,y:145+Math.random()*245,active:true};}while(r.furniture.some(o=>c.x>o.x-28&&c.x<o.x+o.w+28&&c.y>o.y-28&&c.y<o.y+o.h+28));return c;});
     r.serverSession=config.startGame?Promise.resolve().then(()=>config.startGame(id)).catch(()=>null):Promise.resolve(null);
     r.art=new Image();r.art.src=`icons/clubhouse/props/${games[id].art}`;r.pet=new Image();r.pet.src='icons/mascot/chota-v2/chota-poses.webp';
@@ -98,44 +105,53 @@
       if(e.type==='keydown'&&![' ','Enter','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
       if(e.type==='keydown'&&id==='robot-vacuum'){e.preventDefault();r.target.x=Math.max(52,Math.min(548,r.target.x+(e.key==='ArrowRight'?45:e.key==='ArrowLeft'?-45:0)));r.target.y=Math.max(145,Math.min(390,r.target.y+(e.key==='ArrowDown'?45:e.key==='ArrowUp'?-45:0)));return;}
       e.preventDefault();const p=e.type==='keydown'?{x:r.ball.x,y:r.ball.y}:point(e);
-      if(id==='football'&&r.time-r.lastHit>.26&&Math.hypot(p.x-r.ball.x,p.y-r.ball.y)<46){r.lastHit=r.time;r.ball.vy=-380-Math.min(r.time*5,120);r.ball.vx=Math.max(-240,Math.min(240,r.ball.vx*.45+(r.ball.x-p.x)*6+(Math.random()-.5)*65));r.score++;}
+      if(id==='football'&&r.time-r.lastHit>.26&&Math.hypot(p.x-r.ball.x,p.y-r.ball.y)<46-(r.level-1)*2){r.lastHit=r.time;r.ball.vy=-380-(r.level-1)*28;r.ball.vx=Math.max(-270,Math.min(270,r.ball.vx*.45+(r.ball.x-p.x)*6+(Math.random()-.5)*(65+(r.level-1)*16)));r.score++;advanceLevel(r);}
       else if(id==='skateboard'&&r.jump===0){r.vy=500;r.jump=1;r.skateAir=0;r.skateLanding=0;}
       else if(id==='robot-vacuum'){r.drag=e.pointerId;stage.setPointerCapture?.(e.pointerId);r.target.x=Math.max(52,Math.min(548,p.x));r.target.y=Math.max(145,Math.min(390,p.y));}
     }
     stage.addEventListener('pointerdown',act);stage.addEventListener('keydown',act);
     stage.addEventListener('pointermove',e=>{if(round===r&&r.drag===e.pointerId){e.preventDefault();const p=point(e);r.target.x=Math.max(52,Math.min(548,p.x));r.target.y=Math.max(145,Math.min(390,p.y));}});
     stage.addEventListener('pointerup',()=>{r.drag=null;});stage.addEventListener('pointercancel',()=>{r.drag=null;});
-    body().querySelector('[data-abandon]').addEventListener('click',()=>finish(r));stage.focus({preventScroll:true});
-    const scoreLabel=body().querySelector('[data-score]'),clockLabel=body().querySelector('[data-clock]');
+    body().querySelector('[data-abandon]').addEventListener('click',()=>{r.endReason='abandoned';finish(r);});stage.focus({preventScroll:true});
+    const scoreLabel=body().querySelector('[data-score]'),clockLabel=body().querySelector('[data-clock]'),levelLabel=body().querySelector('[data-level]'),levelProgress=body().querySelector('[data-level-progress]'),levelNext=body().querySelector('[data-level-next]'),livesLabel=body().querySelector('[data-lives]');
+    let shownLevel=1,shownLives=3;
     const loop=now=>{
       if(round!==r||token!==serial||!dialog)return;
       if(r.actor!==user()){close();return;}
       const dt=r.last?Math.min((now-r.last)/1000,.04):0;r.last=now;r.time+=dt;
       update(r,dt);if(round!==r)return;draw(ctx,r);
       if(scoreLabel.textContent!==String(r.score))scoreLabel.textContent=String(r.score);
+      if(shownLevel!==r.level){shownLevel=r.level;levelLabel.textContent=`Nivel ${r.level}`;}
+      const target=levelTarget(r),remaining=target===null?0:target-r.score;
+      const progress=target===null?games[id].levelStep:r.score-(r.level-1)*games[id].levelStep;if(levelProgress.value!==progress)levelProgress.value=progress;
+      const nextText=target===null?'Nivel máximo':`${remaining} ${games[id].unit} para nivel ${r.level+1}`;if(levelNext.textContent!==nextText)levelNext.textContent=nextText;
+      if(livesLabel&&shownLives!==r.lives){shownLives=r.lives;livesLabel.setAttribute('aria-label',`${r.lives} ${r.lives===1?'vida restante':'vidas restantes'}`);livesLabel.querySelectorAll('svg').forEach((heart,index)=>heart.classList.toggle('is-lost',index>=r.lives));}
       const seconds=String(Math.max(0,Math.ceil(30-r.time)));if(clockLabel.textContent!==seconds)clockLabel.textContent=seconds;
-      if(r.time>=30||(id==='robot-vacuum'&&r.score===30)){r.completed=true;finish(r);return;}
+      if(r.time>=30||(id==='robot-vacuum'&&r.score===30)){r.completed=true;r.endReason=r.score===30&&id==='robot-vacuum'?'clean':'time';finish(r);return;}
       frame=requestAnimationFrame(loop);
     };frame=requestAnimationFrame(loop);
   }
   function update(r,dt){
+    r.levelNotice=Math.max(0,r.levelNotice-dt);
+    const difficulty=r.level-1;
     if(r.id==='football'){
-      r.ball.vy+=(610+r.time*6)*dt;
-      r.ball.vx+=Math.sin(r.time*1.7)*(36+r.time*2)*dt;
+      r.ball.vy+=(610+difficulty*82)*dt;
+      r.ball.vx+=Math.sin(r.time*(1.7+difficulty*.18))*(36+difficulty*24)*dt;
       r.ball.y+=r.ball.vy*dt;r.ball.x+=r.ball.vx*dt;
       if(r.ball.x<30||r.ball.x>570){r.ball.x=Math.max(30,Math.min(570,r.ball.x));r.ball.vx*=-.92;}
       if(r.ball.y<34){r.ball.y=34;r.ball.vy=Math.abs(r.ball.vy)*.55;}
-      if(r.ball.y>485){r.misses++;r.ball={x:160+Math.random()*280,y:130,vy:0,vx:(Math.random()<.5?-1:1)*(90+r.time*3)};}
+      if(r.ball.y>485){r.misses++;r.ball={x:160+Math.random()*280,y:130,vy:0,vx:(Math.random()<.5?-1:1)*(90+difficulty*28)};}
     }
     if(r.id==='skateboard'){
       r.skateLanding=Math.max(0,r.skateLanding-dt);
       if(r.jump>0){r.skateAir+=dt;r.vy-=1200*dt;r.jump=Math.max(0,r.jump+r.vy*dt);if(r.jump===0){r.skateLanding=.25;r.vy=0;}}
-      r.spawn-=dt;if(r.spawn<=0){r.obstacles.push({x:660,passed:false});r.spawn=1.15+Math.random()*.6;}
-      for(const o of r.obstacles){o.x-=(220+r.time*3)*dt;if(!o.passed&&o.x<110){o.passed=true;r.score++;}if(o.x<184&&o.x>112&&r.jump<43){r.completed=true;finish(r);return;}}
+      r.spawn-=dt;if(r.spawn<=0){r.obstacles.push({x:660,passed:false});r.spawn=1.35-difficulty*.12+Math.random()*.4;}
+      for(const o of r.obstacles){o.x-=(220+difficulty*32)*dt;if(!o.passed&&o.x<110){o.passed=true;r.score++;advanceLevel(r);}if(o.x<184&&o.x>112&&r.jump<43){r.completed=true;r.endReason='collision';finish(r);return;}}
       r.obstacles=r.obstacles.filter(o=>o.x>-50);
     }
     if(r.id==='robot-vacuum'){
       r.stunned=Math.max(0,r.stunned-dt);
+      r.invulnerable=Math.max(0,r.invulnerable-dt);
       const distance=Math.hypot(r.target.x-r.x,r.target.y-r.y),step=Math.min(distance,(r.stunned>0?65:210)*dt);
       if(distance>1){
         const dx=(r.target.x-r.x)/distance*step,dy=(r.target.y-r.y)/distance*step;
@@ -143,9 +159,16 @@
         if(!blocked(r.x+dx,r.y))r.x+=dx;
         if(!blocked(r.x,r.y+dy))r.y+=dy;
       }
-      const hazard={x:300+Math.sin(r.time*1.1)*218,y:250+Math.cos(r.time*1.65)*95};
-      if(Math.hypot(hazard.x-r.x,hazard.y-r.y)<42&&r.time-r.hazardHit>1.5){r.hazardHit=r.time;r.stunned=1.2;}
-      for(const c of r.crumbs)if(c.active&&Math.hypot(c.x-r.x,c.y-r.y)<25){c.active=false;r.score++;}
+      const count=1+Math.floor(difficulty/2);
+      for(let index=0;index<count;index++){
+        const hazard=r.hazards[index];hazard.age+=dt;hazard.phase+=(.9+difficulty*.16+index*.08)*dt;
+        hazard.x=300+Math.sin(hazard.phase)*218;hazard.y=250+Math.cos(hazard.phase*1.5+index)*95;
+        if(hazard.age>.7&&r.invulnerable<=0&&Math.hypot(hazard.x-r.x,hazard.y-r.y)<39){
+          r.lives--;r.invulnerable=1.5;r.stunned=.6;
+          if(r.lives===0){r.completed=true;r.endReason='dust';finish(r);return;}
+        }
+      }
+      for(const c of r.crumbs)if(c.active&&Math.hypot(c.x-r.x,c.y-r.y)<25){c.active=false;r.score++;advanceLevel(r);}
     }
   }
   function draw(ctx,r){
@@ -157,23 +180,25 @@
     if(r.id==='football'){
       pet(235,265,140,140);image(r.art,r.ball.x-31,r.ball.y-31,62,62);
       ctx.fillStyle='#fff2d9';ctx.font='16px system-ui';ctx.fillText(`Caídas: ${r.misses}`,22,35);
-      ctx.fillStyle='#d9b877';ctx.fillText('Viento '+(Math.sin(r.time*1.7)>0?'→':'←'),465,35);
+      ctx.fillStyle='#d9b877';ctx.fillText('Viento '+(Math.sin(r.time*(1.7+(r.level-1)*.18))>0?'→':'←'),465,35);
     }
     if(r.id==='skateboard'){
       ctx.fillStyle='#b87a38';ctx.fillRect(0,387,600,4);
       // Track marks move at obstacle speed, so the rider travels through the room.
-      ctx.fillStyle='#d2ab652a';const track=(r.time*240)%100;for(let x=-100;x<650;x+=100)ctx.fillRect(x-track,400,36,2);
+      ctx.fillStyle='#d2ab652a';const track=(r.time*(220+(r.level-1)*32))%100;for(let x=-100;x<650;x+=100)ctx.fillRect(x-track,400,36,2);
       drawSkater(ctx,r);
       for(const o of r.obstacles){ctx.fillStyle='#bb8648';ctx.fillRect(o.x,344,45,43);ctx.strokeStyle='#6c4828';ctx.lineWidth=4;ctx.strokeRect(o.x+3,347,39,37);ctx.beginPath();ctx.moveTo(o.x+5,349);ctx.lineTo(o.x+40,381);ctx.stroke();}
     }
     if(r.id==='robot-vacuum'){
       for(const o of r.furniture){ctx.fillStyle='#141b27';ctx.fillRect(o.x-5,o.y+7,o.w+10,o.h+5);ctx.fillStyle='#765137';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.strokeStyle='#c58d52';ctx.lineWidth=3;ctx.strokeRect(o.x+4,o.y+4,o.w-8,o.h-8);}
       for(const c of r.crumbs)if(c.active){ctx.fillStyle='#e4bd6b';ctx.fillRect(c.x,c.y,6,5);ctx.fillRect(c.x+9,c.y+5,4,4);}
-      const hx=300+Math.sin(r.time*1.1)*218,hy=250+Math.cos(r.time*1.65)*95;
-      ctx.fillStyle='#a99c88';for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(hx+Math.cos(i)*12,hy+Math.sin(i)*10,10,0,Math.PI*2);ctx.fill();}
-      ctx.save();ctx.globalAlpha=r.stunned>0?.6+.3*Math.sin(r.time*25):1;image(r.art,r.x-40,r.y-27,80,54);ctx.restore();
+      for(let index=0;index<1+Math.floor((r.level-1)/2);index++){
+        const hazard=r.hazards[index];ctx.save();ctx.globalAlpha=Math.min(1,hazard.age/.7);ctx.fillStyle='#a99c88';for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(hazard.x+Math.cos(i+hazard.phase)*12,hazard.y+Math.sin(i+hazard.phase)*10,10,0,Math.PI*2);ctx.fill();}ctx.restore();
+      }
+      ctx.save();ctx.globalAlpha=r.invulnerable>0&&r.time>.9?.55+.35*Math.abs(Math.sin(r.time*20)):1;image(r.art,r.x-40,r.y-27,80,54);ctx.restore();
       if(r.drag!==null){ctx.strokeStyle='#f0d8a566';ctx.lineWidth=2;ctx.beginPath();ctx.arc(r.target.x,r.target.y,9,0,Math.PI*2);ctx.stroke();}
     }
+    if(r.levelNotice>0){ctx.save();ctx.globalAlpha=Math.min(1,r.levelNotice*3);ctx.fillStyle='#111314e8';ctx.fillRect(225,60,150,40);ctx.fillStyle='#e9c77e';ctx.textAlign='center';ctx.font='600 18px system-ui';ctx.fillText(`Nivel ${r.level}`,300,86);ctx.restore();}
   }
   function drawSkater(ctx,r){
     const airborne=r.jump>0;
@@ -223,7 +248,8 @@
     if(r.actor!==user()){close();return;}
     const score=r.score,token=r.token,actor=r.actor,game=r.id;stop();
     const best=save(game,score);
-    body().innerHTML=`<section class="chota-arcade-result"><p>${game==='robot-vacuum'&&score===30?'Alfombra impecable':'Fin de la partida'}</p><h2>${score}<small>${game==='robot-vacuum'?'migas':game==='football'?'toques':'saltos'}</small></h2><p>Tu mejor marca: <strong>${best}</strong></p><p data-reward>Comprobando recompensa diaria…</p><button type="button" class="chota-arcade-secondary" data-retry-save hidden>Reintentar guardado</button><div class="chota-arcade-results-actions"><button type="button" data-again>Otra partida</button><button type="button" class="chota-arcade-secondary" data-menu>Ver juegos</button></div><div class="chota-arcade-ranking" data-ranking></div></section>`;
+    const outcome=r.endReason==='dust'?'Sin vidas':r.endReason==='clean'?'Alfombra impecable':r.endReason==='collision'?'Te has chocado':r.endReason==='time'?'Tiempo agotado':'Fin de la partida';
+    body().innerHTML=`<section class="chota-arcade-result"><p>${outcome}</p><h2>${score}<small>${games[game].unit}</small></h2><p class="chota-arcade-result-level">Nivel ${r.level} alcanzado</p><p>Tu mejor marca: <strong>${best}</strong></p><p data-reward>Comprobando recompensa diaria…</p><button type="button" class="chota-arcade-secondary" data-retry-save hidden>Reintentar guardado</button><div class="chota-arcade-results-actions"><button type="button" data-again>Otra partida</button><button type="button" class="chota-arcade-secondary" data-menu>Ver juegos</button></div><div class="chota-arcade-ranking" data-ranking></div></section>`;
     body().querySelector('[data-again]').addEventListener('click',()=>start(game));body().querySelector('[data-menu]').addEventListener('click',menu);
     const reward=body().querySelector('[data-reward]');
     if(!config.submitScore){reward.textContent='Completa una partida con conexión para ganar tu sobre diario.';return;}
