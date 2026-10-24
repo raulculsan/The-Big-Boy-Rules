@@ -123,3 +123,14 @@
   .clubhouse-room::after, .clubhouse-plan, .clubhouse-sky > i, .clubhouse-sky-stars { transition: none; }
 }
 html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars) { transition:none; }
+
+/* Quiet standing pose: separate head and torso preserve the feet's floor contact.
+   These layers use cell zero of the existing sheet; commanded poses use the sheet normally. */
+.chota-idle-body, .chota-idle-head { display:none; position:absolute; inset:0; background:url("icons/mascot/chota-v2/chota-poses.webp") 0 0 / 600% 400% no-repeat; image-rendering:pixelated; pointer-events:none; }
+.tigreton-character.is-idling { background-image:none; }
+.tigreton-character.is-idling :is(.chota-idle-body,.chota-idle-head) { display:block; }
+.chota-idle-body { clip-path:inset(52% 0 0); transform-origin:50% 93%; }
+.chota-idle-head { clip-path:inset(0 0 46%); transform-origin:57% 52%; }
+.chota-idle-eyelids { display:block; position:absolute; inset:0; width:100%; height:100%; opacity:0; overflow:visible; }
+@media(prefers-reduced-motion:reduce) { .chota-idle-eyelids { display:none; } }
+html[data-reduced-motion="true"] .chota-idle-eyelids { display:none; }
