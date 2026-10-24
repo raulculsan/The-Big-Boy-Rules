@@ -65,10 +65,25 @@
   document.addEventListener('visibilitychange', () => bannerVideos.forEach(updateBannerVideo));
   bannerMotionPreference.addEventListener('change', () => bannerVideos.forEach(updateBannerVideo));
   let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
-  let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0, shopResetTimer;
+  let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0, shopResetTimer, shopCountdownTimer;
   const dailyBanners = () => Array.isArray(state?.daily_banner_ids)
     ? state.daily_banner_ids.map(id => state.banners?.find(banner => banner.id === id)).filter(banner => banner && banner.id !== 'banner-de-prueba').slice(0, 5)
     : (state?.banners || []).filter(banner => banner.id !== 'banner-de-prueba' && banner.in_daily_shop !== false).slice(0, 5);
+  function updateShopCountdown() {
+    clearTimeout(shopCountdownTimer);
+    const subtitle = el('shopBannersPanel')?.querySelector('.shop-section-heading p');
+    if (!subtitle) return;
+    const reset = Date.parse(state?.shop_next_reset_at);
+    const remaining = Number.isFinite(reset) ? Math.max(0, Math.ceil((reset - Date.now()) / 1000)) : null;
+    const text = remaining === null ? 'Actualización diaria'
+      : remaining === 0 ? (online() ? 'Actualizando selección…' : 'Actualización pendiente')
+      : `Se renueva en ${[Math.floor(remaining / 3600), Math.floor(remaining / 60) % 60, remaining % 60].map(value => String(value).padStart(2, '0')).join(':')}`;
+    if (subtitle.textContent !== text) subtitle.textContent = text;
+    // Only the text ticks: artwork and purchase controls retain their DOM state.
+    if (remaining > 0 && el('bannerShopDialog')?.open && !document.hidden) {
+      shopCountdownTimer = setTimeout(updateShopCountdown, 1000 - Date.now() % 1000 + 20);
+    }
+  }
   function scheduleShopReset() {
     clearTimeout(shopResetTimer);
     const delay = Date.parse(state?.shop_next_reset_at) - Date.now();
@@ -747,12 +762,7 @@
     if (shopHeading) {
       const title = shopHeading.querySelector('h3'), subtitle = shopHeading.querySelector('p');
       if (title) title.textContent = 'Selección de hoy';
-      if (subtitle) {
-        const reset = Date.parse(state?.shop_next_reset_at);
-        subtitle.textContent = state && Number.isFinite(reset)
-          ? `${dailyBanners().length} diseños · cambia a las ${new Intl.DateTimeFormat('es-ES', {hour:'2-digit', minute:'2-digit'}).format(new Date(reset))}`
-          : 'Hasta 5 diseños elegidos cada día.';
-      }
+      if (subtitle) updateShopCountdown();
     }
     const container = el('bannerShopItems');
     if (container) {
@@ -977,6 +987,7 @@
       if (event.target.closest('[data-banner-shop]')) {
         const shop = el('bannerShopDialog');
         shop.showModal();
+        updateShopCountdown();
         const artwork = shop.querySelector('.is-featured .shop-artwork');
         if (artwork && !revealReduced()) artwork.animate([
           {opacity:.6, transform:'scale(.985)'},
@@ -1008,6 +1019,7 @@
     });
     el('profileBannerRetry').addEventListener('click', () => void refresh());
     el('bannerShopClose').addEventListener('click', () => el('bannerShopDialog').close());
+    el('bannerShopDialog').addEventListener('close', () => clearTimeout(shopCountdownTimer));
     const shopTabs = [...document.querySelectorAll('[data-shop-tab]')];
     const selectShopTab = tab => {
       shopTabs.forEach(item => {
@@ -1034,12 +1046,14 @@
     });
     window.addEventListener('offline', render);
     document.addEventListener('visibilitychange', () => {
+      updateShopCountdown();
       if (!document.hidden && options?.session() && el('bannerShopDialog')?.open && Date.parse(state?.shop_next_reset_at) <= Date.now()) void refresh();
     });
     render();
   }
   function reset() {
     clearTimeout(shopResetTimer);
+    clearTimeout(shopCountdownTimer);
     closeEditor();
     el('profileBannerOptions').replaceChildren();
     delete el('profileBannerOptions').dataset.signature;
