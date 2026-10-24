@@ -112,7 +112,7 @@ const excluded = new Set([
     return await stat(path).then(() => path, () => null);
   })).then(paths => paths.filter(Boolean)),
   // José Enrique ships only the playback video and its static fallback.
-  ...['jose-enrique-ojos-v1.gif', 'poster-glow.jpg', 'preview.html'].map(name => resolve(root, 'icons/banners/jose-enrique-ojos-v1', name)),
+  ...['jose-enrique-ojos-v1.gif', 'jose-enrique-ojos-v2.gif', 'jose-enrique-ojos-v1.mp4', 'poster-glow.jpg', 'preview.html'].map(name => resolve(root, 'icons/banners/jose-enrique-ojos-v1', name)),
   ...await findUnreferencedNumberedCopies([resolve(root, "icons"), resolve(root, "vendor")], references),
   ...await findSupersededCardArtwork(root, references)
 ]);

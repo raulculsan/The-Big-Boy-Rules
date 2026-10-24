@@ -29,7 +29,7 @@
     try { localStorage.setItem(memberBannerCacheKey(owner), JSON.stringify({savedAt:Date.now(), banners})); memberBannerCacheSignature = signature; } catch {}
   }
   const visibleMemberTiles = new Set(), observedMemberTiles = new Set();
-  const bannerVideos = new Set(), visibleBannerVideos = new WeakSet();
+  const bannerVideos = new Set(), visibleBannerVideos = new WeakSet(), pendingBannerVideos = new WeakSet();
   const bannerMotionPreference = matchMedia('(prefers-reduced-motion: reduce)');
   let bannerVideoObserver;
   function updateBannerVideo(video) {
@@ -38,20 +38,30 @@
       video.pause(); video.removeAttribute('src'); video.load();
       return;
     }
-    if (document.hidden || bannerMotionPreference.matches || !visibleBannerVideos.has(video)) {video.pause(); return;}
+    if (document.hidden || bannerMotionPreference.matches || !visibleBannerVideos.has(video)) {video.pause(); video.classList.remove('is-ready'); return;}
     if (!video.getAttribute('src')) video.src = video.dataset.bannerSrc;
-    void video.play().catch(() => {}); // The poster remains visible if playback is unavailable.
+    if (!video.paused || pendingBannerVideos.has(video)) return;
+    pendingBannerVideos.add(video);
+    // iOS can reject autoplay in Low Power Mode. Keep the poster until actual
+    // playback and retry on the next gesture or when the app returns.
+    Promise.resolve(video.play()).catch(() => video.classList.remove('is-ready'))
+      .finally(() => pendingBannerVideos.delete(video));
   }
   function registerBannerVideos(root = document) {
     bannerVideos.forEach(updateBannerVideo);
     root.querySelectorAll('video[data-banner-src]').forEach(video => {
       if (bannerVideos.has(video)) return;
-      bannerVideos.add(video); video.muted = true;
-      video.addEventListener('loadeddata', () => video.classList.add('is-ready'), {once:true});
+      bannerVideos.add(video); video.muted = true; video.defaultMuted = true;
+      video.autoplay = true; video.playsInline = true;
+      video.setAttribute('webkit-playsinline', '');
+      video.addEventListener('playing', () => video.classList.add('is-ready'));
+      video.addEventListener('pause', () => video.classList.remove('is-ready'));
+      video.addEventListener('emptied', () => video.classList.remove('is-ready'));
+      video.addEventListener('canplay', () => updateBannerVideo(video));
       video.addEventListener('error', () => {
         if (!video.isConnected || !video.getAttribute('src') || video.dataset.remoteTried) return;
         video.dataset.remoteTried = 'true'; video.src = video.dataset.bannerRemote;
-        if (visibleBannerVideos.has(video) && !document.hidden && !bannerMotionPreference.matches) void video.play().catch(() => {});
+        updateBannerVideo(video);
       });
       if ('IntersectionObserver' in globalThis) {
         bannerVideoObserver ||= new IntersectionObserver(entries => entries.forEach(entry => {
@@ -63,6 +73,10 @@
     });
   }
   document.addEventListener('visibilitychange', () => bannerVideos.forEach(updateBannerVideo));
+  window.addEventListener('pageshow', () => bannerVideos.forEach(updateBannerVideo));
+  document.addEventListener('pointerup', () => {
+    for (const video of bannerVideos) if (video.paused) updateBannerVideo(video);
+  }, {passive:true});
   bannerMotionPreference.addEventListener('change', () => bannerVideos.forEach(updateBannerVideo));
   let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
   let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0, shopResetTimer, shopCountdownTimer;
@@ -524,13 +538,13 @@
   function artwork(banner, extra = '') {
     if (banner?.art_key === 'jose-enrique-ojos-v1') {
       const base = 'icons/banners/jose-enrique-ojos-v1/';
-      const remote = 'https://nfvggpgeypkkqceivkaq.supabase.co/storage/v1/object/public/group-media/banners/jose-enrique-ojos-v1.mp4';
-      return `<div class="banner-art banner-fufi-flight banner-jose-eyes ${extra}" style="background-image:url('${base}poster.jpg');background-color:#0b1020" role="img" aria-label="${escape(banner.name || 'José Enrique bajo la lluvia, con los ojos iluminándose')}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}jose-enrique-ojos-v1.mp4" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
+      const remote = 'https://nfvggpgeypkkqceivkaq.supabase.co/storage/v1/object/public/group-media/banners/jose-enrique-ojos-v2.mp4';
+      return `<div class="banner-art banner-fufi-flight banner-jose-eyes ${extra}" style="background-image:url('${base}poster.jpg');background-color:#0b1020" role="img" aria-label="${escape(banner.name || 'José Enrique bajo la lluvia, con los ojos iluminándose')}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}jose-enrique-ojos-v2.mp4" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" autoplay muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
     }
     if (banner?.art_key === 'fufi-supervuelo-v1') {
       const base = 'icons/banners/fufi-supervuelo-v1/';
       const remote = 'https://nfvggpgeypkkqceivkaq.supabase.co/storage/v1/object/public/group-media/banners/fufi-supervuelo-v1.mp4';
-      return `<div class="banner-art banner-fufi-flight ${extra}" role="img" aria-label="${escape(banner.name || 'Fufi volando entre nubes')}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}fufi-supervuelo-v1.mp4" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
+      return `<div class="banner-art banner-fufi-flight ${extra}" role="img" aria-label="${escape(banner.name || 'Fufi volando entre nubes')}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}fufi-supervuelo-v1.mp4" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" autoplay muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
     }
     // Only known artwork keys become styles; future Krita exports are added here.
     const panorama = {
