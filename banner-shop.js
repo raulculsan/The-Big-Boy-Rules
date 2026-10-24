@@ -538,7 +538,7 @@
   function artwork(banner, extra = '') {
     if (banner?.art_key === 'jose-enrique-ojos-v1') {
       const base = 'icons/banners/jose-enrique-ojos-v1/';
-      const remote = 'https://nfvggpgeypkkqceivkaq.supabase.co/storage/v1/object/public/group-media/banners/jose-enrique-ojos-v2.mp4';
+      const remote = 'https://raulculsan.github.io/The-Big-Boy-Rules/icons/banners/jose-enrique-ojos-v1/jose-enrique-ojos-v2.mp4';
       return `<div class="banner-art banner-fufi-flight banner-jose-eyes ${extra}" style="background-image:url('${base}poster.jpg');background-color:#0b1020" role="img" aria-label="${escape(banner.name || 'José Enrique bajo la lluvia, con los ojos iluminándose')}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}jose-enrique-ojos-v2.mp4" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" autoplay muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
     }
     if (banner?.art_key === 'fufi-supervuelo-v1') {
