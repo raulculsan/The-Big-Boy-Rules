@@ -1,6 +1,44 @@
 import UIKit
 import WebKit
 import Capacitor
+import OSLog
+
+/// One clock spans the native/WebKit boundary. performance.now() alone starts
+/// too late to account for WebKit process creation after an app update.
+enum ClubLaunchMetrics {
+    private static let logger = Logger(subsystem: "com.raulculsan.thebigboyrules", category: "Startup")
+    private static var started = ProcessInfo.processInfo.systemUptime
+    private static var marks = Set<String>()
+
+    static func begin() {
+        started = ProcessInfo.processInfo.systemUptime
+        let defaults = UserDefaults.standard
+        let key = "bb-last-installation-path"
+        let installation = Bundle.main.bundleURL.path
+        let changed = defaults.string(forKey: key) != installation
+        defaults.set(installation, forKey: key)
+        #if DEBUG
+        let mode = "debug"
+        #else
+        let mode = "release"
+        #endif
+        logger.notice("[BigBoy native startup] launch: 0 ms (\(mode, privacy: .public), installation-changed=\(changed, privacy: .public))")
+    }
+
+    static func mark(_ name: String) {
+        guard marks.insert(name).inserted else { return }
+        let ms = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
+        logger.notice("[BigBoy native startup] \(name, privacy: .public): \(ms, privacy: .public) ms")
+    }
+}
+
+private final class ClubStartupMessageHandler: NSObject, WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.frameInfo.isMainFrame, let mark = message.body as? String,
+              ["document-start", "dom-ready-frame", "shell-ready"].contains(mark) else { return }
+        ClubLaunchMetrics.mark(mark)
+    }
+}
 
 /// UIKit owns the available height. No delayed plugin resize or second JS animation.
 final class KeyboardHostViewController: UIViewController {
@@ -12,6 +50,7 @@ final class KeyboardHostViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        ClubLaunchMetrics.mark("host-ready")
         view.backgroundColor = UIColor(red: 8/255, green: 9/255, blue: 12/255, alpha: 1)
         overrideUserInterfaceStyle = .dark
         let keyboard = view.keyboardLayoutGuide
@@ -47,17 +86,34 @@ final class KeyboardHostViewController: UIViewController {
 
 final class ClubBridgeViewController: CAPBridgeViewController {
     override func webViewConfiguration(for configuration: InstanceConfiguration) -> WKWebViewConfiguration {
-        let webConfiguration = super.webViewConfiguration(for: configuration)
-        webConfiguration.userContentController.addUserScript(WKUserScript(
-            source: "window.__bigboysNativeKeyboardLayout = true;",
+        ClubLaunchMetrics.mark("webview-configuration")
+        return super.webViewConfiguration(for: configuration)
+    }
+
+    override func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
+        // Capacitor replaces userContentController after webViewConfiguration().
+        // Install on the final controller, otherwise both this measurement and
+        // the native keyboard-layout flag are silently discarded before load.
+        configuration.userContentController.add(ClubStartupMessageHandler(), name: "bigboyStartup")
+        configuration.userContentController.addUserScript(WKUserScript(
+            source: """
+            window.__bigboysNativeKeyboardLayout = true;
+            (() => {
+              const mark = name => window.webkit.messageHandlers.bigboyStartup.postMessage(name);
+              mark('document-start');
+              document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(() => requestAnimationFrame(() => mark('dom-ready-frame'))), {once:true});
+              document.addEventListener('bb:launch-ready', () => mark('shell-ready'), {once:true});
+            })();
+            """,
             injectionTime: .atDocumentStart,
             forMainFrameOnly: true
         ))
-        return webConfiguration
+        return super.webView(with: frame, configuration: configuration)
     }
 
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
+        ClubLaunchMetrics.mark("bridge-ready")
         bridge?.registerPluginInstance(ClubPlanWidgetPlugin())
         bridge?.registerPluginInstance(ClubSpotifyPlugin())
         bridge?.registerPluginInstance(ClubGalleryPlugin())

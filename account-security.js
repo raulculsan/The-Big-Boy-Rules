@@ -81,15 +81,23 @@
   function codeForm(title, detail) {
     return `<h3>${title}</h3><p>${detail}</p><form data-security-verify><label for="accountSecurityCode">Código de 6 cifras</label><input id="accountSecurityCode" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="000000"><button class="security-primary" type="submit">Verificar y continuar</button></form>`;
   }
-  async function refresh() {
-    const result = await client.auth.getUser();
+  async function refresh(serverVerifiedUser = null) {
+    // gate() receives the getUser response just checked by beginAuthenticatedSession.
+    // Reuse that server record for this one evaluation, never a stored session.
+    // Later refreshes (MFA verification, contact changes, management) fetch anew.
+    const [result, nextPolicy] = await Promise.all([
+      serverVerifiedUser ? Promise.resolve({data:{user:serverVerifiedUser}, error:null}) : client.auth.getUser(),
+      loadPolicy()
+    ]);
     if (result.error || result.data.user?.id !== user.id) throw new Error('La cuenta ha cambiado. Cierra sesión y vuelve a entrar.');
     user = result.data.user;
-    policy = await loadPolicy();
-    const factors = await client.auth.mfa.listFactors();
-    if (factors.error) throw factors.error;
-    const verified = (factors.data.totp || []).filter(f => f.status === 'verified');
-    const level = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    policy = nextPolicy;
+    // Supabase listFactors() performs getUser() and filters user.factors itself.
+    // Using the same fresh response avoids a third identical Auth request.
+    const verified = (user.factors || []).filter(f => f.factor_type === 'totp' && f.status === 'verified');
+    const level = ['aal1','aal2'].includes(policy?.current_aal)
+      ? {data:{currentLevel:policy.current_aal}, error:null}
+      : await client.auth.mfa.getAuthenticatorAssuranceLevel();
     if (level.error) throw level.error;
     const linked = linkedProviders();
     // Either verified email OR a verified external identity satisfies contact linking.
@@ -187,7 +195,7 @@
       throw error;
     }
   }
-  async function verifyPendingLink() {
+  async function verifyPendingLink(serverVerifiedUser = null) {
     const raw = localStorage.getItem(PENDING_LINK);
     if (!raw) return;
     localStorage.removeItem(PENDING_LINK);
@@ -198,7 +206,7 @@
       await client.auth.signOut();
       throw new Error('La vinculación ha caducado. Vuelve a entrar con tu usuario habitual e inténtalo de nuevo.');
     }
-    const result = await client.auth.getUser();
+    const result = serverVerifiedUser ? {data:{user:serverVerifiedUser}, error:null} : await client.auth.getUser();
     if (result.error) throw result.error;
     if (result.data.user?.id !== pending.id) {
       await client.auth.signOut();
@@ -232,17 +240,16 @@
     async gate(db, authUser) {
       client = db; user = authUser; management = false; required = true;
       mount();
-      await verifyPendingLink();
-      policy = await loadPolicy();
+      await verifyPendingLink(authUser);
       const completed = new Promise(resolve => { resume = resolve; });
-      await refresh();
+      await refresh(authUser);
       return completed;
     },
     async open(db, authUser) {
       client = db; user = authUser; management = true; required = false;
       mount();
       if (!dialog.open) dialog.showModal();
-      await run(async () => { policy = await loadPolicy(); await refresh(); });
+      await run(refresh);
     },
     reset() { emailPending = false; resume?.(false); resume = null; required = false; dialog?.close(); clearEnrollment(); }
   };

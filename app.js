@@ -4166,10 +4166,16 @@ async function logoutCurrentUser() {
   renderNotifications();
 }
 
+async function measureSessionStartup(name, load) {
+  const started = performance.now();
+  try { return await load(); }
+  finally { console.info(`[BigBoy startup] ${name}: ${Math.round(performance.now() - started)} ms`); }
+}
+
 async function beginAuthenticatedSession(authUser) {
   // getUser reads the current server record, including non-user-editable app metadata.
   // A cached JWT/user_metadata/local flag must never waive a required change.
-  const {data, error} = await db.auth.getUser();
+  const {data, error} = await measureSessionStartup("auth-user", () => db.auth.getUser());
   if (error || !data.user || data.user.id !== authUser.id) throw new Error("La sesión ya no está disponible. Vuelve a iniciar sesión.");
   const verifiedUser = data.user;
   if (await accountRequests?.handleAuthUser(verifiedUser)) { showLogin(); return; }
@@ -4184,14 +4190,14 @@ async function beginAuthenticatedSession(authUser) {
   let securityApproved;
   try {
     if (!globalThis.ClubAccountSecurity) throw new Error("No se pudo cargar la seguridad del acceso. Actualiza la aplicación e inténtalo de nuevo.");
-    securityApproved = await globalThis.ClubAccountSecurity.gate(db, verifiedUser);
+    securityApproved = await measureSessionStartup("auth-security", () => globalThis.ClubAccountSecurity.gate(db, verifiedUser));
   } catch (securityError) {
     showLogin();
     throw securityError;
   }
   if (securityApproved === false) return;
   // Roles and account visibility must also come from the current server profile.
-  const profile = await profileForAuthUser(verifiedUser);
+  const profile = await measureSessionStartup("auth-profile", () => profileForAuthUser(verifiedUser));
   if (!profile) {
     globalThis.ClubDrafts?.suspend();
     currentAuthUser = null;
@@ -7700,7 +7706,7 @@ if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("l
   try {
     if (navigator.onLine === false) {showLogin();return;}
     if (backendReady) {
-      const {data, error} = await db.auth.getSession();
+      const {data, error} = await measureSessionStartup("auth-session", () => db.auth.getSession());
       if (error) throw error;
       if (data.session?.user) {
         return await beginAuthenticatedSession(data.session.user);

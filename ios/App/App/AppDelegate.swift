@@ -8,6 +8,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        ClubLaunchMetrics.begin()
         // Install before scene/WebView creation so cold-launch responses cannot be lost.
         UNUserNotificationCenter.current().delegate = self
         return true
