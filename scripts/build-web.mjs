@@ -111,6 +111,8 @@ const excluded = new Set([
     const path = resolve(root, 'icons/banners/fufi-supervuelo-v1', name);
     return await stat(path).then(() => path, () => null);
   })).then(paths => paths.filter(Boolean)),
+  // José Enrique ships only the playback video and its static fallback.
+  ...['jose-enrique-ojos-v1.gif', 'poster-glow.jpg', 'preview.html'].map(name => resolve(root, 'icons/banners/jose-enrique-ojos-v1', name)),
   ...await findUnreferencedNumberedCopies([resolve(root, "icons"), resolve(root, "vendor")], references),
   ...await findSupersededCardArtwork(root, references)
 ]);

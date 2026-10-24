@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v398";
+const CACHE_NAME = "big-boy-rules-v399";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -63,7 +63,7 @@ const APP_SHELL = [
   "./onboarding.css?v=20261016-improvements-319",
   "./admin-grants.js?v=20261018-password-335",
   "./admin-grants.css?v=20261009-213",
-  "./banner-shop.js?v=20261024-countdown-398",
+  "./banner-shop.js?v=20261024-jose-banner-399",
   "./banner-shop.css?v=20261024-store-397",
   "./collection-social.js?v=20261022-pwa-shell-376",
   "./collection-social.css?v=20261022-trade-art-377",
