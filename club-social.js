@@ -1,7 +1,7 @@
 /* Shared social season and a member's three chosen cards. Rewards and ownership stay server-owned. */
 (() => {
  'use strict';
- let cfg, epoch=0, goalCache=null,goalRequest=null,showcaseRequests=new Map(),picker=null;
+ let cfg, epoch=0, goalCache=null,goalRequest=null,showcaseRequests=new Map(),picker=null,missionsDialog=null,missionsTrigger=null,missionsObserver=null,missionsRoom=null;
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const user=()=>cfg?.getUser?.()?.id;
  const catalog=()=>globalThis.CardCollection?.catalog||[];
@@ -45,14 +45,47 @@
  function renderGoal(node,data){
   const end=new Date(data.ends_at).toLocaleDateString('es-ES',{day:'numeric',month:'short',timeZone:'Europe/Madrid'});
   node.innerHTML=`<header><span>Objetivo del club</span><small>Hasta el ${esc(end)}</small></header><h3>${esc(data.theme)}</h3><p>Completadlo entre todos. Cada participante recibe ${Number(data.reward_packs)} sobres.</p><div class="club-social-progress">${[['plans','plan_target','Planes con dos llegadas'],['memories','memory_target','Recuerdos de planes'],['trades','trade_target','Parejas que intercambian']].map(([key,target,label])=>`<div><span>${label}</span><strong>${Number(data[key])} / ${Number(data[target])}</strong><progress max="${Number(data[target])}" value="${Math.min(Number(data[key]),Number(data[target]))}" aria-label="${label}"></progress></div>`).join('')}</div><small>Cuenta un recuerdo por persona y plan, y un intercambio por pareja este mes.</small><button type="button" data-social-claim ${!data.complete||!data.contributed||data.claimed?'disabled':''}>${data.claimed?'Recompensa recogida':data.complete&&!data.contributed?'Participa para recoger tus sobres':data.complete?'Recoger los 3 sobres':'3 sobres al completar el objetivo'}</button><p role="status" class="social-goal-feedback"></p>`;
-  node.querySelector('[data-social-claim]').onclick=async e=>{e.target.disabled=true;try{const result=await rpc('claim_club_social_season');goalCache=null;await cfg.refreshPacks?.();await refreshGoal(true);if(result.awarded)node.querySelector('.social-goal-feedback').textContent='Tus 3 sobres ya están disponibles.';}catch(error){node.querySelector('.social-goal-feedback').textContent=friendly(error);e.target.disabled=false;}};
+  node.querySelector('[data-social-claim]').onclick=async e=>{const version=epoch;e.target.disabled=true;try{const result=await rpc('claim_club_social_season');if(version!==epoch)return;goalCache=null;await cfg.refreshPacks?.();await refreshGoal(true);if(version===epoch&&node.isConnected&&result.awarded)node.querySelector('.social-goal-feedback').textContent='Tus 3 sobres ya están disponibles.';}catch(error){if(version===epoch&&node.isConnected){node.querySelector('.social-goal-feedback').textContent=friendly(error);e.target.disabled=false;}}};
  }
  async function refreshGoal(force=false){
   const nodes=[...document.querySelectorAll('[data-club-social-goal]')];if(!nodes.length||!user())return;const version=epoch;
   try{if(force||!goalCache||Date.now()-goalCache.at>60000){if(!goalRequest)goalRequest=rpc('get_club_social_season').then(data=>{if(version===epoch)goalCache={data,at:Date.now()};}).finally(()=>goalRequest=null);await goalRequest;}if(version!==epoch||!goalCache)return;nodes.filter(n=>n.isConnected).forEach(n=>renderGoal(n,goalCache.data));}catch(e){if(version===epoch)nodes.forEach(n=>n.innerHTML=`<p role="status">${esc(friendly(e))}</p><button type="button" data-goal-retry>Volver a cargar</button>`);nodes.forEach(n=>n.querySelector('[data-goal-retry]')?.addEventListener('click',()=>void refreshGoal(true)));}
  }
- function mountGoal(host){if(!host||!user())return;let node=host.querySelector('[data-club-social-goal]');if(!node){node=document.createElement('section');node.className='club-social-season';node.setAttribute('data-club-social-goal','');host.append(node);}void refreshGoal();}
- document.addEventListener('click',e=>{const b=e.target.closest('[data-vitrine-open]');if(b)globalThis.CardCollection?.open(b.dataset.vitrineOpen,b);});
+ function closeMissions(restoreFocus=true){
+  const dialog=missionsDialog,trigger=missionsTrigger;
+  missionsDialog=null;missionsTrigger=null;missionsRoom=null;missionsObserver?.disconnect();missionsObserver=null;
+  trigger?.setAttribute('aria-expanded','false');
+  if(dialog){if(dialog.open)dialog.close();dialog.remove();}
+  if(restoreFocus&&trigger?.isConnected)trigger.focus({preventScroll:true});
+ }
+ function openMissions(trigger){
+  if(!user())return;
+  if(missionsDialog?.open){missionsDialog.querySelector('[data-missions-close]')?.focus();return;}
+  closeMissions(false);
+  const room=trigger.closest('.clubhouse-room');if(!room)return;
+  const dialog=document.createElement('dialog');missionsDialog=dialog;missionsTrigger=trigger;missionsRoom=room;
+  dialog.className='club-missions-dialog';dialog.setAttribute('aria-labelledby','clubMissionsTitle');
+  dialog.innerHTML='<div class="club-missions-shell"><header class="club-missions-heading"><div><span>La sede del club</span><h2 id="clubMissionsTitle">Misiones</h2></div><button type="button" data-missions-close>Cerrar</button></header><section class="club-social-season" data-club-social-goal aria-label="Progreso de las misiones"><p role="status">Consultando las misiones…</p></section></div>';
+  document.body.append(dialog);trigger.setAttribute('aria-expanded','true');dialog.showModal();
+  dialog.querySelector('[data-missions-close]').addEventListener('click',()=>closeMissions());
+  dialog.addEventListener('close',()=>{if(missionsDialog===dialog)closeMissions();});
+  dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const rect=dialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closeMissions();});
+  // A room rerender removes its trigger; never leave that room's modal in the top layer.
+  missionsObserver=new MutationObserver(()=>{if(!room.isConnected)closeMissions(false);});
+  missionsObserver.observe(room.parentElement,{childList:true});
+  void refreshGoal();
+ }
+ function mountGoal(host){
+  if(!host||!user())return;
+  const room=host.querySelector('.clubhouse-room');
+  if(missionsDialog&&(!missionsRoom?.isConnected||missionsRoom!==room))closeMissions(false);
+  host.querySelectorAll(':scope > .club-social-season[data-club-social-goal]').forEach(node=>node.remove());
+  if(!room||room.querySelector('[data-club-missions-open]'))return;
+  const button=document.createElement('button');button.type='button';button.className='club-missions-entry';button.setAttribute('data-club-missions-open','');button.setAttribute('aria-label','Misiones del club');button.setAttribute('title','Misiones del club');button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');
+  button.innerHTML='<svg viewBox="0 0 24 26" aria-hidden="true"><path d="M8 4H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><rect x="8" y="2" width="8" height="5" rx="1.5"/><path d="m7 12 1.5 1.5L11 11m3 2h3M7 18h3m4 0h3"/></svg>';
+  room.append(button);
+ }
+ document.addEventListener('click',e=>{const mission=e.target.closest('[data-club-missions-open]');if(mission){openMissions(mission);return;}const b=e.target.closest('[data-vitrine-open]');if(b)globalThis.CardCollection?.open(b.dataset.vitrineOpen,b);});
  document.addEventListener('collection-social-change',()=>{goalCache=null;showcaseRequests.clear();});
- globalThis.ClubSocial={init(options){cfg=options;},mountProfile,mountGoal,refreshGoal,reset(){epoch++;goalCache=null;goalRequest=null;showcaseRequests.clear();picker?.close();}};
+ globalThis.ClubSocial={init(options){cfg=options;},mountProfile,mountGoal,refreshGoal,reset(){epoch++;goalCache=null;goalRequest=null;showcaseRequests.clear();picker?.close();closeMissions(false);}};
 })();
