@@ -29,3 +29,5 @@
 .club-missions-dialog .social-goal-feedback:empty{display:none}
 .club-missions-dialog button:focus-visible{outline:2px solid #e9c77e;outline-offset:3px}
 @media(max-width:420px){.club-missions-shell{padding:16px}.club-missions-dialog .club-social-progress{gap:20px}}
+
+.club-missions-dialog .club-weekly-challenge{margin:0;padding:22px 0;border-top:0;border-bottom:1px solid #303234}.club-missions-dialog .club-weekly-heading>span{font-size:12px;letter-spacing:0;color:#cbc4b4}.club-missions-dialog .club-weekly-challenge h3{font-size:21px}.club-missions-dialog .club-weekly-progress{flex-wrap:wrap;gap:10px}.club-missions-dialog .club-weekly-progress span{width:100%;font-size:12px}.club-missions-dialog .club-weekly-challenge button{min-height:44px}.club-missions-dialog .club-weekly-ranking{margin-bottom:0}

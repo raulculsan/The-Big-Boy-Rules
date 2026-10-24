@@ -2,11 +2,11 @@
 (() => {
   'use strict';
   const games = {
-    football: {name:'Toques en la sede',item:'Pelota',art:'football-v2.png',help:'Mantén el balón en el aire: toca a un lado para corregir su dirección. El viento y la velocidad aumentan. Tienes 30 segundos.'},
+    football: {name:'Toques en la sede',item:'Pelota',art:'football-v2.png',help:'Toca el balón para mantenerlo en el aire. El lado que toques cambia su dirección. Suma todos los toques que puedas en 30 segundos.'},
     skateboard: {name:'Salta con El Chota',item:'Skate',art:'skateboard-v2.png',help:'Toca la pista para saltar las cajas. Cada caja superada suma un punto. Tienes 30 segundos.'},
-    'robot-vacuum': {name:'La última miga',item:'Roomba',art:'robot-vacuum-v2.png',help:'Guía la roomba entre los muebles y esquiva la bola de polvo: te frena. Su velocidad es limitada, así que anticipa la ruta. Recoge 30 migas en 30 segundos.'}
+    'robot-vacuum': {name:'La última miga',item:'Roomba',art:'robot-vacuum-v2.png',help:'Arrastra para guiar la roomba. Esquiva los muebles y la bola de polvo, que te frena. Recoge 30 migas en 30 segundos.'}
   };
-  let config = {}, dialog = null, round = null, frame = 0, root = null, previousFocus = null, serial = 0;
+  let config = {}, dialog = null, round = null, frame = 0, root = null, previousFocus = null, serial = 0, holdTimer = 0;
   const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const user = () => String(config.session?.() || 'guest');
   const key = () => `bb:chota-games:v1:${user()}`;
@@ -25,13 +25,13 @@
     root.innerHTML='<button type="button" data-chota-arcade aria-label="Juegos de El Chota" title="Juegos de El Chota"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M8 6h12c3 0 4 3 5 9s-2 7-5 3l-2-2h-8l-2 2c-3 4-6 3-5-3S5 6 8 6Z"/><path d="M8 9v6m-3-3h6"/><circle cx="19" cy="10" r="1"/><circle cx="22" cy="13" r="1"/></svg></button>';
     root.querySelector('button').addEventListener('click',open);
   }
-  function stop(){cancelAnimationFrame(frame);frame=0;round=null;}
+  function stop(){cancelAnimationFrame(frame);clearTimeout(holdTimer);holdTimer=0;frame=0;round=null;}
   function close(){serial++;stop();if(dialog){dialog.close();dialog.remove();dialog=null;}previousFocus?.focus?.({preventScroll:true});}
   async function open(){
     if(dialog)return;
     previousFocus=document.activeElement;
     dialog=document.createElement('dialog');dialog.className='chota-arcade';dialog.setAttribute('aria-label','Minijuegos de El Chota');
-    dialog.innerHTML='<div class="chota-arcade-shell"><header><span>La sede · El Chota</span><button type="button" data-arcade-close aria-label="Cerrar minijuegos">Cerrar</button></header><div data-arcade-body aria-live="polite"><p>Cargando sus objetos…</p></div></div>';
+    dialog.innerHTML='<div class="chota-arcade-shell"><header><h2>Juegos</h2><button type="button" data-arcade-close aria-label="Cerrar minijuegos">Cerrar</button></header><div data-arcade-body aria-live="polite"><p>Cargando sus objetos…</p></div></div>';
     document.body.append(dialog);dialog.showModal();
     dialog.querySelector('[data-arcade-close]').addEventListener('click',close);
     dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
@@ -45,15 +45,29 @@
     try{inventory=await owned();}catch{inventory=new Set();}
     if(token!==serial||actor!==user()||!dialog)return;
     const best=scores();
-    body().innerHTML=`<div class="chota-arcade-intro"><h2>¿Una partida?</h2><p>Los objetos de su habitación también se juegan.</p></div><section class="club-weekly-challenge" data-weekly-challenge aria-live="polite"><p>Cargando reto de la semana…</p></section><div class="chota-arcade-games">${Object.entries(games).map(([id,g])=>`<button class="chota-arcade-game" type="button" data-game="${id}" ${inventory.has(id)?'':'data-locked="true"'}><img src="icons/clubhouse/props/${g.art}" alt="" draggable="false"><span><strong>${g.name}</strong><small>${inventory.has(id)?`Tu marca: ${Number(best[id])||0} · 30 s`:`Consigue ${g.item.toLowerCase()} en la tienda`}</small></span><b>${inventory.has(id)?'Jugar':'Tienda'}</b></button>`).join('')}</div><p class="chota-arcade-footnote">Completa una partida de cada juego para ganar 1 sobre al día por juego. Hasta 3 sobres diarios, sin gastar monedas.</p>`;
-    void weeklyChallenge(body().querySelector('[data-weekly-challenge]'));
-    body().querySelectorAll('[data-game]').forEach(button=>button.addEventListener('click',()=>{
-      if(button.dataset.locked){if(config.openShop){close();config.openShop();}else{body().querySelector('.chota-arcade-footnote').textContent='Encontrarás sus objetos en Tienda → El Chota.';}return;}
-      briefing(button.dataset.game);
-    }));
+    body().innerHTML=`<div class="chota-arcade-games">${Object.entries(games).map(([id,g])=>`<button class="chota-arcade-game" type="button" data-game="${id}" aria-describedby="chotaGameHelpHint" ${inventory.has(id)?'':'data-locked="true"'}><img src="icons/clubhouse/props/${g.art}" alt="" draggable="false"><span><strong>${g.name}</strong><small>${inventory.has(id)?`Récord ${Number(best[id])||0} · 30 s`:`Necesitas ${g.item.toLowerCase()}`}</small></span><b>${inventory.has(id)?'Jugar':'Tienda'}</b></button>`).join('')}</div><div class="chota-arcade-menu-note"><p>1 sobre por juego al día</p><p id="chotaGameHelpHint">Mantén pulsado un juego para ver cómo jugar.</p></div>`;
+    body().querySelectorAll('[data-game]').forEach(button=>{
+      let press=null,suppressUntil=0;
+      const clearHold=()=>{clearTimeout(holdTimer);holdTimer=0;press=null;button.classList.remove('is-holding');};
+      const explain=()=>{clearHold();suppressUntil=performance.now()+900;briefing(button.dataset.game,button.dataset.locked==='true');};
+      button.addEventListener('pointerdown',event=>{
+        if(event.button!==0||!event.isPrimary)return;
+        clearHold();press={x:event.clientX,y:event.clientY};button.classList.add('is-holding');
+        holdTimer=setTimeout(explain,450);
+      });
+      button.addEventListener('pointermove',event=>{if(press&&Math.hypot(event.clientX-press.x,event.clientY-press.y)>10)clearHold();});
+      ['pointerup','pointercancel','pointerleave','lostpointercapture'].forEach(type=>button.addEventListener(type,clearHold));
+      button.addEventListener('contextmenu',event=>{event.preventDefault();if(performance.now()>=suppressUntil)explain();});
+      button.addEventListener('keydown',event=>{if(event.key==='ContextMenu'||event.shiftKey&&event.key==='F10'){event.preventDefault();explain();}});
+      button.addEventListener('click',event=>{
+        clearHold();if(performance.now()<suppressUntil){event.preventDefault();return;}
+        if(button.dataset.locked){if(config.openShop){close();config.openShop();}return;}
+        start(button.dataset.game);
+      });
+    });
   }
   async function weeklyChallenge(node){
-    if(!node||!config.rpc)return;const actor=user();
+    if(!node)return;if(!config.rpc){node.innerHTML='<p>El reto semanal no está disponible ahora.</p>';return;}const actor=user();
     try{const {data,error}=await config.rpc('get_chota_weekly_challenge');if(error)throw error;if(!node.isConnected||actor!==user())return;
       const game=games[data.game];
       node.innerHTML=`<div class="club-weekly-heading"><span>RETO DE LA SEMANA</span><small>Hasta ${new Date(data.ends_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</small></div><h3>${esc(game?.name||'El reto del club')}</h3><p>Consigue ${Number(data.target)} puntos. Cuando ${Number(data.club_goal)} miembros lo consigan, cada participante que supere el reto recibe ${Number(data.club_reward_packs)} sobres.</p><div class="club-weekly-progress"><progress value="${Math.min(Number(data.participants)||0,Number(data.club_goal)||3)}" max="${Number(data.club_goal)||3}"></progress><span>${Number(data.participants)||0}/${Number(data.club_goal)||3} miembros · Tu marca: ${Number(data.my_best)||0}</span></div><ol class="club-weekly-ranking">${(data.leaderboard||[]).slice(0,10).map((r,i)=>`<li><span>${i+1}. ${esc(r.name||'Miembro')}</span><strong>${Number(r.score)||0}</strong></li>`).join('')||'<li>Aún no hay marcas esta semana.</li>'}</ol>${data.reward_claimed?'<p>Recompensa recibida</p>':data.club_complete&&Number(data.my_best)>=Number(data.target)?'<button type="button" data-weekly-claim>Recoger sobres</button>':'<p>Las partidas guardadas cuentan automáticamente para este reto.</p>'}`;
@@ -61,11 +75,12 @@
     }catch{if(node.isConnected)node.innerHTML='<p>El reto semanal no está disponible. Puedes seguir jugando y guardar tus marcas.</p>';}
   }
   const body=()=>dialog?.querySelector('[data-arcade-body]');
-  function briefing(id){
-    const g=games[id];
-    body().innerHTML=`<section class="chota-arcade-brief"><img src="icons/clubhouse/props/${g.art}" alt="" draggable="false"><h2>${g.name}</h2><p>${g.help}</p><p>Termina una partida de al menos 12 segundos para ganar 1 sobre por juego al día. No necesitas ganar.</p><button type="button" data-start>Empezar</button><button type="button" class="chota-arcade-secondary" data-menu>Volver a los juegos</button></section>`;
-    body().querySelector('[data-start]').addEventListener('click',()=>start(id));
+  function briefing(id,locked=false){
+    clearTimeout(holdTimer);holdTimer=0;const g=games[id];
+    body().innerHTML=`<section class="chota-arcade-brief"><img src="icons/clubhouse/props/${g.art}" alt="" draggable="false"><h2 tabindex="-1">${g.name}</h2><p>${g.help}</p>${locked?'<p>Consigue este objeto en la tienda para jugar.</p>':'<button type="button" data-start>Jugar</button>'}<button type="button" class="chota-arcade-secondary" data-menu>Volver a los juegos</button></section>`;
+    body().querySelector('[data-start]')?.addEventListener('click',()=>start(id));
     body().querySelector('[data-menu]').addEventListener('click',menu);
+    body().querySelector('h2').focus({preventScroll:true});
   }
   function start(id){
     stop();const token=++serial;
@@ -209,7 +224,7 @@
     const score=r.score,token=r.token,actor=r.actor,game=r.id;stop();
     const best=save(game,score);
     body().innerHTML=`<section class="chota-arcade-result"><p>${game==='robot-vacuum'&&score===30?'Alfombra impecable':'Fin de la partida'}</p><h2>${score}<small>${game==='robot-vacuum'?'migas':game==='football'?'toques':'saltos'}</small></h2><p>Tu mejor marca: <strong>${best}</strong></p><p data-reward>Comprobando recompensa diaria…</p><button type="button" class="chota-arcade-secondary" data-retry-save hidden>Reintentar guardado</button><div class="chota-arcade-results-actions"><button type="button" data-again>Otra partida</button><button type="button" class="chota-arcade-secondary" data-menu>Ver juegos</button></div><div class="chota-arcade-ranking" data-ranking></div></section>`;
-    body().querySelector('[data-again]').addEventListener('click',()=>briefing(game));body().querySelector('[data-menu]').addEventListener('click',menu);
+    body().querySelector('[data-again]').addEventListener('click',()=>start(game));body().querySelector('[data-menu]').addEventListener('click',menu);
     const reward=body().querySelector('[data-reward]');
     if(!config.submitScore){reward.textContent='Completa una partida con conexión para ganar tu sobre diario.';return;}
     const ranking=body().querySelector('[data-ranking]');ranking.textContent='Cargando marcas del club…';
@@ -241,5 +256,5 @@
   }
   function initialize(options={}){config=options;}
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&round)finish(round);});
-  globalThis.ChotaGames=Object.freeze({initialize,mount,open,reset:close});
+  globalThis.ChotaGames=Object.freeze({initialize,mount,open,mountWeeklyChallenge:weeklyChallenge,reset:close});
 })();

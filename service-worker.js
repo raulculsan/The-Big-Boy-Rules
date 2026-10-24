@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v395";
+const CACHE_NAME = "big-boy-rules-v396";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -16,12 +16,12 @@ const APP_SHELL = [
   "./clubhouse.css?v=20261024-chota-idle-394",
   "./chota-shop.js?v=20261022-chota-contact-381",
   "./chota-shop.css?v=20261022-chota-contact-381",
-  "./club-social.js?v=20261024-social-395",
-  "./club-social.css?v=20261024-social-395",
+  "./club-social.js?v=20261024-missions-396",
+  "./club-social.css?v=20261024-missions-396",
   "./club-live.js?v=20261024-social-393",
   "./club-live.css?v=20261023-club-experiences-1",
-  "./chota-games.js?v=20261023-club-recaps-386",
-  "./chota-games.css?v=20261023-clubhouse-icons-383",
+  "./chota-games.js?v=20261024-fullscreen-396",
+  "./chota-games.css?v=20261024-fullscreen-396",
   "./club-experiences.css?v=20261023-club-recaps-386",
   "./plan-widget.js?v=20261024-social-393",
   "./icons/clubhouse/club-room-v1.webp",
@@ -64,7 +64,7 @@ const APP_SHELL = [
   "./admin-grants.js?v=20261018-password-335",
   "./admin-grants.css?v=20261009-213",
   "./banner-shop.js?v=20261024-fufi-flight-389",
-  "./banner-shop.css?v=20261024-fufi-fill-390",
+  "./banner-shop.css?v=20261024-fullscreen-396",
   "./collection-social.js?v=20261022-pwa-shell-376",
   "./collection-social.css?v=20261022-trade-art-377",
   "./pending-actions.js?v=20261016-release-322",
