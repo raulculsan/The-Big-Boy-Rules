@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v392";
+const CACHE_NAME = "big-boy-rules-v393";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -16,12 +16,14 @@ const APP_SHELL = [
   "./clubhouse.css?v=20261024-seasonal-room-392",
   "./chota-shop.js?v=20261022-chota-contact-381",
   "./chota-shop.css?v=20261022-chota-contact-381",
-  "./club-live.js?v=20261023-club-recaps-386",
+  "./club-social.js?v=20261024-social-393",
+  "./club-social.css?v=20261024-social-393",
+  "./club-live.js?v=20261024-social-393",
   "./club-live.css?v=20261023-club-experiences-1",
   "./chota-games.js?v=20261023-club-recaps-386",
   "./chota-games.css?v=20261023-clubhouse-icons-383",
   "./club-experiences.css?v=20261023-club-recaps-386",
-  "./plan-widget.js?v=20261023-club-recaps-386",
+  "./plan-widget.js?v=20261024-social-393",
   "./icons/clubhouse/club-room-v1.webp",
   "./icons/clubhouse/decor-halloween-v1.svg",
   "./icons/clubhouse/decor-christmas-v1.svg",
@@ -52,7 +54,7 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20260903-130",
   "./admin-console.js?v=20261022-chota-shop-378",
   "./admin-console.css?v=20261021-compact-364",
-  "./app.js?v=20261024-seasonal-room-392",
+  "./app.js?v=20261024-social-393",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261023-album-pages-387",

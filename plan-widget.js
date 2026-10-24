@@ -9,7 +9,7 @@
     const endAt = plan?.endAt ? new Date(plan.endAt).getTime() : startAt + 4 * 3600000;
     const hasPlan = !!plan?.id && Number.isFinite(startAt) && Number.isFinite(endAt) && endAt > startAt;
     lastPlan = hasPlan ? plan : null;
-    const data = { id: hasPlan ? String(plan.id) : '', title: hasPlan ? String(plan.title || 'Próximo plan').slice(0, 100) : 'La sede te espera', startAt: hasPlan ? startAt : 0, endAt: hasPlan ? endAt : 0, hasPlan, packCount };
+    const data = { id: hasPlan ? String(plan.id) : '', title: hasPlan ? String(plan.title || 'Próximo plan').slice(0, 100) : 'La sede te espera', startAt: hasPlan ? startAt : 0, endAt: hasPlan ? endAt : 0, hasPlan, packCount, location: hasPlan ? String(plan.location || '').slice(0, 120) : '' };
     const key = JSON.stringify(data);
     if (signature === key || !plugin()) return;
     try { await plugin().sync(data); signature = key; } catch (_) { /* optional native surface */ }

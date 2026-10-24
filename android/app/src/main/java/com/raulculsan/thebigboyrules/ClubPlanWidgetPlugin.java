@@ -30,6 +30,7 @@ public class ClubPlanWidgetPlugin extends Plugin {
         }
         getContext().getSharedPreferences(ClubPlanWidgetProvider.PREFS, 0).edit()
             .putString("id", id).putString("title", title.substring(0, Math.min(100, title.length())))
+            .putString("location", call.getString("location", "").substring(0, Math.min(120, call.getString("location", "").length())))
             .putLong("start", start.longValue()).putLong("end", end.longValue())
             .putInt("packs", Math.max(0, Math.min(999999, call.getInt("packCount", 0)))).apply();
         ClubPlanWidgetProvider.refresh(getContext());

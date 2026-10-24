@@ -7,6 +7,7 @@ struct ClubPlanAttributes: ActivityAttributes {
         var title: String
         var start: Date
         var end: Date
+        var location: String = ""
     }
     var eventID: String
 }

@@ -10,6 +10,7 @@ struct PlanEntry: TimelineEntry {
     var start: Date?
     var end: Date?
     var packCount = 0
+    var location = ""
     var active: Bool { if let start, let end { return date >= start && date < end }; return false }
     var link: URL { var parts = URLComponents(string: "bigboyrules://plan")!; parts.queryItems = [URLQueryItem(name: "id", value: id)]; return parts.url! }
 }
@@ -20,7 +21,7 @@ struct PlanProvider: TimelineProvider {
         let entry = read()
         var entries = [entry]
         if let start = entry.start, start > entry.date {
-            var live = entry; live = PlanEntry(date: start, id: live.id, title: live.title, start: live.start, end: live.end, packCount: live.packCount); entries.append(live)
+            var live = entry; live = PlanEntry(date: start, id: live.id, title: live.title, start: live.start, end: live.end, packCount: live.packCount, location: live.location); entries.append(live)
         }
         if let end = entry.end, end > entry.date { entries.append(PlanEntry(date: end, packCount: entry.packCount)) }
         completion(Timeline(entries: entries, policy: .after(Date().addingTimeInterval(1800))))
@@ -32,7 +33,7 @@ struct PlanProvider: TimelineProvider {
         guard let plan = defaults?.dictionary(forKey: "nextPlan"),
               let title = plan["title"] as? String, let start = plan["startAt"] as? Double,
               let end = plan["endAt"] as? Double, end > now.timeIntervalSince1970 else { return PlanEntry(date: now, packCount: packs) }
-        return PlanEntry(date: now, id: plan["id"] as? String ?? "", title: title, start: Date(timeIntervalSince1970: start), end: Date(timeIntervalSince1970: end), packCount: packs)
+        return PlanEntry(date: now, id: plan["id"] as? String ?? "", title: title, start: Date(timeIntervalSince1970: start), end: Date(timeIntervalSince1970: end), packCount: packs, location: plan["location"] as? String ?? "")
     }
 }
 struct PlanWidgetView: View {
@@ -43,6 +44,7 @@ struct PlanWidgetView: View {
             VStack(alignment: .leading, spacing: 7) {
                 Text(entry.active ? "AHORA · EL CLUB" : "EL CHOTA · PRÓXIMO PLAN")
                     .font(.system(size: 9, weight: .heavy, design: .rounded)).tracking(1).foregroundStyle(accent)
+                if !entry.location.isEmpty { Text(entry.location).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }
                 Text(entry.title).font(.system(size: family == .systemSmall ? 17 : 21, weight: .bold, design: .rounded)).lineLimit(2).foregroundStyle(.white)
                 if let start = entry.start {
                     if entry.active { Label("Plan en directo", systemImage: "circle.fill").font(.caption2).foregroundStyle(.green) }
@@ -78,6 +80,7 @@ struct ClubPlanLiveWidget: Widget {
                 VStack(alignment: .leading, spacing: 5) {
                     Text("EL CLUB · EN DIRECTO").font(.caption2.bold()).foregroundStyle(accent)
                     Text(context.state.title).font(.headline).lineLimit(2)
+                    if !context.state.location.isEmpty { Text(context.state.location).font(.caption).lineLimit(1).foregroundStyle(.secondary) }
                     Text(context.state.start, style: .time).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()

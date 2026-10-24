@@ -46,8 +46,9 @@ final class ClubPlanWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
         let start = Date(timeIntervalSince1970: startMS / 1000)
         let end = Date(timeIntervalSince1970: endMS / 1000)
         let safeTitle = String(title.prefix(100))
+        let place = String((call.getString("location") ?? "").prefix(120))
         if id.isEmpty { defaults?.removeObject(forKey: "nextPlan") }
-        else { defaults?.set(["id": id, "title": safeTitle, "startAt": startMS / 1000, "endAt": endMS / 1000], forKey: "nextPlan") }
+        else { defaults?.set(["id": id, "title": safeTitle, "location": place, "startAt": startMS / 1000, "endAt": endMS / 1000], forKey: "nextPlan") }
         WidgetCenter.shared.reloadTimelines(ofKind: "ClubNextPlan")
         if #available(iOS 16.2, *) {
             Task { @MainActor in
@@ -58,7 +59,7 @@ final class ClubPlanWidgetPlugin: CAPPlugin, CAPBridgedPlugin {
                     }
                 }
                 if now >= start && now < end && ActivityAuthorizationInfo().areActivitiesEnabled {
-                    let state = ClubPlanAttributes.ContentState(title: safeTitle, start: start, end: end)
+                    let state = ClubPlanAttributes.ContentState(title: safeTitle, start: start, end: end, location: place)
                     let content = ActivityContent(state: state, staleDate: end)
                     if let activity = Activity<ClubPlanAttributes>.activities.first(where: { $0.attributes.eventID == id }) {
                         await activity.update(content)

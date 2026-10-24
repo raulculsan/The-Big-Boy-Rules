@@ -1465,6 +1465,7 @@ function renderProfile(memberId, navigate = true) {
     document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
   }
   globalThis.BannerShop?.mountProfile(document.querySelector("#profileContent .club-profile"), member.authId, isOwnProfile);
+  globalThis.ClubSocial?.mountProfile(document.getElementById("profileContent"), member.authId, isOwnProfile);
   if (navigate) goTo("perfil");
 }
 
@@ -3512,6 +3513,7 @@ function renderUpcomingEvents() {
   const context = chotaRoomContext();
   tigretonRenderedKey = tigretonContextKey(context.event, context.date);
   renderClubhouse(upcoming);
+  globalThis.ClubSocial?.mountGoal(document.querySelector(".clubhouse-room")?.parentElement);
   globalThis.PlanWidget?.sync({
     id: upcoming[0]?.event ? String(upcoming[0].event.id) : "", title: upcoming[0]?.event.title || "",
     startAt: upcoming[0]?.date?.toISOString() || null, endAt: upcoming[0]?.event.endsAt || null,
@@ -3916,6 +3918,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ChotaShop?.reset();
     globalThis.ChotaGames?.reset();
     globalThis.ClubLive?.reset();
+    globalThis.ClubSocial?.reset();
     globalThis.ClubSeasons?.reset();
     globalThis.PlanWidget?.clear();
     globalThis.AdminGrants?.reset();
@@ -4008,6 +4011,7 @@ function showLogin() {
   globalThis.ChotaShop?.reset();
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
+    globalThis.ClubSocial?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
@@ -4045,6 +4049,7 @@ async function logoutCurrentUser() {
   globalThis.ChotaShop?.reset();
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
+    globalThis.ClubSocial?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
@@ -7563,6 +7568,8 @@ globalThis.ChotaGames?.initialize({
     return data;
   },
 });
+
+globalThis.ClubSocial?.init({db, getUser: () => currentAuthUser, refreshPacks: () => globalThis.DailyPacks?.refresh(true)});
 
 globalThis.ClubLive?.init({
   db,

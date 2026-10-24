@@ -33,6 +33,8 @@ public class ClubPlanWidgetProvider extends AppWidgetProvider {
             String countdown = active ? "Plan en directo" : hours >= 24 ? "En " + (hours / 24) + " días" : hours > 0 ? "En " + hours + " h" : "En menos de una hora";
             detail = countdown + " · " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, new Locale("es", "ES")).format(new Date(start));
         }
+        String place = data.getString("location", "");
+        if (hasPlan && !place.isEmpty()) detail += " · " + place;
         view.setTextViewText(R.id.widget_detail, detail);
         int packs = Math.max(0, data.getInt("packs", 0));
         view.setTextViewText(R.id.widget_packs, packs == 1 ? "1 sobre disponible" : packs + " sobres disponibles");
