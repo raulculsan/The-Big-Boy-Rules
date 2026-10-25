@@ -35,7 +35,9 @@ globalThis.bindTabNavigation = function bindTabNavigation(links, {navigate, open
     link.addEventListener('pointermove', event => {
       if (press?.link !== link || press.id !== event.pointerId) return;
       const dx=event.clientX-press.x,dy=event.clientY-press.y;
-      if(Math.abs(dy)>14&&Math.abs(dy)>Math.abs(dx)){clearPress();return;}
+      // Once horizontal intent is established, reversals near the starting X
+      // must not let ordinary vertical finger drift cancel the captured drag.
+      if(!press.dragging&&Math.abs(dy)>14&&Math.abs(dy)>Math.abs(dx)){clearPress();return;}
       if(press.held)return;
       if(!press.bar||!press.bounds?.[0]?.width){if(Math.hypot(dx,dy)>12)clearPress();return;}
       if(!press.dragging&&Math.abs(dx)<8)return;
@@ -69,6 +71,7 @@ globalThis.bindTabNavigation = function bindTabNavigation(links, {navigate, open
     if (link.dataset.section === 'perfil') {
       link.addEventListener('contextmenu', event => {
         event.preventDefault();
+        if(press?.link===link&&press.dragging)return;
         clearPress();
         consumedClicks.add(link);
         openProfileMenu();

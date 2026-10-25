@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v410";
+const CACHE_NAME = "big-boy-rules-v411";
 const APP_SHELL = [
   "./ui-motion.js?v=20261025-liquid-glass-408",
   "./ui-motion.css?v=20261026-glass-lens-410",
@@ -53,7 +53,7 @@ const APP_SHELL = [
   "./vendor/capacitor.js?v=8.5.0",
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
-  "./tab-navigation.js?v=20261025-liquid-glass-408",
+  "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261022-chota-shop-378",
   "./admin-console.css?v=20261021-compact-364",
   "./app.js?v=20261025-liquid-glass-408",
