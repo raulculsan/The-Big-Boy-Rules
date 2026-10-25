@@ -55,8 +55,9 @@
   const dialog=missionsDialog,trigger=missionsTrigger;
   missionsDialog=null;missionsTrigger=null;missionsRoom=null;missionsObserver?.disconnect();missionsObserver=null;
   trigger?.setAttribute('aria-expanded','false');
-  if(dialog){if(dialog.open)dialog.close();dialog.remove();}
-  if(restoreFocus&&trigger?.isConnected)trigger.focus({preventScroll:true});
+  const finish=()=>{dialog?.remove();if(restoreFocus&&trigger?.isConnected&&!document.querySelector('dialog[open]'))trigger.focus({preventScroll:true});};
+  if(dialog&&restoreFocus&&globalThis.ClubMotion?.closeDialog)void globalThis.ClubMotion.closeDialog(dialog,finish);
+  else {if(dialog?.open)dialog.close();finish();}
  }
  function openMissions(trigger){
   if(!user())return;
@@ -68,6 +69,7 @@
   dialog.innerHTML='<div class="club-missions-shell"><header class="club-missions-heading"><div><span>La sede del club</span><h2 id="clubMissionsTitle">Misiones</h2></div><button type="button" data-missions-close>Cerrar</button></header><section class="club-weekly-challenge" data-club-weekly-mission aria-label="Reto de la semana" aria-live="polite"><p>Cargando reto de la semana…</p></section><section class="club-social-season" data-club-social-goal aria-label="Progreso de las misiones"><p role="status">Consultando las misiones…</p></section></div>';
   document.body.append(dialog);trigger.setAttribute('aria-expanded','true');dialog.showModal();
   dialog.querySelector('[data-missions-close]').addEventListener('click',()=>closeMissions());
+  dialog.addEventListener('cancel',event=>{event.preventDefault();closeMissions();});
   dialog.addEventListener('close',()=>{if(missionsDialog===dialog)closeMissions();});
   dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const rect=dialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closeMissions();});
   // A room rerender removes its trigger; never leave that room's modal in the top layer.

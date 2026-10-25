@@ -784,6 +784,9 @@ function goTo(sectionId) {
     link.setAttribute("aria-current", active ? "page" : "false");
   });
   updateFloatingTabIndicator(navigationSection);
+  if (switchingSection && !document.body.classList.contains("message-slide-transition") && !pageBackSettling && !activeChatMotionScene) {
+    globalThis.ClubMotion?.enterSection(document.getElementById(sectionId));
+  }
   document.body.classList.toggle("chat-focus", sectionId === "privados");
   document.body.classList.toggle("chat-inbox-view", sectionId === "chat");
   document.body.classList.toggle("achievement-management-open", ["admin-configuracion", "admin-diagnostico", "admin-cuentas", "admin-logros", "crear-logro", "asignar-logro", "editar-usuario"].includes(sectionId));
@@ -1874,8 +1877,9 @@ function releaseChatMenuFocus(menu, immediate = false) {
     focus.layer.remove();
     return;
   }
-  const fade = focus.layer.animate([{opacity: 1}, {opacity: 0}], {duration: 150, easing: "ease-out", fill: "forwards"});
-  fade.onfinish = () => focus.layer.remove();
+  const fade = globalThis.ClubMotion?.run(focus.layer,[{opacity: 1}, {opacity: 0}], {channel:"chat-focus",duration:160,cleanup:false})
+    || focus.layer.animate([{opacity: 1}, {opacity: 0}], {duration: 150, easing: "ease-out", fill: "forwards"});
+  fade.finished.catch(()=>{}).then(() => focus.layer.remove());
 }
 function focusChatMenuSource(menu, source) {
   releaseChatMenuFocus(menu, true);
@@ -1928,18 +1932,21 @@ function focusChatMenuSource(menu, source) {
   source.classList.add("chat-menu-source-hidden");
   chatMenuFocus.set(menu, {layer, source});
   if (!(globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)")).matches) {
-    layer.animate([{opacity: 0}, {opacity: 1}], {duration: 220, easing: "ease-out"});
-    preview.animate([
-      {transform: "scale(1)", left: `${rect.left}px`, top: `${rect.top}px`},
-      {transform: `scale(${scale})`, left: `${left}px`, top: `${top}px`}
-    ], {duration: 300, easing: "cubic-bezier(.2,.75,.25,1)"});
+    const run = globalThis.ClubMotion?.run || ((node,frames,options)=>node.animate(frames,options));
+    run(layer,[{opacity: 0}, {opacity: 1}], {channel:"chat-focus",duration:160,easing:"ease-out"});
+    // Keep layout fixed at the destination. Only the compositor follows the
+    // touched bubble, including when the keyboard changes the visible viewport.
+    run(preview,[
+      {transform: `translate3d(${rect.left-left}px,${rect.top-top}px,0) scale(1)`},
+      {transform: `translate3d(0,0,0) scale(${scale})`}
+    ], {channel:"chat-preview",duration:280,easing:"cubic-bezier(.2,.8,.2,1)"});
   }
 }
 function animateChatMenu(menu, opening) {
   if (!menu || (!opening && menu.hidden)) return;
   const previous = chatMenuMotion.get(menu);
   if (!opening && menu.classList.contains("is-closing")) return;
-  previous?.cancel();
+  if (!globalThis.ClubMotion?.run) previous?.cancel();
   if (!opening) releaseChatMenuFocus(menu);
   menu.classList.toggle("is-closing", !opening);
   menu.setAttribute("aria-hidden", String(!opening));
@@ -1953,22 +1960,23 @@ function animateChatMenu(menu, opening) {
     chatMenuMotion.delete(menu);
     return;
   }
-  const animation = menu.animate(opening ? [
-    {opacity: 0, transform: "translateY(-8px) scale(.84)"},
-    {opacity: 1, transform: "translateY(1px) scale(1.015)", offset: .76},
+  const frames = opening ? [
+    {opacity: 0, transform: "translateY(-6px) scale(.96)"},
     {opacity: 1, transform: "translateY(0) scale(1)"}
   ] : [
     {opacity: 1, transform: "translateY(0) scale(1)"},
-    {opacity: 0, transform: "translateY(-4px) scale(.94)"}
-  ], {duration: opening ? 300 : 150, easing: opening ? "cubic-bezier(.2,.75,.25,1)" : "ease-out", fill: "both"});
+    {opacity: 0, transform: "translateY(-4px) scale(.98)"}
+  ];
+  const options = {channel:"chat-menu",duration:opening?260:160,easing:"cubic-bezier(.2,.8,.2,1)",fill:"both",cleanup:false};
+  const animation = globalThis.ClubMotion?.run(menu,frames,options) || menu.animate(frames,options);
   chatMenuMotion.set(menu, animation);
-  animation.onfinish = () => {
+  animation.finished.catch(()=>{}).then(() => {
     if (chatMenuMotion.get(menu) !== animation) return;
     menu.hidden = !opening;
     menu.classList.remove("is-closing");
     chatMenuMotion.delete(menu);
     animation.cancel();
-  };
+  });
 }
 function positionChatMenu(menu, x, y) {
   const viewport = window.visualViewport;
@@ -6920,13 +6928,34 @@ document.addEventListener("pointerdown", event => {
   if (!page || event.clientX > Math.max(0, page.getBoundingClientRect().left) + 36) return;
   const back = pageBackAction(page);
   if (!back) return;
-  pageBackGesture = {page, back, id: event.pointerId, x: event.clientX, y: event.clientY, dx: 0, tracking: false};
+  pageBackGesture = {page, back, id:event.pointerId,x:event.clientX,y:event.clientY,dx:0,peak:0,velocity:0,samples:[{x:event.clientX,time:event.timeStamp??performance.now()}],frame:0,tracking:false};
 }, {passive: true});
+function samplePageBackGesture(gesture,event) {
+  const time=event.timeStamp??performance.now();
+  gesture.samples.push({x:event.clientX,time});
+  gesture.samples=gesture.samples.filter(sample=>time-sample.time<=90);
+  const first=gesture.samples[0],elapsed=time-first.time;
+  gesture.velocity=elapsed>0?(event.clientX-first.x)/elapsed:0;
+  gesture.dx=Math.max(0,event.clientX-gesture.x);
+  gesture.peak=Math.max(gesture.peak,gesture.dx);
+}
+function paintPageBackGesture(gesture) {
+  gesture.frame=0;
+  const transform=`translate3d(${Math.min(gesture.dx,innerWidth)}px,0,0)`;
+  gesture.page.style.transform=transform;
+  if(gesture.scene?.sourceHeader)gesture.scene.sourceHeader.style.transform=transform;
+}
 document.addEventListener("pointermove", event => {
   const gesture = pageBackGesture;
   if (!gesture || gesture.id !== event.pointerId) return;
+  samplePageBackGesture(gesture,event);
   const dx = event.clientX - gesture.x, dy = event.clientY - gesture.y;
   if (!gesture.page.classList.contains("active") || (!gesture.tracking && (dx < -12 || Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)))) {
+    if(gesture.frame)cancelAnimationFrame(gesture.frame);
+    if(gesture.tracking){
+      if(gesture.sourceTransform)gesture.page.style.transform=gesture.sourceTransform;else gesture.page.style.removeProperty("transform");
+      cleanupPageBackPreview(gesture);
+    }
     pageBackGesture = null;
     return;
   }
@@ -6937,31 +6966,34 @@ document.addEventListener("pointermove", event => {
     gesture.scene = preparePageBackPreview(gesture.page);
   }
   gesture.tracking = true;
-  gesture.dx = Math.max(0, dx);
   if (event.cancelable) event.preventDefault();
   try { gesture.page.setPointerCapture(event.pointerId); } catch { /* OS may cancel an edge gesture. */ }
-  const transform = `translate3d(${Math.min(gesture.dx, innerWidth)}px,0,0)`;
-  gesture.page.style.transform = transform;
-  if (gesture.scene?.sourceHeader) gesture.scene.sourceHeader.style.transform = transform;
+  if(!gesture.frame)gesture.frame=requestAnimationFrame(()=>{if(pageBackGesture===gesture)paintPageBackGesture(gesture);});
 }, {passive: false});
 async function finishPageBackGesture(event) {
   const gesture = pageBackGesture;
   if (!gesture || gesture.id !== event.pointerId) return;
+  samplePageBackGesture(gesture,event);
+  if(gesture.frame)cancelAnimationFrame(gesture.frame);
+  if(gesture.tracking)paintPageBackGesture(gesture);
   pageBackGesture = null;
   if (gesture.page.hasPointerCapture?.(gesture.id)) gesture.page.releasePointerCapture(gesture.id);
   if (!gesture.tracking) return;
   pageBackSettling = true;
   suppressPageBackClickUntil = Date.now() + 450;
-  const dx = Math.max(0, event.clientX - gesture.x);
-  const commit = event.type === "pointerup" && gesture.page.classList.contains("active") && dx >= Math.min(84, innerWidth * .22);
+  const dx=gesture.dx,reversed=gesture.peak-dx>=28;
+  const commit=event.type==="pointerup" && gesture.page.classList.contains("active") && !reversed
+    && (dx>=Math.min(84,innerWidth*.22) || dx>=32 && gesture.velocity>=.45);
   const reduced = (globalThis.ClubMotion?.media || matchMedia("(prefers-reduced-motion: reduce)")).matches;
   const animations = [];
   try {
     if (!reduced && gesture.page.animate) {
+      const distance=Math.abs((commit?innerWidth:0)-gesture.dx);
+      const duration=globalThis.ClubMotion?.settleDuration(distance,innerWidth,commit?gesture.velocity:-gesture.velocity) || (commit?180:150);
       for (const surface of [gesture.page, gesture.scene?.sourceHeader].filter(Boolean)) animations.push(surface.animate([
         {transform: `translate3d(${gesture.dx}px,0,0)`},
         {transform: `translate3d(${commit ? innerWidth : 0}px,0,0)`}
-      ], {duration: commit ? 180 : 150, easing: "cubic-bezier(.2,.7,.2,1)", fill: "both"}));
+      ], {duration,easing:globalThis.ClubMotion?.ease||"cubic-bezier(.2,.8,.2,1)",fill:"both"}));
       await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
     }
     // Keep the source offscreen and the live destination underneath until the

@@ -5,7 +5,7 @@
       id: 'jose-enrique-fernandez-cruz-vice-city', collection: 'los-nuestros-01',
       kind: 'Miembro', name: 'JOSE ENRIQUE FERNANDEZ CRUZ', edition: 'Vice City', rarity: 'vice_city', score: 98,
       front: 'icons/cards/jose-enrique-fernandez-cruz-vice-city-98-v2.png',
-      back: 'icons/cards/reverso-vice-city-unificado-v1.png',
+      back: 'icons/cards/reverso-vice-city-unificado-v1.jpg',
       width: 948, height: 1660
     }),
     Object.freeze({
@@ -624,13 +624,18 @@
     back.alt = backDescription(card);
     front.src = card.front; back.src = card.back;
     setFace(false);
-    if (!dialog.open) dialog.showModal();
+    if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(dialog);else if(!dialog.open)dialog.showModal();
     document.body.classList.add('collection-card-open');
     document.getElementById('collectionCardClose').focus({preventScroll:true});
     document.dispatchEvent(new CustomEvent('bb:card-explored', {detail:{cardId:card.id}}));
     detachMotion=globalThis.CollectionMotion?.attachCard(document.getElementById('collectionCardTilt'),document.getElementById('collectionCardFoil'),()=>setFace(!reversed),card.edition);
   }
-  function close() {if (dialog.open) dialog.close();globalThis.CollectionMotion?.close();}
+  function close() {
+    const finish=()=>globalThis.CollectionMotion?.close();
+    if(globalThis.ClubMotion?.closeDialog)void globalThis.ClubMotion.closeDialog(dialog,finish);
+    else {if(dialog.open)dialog.close();finish();}
+  }
+  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   dialog.addEventListener('close', () => {
     detachMotion?.();detachMotion=null;
     document.body.classList.remove('collection-card-open');

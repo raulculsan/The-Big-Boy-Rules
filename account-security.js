@@ -13,12 +13,12 @@
     dialog.className = 'account-security';
     dialog.setAttribute('aria-labelledby', 'accountSecurityTitle');
     dialog.innerHTML = `<header><span class="security-emblem" aria-hidden="true">✓</span><div><small>TU CUENTA · SEGURIDAD</small><h2 id="accountSecurityTitle">Protege tu acceso</h2></div><button type="button" data-security-close aria-label="Cerrar">×</button></header><div data-security-content></div><p class="security-feedback" data-security-feedback role="status" aria-live="polite"></p><footer><button type="button" data-security-recovery>He perdido el acceso</button><button type="button" data-security-logout>Cerrar sesión</button></footer>`;
-    dialog.addEventListener('cancel', event => { if (required || busy) event.preventDefault(); });
+    dialog.addEventListener('cancel', event => { if (required || busy) event.preventDefault(); else if(globalThis.ClubMotion?.closeDialog){event.preventDefault();void globalThis.ClubMotion.closeDialog(dialog);} });
     dialog.addEventListener('close', clearEnrollment);
     dialog.addEventListener('click', event => {
       const button = event.target.closest('button');
       if (!button || busy) return;
-      if (button.hasAttribute('data-security-close')) { if (!required) dialog.close(); }
+      if (button.hasAttribute('data-security-close')) { if (!required) globalThis.ClubMotion?.closeDialog ? void globalThis.ClubMotion.closeDialog(dialog) : dialog.close(); }
       else if (button.dataset.provider) void run(() => link(button.dataset.provider));
       else if (button.hasAttribute('data-security-email')) void run(linkEmail);
       else if (button.hasAttribute('data-security-enroll')) void run(enroll);
@@ -129,7 +129,7 @@
     // An email/reset link must remain above the account gate when a saved
     // session is restored in the same browser. Its confirmation resumes us.
     const accountAction = document.querySelector('.account-request-dialog[open] form[data-flow="email"], .account-request-dialog[open] form[data-flow="reset"]');
-    if (!dialog.open && !accountAction) dialog.showModal();
+    if(!accountAction){if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(dialog);else if(!dialog.open)dialog.showModal();}
     document.documentElement.classList.remove('auth-session-hint');
     document.body.classList.remove('session-restoring');
     window.completeInitialLaunch?.();
@@ -248,7 +248,7 @@
     async open(db, authUser) {
       client = db; user = authUser; management = true; required = false;
       mount();
-      if (!dialog.open) dialog.showModal();
+      if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(dialog);else if(!dialog.open)dialog.showModal();
       await run(refresh);
     },
     reset() { emailPending = false; resume?.(false); resume = null; required = false; dialog?.close(); clearEnrollment(); }

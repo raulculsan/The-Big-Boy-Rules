@@ -331,7 +331,7 @@
     reveal = {cards,index:0,flipped:false,discarded:new Set(),selected:new Set(),uncertain:new Set(),phase:'idle'};
     revealDialog.classList.remove('is-pack-summary');
     delete revealDialog.dataset.cardIndex;
-    revealDialog.showModal(); renderReveal();
+    if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(revealDialog);else revealDialog.showModal(); renderReveal();
     if (!revealReduced()) {
       // Keep the opening self-contained: no network player, layout loop or
       // changes to the reward/flip gesture state. Only transforms and opacity.
@@ -354,10 +354,10 @@
     }
   }
   revealDialog.addEventListener('click', event => {
-    if (event.target.closest('[data-reveal-close]')) revealDialog.close();
+    if (event.target.closest('[data-reveal-close]')) globalThis.ClubMotion?.closeDialog ? void globalThis.ClubMotion.closeDialog(revealDialog) : revealDialog.close();
     if (Date.now() < suppressRevealClickUntil) return;
     if (event.target.closest('[data-reveal-skip]')) {showRevealSummary(); return;}
-    if (event.target.closest('[data-reveal-save]')) {revealDialog.close(); return;}
+    if (event.target.closest('[data-reveal-save]')) {globalThis.ClubMotion?.closeDialog ? void globalThis.ClubMotion.closeDialog(revealDialog) : revealDialog.close(); return;}
     const choice = event.target.closest('[data-summary-card]');
     if (choice && reveal?.summary && !busy && !loading) {
       const index = Number(choice.dataset.summaryCard);
@@ -979,10 +979,10 @@
     // Native top-layer promotion does not make an inert ancestor interactive.
     if (dialog.parentElement !== document.body) document.body.append(dialog);
     dialog.inert = false; dialog.hidden = false; dialog.removeAttribute('aria-hidden');
-    if (dialog.open) {el('duplicatesDialog')?.querySelector('[data-duplicates-close]')?.focus({preventScroll:true}); return;}
+    if (dialog.open) {globalThis.ClubMotion?.openDialog?.(dialog);el('duplicatesDialog')?.querySelector('[data-duplicates-close]')?.focus({preventScroll:true}); return;}
     duplicatesOpener = trigger || document.activeElement;
     try {
-      render(); dialog.showModal(); el('duplicatesDialog')?.querySelector('[data-duplicates-close]')?.focus({preventScroll:true});
+      render();if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(dialog);else dialog.showModal(); el('duplicatesDialog')?.querySelector('[data-duplicates-close]')?.focus({preventScroll:true});
     } catch {
       // Never leave an unresponsive top-layer backdrop after a failed mount.
       if (dialog.open) dialog.close(); duplicatesOpener = null; return;
@@ -1007,7 +1007,7 @@
     document.addEventListener('click', event => {
       if (event.target.closest('[data-banner-shop]')) {
         const shop = el('bannerShopDialog');
-        shop.showModal();
+        if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(shop);else if(!shop.open)shop.showModal();
         render();
         updateShopCountdown();
         const artwork = shop.querySelector('.is-featured .shop-artwork');
@@ -1028,7 +1028,7 @@
       if (voucher) void mutate(voucher.dataset.voucherAction === 'unlock' ? 'unlock_reward_voucher' : 'redeem_reward_voucher', {target_voucher_id:voucher.dataset.voucherId}, voucher.dataset.voucherAction === 'unlock' ? 'Vale desbloqueado.' : 'Premio canjeado.');
       const duplicatesTrigger = event.target.closest('[data-duplicates-open]');
       if (duplicatesTrigger) openDuplicates(duplicatesTrigger);
-      if (event.target.closest('[data-duplicates-close]')) el('duplicatesDialog').close();
+      if (event.target.closest('[data-duplicates-close]')) globalThis.ClubMotion?.closeDialog ? void globalThis.ClubMotion.closeDialog(el('duplicatesDialog')) : el('duplicatesDialog').close();
       const discard = event.target.closest('[data-discard-card]');
       if (discard) void mutate('discard_duplicate_card', {target_card_id:discard.dataset.discardCard,copies:1}, 'Carta repetida descartada. Monedas añadidas a tu cuenta.');
     });
@@ -1040,7 +1040,8 @@
       if (!picker.hidden) {renderEditor(); if (!state && !request) void refresh();}
     });
     el('profileBannerRetry').addEventListener('click', () => void refresh());
-    el('bannerShopClose').addEventListener('click', () => el('bannerShopDialog').close());
+    el('bannerShopClose').addEventListener('click', () => globalThis.ClubMotion?.closeDialog ? void globalThis.ClubMotion.closeDialog(el('bannerShopDialog')) : el('bannerShopDialog').close());
+    for(const dialog of [el('bannerShopDialog'),el('duplicatesDialog'),revealDialog])dialog?.addEventListener('cancel',event=>{if(globalThis.ClubMotion?.closeDialog){event.preventDefault();void globalThis.ClubMotion.closeDialog(dialog);}});
     el('bannerShopDialog').addEventListener('close', () => clearTimeout(shopCountdownTimer));
     const shopTabs = [...document.querySelectorAll('[data-shop-tab]')];
     const selectShopTab = tab => {

@@ -50,7 +50,7 @@
     root.querySelector('button').addEventListener('click',open);
   }
   function stop(){cancelAnimationFrame(frame);clearTimeout(holdTimer);holdTimer=0;frame=0;round=null;}
-  function close(){serial++;stop();if(dialog){dialog.close();dialog.remove();dialog=null;}previousFocus?.focus?.({preventScroll:true});}
+  function close({immediate=false}={}){serial++;stop();const old=dialog;dialog=null;const finish=()=>{old?.remove();if(!dialog&&!document.querySelector('dialog[open]'))previousFocus?.focus?.({preventScroll:true});};if(old&&globalThis.ClubMotion?.closeDialog)return globalThis.ClubMotion.closeDialog(old,finish,{immediate});old?.close();finish();return Promise.resolve();}
   async function open(){
     if(dialog)return;
     previousFocus=document.activeElement;
@@ -331,5 +331,5 @@
   }
   function initialize(options={}){config=options;}
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&round){round.endReason='abandoned';finish(round);}});
-  globalThis.ChotaGames=Object.freeze({initialize,mount,open,mountWeeklyChallenge:weeklyChallenge,reset:close});
+  globalThis.ChotaGames=Object.freeze({initialize,mount,open,mountWeeklyChallenge:weeklyChallenge,reset:()=>close({immediate:true})});
 })();

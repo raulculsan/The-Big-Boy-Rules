@@ -18,10 +18,12 @@
   close(); const previous=document.activeElement;
   dialog=document.createElement('dialog');dialog.className='club-live-dialog';dialog.setAttribute('aria-label',title);
   dialog.innerHTML=`<div class="club-live-shell"><header><h2>${esc(title)}</h2><button type="button" data-cl-close aria-label="Cerrar">Cerrar</button></header><div class="club-live-body"><p role="status">Cargando el plan…</p></div></div>`;
-  document.body.append(dialog);dialog.addEventListener('close',()=>{close();previous?.focus?.({preventScroll:true});},{once:true});
+  const current=dialog;
+  document.body.append(dialog);dialog.addEventListener('close',()=>{if(dialog===current)close();else current.remove();if(!dialog)previous?.focus?.({preventScroll:true});},{once:true});
+  dialog.addEventListener('cancel',event=>{event.preventDefault();if(dialog===current)close({animate:true});});
   dialog.showModal();return dialog;
  }
- function close(){generation++;clearTimeout(refreshTimer);aborter?.abort();aborter=null;const hadDialog=!!dialog;if(dialog){const old=dialog;dialog=null;old.remove();}state=null;pending=false;if(hadDialog&&uid())document.querySelectorAll('.clubhouse-room, .chota-viewer-room-scene').forEach(room=>void mountRoomDetails(room));}
+ function close({animate=false}={}){generation++;clearTimeout(refreshTimer);aborter?.abort();aborter=null;const hadDialog=!!dialog;if(dialog){const old=dialog;dialog=null;if(animate&&globalThis.ClubMotion?.closeDialog)void globalThis.ClubMotion.closeDialog(old,()=>old.remove());else old.remove();}state=null;pending=false;if(hadDialog&&uid())document.querySelectorAll('.clubhouse-room, .chota-viewer-room-scene').forEach(room=>void mountRoomDetails(room));}
  function status(text){let n=dialog?.querySelector('.club-live-feedback');if(!n){n=document.createElement('p');n.className='club-live-feedback';n.setAttribute('role','status');dialog?.querySelector('.club-live-body')?.prepend(n);}if(n)n.textContent=text;}
  function friendly(e){return /does not exist|schema cache|PGRST/.test(e?.message||'')?'Estamos preparando esta función. Vuelve a intentarlo más tarde.':/abort|network|fetch/i.test(e?.message||'')?'La conexión se ha interrumpido. Vuelve a intentarlo.':e?.message||'No se pudo guardar. Inténtalo de nuevo.';}
  async function mutate(action){if(pending||!state)return;pending=true;dialog?.setAttribute('aria-busy','true');dialog?.querySelectorAll('button[type=submit]').forEach(n=>n.disabled=true);try{await action();invalidatePassport();await load();}catch(e){status(friendly(e));}finally{pending=false;dialog?.removeAttribute('aria-busy');dialog?.querySelectorAll('button[type=submit]').forEach(n=>n.disabled=false);}}
@@ -155,7 +157,7 @@
   if(b.hasAttribute('data-cl-repeat-place')){const place=passportCache&&placesOf(passportCache.data)[Number(b.dataset.clRepeatPlace)];if(!place)return;close();return cfg.onProposePlace?.({title:`Volver a ${place.label}`.slice(0,80),location:place.label,description:`Repetimos en ${place.label}.`});}
   if(b.hasAttribute('data-club-live-event')||b.hasAttribute('data-cl-map-event')){e.preventDefault();const id=b.dataset.clubLiveEvent||b.dataset.clMapEvent;return open(events().find(p=>String(p.id)===String(id)),b.dataset.occurrence);}
   if(!dialog?.contains(b))return;
-  if(b.hasAttribute('data-cl-close'))return close();
+  if(b.hasAttribute('data-cl-close'))return close({animate:true});
   if(b.hasAttribute('data-cl-tab'))return dialog.querySelector('#clubLiveRecap')?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
   if(b.hasAttribute('data-cl-photos'))return void pickPhotos();
   if(b.hasAttribute('data-cl-add-photo'))return cfg.onAddPhoto?.(state?.event);

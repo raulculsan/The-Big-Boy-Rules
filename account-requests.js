@@ -6,6 +6,7 @@
   let googleApplicant=null;
   let applicant, review, busy=false, owner=null, generation=0, requests=[];
   const text=(node,value)=>{node.textContent=value;};
+  const show=node=>{if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(node);else if(!node.open)node.showModal();};
   async function invoke(action,values={}) {
    if(!api.client)throw new Error('El servicio de acceso no está disponible.');
    const {data,error}=await api.client.functions.invoke('account-requests',{body:{action,...values}});
@@ -15,8 +16,9 @@
   function makeDialog(label) {
    const node=document.createElement('dialog');node.className='account-request-dialog';node.setAttribute('aria-label',label);
    node.innerHTML=`<div class="request-dialog-head"><span class="eyebrow">BIG BOY · ACCESO</span><button type="button" data-request-close aria-label="Cerrar">×</button></div>`;
-   node.addEventListener('click',event=>{if(event.target.closest('[data-request-close]')){if(!busy)node.close();}});
-   node.addEventListener('cancel',event=>{if(busy)event.preventDefault();});document.body.append(node);return node;
+   const dismiss=()=>globalThis.ClubMotion?.closeDialog?void globalThis.ClubMotion.closeDialog(node):node.close();
+   node.addEventListener('click',event=>{if(event.target.closest('[data-request-close]')){if(!busy)dismiss();}});
+   node.addEventListener('cancel',event=>{event.preventDefault();if(!busy)dismiss();});document.body.append(node);return node;
   }
   async function openApplication() {
    if(!applicant){
@@ -31,7 +33,7 @@
     });
     applicant.addEventListener('close',()=>{applicant.querySelector('form').reset();if(googleApplicant){googleApplicant=null;sessionStorage.removeItem(GOOGLE_REQUEST);void api.client.auth.signOut();}});
    }
-   const form=applicant.querySelector('form');form.querySelectorAll('label,small,button').forEach(n=>n.hidden=false);form.querySelector('.request-feedback').classList.remove('request-success');text(form.querySelector('.request-feedback'),'');if(!applicant.open)applicant.showModal();
+   const form=applicant.querySelector('form');form.querySelectorAll('label,small,button').forEach(n=>n.hidden=false);form.querySelector('.request-feedback').classList.remove('request-success');text(form.querySelector('.request-feedback'),'');show(applicant);
    const email=form.elements.email;email.readOnly=!!googleApplicant;if(googleApplicant){email.value=googleApplicant.email;form.querySelector('.request-footnote').textContent='Google ya ha verificado tu correo. Administración debe aprobar la solicitud antes de que puedas entrar.';}
    const submit=form.querySelector('[type=submit]');submit.disabled=true;
    try{const status=await invoke('configuration');if(!status.configured)text(form.querySelector('.request-feedback'),'La recepción de solicitudes se está preparando. Vuelve a intentarlo más tarde.');submit.disabled=!status.configured;}catch(error){text(form.querySelector('.request-feedback'),error.message);submit.disabled=true;}
@@ -73,7 +75,7 @@
   async function openReview() {
    if(!api.canManage())return;
    if(!review){review=makeDialog('Solicitudes de cuenta');review.classList.add('request-review-dialog');review.insertAdjacentHTML('beforeend','<h2>Solicitudes de acceso.</h2><div data-request-review><p class="request-intro">Las solicitudes aparecen desde que se envían. El correo debe estar verificado antes de aceptar y activar la cuenta.</p><p class="request-feedback" role="status" aria-live="polite"></p><div class="request-review-list"></div></div>');}
-   render();reviewFeedback('Cargando solicitudes…');review.showModal();await refresh();
+   render();reviewFeedback('Cargando solicitudes…');show(review);await refresh();
   }
   document.addEventListener('click',async event=>{
    const refreshButton=event.target.closest('[data-request-refresh]');
@@ -102,7 +104,7 @@
     const open=document.createElement('a');open.dataset.openNative='';open.className='request-recovery-link';open.textContent='Abrir en la app';open.href=`bigboyrules://account-request/verify?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`;confirmation.append(open);
    }
    const button=confirmation.querySelector('[data-confirm-request]');button.hidden=false;button.disabled=false;text(confirmation.querySelector('.request-feedback'),'');
-   if(!confirmation.open)confirmation.showModal();
+   show(confirmation);
   }
   const verification=location.hash.match(/^#account-request=([0-9a-f-]{36})\.([0-9a-f-]{72})$/i);
   if(verification){history.replaceState(null,'',location.pathname+location.search);showVerification(verification[1],verification[2]);}
@@ -128,7 +130,7 @@
    if(token&&!window.Capacitor?.isNativePlatform?.()){
     const open=document.createElement('a');open.dataset.openNative='';open.className='request-recovery-link';open.textContent='Abrir en la app';open.href=`bigboyrules://account-security/${flow}?token=${encodeURIComponent(token)}`;content.append(open);
    }
-   recovery.append(content);if(!recovery.open)recovery.showModal();
+   recovery.append(content);show(recovery);
   }
   function handleIdentityLink(value){try{const link=new URL(value);if(link.protocol==='bigboyrules:'&&link.hostname==='account-security'&&['/reset','/email'].includes(link.pathname)&&/^[0-9a-f-]{72}$/i.test(link.searchParams.get('token')||''))showRecovery(link.pathname.slice(1),link.searchParams.get('token'));}catch{}}
   function handleAccountHash(){
