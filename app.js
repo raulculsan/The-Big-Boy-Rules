@@ -938,6 +938,7 @@ function showGroupChatInbox() {
   document.querySelectorAll("#privateContacts .private-contact.active").forEach(contact => contact.classList.remove("active"));
   history.replaceState(null, "", "#chat");
   restorePagePosition(chatInboxScroll);
+  scheduleChatImageWarmup();
 }
 
 function showPrivateChatInbox() {
@@ -2338,6 +2339,35 @@ function warmChatImages(items, {limit = 4, explicit = false} = {}) {
     if (image.complete && image.naturalWidth) finish(false);
   }
 }
+function inboxChatImageWarmCandidates() {
+  const owner = currentAuthUser?.id;
+  const readyImage = message => message.attachmentType?.startsWith("image/")
+    && !getSharedMediaReference(message) && chatImageSource(message.attachmentUrl);
+  const group = messages.filter(message => String(message.channelId || "") === String(activeChatChannelId || "") && readyImage(message))
+    .sort((a, b) => messageTimestamp(b) - messageTimestamp(a));
+  const conversations = new Map();
+  for (const message of privateMessages) {
+    const peer = message.senderId === owner ? message.recipientId : message.recipientId === owner ? message.senderId : null;
+    if (!peer) continue;
+    let conversation = conversations.get(peer);
+    if (!conversation) conversations.set(peer, conversation = {latest: 0, images: []});
+    conversation.latest = Math.max(conversation.latest, messageTimestamp(message));
+    if (readyImage(message)) conversation.images.push(message);
+  }
+  const queues = [...conversations.values()].sort((a, b) => b.latest - a.latest)
+    .map(conversation => conversation.images.sort((a, b) => messageTimestamp(b) - messageTimestamp(a)));
+  const direct = [];
+  // Take one recent photo per conversation before taking a second from any of
+  // them. Reserve private slots so a busy group cannot occupy the whole cache.
+  for (let round = 0; direct.length < 4 && queues.some(queue => queue.length > round); round++) {
+    for (const queue of queues) if (queue[round] && direct.length < 4) direct.push(queue[round]);
+  }
+  const privateSlots = group.length ? 3 : 4;
+  const selected = direct.slice(0, privateSlots);
+  selected.push(...group.slice(0, 4 - selected.length));
+  if (selected.length < 4) selected.push(...direct.slice(privateSlots, privateSlots + 4 - selected.length));
+  return selected;
+}
 function scheduleChatImageWarmup() {
   clearTimeout(chatImageWarmTimer);
   chatImageWarmTimer = setTimeout(() => {
@@ -2346,7 +2376,10 @@ function scheduleChatImageWarmup() {
       const member = getMember(activePrivateMemberId);
       warmChatImages(privateMessages.filter(message => message.senderId === member?.authId || message.recipientId === member?.authId), {explicit: true});
     } else if (document.getElementById("chat")?.classList.contains("active")) {
-      warmChatImages(messages.filter(message => String(message.channelId || "") === String(activeChatChannelId || "")));
+      const conversationOpen = document.getElementById("chat").classList.contains("conversation-open");
+      warmChatImages(conversationOpen
+        ? messages.filter(message => String(message.channelId || "") === String(activeChatChannelId || ""))
+        : inboxChatImageWarmCandidates());
     }
   }, 0);
 }
@@ -2381,6 +2414,14 @@ function startChatThumbnail(image) {
   image.src = image.dataset.imageSource;
   if (image.complete && image.naturalWidth) finish(false);
 }
+function queueChatThumbnail(image) {
+  const warm = chatImageWarmCache.get(image.dataset.imageSource)?.image;
+  // A prepared photo can start before the first paint; IntersectionObserver
+  // would otherwise deliberately leave a loading card for one more frame.
+  if (warm?.complete && warm.naturalWidth) startChatThumbnail(image);
+  else if (chatThumbnailObserver) chatThumbnailObserver.observe(image);
+  else startChatThumbnail(image);
+}
 const chatMarkupSnapshots = new WeakMap();
 function setChatMessageMarkup(container, markup) {
   const previous = chatMarkupSnapshots.get(container);
@@ -2405,8 +2446,7 @@ function setChatMessageMarkup(container, markup) {
       {opacity:1, transform:'translateY(0)'}
     ], {duration:180, easing:'cubic-bezier(.22,1,.36,1)'});
     for (const image of images) {
-      if (chatThumbnailObserver) chatThumbnailObserver.observe(image);
-      else startChatThumbnail(image);
+      queueChatThumbnail(image);
     }
     rememberChatMarkup(container, markup);
     return;
@@ -2430,11 +2470,9 @@ function setChatMessageMarkup(container, markup) {
       image.closest(".message-image").replaceWith(button);
       // An image outside the viewport may not have started yet.
       if (!cached.hasAttribute("src") && !button.classList.contains("image-failed")) {
-        if (chatThumbnailObserver) chatThumbnailObserver.observe(cached);
-        else startChatThumbnail(cached);
+        queueChatThumbnail(cached);
       }
-    } else if (chatThumbnailObserver) chatThumbnailObserver.observe(image);
-    else startChatThumbnail(image);
+    } else queueChatThumbnail(image);
   });
   for (const images of retained.values()) for (const image of images) {
     const load = chatThumbnailLoads.get(image);
