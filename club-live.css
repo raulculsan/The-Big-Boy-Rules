@@ -3,3 +3,69 @@
 .club-live-dialog::backdrop{background:#0009}.club-live-shell>header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 24px;position:sticky;top:0;background:var(--cl-ground);z-index:2}.club-live-dialog h2{font-size:22px;margin:0;line-height:1.2}.club-live-dialog h3{font-size:20px;line-height:1.25;margin:0 0 14px}.club-live-dialog h4{font-size:16px;line-height:1.4;margin:0 0 12px}.club-live-dialog p{color:var(--cl-muted);font-size:14px;line-height:1.55;margin:8px 0 16px}.club-live-body{padding:0 24px 32px}.club-live-body>section{padding:24px 0}.club-live-event-heading{padding:8px 0 24px}.club-live-event-heading h3{font-size:30px;max-width:24ch}.club-live-actions{display:flex;gap:8px;flex-wrap:wrap}.club-live-dialog button,.club-live-dialog summary,.club-live-dialog a{font:inherit;font-size:14px;color:var(--cl-ink);touch-action:manipulation;-webkit-tap-highlight-color:transparent}.club-live-dialog button{border:0;background:#2b2e31;border-radius:8px;min-height:44px;padding:10px 14px;cursor:pointer}.club-live-dialog button:disabled{opacity:.55;cursor:default}.club-live-dialog button[aria-pressed=true],.club-live-actions>button:first-child{background:var(--cl-ink);color:#151515}.club-live-dialog button:focus-visible,.club-live-dialog summary:focus-visible,.club-live-dialog a:focus-visible{outline:2px solid var(--cl-accent);outline-offset:3px}.club-live-shell>header>button{background:none;padding:10px 0}.club-live-columns{display:grid;grid-template-columns:1fr 1fr;gap:32px}.club-live-columns>section{min-width:0}.club-live-columns h3 span{color:var(--cl-accent);font-variant-numeric:tabular-nums}.club-live-people{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}.club-live-people>span{background:var(--cl-panel);padding:10px 12px;border-radius:8px;font-size:14px}.club-live-people small{display:block;color:var(--cl-muted);margin-top:4px}.club-live-question{padding:18px;background:var(--cl-panel);border-radius:12px;margin:16px 0}.club-live-choices{display:grid;gap:6px}.club-live-choices button{position:relative;overflow:hidden;display:flex;justify-content:space-between;text-align:left;gap:10px;background:#292b2d}.club-live-choices button>span{position:relative;z-index:1}.club-live-choices button>span:last-of-type{font-variant-numeric:tabular-nums;white-space:nowrap}.club-live-choices button>i{position:absolute;inset:0 auto 0 0;width:var(--vote);background:#ffffff0b;pointer-events:none}.club-live-question>small{display:block;color:var(--cl-muted);margin-top:10px}.club-live-dialog details{margin:16px 0}.club-live-dialog summary{min-height:44px;display:flex;align-items:center;cursor:pointer;text-decoration:underline;text-underline-offset:5px}.club-live-dialog form{display:grid;gap:12px;margin-top:12px}.club-live-dialog label{display:grid;gap:7px;font-size:14px}.club-live-dialog input,.club-live-dialog textarea,.club-live-dialog select{font:inherit;font-size:16px;color:var(--cl-ink);background:#252729;border:1px solid #45484b;border-radius:8px;width:100%;box-sizing:border-box;padding:12px;min-height:44px;user-select:text;-webkit-user-select:text}.club-live-dialog form>button{justify-self:start}.club-live-dialog form>small{color:var(--cl-muted);font-size:12px}.club-live-coordinates{display:grid;grid-template-columns:1fr 1fr;gap:12px}.club-live-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.club-live-photos>p{grid-column:1/-1}.club-live-photos figure{margin:0;min-width:0}.club-live-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}.club-live-photos figcaption{font-size:13px;color:var(--cl-muted);padding-top:8px;overflow-wrap:anywhere}.club-live-pick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.club-live-pick-grid>button{padding:0;overflow:hidden}.club-live-pick-grid img{width:100%;height:100%;aspect-ratio:1;object-fit:cover;display:block}.club-live-feedback{background:#342a1b;padding:14px;border-radius:8px;color:#f0d8b4!important}.club-live-atlas{background:#1d2020;border-radius:12px;margin:20px 0}.club-live-atlas svg{display:block;width:100%;height:auto}.club-live-atlas circle{fill:var(--cl-accent);stroke:#151717;stroke-width:3}.club-live-atlas text{fill:var(--cl-ink);font-family:inherit;font-size:13px}.club-live-atlas .club-live-map-grid{stroke:#333837;fill:none;stroke-width:1}.club-live-atlas .club-live-map-note{font-size:11px;fill:var(--cl-muted)}.club-live-map-list{display:grid;gap:8px}.club-live-map-list>button{display:flex;align-items:center;gap:14px;text-align:left;background:var(--cl-panel)}.club-live-map-list img{width:64px;height:64px;border-radius:6px;object-fit:cover}.club-live-map-list strong,.club-live-map-list small{display:block}.club-live-map-list small{color:var(--cl-muted);margin-top:6px}.club-live-recap{scroll-margin-top:90px}
 @media(max-width:640px){.club-live-dialog{width:100%;max-width:100%;max-height:100dvh;height:100dvh;margin:0;border-radius:0}.club-live-shell>header{padding:calc(14px + env(safe-area-inset-top)) 20px 14px}.club-live-body{padding:0 20px calc(24px + env(safe-area-inset-bottom))}.club-live-columns{grid-template-columns:1fr;gap:28px}.club-live-event-heading h3{font-size:26px}.club-live-photos{grid-template-columns:repeat(2,1fr)}.club-live-pick-grid{grid-template-columns:repeat(3,1fr)}}
 @media(prefers-reduced-motion:no-preference){.club-live-dialog[open]{animation:club-live-enter .22s ease-out}@keyframes club-live-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}}
+
+/* The passport uses the club's real photographs; room rewards stay on the room's objects. */
+.club-passport-dialog{width:min(960px,calc(100% - 32px));background:#101112}
+.club-passport-dialog .club-live-shell>header{padding-bottom:12px}
+.club-passport-tabs{display:flex;gap:24px;margin-bottom:24px}
+.club-passport-dialog .club-passport-tabs button{background:none;border-radius:0;padding:10px 0;color:#aeb0b2;border-bottom:2px solid transparent}
+.club-passport-dialog .club-passport-tabs button[aria-pressed=true]{color:#f5f4f1;border-bottom-color:#f5f4f1}
+.club-passport-intro{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:0 0 12px!important}
+.club-passport-intro h3{font-size:24px;letter-spacing:-.035em;margin-bottom:6px}
+.club-passport-intro p{margin:0}
+.club-passport-intro>button{background:none!important;white-space:nowrap;padding-inline:0!important;text-decoration:underline;text-underline-offset:5px}
+.club-passport-map{position:relative;margin:16px 0 28px;border-radius:12px;background:#1b201e;overflow:hidden}
+.club-passport-map svg{display:block;width:100%;max-height:250px}
+.club-passport-map p{padding:0 16px 12px;margin:0;font-size:12px;color:#b9c0bc}
+.club-passport-map circle{fill:#cfad70;stroke:#17201c;stroke-width:2}
+.club-passport-map .club-passport-map-hit{fill:transparent;stroke:none}
+.club-passport-map a:focus-visible circle:not(.club-passport-map-hit){stroke:#fff;stroke-width:3}
+.club-passport-map text{fill:#b9c0bc;font:12px var(--font-body,sans-serif)}
+.club-passport-map-land{fill:none;stroke:#58645c;stroke-width:1;opacity:.3}
+.club-passport-places{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 28px}
+.club-passport-dialog .club-passport-place{display:flex;gap:16px;padding:0;text-align:left;background:none;border-radius:0;min-width:0;align-items:center}
+.club-passport-place>img,.club-passport-no-photo{flex:0 0 104px;width:104px;height:104px;object-fit:cover;border-radius:8px;display:grid;place-items:center;background:#252a27;color:#bfc7c1;font-size:30px}
+.club-passport-place>span:last-child{min-width:0;display:grid;gap:7px}
+.club-passport-place strong{font-size:18px;line-height:1.25;overflow-wrap:anywhere}
+.club-passport-place small{font-size:12px;color:#b3b5b7;line-height:1.4}
+.club-passport-place>span>span{font-size:13px;line-height:1.4;color:#b3b5b7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.club-passport-empty{padding:20px 0 32px!important;max-width:48ch}
+.club-passport-empty h3{font-size:24px;letter-spacing:-.025em}
+.club-passport-empty p{font-size:15px;line-height:1.6}
+.club-passport-dialog .club-passport-back{background:none;padding-left:0;margin-bottom:16px;text-decoration:underline;text-underline-offset:5px}
+.club-passport-place-detail{padding:0!important}
+.club-passport-cover{margin-bottom:24px;background:#1c1e20;border-radius:12px;overflow:hidden}
+.club-passport-cover img{display:block;width:100%;height:min(38dvh,330px);object-fit:cover}
+.club-passport-place-detail>h3{font-size:28px;letter-spacing:-.035em;margin-bottom:4px}
+.club-passport-map-link{display:flex;align-items:center;min-height:44px;padding:10px 14px;box-sizing:border-box;background:#2b2e31;border-radius:8px;text-decoration:none}
+.club-passport-visits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:32px}
+.club-passport-visits article{padding:20px;background:#1c1e20;border-radius:10px;min-width:0}
+.club-passport-visits time{display:block;font-size:12px;color:#b3b5b7;margin-bottom:12px}
+.club-passport-visits h4{font-size:18px}
+.club-passport-people{display:flex;flex-wrap:wrap;gap:5px 12px;font-size:13px;color:#dedfdf;line-height:1.5}
+.club-passport-visits p{margin:12px 0;font-size:13px}
+.club-passport-visits article>button{background:none;padding:8px 0;text-decoration:underline;text-underline-offset:5px}
+.club-room-progress{padding:0!important}
+.club-room-progress>h3{font-size:24px;letter-spacing:-.025em}
+.club-room-progress>p{max-width:58ch}
+.club-room-progress-totals{display:flex;gap:28px;margin:24px 0 32px;font-size:13px;color:#b3b5b7}
+.club-room-progress-totals strong{display:block;font-size:26px;font-weight:500;color:#f5f4f1;font-variant-numeric:tabular-nums;margin-bottom:6px}
+.club-room-milestones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 28px}
+.club-room-milestones article{display:flex;align-items:center;gap:20px;min-width:0;padding:20px;background:#1c1e20;border-radius:10px}
+.club-room-milestone-art{width:64px;flex:0 0 64px;opacity:.32;filter:grayscale(1)}
+.club-room-milestone-art svg{width:100%;max-height:76px;display:block}
+.club-room-milestones .is-earned .club-room-milestone-art{opacity:1;filter:none}
+.club-room-milestones h4{margin-bottom:6px}
+.club-room-milestones p{margin:0 0 8px;font-size:13px}
+.club-room-milestones small{display:block;font-size:12px;line-height:1.5;color:#b3b5b7;font-variant-numeric:tabular-nums}
+.club-room-milestones progress{display:block;width:100%;height:4px;margin-top:12px;accent-color:#c9ab73}
+.club-room-progress>p:last-child{margin-top:26px}
+@media(max-width:640px){
+ .club-passport-dialog{width:100%;max-width:100%;height:100dvh;max-height:100dvh;margin:0;border-radius:0}
+ .club-passport-intro{display:block}.club-passport-intro h3{font-size:22px}.club-passport-intro>button{margin-top:6px}
+ .club-passport-tabs{margin-bottom:20px}.club-passport-places,.club-passport-visits,.club-room-milestones{grid-template-columns:1fr}
+ .club-passport-place>img,.club-passport-no-photo{width:88px;height:88px;flex-basis:88px}
+ .club-passport-map{margin-top:10px}.club-passport-map svg{max-height:185px}
+ .club-room-progress-totals{gap:20px;justify-content:space-between}.club-room-progress-totals>span{max-width:90px;line-height:1.45}
+ .club-room-milestones article{padding:18px;gap:20px}.club-room-progress>h3{font-size:22px}
+}

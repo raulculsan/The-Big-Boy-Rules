@@ -50,6 +50,7 @@ let members = baseMembers.map((item, index) => ({
 }));
 let membersById = new Map();
 let membersByAuthId = new Map();
+const memberSearchText = new WeakMap();
 
 function rebuildMemberIndexes() {
   membersById = new Map(members.map(member => [Number(member.id), member]));
@@ -219,6 +220,7 @@ let notificationPreferences = null, notificationPreferencesOwner = null, notific
 let newsNoticePending = false;
 let privateMessages = [];
 let groupEvents = [];
+let pendingWidgetEventId = null;
 let calendarChatAnnouncements = [];
 let channelAutomationMessages = [];
 let calendarChatSyncDay = "";
@@ -362,7 +364,9 @@ function scheduleIdleStartup() {
     }
   };
   if ("requestIdleCallback" in window) window.requestIdleCallback(run, {timeout:idleStartupQueue[0].timeout});
-  else window.setTimeout(run, 300);
+  // WebKit versions without requestIdleCallback still yield a frame and obey
+  // the editing guard; a fixed 300 ms per queued task delayed the whole startup.
+  else window.setTimeout(run, 32);
 }
 
 function debounce(callback, delay = 90) {
@@ -1191,9 +1195,12 @@ async function openGroupConversation(channelId = activeChatChannelId) {
 // DOM nodes (decoded avatars, banner animations and scroll/focus state).
 const surfaceMarkup = new WeakMap();
 function updateSurfaceMarkup(node, markup) {
-  if (!node || surfaceMarkup.get(node) === markup) return false;
+  if (!node) return false;
+  const previous = surfaceMarkup.get(node);
+  if (previous?.markup === markup && previous.count === node.childNodes.length
+    && previous.first === node.firstChild && previous.last === node.lastChild) return false;
   node.innerHTML = markup;
-  surfaceMarkup.set(node, markup);
+  surfaceMarkup.set(node, {markup, count: node.childNodes.length, first: node.firstChild, last: node.lastChild});
   return true;
 }
 
@@ -1459,6 +1466,7 @@ function renderProfile(memberId, navigate = true) {
     document.getElementById("editProfileButton")?.addEventListener("click", () => openProfileEditor(member.id));
   }
   globalThis.BannerShop?.mountProfile(document.querySelector("#profileContent .club-profile"), member.authId, isOwnProfile);
+  globalThis.ClubSocial?.mountProfile(document.getElementById("profileContent"), member.authId, isOwnProfile);
   if (navigate) goTo("perfil");
 }
 
@@ -1593,6 +1601,17 @@ function renderMessages() {
 
 
 // Reply state belongs to a user and conversation; switching threads never leaks a quote.
+// Histories are replaced on remote updates and appended on local sends. Index
+// once per snapshot instead of scanning every message for every quoted reply.
+const chatMessageIndexes = new WeakMap();
+function chatMessageIndex(items) {
+  let entry = chatMessageIndexes.get(items);
+  if (!entry || entry.length !== items.length) {
+    entry = {length: items.length, byId: new Map(items.map(item => [String(item.id), item]))};
+    chatMessageIndexes.set(items, entry);
+  }
+  return entry.byId;
+}
 const chatReplies = new Map();
 function chatReplyKey(kind) { return `${currentAuthUser?.id || ""}:${kind}:${kind === "private" ? activePrivateMemberId : activeChatChannelId}`; }
 function chatReplyDescription(kind, message) {
@@ -1601,7 +1620,7 @@ function chatReplyDescription(kind, message) {
 }
 function renderChatQuote(kind, message) {
   if (!message.replyToId) return "";
-  const source = (kind === "private" ? privateMessages : messages).find(item => String(item.id) === String(message.replyToId));
+  const source = chatMessageIndex(kind === "private" ? privateMessages : messages).get(String(message.replyToId));
   const quote = source ? chatReplyDescription(kind, source) : {name: "Respuesta", text: "Mensaje anterior no disponible"};
   return `<button type="button" class="chat-message-quote" data-chat-quote="${escapeHtml(String(message.replyToId))}" data-quote-kind="${kind}" aria-label="Ver mensaje al que responde"><strong>${escapeHtml(quote.name)}</strong><span>${escapeHtml(quote.text)}</span></button>`;
 }
@@ -1825,13 +1844,14 @@ function contextMessage(target) {
   if (!currentAuthUser || !target) return null;
   if (target.kind === "group") {
     if (!document.getElementById("chat").classList.contains("active") || !document.getElementById("chat").classList.contains("conversation-open")) return null;
-    return messages.find(item => String(item.id) === target.id && String(item.channelId || "") === String(activeChatChannelId || "")) || null;
+    const message = chatMessageIndex(messages).get(target.id);
+    return message && String(message.channelId || "") === String(activeChatChannelId || "") ? message : null;
   }
   const peer = getMember(activePrivateMemberId);
   if (!peer || !document.getElementById("privados").classList.contains("active") || !document.getElementById("privados").classList.contains("conversation-open")) return null;
-  return privateMessages.find(item => String(item.id) === target.id &&
-    ((item.senderId === currentAuthUser.id && item.recipientId === peer.authId) ||
-    (item.senderId === peer.authId && item.recipientId === currentAuthUser.id))) || null;
+  const message = chatMessageIndex(privateMessages).get(target.id);
+  return message && ((message.senderId === currentAuthUser.id && message.recipientId === peer.authId) ||
+    (message.senderId === peer.authId && message.recipientId === currentAuthUser.id)) ? message : null;
 }
 // One lifecycle for both long-press menus, including interrupted/repeated holds.
 const chatMenuMotion = new WeakMap();
@@ -2006,7 +2026,7 @@ function showMessageMenu(bubble, x, y) {
   const own = (target.kind === "group" ? message.userId : message.senderId) === currentAuthUser.id;
   const canDelete = own || (target.kind === "group" && canManageSite());
   const menu = document.getElementById("messageContextMenu");
-  menu.innerHTML = `<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="reply">Responder</button><button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
+  menu.innerHTML = `<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="reply">Responder</button>${target.kind === "group" && canManageSite() && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="plan">Crear plan</button>' : ""}<button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
   messageMenuTarget = target; menu.hidden = false;
   positionChatMenu(menu, x, y);
   focusChatMenuSource(menu, bubble);
@@ -2095,6 +2115,8 @@ const notificationDateFormatter = new Intl.DateTimeFormat("es-ES", {day: "numeri
 
 const conversationDayFormatter = new Intl.DateTimeFormat("es-ES", {day: "numeric", month: "long", year: "numeric"});
 const messageDateFormatter = new Intl.DateTimeFormat("es-ES", {day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"});
+const newsDateFormatter = new Intl.DateTimeFormat("es-ES", {day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"});
+const shortMonthFormatter = new Intl.DateTimeFormat("es-ES", {month: "short"});
 // Bounded by timestamps, so repeated renders reuse parsing and locale strings
 // without retaining whole messages or growing with a long-running session.
 const chatDateCache = new Map();
@@ -2733,7 +2755,7 @@ function renderPrivateConversation() {
   document.getElementById("privados").classList.toggle("conversation-open", Boolean(member));
   if (!member) {
     const emptyPrivateHeader = document.getElementById("privateChatHeader");
-    emptyPrivateHeader.innerHTML = `<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>`;
+    updateSurfaceMarkup(emptyPrivateHeader, `<div><span class="eyebrow">MENSAJE DIRECTO</span><h3>Elige un miembro</h3></div>`);
     container.innerHTML = `<div class="empty-state">Selecciona un miembro para comenzar una conversación privada.</div>`;
     input.disabled = true;
     submit.disabled = true;
@@ -2746,14 +2768,14 @@ function renderPrivateConversation() {
     return;
   }
   const privateHeader = document.getElementById("privateChatHeader");
-  privateHeader.innerHTML = `
+  updateSurfaceMarkup(privateHeader, `
     <div class="private-chat-person">
       <button class="chat-back-button private-conversation-back" type="button" data-private-back aria-label="Volver a conversaciones"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button>
       <button type="button" class="private-chat-avatar" data-profile="${escapeHtml(String(member.id))}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
         ${getAvatar(member)}
       </button>
       <div><h3>${escapeHtml(member.name)}</h3><span class="chat-username">@${escapeHtml(member.username)}</span></div>
-    </div>`;
+    </div>`);
   globalThis.ChatThemes?.sync("private");
   const finishReading = preserveConversationReading(container, `private:${member.id}`);
   const items = privateMessages.filter(message =>
@@ -2785,8 +2807,8 @@ function calendarEventMarkup(event, compact = false) {
   const date = new Date(event.startsAt);
   const birthday = event.eventType === "birthday";
   return `<article class="calendar-agenda-event ${birthday ? "birthday" : ""} ${compact ? "compact" : ""}">
-    <time class="calendar-event-date" datetime="${escapeHtml(event.startsAt)}"><strong>${date.getDate()}</strong><span>${date.toLocaleDateString("es-ES", {month: "short"})}</span></time>
-    <div class="calendar-event-copy"><span class="calendar-event-type">${birthday ? "Cumpleaños · Todo el día" : conversationTimeFormatter.format(date)}</span><h4>${escapeHtml(event.title)}</h4>${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}${!compact && event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}${!compact && !birthday && event.endsAt ? `<p>Hasta ${new Date(event.endsAt).toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"})}</p>` : ""}${canEditCalendarEvent(event) ? `<button type="button" class="calendar-edit-event" data-edit-calendar-event="${escapeHtml(event.id)}">Editar</button>` : ""}${!compact ? globalThis.GroupInteractions?.attendanceMarkup(event, activeCalendarDay) || "" : ""}</div>
+    <time class="calendar-event-date" datetime="${escapeHtml(event.startsAt)}"><strong>${date.getDate()}</strong><span>${shortMonthFormatter.format(date)}</span></time>
+    <div class="calendar-event-copy"><span class="calendar-event-type">${birthday ? "Cumpleaños · Todo el día" : conversationTimeFormatter.format(date)}</span><h4>${escapeHtml(event.title)}</h4>${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}${!compact && event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}${!compact && !birthday && event.endsAt ? `<p>Hasta ${conversationTimeFormatter.format(new Date(event.endsAt))}</p>` : ""}${canEditCalendarEvent(event) ? `<button type="button" class="calendar-edit-event" data-edit-calendar-event="${escapeHtml(event.id)}">Editar</button>` : ""}${!compact ? `<button type="button" class="club-live-event-link" data-club-live-event="${escapeHtml(event.id)}" data-occurrence="${escapeHtml(activeCalendarDay)}">Plan en directo</button>${globalThis.GroupInteractions?.attendanceMarkup(event, activeCalendarDay) || ""}` : ""}</div>
   </article>`;
 }
 
@@ -2809,6 +2831,15 @@ function renderCalendar() {
   renderUpcomingEvents();
   const year = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
+  const monthLabel = calendarDate.toLocaleDateString("es-ES", {month: "long"});
+  const eventsByDay = new Map();
+  for (const event of groupEvents) {
+    const date = new Date(event.startsAt);
+    if (date.getMonth() !== month || event.eventType !== "birthday" && date.getFullYear() !== year) continue;
+    const day = date.getDate();
+    if (!eventsByDay.has(day)) eventsByDay.set(day, []);
+    eventsByDay.get(day).push(event);
+  }
   document.getElementById("calendarMonthTitle").textContent = calendarDate.toLocaleDateString("es-ES", {month: "long", year: "numeric"});
   const ownBirthday = groupEvents.find(event => event.eventType === "birthday" && event.createdBy === currentAuthUser?.id);
   const birthdayButton = document.getElementById("addBirthdayButton");
@@ -2824,16 +2855,13 @@ function renderCalendar() {
   cells += Array.from({length: firstWeekday}, () => `<div class="calendar-day outside" aria-hidden="true"></div>`).join("");
   for (let day = 1; day <= days; day += 1) {
     const date = new Date(year, month, day);
-    const events = groupEvents.filter(event => eventOccursOn(event, date));
+    const events = eventsByDay.get(day) || [];
     const calendarKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    cells += `<button class="calendar-day ${dateKey(date) === todayKey ? "today" : ""} ${events.length ? "has-events" : ""}" type="button" data-calendar-date="${calendarKey}" ${dateKey(date) === todayKey ? 'aria-current="date"' : ""} aria-label="${day} de ${calendarDate.toLocaleDateString("es-ES", {month: "long"})}, ${events.length} eventos${events.length ? `: ${escapeHtml(events.map(event => event.title).join(", "))}` : ""}"><span class="calendar-day-number">${day}</span><span class="calendar-dots" aria-hidden="true">${events.slice(0, 3).map(event => `<i class="${event.eventType === "birthday" ? "birthday" : ""}"></i>`).join("")}</span></button>`;
+    cells += `<button class="calendar-day ${dateKey(date) === todayKey ? "today" : ""} ${events.length ? "has-events" : ""}" type="button" data-calendar-date="${calendarKey}" ${dateKey(date) === todayKey ? 'aria-current="date"' : ""} aria-label="${day} de ${monthLabel}, ${events.length} eventos${events.length ? `: ${escapeHtml(events.map(event => event.title).join(", "))}` : ""}"><span class="calendar-day-number">${day}</span><span class="calendar-dots" aria-hidden="true">${events.slice(0, 3).map(event => `<i class="${event.eventType === "birthday" ? "birthday" : ""}"></i>`).join("")}</span></button>`;
   }
   cells += Array.from({length: (7 - ((firstWeekday + days) % 7)) % 7}, () => `<div class="calendar-day outside" aria-hidden="true"></div>`).join("");
   document.getElementById("calendarGrid").innerHTML = cells;
-  const monthEvents = groupEvents.filter(event => {
-    const date = new Date(event.startsAt);
-    return date.getMonth() === month && (event.eventType === "birthday" || date.getFullYear() === year);
-  }).sort((a, b) => new Date(a.startsAt).getDate() - new Date(b.startsAt).getDate());
+  const monthEvents = [...eventsByDay.entries()].sort(([a], [b]) => a - b).flatMap(([, events]) => events);
   document.getElementById("calendarMonthCount").textContent = monthEvents.length;
   document.getElementById("calendarEventList").innerHTML = monthEvents.length ? monthEvents.map(event => calendarEventMarkup(event, true)).join("") : `<p class="calendar-month-empty">Todavía no hay fechas en la agenda.</p>`;
   renderCalendarSelectedDay();
@@ -2904,16 +2932,16 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const spark = pet.querySelector(".tigreton-spark");
   const isBirthday = event?.eventType === "birthday";
   const isToday = date && tigretonDaysUntil(date) === 0;
-  const isCall = /llamada|videollamada|zoom|teams/.test(`${event?.title || ""} ${event?.description || ""}`.toLowerCase());
-  const hour = new Date().getHours();
-  const canDoze = !isToday && (hour >= 21 || hour < 8);
   const sequences = {
     greet: [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [3, 2], [4, 2], [2, 2], [5, 2], [1, 2], [0, 3]],
     walk: [[0, 2], [6, 2], [7, 2], [8, 2], [9, 2], [10, 2], [11, 2], [6, 2], [7, 2], [8, 2], [9, 2], [10, 2], [11, 2], [0, 3]],
     jump: [[0, 2], [12, 1], [13, 2], [14, 1], [15, 2], [14, 1], [16, 2], [17, 2], [0, 3]],
     rest: [[0, 2], [18, 2], [19, 3], [20, 3], [21, 3], [22, 5], [23, 6], [22, 6], [23, 6], [22, 5], [21, 3], [20, 3], [19, 3], [18, 2], [0, 3]],
   };
-  let inView = false, timer = 0, frameTimer = 0, animations = [], destroyed = false, lastGesture = "", paused = false, spriteRequest = 0;
+  const idleHead = character.querySelector(".chota-idle-head");
+  const idleBody = character.querySelector(".chota-idle-body");
+  const eyelids = character.querySelector(".chota-idle-eyelids");
+  let inView = false, timer = 0, frameTimer = 0, blinkTimer = 0, animations = [], destroyed = false, paused = false, spriteRequest = 0, lastAmbient = 0;
   const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping();
   function setFrame(frame) {
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
@@ -2922,23 +2950,66 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     spriteRequest++;
     clearTimeout(timer);
     clearTimeout(frameTimer);
+    clearTimeout(blinkTimer);
     animations.forEach(animation => animation.cancel());
     animations = [];
     pet.classList.remove("is-awake", "is-sleeping", "is-sleep-reacting");
-    character.classList.remove("is-speaking");
+    character.classList.remove("is-speaking", "is-idling");
     setFrame(0);
+  }
+  function animateIdle(target, frames, options) {
+    if (!target) return;
+    const animation = target.animate(frames, options);
+    animations.push(animation);
+    animation.onfinish = () => { animations = animations.filter(item => item !== animation); };
+    return animation;
+  }
+  function scheduleBlink() {
+    clearTimeout(blinkTimer);
+    if (!active() || !character.classList.contains("is-idling")) return;
+    blinkTimer = setTimeout(() => {
+      if (!active() || !character.classList.contains("is-idling")) return;
+      animateIdle(eyelids, [{opacity:0}, {opacity:1,offset:.3}, {opacity:1,offset:.55}, {opacity:0}], {duration:155,easing:"linear"});
+      scheduleBlink();
+    }, 3800 + Math.random() * 4800);
   }
   function schedule() {
     clearTimeout(timer);
-    if (!active()) return;
+    if (!active() || !character.classList.contains("is-idling")) return;
     timer = setTimeout(() => {
-      const choices = ["greet", "greet", "walk"];
-      if (isBirthday || (isToday && !isCall)) choices.push("jump");
-      if (isCall) choices.push("greet");
-      if (canDoze) choices.push("rest");
-      const available = choices.filter(gesture => gesture !== lastGesture);
-      play(available[Math.floor(Math.random() * available.length)]);
-    }, 2800 + Math.random() * 5200);
+      if (!active() || !character.classList.contains("is-idling")) return;
+      const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
+      const now = performance.now();
+      // A quiet glance at something that is actually in this room. Feet stay planted.
+      const ambient = room && now - lastAmbient > 32000 && Math.random() < .6;
+      const target = ambient ? room.querySelector(".chota-room-robot-vacuum") || room.querySelector(".clubhouse-sky") : null;
+      let direction = Math.random() < .5 ? -1 : 1;
+      if (target) {
+        const targetBox = target.getBoundingClientRect(), petBox = character.getBoundingClientRect();
+        direction = targetBox.left + targetBox.width / 2 < petBox.left + petBox.width / 2 ? -1 : 1;
+        lastAmbient = now;
+      }
+      const turn = direction * (target ? 1.6 : .65);
+      animateIdle(idleHead, [
+        {transform:"translate(0,0) rotate(0deg)"},
+        {transform:`translate(${direction * (target ? .7 : .25)}%,-.25%) rotate(${turn}deg)`,offset:.28},
+        {transform:`translate(${direction * (target ? .65 : .2)}%,-.2%) rotate(${turn * .85}deg)`,offset:.72},
+        {transform:"translate(0,0) rotate(0deg)"}
+      ], {duration:target ? 3300 : 1900,easing:"ease-in-out"});
+      schedule();
+    }, 9500 + Math.random() * 10500);
+  }
+  function idle() {
+    stop();
+    if (!active()) return;
+    pet.classList.add("is-awake");
+    character.classList.add("is-idling");
+    // The torso expands only a fraction; the shoes and contact shadow never slide.
+    const breath = 4400 + Math.random() * 1000;
+    animateIdle(idleBody, [{transform:"scale(1)"}, {transform:"scale(1.004,1.007)",offset:.48}, {transform:"scale(1)"}], {duration:breath,iterations:Infinity,easing:"ease-in-out"});
+    animateIdle(idleHead, [{transform:"translateY(0)"}, {transform:"translateY(-.3%)",offset:.48}, {transform:"translateY(0)"}], {duration:breath,iterations:Infinity,easing:"ease-in-out"});
+    scheduleBlink();
+    schedule();
   }
   function play(gesture) {
     if (!active()) return;
@@ -2950,7 +3021,6 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     stop();
     pet.classList.add("is-awake");
     const action = {look: "greet", nod: "greet", shuffle: "walk", celebrate: "jump", doze: "rest"}[gesture] || gesture;
-    lastGesture = action;
     const frames = sequences[action] || sequences.greet;
     const duration = frames.reduce((total, [, ticks]) => total + ticks, 0) * (1000 / 12);
     if (action === "walk") {
@@ -2965,7 +3035,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     let index = 0;
     function advance() {
       if (!active()) return;
-      if (index >= frames.length) { stop(); schedule(); return; }
+      if (index >= frames.length) { idle(); return; }
       const [frame, ticks] = frames[index++];
       setFrame(frame);
       frameTimer = setTimeout(advance, ticks * (1000 / 12));
@@ -2992,7 +3062,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       const elapsed = performance.now() - started;
       if (elapsed >= duration) {
         stop();
-        if (gesture) play(gesture); else schedule();
+        if (gesture) play(gesture); else idle();
         return;
       }
       const word = words[Math.min(words.length - 1, Math.floor(elapsed / duration * words.length))];
@@ -3011,7 +3081,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       setFrame(22);
       return;
     }
-    if (active()) { pet.classList.add("is-awake"); schedule(); }
+    if (active()) idle();
   }
   function reactSleeping() {
     if (destroyed || paused || !inView || document.hidden || !isChotaSleeping() || tigretonReducedMotion.matches || pet.classList.contains("is-sleep-reacting")) return;
@@ -3038,7 +3108,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const observer = new IntersectionObserver(entries => {
     inView = entries[0].isIntersecting;
     refresh();
-    if (inView && reactToPlan) { reactToPlan = false; play(isBirthday || (isToday && !isCall) ? "jump" : "greet"); }
+    // Entering the screen or receiving a new plan must not trigger a commanded action.
   }, {threshold: .25});
   observer.observe(pet);
   refresh();
@@ -3058,7 +3128,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
 }
 function tigretonSpriteMarkup(interactive = false) {
   const tag = interactive ? "button" : "span";
-  return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
+  return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"><span class="chota-idle-body"></span><span class="chota-idle-head"><svg class="chota-idle-eyelids" viewBox="0 0 256 256" aria-hidden="true"><path fill="#fa7906" d="M117 84Q126 81 136 93L141 99 138 105Q126 108 119 99Z M164 98Q174 94 182 100L184 105 180 113Q172 116 164 108Z"/><path fill="none" stroke="#27170f" stroke-width="1.7" stroke-linecap="round" d="M119 96q11 10 20 3m26 5q8 7 17 1"/></svg></span></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
 }
 let chotaViewerMotion = null;
 let chotaViewerMotionKey = "";
@@ -3161,6 +3231,7 @@ function openChotaViewer(trigger) {
     <div class="chota-viewer-room-scene">
     <img class="chota-viewer-room-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="" aria-hidden="true" decoding="async">
     ${clubhouseSkyMarkup()}
+    ${clubhouseSeasonalMarkup()}
     <div class="tigreton-agenda chota-viewer-pet">
     <div class="chota-viewer-bubble-slot"><div class="tigreton-bubble chota-viewer-status" role="status" aria-live="polite" aria-atomic="true" hidden></div></div>
     <div class="chota-character-row"><button class="chota-viewer-touch" type="button" data-chota-action="nod" aria-label="Tocar a El Chota">${tigretonSpriteMarkup()}</button></div></div></div>
@@ -3172,6 +3243,7 @@ function openChotaViewer(trigger) {
   document.body.classList.add("chota-viewer-open");
   viewer.show();
   globalThis.ChotaShop?.mountRoom(viewer.querySelector(".chota-viewer-room-scene"));
+  globalThis.ClubLive?.mountRoomDetails?.(viewer.querySelector(".chota-viewer-room-scene"));
   syncClubhouseDaylight();
   document.querySelector("main.app")?.setAttribute("aria-hidden", "true");
   if (!chotaViewerMotion || chotaViewerMotionKey !== key) {
@@ -3332,6 +3404,25 @@ let clubhouseObserver = null;
 function clubhouseSkyMarkup() {
   return '<div class="clubhouse-sky" aria-hidden="true"><i class="clubhouse-sky-dawn"></i><i class="clubhouse-sky-day"></i><i class="clubhouse-sky-evening"></i><i class="clubhouse-sky-night"></i><span class="clubhouse-sky-stars"></span></div>';
 }
+function clubhouseSeasonalMarkup() {
+  return '<div class="clubhouse-seasonal" aria-hidden="true"></div>';
+}
+function clubhouseSeason(now = new Date()) {
+  // Whole months, using the same local clock as the room and the sleep schedule.
+  return ({1:"valentine",9:"halloween",11:"christmas"})[now.getMonth()] || "normal";
+}
+function syncClubhouseSeason(room, season) {
+  if (room.dataset.season === season) return;
+  const layer = room.querySelector(".clubhouse-seasonal");
+  if (!layer) return;
+  room.dataset.season = season;
+  if (season === "normal") { layer.replaceChildren(); return; }
+  const decoration = new Image(1024, 1024);
+  decoration.alt = "";
+  decoration.decoding = "async";
+  decoration.src = `icons/clubhouse/decor-${season}-v1.svg`;
+  layer.replaceChildren(decoration);
+}
 function clubhouseDaylight(now = new Date()) {
   // Seasonal daylight at the club's latitude, driven by the device's local clock.
   const year = now.getFullYear();
@@ -3356,8 +3447,11 @@ function clubhouseDaylight(now = new Date()) {
 }
 function syncClubhouseDaylight(now = new Date()) {
   const {weights, moment} = clubhouseDaylight(now);
+  const season = clubhouseSeason(now);
   document.querySelectorAll(".clubhouse-room, .chota-viewer-room-scene").forEach(room => {
     room.dataset.time = moment;
+    syncClubhouseSeason(room, season);
+    room.classList.toggle("is-sleeping", isChotaSleeping(now));
     for (const [name, weight] of Object.entries(weights)) room.style.setProperty(`--club-sky-${name}`, weight.toFixed(4));
   });
   const time = document.getElementById("clubhouseTime");
@@ -3379,6 +3473,8 @@ function renderClubhouse(upcoming) {
   const signature = JSON.stringify([homeEventsReady, birthday, next?.event.id, next?.event.title, next?.event.description, next?.event.eventType, days, date, schedule]);
   if (content.dataset.roomSignature === signature && content.firstElementChild) {
     globalThis.ChotaShop?.mountRoom(content.firstElementChild);
+    globalThis.ChotaGames?.mount(content.querySelector("#chotaArcadeEntry"));
+    globalThis.ClubLive?.mountRoom?.(content.querySelector(".clubhouse-memory"));
     syncClubhouseDaylight();
     syncChotaSleepControls();
     return;
@@ -3389,17 +3485,22 @@ function renderClubhouse(upcoming) {
   content.innerHTML = `<div class="clubhouse-room${birthday ? " is-birthday" : ""}" data-time="${moment}">
     <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="async" fetchpriority="low">
     ${clubhouseSkyMarkup()}
+    ${clubhouseSeasonalMarkup()}
     <div class="clubhouse-lamplight" aria-hidden="true"></div><div class="clubhouse-dust" aria-hidden="true"><i></i><i></i><i></i></div>
     ${birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ""}
     ${plan}
+    ${next ? `<button type="button" class="clubhouse-live-icon" data-club-live-event="${escapeHtml(next.event.id)}" aria-label="Abrir plan en directo: ${escapeHtml(next.event.title)}" title="Plan en directo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.1 7.1a7 7 0 0 0 0 9.8m9.8-9.8a7 7 0 0 1 0 9.8M4 4a11.3 11.3 0 0 0 0 16M20 4a11.3 11.3 0 0 1 0 16"/></svg></button>` : ""}
+    <div id="chotaArcadeEntry"></div>
     <div class="clubhouse-memory"><span class="clubhouse-memory-label">Recuerdos del club</span><svg viewBox="0 0 40 32" aria-hidden="true"><path d="M4 8h8l3-5h10l3 5h8v21H4z"/><circle cx="20" cy="18" r="7"/></svg><strong>Aún no hay recuerdos compartidos</strong><span>Este sitio será para vuestra próxima foto.</span></div>
     <div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small><button type="button" class="chota-expand" data-chota-expand aria-label="Ver a El Chota en pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 21h5v-5m0 5-7-7M16 3h5v5m0-5-7 7M8 21H3v-5m0 5 7-7"/></svg></button></div>
     <div class="tigreton-bubble clubhouse-bubble" hidden role="status" aria-live="polite" aria-atomic="true"></div>
   </div>`;
   const room = content.firstElementChild;
+  globalThis.ClubLive?.mountRoom?.(content.querySelector(".clubhouse-memory"));
   clubhouseObserver = new IntersectionObserver(entries => room.classList.toggle("is-in-view", entries[0].isIntersecting), {threshold: .15});
   clubhouseObserver.observe(room);
   globalThis.ChotaShop?.mountRoom(room);
+  globalThis.ChotaGames?.mount(content.querySelector("#chotaArcadeEntry"));
   syncClubhouseDaylight();
   syncChotaSleepControls();
 }
@@ -3415,7 +3516,7 @@ function syncChotaSleepControls() {
     }
     if (button.matches("[data-chota-expand]")) button.hidden = sleeping;
   });
-  document.querySelector("#clubhouseContent .clubhouse-room")?.classList.toggle("is-sleeping", sleeping);
+  document.querySelectorAll(".clubhouse-room, .chota-viewer-room-scene").forEach(room => room.classList.toggle("is-sleeping", sleeping));
   if (sleeping) {
     document.querySelectorAll(".clubhouse-bubble, .chota-viewer-status").forEach(bubble => { bubble.hidden = true; bubble.setAttribute("aria-busy", "false"); });
   }
@@ -3444,12 +3545,24 @@ function refreshChotaSleepSchedule() {
   chotaSleepTimer = setTimeout(refreshChotaSleepSchedule, Math.max(100, boundary.getTime() - now.getTime()));
 }
 function renderUpcomingEvents() {
+  if (pendingWidgetEventId && homeEventsReady && currentAuthUser) {
+    const pendingId = pendingWidgetEventId; pendingWidgetEventId = null;
+    const pendingEvent = groupEvents.find(item => String(item.id) === pendingId);
+    if (pendingEvent) requestAnimationFrame(() => globalThis.GroupInteractions?.openPlan(pendingEvent));
+    else goTo("calendario");
+  }
   cancelChotaPress(true);
   const upcoming = ClubModel.upcomingEvents(groupEvents);
   const previousPlanKey = tigretonRenderedKey;
   const context = chotaRoomContext();
   tigretonRenderedKey = tigretonContextKey(context.event, context.date);
   renderClubhouse(upcoming);
+  globalThis.ClubSocial?.mountGoal(document.querySelector(".clubhouse-room")?.parentElement);
+  globalThis.PlanWidget?.sync({
+    id: upcoming[0]?.event ? String(upcoming[0].event.id) : "", title: upcoming[0]?.event.title || "",
+    startAt: upcoming[0]?.date?.toISOString() || null, endAt: upcoming[0]?.event.endsAt || null,
+    location: upcoming[0]?.event.location || "", packCount: globalThis.DailyPacks?.snapshot()?.data?.available
+  });
   const viewer = document.getElementById("chotaViewer");
   if (viewer?.open && viewer.dataset.contextKey !== tigretonRenderedKey) viewer.close();
   mountTigretonMotion(previousPlanKey !== tigretonRenderedKey, context.event, context.date);
@@ -3495,6 +3608,7 @@ function openCalendarDay(dateValue) {
       ${event.location ? `<p>⌖ ${escapeHtml(event.location)}</p>` : ""}
       ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
       ${canEditCalendarEvent(event) ? `<button class="secondary-button" type="button" data-edit-calendar-event="${event.id}">Editar</button>` : ""}
+      <button class="club-live-event-link" type="button" data-club-live-event="${escapeHtml(event.id)}" data-occurrence="${escapeHtml(dateValue)}">Plan en directo</button>
       ${globalThis.GroupInteractions?.attendanceMarkup(event, dateValue) || ""}
     </article>`).join("") : `<div class="empty-state compact"><strong>No hay nada programado</strong><span>Este día no tiene eventos ni cumpleaños.</span></div>`;
   void globalThis.GroupInteractions?.hydrateAttendance(document.getElementById("calendarDayDetailList"));
@@ -3529,23 +3643,32 @@ function formatEventDate(value) {
   return new Date(value).toLocaleString("es-ES", {weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"});
 }
 
+function searchableMemberText(member) {
+  const text = `${member.name} ${member.username} ${member.nickname}`;
+  let entry = memberSearchText.get(member);
+  if (entry?.text !== text) {
+    entry = {text, normalized: normalizeUsername(text)};
+    memberSearchText.set(member, entry);
+  }
+  return entry.normalized;
+}
 function performSearch(query) {
   const term = normalizeUsername(query);
   document.getElementById("searchResults").hidden = !term;
   if (!term) {
-    document.getElementById("searchResults").innerHTML = "";
+    updateSurfaceMarkup(document.getElementById("searchResults"), "");
     return;
   }
   const results = members
-    .filter(member => !member.hidden && normalizeUsername(`${member.name} ${member.username} ${member.nickname}`).includes(term))
+    .filter(member => !member.hidden && searchableMemberText(member).includes(term))
     .slice(0, 20);
-  document.getElementById("searchResults").innerHTML = results.length ? results.map(member => {
+  updateSurfaceMarkup(document.getElementById("searchResults"), results.length ? results.map(member => {
     const detail = `@${member.username}${member.nickname ? ` · ${member.nickname}` : ""}`;
     return `<button type="button" class="search-result member-search-result" data-profile="${member.id}">
       ${getAvatar(member, "avatar small")}
       <span class="search-result-copy"><strong>${escapeHtml(member.name)}</strong><small>${escapeHtml(detail)}</small></span>
     </button>`;
-  }).join("") : `<div class="empty-state compact">No hay miembros para “${escapeHtml(query)}”.</div>`;
+  }).join("") : `<div class="empty-state compact">No hay miembros para “${escapeHtml(query)}”.</div>`);
 }
 
 const accountRequests = globalThis.ClubAccountRequests?.create({client: db, canManage: canManageSite, owner: () => currentAuthUser?.id});
@@ -3837,6 +3960,11 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ClubOnboarding?.reset();
     globalThis.BannerShop?.reset();
     globalThis.ChotaShop?.reset();
+    globalThis.ChotaGames?.reset();
+    globalThis.ClubLive?.reset();
+    globalThis.ClubSocial?.reset();
+    globalThis.ClubSeasons?.reset();
+    globalThis.PlanWidget?.clear();
     globalThis.AdminGrants?.reset();
     globalThis.GroupInteractions?.reset();
     globalThis.PendingActions?.reset();
@@ -3925,6 +4053,11 @@ function showLogin() {
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
   globalThis.ChotaShop?.reset();
+  globalThis.ChotaGames?.reset();
+  globalThis.ClubLive?.reset();
+    globalThis.ClubSocial?.reset();
+  globalThis.ClubSeasons?.reset();
+  globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
   globalThis.PendingActions?.reset();
@@ -3958,6 +4091,11 @@ async function logoutCurrentUser() {
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
   globalThis.ChotaShop?.reset();
+  globalThis.ChotaGames?.reset();
+  globalThis.ClubLive?.reset();
+    globalThis.ClubSocial?.reset();
+  globalThis.ClubSeasons?.reset();
+  globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
   globalThis.GroupInteractions?.reset();
   globalThis.PendingActions?.reset();
@@ -4030,10 +4168,16 @@ async function logoutCurrentUser() {
   renderNotifications();
 }
 
+async function measureSessionStartup(name, load) {
+  const started = performance.now();
+  try { return await load(); }
+  finally { console.info(`[BigBoy startup] ${name}: ${Math.round(performance.now() - started)} ms`); }
+}
+
 async function beginAuthenticatedSession(authUser) {
   // getUser reads the current server record, including non-user-editable app metadata.
   // A cached JWT/user_metadata/local flag must never waive a required change.
-  const {data, error} = await db.auth.getUser();
+  const {data, error} = await measureSessionStartup("auth-user", () => db.auth.getUser());
   if (error || !data.user || data.user.id !== authUser.id) throw new Error("La sesión ya no está disponible. Vuelve a iniciar sesión.");
   const verifiedUser = data.user;
   if (await accountRequests?.handleAuthUser(verifiedUser)) { showLogin(); return; }
@@ -4048,14 +4192,14 @@ async function beginAuthenticatedSession(authUser) {
   let securityApproved;
   try {
     if (!globalThis.ClubAccountSecurity) throw new Error("No se pudo cargar la seguridad del acceso. Actualiza la aplicación e inténtalo de nuevo.");
-    securityApproved = await globalThis.ClubAccountSecurity.gate(db, verifiedUser);
+    securityApproved = await measureSessionStartup("auth-security", () => globalThis.ClubAccountSecurity.gate(db, verifiedUser));
   } catch (securityError) {
     showLogin();
     throw securityError;
   }
   if (securityApproved === false) return;
   // Roles and account visibility must also come from the current server profile.
-  const profile = await profileForAuthUser(verifiedUser);
+  const profile = await measureSessionStartup("auth-profile", () => profileForAuthUser(verifiedUser));
   if (!profile) {
     globalThis.ClubDrafts?.suspend();
     currentAuthUser = null;
@@ -5573,7 +5717,7 @@ function syncEventEditorViewport() {
   else if (bounds.top < top) scroller.scrollTop -= top - bounds.top;
 }
 
-function openEventEditor(eventId = null, requestedType = "event") {
+function openEventEditor(eventId = null, requestedType = "event", draft = null) {
   globalThis.ClubDrafts?.flush();
   const event = groupEvents.find(item => String(item.id) === String(eventId));
   const eventType = event?.eventType || requestedType;
@@ -5598,6 +5742,11 @@ function openEventEditor(eventId = null, requestedType = "event") {
   document.getElementById("eventFeedback").textContent = "";
   document.getElementById("deleteEventButton").hidden = !event || !canEditCalendarEvent(event);
   globalThis.ClubDrafts?.begin("eventForm", event ? `event:${event.id}` : `new:${eventType}`, {reopen:true});
+  if (draft && !event) {
+    document.getElementById("eventTitle").value = String(draft.title || "").slice(0, 160);
+    document.getElementById("eventDescription").value = String(draft.description || "").slice(0, 2000);
+    document.getElementById("eventLocation").value = String(draft.location || "").slice(0, 200);
+  }
   updateEventEditorType();
   const modal = document.getElementById("eventEditor");
   document.body.classList.add("event-editor-open");
@@ -6455,7 +6604,7 @@ function renderNews(items, feedTitle, refreshedAt = Date.now()) {
   globalThis.ClubFeedback?.set(grid, "ready", "");
   grid.removeAttribute("aria-busy");
   const categoryName = {deportes: "Deportes", espana: "España", mundo: "Mundo"}[activeNewsCategory] || "Actualidad";
-  grid.innerHTML = sortedItems.map((item, index) => {
+  updateSurfaceMarkup(grid, sortedItems.map((item, index) => {
     const source = item.source || "Medio de comunicación";
     const cleanTitle = item.title.endsWith(` - ${source}`) ? item.title.slice(0, -(source.length + 3)) : item.title;
     item.cleanTitle = cleanTitle;
@@ -6475,7 +6624,7 @@ function renderNews(items, feedTitle, refreshedAt = Date.now()) {
       ${summary && index < 3 && summary !== cleanTitle ? `<p class="news-summary">${escapeHtml(summary)}</p>` : ""}
       <div class="news-card-actions"><a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Leer noticia</a>${!isSuperAdmin() ? `<button class="media-share-button news-share-button" type="button" data-share-news="${index}" aria-label="Compartir: ${escapeHtml(cleanTitle)}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg></button>` : ""}</div></div>
     </article>`;
-  }).join("") || '<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Actualiza para consultar las últimas noticias.</span></div>';
+  }).join("") || '<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Actualiza para consultar las últimas noticias.</span></div>');
 }
 
 function newsTimestamp(value) {
@@ -6491,7 +6640,7 @@ function formatNewsDate(value) {
   const timestamp = newsTimestamp(value);
   if (!timestamp) return "Fecha no disponible";
   const date = new Date(timestamp);
-  return date.toLocaleString("es-ES", {day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"});
+  return newsDateFormatter.format(date);
 }
 
 function formatMessageDate(value) {
@@ -6891,7 +7040,8 @@ document.getElementById("messageContextMenu").addEventListener("click", event =>
   const target = messageMenuTarget;
   if (!action || !contextMessage(target)) return;
   closeMessageMenu(event.detail === 0);
-  if (action === "reply") selectChatReply(target);
+  if (action === "plan") { const message = contextMessage(target); openEventEditor(null, "event", {title: (message.text || message.body || "").slice(0, 160), description: message.text || message.body || ""}); }
+  else if (action === "reply") selectChatReply(target);
   else if (action === "info") showMessageInfo({...target, restoreFocus: event.detail === 0});
   else if (action === "edit") (target.kind === "group" ? editGroupMessage : editPrivateMessage)(target.id);
   else if (action === "delete") (target.kind === "group" ? deleteGroupMessage : deletePrivateMessage)(target.id);
@@ -7418,6 +7568,8 @@ globalThis.GroupInteractions?.init({
   getChannelId: () => activeChatChannelId,
   canWriteChannel: channelId => !chatChannels.find(channel => String(channel.id) === String(channelId))?.readOnly || canManageSite(),
   getMember: getMemberByAuthId,
+  canCreatePlan: canManageSite,
+  createPlan: draft => openEventEditor(null, "event", draft),
 });
 
 globalThis.BannerShop?.initialize({
@@ -7439,6 +7591,66 @@ globalThis.ChotaShop?.initialize({
   session: () => backendReady && currentAuthUser?.id,
   rpc: (name, args) => db.rpc(name, args),
   refreshWallet: () => globalThis.BannerShop?.refresh(),
+});
+
+globalThis.ChotaGames?.initialize({
+  session: () => backendReady && currentAuthUser?.id,
+  getOwnedItems: () => globalThis.ChotaShop?.refresh(),
+  openShop: () => {
+    document.querySelector('[data-banner-shop]')?.click();
+    document.getElementById('shopChotaTab')?.click();
+  },
+  rpc: (name, args) => db.rpc(name, args),
+  startGame: async game => {
+    const {data, error} = await db.rpc('start_chota_game', {target_game: game});
+    if (error) throw error;
+    return data;
+  },
+  submitScore: async (_game, score, sessionId, completed) => {
+    const {data, error} = await db.rpc('submit_chota_game_score', {game_session_id: sessionId, submitted_score: score, completed_round: completed === true});
+    if (error) throw error;
+    if (data?.reward_status === 'awarded') void globalThis.DailyPacks?.refresh(true);
+    return data;
+  },
+  leaderboard: async game => {
+    const {data, error} = await db.rpc('get_chota_game_leaderboard', {target_game: game});
+    if (error) throw error;
+    return data;
+  },
+});
+
+globalThis.ClubSocial?.init({db, getUser: () => currentAuthUser, refreshPacks: () => globalThis.DailyPacks?.refresh(true)});
+
+globalThis.ClubLive?.init({
+  db,
+  getUser: () => currentAuthUser,
+  getEvents: () => groupEvents,
+  getMember: getMemberByAuthId,
+  canManage: canManageSite,
+  onOpenCalendar: () => goTo("calendario"),
+  onProposePlace: async draft => {
+    const owner = currentAuthUser?.id;
+    if (!owner) return;
+    if (canManageSite()) return openEventEditor(null, "event", draft);
+    const channel = chatChannels.find(item => !item.readOnly);
+    if (!channel) return goTo("calendario");
+    await openGroupConversation(channel.id);
+    if (currentAuthUser?.id !== owner) return;
+    const input = document.getElementById("messageInput");
+    const proposal = `¿Repetimos en ${draft.location}?`;
+    input.value = input.value.trim() ? `${input.value.trim()} ${proposal}` : proposal;
+    input.dispatchEvent(new Event("input", {bubbles: true}));
+    input.focus({preventScroll: true});
+  },
+});
+
+globalThis.ClubSeasons?.initialize({db, session: () => currentAuthUser?.id, refreshPacks: () => globalThis.DailyPacks?.refresh(true), openAlbum: () => globalThis.CardAlbum?.open()});
+
+globalThis.PlanWidget?.onOpen?.(eventId => {
+  if (!homeEventsReady || !currentAuthUser) { pendingWidgetEventId = String(eventId); return; }
+  const event = groupEvents.find(item => String(item.id) === String(eventId));
+  if (event) globalThis.GroupInteractions?.openPlan(event);
+  else goTo('calendario');
 });
 
 globalThis.CollectionSocial?.configurePush(dispatchPush);
@@ -7511,7 +7723,7 @@ if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("l
   try {
     if (navigator.onLine === false) {showLogin();return;}
     if (backendReady) {
-      const {data, error} = await db.auth.getSession();
+      const {data, error} = await measureSessionStartup("auth-session", () => db.auth.getSession());
       if (error) throw error;
       if (data.session?.user) {
         return await beginAuthenticatedSession(data.session.user);

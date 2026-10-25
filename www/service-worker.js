@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v405";
+const CACHE_NAME = "big-boy-rules-v406";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -13,13 +13,13 @@ const APP_SHELL = [
   "./visual-system.css?v=20261025-ios-glass-405",
   "./notifications.css?v=20261015-notifications-polls-307",
   "./club.css?v=20261021-performance-363",
-  "./clubhouse.css?v=20261024-chota-idle-394",
+  "./clubhouse.css?v=20261025-passport-406",
   "./chota-shop.js?v=20261022-chota-contact-381",
   "./chota-shop.css?v=20261024-store-397",
   "./club-social.js?v=20261024-missions-396",
   "./club-social.css?v=20261024-missions-396",
-  "./club-live.js?v=20261025-audit-404",
-  "./club-live.css?v=20261023-club-experiences-1",
+  "./club-live.js?v=20261025-passport-406",
+  "./club-live.css?v=20261025-passport-406",
   "./chota-games.js?v=20261024-stages-401",
   "./chota-games.css?v=20261024-stages-401",
   "./club-experiences.css?v=20261023-club-recaps-386",
@@ -54,7 +54,7 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20260903-130",
   "./admin-console.js?v=20261022-chota-shop-378",
   "./admin-console.css?v=20261021-compact-364",
-  "./app.js?v=20261025-ios-glass-405",
+  "./app.js?v=20261025-passport-406",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261023-album-pages-387",

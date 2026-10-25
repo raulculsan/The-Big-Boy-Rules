@@ -3243,6 +3243,7 @@ function openChotaViewer(trigger) {
   document.body.classList.add("chota-viewer-open");
   viewer.show();
   globalThis.ChotaShop?.mountRoom(viewer.querySelector(".chota-viewer-room-scene"));
+  globalThis.ClubLive?.mountRoomDetails?.(viewer.querySelector(".chota-viewer-room-scene"));
   syncClubhouseDaylight();
   document.querySelector("main.app")?.setAttribute("aria-hidden", "true");
   if (!chotaViewerMotion || chotaViewerMotionKey !== key) {
@@ -7626,6 +7627,21 @@ globalThis.ClubLive?.init({
   getEvents: () => groupEvents,
   getMember: getMemberByAuthId,
   canManage: canManageSite,
+  onOpenCalendar: () => goTo("calendario"),
+  onProposePlace: async draft => {
+    const owner = currentAuthUser?.id;
+    if (!owner) return;
+    if (canManageSite()) return openEventEditor(null, "event", draft);
+    const channel = chatChannels.find(item => !item.readOnly);
+    if (!channel) return goTo("calendario");
+    await openGroupConversation(channel.id);
+    if (currentAuthUser?.id !== owner) return;
+    const input = document.getElementById("messageInput");
+    const proposal = `¿Repetimos en ${draft.location}?`;
+    input.value = input.value.trim() ? `${input.value.trim()} ${proposal}` : proposal;
+    input.dispatchEvent(new Event("input", {bubbles: true}));
+    input.focus({preventScroll: true});
+  },
 });
 
 globalThis.ClubSeasons?.initialize({db, session: () => currentAuthUser?.id, refreshPacks: () => globalThis.DailyPacks?.refresh(true), openAlbum: () => globalThis.CardAlbum?.open()});
