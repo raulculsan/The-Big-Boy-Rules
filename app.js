@@ -680,6 +680,7 @@ function updateFloatingTabIndicator(sectionId) {
   if (index < 0) return;
   const tabBar = document.getElementById("floatingTabBar");
   tabBar?.style.setProperty("--active-tab-offset", `${index * 100}%`);
+  globalThis.ClubMotion?.moveGlassSelection?.(tabBar,index);
 }
 
 async function transitionMessageView(update, {back = false} = {}) {

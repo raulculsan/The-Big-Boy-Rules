@@ -33,3 +33,25 @@ No se animan desenfoques ni se añaden bucles permanentes al sistema de interfaz
 
 Validación: `scripts/ui-motion.test.mjs` cubre interrupción/reapertura, cierre repetido, cambio de
 preferencia, cancelación y flick de vuelta. Se mantienen las pruebas existentes de navegación y chat.
+# Liquid Glass-inspired controls (v408)
+
+The floating navigation, contextual menus, notification overlay and selected
+floating controls use a shared optical material. It combines background
+sampling, saturation, a directional rim and local touch illumination. Content
+cards, messages and full-screen reading surfaces retain their standard material.
+
+The navigation lens stretches during a destination change and follows an
+intentional horizontal drag across the dock. A route is committed only on
+release; vertical intent and cancellation restore the original selection.
+There is no data loading or route change while dragging.
+
+This is a web implementation for Capacitor iOS/Android and browsers. It emulates
+the optical language; it does not invoke Apple's native `UIGlassEffect` API.
+The PWA safe-area geometry and the native iPhone dock geometry are preserved.
+Background blur is static, touch tracking performs no repeated geometry reads,
+and material lighting stops on release, backgrounding or accessibility changes.
+Reduced transparency/high contrast use opaque surfaces. Reduced motion keeps
+direct gesture tracking but disables lens deformation and light animations.
+
+References: [Apple Materials](https://developer.apple.com/design/human-interface-guidelines/materials),
+[Meet Liquid Glass](https://developer.apple.com/videos/play/wwdc2025/219/).

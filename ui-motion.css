@@ -57,3 +57,137 @@ body.authenticated :is(.primary-button,.secondary-button,.icon-button,.back-butt
 html[data-reduced-motion="true"] dialog[data-motion-managed]::backdrop { animation:none; }
 html[data-reduced-motion="true"] body.authenticated :is(.primary-button,.secondary-button,.icon-button,.back-button,.close-modal,.calendar-nav-button,.packs-sync,.shop-navigation button,.club-passport-tabs button,.plan-attendance-options button):active { scale:1; }
 html[data-reduced-motion="true"] .modal-backdrop > :is(.modal,.profile-editor-modal,.achievement-assignment-modal) { transform:none; }
+
+/* Liquid Glass-inspired control layer. The content remains opaque and calm;
+   only navigation, transient menus and floating controls receive this material.
+   CSS backdrop sampling is an optical approximation, not UIKit UIGlassEffect. */
+:root {
+  --glass-tint:rgba(31,33,36,.60);
+  --glass-panel:rgba(27,29,33,.86);
+  --glass-rim:rgba(255,255,255,.22);
+  --glass-blur:24px;
+  --glass-shadow:0 12px 32px #0003,inset 0 1px 0 #ffffff38,inset 0 -1px 0 #0003;
+}
+html[data-glass-quality="low"] { --glass-blur:14px; }
+body.authenticated .floating-tab-bar,
+body.authenticated.native-ios .floating-tab-bar {
+  background:transparent;
+  border-color:transparent;
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  isolation:isolate;
+  overflow:visible;
+}
+body.authenticated .floating-tab-bar::before,
+body.authenticated.native-ios .floating-tab-bar::before {
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:0;
+  border:1px solid var(--glass-rim);
+  border-radius:inherit;
+  background:linear-gradient(165deg,#ffffff12,#ffffff02 40%,#0000000a 75%),var(--glass-tint);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(175%) brightness(1.1);
+  backdrop-filter:blur(var(--glass-blur)) saturate(175%) brightness(1.1);
+  box-shadow:var(--glass-shadow);
+  pointer-events:none;
+}
+body.authenticated .floating-tab-bar::after,
+body.authenticated.native-ios .floating-tab-bar::after {
+  content:"";
+  position:absolute;
+  z-index:1;
+  inset:0;
+  border-radius:inherit;
+  background:radial-gradient(ellipse at var(--glass-light-x,50%) var(--glass-light-y,0%),#ffffff2e,transparent 60%);
+  opacity:.32;
+  transition:opacity 300ms var(--motion-ease);
+  pointer-events:none;
+}
+body.authenticated .floating-tab-bar[data-glass-touch]::after { opacity:1; }
+body.authenticated .floating-tab-bar .app-tab { z-index:3;background:transparent; }
+body.authenticated .floating-tab-bar .tab-selection-indicator,
+body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator {
+  z-index:2;
+  border:1px solid #ffffff2c;
+  background:linear-gradient(155deg,#ffffff25,#ffffff0c 48%,#ffffff16);
+  box-shadow:inset 1px 1px 0 #ffffff3b,inset -1px -1px 0 #ffffff0b,0 3px 9px #0002;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  transform-origin:center;
+}
+body.authenticated .floating-tab-bar .tab-selection-indicator::after,
+body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator::after {
+  content:"";display:block;position:absolute;inset:1px;border-radius:inherit;
+  background:linear-gradient(135deg,#ffffff22,transparent 35%,transparent 68%,#ffffff10);
+  pointer-events:none;
+}
+body.authenticated .floating-tab-bar[data-glass-dragging] .tab-selection-indicator,
+body.authenticated.native-ios .floating-tab-bar[data-glass-dragging] .tab-selection-indicator {
+  transition:none;scale:1.1 .94;
+}
+/* Keep icon geometry above the system inset, but carry the material through
+   the whole bar so an installed PWA never gains a separate dark bottom strip. */
+@media(max-width:760px) {
+  body.authenticated:not(.native-ios) .floating-tab-bar::before,
+  body.authenticated:not(.native-ios) .floating-tab-bar::after {
+    inset:0 8px 0;
+    border-radius:28px;
+  }
+  body.authenticated:not(.native-ios) .floating-tab-bar .tab-selection-indicator { border-radius:24px; }
+}
+body.authenticated :is(.top-actions>.icon-button,.top-actions .notifications-wrap>.icon-button,.back-button,.calendar-nav-button) {
+  position:relative;
+  isolation:isolate;
+  border:1px solid #ffffff26;
+  background:radial-gradient(ellipse at var(--glass-light-x,35%) var(--glass-light-y,0%),#ffffff1c,transparent 75%),rgba(43,45,49,.58);
+  color:#f4f5f7;
+  box-shadow:inset 0 1px 0 #ffffff24,0 3px 9px #0002;
+  -webkit-backdrop-filter:blur(16px) saturate(155%);
+  backdrop-filter:blur(16px) saturate(155%);
+  transition:scale 200ms var(--motion-ease),background-color 160ms,box-shadow 220ms;
+}
+body.authenticated :is(.top-actions>.icon-button,.top-actions .notifications-wrap>.icon-button,.back-button,.calendar-nav-button)[data-glass-touch] {
+  background-color:rgba(91,94,101,.55);
+  box-shadow:inset 0 1px 0 #ffffff60,inset 0 -1px 0 #ffffff0d,0 4px 14px #0002;
+}
+body.authenticated :is(.message-context-menu,.inbox-context-menu,.profile-quick-menu,#notificationsDropdown) {
+  border:1px solid #ffffff2b;
+  background:linear-gradient(155deg,#ffffff0e,transparent 46%),var(--glass-panel);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(165%);
+  backdrop-filter:blur(var(--glass-blur)) saturate(165%);
+  box-shadow:0 18px 54px #0005,inset 0 1px 0 #ffffff30,inset 0 -1px 0 #ffffff0b;
+}
+body.authenticated .profile-quick-menu::after { display:none; }
+body.authenticated :is(.message-context-menu,.inbox-context-menu,.profile-quick-menu)>button { border-radius:14px; }
+body.authenticated :is(.message-context-menu,.inbox-context-menu,.profile-quick-menu)>button:active { background:#ffffff1c; }
+body.authenticated #notificationsDropdown .notifications-heading,
+body.authenticated #notificationsDropdown .notifications-toolbar { background:transparent; }
+body.authenticated #notificationsDropdown .notifications-list { background:#10121524; }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  body.authenticated .floating-tab-bar::before,
+  body.authenticated.native-ios .floating-tab-bar::before,
+  body.authenticated :is(.message-context-menu,.inbox-context-menu,.profile-quick-menu,#notificationsDropdown) { background:#25272b; }
+}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
+  body.authenticated .floating-tab-bar::before,
+  body.authenticated.native-ios .floating-tab-bar::before,
+  body.authenticated :is(.top-actions>.icon-button,.top-actions .notifications-wrap>.icon-button,.back-button,.calendar-nav-button,.message-context-menu,.inbox-context-menu,.profile-quick-menu,#notificationsDropdown) {
+    background:#25272b;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;
+  }
+  body.authenticated .floating-tab-bar::after,
+  body.authenticated.native-ios .floating-tab-bar::after { display:none; }
+  body.authenticated .floating-tab-bar .tab-selection-indicator,
+  body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator { background:#484b50;-webkit-backdrop-filter:none;backdrop-filter:none; }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.authenticated .floating-tab-bar::after,
+  body.authenticated.native-ios .floating-tab-bar::after { transition:none; }
+}
+html[data-reduced-motion="true"] body.authenticated .floating-tab-bar::after { transition:none; }
+@media(prefers-reduced-motion:reduce) {
+  body.authenticated .floating-tab-bar[data-glass-dragging] .tab-selection-indicator,
+  body.authenticated.native-ios .floating-tab-bar[data-glass-dragging] .tab-selection-indicator { scale:1; }
+}
+html[data-reduced-motion="true"] body.authenticated .floating-tab-bar[data-glass-dragging] .tab-selection-indicator { scale:1; }

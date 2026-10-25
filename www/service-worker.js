@@ -1,7 +1,7 @@
-const CACHE_NAME = "big-boy-rules-v407";
+const CACHE_NAME = "big-boy-rules-v408";
 const APP_SHELL = [
-  "./ui-motion.js?v=20261025-fluid-motion-407",
-  "./ui-motion.css?v=20261025-fluid-motion-407",
+  "./ui-motion.js?v=20261025-liquid-glass-408",
+  "./ui-motion.css?v=20261025-liquid-glass-408",
   "./",
   "./index.html",
   "./account-security.js?v=20261025-fluid-motion-407",
@@ -53,10 +53,10 @@ const APP_SHELL = [
   "./vendor/capacitor.js?v=8.5.0",
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
-  "./tab-navigation.js?v=20260903-130",
+  "./tab-navigation.js?v=20261025-liquid-glass-408",
   "./admin-console.js?v=20261022-chota-shop-378",
   "./admin-console.css?v=20261021-compact-364",
-  "./app.js?v=20261025-fluid-motion-407",
+  "./app.js?v=20261025-liquid-glass-408",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261023-album-pages-387",

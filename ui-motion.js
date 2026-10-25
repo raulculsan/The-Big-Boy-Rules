@@ -90,9 +90,59 @@
     const base = 150 + 150 * Math.sqrt(progress);
     return Math.round(Math.max(120,Math.min(300,base - Math.min(70,Math.max(0,velocity)*55))));
   }
+  // Optical feedback belongs to the small floating control layer. It only
+  // works while touched/pointed at: no device sensors, scroll loop or shader.
+  const glassSelector = '.floating-tab-bar,.top-actions>.icon-button,.top-actions .notifications-wrap>.icon-button,.back-button,.calendar-nav-button,.message-context-menu,.inbox-context-menu,.profile-quick-menu,#notificationsDropdown';
+  const transparency = matchMedia('(prefers-reduced-transparency:reduce), (prefers-contrast:more)');
+  const glassSelections = new WeakMap();
+  const lowPower = Number(navigator.deviceMemory || 8) <= 4;
+  document.documentElement.dataset.glassQuality = lowPower ? 'low' : 'full';
+  let glassTouch = null, glassFrame = 0;
+  function resetGlass() {
+    if(glassFrame)cancelAnimationFrame(glassFrame);
+    glassFrame=0;
+    if(glassTouch){delete glassTouch.element.dataset.glassTouch;glassTouch.element.style.removeProperty('--glass-light-x');glassTouch.element.style.removeProperty('--glass-light-y');}
+    glassTouch=null;
+  }
+  function paintGlass() {
+    glassFrame=0;
+    if(!glassTouch)return;
+    const {element,rect,x,y}=glassTouch;
+    element.style.setProperty('--glass-light-x',`${Math.max(0,Math.min(100,(x-rect.left)/Math.max(1,rect.width)*100))}%`);
+    element.style.setProperty('--glass-light-y',`${Math.max(0,Math.min(100,(y-rect.top)/Math.max(1,rect.height)*100))}%`);
+  }
+  function touchGlass(event) {
+    if(event.isPrimary===false||event.button>0||motion.media.matches||transparency.matches||document.hidden)return;
+    const element=event.target.closest?.(glassSelector);
+    if(!element||!document.body.classList.contains('authenticated')||element.disabled)return;
+    resetGlass();
+    glassTouch={element,id:event.pointerId,rect:element.getBoundingClientRect(),x:event.clientX,y:event.clientY};
+    element.dataset.glassTouch='true';paintGlass();
+  }
+  document.addEventListener('pointerdown',touchGlass,{passive:true});
+  document.addEventListener('pointermove',event=>{
+    if(!glassTouch||glassTouch.id!==event.pointerId)return;
+    glassTouch.x=event.clientX;glassTouch.y=event.clientY;
+    if(!glassFrame)glassFrame=requestAnimationFrame(paintGlass);
+  },{passive:true});
+  for(const type of ['pointerup','pointercancel'])document.addEventListener(type,event=>{if(glassTouch?.id===event.pointerId)resetGlass();},{passive:true});
+  function moveGlassSelection(bar,index) {
+    if(!bar)return;
+    const previous=glassSelections.get(bar);glassSelections.set(bar,index);
+    const lens=bar.querySelector('.tab-selection-indicator');
+    if(!lens||previous==null||previous===index||motion.media.matches||transparency.matches||document.hidden)return;
+    const direction=index>previous?1:-1;
+    lens.style.transformOrigin=direction>0?'22% 50%':'78% 50%';
+    run(lens,[{scale:'1 1'},{scale:'1.16 .91',offset:.24},{scale:'1.025 .99',offset:.72},{scale:'1 1'}],
+      {channel:'glass-lens',duration:420,easing:'cubic-bezier(.22,.8,.24,1)'});
+    // A brief light surge makes the moving lens read as a material, not a tile.
+    run(lens,[{filter:'brightness(1)'},{filter:'brightness(1.3)',offset:.3},{filter:'brightness(1)'}],
+      {channel:'glass-light',duration:360});
+  }
   const cancelAll = () => { for (const animation of active) animation.cancel(); active.clear(); };
-  motion.media.addEventListener('change',cancelAll);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelAll();});
+  motion.media.addEventListener('change',()=>{cancelAll();resetGlass();});
+  transparency.addEventListener?.('change',()=>{cancelAll();resetGlass();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAll();resetGlass();}});
   document.addEventListener('close',event=>{if(event.target.tagName==='DIALOG')stop(event.target,'dialog');},true);
   // Attribute-only observation does no work for chat/list mutations. It also
   // catches feature dialogs created later without wrapping native dialog APIs.
@@ -101,5 +151,5 @@
     dialogs.forEach(presentDialog);
   });
   observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
-  Object.assign(motion,{run,stop,openDialog,closeDialog,enterSection,settleDuration,timings,ease});
+  Object.assign(motion,{run,stop,openDialog,closeDialog,enterSection,settleDuration,moveGlassSelection,timings,ease});
 })();
