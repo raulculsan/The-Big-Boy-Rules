@@ -774,7 +774,7 @@ function goTo(sectionId) {
     section.inert = section.id !== sectionId;
   });
   // Realtime keeps data current while hidden; build the inbox only on entry.
-  if (sectionId === "chat") renderPrivateContacts();
+  if (sectionId === "chat") { renderPrivateContacts(); scheduleChatImageWarmup(); }
   globalThis.CardAlbum?.didNavigate(sectionId, currentSection);
   globalThis.AdminGrants?.didNavigate(sectionId);
   adminConsole?.didNavigate(sectionId);
@@ -2233,6 +2233,7 @@ function selectChatChannel(id) {
   if (!chatChannels.some(channel => String(channel.id) === String(id))) return;
   if (String(activeChatChannelId) !== String(id)) cancelActiveAudioRecording();
   activeChatChannelId = id;
+  warmChatImages(messages.filter(message => String(message.channelId || "") === String(id || "")), {explicit: true});
   renderChatChannels();
   renderMessages();
   globalThis.GroupInteractions?.mountPolls(document.getElementById("groupPolls"), activeChatChannelId);
@@ -2277,6 +2278,77 @@ function renderPresence() {
       <div><strong>${escapeHtml(member?.name || user.name || "Miembro")}</strong><small>En línea ahora</small></div><i></i>
     </div>`;
   }).join(""));
+}
+
+// Warm only the newest attachments while the inbox is open. Keep this small:
+// full camera images can otherwise retain tens of megabytes each on iPhone.
+const chatImageWarmCache = new Map();
+let chatImageWarmOwner = null;
+let chatImageWarmTimer = null;
+function clearChatImageWarmCache() {
+  clearTimeout(chatImageWarmTimer); chatImageWarmTimer = null;
+  for (const entry of chatImageWarmCache.values()) {
+    clearTimeout(entry.timer); entry.image.onload = entry.image.onerror = null;
+    entry.image.removeAttribute("src");
+  }
+  chatImageWarmCache.clear(); chatImageWarmOwner = null;
+}
+function warmChatImages(items, {limit = 4, explicit = false} = {}) {
+  const owner = currentAuthUser?.id;
+  if (!owner || document.hidden) return;
+  const connection = navigator.connection;
+  if (!explicit && (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || ""))) return;
+  if (chatImageWarmOwner !== owner) { clearChatImageWarmCache(); chatImageWarmOwner = owner; }
+  const sources = [...new Set([...items].sort((a, b) => messageTimestamp(b) - messageTimestamp(a))
+    .filter(message => message.attachmentType?.startsWith("image/") && !getSharedMediaReference(message))
+    .map(message => chatImageSource(message.attachmentUrl)).filter(Boolean))].slice(0, Math.min(limit, 4));
+  for (const source of sources) {
+    if (chatImageWarmCache.has(source)) {
+      const entry = chatImageWarmCache.get(source);
+      chatImageWarmCache.delete(source); chatImageWarmCache.set(source, entry);
+      continue;
+    }
+    while (chatImageWarmCache.size >= 4) {
+      const key = chatImageWarmCache.keys().next().value, old = chatImageWarmCache.get(key);
+      clearTimeout(old.timer); old.image.onload = old.image.onerror = null; old.image.removeAttribute("src");
+      chatImageWarmCache.delete(key);
+    }
+    const image = new Image(), entry = {image, timer: null};
+    image.decoding = "async"; image.fetchPriority = explicit ? "auto" : "low";
+    const finish = failed => {
+      clearTimeout(entry.timer); image.onload = image.onerror = null;
+      // Oversized legacy files may stay in the HTTP cache without retaining a
+      // decoded copy in our warm set. New uploads are bounded to 2048 pixels.
+      if (failed || image.naturalWidth * image.naturalHeight > 4200000) {
+        if (chatImageWarmCache.get(source) === entry) chatImageWarmCache.delete(source);
+        image.removeAttribute("src");
+      }
+      let pixels = [...chatImageWarmCache.values()].reduce((sum, item) => sum + item.image.naturalWidth * item.image.naturalHeight, 0);
+      for (const [key, old] of chatImageWarmCache) {
+        if (pixels <= 6300000) break;
+        if (old === entry || !old.image.naturalWidth) continue;
+        pixels -= old.image.naturalWidth * old.image.naturalHeight;
+        clearTimeout(old.timer); old.image.onload = old.image.onerror = null; old.image.removeAttribute("src");
+        chatImageWarmCache.delete(key);
+      }
+    };
+    image.onload = () => finish(false); image.onerror = () => finish(true);
+    chatImageWarmCache.set(source, entry);
+    entry.timer = setTimeout(() => finish(true), 15000); image.src = source;
+    if (image.complete && image.naturalWidth) finish(false);
+  }
+}
+function scheduleChatImageWarmup() {
+  clearTimeout(chatImageWarmTimer);
+  chatImageWarmTimer = setTimeout(() => {
+    chatImageWarmTimer = null;
+    if (document.getElementById("privados")?.classList.contains("active")) {
+      const member = getMember(activePrivateMemberId);
+      warmChatImages(privateMessages.filter(message => message.senderId === member?.authId || message.recipientId === member?.authId), {explicit: true});
+    } else if (document.getElementById("chat")?.classList.contains("active")) {
+      warmChatImages(messages.filter(message => String(message.channelId || "") === String(activeChatChannelId || "")));
+    }
+  }, 0);
 }
 
 const chatThumbnailLoads = new WeakMap();
@@ -2738,6 +2810,7 @@ async function openPrivateConversation(memberId) {
   const member = getMember(memberId);
   if (!member || member.id === currentUser?.id) return;
   if (activePrivateMemberId !== member.id) cancelActiveAudioRecording();
+  warmChatImages(privateMessages.filter(message => message.senderId === member.authId || message.recipientId === member.authId), {explicit: true});
   void resolvePrivateAttachments().then(refreshPrivateMessageSurfaces);
   await transitionMessageView(() => {
     if (owner !== currentAuthUser?.id) return;
@@ -4134,6 +4207,7 @@ async function logoutCurrentUser() {
   privateMessages = [];
   privateAttachmentCache.clear();
   privateAttachmentRequest = null;
+  clearChatImageWarmCache();
   groupEvents = [];
   calendarChatAnnouncements = [];
   channelAutomationMessages = [];
@@ -4427,6 +4501,7 @@ function scheduleChatSurfaces({group = false, privateConversation = false, conta
 }
 
 function refreshGroupMessageSurfaces() {
+  scheduleChatImageWarmup();
   scheduleChatSurfaces({group: true});
 }
 
@@ -4795,10 +4870,14 @@ async function loadPrivateMessages() {
     if (owner !== currentAuthUser?.id) return;
     if (error) throw error;
     privateMessages = [...(data || [])].reverse().map(mapPrivateMessage);
-    await resolvePrivateAttachments({changed: true});
-    if (owner !== currentAuthUser?.id) return;
+    applyCachedPrivateAttachments(owner);
     globalThis.ClubFeedback?.set(anchor, "ready", "");
     refreshPrivateMessageSurfaces();
+    // Text and the inbox must not wait for a Storage round trip. Reconcile the
+    // attachment URLs when signing finishes, using the same account guard.
+    void resolvePrivateAttachments({changed: true}).then(() => {
+      if (owner === currentAuthUser?.id) refreshPrivateMessageSurfaces();
+    });
   } catch {
     if (owner === currentAuthUser?.id) globalThis.ClubFeedback?.set(anchor, "error", privateMessages.length ? "No se pudo actualizar. Mostramos los últimos mensajes." : "No se pudieron cargar los mensajes. Comprueba la conexión.", () => void loadPrivateMessages());
   }
@@ -4809,6 +4888,14 @@ let privateAttachmentRequest = null;
 function privateAttachmentPath(value) {
   const prefix = "storage://private-chat/";
   return typeof value === "string" && value.startsWith(prefix) ? value.slice(prefix.length) : null;
+}
+function applyCachedPrivateAttachments(userId) {
+  for (const message of privateMessages) {
+    const path = privateAttachmentPath(message.attachmentRef || message.attachmentUrl);
+    if (!path) continue;
+    const cached = privateAttachmentCache.get(`${userId}:${path}`);
+    message.attachmentUrl = cached?.expires > Date.now() ? cached.url : message.attachmentRef;
+  }
 }
 async function resolvePrivateAttachments({changed = false} = {}) {
   if (!currentAuthUser || !backendReady) return;
@@ -4831,16 +4918,14 @@ async function resolvePrivateAttachments({changed = false} = {}) {
       }
     }
     if (currentAuthUser?.id !== userId) return;
-    for (const message of privateMessages) {
-      const path = privateAttachmentPath(message.attachmentRef || message.attachmentUrl);
-      if (path) message.attachmentUrl = privateAttachmentCache.get(`${userId}:${path}`)?.url || message.attachmentRef;
-    }
+    applyCachedPrivateAttachments(userId);
     } while (request.pending && currentAuthUser?.id === userId);
   })().catch(() => { /* Offline signing leaves a non-executable storage reference for later retry. */ }).finally(() => { if (privateAttachmentRequest === request) privateAttachmentRequest = null; });
   return request.promise;
 }
 
 function refreshPrivateMessageSurfaces() {
+  scheduleChatImageWarmup();
   scheduleChatSurfaces({privateConversation: true});
 }
 
