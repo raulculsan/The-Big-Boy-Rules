@@ -65,3 +65,9 @@ test('glass shell resets the retired moving pseudo-selector',()=>{
   assert.match(shell,/transition:none;/,'the shell must not animate like the old selector');
   assert.match(shell,/will-change:auto;/,'the shell must not retain an extra compositor layer');
 });
+test('glass lens highlight fills its capsule without the retired gold dash',()=>{
+  const css=read('ui-motion.css');
+  const highlight=css.match(/body\.authenticated \.floating-tab-bar \.tab-selection-indicator::after,\s*body\.authenticated\.native-ios \.floating-tab-bar \.tab-selection-indicator::after\s*\{([^}]+)\}/)[1];
+  assert.match(highlight,/width:auto;height:auto;transform:none;box-shadow:none;/,
+    'old 18×2px highlight must not appear at the top-left of the lens');
+});

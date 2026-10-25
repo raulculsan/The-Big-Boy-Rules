@@ -125,6 +125,7 @@ body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator {
 body.authenticated .floating-tab-bar .tab-selection-indicator::after,
 body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator::after {
   content:"";display:block;position:absolute;inset:1px;border-radius:inherit;
+  width:auto;height:auto;transform:none;box-shadow:none;
   background:linear-gradient(135deg,#ffffff22,transparent 35%,transparent 68%,#ffffff10);
   pointer-events:none;
 }
