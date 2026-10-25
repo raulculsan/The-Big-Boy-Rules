@@ -57,3 +57,11 @@ test('PWA glass covers the system inset without moving the dock icons',()=>{
   assert.match(shell,/inset:0 8px 0;/,'material extends to the bottom rather than ending above safe area');
   assert.doesNotMatch(shell,/--tab-safe-bottom|height:|padding:|transform:/,'material cannot alter the established dock hit-target geometry');
 });
+test('glass shell resets the retired moving pseudo-selector',()=>{
+  const css=read('ui-motion.css');
+  const shell=css.match(/body\.authenticated \.floating-tab-bar::before,\s*body\.authenticated\.native-ios \.floating-tab-bar::before\s*\{([^}]+)\}/)[1];
+  assert.match(shell,/width:auto;/,'the shell must span the whole dock, not the old one-tab width');
+  assert.match(shell,/transform:none;/,'the shell must not follow the tab selection offset');
+  assert.match(shell,/transition:none;/,'the shell must not animate like the old selector');
+  assert.match(shell,/will-change:auto;/,'the shell must not retain an extra compositor layer');
+});

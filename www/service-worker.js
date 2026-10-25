@@ -1,7 +1,7 @@
-const CACHE_NAME = "big-boy-rules-v408";
+const CACHE_NAME = "big-boy-rules-v409";
 const APP_SHELL = [
   "./ui-motion.js?v=20261025-liquid-glass-408",
-  "./ui-motion.css?v=20261025-liquid-glass-408",
+  "./ui-motion.css?v=20261026-glass-shell-409",
   "./",
   "./index.html",
   "./account-security.js?v=20261025-fluid-motion-407",
