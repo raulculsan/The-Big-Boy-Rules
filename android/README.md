@@ -15,7 +15,7 @@ npm run android:open   # sincroniza y abre Android Studio
 npm run android:build  # sincroniza y genera APK debug
 ```
 
-El APK de desarrollo queda en `android/app/build/outputs/apk/debug/app-debug.apk`. Para distribuir en Google Play, crea una clave de firma de publicación fuera del repositorio y genera un Android App Bundle firmado desde Android Studio.
+El APK de desarrollo aparece en el enlace **Locate** de Android Studio al terminar la build. Gradle guarda sus archivos generados en `~/.gradle/bigboy-generated/` para evitar las copias numeradas que crea la sincronización de Documents. Desde Terminal puedes localizarlo con `find ~/.gradle/bigboy-generated -name app-debug.apk`. Para distribuir en Google Play, crea una clave de firma de publicación fuera del repositorio y genera un Android App Bundle firmado desde Android Studio.
 
 ## Integraciones
 

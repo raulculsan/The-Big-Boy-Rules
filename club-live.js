@@ -62,7 +62,7 @@
    // Background refresh never rebuilds a form while a member is typing.
    if(![...dialog.querySelectorAll('video')].some(video=>!video.paused)&&(!dialog.contains(document.activeElement)||!document.activeElement.matches('input,textarea,select'))){const scroll=dialog.scrollTop;render();dialog.scrollTop=scroll;}
   }catch(e){if(version===generation)status(friendly(e));}
-  finally{if(version===generation&&dialog){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!document.hidden&&!pending)void load();else refreshTimer=setTimeout(()=>void load(),20000);},20000);}}
+  finally{if(version===generation&&dialog){clearTimeout(refreshTimer);if(!document.hidden)refreshTimer=setTimeout(()=>{if(!document.hidden&&!pending)void load();},20000);}}
  }
  function open(event,occurrence){if(!event||!uid()||!cfg?.db)return; shell('El plan en directo');state={event,occurrence:occurrence||dateOf(event),arrivals:[],questions:[],memories:[],attendance:[],votes:[]};void load();}
  async function pickPhotos(){try{const rows=await query(cfg.db.from('moments').select('id,media_url,caption,media_type').eq('user_id',uid()).in('media_type',['image','video']).order('created_at',{ascending:false}).limit(24));const n=dialog?.querySelector('.club-live-photo-picker');if(n)n.innerHTML=rows.length?`<p>Elige la foto que pertenece a este plan.</p><div class="club-live-pick-grid">${rows.map(r=>`<button type="button" data-cl-link-photo="${r.id}" aria-label="${esc(r.caption||'Añadir foto al plan')}">${memoryMedia({moments:r},true)}</button>`).join('')}</div>`:'<p>No tienes fotos en Momentos todavía.</p>';}catch(e){status(friendly(e));}}
@@ -120,5 +120,9 @@
   if(owner!==uid()||!node.isConnected)return;const photo=roomCache?.rows?.[0];if(!photo)return;
   node.innerHTML=`<button type="button" class="clubhouse-memory-photo" data-club-live-event="${esc(photo.event_id)}" data-occurrence="${esc(photo.occurrence)}" aria-label="Abrir recuerdo del plan">${memoryMedia(photo,true)}<span>${esc(photo.caption||photo.moments?.caption||'Recuerdos del club')}</span></button>`;
  }
- globalThis.ClubLive={init(options){cfg=options;},open,openMap,mountRoom,reset(){close();roomCache=null;roomRequest=null;},refresh(){if(state&&!pending)void load();}};
+ document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){clearTimeout(refreshTimer);refreshTimer=0;return;}
+  if(state&&dialog&&!pending)void load();
+ });
+ globalThis.ClubLive={init(options){cfg=options;},open,openMap,mountRoom,reset(){close();roomCache=null;roomRequest=null;},refresh(){if(state&&!pending&&!document.hidden)void load();}};
 })();

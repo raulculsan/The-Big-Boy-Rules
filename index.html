@@ -45,7 +45,7 @@
   <link rel="stylesheet" href="packs.css?v=20261021-halloween-365" />
   <link rel="stylesheet" href="achievement-admin.css?v=20261011-256" />
   <link rel="stylesheet" href="club.css?v=20261021-performance-363" />
-  <link rel="stylesheet" href="banner-shop.css?v=20261024-store-397" />
+  <link rel="stylesheet" href="banner-shop.css?v=20261025-audit-404" />
   <link rel="stylesheet" href="onboarding.css?v=20261016-improvements-319" />
   <link rel="stylesheet" href="news.css?v=20261014-home-scroll-291" />
   <link rel="stylesheet" href="pending-actions.css?v=20261016-release-322" />
@@ -955,24 +955,24 @@
   <script defer src="club-model.js?v=20260902-126"></script>
   <script defer src="chat-motion.js?v=20260902-128"></script>
   <script defer src="vendor/capacitor.js?v=8.5.0"></script>
-  <script defer src="chat-keyboard.js?v=20261016-improvements-319"></script>
+  <script defer src="chat-keyboard.js?v=20261025-audit-404"></script>
   <script defer src="tab-navigation.js?v=20260903-130"></script>
   <script defer src="trophy-motion.js?v=20260904-150"></script>
   <script defer src="trophy-unlock.js?v=20260903-138"></script>
   <script defer src="daily-packs.js?v=20261023-club-recaps-386"></script>
   <script defer src="collection-motion.js?v=20261021-halloween-365"></script>
   <script defer src="card-thumbnails.js?v=20261023-jose-vice-city-388"></script>
-  <script defer src="card-media.js?v=20261022-pwa-shell-376"></script>
+  <script defer src="card-media.js?v=20261025-audit-404"></script>
   <script defer src="card-collection.js?v=20261023-jose-vice-city-388"></script>
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
   <script defer src="collection-social.js?v=20261022-pwa-shell-376"></script>
   <script defer src="album.js?v=20261023-album-pages-387"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
-  <script defer src="banner-shop.js?v=20261025-jose-rain-splash-402"></script>
+  <script defer src="banner-shop.js?v=20261025-audit-404"></script>
   <script defer src="chota-shop.js?v=20261022-chota-contact-381"></script>
   <script defer src="club-social.js?v=20261024-missions-396"></script>
-  <script defer src="club-live.js?v=20261024-social-393"></script>
+  <script defer src="club-live.js?v=20261025-audit-404"></script>
   <script defer src="chota-games.js?v=20261024-stages-401"></script>
   <script defer src="plan-widget.js?v=20261024-social-393"></script>
   <script defer src="group-interactions.js?v=20261023-club-recaps-386"></script>
@@ -1010,7 +1010,13 @@
       document.addEventListener("visibilitychange", () => { if (!document.hidden) { sync(); setTimeout(sync, 200); } });
       sync();
     })();
-    if ("serviceWorker" in navigator) {
+    const nativeWebView = location.protocol === "capacitor:" || location.origin === "https://localhost" || Boolean(globalThis.Capacitor?.isNativePlatform?.());
+    if (nativeWebView && "serviceWorker" in navigator) {
+      // Native builds already bundle their shell. Remove workers left by older builds.
+      navigator.serviceWorker.getRegistrations().then(registrations =>
+        Promise.all(registrations.map(registration => registration.unregister()))).catch(() => {});
+    }
+    if (!nativeWebView && "serviceWorker" in navigator) {
       // Asset revisions identify the document actually on screen, including an
       // older document restored by iOS while a newer worker is already active.
       const documentRelease = Math.max(0, ...Array.from(document.querySelectorAll("link[href],script[src]"), element =>

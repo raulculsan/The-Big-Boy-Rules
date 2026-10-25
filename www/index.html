@@ -45,7 +45,7 @@
   <link rel="stylesheet" href="packs.css?v=20261021-halloween-365" />
   <link rel="stylesheet" href="achievement-admin.css?v=20261011-256" />
   <link rel="stylesheet" href="club.css?v=20261021-performance-363" />
-  <link rel="stylesheet" href="banner-shop.css?v=20261021-performance-363" />
+  <link rel="stylesheet" href="banner-shop.css?v=20261025-audit-404" />
   <link rel="stylesheet" href="onboarding.css?v=20261016-improvements-319" />
   <link rel="stylesheet" href="news.css?v=20261014-home-scroll-291" />
   <link rel="stylesheet" href="pending-actions.css?v=20261016-release-322" />
@@ -53,8 +53,12 @@
   <link rel="stylesheet" href="collection-social.css?v=20261022-trade-art-377" />
   <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
   <link rel="stylesheet" href="visual-system.css?v=20261022-pwa-shell-376" />
-  <link rel="stylesheet" href="clubhouse.css?v=20261022-chota-contact-381" />
-  <link rel="stylesheet" href="chota-shop.css?v=20261022-chota-contact-381" />
+  <link rel="stylesheet" href="clubhouse.css?v=20261024-chota-idle-394" />
+  <link rel="stylesheet" href="chota-shop.css?v=20261024-store-397" />
+  <link rel="stylesheet" href="club-social.css?v=20261024-missions-396" />
+  <link rel="stylesheet" href="club-live.css?v=20261023-club-experiences-1" />
+  <link rel="stylesheet" href="chota-games.css?v=20261024-stages-401" />
+  <link rel="stylesheet" href="club-experiences.css?v=20261023-club-recaps-386" />
 </head>
 <body>
 
@@ -196,7 +200,7 @@
       </section>
       <div class="club-dashboard">
         <section class="clubhouse" aria-labelledby="clubhouseTitle">
-          <div class="clubhouse-heading"><h3 id="clubhouseTitle">La sede del club</h3><span id="clubhouseTime">El Chota está en casa</span></div>
+          <div class="clubhouse-heading"><h3 id="clubhouseTitle">La sede del club</h3><div class="clubhouse-heading-actions"><button type="button" data-club-memory-map>Mapa de recuerdos</button><span id="clubhouseTime">El Chota está en casa</span></div></div>
           <div id="clubhouseContent" class="clubhouse-content"></div>
         </section>
         <article class="panel spotify-panel">
@@ -921,13 +925,16 @@
   <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle"><header class="banner-shop-heading"><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2><button type="button" data-duplicates-close aria-label="Cerrar repetidas">✕</button></header><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Descartar todas</button><div id="ownedCardInventory" class="owned-card-inventory"></div></dialog>
 
   <dialog id="bannerShopDialog" class="banner-shop-dialog" aria-labelledby="bannerShopTitle">
-    <header class="banner-shop-heading shop-topbar"><span class="shop-brand">BB <span>STORE</span></span><button id="bannerShopClose" type="button" aria-label="Cerrar tienda">×</button></header>
+    <header class="banner-shop-heading shop-topbar">
+      <div class="shop-brand"><span aria-hidden="true">BB</span><h2 id="bannerShopTitle">Tienda</h2></div>
+      <div class="shop-wallet"><span>Saldo</span><strong><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.8 8.5h-4a2 2 0 0 0 0 4h2.4a2 2 0 0 1 0 4H9M12 6v12"/></svg><span id="bannerShopBalance" class="banner-shop-balance">— monedas</span></strong></div>
+      <button id="bannerShopClose" type="button" aria-label="Cerrar tienda"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </header>
     <div class="shop-content">
-      <section class="shop-intro"><div><span class="shop-kicker">EL CLUB · PERSONALIZACIÓN</span><h2 id="bannerShopTitle">Tienda</h2><p>Banners, objetos para El Chota y premios del club.</p></div><div class="shop-wallet"><span>Tu saldo</span><strong><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.8 8.5h-4a2 2 0 0 0 0 4h2.4a2 2 0 0 1 0 4H9M12 6v12"/></svg><span id="bannerShopBalance" class="banner-shop-balance">— monedas</span></strong></div></section>
       <div class="shop-navigation" role="tablist" aria-label="Secciones de la tienda"><button type="button" id="shopBannersTab" role="tab" aria-selected="true" aria-controls="shopBannersPanel" data-shop-tab="banners">Banners <span data-shop-banner-count>—</span></button><button type="button" id="shopChotaTab" role="tab" aria-selected="false" aria-controls="shopChotaPanel" tabindex="-1" data-shop-tab="chota">El Chota <span data-shop-chota-count>—</span></button><button type="button" id="shopVouchersTab" role="tab" aria-selected="false" aria-controls="shopVouchersPanel" tabindex="-1" data-shop-tab="vouchers">Vales <span data-shop-voucher-count>—</span></button></div>
       <p id="bannerShopStatus" class="shop-status" role="status" aria-live="polite"></p>
-      <section id="shopBannersPanel" role="tabpanel" aria-labelledby="shopBannersTab"><header class="shop-section-heading"><div><h3>Para tu perfil</h3><p>Vista completa de cada diseño.</p></div><button id="bannerUnequip" class="shop-text-button" type="button" disabled>Quitar banner</button></header><div id="bannerShopItems" class="banner-shop-items"></div></section>
-      <section id="shopChotaPanel" role="tabpanel" aria-labelledby="shopChotaTab" hidden><header class="chota-shop-intro"><div><h3>Cosas para su habitación</h3><p>Cada compra encuentra su sitio en la sede. El robot aspirador recorrerá el suelo mientras limpia.</p></div></header><p id="chotaShopStatus" role="status" aria-live="polite"></p><div id="chotaShopItems" class="chota-shop-items"></div></section>
+      <section id="shopBannersPanel" role="tabpanel" aria-labelledby="shopBannersTab"><header class="shop-section-heading"><div><h3>Selección de hoy</h3><p>Actualización diaria</p></div><button id="bannerUnequip" class="shop-text-button" type="button" disabled>Quitar banner</button></header><div id="bannerShopItems" class="banner-shop-items"></div></section>
+      <section id="shopChotaPanel" role="tabpanel" aria-labelledby="shopChotaTab" hidden><header class="chota-shop-intro"><div><h3>Para su habitación</h3><p>Objetos que cobran vida en la sede.</p></div></header><p id="chotaShopStatus" role="status" aria-live="polite"></p><div id="chotaShopItems" class="chota-shop-items"></div></section>
       <section id="shopVouchersPanel" class="reward-voucher-shop" role="tabpanel" aria-labelledby="shopVouchersTab" hidden><header class="shop-section-heading"><div><h3 id="rewardVoucherTitle">Premios del club</h3><p>Desbloquea un vale y canjéalo cuando quieras.</p></div></header><div id="rewardVoucherItems" class="banner-shop-items"></div></section>
     </div>
   </dialog>
@@ -948,28 +955,32 @@
   <script defer src="club-model.js?v=20260902-126"></script>
   <script defer src="chat-motion.js?v=20260902-128"></script>
   <script defer src="vendor/capacitor.js?v=8.5.0"></script>
-  <script defer src="chat-keyboard.js?v=20261016-improvements-319"></script>
+  <script defer src="chat-keyboard.js?v=20261025-audit-404"></script>
   <script defer src="tab-navigation.js?v=20260903-130"></script>
   <script defer src="trophy-motion.js?v=20260904-150"></script>
   <script defer src="trophy-unlock.js?v=20260903-138"></script>
-  <script defer src="daily-packs.js?v=20261021-activity-packs-372"></script>
+  <script defer src="daily-packs.js?v=20261023-club-recaps-386"></script>
   <script defer src="collection-motion.js?v=20261021-halloween-365"></script>
-  <script defer src="card-thumbnails.js?v=20261021-halloween-jose-366"></script>
-  <script defer src="card-media.js?v=20261022-pwa-shell-376"></script>
-  <script defer src="card-collection.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="card-thumbnails.js?v=20261023-jose-vice-city-388"></script>
+  <script defer src="card-media.js?v=20261025-audit-404"></script>
+  <script defer src="card-collection.js?v=20261023-jose-vice-city-388"></script>
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
   <script defer src="collection-social.js?v=20261022-pwa-shell-376"></script>
-  <script defer src="album.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="album.js?v=20261023-album-pages-387"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
-  <script defer src="banner-shop.js?v=20261022-member-motion-378"></script>
+  <script defer src="banner-shop.js?v=20261025-audit-404"></script>
   <script defer src="chota-shop.js?v=20261022-chota-contact-381"></script>
-  <script defer src="group-interactions.js?v=20261021-activity-packs-372"></script>
+  <script defer src="club-social.js?v=20261024-missions-396"></script>
+  <script defer src="club-live.js?v=20261025-audit-404"></script>
+  <script defer src="chota-games.js?v=20261024-stages-401"></script>
+  <script defer src="plan-widget.js?v=20261024-social-393"></script>
+  <script defer src="group-interactions.js?v=20261023-club-recaps-386"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
   <script defer src="admin-console.js?v=20261022-chota-shop-378"></script>
-  <script defer src="account-security.js?v=20261021-email-359"></script>
+  <script defer src="account-security.js?v=20261025-startup-auth-403"></script>
   <script defer src="account-requests.js?v=20261021-email-359"></script>
-  <script defer src="app.js?v=20261022-chota-contact-381"></script>
+  <script defer src="app.js?v=20261025-startup-auth-403"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
@@ -999,7 +1010,13 @@
       document.addEventListener("visibilitychange", () => { if (!document.hidden) { sync(); setTimeout(sync, 200); } });
       sync();
     })();
-    if ("serviceWorker" in navigator) {
+    const nativeWebView = location.protocol === "capacitor:" || location.origin === "https://localhost" || Boolean(globalThis.Capacitor?.isNativePlatform?.());
+    if (nativeWebView && "serviceWorker" in navigator) {
+      // Native builds already bundle their shell. Remove workers left by older builds.
+      navigator.serviceWorker.getRegistrations().then(registrations =>
+        Promise.all(registrations.map(registration => registration.unregister()))).catch(() => {});
+    }
+    if (!nativeWebView && "serviceWorker" in navigator) {
       // Asset revisions identify the document actually on screen, including an
       // older document restored by iOS while a newer worker is already active.
       const documentRelease = Math.max(0, ...Array.from(document.querySelectorAll("link[href],script[src]"), element =>

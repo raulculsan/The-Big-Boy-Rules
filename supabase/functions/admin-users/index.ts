@@ -127,10 +127,12 @@ export default {
         password: body.password,
         // Auth writes the hash before metadata. Explicitly complete the requirement
         // so its later metadata update cannot restore the old pending marker.
-        app_metadata: {...user.app_metadata, must_change_password: false},
+        app_metadata: {...user.app_metadata, must_change_password: false, password_change_nonce: crypto.randomUUID()},
         user_metadata: {must_change_password: false},
       });
       if (error) return json({error: error.message}, 400);
+      const {error: revokeError} = await adminClient.rpc("revoke_user_sessions_after_password_change", {p_user: user.id});
+      if (revokeError) return json({error: "La contraseña se actualizó, pero no se pudieron cerrar las sesiones anteriores. Contacta con administración."}, 500);
       return json({ok: true});
     }
     if (user.app_metadata?.must_change_password === true) {
@@ -250,6 +252,8 @@ export default {
         app_metadata: {...targetAuth.user.app_metadata, must_change_password: true, password_change_nonce: crypto.randomUUID()},
       });
       if (error) return json({error: error.message}, 400);
+      const {error: revokeError} = await adminClient.rpc("revoke_user_sessions_after_password_change", {p_user: userId});
+      if (revokeError) return json({error: "La contraseña se actualizó, pero no se pudieron cerrar las sesiones anteriores."}, 500);
       return json({ok: true});
     }
 

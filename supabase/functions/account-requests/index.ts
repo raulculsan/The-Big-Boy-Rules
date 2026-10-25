@@ -119,8 +119,14 @@ export default {async fetch(request:Request):Promise<Response>{
   const {data:claimed}=await client.from('account_identity_tokens').update({used_at:new Date().toISOString()}).eq('token_hash',token.token_hash).is('used_at',null).gt('expires_at',new Date().toISOString()).select('user_id').maybeSingle();
   if(!claimed)return json({error:'Este enlace ya se ha utilizado.'},400);
   const {data:currentAccount,error:accountError}=await client.auth.admin.getUserById(token.user_id);if(accountError||!currentAccount.user)return json({error:'La cuenta ya no está disponible.'},400);
-  const attributes=kind==='reset'?{password:body.password}:{email:token.email,email_confirm:true,app_metadata:{...currentAccount.user.app_metadata,contact_verification_pending:false}};
+  const attributes=kind==='reset'
+   ? {password:body.password,app_metadata:{...currentAccount.user.app_metadata,must_change_password:false,password_change_nonce:crypto.randomUUID()}}
+   : {email:token.email,email_confirm:true,app_metadata:{...currentAccount.user.app_metadata,contact_verification_pending:false}};
   const {error}=await client.auth.admin.updateUserById(token.user_id,attributes);if(error)return json({error:'No se pudo completar. Solicita un enlace nuevo; el correo puede pertenecer a otra cuenta.'},409);
+  if(kind==='reset'){
+   const {error:revokeError}=await client.rpc('revoke_user_sessions_after_password_change',{p_user:token.user_id});
+   if(revokeError)return json({error:'La contraseña se actualizó, pero no se pudieron cerrar las sesiones anteriores. Contacta con administración.'},500);
+  }
   await client.from('account_identity_tokens').update({used_at:new Date().toISOString()}).eq('user_id',token.user_id).is('used_at',null);
   return json({ok:true,message:kind==='reset'?'Contraseña actualizada. Ya puedes iniciar sesión.':'Correo verificado y vinculado a tu cuenta.'});
  }

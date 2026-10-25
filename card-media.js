@@ -88,6 +88,7 @@
     try { return await task; } finally { inflight.delete(url); }
   }
   function releaseUnused() {
+    if (!objectURLs.size) return;
     for (const [url, entry] of objectURLs) {
       for (const image of entry.images) if (!image.isConnected || image.src !== entry.objectURL) entry.images.delete(image);
       if (entry.images.size) continue;
@@ -102,6 +103,12 @@
     const original = originals.get(value);
     if (!original || (image.dataset.cardMedia === value && inflight.has(value))) return;
     image.dataset.cardMedia = value;
+    const retained = objectURLs.get(value);
+    if (retained) {
+      retained.images.add(image);
+      image.src = retained.objectURL;
+      return;
+    }
     const fallback = remoteFallbacks.get(value) || globalThis.CardThumbnails?.[original];
     if (fallback) image.src = fallback;
     void art(value).then(blob => {

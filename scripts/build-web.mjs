@@ -128,5 +128,7 @@ for (const source of sources) {
 
 await pruneGeneratedCopies(output);
 await optimizePackagedCards(output);
+// Image conversion creates new delivery files; verify the final tree again.
+await pruneGeneratedCopies(output);
 
 console.log(`Aplicación web preparada en ${output}`);

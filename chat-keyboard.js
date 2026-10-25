@@ -11,7 +11,7 @@ const ChatKeyboard = Object.freeze({
     const nativeLayout = window.__bigboysNativeKeyboardLayout === true;
     document.body.classList.toggle('native-keyboard-layout', nativeLayout);
     const capacitor = window.Capacitor;
-    const keyboard = nativeLayout && capacitor?.isPluginAvailable?.('Keyboard')
+    const keyboard = (nativeLayout || capacitor?.isNativePlatform?.()) && capacitor?.isPluginAvailable?.('Keyboard')
       ? capacitor.registerPlugin('Keyboard') : null;
     const state = {
       nativeLayout,
@@ -51,8 +51,10 @@ const ChatKeyboard = Object.freeze({
           void keyboard.setScroll({isDisabled: lockDocument, preventKeyboardDismiss: inChat}).catch(() => {});
         }
       };
-      new MutationObserver(syncContext).observe(document.body, {attributes:true, attributeFilter:['class']});
-      syncContext();
+      if (nativeLayout) {
+        new MutationObserver(syncContext).observe(document.body, {attributes:true, attributeFilter:['class']});
+        syncContext();
+      }
     }
     document.querySelectorAll('.message-form').forEach(form => {
       // Tapping Send/tools must not blur the editor before their actual click action.

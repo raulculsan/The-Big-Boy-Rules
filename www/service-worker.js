@@ -1,8 +1,8 @@
-const CACHE_NAME = "big-boy-rules-v381";
+const CACHE_NAME = "big-boy-rules-v404";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./account-security.js?v=20261021-email-359",
+  "./account-security.js?v=20261025-startup-auth-403",
   "./account-security.css?v=20261019-identity-353",
   "./account-requests.js?v=20261021-email-359",
   "./account-requests.css?v=20261019-identity-353",
@@ -13,10 +13,21 @@ const APP_SHELL = [
   "./visual-system.css?v=20261022-pwa-shell-376",
   "./notifications.css?v=20261015-notifications-polls-307",
   "./club.css?v=20261021-performance-363",
-  "./clubhouse.css?v=20261022-chota-contact-381",
+  "./clubhouse.css?v=20261024-chota-idle-394",
   "./chota-shop.js?v=20261022-chota-contact-381",
-  "./chota-shop.css?v=20261022-chota-contact-381",
+  "./chota-shop.css?v=20261024-store-397",
+  "./club-social.js?v=20261024-missions-396",
+  "./club-social.css?v=20261024-missions-396",
+  "./club-live.js?v=20261025-audit-404",
+  "./club-live.css?v=20261023-club-experiences-1",
+  "./chota-games.js?v=20261024-stages-401",
+  "./chota-games.css?v=20261024-stages-401",
+  "./club-experiences.css?v=20261023-club-recaps-386",
+  "./plan-widget.js?v=20261024-social-393",
   "./icons/clubhouse/club-room-v1.webp",
+  "./icons/clubhouse/decor-halloween-v1.svg",
+  "./icons/clubhouse/decor-christmas-v1.svg",
+  "./icons/clubhouse/decor-valentine-v1.svg",
   "./icons/mascot/chota-v2/chota-poses.webp",
   "./icons/mascot/chota-v2/chota-talk.webp",
   "./news.css?v=20261014-home-scroll-291",
@@ -36,29 +47,29 @@ const APP_SHELL = [
   "./icons/chat-backgrounds/aurora.svg",
   "./icons/chat-backgrounds/vice-city.svg",
   "./icons/chat-backgrounds/orbita.svg",
-  "./chat-keyboard.js?v=20261016-improvements-319",
+  "./chat-keyboard.js?v=20261025-audit-404",
   "./vendor/capacitor.js?v=8.5.0",
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20260903-130",
   "./admin-console.js?v=20261022-chota-shop-378",
   "./admin-console.css?v=20261021-compact-364",
-  "./app.js?v=20261022-chota-contact-381",
+  "./app.js?v=20261025-startup-auth-403",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
-  "./album.js?v=20261021-dynamic-cards-367",
+  "./album.js?v=20261023-album-pages-387",
   "./album.css?v=20261021-halloween-365",
   "./onboarding.js?v=20261016-improvements-319",
   "./onboarding.css?v=20261016-improvements-319",
   "./admin-grants.js?v=20261018-password-335",
   "./admin-grants.css?v=20261009-213",
-  "./banner-shop.js?v=20261022-member-motion-378",
-  "./banner-shop.css?v=20261021-performance-363",
+  "./banner-shop.js?v=20261025-audit-404",
+  "./banner-shop.css?v=20261025-audit-404",
   "./collection-social.js?v=20261022-pwa-shell-376",
   "./collection-social.css?v=20261022-trade-art-377",
   "./pending-actions.js?v=20261016-release-322",
   "./pending-actions.css?v=20261016-release-322",
-  "./group-interactions.js?v=20261021-activity-packs-372",
+  "./group-interactions.js?v=20261023-club-recaps-386",
   "./group-interactions.css?v=20261015-poll-focus-315",
   "./icons/banners/miguel-basket-bano-bg-v1.webp",
   "./icons/banners/posters/miguel-basket-v1.webp",
@@ -79,11 +90,11 @@ const APP_SHELL = [
   "./icons/banners/alberto-galicia-member-v1.png",
   "./icons/banners/alberto-galicia-member-bg-v1.webp",
   "./icons/banners/alberto-galicia-member-figures-v1.webp",
-  "./daily-packs.js?v=20261021-activity-packs-372",
+  "./daily-packs.js?v=20261023-club-recaps-386",
   "./packs.css?v=20261021-halloween-365",
-  "./card-thumbnails.js?v=20261021-halloween-jose-366",
-  "./card-media.js?v=20261022-pwa-shell-376",
-  "./card-collection.js?v=20261021-dynamic-cards-367",
+  "./card-thumbnails.js?v=20261023-jose-vice-city-388",
+  "./card-media.js?v=20261025-audit-404",
+  "./card-collection.js?v=20261023-jose-vice-city-388",
   "./card-catalog-sync.js?v=20261021-dynamic-cards-367",
   "./icons/cards/card-art-unavailable.svg",
   "./icons/cards/raul-culsan-gonzalez-full-art-92-playa-v5.jpg",
@@ -217,7 +228,7 @@ const APP_SHELL = [
 
 // Card illustrations, banner sprites and trophy renders are downloaded only
 // when viewed. They must never delay installing/updating the executable shell.
-const CORE_SHELL = APP_SHELL.filter(asset => !asset.startsWith("./icons/cards/") && !asset.startsWith("./icons/banners/") && !asset.startsWith("./icons/trophies/") && !asset.startsWith("./icons/mascot/"));
+const CORE_SHELL = APP_SHELL.filter(asset => !["./icons/cards/", "./icons/banners/", "./icons/trophies/", "./icons/mascot/", "./icons/clubhouse/", "./icons/chat-backgrounds/"].some(prefix => asset.startsWith(prefix)));
 
 // Reuse exact versioned executable URLs across releases. HTML and unversioned
 // configuration always come from the network so a release cannot inherit old entrypoints.
@@ -268,6 +279,17 @@ const mediaPath = request => {
 };
 let shellUrls;
 let mediaWrite = Promise.resolve();
+// A stale illustration can be requested by several cards/views at once. Share
+// its refresh so each frame does not start another download and cache rewrite.
+const mediaRevalidations = new Map();
+function revalidatePublicMedia(request) {
+  const key = request.url;
+  if (mediaRevalidations.has(key)) return mediaRevalidations.get(key);
+  const pending = fetch(request).then(response => savePublicMedia(request, response))
+    .catch(() => {}).finally(() => mediaRevalidations.delete(key));
+  mediaRevalidations.set(key, pending);
+  return pending;
+}
 let mediaEntries = new Map();
 let mediaIndexReady = false;
 // Reconcile keys cheaply on writes, but read response metadata only for entries
@@ -403,7 +425,7 @@ self.addEventListener("fetch", event => {
       const cache = await caches.open(MEDIA_CACHE_NAME), cached = await cache.match(request);
       const fresh = cached && Date.now() - Number(cached.headers.get("x-big-boy-cache-time")) < MEDIA_FRESH_MS;
       if (cached) {
-        if (!fresh) event.waitUntil(fetch(request).then(response => savePublicMedia(request,response)).catch(() => {}));
+        if (!fresh) event.waitUntil(revalidatePublicMedia(request));
         return cached;
       }
       const response = await fetch(request);
@@ -440,7 +462,8 @@ self.addEventListener("push", event => {
 
 self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const targetUrl = new URL(event.notification.data?.url || "./", self.registration.scope).href;
+  const requested = new URL(event.notification.data?.url || "./", self.registration.scope);
+  const targetUrl = requested.origin === self.location.origin ? requested.href : self.registration.scope;
   event.waitUntil(clients.matchAll({type: "window", includeUncontrolled: true}).then(openClients => {
     const existing = openClients.find(client => new URL(client.url).origin === new URL(targetUrl).origin);
     if (existing) return existing.navigate(targetUrl).then(client => client?.focus());

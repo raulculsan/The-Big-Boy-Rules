@@ -29,11 +29,75 @@
     try { localStorage.setItem(memberBannerCacheKey(owner), JSON.stringify({savedAt:Date.now(), banners})); memberBannerCacheSignature = signature; } catch {}
   }
   const visibleMemberTiles = new Set(), observedMemberTiles = new Set();
+  const bannerVideos = new Set(), visibleBannerVideos = new WeakSet(), pendingBannerVideos = new WeakSet();
+  const bannerMotionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+  let bannerVideoObserver;
+  function updateBannerVideo(video) {
+    if (!video.isConnected) {
+      bannerVideoObserver?.unobserve(video); bannerVideos.delete(video);
+      video.pause(); video.removeAttribute('src'); video.load();
+      return;
+    }
+    if (document.hidden || bannerMotionPreference.matches || !visibleBannerVideos.has(video)) {video.pause(); video.classList.remove('is-ready'); return;}
+    if (!video.getAttribute('src')) video.src = video.dataset.bannerSrc;
+    if (!video.paused || pendingBannerVideos.has(video)) return;
+    pendingBannerVideos.add(video);
+    // iOS can reject autoplay in Low Power Mode. Keep the poster until actual
+    // playback and retry on the next gesture or when the app returns.
+    Promise.resolve(video.play()).catch(() => video.classList.remove('is-ready'))
+      .finally(() => pendingBannerVideos.delete(video));
+  }
+  function registerBannerVideos(root = document) {
+    bannerVideos.forEach(updateBannerVideo);
+    root.querySelectorAll('video[data-banner-src]').forEach(video => {
+      if (bannerVideos.has(video)) return;
+      bannerVideos.add(video); video.muted = true; video.defaultMuted = true;
+      video.autoplay = true; video.playsInline = true;
+      video.setAttribute('webkit-playsinline', '');
+      video.addEventListener('playing', () => video.classList.add('is-ready'));
+      video.addEventListener('pause', () => video.classList.remove('is-ready'));
+      video.addEventListener('emptied', () => video.classList.remove('is-ready'));
+      video.addEventListener('canplay', () => updateBannerVideo(video));
+      video.addEventListener('error', () => {
+        if (!video.isConnected || !video.getAttribute('src') || video.dataset.remoteTried) return;
+        video.dataset.remoteTried = 'true'; video.src = video.dataset.bannerRemote;
+        updateBannerVideo(video);
+      });
+      if ('IntersectionObserver' in globalThis) {
+        bannerVideoObserver ||= new IntersectionObserver(entries => entries.forEach(entry => {
+          if (entry.isIntersecting) visibleBannerVideos.add(entry.target); else visibleBannerVideos.delete(entry.target);
+          updateBannerVideo(entry.target);
+        }), {threshold:0.01});
+        bannerVideoObserver.observe(video);
+      } else {visibleBannerVideos.add(video); updateBannerVideo(video);}
+    });
+  }
+  document.addEventListener('visibilitychange', () => bannerVideos.forEach(updateBannerVideo));
+  window.addEventListener('pageshow', () => bannerVideos.forEach(updateBannerVideo));
+  document.addEventListener('pointerup', () => {
+    for (const video of bannerVideos) if (video.paused) updateBannerVideo(video);
+  }, {passive:true});
+  bannerMotionPreference.addEventListener('change', () => bannerVideos.forEach(updateBannerVideo));
   let reveal = null, swipe = null, suppressRevealClickUntil = 0, detachRevealFoil, detachRevealVfx;
-  let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0, shopResetTimer;
+  let lastInventory = null, inventoryOwner = null, inventorySavedAt = 0, shopResetTimer, shopCountdownTimer;
   const dailyBanners = () => Array.isArray(state?.daily_banner_ids)
     ? state.daily_banner_ids.map(id => state.banners?.find(banner => banner.id === id)).filter(banner => banner && banner.id !== 'banner-de-prueba').slice(0, 5)
     : (state?.banners || []).filter(banner => banner.id !== 'banner-de-prueba' && banner.in_daily_shop !== false).slice(0, 5);
+  function updateShopCountdown() {
+    clearTimeout(shopCountdownTimer);
+    const subtitle = el('shopBannersPanel')?.querySelector('.shop-section-heading p');
+    if (!subtitle) return;
+    const reset = Date.parse(state?.shop_next_reset_at);
+    const remaining = Number.isFinite(reset) ? Math.max(0, Math.ceil((reset - Date.now()) / 1000)) : null;
+    const text = remaining === null ? 'Actualización diaria'
+      : remaining === 0 ? (online() ? 'Actualizando selección…' : 'Actualización pendiente')
+      : `Se renueva en ${[Math.floor(remaining / 3600), Math.floor(remaining / 60) % 60, remaining % 60].map(value => String(value).padStart(2, '0')).join(':')}`;
+    if (subtitle.textContent !== text) subtitle.textContent = text;
+    // Only the text ticks: artwork and purchase controls retain their DOM state.
+    if (remaining > 0 && el('bannerShopDialog')?.open && !document.hidden) {
+      shopCountdownTimer = setTimeout(updateShopCountdown, 1000 - Date.now() % 1000 + 20);
+    }
+  }
   function scheduleShopReset() {
     clearTimeout(shopResetTimer);
     const delay = Date.parse(state?.shop_next_reset_at) - Date.now();
@@ -472,6 +536,16 @@
     return `<div class="banner-art banner-alberto-galicia ${extra}" role="img" aria-label="${escape(banner.name || 'Alberto Velasco con sus cabras en Galicia')}"><img class="banner-galicia-fallback" src="icons/banners/${compact ? 'alberto-galicia-member-v1.png' : 'posters/alberto-galicia-v1.webp'}" width="${sceneWidth}" height="724" alt="" decoding="async" aria-hidden="true"><svg class="banner-galicia-scene" viewBox="0 0 ${sceneWidth} 724" preserveAspectRatio="${sceneFit}" aria-hidden="true" focusable="false"><defs><clipPath id="${id}-alberto"><rect width="545" height="724"/></clipPath><clipPath id="${id}-head"><polygon points="${head}"/></clipPath><clipPath id="${id}-torso"><rect y="155" width="545" height="395"/></clipPath><clipPath id="${id}-legs"><rect y="535" width="545" height="189"/></clipPath><mask id="${id}-body" maskUnits="userSpaceOnUse" x="0" y="0" width="545" height="724"><rect width="545" height="724" fill="white"/><polygon points="${head}" fill="black"/></mask><radialGradient id="${id}-cloud-fade"><stop offset="45%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><radialGradient id="${id}-foliage-fade"><stop offset="50%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><radialGradient id="${id}-expression-fade"><stop offset="65%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><mask id="${id}-expression" maskUnits="userSpaceOnUse" x="357" y="62" width="126" height="152"><ellipse cx="420" cy="138" rx="63" ry="76" fill="url(#${id}-expression-fade)"/></mask>${cloudDefs}${foliageDefs}${goatDefs}</defs>${background}${clouds}${foliageArt(true)}${birds}<g class="banner-galicia-alberto" clip-path="url(#${id}-alberto)"><g clip-path="url(#${id}-legs)">${figure}</g><g class="banner-galicia-torso"><g clip-path="url(#${id}-torso)" mask="url(#${id}-body)">${figure}</g></g><g class="banner-galicia-head"><g clip-path="url(#${id}-head)">${figure}${expression}</g></g></g>${goatArt}${foliageArt(false)}<g class="banner-galicia-grass">${grass}</g><g class="banner-galicia-breeze"><path d="M730 473 Q820 441 917 460"/><path d="M1460 269 Q1530 245 1616 256"/></g></svg></div>`;
   }
   function artwork(banner, extra = '') {
+    if (banner?.art_key === 'jose-enrique-ojos-v1') {
+      const base = 'icons/banners/jose-enrique-ojos-v1/';
+      const remote = 'https://raulculsan.github.io/The-Big-Boy-Rules/icons/banners/jose-enrique-ojos-v1/jose-enrique-ojos-v2.mp4';
+      return `<div class="banner-art banner-fufi-flight banner-jose-eyes ${extra}" style="background-image:url('${base}poster.jpg');background-color:#0b1020" role="img" aria-label="${escape(banner.name || 'José Enrique bajo la lluvia, con los ojos iluminándose')}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}jose-enrique-ojos-v2.mp4" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" autoplay muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
+    }
+    if (banner?.art_key === 'fufi-supervuelo-v1') {
+      const base = 'icons/banners/fufi-supervuelo-v1/';
+      const remote = 'https://nfvggpgeypkkqceivkaq.supabase.co/storage/v1/object/public/group-media/banners/fufi-supervuelo-v1.mp4';
+      return `<div class="banner-art banner-fufi-flight ${extra}" role="img" aria-label="${escape(banner.name || 'Fufi volando entre nubes')}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}fufi-supervuelo-v1.mp4" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" autoplay muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
+    }
     // Only known artwork keys become styles; future Krita exports are added here.
     const panorama = {
       'madrid-medianoche-v1': 'icons/banners/madrid-medianoche-v1.jpg',
@@ -528,6 +602,7 @@
       node.querySelector('[data-banner-shop]')?.setAttribute('aria-label', `Abrir tienda de banners. ${coins()}`);
       node.querySelector('[data-wallet]')?.setAttribute('aria-label', `Saldo: ${coins()}`);
     }
+    registerBannerVideos(node);
   }
   function memberBanner(userId) {
     if (userId && userId === options?.session() && state) {
@@ -536,6 +611,8 @@
     return memberBanners.get(userId) || null;
   }
   function memberPoster(banner, priority = false) {
+    if (banner?.art_key === 'jose-enrique-ojos-v1') return `<div class="banner-art banner-fufi-flight banner-jose-eyes member-banner-art" style="background-image:url('icons/banners/jose-enrique-ojos-v1/poster.jpg');background-color:#0b1020" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/jose-enrique-ojos-v1/poster.jpg" width="1440" height="480" alt="" loading="${priority ? 'eager' : 'lazy'}" decoding="async"></div>`;
+    if (banner?.art_key === 'fufi-supervuelo-v1') return `<div class="banner-art banner-fufi-flight member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/fufi-supervuelo-v1/poster.jpg" width="1440" height="480" alt="" loading="${priority ? 'eager' : 'lazy'}" decoding="async"></div>`;
     const image = {'alberto-galicia-anime-v1':'posters/alberto-galicia-v1.webp', 'miguel-basket-bano-v1':'posters/miguel-basket-v1.webp', 'miguel-moto-anime-v1':'posters/miguel-moto-v1.webp', 'madrid-medianoche-v1':'madrid-medianoche-v1.jpg', 'costa-atlantica-v1':'costa-atlantica-v1.jpg'}[banner?.art_key];
     if (image) return `<div class="banner-art member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/${image}" width="2172" height="724" alt="" loading="${priority ? 'eager' : 'lazy'}" fetchpriority="${priority ? 'high' : 'auto'}" decoding="async" style="width:100%;height:100%;object-fit:contain"></div>`;
     return artwork(null, 'member-banner-art');
@@ -561,6 +638,7 @@
     }
     // Offscreen tiles retain one poster, releasing SVG masks and compositor layers.
     // Visible tiles keep the complete 2172 × 724 composition and original aspect.
+    registerBannerVideos(surface);
   }
   globalThis.ClubMotion?.media.addEventListener('change', () => paintMembers());
   function paintMembers() {
@@ -656,6 +734,7 @@
     el('profileBannerStatus').textContent = failure || (busy ? 'Aplicando banner…' : loading ? 'Cargando tus banners…' : !online() ? 'Conéctate para elegir tu banner.' : notice || (state && !(state.banners || []).some(banner => banner.owned) ? 'Todavía no tienes banners comprados.' : ''));
     el('profileBannerRetry').hidden = !failure && (loading || !!state);
     el('profileBannerRetry').disabled = busy || loading || !online();
+    registerBannerVideos(list);
   }
   function openEditor(own) {
     el('profileBannerSettings').hidden = !own;
@@ -703,20 +782,16 @@
     if (shopHeading) {
       const title = shopHeading.querySelector('h3'), subtitle = shopHeading.querySelector('p');
       if (title) title.textContent = 'Selección de hoy';
-      if (subtitle) {
-        const reset = Date.parse(state?.shop_next_reset_at);
-        subtitle.textContent = state && Number.isFinite(reset)
-          ? `${dailyBanners().length} diseños · cambia a las ${new Intl.DateTimeFormat('es-ES', {hour:'2-digit', minute:'2-digit'}).format(new Date(reset))}`
-          : 'Hasta 5 diseños elegidos cada día.';
-      }
+      if (subtitle) updateShopCountdown();
     }
+    const shopVisible = Boolean(el('bannerShopDialog')?.open);
     const container = el('bannerShopItems');
-    if (container) {
+    if (container && shopVisible) {
       // Wallet and inventory refreshes must not recreate animated SVG banners.
       const signature = JSON.stringify(state ? dailyBanners() : null);
       if (container.dataset.signature !== signature) {
         container.dataset.signature = signature;
-        container.innerHTML = state ? (dailyBanners().map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1'].includes(banner.art_key) ? 'BANNER ANIMADO' : 'BANNER DE PERFIL'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? '✓ Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Tu tienda está a un paso</strong><p>Conéctate para cargar los diseños del club.</p></div>';
+        container.innerHTML = state ? (dailyBanners().map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1', 'fufi-supervuelo-v1', 'jose-enrique-ojos-v1'].includes(banner.art_key) ? 'Animado' : 'Perfil'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? 'Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Cargando la tienda</strong><p>Los diseños del club aparecerán aquí.</p></div>';
       }
       container.querySelectorAll('[data-banner-action]').forEach(button => {
         const banner = state?.banners?.find(item => item.id === button.dataset.bannerId);
@@ -724,11 +799,11 @@
       });
     }
     const vouchers = el('rewardVoucherItems');
-    if (vouchers) {
+    if (vouchers && shopVisible) {
       const signature = JSON.stringify(state?.vouchers || null);
       if (vouchers.dataset.signature !== signature) {
         vouchers.dataset.signature = signature;
-        vouchers.innerHTML = state ? ((state.vouchers || []).map(voucher => `<article class="banner-shop-item reward-voucher-item"><div class="shop-voucher-art" aria-hidden="true"><span class="reward-voucher-mark">BB</span><span>VALE DEL CLUB</span></div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">CANJE POR PREMIO</span>${voucher.owned_quantity ? `<span class="shop-ownership">${escape(voucher.owned_quantity)} disponibles</span>` : ''}</div><h3>${escape(voucher.name)}</h3><p>${escape(voucher.description || '')}</p><div class="shop-card-purchase"><span class="shop-price">${voucher.owned_quantity ? '<small>Listo para canjear</small>' : `<strong>${escape(voucher.price)}</strong><small>monedas</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-voucher-action="${voucher.owned_quantity ? 'redeem' : 'unlock'}" data-voucher-id="${escape(voucher.id)}">${voucher.owned_quantity ? 'Canjear' : 'Desbloquear'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Aún no hay vales</strong><p>Los próximos premios aparecerán aquí.</p></div>') : '<div class="shop-empty"><strong>Premios del club</strong><p>Conéctate para consultar los vales.</p></div>';
+        vouchers.innerHTML = state ? ((state.vouchers || []).map(voucher => `<article class="banner-shop-item reward-voucher-item"><div class="shop-voucher-art" aria-hidden="true"><span class="reward-voucher-mark">BB</span><span>VALE DEL CLUB</span></div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">Canje por premio</span>${voucher.owned_quantity ? `<span class="shop-ownership">${escape(voucher.owned_quantity)} disponibles</span>` : ''}</div><h3>${escape(voucher.name)}</h3><p>${escape(voucher.description || '')}</p><div class="shop-card-purchase"><span class="shop-price">${voucher.owned_quantity ? '<small>Listo para canjear</small>' : `<strong>${escape(voucher.price)}</strong><small>monedas</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-voucher-action="${voucher.owned_quantity ? 'redeem' : 'unlock'}" data-voucher-id="${escape(voucher.id)}">${voucher.owned_quantity ? 'Canjear' : 'Desbloquear'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Aún no hay vales</strong><p>Los próximos premios aparecerán aquí.</p></div>') : '<div class="shop-empty"><strong>Premios del club</strong><p>Conéctate para consultar los vales.</p></div>';
       }
       vouchers.querySelectorAll('[data-voucher-action]').forEach(button => {
         const voucher = state?.vouchers?.find(item => item.id === button.dataset.voucherId);
@@ -740,6 +815,7 @@
     document.querySelectorAll('[data-shop-voucher-count]').forEach(node => {node.textContent = state ? state.vouchers?.length || 0 : '—';});
     if (el('bannerUnequip')) el('bannerUnequip').disabled = busy || loading || !state?.equipped_banner_id || !online();
     renderInventory();
+    registerBannerVideos();
   }
   function renderInventory() {
     const inventory = el('ownedCardInventory');
@@ -932,6 +1008,8 @@
       if (event.target.closest('[data-banner-shop]')) {
         const shop = el('bannerShopDialog');
         shop.showModal();
+        render();
+        updateShopCountdown();
         const artwork = shop.querySelector('.is-featured .shop-artwork');
         if (artwork && !revealReduced()) artwork.animate([
           {opacity:.6, transform:'scale(.985)'},
@@ -963,6 +1041,7 @@
     });
     el('profileBannerRetry').addEventListener('click', () => void refresh());
     el('bannerShopClose').addEventListener('click', () => el('bannerShopDialog').close());
+    el('bannerShopDialog').addEventListener('close', () => clearTimeout(shopCountdownTimer));
     const shopTabs = [...document.querySelectorAll('[data-shop-tab]')];
     const selectShopTab = tab => {
       shopTabs.forEach(item => {
@@ -989,12 +1068,14 @@
     });
     window.addEventListener('offline', render);
     document.addEventListener('visibilitychange', () => {
+      updateShopCountdown();
       if (!document.hidden && options?.session() && el('bannerShopDialog')?.open && Date.parse(state?.shop_next_reset_at) <= Date.now()) void refresh();
     });
     render();
   }
   function reset() {
     clearTimeout(shopResetTimer);
+    clearTimeout(shopCountdownTimer);
     closeEditor();
     el('profileBannerOptions').replaceChildren();
     delete el('profileBannerOptions').dataset.signature;

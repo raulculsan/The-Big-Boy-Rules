@@ -34,10 +34,11 @@ test('client and server reject weak/name-based passwords consistently', () => {
 });
 test('authenticated self-change rejects weak inputs and only updates the authenticated identity', async () => {
  const id = '00000000-0000-0000-0000-000000000001';
- const updates = [];
+ const updates = [], revocations = [];
  const metadata = {must_change_password:true, password_change_nonce:'reset1'};
  const client = {
    auth: {getUser:async () => ({data:{user:{id, app_metadata:metadata}}}), admin:{updateUserById:async (target, payload) => {updates.push({target, payload}); return {};}}},
+   rpc:async (name, args) => {revocations.push({name,args}); return {};},
    from: () => ({select(){return this;}, eq(){return this;}, single:async () => ({data:{username:'raul',display_name:'Raúl Culsán González'}})}),
  };
  const context = vm.createContext({Response, Uint8Array, TextDecoder, crypto, Deno:{env:{get:()=>'configured'}}, createClient:()=>client});
@@ -51,7 +52,10 @@ test('authenticated self-change rejects weak inputs and only updates the authent
  assert.equal((await call({action:'change-password',password:'S3!privateOcean'})).status,200);
  assert.equal(updates.length,1);
  assert.equal(updates[0].target,id);
- assert.equal(updates[0].payload.app_metadata.password_change_nonce,'reset1');
+ assert.notEqual(updates[0].payload.app_metadata.password_change_nonce,'reset1');
  assert.equal(updates[0].payload.app_metadata.must_change_password,false);
  assert.equal(updates[0].payload.user_metadata.must_change_password,false);
+ assert.equal(revocations.length,1);
+ assert.equal(revocations[0].name,'revoke_user_sessions_after_password_change');
+ assert.equal(revocations[0].args.p_user,id);
 });

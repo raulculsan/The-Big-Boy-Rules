@@ -784,8 +784,9 @@
       if (title) title.textContent = 'Selección de hoy';
       if (subtitle) updateShopCountdown();
     }
+    const shopVisible = Boolean(el('bannerShopDialog')?.open);
     const container = el('bannerShopItems');
-    if (container) {
+    if (container && shopVisible) {
       // Wallet and inventory refreshes must not recreate animated SVG banners.
       const signature = JSON.stringify(state ? dailyBanners() : null);
       if (container.dataset.signature !== signature) {
@@ -798,7 +799,7 @@
       });
     }
     const vouchers = el('rewardVoucherItems');
-    if (vouchers) {
+    if (vouchers && shopVisible) {
       const signature = JSON.stringify(state?.vouchers || null);
       if (vouchers.dataset.signature !== signature) {
         vouchers.dataset.signature = signature;
@@ -1007,6 +1008,7 @@
       if (event.target.closest('[data-banner-shop]')) {
         const shop = el('bannerShopDialog');
         shop.showModal();
+        render();
         updateShopCountdown();
         const artwork = shop.querySelector('.is-featured .shop-artwork');
         if (artwork && !revealReduced()) artwork.animate([

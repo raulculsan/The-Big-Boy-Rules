@@ -40,6 +40,39 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
+// Cloud-synced checkouts can recreate numbered copies after Capacitor's sync
+// hook has already cleaned them. Android resource names may not contain spaces.
+def cleanNumberedAndroidResources = tasks.register('cleanNumberedAndroidResources') {
+    doLast {
+        fileTree('src/main/res').files.findAll { file ->
+            file.name ==~ /.* [0-9]+\.[^.]+/
+        }.each { file ->
+            if (!file.delete()) throw new GradleException("Could not remove duplicate resource: ${file}")
+        }
+    }
+}
+def cleanNumberedAndroidAssets = tasks.register('cleanNumberedAndroidAssets') {
+    doLast {
+        fileTree('src/main/assets/public').files.each { file ->
+            def copyName = file.name =~ /^(.*) [0-9]+(\.[^.]+)$/
+            if (copyName.matches()) {
+                def original = new File(file.parentFile, copyName.group(1) + copyName.group(2))
+                if (original.isFile() && !file.delete()) {
+                    throw new GradleException("Could not remove duplicate asset: ${file}")
+                }
+            }
+        }
+    }
+}
+tasks.configureEach { task ->
+    if (task.name.startsWith('merge') && task.name.endsWith('Resources')) {
+        task.dependsOn(cleanNumberedAndroidResources)
+    }
+    if (task.name.startsWith('merge') && task.name.endsWith('Assets')) {
+        task.dependsOn(cleanNumberedAndroidAssets)
+    }
+}
+
 try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {

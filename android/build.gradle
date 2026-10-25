@@ -17,7 +17,13 @@ buildscript {
 
 apply from: "variables.gradle"
 
+// Keep generated files out of cloud-synced Documents. Its automatic numbered
+// copies can become duplicate Android resources or classes during a build.
+def generatedBuildRoot = new File(gradle.gradleUserHomeDir,
+        "bigboy-generated/${Integer.toHexString(rootProject.projectDir.canonicalPath.hashCode())}")
 allprojects {
+    def moduleName = project.path == ':' ? 'root' : project.path.substring(1).replace(':', '-')
+    layout.buildDirectory.set(new File(generatedBuildRoot, moduleName))
     repositories {
         google()
         mavenCentral()
@@ -25,5 +31,5 @@ allprojects {
 }
 
 task clean(type: Delete) {
-    delete rootProject.buildDir
+    delete generatedBuildRoot
 }

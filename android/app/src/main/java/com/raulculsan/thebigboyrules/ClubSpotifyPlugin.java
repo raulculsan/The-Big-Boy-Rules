@@ -96,7 +96,7 @@ public class ClubSpotifyPlugin extends Plugin {
                     case "pause": path = "me/player/pause"; break;
                     case "next": path = "me/player/next"; method = "POST"; break;
                     case "previous": path = "me/player/previous"; method = "POST"; break;
-                    case "seek": path = "me/player/seek?position_ms=" + Math.max(0, call.getInt("position", 0)); break;
+                    case "seek": Integer requested = call.getInt("position", 0); path = "me/player/seek?position_ms=" + Math.max(0, requested == null ? 0 : requested); break;
                     default: call.reject("Control de Spotify no válido."); return;
                 }
                 api(path, method, body); update(); call.resolve(snapshot()); emit();
@@ -113,9 +113,18 @@ public class ClubSpotifyPlugin extends Plugin {
     }
     private void update() throws Exception {
         try {
-            JSONObject result = api("me/player", "GET", null);
+            JSONObject result = api("me/player?additional_types=episode", "GET", null);
             JSONObject track = result.optJSONObject("item");
-            if (track == null || !"track".equals(track.optString("type", "track"))) { playback = new JSObject(); playbackStatus = "empty"; }
+            if (track == null) {
+                boolean activeDevice = false;
+                JSONArray devices = api("me/player/devices", "GET", null).optJSONArray("devices");
+                if (devices != null) for (int i = 0; i < devices.length(); i++) {
+                    JSONObject device = devices.optJSONObject(i);
+                    if (device != null && device.optBoolean("is_active") && !device.optBoolean("is_restricted")) activeDevice = true;
+                }
+                playback = new JSObject().put("connected", activeDevice).put("paused", true).put("currentAvailable", false);
+                playbackStatus = "empty";
+            }
             else {
                 JSObject song = song(track); JSONObject device = result.optJSONObject("device");
                 playback = song.put("currentAvailable", true).put("paused", !result.optBoolean("is_playing"))
@@ -134,9 +143,10 @@ public class ClubSpotifyPlugin extends Plugin {
     private JSObject song(JSONObject track) {
         JSONArray artists = track.optJSONArray("artists"); List<String> names = new ArrayList<>();
         if (artists != null) for (int i = 0; i < artists.length(); i++) names.add(artists.optJSONObject(i).optString("name"));
-        JSONObject album = track.optJSONObject("album"); JSONArray images = album == null ? null : album.optJSONArray("images");
+        JSONObject album = track.optJSONObject("album"); JSONArray images = album == null ? track.optJSONArray("images") : album.optJSONArray("images");
         String image = images != null && images.length() > 0 ? images.optJSONObject(0).optString("url") : "";
-        return new JSObject().put("title", track.optString("name")).put("artist", android.text.TextUtils.join(", ", names)).put("duration", track.optLong("duration_ms")).put("artwork", image);
+        String artist = names.isEmpty() ? track.optJSONObject("show") == null ? "" : track.optJSONObject("show").optString("publisher") : android.text.TextUtils.join(", ", names);
+        return new JSObject().put("title", track.optString("name")).put("artist", artist).put("duration", track.optLong("duration_ms")).put("artwork", image);
     }
     private JSObject snapshot() {
         boolean linked = !refresh.isEmpty(), connected = playback.optBoolean("connected");
