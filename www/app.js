@@ -113,6 +113,7 @@ const pageTitle = document.getElementById("pageTitle");
 const sections = [...document.querySelectorAll(".page-section")];
 const navLinks = [...document.querySelectorAll(".app-tab")];
 document.body.classList.toggle("native-android", window.Capacitor?.getPlatform?.() === "android");
+document.body.classList.toggle("native-ios", window.Capacitor?.getPlatform?.() === "ios" || window.__bigboysNativeKeyboardLayout === true);
 const isStandaloneApp = window.Capacitor?.isNativePlatform?.() === true || window.__bigboysNativeKeyboardLayout === true || window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 document.body.classList.toggle("standalone-app", isStandaloneApp);
 let mobileHeaderLastScrollY = Math.max(0, window.scrollY);
