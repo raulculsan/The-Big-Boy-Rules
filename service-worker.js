@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v417";
+const CACHE_NAME = "big-boy-rules-v418";
 const APP_SHELL = [
   "./ui-motion.js?v=20261025-liquid-glass-408",
   "./ui-motion.css?v=20261026-glass-lens-410",
@@ -12,7 +12,7 @@ const APP_SHELL = [
   "./app-health.js?v=20261017-startup-logs-331",
   "./app-health.css?v=20261016-improvements-319",
   "./styles.css?v=20261020-polish-357",
-  "./visual-system.css?v=20261026-collection-414",
+  "./visual-system.css?v=20261026-collection-redesign-418",
   "./notifications.css?v=20261015-notifications-polls-307",
   "./club.css?v=20261021-performance-363",
   "./clubhouse.css?v=20261025-passport-406",
@@ -92,7 +92,7 @@ const APP_SHELL = [
   "./icons/banners/alberto-galicia-member-v1.png",
   "./icons/banners/alberto-galicia-member-bg-v1.webp",
   "./icons/banners/alberto-galicia-member-figures-v1.webp",
-  "./daily-packs.js?v=20261026-collection-414",
+  "./daily-packs.js?v=20261026-collection-redesign-418",
   "./packs.css?v=20261026-pack-info-415",
   "./card-thumbnails.js?v=20261023-jose-vice-city-388",
   "./card-media.js?v=20261025-audit-404",

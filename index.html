@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
   <link rel="stylesheet" href="collection-social.css?v=20261022-trade-art-377" />
   <link rel="stylesheet" href="group-interactions.css?v=20261025-fluid-motion-407" />
-  <link rel="stylesheet" href="visual-system.css?v=20261026-collection-414" />
+  <link rel="stylesheet" href="visual-system.css?v=20261026-collection-redesign-418" />
   <link rel="stylesheet" href="clubhouse.css?v=20261025-passport-406" />
   <link rel="stylesheet" href="chota-shop.css?v=20261024-store-397" />
   <link rel="stylesheet" href="club-social.css?v=20261026-missions-fullscreen-417" />
@@ -219,13 +219,13 @@
     <section class="page-section packs-page" id="sobres" aria-labelledby="packsTitle">
       <header class="packs-heading">
         <button class="packs-back" type="button" data-go="inicio" aria-label="Volver a Inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
-        <div><span class="eyebrow">TU COLECCIÓN PERSONAL</span><h2 id="packsTitle" tabindex="-1">Los nuestros.</h2></div>
-        <button type="button" class="collection-catalog-trigger" data-go="catalogo" aria-label="Ver todas las cartas de la colección"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6 9-3 4 13-9 3zM15 5h5v16H10v-2"/><path d="m7 9 5-1M8 12l5-1"/></svg></button>
-        <button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span data-duplicates-count>0</span></button>
+        <div class="collection-overview-title"><span class="eyebrow">LOS NUESTROS · COLECCIÓN 01</span><h2 id="packsTitle" tabindex="-1">Colección</h2></div>
+        <button type="button" class="collection-catalog-trigger" data-go="catalogo" aria-label="Ver todas las cartas de la colección"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6 9-3 4 13-9 3zM15 5h5v16H10v-2"/><path d="m7 9 5-1M8 12l5-1"/></svg><span class="collection-control-label">Catálogo</span></button>
+        <button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span class="collection-control-label">Repetidas</span><span data-duplicates-count>0</span></button>
       </header>
       <div class="packs-layout">
         <div class="packs-display">
-          <div class="bb2-pack-copy"><span class="packs-display-edition">BIG BOYS · COLECCIÓN 01</span><h3>Tu próxima<br>apertura.</h3><span class="bb2-pack-action">Toca el sobre para abrir</span></div>
+          <div class="bb2-pack-copy"><span class="collection-section-label"><span aria-hidden="true">01</span> Sobres</span><h3>Los nuestros.</h3><span class="packs-display-edition">6 CARTAS POR SOBRE</span><span class="bb2-pack-action">Toca el sobre para abrir</span></div>
           <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-los-nuestros-recortado-v2.png" width="1024" height="1536" loading="lazy" decoding="async" alt=""></button>
           <span id="packsCount" class="packs-count-badge" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
           <button type="button" class="packs-info-trigger" id="packsInfoTrigger" aria-label="Información y saldo de sobres" aria-expanded="false" aria-controls="packsInfoPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button>
@@ -234,7 +234,7 @@
         </div>
         <div class="packs-information">
           <button type="button" class="bb2-album-entry" data-card-album aria-label="Abrir mi álbum de cartas">
-            <span class="eyebrow">COLECCIÓN ORIGINAL</span><strong>Mi álbum</strong>
+            <span class="collection-section-label"><span aria-hidden="true">02</span> Tus cartas</span><strong>Mi álbum</strong>
             <span class="bb2-album-pages" aria-hidden="true">
               <span class="bb2-album-card"><svg viewBox="0 0 72 126" focusable="false"><path d="M12 108V83c0-10 7-17 15-20-6-5-9-13-9-22 0-17 8-28 18-28s18 11 18 28c0 9-3 17-9 22 8 3 15 10 15 20v25Z"/><path class="bb2-album-cutout" d="M26 40c0-8 4-14 10-14s10 6 10 14v9c0 9-4 15-10 15s-10-6-10-15Z"/><path class="bb2-album-detail" d="m28 70 8 9 8-9M28 87v15m16-15v15"/></svg></span>
               <span class="bb2-album-card"><svg viewBox="0 0 72 126" focusable="false"><path d="m20 43-7-27 20 15 10-2 16-14-3 31c7 10 4 25-7 31l5 23 7 7v4H44l-7-23-6 23H15v-5l6-8 1-19C9 72 5 62 9 53l7 6c-1 6 0 9 5 10-5-9-5-18-1-26Z"/><path class="bb2-album-cutout" d="m24 53 6 2-4 4Zm18 2 7-2-3 6Zm-7 11h7l-4 5Z"/></svg></span>
@@ -242,7 +242,7 @@
               <span class="bb2-album-card"><svg viewBox="0 0 72 126" focusable="false"><path fill-rule="evenodd" d="M28 24v-5c0-6 16-6 16 0v5c10 4 16 13 16 27v51c0 7-48 7-48 0V51c0-14 6-23 16-27Zm5-2h6v-3h-6Z"/><path class="bb2-album-cutout" d="M22 70h28v24H22Z"/><path class="bb2-album-detail" d="M22 49c0-19 28-19 28 0M19 61h34M28 77h16"/></svg></span>
               <span class="bb2-album-card"><svg viewBox="0 0 72 126" focusable="false"><path d="m13 47 13-10 8-25 16 24 12 11-16 3c5 7 5 18 2 25l13 32H11l13-32c-4-8-3-17 2-25Z"/><path class="bb2-album-cutout" d="M29 53h14v10c0 10-14 10-14 0Z"/><path class="bb2-album-detail" d="m27 38 20 3M28 80l8 7 8-7"/></svg></span>
             </span>
-            <span class="bb2-album-label">Ver mis cartas</span>
+            <span class="bb2-album-label">Abrir álbum</span>
           </button>
         </div>
       </div>
@@ -963,7 +963,7 @@
   <script defer src="tab-navigation.js?v=20261026-dock-drag-411"></script>
   <script defer src="trophy-motion.js?v=20260904-150"></script>
   <script defer src="trophy-unlock.js?v=20260903-138"></script>
-  <script defer src="daily-packs.js?v=20261026-collection-414"></script>
+  <script defer src="daily-packs.js?v=20261026-collection-redesign-418"></script>
   <script defer src="collection-motion.js?v=20261021-halloween-365"></script>
   <script defer src="card-thumbnails.js?v=20261023-jose-vice-city-388"></script>
   <script defer src="card-media.js?v=20261025-audit-404"></script>
