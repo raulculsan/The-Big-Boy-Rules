@@ -4,7 +4,7 @@
   'use strict';
   const registry = {
     chat: {styles:[], scripts:['chat-themes.js?v=20261010-241']},
-    collection: {styles:['album.css?v=20261021-halloween-365']},
+    collection: {styles:['album.css?v=20261026-collection-414']},
     admin: {styles:['admin-grants.css?v=20261009-213','admin-console.css?v=20261021-compact-364'], scripts:['achievement-admin.js?v=20261010-244','admin-grants.js?v=20261018-password-335']},
     spotify: {styles:['spotify-player.css?v=20261014-balanced'], scripts:['spotify-player.js?v=20261021-deferred-364']}
   };

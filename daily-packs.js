@@ -70,22 +70,12 @@
   let ui;
   function initialize(options) {
     if (ui) return;
-    const text = (id,value) => {const node=document.getElementById(id);if(node && node.textContent !== value) node.textContent=value;};
     let renderedBalanceData;
     const render = state => {
-      const view = presentation(state);
       if (state.data !== renderedBalanceData) {
         renderedBalanceData = state.data;
         updateBalance(state.data?.available);
       }
-      text('packsStatusTitle',view.heading);text('packsStatusMessage',view.message);
-      const meter=document.getElementById('packsDailyProgress');
-      if(meter) {meter.value=view.filled?1:0;meter.setAttribute('aria-valuetext',view.filled?'Sobre de hoy recibido':'Acceso de hoy pendiente de comprobar');}
-      text('packsDailyLabel',view.filled?'SOBRE DIARIO · RECIBIDO':'SOBRE DIARIO');
-      const button=document.getElementById('packsSyncButton');
-      if(button) {button.disabled=state.status==='loading';button.textContent=state.status==='loading'?'Sincronizando…':state.status==='error'?'Reintentar':'Actualizar saldo';}
-      const next = state.status === 'ready' ? new Intl.DateTimeFormat('es-ES',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}).format(new Date(state.data.next_reset_at)) : 'Pendiente de sincronización';
-      text('packsNextReset',next);
       const info=document.getElementById('packsInfoPanel');
       if(info) {
         let rewards=info.querySelector('[data-pack-progression]');
@@ -103,11 +93,8 @@
           }
         }
       }
-      const panel=document.getElementById('packsDailyPanel');
-      if(panel) panel.dataset.state=state.status;
     };
     ui=createStore({...options,onChange:render});
-    document.getElementById('packsSyncButton')?.addEventListener('click',()=>void ui.refresh(true));
     render(ui.snapshot());
   }
   function activityCompleted(kind) {

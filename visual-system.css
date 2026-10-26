@@ -477,11 +477,6 @@ body.authenticated #sobres .packs-display-edition {
   font-size: 9px;
   letter-spacing: .13em;
 }
-body.authenticated #sobres .packs-daily-panel {
-  border-color: var(--bb2-line);
-  border-radius: 22px;
-  background: var(--bb2-panel);
-}
 body.authenticated #sobres .packs-information { display: grid; gap: 18px; }
 body.authenticated #catalogo .collection-card-tile {
   padding: 10px 10px 15px;
@@ -594,15 +589,17 @@ body.authenticated #sobres .packs-display-edition { display: block; padding: 0; 
 body.authenticated #sobres .packs-art-button { width: 100%; margin: 0; align-self: center; filter: drop-shadow(0 15px 12px #0005); }
 body.authenticated #sobres .packs-art { mix-blend-mode: normal; }
 body.authenticated #sobres .packs-information { gap: 18px; }
-.bb2-album-entry { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 22px; border: 1px solid var(--bb2-line-strong); border-radius: 22px; color: var(--bb2-ink); background: var(--bb2-panel); text-align: left; cursor: pointer; }
+.bb2-album-entry { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 22px; border: 1px solid var(--bb2-line-strong); border-radius: 22px; color: var(--bb2-ink); background: var(--bb2-panel); text-align: left; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .bb2-album-entry > strong { font-size: 24px; font-weight: 650; letter-spacing: -.04em; }
 .bb2-album-entry .eyebrow { color: var(--bb2-muted); font-size: 9px; }
-.bb2-album-pages { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; margin: 2px 0; }
-.bb2-album-pages i { display: block; aspect-ratio: .7; border: 1px solid var(--bb2-line-strong); border-radius: 8px; background: var(--bb2-raised); }
-.bb2-album-pages i:nth-child(1),.bb2-album-pages i:nth-child(2),.bb2-album-pages i:nth-child(4) { background: var(--bb2-gold-dark); border-color: #dbba7340; }
+.bb2-album-pages { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; margin: 2px 0; padding: 8px 0 4px; }
+.bb2-album-card { position: relative; display: block; min-width: 0; aspect-ratio: 4 / 7; overflow: hidden; border: 1px solid var(--bb2-line-strong); border-radius: 6px; background: var(--bb2-raised); color: #77746b; }
+.bb2-album-card::after { content: ""; position: absolute; inset: 4px; border: 1px solid #d0b88320; border-radius: 3px; pointer-events: none; }
+.bb2-album-card svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+.bb2-album-card .bb2-album-cutout { fill: var(--bb2-raised); }
+.bb2-album-card .bb2-album-detail { fill: none; stroke: var(--bb2-raised); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bb2-album-card:nth-child(2),.bb2-album-card:nth-child(5) { color: #a29475; }
 .bb2-album-label { color: var(--bb2-gold); font-size: 12px; font-weight: 600; }
-body.authenticated #sobres .packs-daily-panel { padding: 20px; border-radius: 18px; }
-body.authenticated #sobres .packs-daily-panel h3 { font-size: 19px; margin: 8px 0 15px; }
 
 /* Figma inbox: independent conversation surfaces, rather than ruled rows. */
 body.authenticated .chat-inbox .bb2-inbox-heading { margin-bottom: 22px; }
@@ -640,8 +637,14 @@ body.authenticated .app-tab.active { color: var(--bb2-gold-soft); }
   body.authenticated .chat-inbox .unified-chat-list .private-contact { padding: 15px 13px; gap: 12px; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .bb2-album-entry:active { transform: scale(.985); }
-  .bb2-album-entry { transition: border-color 180ms ease, transform 180ms var(--bb2-ease); }
+  .bb2-album-entry { transition: background-color 160ms ease; }
+  .bb2-album-card { transition: transform 220ms var(--bb2-ease), color 180ms ease; }
+  .bb2-album-entry:active .bb2-album-card { transform: translateY(2px); transition-duration: 90ms; }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .bb2-album-entry:hover .bb2-album-card { transform: translateY(-3px); color: #c5b488; }
+  .bb2-album-entry:hover .bb2-album-card:nth-child(even) { transform: translateY(-6px); }
+  .bb2-album-entry:active .bb2-album-card { transform: translateY(1px); }
 }
 /* Let long plan titles breathe beside the mascot on narrow phones. */
 body.authenticated #inicio .club-event-with-tigreton { grid-template-columns: minmax(0,1fr) 90px; gap: 12px; }
@@ -778,10 +781,6 @@ body.authenticated #sobres .packs-display-edition { color: var(--bb2-muted); fon
 body.authenticated .bb2-pack-copy h3 { font-size: clamp(26px,3vw,36px); font-weight: 550; }
 body.authenticated .bb2-album-entry { padding: 22px; border: 0; border-radius: 14px; background: var(--bb2-panel); gap: 15px; }
 body.authenticated .bb2-album-entry > strong { font-size: 24px; font-weight: 550; }
-body.authenticated .bb2-album-pages { gap: 8px; }
-body.authenticated .bb2-album-pages i { background: var(--bb2-raised); border-color: var(--bb2-line-strong); border-radius: 6px; }
-body.authenticated .bb2-album-pages i:nth-child(1),body.authenticated .bb2-album-pages i:nth-child(2),body.authenticated .bb2-album-pages i:nth-child(4) { background: #d0b88325; border-color: #d0b88340; }
-body.authenticated #sobres .packs-daily-panel { padding: 20px 0; border: 0; border-top: 1px solid var(--bb2-line); border-radius: 0; background: transparent; }
 body.authenticated :is(.collection-card-meta,.collection-card-hint) { text-transform: none; letter-spacing: 0; color: var(--bb2-muted); }
 body.authenticated .collection-card-tile > strong { font-size: 14px; font-weight: 550; }
 body.authenticated .collection-card-grid { gap: 26px 18px; }

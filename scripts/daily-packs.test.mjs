@@ -40,29 +40,30 @@ test('network timeout aborts a request without blocking app use; malformed total
   let signal;const s=make({timeoutMs:5,rpc:s=>{signal=s;return new Promise(()=>{});}});await s.refresh();assert.equal(s.snapshot().status,'error');assert.equal(signal.aborted,true);
   const bad=make({rpc:async()=>({data:{available:-3}})});await bad.refresh();assert.equal(bad.snapshot().data,null);assert.equal(bad.snapshot().status,'error');
 });
-test('page shows server-backed counts and retry updates without replacing artwork or user focus',async()=>{
+test('collection keeps automatic server balances without a daily panel or manual sync button',async()=>{
   const dom=new JSDOM(read('index.html'),{url:'https://club.test',runScripts:'outside-only'}),w=dom.window;
   w.eval(source);let value=response(7);
   w.DailyPacks.initialize({session:()=> 'alice',rpc:async()=>value});
   const art=w.document.querySelector('.packs-art');await w.DailyPacks.refresh();assert.equal(w.document.getElementById('packsCount').textContent,'7');
-  assert.equal(w.document.getElementById('packsDailyProgress').value,1);assert.match(w.document.getElementById('packsNextReset').textContent,/4 de septiembre/);
-  value={error:{code:'PGRST202'}};await w.DailyPacks.refresh(true);assert.match(w.document.getElementById('packsStatusTitle').textContent,/no está activada/);
+  assert.equal(w.document.getElementById('packsDailyPanel'),null);assert.equal(w.document.getElementById('packsSyncButton'),null);
+  assert.ok(w.document.querySelector('#packsInfoPanel [data-pack-progression]'));
+  value={error:{code:'PGRST202'}};await w.DailyPacks.refresh(true);assert.equal(w.document.getElementById('packsCount').textContent,'7');
   assert.equal(w.document.querySelector('.packs-art'),art);w.DailyPacks.reset();assert.equal(w.document.getElementById('packsCount').textContent,'—');dom.window.close();
 });
 test('packs keep the four main tabs and are reachable from home, with a working back target and daily lifecycle hooks',()=>{
   const html=read('index.html'),app=read('app.js');const dom=new JSDOM(html),d=dom.window.document;
   assert.equal(d.querySelectorAll('.floating-tab-bar .app-tab').length,4);
-  assert.ok(d.querySelector('#inicio [data-go="sobres"]'));assert.ok(d.querySelector('#sobres [data-go="inicio"]'));
+  assert.ok(d.querySelector('#packsTopButton[data-go="sobres"]'));assert.ok(d.querySelector('#sobres [data-go="inicio"]'));
   assert.match(app,/function refreshDailyParticipation[\s\S]*?DailyPacks\?\.refresh\(force\)/);
   assert.match(app,/function loadAchievements[\s\S]*?DailyPacks\?\.refresh\(\)/);
   assert.match(app,/function logoutCurrentUser[\s\S]*?DailyPacks\?\.reset\(\)/);
-  assert.ok(app.includes('sectionId === "sobres" ? "inicio"'));dom.window.close();
+  assert.ok(app.includes('sobres: "inicio"'));dom.window.close();
 });
 test('page assets and original pack artwork reach web, offline shell and the stable iOS build',()=>{
   for(const file of ['index.html','service-worker.js','scripts/build-web.mjs','scripts/live-server.mjs','scripts/preview-club.mjs']) {
     assert.ok(read(file).includes('daily-packs.js'),file);assert.ok(read(file).includes('packs.css'),file);
   }
-  for(const file of ['daily-packs.js','packs.css','icons/cards/sobre-los-nuestros-v1.png']) {
+  for(const file of ['daily-packs.js','packs.css','icons/cards/sobre-los-nuestros-v1.jpg']) {
     assert.deepEqual(readFileSync(new URL('../'+file,import.meta.url)),readFileSync(new URL('../ios/App/App/public/'+file,import.meta.url)));
   }
 });

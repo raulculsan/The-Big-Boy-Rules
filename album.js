@@ -251,15 +251,11 @@
     // A right-hand page leaves the left spine; reversing returns it from that spine.
     const origin = forward ? 'left center' : 'right center', sign = forward ? -1 : 1;
     outgoing.style.transformOrigin = incoming.style.transformOrigin = origin;
-    incoming.style.visibility = 'hidden';
-    // Decode the destination before its moving face becomes visible.
+    // Begin the turn on this input frame. The incoming sheet stays transparent
+    // for the first quarter of the turn, allowing its thumbnails to decode
+    // without holding the entire gesture behind a network/image timeout.
     try {
-    await Promise.race([
-      Promise.all([...incoming.querySelectorAll('img')].map(img => img.decode?.().catch(() => {}) || Promise.resolve())),
-      new Promise(resolve => setTimeout(resolve,180))
-    ]);
-    if (token !== pageMotionToken || !isOpen()) return;
-    incoming.style.visibility = '';
+    for (const image of incoming.querySelectorAll('img')) void image.decode?.().catch(() => {});
     // Both leaves share one continuous timeline. The departing paper keeps
     // moving and becomes transparent before it can linger beside the spine.
     incoming.style.zIndex = '4';
@@ -287,14 +283,10 @@
     // Reveal the identical stationary leaf in the same frame as removing its
     // moving copy, so there is neither a duplicated page nor a blank hand-off.
     viewport.classList.remove('is-turning'); leaf.inert = false; leaf.removeAttribute('aria-hidden');
-    // Settle the cover height only after the sheets have finished crossing.
+    // Release the reserved page height once. Animating height here repeatedly
+    // relaid out the entire route after every turn on phones.
     layer.remove(); pageGhost = null;
     pageAnimations.forEach(animation => animation.cancel()); pageAnimations = [];
-    if (Math.abs(oldHeight - newHeight) > 1) {
-      const resize = viewport.animate([{height:`${Math.max(oldHeight,newHeight)}px`},{height:`${newHeight}px`}],{duration:globalThis.CollectionMotion?.timings?.settle || 140,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
-      pageAnimations.push(resize); await resize.finished.catch(() => {});
-      if (token !== pageMotionToken) return;
-    }
     stopTurn(); if (pendingRender) {pendingRender = false; render();}
     } finally {
       // A canceled, interrupted, or unsupported animation must never leave
