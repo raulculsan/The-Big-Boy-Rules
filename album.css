@@ -76,6 +76,8 @@
 .card-album-trigger,#album .duplicate-cards-trigger{min-width:44px;min-height:44px}
 #album [data-album-close]{min-width:44px;min-height:44px;padding:8px;border:1px solid #b69b5550;border-radius:13px;background:#181b20;color:#d8c695;font-size:21px;cursor:pointer}
 #album .card-album-header h2{margin:8px 0}
+#album .card-album-title-row{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 14px}
+#album .card-album-title-row .card-album-summary{margin:0;min-height:0;white-space:nowrap;font-size:12px;line-height:1.4;font-variant-numeric:tabular-nums;color:#a9a69e}
 @media(max-width:600px){#album .card-album-header{gap:10px}#album .card-album-tabs{margin-bottom:4px}#album .card-album-leaf{padding:12px}}
 
 /* Route entry must never restart the global tab settling animation. */

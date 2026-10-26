@@ -1,0 +1,51 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {JSDOM} from 'jsdom';
+const read = file => readFileSync(new URL('../' + file, import.meta.url), 'utf8');
+const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+function setup(rpc) {
+  const dom = new JSDOM('<main class="app"><section id="sobres" class="page-section active"><button data-card-album>Álbum</button></section><div id="roomHost"><div class="clubhouse-room"></div></div></main>',{url:'https://club.test/#sobres',runScripts:'outside-only',pretendToBeVisual:true});
+  const w = dom.window;
+  w.matchMedia = () => ({matches:true,addEventListener(){}});
+  w.HTMLDialogElement.prototype.showModal = function(){this.open=true;};
+  w.HTMLDialogElement.prototype.close = function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
+  w.CardCollection={catalog:Array.from({length:3},(_,i)=>({id:`card-${i}`,name:`Carta ${i}`,front:`card-${i}.jpg`,folder:'miembros',edition:'Común'})),thumbnail:card=>card.front};
+  w.eval(read('album.js'));w.eval(read('club-social.js'));
+  let packsRefreshes=0;
+  const db={rpc};
+  w.ClubSeasons.initialize({db,session:()=> 'raul',refreshPacks:()=>packsRefreshes++});
+  w.ClubSocial.init({db,getUser:()=>({id:'raul'})});
+  w.ClubSocial.mountGoal(w.document.getElementById('roomHost'));
+  return {dom,w,packsRefreshes:()=>packsRefreshes,openMissions:()=>w.document.querySelector('[data-club-missions-open]').click()};
+}
+test('album keeps one compact count of released cards, independent of filters, and loads no missions',async()=>{
+  const calls=[],h=setup(async name=>{calls.push(name);return {data:[]};});
+  h.w.CardAlbum.update({cards:[{card_id:'card-0',quantity:4},{card_id:'card-1',quantity:1}]});
+  h.w.CardAlbum.open(h.w.document.querySelector('[data-card-album]'));
+  assert.equal(h.w.document.querySelector('#album [data-collection-seasons]'),null);
+  assert.equal(h.w.document.getElementById('cardAlbumSummary').textContent,'2 / 3 cartas');
+  const search=h.w.document.querySelector('[data-album-search]');search.value='Carta 0';search.dispatchEvent(new h.w.Event('input',{bubbles:true}));
+  await tick();
+  assert.equal(h.w.document.getElementById('cardAlbumSummary').textContent,'2 / 3 cartas');
+  assert.equal(calls.includes('get_collection_seasons'),false);
+  h.dom.window.close();
+});
+test('collection mission survives reopening during a fetch and claims rewards from the room',async()=>{
+  let finish,requests=0,claimed=false;
+  const row=()=>({id:'autumn',active:true,ends_at:'2026-11-01T00:00:00Z',title:'Coleccionista',description:'Consigue cartas',owned_cards:3,target_cards:3,reward_packs:2,reward_claimed:claimed});
+  const h=setup(async(name,args)=>{
+    if(name==='get_collection_seasons'){requests++;if(requests===1)return new Promise(resolve=>finish=()=>resolve({data:[row()]}));return {data:[row()]};}
+    if(name==='claim_collection_season_reward'){assert.equal(args.season_id,'autumn');claimed=true;return {data:{awarded:true}};}
+    return {error:{code:'PGRST202'}};
+  });
+  h.openMissions();await tick();
+  h.w.document.querySelector('[data-missions-close]').click();h.openMissions();
+  finish();await tick();
+  const host=h.w.document.querySelector('.club-missions-dialog [data-collection-seasons]');
+  assert.match(host.textContent,/Coleccionista/);assert.equal(requests,1);
+  host.querySelector('[data-season-claim]').click();await tick();
+  assert.equal(h.packsRefreshes(),1);assert.equal(requests,2);
+  assert.match(host.textContent,/Completada/);assert.equal(host.querySelector('[data-season-claim]'),null);
+  h.dom.window.close();
+});

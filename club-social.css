@@ -27,6 +27,13 @@
 .club-missions-dialog .club-social-season>small{display:block;line-height:1.5;color:#bdbcb6}
 .club-missions-dialog .club-social-season>button{min-height:44px;width:100%;margin-top:24px;font-size:14px;background:#e9c77e;border:0;border-radius:6px}
 .club-missions-dialog .social-goal-feedback:empty{display:none}
+.club-missions-dialog .collection-season{margin:0;padding:22px 0;border-top:0;border-bottom:1px solid #303234}
+.club-missions-dialog .collection-season h3{font-size:21px}
+.club-missions-dialog .collection-season-top>span{font-size:12px;letter-spacing:0;font-weight:500;color:#cbc4b4}
+.club-missions-dialog .collection-season-meter progress{height:6px}
+.club-missions-dialog .collection-season-bottom{flex-wrap:wrap}
+.club-missions-dialog .collection-season button{min-height:44px}
+.club-missions-dialog .collection-season-unavailable{padding:18px 0;margin:0;border-bottom:1px solid #303234;line-height:1.5}
 .club-missions-dialog button:focus-visible{outline:2px solid #e9c77e;outline-offset:3px}
 @media(max-width:420px){.club-missions-shell{padding:16px}.club-missions-dialog .club-social-progress{gap:20px}}
 

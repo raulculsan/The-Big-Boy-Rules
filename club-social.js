@@ -66,7 +66,7 @@
   const room=trigger.closest('.clubhouse-room');if(!room)return;
   const dialog=document.createElement('dialog');missionsDialog=dialog;missionsTrigger=trigger;missionsRoom=room;
   dialog.className='club-missions-dialog';dialog.setAttribute('aria-labelledby','clubMissionsTitle');
-  dialog.innerHTML='<div class="club-missions-shell"><header class="club-missions-heading"><div><span>La sede del club</span><h2 id="clubMissionsTitle">Misiones</h2></div><button type="button" data-missions-close>Cerrar</button></header><section class="club-weekly-challenge" data-club-weekly-mission aria-label="Reto de la semana" aria-live="polite"><p>Cargando reto de la semana…</p></section><section class="club-social-season" data-club-social-goal aria-label="Progreso de las misiones"><p role="status">Consultando las misiones…</p></section></div>';
+  dialog.innerHTML='<div class="club-missions-shell"><header class="club-missions-heading"><div><span>La sede del club</span><h2 id="clubMissionsTitle">Misiones</h2></div><button type="button" data-missions-close>Cerrar</button></header><section class="club-weekly-challenge" data-club-weekly-mission aria-label="Reto de la semana" aria-live="polite"><p>Cargando reto de la semana…</p></section><section class="collection-season-strip" data-collection-seasons aria-label="Misiones de colección"><p role="status">Cargando misiones de colección…</p></section><section class="club-social-season" data-club-social-goal aria-label="Progreso de las misiones"><p role="status">Consultando las misiones…</p></section></div>';
   document.body.append(dialog);trigger.setAttribute('aria-expanded','true');dialog.showModal();
   dialog.querySelector('[data-missions-close]').addEventListener('click',()=>closeMissions());
   dialog.addEventListener('cancel',event=>{event.preventDefault();closeMissions();});
@@ -76,6 +76,7 @@
   missionsObserver=new MutationObserver(()=>{if(!room.isConnected)closeMissions(false);});
   missionsObserver.observe(room.parentElement,{childList:true});
   void refreshGoal();
+  void globalThis.ClubSeasons?.refresh(true);
   void globalThis.ChotaGames?.mountWeeklyChallenge?.(dialog.querySelector('[data-club-weekly-mission]'));
  }
  function mountGoal(host){
