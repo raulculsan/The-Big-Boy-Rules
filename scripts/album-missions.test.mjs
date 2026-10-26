@@ -49,3 +49,19 @@ test('collection mission survives reopening during a fetch and claims rewards fr
   assert.match(host.textContent,/Completada/);assert.equal(host.querySelector('[data-season-claim]'),null);
   h.dom.window.close();
 });
+test('missions keep the close control outside the scrolling board and restore room focus on Escape',async()=>{
+  const h=setup(async()=>({data:[]}));
+  const trigger=h.w.document.querySelector('[data-club-missions-open]');trigger.focus();h.openMissions();
+  const dialog=h.w.document.querySelector('.club-missions-dialog'),body=dialog.querySelector('[data-missions-body]');
+  assert.equal(body.contains(dialog.querySelector('[data-missions-close]')),false);
+  assert.equal(body.querySelectorAll('.club-mission-section').length,3);
+  assert.equal(h.w.document.body.classList.contains('club-missions-open'),true);
+  assert.equal(trigger.getAttribute('aria-expanded'),'true');
+  const cancel=new h.w.Event('cancel',{cancelable:true});dialog.dispatchEvent(cancel);await tick();
+  assert.equal(cancel.defaultPrevented,true);
+  assert.equal(h.w.document.querySelector('.club-missions-dialog'),null);
+  assert.equal(h.w.document.body.classList.contains('club-missions-open'),false);
+  assert.equal(trigger.getAttribute('aria-expanded'),'false');
+  assert.equal(h.w.document.activeElement,trigger);
+  h.dom.window.close();
+});
