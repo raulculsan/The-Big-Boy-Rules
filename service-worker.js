@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v414";
+const CACHE_NAME = "big-boy-rules-v415";
 const APP_SHELL = [
   "./ui-motion.js?v=20261025-liquid-glass-408",
   "./ui-motion.css?v=20261026-glass-lens-410",
@@ -93,7 +93,7 @@ const APP_SHELL = [
   "./icons/banners/alberto-galicia-member-bg-v1.webp",
   "./icons/banners/alberto-galicia-member-figures-v1.webp",
   "./daily-packs.js?v=20261026-collection-414",
-  "./packs.css?v=20261021-halloween-365",
+  "./packs.css?v=20261026-pack-info-415",
   "./card-thumbnails.js?v=20261023-jose-vice-city-388",
   "./card-media.js?v=20261025-audit-404",
   "./card-collection.js?v=20261025-fluid-motion-407",
