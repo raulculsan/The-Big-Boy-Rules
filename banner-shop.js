@@ -723,13 +723,16 @@
       const owned = (state.banners || []).filter(banner => banner.owned);
       const selected = owned.find(banner => banner.id === state.equipped_banner_id);
       el('profileBannerSelection').textContent = selected?.name || 'Sin banner';
-      const signature = JSON.stringify([state.equipped_banner_id, owned]);
+      const signature = JSON.stringify(owned.map(({id, name, art_key}) => [id, name, art_key]));
       if (list.dataset.signature !== signature) {
         list.dataset.signature = signature;
         list.innerHTML = `<button type="button" class="profile-banner-option" data-profile-banner="" data-banner-id="" aria-pressed="${!state.equipped_banner_id}"><div class="profile-banner-empty" aria-hidden="true">BB</div><span>Sin banner</span></button>` + owned.map(banner => `<button type="button" class="profile-banner-option" data-profile-banner="${escape(banner.id)}" data-banner-id="${escape(banner.id)}" aria-pressed="${banner.id === state.equipped_banner_id}">${artwork(banner)}<span>${escape(banner.name)}</span></button>`).join('');
       }
     }
-    list.querySelectorAll('button').forEach(button => {button.disabled = busy || loading || !state || !online();});
+    list.querySelectorAll('button').forEach(button => {
+      button.disabled = busy || loading || !state || !online();
+      button.setAttribute('aria-pressed', String((button.dataset.profileBanner || null) === (state?.equipped_banner_id || null)));
+    });
     picker.setAttribute('aria-busy', String(busy || loading));
     el('profileBannerStatus').textContent = failure || (busy ? 'Aplicando banner…' : loading ? 'Cargando tus banners…' : !online() ? 'Conéctate para elegir tu banner.' : notice || (state && !(state.banners || []).some(banner => banner.owned) ? 'Todavía no tienes banners comprados.' : ''));
     el('profileBannerRetry').hidden = !failure && (loading || !!state);
@@ -766,7 +769,7 @@
     globalThis.CardAlbum?.update({cards:lastInventory, loading:loading || busy, failure, savedAt:inventorySavedAt});
     globalThis.CollectionSocial?.update(lastInventory);
     const status = el('bannerShopStatus');
-    if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); }
+    if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); status.classList.toggle('is-passive', !failure && !!state); }
     if (el('bannerShopBalance')) el('bannerShopBalance').textContent = coins();
     document.querySelectorAll('[data-wallet-balance]').forEach(node => {node.textContent = state ? Number(state.balance).toLocaleString('es-ES') : '—';});
     document.querySelectorAll('[data-wallet]').forEach(node => node.setAttribute('aria-label', `Saldo: ${coins()}`));
@@ -787,14 +790,33 @@
     const shopVisible = Boolean(el('bannerShopDialog')?.open);
     const container = el('bannerShopItems');
     if (container && shopVisible) {
-      // Wallet and inventory refreshes must not recreate animated SVG banners.
-      const signature = JSON.stringify(state ? dailyBanners() : null);
+      // Selection, ownership and wallet changes update controls in place so
+      // decoded images and animated scenes retain their playback position.
+      const signature = JSON.stringify(state ? dailyBanners().map(({id,name,description,art_key}) => [id,name,description,art_key]) : null);
       if (container.dataset.signature !== signature) {
         container.dataset.signature = signature;
         container.innerHTML = state ? (dailyBanners().map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1', 'fufi-supervuelo-v1', 'jose-enrique-ojos-v1'].includes(banner.art_key) ? 'Animado' : 'Perfil'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? 'Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Cargando la tienda</strong><p>Los diseños del club aparecerán aquí.</p></div>';
       }
       container.querySelectorAll('[data-banner-action]').forEach(button => {
         const banner = state?.banners?.find(item => item.id === button.dataset.bannerId);
+        if (banner) {
+          const article = button.closest('.shop-banner-card');
+          article.classList.toggle('is-equipped', !!banner.equipped);
+          const labels = article.querySelector('.shop-card-labels');
+          let ownership = labels.querySelector('.shop-ownership');
+          if (banner.owned && !ownership) { ownership = document.createElement('span'); ownership.className = 'shop-ownership'; labels.append(ownership); }
+          if (ownership) {
+            ownership.hidden = !banner.owned;
+            ownership.classList.toggle('is-active', !!banner.equipped);
+            ownership.textContent = banner.equipped ? 'Equipado' : 'En tu colección';
+          }
+          const price = article.querySelector('.shop-price');
+          const markup = banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`;
+          if (price.dataset.markup !== markup) { price.innerHTML = markup; price.dataset.markup = markup; }
+          button.dataset.bannerAction = banner.owned ? 'equip' : 'buy';
+          const label = banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar';
+          if (button.textContent !== label) button.textContent = label;
+        }
         button.disabled = busy || loading || !banner || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online();
       });
     }
@@ -911,6 +933,7 @@
   async function mutate(name, args, message, discardedIndex = null) {
     if (busy || loading || !online()) return;
     const token = generation, user = options.session();
+    const equippingBanner = name === 'equip_profile_banner';
     const focus = document.activeElement;
     const revealAtStart = reveal;
     const focusCard = focus?.dataset?.discardCard;
@@ -922,8 +945,13 @@
       const data = await rpc(name, args);
       if (token !== generation || user !== options.session()) return;
       if (discardedIndex != null && reveal === revealAtStart) reveal.discarded.add(discardedIndex);
-      // A successful spend invalidates the old wallet until the server refreshes it.
-      state = null;
+      // Equipping never spends coins. Apply its confirmed result to the current
+      // snapshot while revalidating instead of flashing an empty shop/profile.
+      if (equippingBanner && state) {
+        const equipped = data.equipped_banner_id || null;
+        state = {...state, equipped_banner_id:equipped, banners:state.banners.map(banner => ({...banner,equipped:banner.id === equipped}))};
+        render();
+      } else state = null;
       if (name === 'open_owned_card_pack') {
         const draws = data.cards || (data.card ? [data.card] : []);
         if (draws.some(item => !card(item.card_id))) await globalThis.CardCatalogSync?.refresh(true);
@@ -942,7 +970,7 @@
       }
       notice = message;
       await refresh();
-    } catch (error) { if (token === generation) {state = null; const message = errorMessage(error); await refresh(); if (token === generation) failure = `${message} Comprueba el saldo actualizado antes de repetir la acción.`;} }
+    } catch (error) { if (token === generation) {if (!equippingBanner) state = null; const message = errorMessage(error); await refresh(); if (token === generation) failure = equippingBanner ? message : `${message} Comprueba el saldo actualizado antes de repetir la acción.`;} }
     finally {if (token === generation) {
       if (reveal === revealAtStart && reveal) reveal.discarding = false;
       busy = false; render();
