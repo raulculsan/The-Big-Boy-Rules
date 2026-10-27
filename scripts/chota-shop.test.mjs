@@ -124,6 +124,50 @@ test('an unowned style from server cannot be equipped',async()=>{
  }finally{dom.window.close();}
 });
 
+test('using a style preserves decoded previews and focus through pending, success, refresh and failure',async()=>{
+ let settle,room_style=null;
+ const calls=[];
+ const payload=()=>({balance:100,items:styles,room_style});
+ const {dom,w,d}=setup(async(name,args)=>{
+  calls.push({name,args});
+  if(name==='equip_chota_room_style') return new Promise(resolve=>{settle=resolve;});
+  return {data:payload()};
+ });
+ try{
+  await w.ChotaShop.refresh();
+  const container=d.getElementById('chotaShopItems');
+  const previews=[...container.querySelectorAll('.chota-shop-object img')];
+  const cards=[...container.querySelectorAll('[data-chota-item]')];
+  const button=d.querySelector('[data-chota-equip="chota-room-forest"]');
+  button.focus();container.scrollTop=200;
+  button.click();
+  button.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+  assert.equal(button.textContent,'Aplicando…');
+  assert.equal(calls.filter(call=>call.name==='equip_chota_room_style').length,1);
+  assert.equal(d.activeElement,button);
+  assert.deepEqual([...container.querySelectorAll('.chota-shop-object img')],previews);
+  room_style='chota-room-forest';settle({data:payload()});
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(button.textContent,'En uso');
+  assert.equal(button.getAttribute('aria-pressed'),'true');
+  assert.equal(d.activeElement,button);
+  assert.equal(container.scrollTop,200);
+  assert.deepEqual([...container.querySelectorAll('[data-chota-item]')],cards);
+  assert.deepEqual([...container.querySelectorAll('.chota-shop-object img')],previews);
+  assert.equal(d.getElementById('chotaShopStatus').classList.contains('is-notice'),true);
+  await w.ChotaShop.refresh(true);
+  assert.deepEqual([...container.querySelectorAll('.chota-shop-object img')],previews);
+  const original=d.querySelector('[data-chota-equip="original"]');
+  original.click();settle({error:{message:'Sin conexión'}});
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(original.textContent,'Usar');
+  assert.equal(button.getAttribute('aria-pressed'),'true');
+  assert.equal(d.getElementById('chotaShopStatus').classList.contains('is-notice'),false);
+  assert.equal(d.getElementById('chotaShopStatus').classList.contains('is-error'),true);
+  assert.deepEqual([...container.querySelectorAll('.chota-shop-object img')],previews);
+ }finally{dom.window.close();}
+});
+
 test('server purchases and style selection require ownership, charge once, and keep original free',async()=>{
  const db=new PGlite();
  const actor='11111111-1111-1111-1111-111111111111';

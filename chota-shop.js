@@ -95,23 +95,52 @@
     const container = document.getElementById('chotaShopItems');
     if (!container) return;
     const status = document.getElementById('chotaShopStatus');
-    if (status) { status.textContent = failure || notice || (loading && !state ? 'Cargando su habitación…' : ''); status.classList.toggle('is-error',!!failure); }
+    if (status) { status.textContent = failure || notice || (loading && !state ? 'Cargando su habitación…' : ''); status.classList.toggle('is-error',!!failure); status.classList.toggle('is-notice',!failure && !!notice); }
     const count = document.querySelector('[data-shop-chota-count]');
     if (count) count.textContent = state ? String(state.items.filter(item => item.owned).length) : '—';
     const items = (state?.items || []).filter(item => item.active || item.owned);
     const busy=!!buying || !!equipping || loading || !owner || navigator.onLine===false;
     const card=item=>{
       const theme=!!roomStyles[item.art_key] || item.art_key==='original';
-      const selected=theme && (item.id==='original' ? !state?.room_style : state?.room_style===item.id);
-      const action=theme&&item.owned?'data-chota-equip':'data-chota-buy';
-      const disabled=busy || (theme&&item.owned ? selected : item.owned || state.balance<item.price);
-      return `<article class="chota-shop-item${item.owned?' is-owned':''}${theme?' chota-shop-style':''}${selected?' is-equipped':''}"><div class="chota-shop-object chota-shop-${esc(item.art_key)}" aria-hidden="true">${art(item.art_key)}</div><div class="chota-shop-copy"><span class="chota-shop-kind">${theme?'Estilo de habitación':propArt[item.art_key]?.decoration?'Decoración':'Objeto del Chota'}</span><h4>${esc(item.name)}</h4><p>${esc(item.description)}</p><div class="chota-shop-purchase"><span>${item.owned ? (theme ? selected?'En uso':'Desbloqueado' : 'En su habitación') : `<strong>${esc(item.price)}</strong> monedas`}</span><button type="button" ${action}="${esc(item.id)}" ${disabled?'disabled':''} ${theme&&item.owned?`aria-pressed="${selected}"`:''}>${equipping===item.id?'Aplicando…':buying===item.id?'Comprando…':item.owned?(theme?selected?'En uso':'Usar':'Comprado'):'Comprar'}</button></div></div></article>`;
+      return `<article class="chota-shop-item${theme?' chota-shop-style':''}" data-chota-item="${esc(item.id)}"><div class="chota-shop-object chota-shop-${esc(item.art_key)}" aria-hidden="true">${art(item.art_key)}</div><div class="chota-shop-copy"><span class="chota-shop-kind">${theme?'Estilo de habitación':propArt[item.art_key]?.decoration?'Decoración':'Objeto del Chota'}</span><h4>${esc(item.name)}</h4><p>${esc(item.description)}</p><div class="chota-shop-purchase"><span></span><button type="button"></button></div></div></article>`;
     };
     const themes=items.filter(item=>roomStyles[item.art_key]);
     const props=items.filter(item=>!roomStyles[item.art_key]);
     const original={id:'original',art_key:'original',name:'La sede original',description:'Paredes azul tinta, madera cálida y alfombra del club.',owned:true,price:0};
-    const markup = items.length ? `<div class="chota-shop-section-heading"><h4>Elige el ambiente</h4><p>Compra un estilo y cámbialo cuando quieras.</p></div><div class="chota-style-grid">${[original,...themes].map(card).join('')}</div>${props.length?'<div class="chota-shop-section-heading"><h4>Objetos y decoración</h4></div>'+props.map(card).join(''):''}` : `<div class="chota-shop-empty"><strong>${failure?'La tienda no está disponible':'Un sitio para sus cosas'}</strong><p>${failure?'Vuelve a intentarlo para cargar sus objetos.':'Los objetos aparecerán aquí al conectar con el club.'}</p><button type="button" data-chota-retry ${loading?'disabled':''}>${loading?'Cargando…':'Actualizar'}</button></div>`;
-    if (container.dataset.markup !== markup) { container.innerHTML = markup; container.dataset.markup = markup; }
+    if (!items.length) {
+      const markup=`<div class="chota-shop-empty"><strong>${failure?'La tienda no está disponible':'Un sitio para sus cosas'}</strong><p>${failure?'Vuelve a intentarlo para cargar sus objetos.':'Los objetos aparecerán aquí al conectar con el club.'}</p><button type="button" data-chota-retry ${loading?'disabled':''}>${loading?'Cargando…':'Actualizar'}</button></div>`;
+      if (container.dataset.markup!==markup) { container.innerHTML=markup;container.dataset.markup=markup; }
+      delete container.dataset.catalogue;
+      return;
+    }
+    const cards=[original,...themes,...props];
+    // Keep decoded previews and focus in place while an RPC changes button/ownership state.
+    const catalogue=JSON.stringify(cards.map(({id,art_key,name,description})=>[id,art_key,name,description]));
+    if (container.dataset.catalogue!==catalogue) {
+      container.innerHTML=`<div class="chota-shop-section-heading"><h4>Elige el ambiente</h4><p>Compra un estilo y cámbialo cuando quieras.</p></div><div class="chota-style-grid">${[original,...themes].map(card).join('')}</div>${props.length?'<div class="chota-shop-section-heading"><h4>Objetos y decoración</h4></div>'+props.map(card).join(''):''}`;
+      container.dataset.catalogue=catalogue;
+      delete container.dataset.markup;
+    }
+    const byId=new Map(cards.map(item=>[item.id,item]));
+    for (const article of container.querySelectorAll('[data-chota-item]')) {
+      const item=byId.get(article.dataset.chotaItem);
+      const theme=!!roomStyles[item.art_key] || item.art_key==='original';
+      const selected=theme && (item.id==='original' ? !state.room_style : state.room_style===item.id);
+      article.classList.toggle('is-owned',item.owned);
+      article.classList.toggle('is-equipped',selected);
+      const price=article.querySelector('.chota-shop-purchase > span');
+      const summary=item.owned ? (theme ? selected?'En uso':'Desbloqueado' : 'En su habitación') : `<strong>${esc(item.price)}</strong> monedas`;
+      if (price.dataset.summary!==summary) { price.innerHTML=summary;price.dataset.summary=summary; }
+      const button=article.querySelector('.chota-shop-purchase button');
+      const equip=theme && item.owned;
+      button.toggleAttribute('data-chota-equip',equip);
+      button.toggleAttribute('data-chota-buy',!equip);
+      button.setAttribute(equip?'data-chota-equip':'data-chota-buy',item.id);
+      button.disabled=busy || (equip ? selected : item.owned || state.balance<item.price);
+      if (equip) button.setAttribute('aria-pressed',String(selected)); else button.removeAttribute('aria-pressed');
+      const label=equipping===item.id?'Aplicando…':buying===item.id?'Comprando…':item.owned?(theme?selected?'En uso':'Usar':'Comprado'):'Comprar';
+      if (button.textContent!==label) button.textContent=label;
+    }
   }
   async function rpc(name,args) { const result = await options.rpc(name,args); if (result.error) throw result.error; return result.data; }
   function refresh(force=false) {

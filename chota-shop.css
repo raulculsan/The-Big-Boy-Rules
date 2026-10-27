@@ -61,6 +61,8 @@
 #chotaShopStatus { margin:0 0 24px; color:var(--shop-gold,#e5c78a); font-size:14px; line-height:1.5; }
 #chotaShopStatus:empty { display:none; }
 #chotaShopStatus.is-error { color:#f0b49f; }
+/* Success is already reflected on the card; announce it without moving the grid. */
+#chotaShopStatus.is-notice { position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
 #bannerShopDialog .chota-shop-empty { grid-column:1/-1; padding:40px 0; color:var(--shop-muted,#a9adaf); border-top:1px solid var(--shop-line,#303335); }
 #bannerShopDialog .chota-shop-empty strong { display:block; color:#f5f3ee; font-size:18px; font-weight:600; }
 #bannerShopDialog .chota-shop-empty p { max-width:440px; font-size:14px; line-height:1.5; }
@@ -110,6 +112,7 @@ body.authenticated #bannerShopDialog .chota-shop-style .chota-style-preview { po
 body.authenticated #bannerShopDialog .chota-shop-style .chota-style-preview > img { object-position:center 57%; }
 body.authenticated #bannerShopDialog .chota-style-grid .chota-shop-item { display:flex;flex-direction:column;grid-column:auto; }
 body.authenticated #bannerShopDialog .chota-shop-style .chota-shop-purchase { flex-wrap:wrap; }
+body.authenticated #bannerShopDialog .chota-shop-style .chota-shop-purchase button { min-width:112px; }
 body.authenticated #bannerShopDialog .chota-shop-style.is-equipped { border-color:#bbceaa; }
 body.authenticated #bannerShopDialog .chota-shop-style.is-equipped .chota-shop-purchase button { background:#40513c;color:#e3efd9; }
 @media(max-width:640px) {
