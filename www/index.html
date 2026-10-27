@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
   <link rel="stylesheet" href="collection-social.css?v=20261022-trade-art-377" />
   <link rel="stylesheet" href="group-interactions.css?v=20261025-fluid-motion-407" />
-  <link rel="stylesheet" href="visual-system.css?v=20261027-calendar-redesign-420" />
+  <link rel="stylesheet" href="visual-system.css?v=20261027-duplicates-redesign-421" />
   <link rel="stylesheet" href="clubhouse.css?v=20261025-passport-406" />
   <link rel="stylesheet" href="chota-shop.css?v=20261024-store-397" />
   <link rel="stylesheet" href="club-social.css?v=20261026-missions-fullscreen-417" />
@@ -926,7 +926,11 @@
     </div>
   </dialog>
 
-  <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle"><header class="banner-shop-heading"><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2><button type="button" data-duplicates-close aria-label="Cerrar repetidas">✕</button></header><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Descartar todas</button><div id="ownedCardInventory" class="owned-card-inventory"></div></dialog>
+  <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle">
+    <header class="banner-shop-heading duplicates-heading"><div><span class="duplicates-kicker">LOS NUESTROS · COLECCIÓN</span><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2></div><button type="button" data-duplicates-close aria-label="Cerrar repetidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+    <div class="duplicates-toolbar"><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Descartar todas</button></div>
+    <div id="ownedCardInventory" class="owned-card-inventory"></div>
+  </dialog>
 
   <dialog id="bannerShopDialog" class="banner-shop-dialog" aria-labelledby="bannerShopTitle">
     <header class="banner-shop-heading shop-topbar">
