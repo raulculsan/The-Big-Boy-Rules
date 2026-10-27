@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
   <link rel="stylesheet" href="collection-social.css?v=20261022-trade-art-377" />
   <link rel="stylesheet" href="group-interactions.css?v=20261025-fluid-motion-407" />
-  <link rel="stylesheet" href="visual-system.css?v=20261027-shop-redesign-419" />
+  <link rel="stylesheet" href="visual-system.css?v=20261027-calendar-redesign-420" />
   <link rel="stylesheet" href="clubhouse.css?v=20261025-passport-406" />
   <link rel="stylesheet" href="chota-shop.css?v=20261024-store-397" />
   <link rel="stylesheet" href="club-social.css?v=20261026-missions-fullscreen-417" />
@@ -397,7 +397,7 @@
     </section>
 
     <section class="page-section club-calendar-page" id="calendario">
-      <div class="club-calendar-heading"><div><span class="eyebrow">EL CLUB · AGENDA</span><h2>Calendario</h2></div><button class="secondary-button" id="calendarTodayButton" type="button">Hoy</button></div>
+      <div class="club-calendar-heading"><div class="calendar-heading-copy"><span class="eyebrow">AGENDA DEL CLUB</span><h2>Calendario</h2></div><button class="secondary-button" id="calendarTodayButton" type="button">Hoy</button></div>
       <div class="calendar-actions">
         <button class="secondary-button" id="addBirthdayButton" type="button">Añadir mi cumpleaños</button>
         <button class="primary-button admin-only" id="addEventButton" type="button">＋ Crear un plan</button>
@@ -405,18 +405,18 @@
       <div class="calendar-layout">
         <div class="calendar-month-panel panel">
           <div class="calendar-toolbar"><div class="calendar-navigation">
-            <button class="icon-button" id="previousMonthButton" type="button" aria-label="Mes anterior">‹</button>
+            <button class="icon-button" id="previousMonthButton" type="button" aria-label="Mes anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
             <h3 id="calendarMonthTitle"></h3>
-            <button class="icon-button" id="nextMonthButton" type="button" aria-label="Mes siguiente">›</button>
+            <button class="icon-button" id="nextMonthButton" type="button" aria-label="Mes siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
           </div></div>
           <div class="calendar-grid" id="calendarGrid"></div>
           <p class="calendar-legend"><span><i></i>Planes</span><span><i class="birthday"></i>Cumpleaños</span></p>
         </div>
         <aside class="panel calendar-agenda-panel">
-          <div class="calendar-agenda-heading"><span class="eyebrow">TU DÍA</span><span id="calendarDayCount" class="calendar-count"></span></div>
+          <div class="calendar-agenda-heading"><span class="calendar-section-label">Día seleccionado</span><span id="calendarDayCount" class="calendar-count"></span></div>
           <h3 id="calendarSelectedTitle"></h3>
           <div id="calendarSelectedEvents" class="calendar-selected-events"></div>
-          <div class="calendar-month-agenda"><div class="calendar-agenda-heading"><span class="eyebrow">ESTE MES</span><span id="calendarMonthCount" class="calendar-count"></span></div><div id="calendarEventList"></div></div>
+          <div class="calendar-month-agenda"><div class="calendar-agenda-heading"><h4 class="calendar-section-label">Este mes</h4><span id="calendarMonthCount" class="calendar-count"></span></div><div id="calendarEventList"></div></div>
         </aside>
       </div>
     </section>
