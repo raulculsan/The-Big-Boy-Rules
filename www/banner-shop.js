@@ -15,7 +15,7 @@
       if (!Array.isArray(cached?.banners) || !Number.isFinite(cached.savedAt) || Date.now() - cached.savedAt > 86400000) return;
       for (const [id, banner] of cached.banners.slice(0, 200)) {
         if (typeof id !== 'string' || (banner !== null && (typeof banner?.id !== 'string' || typeof banner?.name !== 'string' || typeof banner?.art_key !== 'string'))) continue;
-        memberBanners.set(id, banner && {id:banner.id, name:banner.name, art_key:banner.art_key});
+        memberBanners.set(id, banner && {id:banner.id, name:banner.name, art_key:banner.art_key,presentation:globalThis.ShopCatalogMedia?.presentation(banner)});
       }
       // No fetched-at timestamps: cached artwork is always revalidated.
     } catch { /* A missing/invalid cache only delays artwork until its RPC. */ }
@@ -23,7 +23,7 @@
   function saveMemberBannerPosters() {
     const owner = options?.session();
     if (!owner || memberBannerCacheOwner !== owner) return;
-    const banners = [...memberBanners].slice(0, 200).map(([id, banner]) => [id, banner ? {id:String(banner.id), name:String(banner.name || ''), art_key:String(banner.art_key || '')} : null]);
+    const banners = [...memberBanners].slice(0, 200).map(([id, banner]) => [id, banner ? {id:String(banner.id), name:String(banner.name || ''), art_key:String(banner.art_key || ''),presentation:globalThis.ShopCatalogMedia?.presentation(banner)} : null]);
     const signature = JSON.stringify(banners);
     if (signature === memberBannerCacheSignature) return;
     try { localStorage.setItem(memberBannerCacheKey(owner), JSON.stringify({savedAt:Date.now(), banners})); memberBannerCacheSignature = signature; } catch {}
@@ -59,7 +59,7 @@
       video.addEventListener('emptied', () => video.classList.remove('is-ready'));
       video.addEventListener('canplay', () => updateBannerVideo(video));
       video.addEventListener('error', () => {
-        if (!video.isConnected || !video.getAttribute('src') || video.dataset.remoteTried) return;
+        if (!video.isConnected || !video.getAttribute('src') || !video.dataset.bannerRemote || video.dataset.remoteTried) return;
         video.dataset.remoteTried = 'true'; video.src = video.dataset.bannerRemote;
         updateBannerVideo(video);
       });
@@ -536,6 +536,8 @@
     return `<div class="banner-art banner-alberto-galicia ${extra}" role="img" aria-label="${escape(banner.name || 'Alberto Velasco con sus cabras en Galicia')}"><img class="banner-galicia-fallback" src="icons/banners/${compact ? 'alberto-galicia-member-v1.png' : 'posters/alberto-galicia-v1.webp'}" width="${sceneWidth}" height="724" alt="" decoding="async" aria-hidden="true"><svg class="banner-galicia-scene" viewBox="0 0 ${sceneWidth} 724" preserveAspectRatio="${sceneFit}" aria-hidden="true" focusable="false"><defs><clipPath id="${id}-alberto"><rect width="545" height="724"/></clipPath><clipPath id="${id}-head"><polygon points="${head}"/></clipPath><clipPath id="${id}-torso"><rect y="155" width="545" height="395"/></clipPath><clipPath id="${id}-legs"><rect y="535" width="545" height="189"/></clipPath><mask id="${id}-body" maskUnits="userSpaceOnUse" x="0" y="0" width="545" height="724"><rect width="545" height="724" fill="white"/><polygon points="${head}" fill="black"/></mask><radialGradient id="${id}-cloud-fade"><stop offset="45%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><radialGradient id="${id}-foliage-fade"><stop offset="50%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><radialGradient id="${id}-expression-fade"><stop offset="65%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><mask id="${id}-expression" maskUnits="userSpaceOnUse" x="357" y="62" width="126" height="152"><ellipse cx="420" cy="138" rx="63" ry="76" fill="url(#${id}-expression-fade)"/></mask>${cloudDefs}${foliageDefs}${goatDefs}</defs>${background}${clouds}${foliageArt(true)}${birds}<g class="banner-galicia-alberto" clip-path="url(#${id}-alberto)"><g clip-path="url(#${id}-legs)">${figure}</g><g class="banner-galicia-torso"><g clip-path="url(#${id}-torso)" mask="url(#${id}-body)">${figure}</g></g><g class="banner-galicia-head"><g clip-path="url(#${id}-head)">${figure}${expression}</g></g></g>${goatArt}${foliageArt(false)}<g class="banner-galicia-grass">${grass}</g><g class="banner-galicia-breeze"><path d="M730 473 Q820 441 917 460"/><path d="M1460 269 Q1530 245 1616 256"/></g></svg></div>`;
   }
   function artwork(banner, extra = '') {
+    const remote=globalThis.ShopCatalogMedia?.banner(banner,extra,bannerMotionPreference.matches);
+    if(remote)return remote;
     if (banner?.art_key === 'jose-enrique-ojos-v1') {
       const base = 'icons/banners/jose-enrique-ojos-v1/';
       const remote = 'https://raulculsan.github.io/The-Big-Boy-Rules/icons/banners/jose-enrique-ojos-v1/jose-enrique-ojos-v2.mp4';
@@ -587,10 +589,11 @@
         hero.append(avatar);
       }
       // Keep the decoded, circular avatar intact while the artwork changes.
-      if (hero.dataset.bannerId !== String(banner.id) || !hero.querySelector('.profile-banner')) {
+      const signature=JSON.stringify([banner.id,banner.art_key,banner.presentation]);
+      if (hero.dataset.bannerSignature !== signature || !hero.querySelector('.profile-banner')) {
         hero.querySelector('.profile-banner')?.remove();
         hero.insertAdjacentHTML('afterbegin', artwork(banner, 'profile-banner'));
-        hero.dataset.bannerId = String(banner.id);
+        hero.dataset.bannerId = String(banner.id);hero.dataset.bannerSignature=signature;
       }
     } else if (hero) {
       if (avatar) hero.before(avatar);
@@ -611,6 +614,8 @@
     return memberBanners.get(userId) || null;
   }
   function memberPoster(banner, priority = false) {
+    const remote=globalThis.ShopCatalogMedia?.banner(banner,'member-banner-art',true,priority);
+    if(remote)return remote;
     if (banner?.art_key === 'jose-enrique-ojos-v1') return `<div class="banner-art banner-fufi-flight banner-jose-eyes member-banner-art" style="background-image:url('icons/banners/jose-enrique-ojos-v1/poster.jpg');background-color:#0b1020" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/jose-enrique-ojos-v1/poster.jpg" width="1440" height="480" alt="" loading="${priority ? 'eager' : 'lazy'}" decoding="async"></div>`;
     if (banner?.art_key === 'fufi-supervuelo-v1') return `<div class="banner-art banner-fufi-flight member-banner-art" role="img" aria-label="${escape(banner.name)}"><img src="icons/banners/fufi-supervuelo-v1/poster.jpg" width="1440" height="480" alt="" loading="${priority ? 'eager' : 'lazy'}" decoding="async"></div>`;
     const image = {'alberto-galicia-anime-v1':'posters/alberto-galicia-v1.webp', 'miguel-basket-bano-v1':'posters/miguel-basket-v1.webp', 'miguel-moto-anime-v1':'posters/miguel-moto-v1.webp', 'madrid-medianoche-v1':'madrid-medianoche-v1.jpg', 'costa-atlantica-v1':'costa-atlantica-v1.jpg'}[banner?.art_key];
@@ -622,7 +627,7 @@
   }
   function paintMember(node) {
     const banner = memberBanner(node.dataset.memberBannerUser);
-    const key = String(banner?.id || '');
+    const key = JSON.stringify([banner?.id || '',banner?.art_key,banner?.presentation]);
     const surface = node.querySelector('.club-member-banner');
     if (!surface) return;
     // Every visible carousel tile keeps its live scene. A fixed first-two
@@ -723,7 +728,7 @@
       const owned = (state.banners || []).filter(banner => banner.owned);
       const selected = owned.find(banner => banner.id === state.equipped_banner_id);
       el('profileBannerSelection').textContent = selected?.name || 'Sin banner';
-      const signature = JSON.stringify(owned.map(({id, name, art_key}) => [id, name, art_key]));
+      const signature = JSON.stringify(owned.map(({id, name, art_key,presentation}) => [id, name, art_key,presentation]));
       if (list.dataset.signature !== signature) {
         list.dataset.signature = signature;
         list.innerHTML = `<button type="button" class="profile-banner-option" data-profile-banner="" data-banner-id="" aria-pressed="${!state.equipped_banner_id}"><div class="profile-banner-empty" aria-hidden="true">BB</div><span>Sin banner</span></button>` + owned.map(banner => `<button type="button" class="profile-banner-option" data-profile-banner="${escape(banner.id)}" data-banner-id="${escape(banner.id)}" aria-pressed="${banner.id === state.equipped_banner_id}">${artwork(banner)}<span>${escape(banner.name)}</span></button>`).join('');
@@ -792,10 +797,10 @@
     if (container && shopVisible) {
       // Selection, ownership and wallet changes update controls in place so
       // decoded images and animated scenes retain their playback position.
-      const signature = JSON.stringify(state ? dailyBanners().map(({id,name,description,art_key}) => [id,name,description,art_key]) : null);
+      const signature = JSON.stringify(state ? dailyBanners().map(({id,name,description,art_key,presentation}) => [id,name,description,art_key,presentation]) : null);
       if (container.dataset.signature !== signature) {
         container.dataset.signature = signature;
-        container.innerHTML = state ? (dailyBanners().map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1', 'fufi-supervuelo-v1', 'jose-enrique-ojos-v1'].includes(banner.art_key) ? 'Animado' : 'Perfil'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? 'Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Cargando la tienda</strong><p>Los diseños del club aparecerán aquí.</p></div>';
+        container.innerHTML = state ? (dailyBanners().map((banner, index) => `<article class="banner-shop-item shop-banner-card ${index === 0 ? 'is-featured' : ''} ${banner.equipped ? 'is-equipped' : ''}"><div class="shop-artwork">${artwork(banner)}</div><div class="shop-card-content"><div class="shop-card-labels"><span class="shop-item-kind">${['alberto-galicia-anime-v1', 'miguel-basket-bano-v1', 'miguel-moto-anime-v1', 'fufi-supervuelo-v1', 'jose-enrique-ojos-v1'].includes(banner.art_key) || ['video'].includes(globalThis.ShopCatalogMedia?.presentation(banner)?.type) || globalThis.ShopCatalogMedia?.presentation(banner)?.animated ? 'Animado' : 'Perfil'}</span>${banner.owned ? `<span class="shop-ownership ${banner.equipped ? 'is-active' : ''}">${banner.equipped ? 'Equipado' : 'En tu colección'}</span>` : ''}</div><h3>${escape(banner.name)}</h3><p>${escape(banner.description || 'Diseño para la cabecera de tu perfil.')}</p><div class="shop-card-purchase"><span class="shop-price">${banner.owned ? '<small>Ya es tuyo</small>' : `<strong>${escape(banner.price)}</strong><small>${Number(banner.price) === 1 ? 'moneda' : 'monedas'}</small>`}</span><button class="packs-sync shop-purchase-button" type="button" data-banner-action="${banner.owned ? 'equip' : 'buy'}" data-banner-id="${escape(banner.id)}" ${busy || loading || banner.equipped || (!banner.owned && Number(state.balance) < Number(banner.price)) || !online() ? 'disabled' : ''}>${banner.equipped ? 'Equipado' : banner.owned ? 'Equipar' : 'Comprar'}</button></div></div></article>`).join('') || '<div class="shop-empty"><strong>Próximamente, nuevos diseños</strong><p>Los banners disponibles aparecerán aquí.</p></div>') : '<div class="shop-empty"><span class="shop-loading-art" aria-hidden="true"></span><strong>Cargando la tienda</strong><p>Los diseños del club aparecerán aquí.</p></div>';
       }
       container.querySelectorAll('[data-banner-action]').forEach(button => {
         const banner = state?.banners?.find(item => item.id === button.dataset.bannerId);
@@ -1022,7 +1027,7 @@
     });
   }
   function initialize(config) {
-    options = config;
+    options = config;globalThis.ShopCatalogMedia?.configure(config.cacheNamespace);
     globalThis.CollectionSocial?.initialize({session:options.session,rpc:options.rpc,refreshInventory:() => refresh(true)});
     const duplicatesDialog = el('duplicatesDialog');
     if (duplicatesDialog?.parentElement !== document.body && duplicatesDialog) document.body.append(duplicatesDialog);

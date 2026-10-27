@@ -120,3 +120,17 @@ body.authenticated #bannerShopDialog .chota-shop-style.is-equipped .chota-shop-p
  body.authenticated #bannerShopDialog .chota-style-grid .chota-shop-item { display:flex; }
  body.authenticated #bannerShopDialog .chota-shop-style .chota-shop-object { aspect-ratio:1.6; }
 }
+.chota-remote-motion img[hidden]{display:none}
+.chota-remote-motion{display:block;width:100%;transform-origin:50% 90%}
+.chota-room-remote .chota-remote-motion{animation-duration:4s;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-play-state:paused}
+.chota-room-remote [data-chota-motion="sway"]{animation-name:chota-decor-sway}
+.chota-room-remote [data-chota-motion="float"]{animation-name:chota-decor-float}
+.chota-room-remote [data-chota-motion="spin"]{animation-name:chota-decor-spin;animation-duration:8s;animation-timing-function:linear;transform-origin:50% 50%}
+.chota-props-moving .chota-room-remote .chota-remote-motion{animation-play-state:running}
+.chota-shop-remote .chota-remote-motion{display:grid;place-items:center;width:100%;height:100%}
+.chota-shop-remote .chota-remote-motion img{max-width:90%;max-height:90%;width:auto;height:auto}
+@keyframes chota-decor-sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes chota-decor-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5%)}}
+@keyframes chota-decor-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.chota-room-remote .chota-remote-motion{animation:none}}
+html[data-reduced-motion="true"] .chota-room-remote .chota-remote-motion{animation:none}
