@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v421";
+const CACHE_NAME = "big-boy-rules-v422";
 const APP_SHELL = [
   "./ui-motion.js?v=20261025-liquid-glass-408",
   "./ui-motion.css?v=20261026-glass-lens-410",
@@ -16,8 +16,8 @@ const APP_SHELL = [
   "./notifications.css?v=20261015-notifications-polls-307",
   "./club.css?v=20261021-performance-363",
   "./clubhouse.css?v=20261025-passport-406",
-  "./chota-shop.js?v=20261022-chota-contact-381",
-  "./chota-shop.css?v=20261024-store-397",
+  "./chota-shop.js?v=20261027-room-decor-422",
+  "./chota-shop.css?v=20261027-room-decor-422",
   "./club-social.js?v=20261026-missions-fullscreen-417",
   "./club-social.css?v=20261026-missions-fullscreen-417",
   "./club-live.js?v=20261025-fluid-motion-407",
@@ -30,6 +30,10 @@ const APP_SHELL = [
   "./icons/clubhouse/decor-halloween-v1.svg",
   "./icons/clubhouse/decor-christmas-v1.svg",
   "./icons/clubhouse/decor-valentine-v1.svg",
+  "./icons/clubhouse/props/warm-lights-v1.svg",
+  "./icons/clubhouse/props/club-neon-v1.svg",
+  "./icons/clubhouse/props/club-cushion-v1.svg",
+  "./icons/clubhouse/props/vintage-radio-v1.svg",
   "./icons/mascot/chota-v2/chota-poses.webp",
   "./icons/mascot/chota-v2/chota-talk.webp",
   "./news.css?v=20261014-home-scroll-291",

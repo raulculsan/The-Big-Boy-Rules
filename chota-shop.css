@@ -2,6 +2,13 @@
 .chota-room-props { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }
 .chota-room-prop { position:absolute; line-height:0; transform-origin:50% 90%; }
 .chota-room-prop img { display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none; }
+/* Positions use the illustrated room's 1024px coordinates, including its furniture. */
+.chota-room-warm-lights { left:13%; top:.7%; width:67%; }
+.chota-room-club-neon { left:29%; top:45.5%; width:20%; }
+.chota-room-club-cushion { left:9.6%; top:53%; width:8.5%; }
+.chota-room-vintage-radio { left:64.5%; top:46%; width:6%; }
+:is(.clubhouse-room,.chota-viewer-room-scene).is-sleeping .chota-room-prop--decoration { filter:brightness(.32) saturate(.35); }
+.chota-room-prop--decoration img { image-rendering:pixelated; }
 .chota-room-football { left:20%; top:79%; width:7%; }
 .chota-room-skateboard { left:82.1%; top:61%; width:10.5%; transform:rotate(14deg); transform-origin:25% 94%; }
 .chota-room-skateboard::before { content:""; position:absolute; z-index:-1; left:9%; bottom:0; width:57%; height:7%; border-radius:50%; background:#1b0d0be6; filter:blur(1.2px); transform:rotate(-14deg) scaleX(1.25); }
@@ -32,6 +39,12 @@
 #bannerShopDialog .chota-shop-object { position:relative; display:grid; place-items:center; height:230px; background:#1c1f20; border-radius:8px; overflow:hidden; }
 #bannerShopDialog .chota-shop-object::after { display:none; }
 #bannerShopDialog .chota-shop-object img { position:relative; display:block; width:140px; max-width:82%; max-height:160px; object-fit:contain; }
+#bannerShopDialog .chota-shop-kind { display:block; margin:0 0 9px; color:#b3bcae; font-size:11px; line-height:1.4; }
+#bannerShopDialog :is(.chota-shop-warm-lights,.chota-shop-club-neon,.chota-shop-club-cushion,.chota-shop-vintage-radio) img { image-rendering:pixelated; }
+#bannerShopDialog .chota-shop-warm-lights img { width:92%; max-width:92%; }
+#bannerShopDialog .chota-shop-club-neon img { width:230px; max-width:86%; }
+#bannerShopDialog .chota-shop-club-cushion img { width:130px; }
+#bannerShopDialog .chota-shop-vintage-radio img { width:170px; }
 #bannerShopDialog .chota-shop-skateboard img { width:260px; max-width:88%; }
 #bannerShopDialog .chota-shop-robot-vacuum img { width:190px; }
 #bannerShopDialog .chota-shop-copy { display:flex; flex-direction:column; padding:20px 0 0; }
@@ -59,6 +72,10 @@
   #bannerShopDialog .chota-shop-object img { width:90px; max-width:84%; }
   #bannerShopDialog .chota-shop-skateboard img { width:142px; max-width:96%; }
   #bannerShopDialog .chota-shop-robot-vacuum img { width:112px; }
+  #bannerShopDialog .chota-shop-kind { margin-bottom:7px; }
+  #bannerShopDialog .chota-shop-club-neon img { width:115px; max-width:88%; }
+  #bannerShopDialog .chota-shop-club-cushion img { width:90px; }
+  #bannerShopDialog .chota-shop-vintage-radio img { width:112px; }
   #bannerShopDialog .chota-shop-copy { padding:10px 0; }
   #bannerShopDialog .chota-shop-copy h4 { font-size:20px; }
   #bannerShopDialog .chota-shop-copy p { min-height:0; font-size:13px; line-height:1.5; }

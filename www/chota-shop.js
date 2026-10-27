@@ -9,7 +9,11 @@
   const propArt = Object.freeze({
     football: {src:'icons/clubhouse/props/football-v2.png', width:1313, height:1198},
     skateboard: {src:'icons/clubhouse/props/skateboard-v2.png', width:1536, height:1024},
-    'robot-vacuum': {src:'icons/clubhouse/props/robot-vacuum-v2.png', width:1536, height:1024}
+    'robot-vacuum': {src:'icons/clubhouse/props/robot-vacuum-v2.png', width:1536, height:1024},
+    'warm-lights': {src:'icons/clubhouse/props/warm-lights-v1.svg',width:700,height:112,decoration:true},
+    'club-neon': {src:'icons/clubhouse/props/club-neon-v1.svg',width:220,height:80,decoration:true},
+    'club-cushion': {src:'icons/clubhouse/props/club-cushion-v1.svg',width:120,height:110,decoration:true},
+    'vintage-radio': {src:'icons/clubhouse/props/vintage-radio-v1.svg',width:160,height:100,decoration:true}
   });
   const art = (kind, inRoom = false) => {
     const asset = inRoom && kind === 'skateboard' ? {src:'icons/clubhouse/props/skateboard-leaning-v3.png',width:1024,height:1536} : propArt[kind];
@@ -18,7 +22,7 @@
     const brushes = inRoom && kind === 'robot-vacuum' ? `<span class="chota-vacuum-brush" aria-hidden="true">${brush}</span><span class="chota-vacuum-brush chota-vacuum-brush--right" aria-hidden="true">${brush}</span>` : '';
     return `${brushes}<img${inRoom && kind === 'robot-vacuum' ? ' class="chota-vacuum-body"' : ''} src="${asset.src}" width="${asset.width}" height="${asset.height}" alt="" aria-hidden="true" decoding="async" loading="${inRoom ? 'eager' : 'lazy'}" draggable="false">`;
   };
-  const known = new Set(['football','skateboard','robot-vacuum']);
+  const known = new Set(Object.keys(propArt));
   function validState(data) {
     if (!data || !Array.isArray(data.items)) throw new Error('No se pudo leer la tienda del Chota.');
     return {balance:Number(data.balance) || 0, items:data.items.filter(item => item && typeof item.id === 'string' && known.has(item.art_key)).map(item => ({id:item.id,name:String(item.name || ''),description:String(item.description || ''),price:Math.max(0,Number(item.price)||0),art_key:item.art_key,owned:item.owned===true,active:item.active!==false}))};
@@ -54,7 +58,8 @@
     const signature = owned.map(item => item.id).sort().join('|');
     if (layer.dataset.signature === signature) return;
     layer.dataset.signature = signature;
-    layer.innerHTML = owned.map(item => `<div class="chota-room-prop chota-room-${esc(item.art_key)}" data-chota-room-item="${esc(item.id)}">${art(item.art_key, true)}</div>`).join('');
+    // Seasonal art belongs to the room's own layer. Purchased decorations never replace it.
+    layer.innerHTML = owned.map(item => `<div class="chota-room-prop chota-room-${esc(item.art_key)}${propArt[item.art_key]?.decoration ? ' chota-room-prop--decoration' : ''}" data-chota-room-item="${esc(item.id)}">${art(item.art_key, true)}</div>`).join('');
   }
   function paintRooms() { for (const room of rooms) if (room.isConnected) paintRoom(room); paintMotion(); }
   function mountRoom(room) {
@@ -80,7 +85,7 @@
     const count = document.querySelector('[data-shop-chota-count]');
     if (count) count.textContent = state ? String(state.items.filter(item => item.owned).length) : '—';
     const items = (state?.items || []).filter(item => item.active || item.owned);
-    const markup = items.length ? items.map(item => `<article class="chota-shop-item${item.owned?' is-owned':''}"><div class="chota-shop-object chota-shop-${esc(item.art_key)}" aria-hidden="true">${art(item.art_key)}</div><div class="chota-shop-copy"><h4>${esc(item.name)}</h4><p>${esc(item.description)}</p><div class="chota-shop-purchase"><span>${item.owned ? 'En su habitación' : `<strong>${esc(item.price)}</strong> monedas`}</span><button type="button" data-chota-buy="${esc(item.id)}" ${item.owned || buying || loading || !owner || navigator.onLine===false || state.balance<item.price ? 'disabled':''}>${item.owned?'Comprado':buying===item.id?'Comprando…':'Comprar'}</button></div></div></article>`).join('') : `<div class="chota-shop-empty"><strong>${failure?'La tienda no está disponible':'Un sitio para sus cosas'}</strong><p>${failure?'Vuelve a intentarlo para cargar sus objetos.':'Los objetos aparecerán aquí al conectar con el club.'}</p><button type="button" data-chota-retry ${loading?'disabled':''}>${loading?'Cargando…':'Actualizar'}</button></div>`;
+    const markup = items.length ? items.map(item => `<article class="chota-shop-item${item.owned?' is-owned':''}"><div class="chota-shop-object chota-shop-${esc(item.art_key)}" aria-hidden="true">${art(item.art_key)}</div><div class="chota-shop-copy"><span class="chota-shop-kind">${propArt[item.art_key]?.decoration ? 'Decoración' : 'Objeto del Chota'}</span><h4>${esc(item.name)}</h4><p>${esc(item.description)}</p><div class="chota-shop-purchase"><span>${item.owned ? 'En su habitación' : `<strong>${esc(item.price)}</strong> monedas`}</span><button type="button" data-chota-buy="${esc(item.id)}" ${item.owned || buying || loading || !owner || navigator.onLine===false || state.balance<item.price ? 'disabled':''}>${item.owned?'Comprado':buying===item.id?'Comprando…':'Comprar'}</button></div></div></article>`).join('') : `<div class="chota-shop-empty"><strong>${failure?'La tienda no está disponible':'Un sitio para sus cosas'}</strong><p>${failure?'Vuelve a intentarlo para cargar sus objetos.':'Los objetos aparecerán aquí al conectar con el club.'}</p><button type="button" data-chota-retry ${loading?'disabled':''}>${loading?'Cargando…':'Actualizar'}</button></div>`;
     if (container.dataset.markup !== markup) { container.innerHTML = markup; container.dataset.markup = markup; }
   }
   async function rpc(name,args) { const result = await options.rpc(name,args); if (result.error) throw result.error; return result.data; }
