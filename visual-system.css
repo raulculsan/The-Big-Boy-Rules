@@ -149,7 +149,9 @@ body.authenticated :is(.primary-button,.secondary-button,.text-button,.icon-butt
 body.authenticated :is(.primary-button,.secondary-button,.icon-button,.packs-sync):active:not(:disabled) {
   transform: scale(.97);
 }
-body.authenticated :is(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),textarea,select) {
+/* Type exclusions must not outweigh component styles: compound fields paint
+   their surface on the wrapper, with a transparent input above it. */
+body.authenticated :is(input:where(:not([type="range"]):not([type="checkbox"]):not([type="radio"])),textarea,select) {
   border-color: var(--bb2-line-strong);
   border-radius: var(--bb2-control-radius);
   color: var(--bb2-ink);
@@ -161,7 +163,7 @@ body.authenticated :is(input,textarea,select):focus {
   border-color: var(--bb2-gold);
   box-shadow: 0 0 0 3px var(--bb2-gold-wash);
 }
-body.authenticated :is(.club-search input,.inbox-search input,.message-form input) {
+body.authenticated :is(.search-hub-box input,.inbox-search input,.message-form input,.trade-search input,.achievement-search input,.group-poll-edit-option input,.request-username input) {
   background: transparent;
   border: 0;
   box-shadow: none;
