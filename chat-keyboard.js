@@ -13,6 +13,21 @@ const ChatKeyboard = Object.freeze({
     const capacitor = window.Capacitor;
     const keyboard = (nativeLayout || capacitor?.isNativePlatform?.()) && capacitor?.isPluginAvailable?.('Keyboard')
       ? capacitor.registerPlugin('Keyboard') : null;
+    const hiddenWaiters = new Set();
+    const waitForHidden = () => {
+      if (!keyboard || !state.keyboardVisible) return Promise.resolve();
+      return new Promise(resolve => {
+        let timeout;
+        const finish = () => {
+          window.clearTimeout(timeout);
+          hiddenWaiters.delete(finish);
+          resolve();
+        };
+        hiddenWaiters.add(finish);
+        // A missing native event must not lock navigation indefinitely.
+        timeout = window.setTimeout(finish, 480);
+      });
+    };
     const state = {
       nativeLayout,
       keyboardVisible: false,
@@ -20,6 +35,22 @@ const ChatKeyboard = Object.freeze({
         // Blur is handled by the caller. Request native dismissal without waiting
         // or applying delayed state changes to a subsequently opened conversation.
         if (keyboard) void keyboard.hide().catch(() => {});
+      },
+      async dismissForNavigation(composer) {
+        // The outgoing chat is already offscreen. iOS must now remove its
+        // keyboard without a second, vertical navigation animation. Do not
+        // blur first: that would start UIKit's default animated dismissal.
+        const hidden = waitForHidden();
+        if (keyboard) {
+          const requested = keyboard.hide({animated: false}).catch(() => {});
+          // The bridge's hide promise only means endEditing was called. The
+          // layout guide reaches its resting position at keyboardDidHide.
+          await Promise.race([requested, hidden]);
+        }
+        if (document.activeElement === composer) composer?.blur?.();
+        await hidden;
+        state.keyboardVisible = false;
+        onViewportChange();
       }
     };
     const refresh = () => onViewportChange();
@@ -32,7 +63,10 @@ const ChatKeyboard = Object.freeze({
       window.addEventListener('keyboardWillShow', event => setVisible((event.keyboardHeight ?? event.detail?.keyboardHeight ?? 0) > 0));
       window.addEventListener('keyboardDidShow', refresh);
       // Keep the dock's compact spacing throughout dismissal, until UIKit has finished.
-      window.addEventListener('keyboardDidHide', () => setVisible(false));
+      window.addEventListener('keyboardDidHide', () => {
+        setVisible(false);
+        [...hiddenWaiters].forEach(finish => finish());
+      });
       let previousChat;
       let previousScrollLock;
       let previousDismissLock;

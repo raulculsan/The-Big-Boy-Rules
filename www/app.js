@@ -691,6 +691,7 @@ async function transitionMessageView(update, {back = false} = {}) {
     const reducedMotion = (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)")).matches;
     const fromInbox = document.body.classList.contains("chat-inbox-view") && !document.body.classList.contains("chat-focus");
     if (!isMobileSidebar() || reducedMotion || (!back && !fromInbox)) {
+      if (back) await dismissChatComposerKeyboard({navigation: true});
       update();
       return;
     }
@@ -699,12 +700,18 @@ async function transitionMessageView(update, {back = false} = {}) {
     const panel = document.querySelector("#privados.active.conversation-open .private-conversation, #chat.active.conversation-open .group-conversation");
     scene = prepareChatBackScene(panel, {entering: !back});
     if (!scene) {
-      if (back) update();
+      if (back) {
+        await dismissChatComposerKeyboard({navigation: true});
+        update();
+      }
       return;
     }
     scene.panel.classList.add("chat-back-button-exit");
     await settleChatBackScene(scene, back ? scene.width : 0);
-    if (back) update();
+    if (back) {
+      await dismissChatComposerKeyboard({navigation: true});
+      update();
+    }
   } finally {
     cleanupChatBackScene(scene);
     messageViewTransitioning = false;
@@ -774,7 +781,7 @@ function goTo(sectionId) {
     section.inert = section.id !== sectionId;
   });
   // Realtime keeps data current while hidden; build the inbox only on entry.
-  if (sectionId === "chat") renderPrivateContacts();
+  if (sectionId === "chat") { renderPrivateContacts(); scheduleChatImageWarmup(); }
   globalThis.CardAlbum?.didNavigate(sectionId, currentSection);
   globalThis.AdminGrants?.didNavigate(sectionId);
   adminConsole?.didNavigate(sectionId);
@@ -902,9 +909,14 @@ async function backFromPrivateConversation({animate = true} = {}) {
   else update();
 }
 
-function dismissChatComposerKeyboard() {
-  const composer = document.activeElement;
-  if (!composer?.closest?.(".message-form")) return;
+function dismissChatComposerKeyboard({navigation = false} = {}) {
+  const focused = document.activeElement;
+  const composer = focused?.closest?.(".message-form") ? focused : null;
+  if (navigation && chatKeyboard?.dismissForNavigation && (composer || chatKeyboard.keyboardVisible
+    || document.body.classList.contains("chat-keyboard-open"))) {
+    return chatKeyboard.dismissForNavigation(composer);
+  }
+  if (!composer) return;
   composer.blur();
   chatKeyboard?.dismiss?.();
   syncMobileViewport();
@@ -938,6 +950,7 @@ function showGroupChatInbox() {
   document.querySelectorAll("#privateContacts .private-contact.active").forEach(contact => contact.classList.remove("active"));
   history.replaceState(null, "", "#chat");
   restorePagePosition(chatInboxScroll);
+  scheduleChatImageWarmup();
 }
 
 function showPrivateChatInbox() {
@@ -980,13 +993,22 @@ function syncChatInboxAccessibility() {
 
 function prepareChatBackScene(panel, {entering = false} = {}) {
   if (!panel) return null;
-  const width = Math.max(1, Math.round(panel.getBoundingClientRect().width || window.innerWidth));
+  const bounds = panel.getBoundingClientRect();
+  const width = Math.max(1, Math.round(bounds.width || window.innerWidth));
   const preview = document.querySelector("#chat .chat-inbox");
   const kind = panel.closest("#privados") ? "private" : "group";
   if (!preview || !width) return null;
   document.body.classList.add("chat-back-transition-active");
   panel.classList.add("chat-back-live-panel");
-  const scene = {panel, preview, kind, width, offset: 0, animations: []};
+  const scene = {panel, preview, kind, width, offset: 0, animations: [],
+    panelHeight: panel.style.height, previewHeight: preview.style.height};
+  if (!entering && document.body.classList.contains("chat-keyboard-open")) {
+    // The list has its resting size from the first frame; UIKit merely clips
+    // it behind the keyboard. Removing the keyboard cannot reflow the list or
+    // stretch the departing chat while the route commits.
+    panel.style.height = `${Math.round(bounds.height)}px`;
+    preview.style.height = `${Math.round(Math.max(bounds.height, mobileViewportBaseline - preview.getBoundingClientRect().top))}px`;
+  }
   activeChatMotionScene = scene;
   updateChatBackScene(scene, entering ? width : 0);
   return scene;
@@ -1006,6 +1028,10 @@ function cleanupChatBackScene(scene) {
   scene.panel?.classList.remove("chat-back-live-panel", "chat-back-button-exit");
   scene.panel?.style.removeProperty("--chat-back-offset");
   scene.preview?.style.removeProperty("--chat-back-list-offset");
+  if (scene.panelHeight) scene.panel.style.height = scene.panelHeight;
+  else scene.panel?.style.removeProperty("height");
+  if (scene.previewHeight) scene.preview.style.height = scene.previewHeight;
+  else scene.preview?.style.removeProperty("height");
   if (activeChatMotionScene === scene) {
     activeChatMotionScene = null;
     document.body.classList.remove("chat-back-transition-active");
@@ -1039,7 +1065,8 @@ async function settleChatBackScene(scene, targetOffset) {
   }
 }
 
-function completeChatBackDestination(kind) {
+async function completeChatBackDestination(kind) {
+  await dismissChatComposerKeyboard({navigation: true});
   if (kind === "private") showPrivateChatInbox();
   else showGroupChatInbox();
 }
@@ -1164,7 +1191,7 @@ async function finishChatBackGesture(event) {
   suppressChatGestureClick = true;
   try {
     await settleChatBackScene(gesture.scene, gesture.scene.width);
-    completeChatBackDestination(gesture.scene.kind);
+    await completeChatBackDestination(gesture.scene.kind);
   } finally {
     cleanupChatBackScene(gesture.scene);
     messageViewTransitioning = false;
@@ -2233,6 +2260,7 @@ function selectChatChannel(id) {
   if (!chatChannels.some(channel => String(channel.id) === String(id))) return;
   if (String(activeChatChannelId) !== String(id)) cancelActiveAudioRecording();
   activeChatChannelId = id;
+  warmChatImages(messages.filter(message => String(message.channelId || "") === String(id || "")), {explicit: true});
   renderChatChannels();
   renderMessages();
   globalThis.GroupInteractions?.mountPolls(document.getElementById("groupPolls"), activeChatChannelId);
@@ -2279,6 +2307,109 @@ function renderPresence() {
   }).join(""));
 }
 
+// Warm only the newest attachments while the inbox is open. Keep this small:
+// full camera images can otherwise retain tens of megabytes each on iPhone.
+const chatImageWarmCache = new Map();
+let chatImageWarmOwner = null;
+let chatImageWarmTimer = null;
+function clearChatImageWarmCache() {
+  clearTimeout(chatImageWarmTimer); chatImageWarmTimer = null;
+  for (const entry of chatImageWarmCache.values()) {
+    clearTimeout(entry.timer); entry.image.onload = entry.image.onerror = null;
+    entry.image.removeAttribute("src");
+  }
+  chatImageWarmCache.clear(); chatImageWarmOwner = null;
+}
+function warmChatImages(items, {limit = 4, explicit = false} = {}) {
+  const owner = currentAuthUser?.id;
+  if (!owner || document.hidden) return;
+  const connection = navigator.connection;
+  if (!explicit && (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || ""))) return;
+  if (chatImageWarmOwner !== owner) { clearChatImageWarmCache(); chatImageWarmOwner = owner; }
+  const sources = [...new Set([...items].sort((a, b) => messageTimestamp(b) - messageTimestamp(a))
+    .filter(message => message.attachmentType?.startsWith("image/") && !getSharedMediaReference(message))
+    .map(message => chatImageSource(message.attachmentUrl)).filter(Boolean))].slice(0, Math.min(limit, 4));
+  for (const source of sources) {
+    if (chatImageWarmCache.has(source)) {
+      const entry = chatImageWarmCache.get(source);
+      chatImageWarmCache.delete(source); chatImageWarmCache.set(source, entry);
+      continue;
+    }
+    while (chatImageWarmCache.size >= 4) {
+      const key = chatImageWarmCache.keys().next().value, old = chatImageWarmCache.get(key);
+      clearTimeout(old.timer); old.image.onload = old.image.onerror = null; old.image.removeAttribute("src");
+      chatImageWarmCache.delete(key);
+    }
+    const image = new Image(), entry = {image, timer: null};
+    image.decoding = "async"; image.fetchPriority = explicit ? "auto" : "low";
+    const finish = failed => {
+      clearTimeout(entry.timer); image.onload = image.onerror = null;
+      // Oversized legacy files may stay in the HTTP cache without retaining a
+      // decoded copy in our warm set. New uploads are bounded to 2048 pixels.
+      if (failed || image.naturalWidth * image.naturalHeight > 4200000) {
+        if (chatImageWarmCache.get(source) === entry) chatImageWarmCache.delete(source);
+        image.removeAttribute("src");
+      }
+      let pixels = [...chatImageWarmCache.values()].reduce((sum, item) => sum + item.image.naturalWidth * item.image.naturalHeight, 0);
+      for (const [key, old] of chatImageWarmCache) {
+        if (pixels <= 6300000) break;
+        if (old === entry || !old.image.naturalWidth) continue;
+        pixels -= old.image.naturalWidth * old.image.naturalHeight;
+        clearTimeout(old.timer); old.image.onload = old.image.onerror = null; old.image.removeAttribute("src");
+        chatImageWarmCache.delete(key);
+      }
+    };
+    image.onload = () => finish(false); image.onerror = () => finish(true);
+    chatImageWarmCache.set(source, entry);
+    entry.timer = setTimeout(() => finish(true), 15000); image.src = source;
+    if (image.complete && image.naturalWidth) finish(false);
+  }
+}
+function inboxChatImageWarmCandidates() {
+  const owner = currentAuthUser?.id;
+  const readyImage = message => message.attachmentType?.startsWith("image/")
+    && !getSharedMediaReference(message) && chatImageSource(message.attachmentUrl);
+  const group = messages.filter(message => String(message.channelId || "") === String(activeChatChannelId || "") && readyImage(message))
+    .sort((a, b) => messageTimestamp(b) - messageTimestamp(a));
+  const conversations = new Map();
+  for (const message of privateMessages) {
+    const peer = message.senderId === owner ? message.recipientId : message.recipientId === owner ? message.senderId : null;
+    if (!peer) continue;
+    let conversation = conversations.get(peer);
+    if (!conversation) conversations.set(peer, conversation = {latest: 0, images: []});
+    conversation.latest = Math.max(conversation.latest, messageTimestamp(message));
+    if (readyImage(message)) conversation.images.push(message);
+  }
+  const queues = [...conversations.values()].sort((a, b) => b.latest - a.latest)
+    .map(conversation => conversation.images.sort((a, b) => messageTimestamp(b) - messageTimestamp(a)));
+  const direct = [];
+  // Take one recent photo per conversation before taking a second from any of
+  // them. Reserve private slots so a busy group cannot occupy the whole cache.
+  for (let round = 0; direct.length < 4 && queues.some(queue => queue.length > round); round++) {
+    for (const queue of queues) if (queue[round] && direct.length < 4) direct.push(queue[round]);
+  }
+  const privateSlots = group.length ? 3 : 4;
+  const selected = direct.slice(0, privateSlots);
+  selected.push(...group.slice(0, 4 - selected.length));
+  if (selected.length < 4) selected.push(...direct.slice(privateSlots, privateSlots + 4 - selected.length));
+  return selected;
+}
+function scheduleChatImageWarmup() {
+  clearTimeout(chatImageWarmTimer);
+  chatImageWarmTimer = setTimeout(() => {
+    chatImageWarmTimer = null;
+    if (document.getElementById("privados")?.classList.contains("active")) {
+      const member = getMember(activePrivateMemberId);
+      warmChatImages(privateMessages.filter(message => message.senderId === member?.authId || message.recipientId === member?.authId), {explicit: true});
+    } else if (document.getElementById("chat")?.classList.contains("active")) {
+      const conversationOpen = document.getElementById("chat").classList.contains("conversation-open");
+      warmChatImages(conversationOpen
+        ? messages.filter(message => String(message.channelId || "") === String(activeChatChannelId || ""))
+        : inboxChatImageWarmCandidates());
+    }
+  }, 0);
+}
+
 const chatThumbnailLoads = new WeakMap();
 const chatThumbnailObserver = typeof IntersectionObserver === "function" ? new IntersectionObserver(entries => {
   for (const entry of entries) if (entry.isIntersecting) {
@@ -2309,6 +2440,14 @@ function startChatThumbnail(image) {
   image.src = image.dataset.imageSource;
   if (image.complete && image.naturalWidth) finish(false);
 }
+function queueChatThumbnail(image) {
+  const warm = chatImageWarmCache.get(image.dataset.imageSource)?.image;
+  // A prepared photo can start before the first paint; IntersectionObserver
+  // would otherwise deliberately leave a loading card for one more frame.
+  if (warm?.complete && warm.naturalWidth) startChatThumbnail(image);
+  else if (chatThumbnailObserver) chatThumbnailObserver.observe(image);
+  else startChatThumbnail(image);
+}
 const chatMarkupSnapshots = new WeakMap();
 function setChatMessageMarkup(container, markup) {
   const previous = chatMarkupSnapshots.get(container);
@@ -2333,8 +2472,7 @@ function setChatMessageMarkup(container, markup) {
       {opacity:1, transform:'translateY(0)'}
     ], {duration:180, easing:'cubic-bezier(.22,1,.36,1)'});
     for (const image of images) {
-      if (chatThumbnailObserver) chatThumbnailObserver.observe(image);
-      else startChatThumbnail(image);
+      queueChatThumbnail(image);
     }
     rememberChatMarkup(container, markup);
     return;
@@ -2358,11 +2496,9 @@ function setChatMessageMarkup(container, markup) {
       image.closest(".message-image").replaceWith(button);
       // An image outside the viewport may not have started yet.
       if (!cached.hasAttribute("src") && !button.classList.contains("image-failed")) {
-        if (chatThumbnailObserver) chatThumbnailObserver.observe(cached);
-        else startChatThumbnail(cached);
+        queueChatThumbnail(cached);
       }
-    } else if (chatThumbnailObserver) chatThumbnailObserver.observe(image);
-    else startChatThumbnail(image);
+    } else queueChatThumbnail(image);
   });
   for (const images of retained.values()) for (const image of images) {
     const load = chatThumbnailLoads.get(image);
@@ -2738,6 +2874,7 @@ async function openPrivateConversation(memberId) {
   const member = getMember(memberId);
   if (!member || member.id === currentUser?.id) return;
   if (activePrivateMemberId !== member.id) cancelActiveAudioRecording();
+  warmChatImages(privateMessages.filter(message => message.senderId === member.authId || message.recipientId === member.authId), {explicit: true});
   void resolvePrivateAttachments().then(refreshPrivateMessageSurfaces);
   await transitionMessageView(() => {
     if (owner !== currentAuthUser?.id) return;
@@ -4134,6 +4271,7 @@ async function logoutCurrentUser() {
   privateMessages = [];
   privateAttachmentCache.clear();
   privateAttachmentRequest = null;
+  clearChatImageWarmCache();
   groupEvents = [];
   calendarChatAnnouncements = [];
   channelAutomationMessages = [];
@@ -4427,6 +4565,7 @@ function scheduleChatSurfaces({group = false, privateConversation = false, conta
 }
 
 function refreshGroupMessageSurfaces() {
+  scheduleChatImageWarmup();
   scheduleChatSurfaces({group: true});
 }
 
@@ -4795,10 +4934,14 @@ async function loadPrivateMessages() {
     if (owner !== currentAuthUser?.id) return;
     if (error) throw error;
     privateMessages = [...(data || [])].reverse().map(mapPrivateMessage);
-    await resolvePrivateAttachments({changed: true});
-    if (owner !== currentAuthUser?.id) return;
+    applyCachedPrivateAttachments(owner);
     globalThis.ClubFeedback?.set(anchor, "ready", "");
     refreshPrivateMessageSurfaces();
+    // Text and the inbox must not wait for a Storage round trip. Reconcile the
+    // attachment URLs when signing finishes, using the same account guard.
+    void resolvePrivateAttachments({changed: true}).then(() => {
+      if (owner === currentAuthUser?.id) refreshPrivateMessageSurfaces();
+    });
   } catch {
     if (owner === currentAuthUser?.id) globalThis.ClubFeedback?.set(anchor, "error", privateMessages.length ? "No se pudo actualizar. Mostramos los últimos mensajes." : "No se pudieron cargar los mensajes. Comprueba la conexión.", () => void loadPrivateMessages());
   }
@@ -4809,6 +4952,14 @@ let privateAttachmentRequest = null;
 function privateAttachmentPath(value) {
   const prefix = "storage://private-chat/";
   return typeof value === "string" && value.startsWith(prefix) ? value.slice(prefix.length) : null;
+}
+function applyCachedPrivateAttachments(userId) {
+  for (const message of privateMessages) {
+    const path = privateAttachmentPath(message.attachmentRef || message.attachmentUrl);
+    if (!path) continue;
+    const cached = privateAttachmentCache.get(`${userId}:${path}`);
+    message.attachmentUrl = cached?.expires > Date.now() ? cached.url : message.attachmentRef;
+  }
 }
 async function resolvePrivateAttachments({changed = false} = {}) {
   if (!currentAuthUser || !backendReady) return;
@@ -4831,16 +4982,14 @@ async function resolvePrivateAttachments({changed = false} = {}) {
       }
     }
     if (currentAuthUser?.id !== userId) return;
-    for (const message of privateMessages) {
-      const path = privateAttachmentPath(message.attachmentRef || message.attachmentUrl);
-      if (path) message.attachmentUrl = privateAttachmentCache.get(`${userId}:${path}`)?.url || message.attachmentRef;
-    }
+    applyCachedPrivateAttachments(userId);
     } while (request.pending && currentAuthUser?.id === userId);
   })().catch(() => { /* Offline signing leaves a non-executable storage reference for later retry. */ }).finally(() => { if (privateAttachmentRequest === request) privateAttachmentRequest = null; });
   return request.promise;
 }
 
 function refreshPrivateMessageSurfaces() {
+  scheduleChatImageWarmup();
   scheduleChatSurfaces({privateConversation: true});
 }
 

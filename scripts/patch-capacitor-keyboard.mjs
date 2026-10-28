@@ -41,6 +41,35 @@ if (!patched.includes(chatScroll)) {
   }
   patched = patched.replace(originalScroll, chatScroll);
 }
+// A completed horizontal chat return has already moved the editor offscreen.
+// Its keyboard must disappear at that boundary, without animating the host's
+// keyboardLayoutGuide upward and stretching the newly revealed inbox.
+const originalHide = `- (void)hide:(CAPPluginCall *)call
+{
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [self.webView endEditing:YES];
+  });
+  [call resolve];
+}`;
+const navigationHide = `- (void)hide:(CAPPluginCall *)call
+{
+  BOOL animated = [call getBool:@"animated" defaultValue:TRUE];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    void (^dismiss)(void) = ^{
+      [self.webView endEditing:YES];
+      [self.webView.window layoutIfNeeded];
+    };
+    if (animated) dismiss();
+    else [UIView performWithoutAnimation:dismiss];
+    [call resolve];
+  });
+}`;
+if (!patched.includes(navigationHide)) {
+  if (!patched.includes(originalHide)) {
+    throw new Error('Keyboard hide changed. Review the chat navigation dismissal patch.');
+  }
+  patched = patched.replace(originalHide, navigationHide);
+}
 if (patched !== source) {
   await writeFile(sourcePath, patched);
   console.log('Capacitor Keyboard: applied bridge getter and chat dismissal fixes.');

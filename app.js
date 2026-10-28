@@ -691,6 +691,7 @@ async function transitionMessageView(update, {back = false} = {}) {
     const reducedMotion = (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)")).matches;
     const fromInbox = document.body.classList.contains("chat-inbox-view") && !document.body.classList.contains("chat-focus");
     if (!isMobileSidebar() || reducedMotion || (!back && !fromInbox)) {
+      if (back) await dismissChatComposerKeyboard({navigation: true});
       update();
       return;
     }
@@ -699,12 +700,18 @@ async function transitionMessageView(update, {back = false} = {}) {
     const panel = document.querySelector("#privados.active.conversation-open .private-conversation, #chat.active.conversation-open .group-conversation");
     scene = prepareChatBackScene(panel, {entering: !back});
     if (!scene) {
-      if (back) update();
+      if (back) {
+        await dismissChatComposerKeyboard({navigation: true});
+        update();
+      }
       return;
     }
     scene.panel.classList.add("chat-back-button-exit");
     await settleChatBackScene(scene, back ? scene.width : 0);
-    if (back) update();
+    if (back) {
+      await dismissChatComposerKeyboard({navigation: true});
+      update();
+    }
   } finally {
     cleanupChatBackScene(scene);
     messageViewTransitioning = false;
@@ -902,9 +909,14 @@ async function backFromPrivateConversation({animate = true} = {}) {
   else update();
 }
 
-function dismissChatComposerKeyboard() {
-  const composer = document.activeElement;
-  if (!composer?.closest?.(".message-form")) return;
+function dismissChatComposerKeyboard({navigation = false} = {}) {
+  const focused = document.activeElement;
+  const composer = focused?.closest?.(".message-form") ? focused : null;
+  if (navigation && chatKeyboard?.dismissForNavigation && (composer || chatKeyboard.keyboardVisible
+    || document.body.classList.contains("chat-keyboard-open"))) {
+    return chatKeyboard.dismissForNavigation(composer);
+  }
+  if (!composer) return;
   composer.blur();
   chatKeyboard?.dismiss?.();
   syncMobileViewport();
@@ -981,13 +993,22 @@ function syncChatInboxAccessibility() {
 
 function prepareChatBackScene(panel, {entering = false} = {}) {
   if (!panel) return null;
-  const width = Math.max(1, Math.round(panel.getBoundingClientRect().width || window.innerWidth));
+  const bounds = panel.getBoundingClientRect();
+  const width = Math.max(1, Math.round(bounds.width || window.innerWidth));
   const preview = document.querySelector("#chat .chat-inbox");
   const kind = panel.closest("#privados") ? "private" : "group";
   if (!preview || !width) return null;
   document.body.classList.add("chat-back-transition-active");
   panel.classList.add("chat-back-live-panel");
-  const scene = {panel, preview, kind, width, offset: 0, animations: []};
+  const scene = {panel, preview, kind, width, offset: 0, animations: [],
+    panelHeight: panel.style.height, previewHeight: preview.style.height};
+  if (!entering && document.body.classList.contains("chat-keyboard-open")) {
+    // The list has its resting size from the first frame; UIKit merely clips
+    // it behind the keyboard. Removing the keyboard cannot reflow the list or
+    // stretch the departing chat while the route commits.
+    panel.style.height = `${Math.round(bounds.height)}px`;
+    preview.style.height = `${Math.round(Math.max(bounds.height, mobileViewportBaseline - preview.getBoundingClientRect().top))}px`;
+  }
   activeChatMotionScene = scene;
   updateChatBackScene(scene, entering ? width : 0);
   return scene;
@@ -1007,6 +1028,10 @@ function cleanupChatBackScene(scene) {
   scene.panel?.classList.remove("chat-back-live-panel", "chat-back-button-exit");
   scene.panel?.style.removeProperty("--chat-back-offset");
   scene.preview?.style.removeProperty("--chat-back-list-offset");
+  if (scene.panelHeight) scene.panel.style.height = scene.panelHeight;
+  else scene.panel?.style.removeProperty("height");
+  if (scene.previewHeight) scene.preview.style.height = scene.previewHeight;
+  else scene.preview?.style.removeProperty("height");
   if (activeChatMotionScene === scene) {
     activeChatMotionScene = null;
     document.body.classList.remove("chat-back-transition-active");
@@ -1040,7 +1065,8 @@ async function settleChatBackScene(scene, targetOffset) {
   }
 }
 
-function completeChatBackDestination(kind) {
+async function completeChatBackDestination(kind) {
+  await dismissChatComposerKeyboard({navigation: true});
   if (kind === "private") showPrivateChatInbox();
   else showGroupChatInbox();
 }
@@ -1165,7 +1191,7 @@ async function finishChatBackGesture(event) {
   suppressChatGestureClick = true;
   try {
     await settleChatBackScene(gesture.scene, gesture.scene.width);
-    completeChatBackDestination(gesture.scene.kind);
+    await completeChatBackDestination(gesture.scene.kind);
   } finally {
     cleanupChatBackScene(gesture.scene);
     messageViewTransitioning = false;

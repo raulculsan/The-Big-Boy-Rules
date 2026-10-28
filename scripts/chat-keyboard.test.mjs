@@ -56,6 +56,60 @@ test('native events track dismissal and hide browser accessory only inside chat'
   events.keyboardWillShow({keyboardHeight:0}); assert.equal(state.keyboardVisible,false);
 });
 
+function navigationKeyboard({visible = true} = {}) {
+  const calls = [], events = {}, timers = new Map();
+  let finishHide;
+  const composer = {blur(){calls.push('blur');context.document.activeElement=null;}};
+  const context = vm.createContext({
+    window:{__bigboysNativeKeyboardLayout:true,addEventListener:(name,callback)=>events[name]=callback,
+      setTimeout:(callback,delay)=>{timers.set(1,{callback,delay});return 1;},clearTimeout:id=>timers.delete(id),
+      Capacitor:{isPluginAvailable:()=>true,registerPlugin:()=>({
+        setAccessoryBarVisible:async()=>{},setScroll:async()=>{},
+        hide:options=>{calls.push(['hide',options.animated]);return new Promise(resolve=>{finishHide=resolve;});}
+      })}},
+    document:{activeElement:composer,body:{classList:{contains:()=>true,toggle(){}}},querySelectorAll:()=>[]},
+    MutationObserver:class {observe(){}},ResizeObserver:class {observe(){}}
+  });
+  vm.runInContext(read('chat-keyboard.js'), context);
+  const state=context.ChatKeyboard.install({onViewportChange(){calls.push('viewport');}});
+  if (visible) events.keyboardWillShow({keyboardHeight:340});
+  calls.length=0;
+  return {calls,state,timers,run:()=>state.dismissForNavigation(composer),
+    finishRequest:()=>finishHide(),didHide:()=>events.keyboardDidHide()};
+}
+
+test('committed navigation waits for keyboardDidHide after the native hide request resolves', async () => {
+  const h=navigationKeyboard();
+  let completed=false;
+  const pending=h.run().then(()=>{completed=true;});
+  assert.deepEqual(h.calls,[['hide',false]]);
+  h.finishRequest();
+  await Promise.resolve();await Promise.resolve();await Promise.resolve();
+  assert.equal(completed,false);
+  assert.equal(h.state.keyboardVisible,true);
+  h.didHide();await pending;
+  assert.equal(completed,true);
+  assert.equal(h.state.keyboardVisible,false);
+  assert.equal(h.timers.size,0);
+  assert.match(read('scripts/patch-capacitor-keyboard.mjs'), /UIView performWithoutAnimation:dismiss/);
+});
+
+test('missing native hide event or bridge reply cannot leave navigation locked', async () => {
+  const h=navigationKeyboard(),pending=h.run();
+  const timer=[...h.timers.values()][0];
+  assert.equal(timer.delay,480);
+  timer.callback();await pending;
+  assert.equal(h.state.keyboardVisible,false);
+  assert.equal(h.timers.size,0);
+});
+
+test('already hidden keyboard completes without an event or timeout', async () => {
+  const h=navigationKeyboard({visible:false});
+  await h.run();
+  assert.equal(h.timers.size,0);
+  assert.equal(h.state.keyboardVisible,false);
+});
+
 function sender() {
   let resolve, reject, requests = 0;
   const pending = new Promise((yes,no) => {resolve=yes;reject=no;});

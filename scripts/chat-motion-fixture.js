@@ -3,7 +3,7 @@ if (new URLSearchParams(location.search).has('motion-qa')) {
   const qa = document.createElement('details');
   qa.id = 'chatMotionQA';
   qa.style.cssText = 'position:fixed;top:72px;right:4px;z-index:9000;background:#161a20;color:white;font:10px sans-serif;padding:4px;border:1px solid #555';
-  qa.innerHTML = '<summary>Pruebas de movimiento</summary><button type="button" data-qa-partial>Gesto parcial (prueba)</button><button type="button" data-qa-cancel>Cancelar gesto (prueba)</button><button type="button" data-qa-complete>Completar gesto (prueba)</button><button type="button" data-qa-insets>Simular zona segura iPhone</button><output id="chatMotionReport" hidden></output>';
+  qa.innerHTML = '<summary>Pruebas de movimiento</summary><button type="button" data-qa-partial>Gesto parcial (prueba)</button><button type="button" data-qa-cancel>Cancelar gesto (prueba)</button><button type="button" data-qa-complete>Completar gesto (prueba)</button><button type="button" data-qa-diagonal>Vuelta diagonal (prueba)</button><button type="button" data-qa-flick>Deslizamiento corto (prueba)</button><button type="button" data-qa-insets>Simular zona segura iPhone</button><output id="chatMotionReport" hidden></output>';
   document.body.appendChild(qa);
   const report = qa.querySelector('output');
   const rect = selector => {
@@ -14,7 +14,7 @@ if (new URLSearchParams(location.search).has('motion-qa')) {
   };
   let sampleGeneration = 0;
   document.addEventListener('click', event => {
-    if (!event.target.closest('[data-private-member], [data-private-back], [data-open-group-chat], [data-chat-back], [data-qa-cancel], [data-qa-complete]')) return;
+    if (!event.target.closest('[data-private-member], [data-private-back], [data-open-group-chat], [data-chat-back], [data-qa-cancel], [data-qa-complete], [data-qa-diagonal], [data-qa-flick]')) return;
     const generation = ++sampleGeneration;
     const start = performance.now();
     const frames = [];
@@ -32,9 +32,9 @@ if (new URLSearchParams(location.search).has('motion-qa')) {
     };
     requestAnimationFrame(sample);
   }, true);
-  const pointer = (type, x) => document.querySelector('#privados.active .messages, #chat.active.conversation-open .messages')?.dispatchEvent(new PointerEvent(type, {
+  const pointer = (type, x, y = 220) => document.querySelector('#privados.active .messages, #chat.active.conversation-open .messages')?.dispatchEvent(new PointerEvent(type, {
     bubbles:true,cancelable:true,isPrimary:true,pointerType:'touch',pointerId:99,
-    clientX:x,clientY:220
+    clientX:x,clientY:y
   }));
   qa.querySelector('[data-qa-partial]').onclick = () => {
     pointer('pointerdown', 24);
@@ -44,6 +44,21 @@ if (new URLSearchParams(location.search).has('motion-qa')) {
   qa.querySelector('[data-qa-complete]').onclick = () => {
     pointer('pointermove', 240);
     pointer('pointerup', 240);
+  };
+  qa.querySelector('[data-qa-diagonal]').onclick = async () => {
+    pointer('pointerdown', 24);
+    pointer('pointermove', 46, 224);
+    await new Promise(resolve => setTimeout(resolve, 140));
+    pointer('pointermove', 85, 284);
+    pointer('pointerup', 122, 300);
+  };
+  qa.querySelector('[data-qa-flick]').onclick = async () => {
+    pointer('pointerdown', 24);
+    await new Promise(resolve => setTimeout(resolve, 30));
+    pointer('pointermove', 50, 222);
+    await new Promise(resolve => setTimeout(resolve, 30));
+    pointer('pointermove', 78, 224);
+    pointer('pointerup', 79, 224);
   };
   qa.querySelector('[data-qa-insets]').onclick = () => {
     document.body.classList.add('standalone-app');
