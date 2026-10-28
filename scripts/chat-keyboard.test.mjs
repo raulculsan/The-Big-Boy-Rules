@@ -24,7 +24,8 @@ test('UIKit is the only native resize owner and the official keyboard plugin is 
   assert.match(swift, /content.view.bottomAnchor.constraint\(equalTo: keyboard.topAnchor\)/);
   assert.match(swift, /keyboard.followsUndockedKeyboard = false/);
   assert.match(swift, /keyboard.usesBottomSafeArea = false/);
-  assert.doesNotMatch(swift, /asyncAfter|scheduledTimer|UIView.animate/);
+  const host = swift.slice(swift.indexOf('final class KeyboardHostViewController'), swift.indexOf('final class ClubBridgeViewController'));
+  assert.doesNotMatch(host, /asyncAfter|scheduledTimer|UIView.animate/);
   assert.match(read('ios/App/CapApp-SPM/Package.swift'), /CapacitorKeyboard/);
   assert.match(read('ios/App/App/Base.lproj/Main.storyboard'), /KeyboardHostViewController/);
 });
@@ -108,6 +109,38 @@ test('already hidden keyboard completes without an event or timeout', async () =
   await h.run();
   assert.equal(h.timers.size,0);
   assert.equal(h.state.keyboardVisible,false);
+});
+
+for (const restore of [false,true]) test(`horizontal keyboard surface follows the chat and ${restore?'restores editing on cancellation':'leaves on commit'}`, async () => {
+  const calls=[],events={};
+  let prepare;
+  const bridge={
+    prepare:()=>new Promise(resolve=>{prepare=resolve;}),
+    update:async value=>calls.push(['update',value.offset,value.width]),
+    settle:async value=>calls.push(['settle',value.offset,value.duration]),
+    finish:async value=>{calls.push(['finish',value.restore,value.inputId]);return {restored:value.restore};}
+  };
+  const context=vm.createContext({
+    window:{__bigboysNativeKeyboardLayout:true,addEventListener:(name,callback)=>events[name]=callback,
+      Capacitor:{isPluginAvailable:()=>true,registerPlugin:name=>name==='ClubChatKeyboard'?bridge:{setAccessoryBarVisible:async()=>{},setScroll:async()=>{}}}},
+    document:{body:{classList:{contains:()=>true,toggle(){}}},querySelectorAll:()=>[]},
+    MutationObserver:class {observe(){}},ResizeObserver:class {observe(){}}
+  });
+  vm.runInContext(read('chat-keyboard.js'),context);
+  const state=context.ChatKeyboard.install({onViewportChange(){}});
+  events.keyboardWillShow({keyboardHeight:340});
+  const navigation=state.beginBackNavigation({id:'messageInput'});
+  events.keyboardDidHide();
+  assert.equal(state.keyboardVisible,true,'captured keyboard retains the compact chat geometry');
+  navigation.update(50,390);
+  assert.deepEqual(calls,[],'no movement before the snapshot is ready');
+  prepare({active:true});await navigation.ready;
+  navigation.update(140,390);
+  await navigation.settle(restore?0:390,390,180);
+  await navigation.finish(restore);
+  await navigation.finish(restore);
+  assert.deepEqual(calls,[['update',140,390],['settle',restore?0:390,180],['finish',restore,'messageInput']]);
+  assert.equal(state.keyboardVisible,restore);
 });
 
 function sender() {

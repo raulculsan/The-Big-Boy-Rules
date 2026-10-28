@@ -13,6 +13,9 @@ const ChatKeyboard = Object.freeze({
     const capacitor = window.Capacitor;
     const keyboard = (nativeLayout || capacitor?.isNativePlatform?.()) && capacitor?.isPluginAvailable?.('Keyboard')
       ? capacitor.registerPlugin('Keyboard') : null;
+    const navigationBridge = nativeLayout && capacitor?.isPluginAvailable?.('ClubChatKeyboard')
+      ? capacitor.registerPlugin('ClubChatKeyboard') : null;
+    let backNavigation = null;
     const hiddenWaiters = new Set();
     const waitForHidden = () => {
       if (!keyboard || !state.keyboardVisible) return Promise.resolve();
@@ -31,6 +34,34 @@ const ChatKeyboard = Object.freeze({
     const state = {
       nativeLayout,
       keyboardVisible: false,
+      beginBackNavigation(composer) {
+        if (!navigationBridge?.prepare || !state.keyboardVisible || backNavigation) return null;
+        const navigation = {active: false, finished: false};
+        backNavigation = navigation;
+        navigation.ready = navigationBridge.prepare().then(result => {
+          navigation.active = result?.active === true;
+          if (!navigation.active && backNavigation === navigation) backNavigation = null;
+          return navigation.active;
+        }).catch(() => { if (backNavigation === navigation) backNavigation = null; return false; });
+        navigation.update = (offset, width) => {
+          if (navigation.active && !navigation.finished) void navigationBridge.update({offset, width}).catch(() => {});
+        };
+        navigation.settle = async (offset, width, duration) => {
+          if (await navigation.ready && !navigation.finished) await navigationBridge.settle({offset, width, duration}).catch(() => {});
+        };
+        navigation.finish = async restore => {
+          if (navigation.finished) return;
+          navigation.finished = true;
+          const active = await navigation.ready;
+          if (active) {
+            const result = await navigationBridge.finish({restore, inputId: composer?.id || ''}).catch(() => null);
+            state.keyboardVisible = restore ? result?.restored === true : false;
+          }
+          if (backNavigation === navigation) backNavigation = null;
+          onViewportChange();
+        };
+        return navigation;
+      },
       dismiss() {
         // Blur is handled by the caller. Request native dismissal without waiting
         // or applying delayed state changes to a subsequently opened conversation.
@@ -64,7 +95,9 @@ const ChatKeyboard = Object.freeze({
       window.addEventListener('keyboardDidShow', refresh);
       // Keep the dock's compact spacing throughout dismissal, until UIKit has finished.
       window.addEventListener('keyboardDidHide', () => {
-        setVisible(false);
+        // A horizontal return is displaying the captured keyboard in its
+        // original place. Its real counterpart is hidden under that surface.
+        if (!backNavigation) setVisible(false);
         [...hiddenWaiters].forEach(finish => finish());
       });
       let previousChat;

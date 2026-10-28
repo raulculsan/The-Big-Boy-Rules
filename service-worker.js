@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v428";
+const CACHE_NAME = "big-boy-rules-v429";
 const APP_SHELL = [
   "./ui-motion.js?v=20261025-liquid-glass-408",
   "./ui-motion.css?v=20261026-glass-lens-410",
@@ -56,14 +56,14 @@ const APP_SHELL = [
   "./icons/chat-backgrounds/aurora.svg",
   "./icons/chat-backgrounds/vice-city.svg",
   "./icons/chat-backgrounds/orbita.svg",
-  "./chat-keyboard.js?v=20261028-chat-keyboard-back-428",
+  "./chat-keyboard.js?v=20261028-chat-keyboard-slide-429",
   "./vendor/capacitor.js?v=8.5.0",
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261022-chota-shop-378",
   "./admin-console.css?v=20261021-compact-364",
-  "./app.js?v=20261028-chat-keyboard-back-428",
+  "./app.js?v=20261028-chat-keyboard-slide-429",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261026-album-missions-416",

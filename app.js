@@ -709,6 +709,7 @@ async function transitionMessageView(update, {back = false} = {}) {
     scene.panel.classList.add("chat-back-button-exit");
     await settleChatBackScene(scene, back ? scene.width : 0);
     if (back) {
+      await finishChatBackKeyboard(scene, false);
       await dismissChatComposerKeyboard({navigation: true});
       update();
     }
@@ -1010,20 +1011,37 @@ function prepareChatBackScene(panel, {entering = false} = {}) {
     preview.style.height = `${Math.round(Math.max(bounds.height, mobileViewportBaseline - preview.getBoundingClientRect().top))}px`;
   }
   activeChatMotionScene = scene;
+  scene.keyboardNavigation = !entering ? chatKeyboard?.beginBackNavigation?.(document.activeElement) : null;
+  scene.keyboardReady = !scene.keyboardNavigation;
+  if (scene.keyboardNavigation) {
+    void scene.keyboardNavigation.ready.then(() => {
+      scene.keyboardReady = true;
+      if (activeChatMotionScene === scene) updateChatBackScene(scene, scene.offset);
+    });
+  }
   updateChatBackScene(scene, entering ? width : 0);
   return scene;
 }
 
-function updateChatBackScene(scene, offset) {
+function updateChatBackScene(scene, offset, {syncKeyboard = true} = {}) {
   if (!scene?.panel) return;
   const {offset: clamped, listOffset} = ChatMotion.position(offset, scene.width);
   scene.offset = clamped;
+  if (scene.keyboardReady === false) return;
   scene.panel.style.setProperty("--chat-back-offset", `${clamped}px`);
   scene.preview.style.setProperty("--chat-back-list-offset", `${listOffset}px`);
+  if (syncKeyboard) scene.keyboardNavigation?.update(clamped, scene.width);
+}
+
+async function finishChatBackKeyboard(scene, restore) {
+  if (!scene?.keyboardNavigation || scene.keyboardFinalized) return;
+  scene.keyboardFinalized = true;
+  await scene.keyboardNavigation.finish(restore);
 }
 
 function cleanupChatBackScene(scene) {
   if (!scene) return;
+  if (scene.keyboardNavigation && !scene.keyboardFinalized) void finishChatBackKeyboard(scene, true);
   scene.animations.forEach(animation => animation.cancel());
   scene.panel?.classList.remove("chat-back-live-panel", "chat-back-button-exit");
   scene.panel?.style.removeProperty("--chat-back-offset");
@@ -1040,12 +1058,14 @@ function cleanupChatBackScene(scene) {
 
 async function settleChatBackScene(scene, targetOffset) {
   if (!scene?.panel) return;
+  await scene.keyboardNavigation?.ready;
   const from = ChatMotion.position(scene.offset, scene.width);
   const to = ChatMotion.position(targetOffset, scene.width);
   const reduced = (globalThis.ClubMotion?.media || window.matchMedia("(prefers-reduced-motion: reduce)")).matches;
   const duration = ChatMotion.duration(Math.abs(to.offset - from.offset), scene.width, reduced);
-  updateChatBackScene(scene, to.offset);
-  if (!duration || !scene.panel.animate) return;
+  updateChatBackScene(scene, to.offset, {syncKeyboard: false});
+  const keyboardSettled = scene.keyboardNavigation?.settle(to.offset, scene.width, duration);
+  if (!duration || !scene.panel.animate) { await keyboardSettled; return; }
   const options = {duration, easing: ChatMotion.easing, fill: "both"};
   scene.animations = [
     scene.panel.animate([
@@ -1058,7 +1078,7 @@ async function settleChatBackScene(scene, targetOffset) {
     ], options)
   ];
   try {
-    await Promise.all(scene.animations.map(animation => animation.finished.catch(() => {})));
+    await Promise.all([...scene.animations.map(animation => animation.finished.catch(() => {})), keyboardSettled]);
   } finally {
     scene.animations.forEach(animation => animation.cancel());
     scene.animations = [];
@@ -1083,7 +1103,9 @@ function resetChatBackGesture({settle = false} = {}) {
     messageViewTransitioning = false;
     return;
   }
-  void settleChatBackScene(gesture.scene, 0).finally(() => {
+  const settled = settleChatBackScene(gesture.scene, 0);
+  const restored = gesture.scene.keyboardNavigation ? settled.then(() => finishChatBackKeyboard(gesture.scene, true)) : settled;
+  void restored.finally(() => {
     cleanupChatBackScene(gesture.scene);
     messageViewTransitioning = false;
   });
@@ -1191,6 +1213,7 @@ async function finishChatBackGesture(event) {
   suppressChatGestureClick = true;
   try {
     await settleChatBackScene(gesture.scene, gesture.scene.width);
+    await finishChatBackKeyboard(gesture.scene, false);
     await completeChatBackDestination(gesture.scene.kind);
   } finally {
     cleanupChatBackScene(gesture.scene);
