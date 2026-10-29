@@ -3079,6 +3079,15 @@ function ensureChotaDirectionalSprite() {
   }
   return chotaDirectionalRequest;
 }
+const chotaContextSprite = new Image();
+let chotaContextRequest = null;
+function ensureChotaContextSprite() {
+  if (!chotaContextRequest) {
+    chotaContextSprite.src = "icons/mascot/chota-v2/chota-contextual-v1.webp";
+    chotaContextRequest = chotaContextSprite.decode().then(() => chotaContextSprite.naturalWidth > 0, () => false);
+  }
+  return chotaContextRequest;
+}
 let chotaSpritesRequest = null;
 const chotaSpritesReady = {talk: false, poses: false};
 function ensureChotaSprites() {
@@ -3122,15 +3131,18 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const idleTail = character.querySelector(".chota-idle-tail");
   const idleEars = [...character.querySelectorAll(".chota-idle-ear")];
   const eyelids = character.querySelector(".chota-idle-eyelids");
-  let inView = false, timer = 0, frameTimer = 0, blinkTimer = 0, animations = [], destroyed = false, paused = false, spriteRequest = 0, lastAmbient = 0;
+  let inView = false, timer = 0, frameTimer = 0, blinkTimer = 0, animations = [], destroyed = false, paused = false, spriteRequest = 0;
   let bedtimeActive = false, bedtimeSwitch = null, wakingActive = false, wakingComplete = null, lastAmbientAction = "";
+  const attentionTimes = new Map();
+  let lastRoomMoment = pet.closest(".clubhouse-room, .chota-viewer-room-scene")?.dataset.time || "";
+  let lastPersonalAt = performance.now(), lastTouchAt = -Infinity;
   const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping() && !bedtimeActive && !wakingActive;
   function setFrame(frame) {
-    character.classList.remove("is-directional");
+    character.classList.remove("is-directional", "is-contextual");
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
   }
   function setDirectionalFrame(frame) {
-    character.classList.remove("is-idling", "is-speaking");
+    character.classList.remove("is-idling", "is-speaking", "is-contextual");
     character.classList.add("is-directional");
     character.style.backgroundPosition = `${(frame % 5) * 25}% ${Math.floor(frame / 5) * (100 / 3)}%`;
   }
@@ -3148,6 +3160,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     animations = [];
     pet.style.transform = "";
     pet.style.transformOrigin = "";
+    delete pet.dataset.attention;
     pet.closest(".clubhouse-room, .chota-viewer-room-scene")?.classList.remove("is-switch-pressed");
     pet.classList.remove("is-going-to-sleep", "is-falling-asleep", "is-waking-up", "is-walking");
     pet.classList.remove("is-awake", "is-sleeping", "is-sleep-reacting");
@@ -3159,7 +3172,10 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     if (!target) return;
     const animation = target.animate(frames, options);
     animations.push(animation);
-    animation.onfinish = () => { animations = animations.filter(item => item !== animation); };
+    animation.onfinish = () => {
+      // Filled poses remain cancellable when another action, sleep or visibility wins.
+      if (!["forwards", "both"].includes(options.fill)) animations = animations.filter(item => item !== animation);
+    };
     return animation;
   }
   function scheduleBlink() {
@@ -3172,42 +3188,110 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       scheduleBlink();
     }, 3800 + Math.random() * 4800);
   }
+  function canAttend(key, now, cooldown) {
+    return key !== lastAmbientAction && now - (attentionTimes.get(key) ?? -Infinity) >= cooldown;
+  }
+  function chooseAttention(now) {
+    const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
+    if (!room) return {action:"ears"};
+    const moment = room.dataset.time || "";
+    if (moment && moment !== lastRoomMoment) {
+      lastRoomMoment = moment;
+      return {action:"window", target:room.querySelector(".clubhouse-sky")};
+    }
+    const plan = room.querySelector(".clubhouse-plan:not(.clubhouse-plan-empty)");
+    const days = date instanceof Date && Number.isFinite(date.getTime()) ? tigretonDaysUntil(date) : Infinity;
+    if (plan && event?.id !== "clubhouse-idle" && days >= 0 && days <= 2 && canAttend("plan", now, 95000)) {
+      return {action:"plan", target:plan};
+    }
+    const vacuum = room.querySelector(".chota-room-robot-vacuum");
+    if (vacuum && canAttend("roomba", now, 48000)) {
+      const target = vacuum.getBoundingClientRect(), body = character.getBoundingClientRect();
+      const distance = Math.hypot(target.left + target.width / 2 - body.left - body.width / 2, target.top + target.height / 2 - body.top - body.height * .85);
+      if (target.width > 0 && distance < room.clientWidth * .42) return {action:"roomba", target:vacuum};
+    }
+    if (["dawn", "evening"].includes(moment) && canAttend("window", now, 110000)) return {action:"window", target:room.querySelector(".clubhouse-sky")};
+    if (now - lastPersonalAt > 28000 && now - lastTouchAt > 12000) {
+      const choices = ["scratch", "shirt", "stretch"].filter(action => canAttend(action, now, action === "stretch" ? 150000 : 90000));
+      if (choices.length) return {action:choices[Math.floor(Math.random() * choices.length)]};
+    }
+    const choices = ["look", "ears", "tail", "settle"].filter(action => action !== lastAmbientAction);
+    return {action:choices[Math.floor(Math.random() * choices.length)]};
+  }
+  function gazeAt(target, kind) {
+    const body = character.getBoundingClientRect(), targetBox = target?.getBoundingClientRect();
+    const direction = targetBox ? (targetBox.left + targetBox.width / 2 < body.left + body.width / 2 ? -1 : 1) : (Math.random() < .5 ? -1 : 1);
+    const down = kind === "roomba", duration = down ? 3400 : 3900;
+    const turn = direction * (down ? 2 : 1.8), vertical = down ? .8 : -.8;
+    if (down && target) {
+      let samples = 0, previous = null, from = "translate(0,0) rotate(0deg)";
+      function followVacuum() {
+        if (!active() || !character.classList.contains("is-idling")) return;
+        previous?.cancel();
+        const box = target.getBoundingClientRect(), body = character.getBoundingClientRect();
+        const side = Math.max(-1, Math.min(1, (box.left + box.width / 2 - body.left - body.width / 2) / (body.width * .8)));
+        const to = samples >= 4 ? "translate(0,0) rotate(0deg)" : `translate(${side * .8}%,.8%) rotate(${side * 2}deg)`;
+        previous = animateIdle(idleHead, [{transform:from},{transform:to}], {duration:650,fill:"forwards",easing:"ease-in-out"});
+        from = to;
+        if (samples++ < 4) frameTimer = setTimeout(followVacuum, 650);
+      }
+      followVacuum();
+    } else animateIdle(idleHead, [{transform:"translate(0,0) rotate(0deg)"},{transform:`translate(${direction * .8}%,${vertical}%) rotate(${turn}deg)`,offset:.23},{transform:`translate(${direction * .55}%,${vertical}%) rotate(${turn * .7}deg)`,offset:.72},{transform:"translate(0,0) rotate(0deg)"}], {duration,easing:"ease-in-out"});
+    idleEars.forEach((ear,index) => animateIdle(ear, [{transform:"rotate(0deg)"},{transform:`rotate(${direction * (index ? 2 : 3)}deg)`,offset:.2},{transform:"rotate(0deg)"}], {duration:1800,delay:index*100,easing:"ease-in-out"}));
+    animateIdle(idleTail, [{transform:"rotate(0deg)"},{transform:`rotate(${down ? -3 : 2}deg)`,offset:.5},{transform:"rotate(0deg)"}], {duration:duration+200,easing:"ease-in-out"});
+    if (kind === "window") animateIdle(eyelids, [{opacity:0},{opacity:.5,offset:.35},{opacity:.5,offset:.55},{opacity:0}], {duration:2100,delay:700,easing:"ease-in-out"});
+  }
+  function playPersonal(action) {
+    const request = ++spriteRequest;
+    void ensureChotaContextSprite().then(ready => {
+      if (request !== spriteRequest || !active()) return;
+      if (!ready) { schedule(); return; }
+      stop();
+      pet.classList.add("is-awake");
+      pet.dataset.attention = action;
+      character.classList.add("is-contextual");
+      const row = {plan:0, scratch:1, stretch:2, shirt:3}[action] ?? 0;
+      const frames = action === "stretch" ? [[0,180],[1,220],[2,850],[3,650],[2,350],[1,220],[0,180]] : action === "scratch" ? [[0,150],[1,200],[2,300],[3,180],[2,180],[3,180],[2,280],[1,200],[0,180]] : action === "shirt" ? [[0,180],[2,350],[3,220],[2,320],[3,180],[2,250],[0,220]] : [[0,180],[1,200],[2,950],[3,550],[2,700],[1,180],[0,180]];
+      const duration = frames.reduce((total, [, hold]) => total + hold, 0);
+      animateIdle(character, [{transform:"rotate(0deg) scale(1)"},{transform:`rotate(${action === "scratch" ? .35 : -.2}deg) scale(1,${action === "stretch" ? 1.005 : 1.002})`,offset:.5},{transform:"rotate(0deg) scale(1)"}], {duration,easing:"ease-in-out"});
+      let index = 0;
+      function advancePersonal() {
+        if (!active()) { refresh(); return; }
+        if (index >= frames.length) { idle(); return; }
+        const [column, hold] = frames[index++];
+        character.style.backgroundPosition = `${column * (100 / 3)}% ${row * (100 / 3)}%`;
+        frameTimer = setTimeout(advancePersonal, hold);
+      }
+      advancePersonal();
+    });
+  }
+  function performAttention(choice) {
+    const {action,target} = choice, now = performance.now();
+    attentionTimes.set(action, now); lastAmbientAction = action;
+    pet.dataset.attention = action;
+    if (["plan","scratch","stretch","shirt"].includes(action)) {
+      lastPersonalAt = now; playPersonal(action); return;
+    }
+    if (action === "roomba" || action === "window" || action === "look") gazeAt(target, action);
+    else if (action === "ears") idleEars.forEach((ear,index) => animateIdle(ear, [{transform:"rotate(0deg)"},{transform:`rotate(${index ? 3 : -4}deg)`,offset:.2},{transform:`rotate(${index ? -2 : 2}deg)`,offset:.42},{transform:"rotate(0deg)",offset:.65},{transform:`rotate(${index ? 1 : -2}deg)`,offset:.8},{transform:"rotate(0deg)"}], {duration:1150,delay:index*140,easing:"ease-in-out"}));
+    else if (action === "tail") animateIdle(idleTail, [{transform:"rotate(0deg)"},{transform:"rotate(-5deg)",offset:.22},{transform:"rotate(4deg)",offset:.5},{transform:"rotate(-2deg)",offset:.76},{transform:"rotate(0deg)"}], {duration:2900,easing:"ease-in-out"});
+    else {
+      animateIdle(idleBody, [{transform:"scale(1) rotate(0deg)"},{transform:"scale(1.006,1.004) rotate(.5deg)",offset:.38},{transform:"scale(1) rotate(0deg)"}], {duration:2400,easing:"ease-in-out"});
+      animateIdle(idleHead, [{transform:"rotate(0deg)"},{transform:"rotate(-.8deg)",offset:.38},{transform:"rotate(0deg)"}], {duration:2400,easing:"ease-in-out"});
+    }
+    schedule();
+  }
   function schedule() {
     clearTimeout(timer);
     if (!active() || !character.classList.contains("is-idling")) return;
     timer = setTimeout(() => {
-      if (!active() || !character.classList.contains("is-idling")) return;
-      const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
-      const now = performance.now();
-      // Small independent body parts give the idle pose life without moving its feet.
-      const ambient = room && now - lastAmbient > 32000 && Math.random() < .6;
-      const target = ambient ? room.querySelector(".chota-room-robot-vacuum") || room.querySelector(".clubhouse-sky") : null;
-      let direction = Math.random() < .5 ? -1 : 1;
-      if (target) {
-        const targetBox = target.getBoundingClientRect(), petBox = character.getBoundingClientRect();
-        direction = targetBox.left + targetBox.width / 2 < petBox.left + petBox.width / 2 ? -1 : 1;
-        lastAmbient = now;
-      }
-      const choices = ["look", "ears", "tail", "settle", "drowsy"];
-      const available = choices.filter(action => action !== lastAmbientAction);
-      const action = target ? "look" : available[Math.floor(Math.random() * available.length)];
-      lastAmbientAction = action;
-      if (action === "look") {
-        const turn = direction * (target ? 1.8 : 1.05);
-        animateIdle(idleHead, [{transform:"translate(0,0) rotate(0deg)"},{transform:`translate(${direction * .65}%,-.25%) rotate(${turn}deg)`,offset:.28},{transform:`translate(${direction * .5}%,-.2%) rotate(${turn * .85}deg)`,offset:.72},{transform:"translate(0,0) rotate(0deg)"}], {duration:target ? 3300 : 2200,easing:"ease-in-out"});
-      } else if (action === "ears") {
-        idleEars.forEach((ear, index) => animateIdle(ear, [{transform:"rotate(0deg)"},{transform:`rotate(${index ? 3 : -4}deg)`,offset:.2},{transform:`rotate(${index ? -2 : 2}deg)`,offset:.42},{transform:"rotate(0deg)",offset:.65},{transform:`rotate(${index ? 1 : -2}deg)`,offset:.8},{transform:"rotate(0deg)"}], {duration:1150,delay:index * 140,easing:"ease-in-out"}));
-      } else if (action === "tail") {
-        animateIdle(idleTail, [{transform:"rotate(0deg)"},{transform:"rotate(-5deg)",offset:.22},{transform:"rotate(4deg)",offset:.5},{transform:"rotate(-2deg)",offset:.76},{transform:"rotate(0deg)"}], {duration:2900,easing:"ease-in-out"});
-      } else if (action === "settle") {
-        animateIdle(idleBody, [{transform:"scale(1) rotate(0deg)"},{transform:"scale(1.006,1.004) rotate(.5deg)",offset:.38},{transform:"scale(1) rotate(0deg)"}], {duration:2400,easing:"ease-in-out"});
-        animateIdle(idleHead, [{transform:"rotate(0deg)"},{transform:"rotate(-.8deg)",offset:.38},{transform:"rotate(0deg)"}], {duration:2400,easing:"ease-in-out"});
-      } else {
-        animateIdle(eyelids, [{opacity:0},{opacity:.72,offset:.3},{opacity:.72,offset:.6},{opacity:0}], {duration:1600,easing:"ease-in-out"});
-        animateIdle(idleHead, [{transform:"translateY(0) rotate(0deg)"},{transform:"translateY(.5%) rotate(.7deg)",offset:.45},{transform:"translateY(0) rotate(0deg)"}], {duration:1800,easing:"ease-in-out"});
-      }
-      schedule();
-    }, 6500 + Math.random() * 7500);
+      if (active() && character.classList.contains("is-idling")) performAttention(chooseAttention(performance.now()));
+    }, 7000 + Math.random() * 6500);
+  }
+  function noticeUser() {
+    if (!active() || performance.now() - lastTouchAt < 3000) return;
+    lastTouchAt = performance.now(); attentionTimes.set("user", lastTouchAt);
+    play("greet");
   }
   function idle() {
     stop();
@@ -3455,7 +3539,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   }
   const observer = new IntersectionObserver(entries => {
     inView = entries[0].isIntersecting;
-    if (inView) void ensureChotaDirectionalSprite();
+    if (inView) { void ensureChotaDirectionalSprite(); void ensureChotaContextSprite(); }
     refresh();
     // Entering the screen or receiving a new plan must not trigger a commanded action.
   }, {threshold: .25});
@@ -3467,6 +3551,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     play,
     speak,
     reactSleeping,
+    noticeUser,
     bedtime,
     wakeup,
     isWaking: () => wakingActive,
@@ -3624,6 +3709,7 @@ function showChotaAgendaComment(trigger) {
   trigger.dataset.commentRequest = requestKey;
   trigger.setAttribute("aria-expanded", "true");
   showChotaCommentLoading(bubble);
+  tigretonMotion?.noticeUser();
   const key = tigretonContextKey(next.event, next.date);
   void loadTigretonComment(next.event, next.date, key).then(result => {
     if (isChotaSleeping() || !trigger.isConnected || trigger.dataset.commentRequest !== requestKey || tigretonRenderedKey !== key || trigger.getAttribute("aria-expanded") !== "true") return;
