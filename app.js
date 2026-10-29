@@ -3280,12 +3280,12 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     function advanceBedtime() {
       if (!bedtimeActive || destroyed) return;
       const elapsed = performance.now() - started;
-      if (elapsed >= 5200) { bedtimeActive = false; refresh(); return; }
       if (elapsed >= 1940 && !switched) {
         switched = true;
         bedtimeSwitch?.();
         bedtimeSwitch = null;
       }
+      if (elapsed >= 5200) { bedtimeActive = false; refresh(); return; }
       if (elapsed < 1700 || (elapsed >= 2600 && elapsed < 4200)) {
         setFrame([6,7,8,9,10,11][Math.floor(elapsed / 115) % 6]);
       } else if (elapsed < 2600) {
