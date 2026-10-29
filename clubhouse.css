@@ -5,7 +5,7 @@
 .clubhouse-heading > span { color: var(--club-muted, #a7abb3); font-size: 12px; }
 .clubhouse-content { width: min(100%, 680px); margin-inline: auto; }
 .clubhouse-room { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; isolation: isolate; border-radius: 18px; background: #171b20; contain: layout paint; }
-.clubhouse-art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
+.clubhouse-art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; transition: filter 3s ease-in-out; }
 .clubhouse-sky { position:absolute; left:83.984375%; top:0; width:13.4765625%; height:39.0625%; z-index:0; pointer-events:none; -webkit-mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; }
 .clubhouse-sky > i { position:absolute; inset:0; display:block; background:url("icons/clubhouse/club-room-v1.webp") 97.06546275% 0 / 742.0289855% 256% no-repeat; transition:opacity 30s linear; }
 .clubhouse-sky-dawn { opacity:var(--club-sky-dawn,0); filter:sepia(1) saturate(1.45) hue-rotate(325deg) brightness(1.05); }
@@ -13,15 +13,18 @@
 .clubhouse-sky-evening { opacity:var(--club-sky-evening,0); }
 .clubhouse-sky-night { opacity:var(--club-sky-night,0); filter:sepia(1) saturate(1.7) hue-rotate(175deg) brightness(.34); }
 .clubhouse-sky-stars { position:absolute; inset:0; opacity:var(--club-sky-night,0); background:radial-gradient(circle .6px at 37.2% 23%,#d9e5ff 70%,transparent),radial-gradient(circle .8px at 72.1% 19.5%,#f3eddb 70%,transparent),radial-gradient(circle .5px at 52% 48.6%,#cbdcff 70%,transparent),radial-gradient(circle .7px at 74.3% 55%,#e8efff 70%,transparent),radial-gradient(circle .5px at 14.9% 53.8%,#f1e9d5 70%,transparent); transition:opacity 30s linear; }
-.clubhouse-room::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #0b1021; opacity: 0; transition: opacity .4s; }
+.clubhouse-room::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #0b1021; opacity: 0; transition: opacity 3s ease-in-out; }
 .clubhouse-room[data-time="night"]::after { opacity: .12; }
 /* Midnight to 06:00: suppress the warm light painted into the illustration.
    The separate window sky stays visible, with a little cool ambient light. */
 :is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping :is(.clubhouse-art, .chota-viewer-room-art) { filter: brightness(.29) saturate(.28); }
-:is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping::before { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse 8% 6% at 41% 8%,#050a14d9,transparent 100%),radial-gradient(ellipse 8% 22% at 8% 43%,#050a14a6,transparent 100%),radial-gradient(ellipse 8% 12% at 6% 75%,#050a14c9,transparent 100%),radial-gradient(ellipse 7% 10% at 95% 72%,#050a14c9,transparent 100%),linear-gradient(100deg,#080f2533 0%,transparent 78%); }
-.clubhouse-room.is-sleeping::after { background:linear-gradient(115deg,#071125 0%,#142a48 73%,#355278 100%); opacity:.22; }
-.clubhouse-room.is-sleeping :is(.clubhouse-lamplight, .clubhouse-dust) { display:none; }
+:is(.clubhouse-room, .chota-viewer-room-scene)::before { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; opacity:0; transition:opacity 3s ease-in-out; background:radial-gradient(ellipse 8% 6% at 41% 8%,#050a14d9,transparent 100%),radial-gradient(ellipse 8% 22% at 8% 43%,#050a14a6,transparent 100%),radial-gradient(ellipse 8% 12% at 6% 75%,#050a14c9,transparent 100%),radial-gradient(ellipse 7% 10% at 95% 72%,#050a14c9,transparent 100%),linear-gradient(100deg,#080f2533 0%,transparent 78%); }
+:is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping::before { opacity:1; }
+.clubhouse-room.is-sleeping::after { opacity:.36; }
+.clubhouse-light-effects { position:absolute; inset:0; z-index:1; pointer-events:none; transition:opacity 3s ease-in-out; }
+.clubhouse-room.is-sleeping .clubhouse-light-effects { opacity:0; }
 .clubhouse-room.is-sleeping :is(.clubhouse-plan, .clubhouse-memory, .clubhouse-bunting, .clubhouse-live-icon, #chotaArcadeEntry, .chota-room-props) { filter:brightness(.58) saturate(.45); }
+:is(.clubhouse-room,.chota-viewer-room-scene) :is(.clubhouse-plan,.clubhouse-memory,.clubhouse-bunting,.clubhouse-live-icon,#chotaArcadeEntry,.chota-room-props,.clubhouse-seasonal,.clubhouse-earned-details,.tigreton-character) { transition:filter 3s ease-in-out; }
 :is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping .tigreton-character { filter:brightness(.72) saturate(.7) drop-shadow(2px 4px 0 #0005); }
 
 /* Transparent seasonal objects share the room's original 1024px coordinates.
@@ -45,6 +48,8 @@
 .clubhouse-memory strong { font-size: clamp(8px, 1.45vw, 12px); line-height: 1.25; font-weight: 650; }
 .clubhouse-memory > span:last-child { font-size: clamp(7px, 1.2vw, 10px); line-height: 1.25; }
 .clubhouse-room .clubhouse-pet { position: absolute; z-index: 3; left: 36%; bottom: 15%; width: 28%; display: flex; flex-direction: column; align-items: center; }
+.clubhouse-pet.is-going-to-sleep { z-index: 4; }
+.clubhouse-pet.is-going-to-sleep :is(.tigreton-name,.chota-expand) { opacity:0; pointer-events:none; }
 .clubhouse-room .tigreton-sprite { width: 100%; height: auto; aspect-ratio: 1; margin: 0; border-radius: 0; }
 .clubhouse-room .tigreton-character { filter: drop-shadow(2px 4px 0 #0002); }
 .clubhouse-room .tigreton-name { width: auto; margin: 0; padding: 4px 9px; color: #fff4da; background: #252223d9; border-radius: 2px; font-size: clamp(10px, 1.8vw, 13px); line-height: 1.25; }
@@ -76,7 +81,7 @@
 .chota-viewer-heading button { background: #171b20e8; border-color: #f0d6a138; }
 .chota-viewer-plan { margin: 0; color: #f2e3c5; text-shadow: 0 1px 5px #000; }
 .chota-viewer-room-scene { position: relative; flex: none; align-self: center; width: min(100%, calc(100dvh - 280px), 760px); aspect-ratio: 1; margin-block: auto; overflow: hidden; isolation: isolate; border-radius: 16px; background: #171b20; }
-.chota-viewer-room-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
+.chota-viewer-room-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; transition:filter 3s ease-in-out; }
 .chota-viewer-room-scene .chota-viewer-pet { position: absolute; inset: 0; min-height: 0; }
 .chota-viewer-room-scene .chota-character-row { position: absolute; bottom: 13%; left: 26%; width: 48%; max-width: none; }
 .chota-viewer-room-scene .chota-viewer-touch { display: block; width: 100%; margin: 0; padding: 0; border-radius: 0; }
@@ -120,7 +125,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .clubhouse-lamplight, .clubhouse-dust i { animation: none !important; }
-  .clubhouse-room::after, .clubhouse-plan, .clubhouse-sky > i, .clubhouse-sky-stars { transition: none; }
+  .clubhouse-room::after, :is(.clubhouse-room,.chota-viewer-room-scene)::before, .clubhouse-light-effects, .clubhouse-plan, .clubhouse-sky > i, .clubhouse-sky-stars, .clubhouse-art, .chota-viewer-room-art { transition: none; }
 }
 html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars) { transition:none; }
 

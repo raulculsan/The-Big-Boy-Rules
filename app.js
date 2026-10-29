@@ -3058,6 +3058,7 @@ const tigretonRequests = new Map();
 const chotaRequestControllers = new Set();
 function isChotaSleeping(now = new Date()) { return now.getHours() < 6; }
 let chotaSleeping = isChotaSleeping();
+let chotaRoomLightsOff = chotaSleeping;
 let chotaSleepTimer = 0;
 let chotaCommentSequence = 0;
 let tigretonRenderedKey = "";
@@ -3111,17 +3112,22 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const idleBody = character.querySelector(".chota-idle-body");
   const eyelids = character.querySelector(".chota-idle-eyelids");
   let inView = false, timer = 0, frameTimer = 0, blinkTimer = 0, animations = [], destroyed = false, paused = false, spriteRequest = 0, lastAmbient = 0;
+  let bedtimeActive = false, bedtimeSwitch = null;
   const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping();
   function setFrame(frame) {
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
   }
   function stop() {
+    bedtimeActive = false;
+    bedtimeSwitch = null;
     spriteRequest++;
     clearTimeout(timer);
     clearTimeout(frameTimer);
     clearTimeout(blinkTimer);
     animations.forEach(animation => animation.cancel());
     animations = [];
+    pet.style.transform = "";
+    pet.classList.remove("is-going-to-sleep");
     pet.classList.remove("is-awake", "is-sleeping", "is-sleep-reacting");
     character.classList.remove("is-speaking", "is-idling");
     setFrame(0);
@@ -3243,6 +3249,8 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     advanceSpeech();
   }
   function refresh() {
+    if (bedtimeActive && !destroyed && !paused && inView && !document.hidden) return;
+    if (bedtimeActive && bedtimeSwitch) bedtimeSwitch();
     stop();
     if (!destroyed && isChotaSleeping()) {
       // Hold the fully reclined frame, including with reduced motion enabled.
@@ -3252,8 +3260,46 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     }
     if (active()) idle();
   }
+  function bedtime(switchLights) {
+    if (destroyed || paused || !inView || document.hidden || tigretonReducedMotion.matches || !isChotaSleeping()) return false;
+    stop();
+    bedtimeActive = true;
+    bedtimeSwitch = switchLights;
+    pet.classList.add("is-going-to-sleep");
+    pet.classList.add("is-awake");
+    const travel = pet.animate([
+      {transform:"translate(0, 0)", offset:0},
+      {transform:"translate(-102%, -3%)", offset:.34},
+      {transform:"translate(-102%, -3%)", offset:.5},
+      {transform:"translate(0, 0)", offset:.79},
+      {transform:"translate(0, 0)", offset:1}
+    ], {duration:5200, easing:"ease-in-out", fill:"forwards"});
+    animations.push(travel);
+    const started = performance.now();
+    let switched = false;
+    function advanceBedtime() {
+      if (!bedtimeActive || destroyed) return;
+      const elapsed = performance.now() - started;
+      if (elapsed >= 5200) { bedtimeActive = false; refresh(); return; }
+      if (elapsed >= 1940 && !switched) {
+        switched = true;
+        bedtimeSwitch?.();
+        bedtimeSwitch = null;
+      }
+      if (elapsed < 1700 || (elapsed >= 2600 && elapsed < 4200)) {
+        setFrame([6,7,8,9,10,11][Math.floor(elapsed / 115) % 6]);
+      } else if (elapsed < 2600) {
+        setFrame(elapsed < 1940 ? 2 : 4);
+      } else {
+        setFrame(elapsed < 4500 ? 18 : elapsed < 4750 ? 19 : elapsed < 4950 ? 20 : 21);
+      }
+      frameTimer = setTimeout(advanceBedtime, 95);
+    }
+    advanceBedtime();
+    return true;
+  }
   function reactSleeping() {
-    if (destroyed || paused || !inView || document.hidden || !isChotaSleeping() || tigretonReducedMotion.matches || pet.classList.contains("is-sleep-reacting")) return;
+    if (destroyed || paused || !inView || document.hidden || !isChotaSleeping() || bedtimeActive || tigretonReducedMotion.matches || pet.classList.contains("is-sleep-reacting")) return;
     refresh();
     pet.classList.add("is-sleep-reacting");
     animations.push(character.animate([
@@ -3287,12 +3333,13 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     play,
     speak,
     reactSleeping,
+    bedtime,
     refresh,
     stopSpeaking: refresh,
     pause() { paused = true; refresh(); },
     resume() { paused = false; refresh(); },
     react: () => play(isBirthday && isToday ? "jump" : "greet"),
-    destroy() { destroyed = true; stop(); observer.disconnect(); document.removeEventListener("visibilitychange", refresh); tigretonReducedMotion.removeEventListener("change", refresh); },
+    destroy() { if (bedtimeActive) bedtimeSwitch?.(); destroyed = true; stop(); observer.disconnect(); document.removeEventListener("visibilitychange", refresh); tigretonReducedMotion.removeEventListener("change", refresh); },
   };
 }
 function tigretonSpriteMarkup(interactive = false) {
@@ -3620,7 +3667,7 @@ function syncClubhouseDaylight(now = new Date()) {
   document.querySelectorAll(".clubhouse-room, .chota-viewer-room-scene").forEach(room => {
     room.dataset.time = moment;
     syncClubhouseSeason(room, season);
-    room.classList.toggle("is-sleeping", isChotaSleeping(now));
+    room.classList.toggle("is-sleeping", chotaRoomLightsOff);
     for (const [name, weight] of Object.entries(weights)) room.style.setProperty(`--club-sky-${name}`, weight.toFixed(4));
   });
   const time = document.getElementById("clubhouseTime");
@@ -3655,7 +3702,7 @@ function renderClubhouse(upcoming) {
     <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="async" fetchpriority="low">
     ${clubhouseSkyMarkup()}
     ${clubhouseSeasonalMarkup()}
-    <div class="clubhouse-lamplight" aria-hidden="true"></div><div class="clubhouse-dust" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="clubhouse-light-effects" aria-hidden="true"><div class="clubhouse-lamplight"></div><div class="clubhouse-dust"><i></i><i></i><i></i></div></div>
     ${birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ""}
     ${plan}
     ${next ? `<button type="button" class="clubhouse-live-icon" data-club-live-event="${escapeHtml(next.event.id)}" aria-label="Abrir plan en directo: ${escapeHtml(next.event.title)}" title="Plan en directo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.1 7.1a7 7 0 0 0 0 9.8m9.8-9.8a7 7 0 0 1 0 9.8M4 4a11.3 11.3 0 0 0 0 16M20 4a11.3 11.3 0 0 1 0 16"/></svg></button>` : ""}
@@ -3685,7 +3732,6 @@ function syncChotaSleepControls() {
     }
     if (button.matches("[data-chota-expand]")) button.hidden = sleeping;
   });
-  document.querySelectorAll(".clubhouse-room, .chota-viewer-room-scene").forEach(room => room.classList.toggle("is-sleeping", sleeping));
   if (sleeping) {
     document.querySelectorAll(".clubhouse-bubble, .chota-viewer-status").forEach(bubble => { bubble.hidden = true; bubble.setAttribute("aria-busy", "false"); });
   }
@@ -3702,7 +3748,15 @@ function refreshChotaSleepSchedule() {
       chotaRequestControllers.forEach(controller => controller.abort());
       const viewer = document.getElementById("chotaViewer");
       if (viewer?.open) viewer.close();
+      const started = now.getHours() === 0 && now.getMinutes() < 1 && tigretonMotion?.bedtime(() => {
+        chotaRoomLightsOff = true;
+        syncClubhouseDaylight();
+      });
+      if (!started) chotaRoomLightsOff = true;
+    } else {
+      chotaRoomLightsOff = false;
     }
+    syncClubhouseDaylight(now);
     syncChotaSleepControls();
     tigretonMotion?.refresh();
     chotaViewerMotion?.refresh();
