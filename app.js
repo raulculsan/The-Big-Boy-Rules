@@ -3112,12 +3112,15 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const idleBody = character.querySelector(".chota-idle-body");
   const eyelids = character.querySelector(".chota-idle-eyelids");
   let inView = false, timer = 0, frameTimer = 0, blinkTimer = 0, animations = [], destroyed = false, paused = false, spriteRequest = 0, lastAmbient = 0;
-  let bedtimeActive = false, bedtimeSwitch = null;
-  const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping();
+  let bedtimeActive = false, bedtimeSwitch = null, wakingActive = false, wakingComplete = null;
+  const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping() && !bedtimeActive && !wakingActive;
   function setFrame(frame) {
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
   }
   function stop() {
+    const wakeDone = wakingComplete;
+    wakingComplete = null;
+    wakingActive = false;
     bedtimeActive = false;
     bedtimeSwitch = null;
     spriteRequest++;
@@ -3127,10 +3130,11 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     animations.forEach(animation => animation.cancel());
     animations = [];
     pet.style.transform = "";
-    pet.classList.remove("is-going-to-sleep");
+    pet.classList.remove("is-going-to-sleep", "is-falling-asleep", "is-waking-up");
     pet.classList.remove("is-awake", "is-sleeping", "is-sleep-reacting");
     character.classList.remove("is-speaking", "is-idling");
     setFrame(0);
+    wakeDone?.();
   }
   function animateIdle(target, frames, options) {
     if (!target) return;
@@ -3218,6 +3222,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     advance();
   }
   function speak(text, gesture) {
+    if (bedtimeActive || wakingActive) return;
     stop();
     if (!active() || !String(text || "").trim()) return;
     if (!chotaSpritesReady.talk) {
@@ -3249,13 +3254,17 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     advanceSpeech();
   }
   function refresh() {
-    if (bedtimeActive && !destroyed && !paused && inView && !document.hidden) return;
+    const validTransition = (bedtimeActive && isChotaSleeping()) || (wakingActive && !isChotaSleeping());
+    if (validTransition && !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches) return;
     if (bedtimeActive && bedtimeSwitch) bedtimeSwitch();
     stop();
     if (!destroyed && isChotaSleeping()) {
       // Hold the fully reclined frame, including with reduced motion enabled.
       pet.classList.add("is-sleeping");
       setFrame(22);
+      if (!paused && inView && !document.hidden && !tigretonReducedMotion.matches) {
+        animateIdle(character, [{transform:"scale(1)"}, {transform:"scale(1.004,1.009)",offset:.48}, {transform:"scale(1)"}], {duration:4600,iterations:Infinity,easing:"ease-in-out"});
+      }
       return;
     }
     if (active()) idle();
@@ -3269,14 +3278,15 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     pet.classList.add("is-awake");
     const travel = pet.animate([
       {transform:"translate(0, 0)", offset:0},
-      {transform:"translate(-102%, -3%)", offset:.34},
-      {transform:"translate(-102%, -3%)", offset:.5},
-      {transform:"translate(0, 0)", offset:.79},
+      {transform:"translate(-102%, -3%)", offset:.405},
+      {transform:"translate(-102%, -3%)", offset:.619},
+      {transform:"translate(0, 0)", offset:.976},
       {transform:"translate(0, 0)", offset:1}
-    ], {duration:5200, easing:"ease-in-out", fill:"forwards"});
+    ], {duration:4200, easing:"ease-in-out", fill:"forwards"});
     animations.push(travel);
+    animateIdle(sleepMark, [{opacity:0}, {opacity:.2,offset:.35}, {opacity:.85}], {duration:3600,delay:6400,fill:"forwards",easing:"ease-in-out"});
     const started = performance.now();
-    let switched = false;
+    let switched = false, lastPose = -1;
     function advanceBedtime() {
       if (!bedtimeActive || destroyed) return;
       const elapsed = performance.now() - started;
@@ -3285,22 +3295,64 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
         bedtimeSwitch?.();
         bedtimeSwitch = null;
       }
-      if (elapsed >= 5200) { bedtimeActive = false; refresh(); return; }
+      if (elapsed >= 10000) { bedtimeActive = false; refresh(); return; }
       if (elapsed < 1700 || (elapsed >= 2600 && elapsed < 4200)) {
         setFrame([6,7,8,9,10,11][Math.floor(elapsed / 115) % 6]);
       } else if (elapsed < 2600) {
         setFrame(elapsed < 1940 ? 2 : 4);
       } else {
-        setFrame(elapsed < 4500 ? 18 : elapsed < 4750 ? 19 : elapsed < 4950 ? 20 : 21);
+        pet.classList.add("is-falling-asleep");
+        // Give every real pose time to read: crouch, sit, lean on an elbow,
+        // then close the eyes and settle into a slower sleeping breath.
+        const pose = elapsed < 4750 ? 18 : elapsed < 5650 ? 19 : elapsed < 6800 ? 20 : elapsed < 8450 ? 21 : 22;
+        setFrame(pose);
+        if (pose !== lastPose) {
+          lastPose = pose;
+          animateIdle(character, [{transform:"translateY(-.4%) rotate(.3deg)"}, {transform:"translateY(0) rotate(0deg)"}], {duration:700,easing:"ease-out"});
+        }
       }
       frameTimer = setTimeout(advanceBedtime, 95);
     }
     advanceBedtime();
     return true;
   }
+  function wakeup(onComplete) {
+    if (destroyed || paused || !inView || document.hidden || tigretonReducedMotion.matches || isChotaSleeping()) return false;
+    stop();
+    wakingActive = true;
+    wakingComplete = onComplete;
+    pet.classList.add("is-waking-up");
+    // A reluctant wake-up: stir, prop up, doze off once more, sit and slowly stand.
+    const poses = [[22,1000],[23,300],[22,650],[21,1350],[22,650],[21,1700],[20,1500],[19,1000],[18,800],[0,650]];
+    const duration = poses.reduce((total, [, hold]) => total + hold, 0);
+    const started = performance.now();
+    let lastPose = -1;
+    animateIdle(sleepMark, [{opacity:.85}, {opacity:.35,offset:.35}, {opacity:0}], {duration:3300,fill:"forwards",easing:"ease-in-out"});
+    function advanceWakeup() {
+      if (!wakingActive || destroyed) return;
+      const elapsed = performance.now() - started;
+      if (elapsed >= duration) { wakingActive = false; refresh(); return; }
+      let boundary = 0;
+      const [pose, hold] = poses.find(([, hold]) => (boundary += hold) > elapsed);
+      setFrame(pose);
+      if (pose !== lastPose) {
+        lastPose = pose;
+        animateIdle(character, [
+          {transform:"translateY(0) rotate(0deg)"},
+          {transform:`translateY(.25%) rotate(${pose === 21 ? -.8 : .45}deg)`,offset:.5},
+          {transform:"translateY(0) rotate(0deg)"}
+        ], {duration:Math.min(hold,1300),easing:"ease-in-out"});
+      }
+      frameTimer = setTimeout(advanceWakeup, Math.min(100, boundary - elapsed));
+    }
+    advanceWakeup();
+    return true;
+  }
   function reactSleeping() {
     if (destroyed || paused || !inView || document.hidden || !isChotaSleeping() || bedtimeActive || tigretonReducedMotion.matches || pet.classList.contains("is-sleep-reacting")) return;
-    refresh();
+    stop();
+    pet.classList.add("is-sleeping");
+    setFrame(22);
     pet.classList.add("is-sleep-reacting");
     animations.push(character.animate([
       {transform:"translateY(0) rotate(0deg)"},
@@ -3334,6 +3386,8 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     speak,
     reactSleeping,
     bedtime,
+    wakeup,
+    isWaking: () => wakingActive,
     refresh,
     stopSpeaking: refresh,
     pause() { paused = true; refresh(); },
@@ -3722,15 +3776,16 @@ function renderClubhouse(upcoming) {
 }
 function syncChotaSleepControls() {
   const sleeping = isChotaSleeping();
+  const waking = Boolean(tigretonMotion?.isWaking());
   document.querySelectorAll("[data-chota-open], [data-chota-expand], [data-chota-action]").forEach(button => {
     const sleepTouch = button.matches("[data-chota-open]");
-    button.disabled = sleeping && !sleepTouch;
-    button.setAttribute("aria-disabled", String(sleeping && !sleepTouch));
+    button.disabled = (sleeping && !sleepTouch) || waking;
+    button.setAttribute("aria-disabled", String((sleeping && !sleepTouch) || waking));
     if (button.matches("[data-chota-open]")) {
-      button.setAttribute("aria-label", sleeping ? "Tocar suavemente a El Chota dormido; descansa hasta las 06:00" : "Mostrar comentario de El Chota sobre el próximo plan");
+      button.setAttribute("aria-label", waking ? "El Chota se está despertando poco a poco" : sleeping ? "Tocar suavemente a El Chota dormido; descansa hasta las 06:00" : "Mostrar comentario de El Chota sobre el próximo plan");
       if (sleeping) { delete button.dataset.commentRequest; button.setAttribute("aria-expanded", "false"); }
     }
-    if (button.matches("[data-chota-expand]")) button.hidden = sleeping;
+    if (button.matches("[data-chota-expand]")) button.hidden = sleeping || waking;
   });
   if (sleeping) {
     document.querySelectorAll(".clubhouse-bubble, .chota-viewer-status").forEach(bubble => { bubble.hidden = true; bubble.setAttribute("aria-busy", "false"); });
@@ -3755,6 +3810,7 @@ function refreshChotaSleepSchedule() {
       if (!started) chotaRoomLightsOff = true;
     } else {
       chotaRoomLightsOff = false;
+      if (now.getHours() === 6 && now.getMinutes() < 1) tigretonMotion?.wakeup(syncChotaSleepControls);
     }
     syncClubhouseDaylight(now);
     syncChotaSleepControls();

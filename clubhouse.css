@@ -48,8 +48,8 @@
 .clubhouse-memory strong { font-size: clamp(8px, 1.45vw, 12px); line-height: 1.25; font-weight: 650; }
 .clubhouse-memory > span:last-child { font-size: clamp(7px, 1.2vw, 10px); line-height: 1.25; }
 .clubhouse-room .clubhouse-pet { position: absolute; z-index: 3; left: 36%; bottom: 15%; width: 28%; display: flex; flex-direction: column; align-items: center; }
-.clubhouse-pet.is-going-to-sleep { z-index: 4; }
-.clubhouse-pet.is-going-to-sleep :is(.tigreton-name,.chota-expand) { opacity:0; pointer-events:none; }
+.clubhouse-pet:is(.is-going-to-sleep,.is-waking-up) { z-index: 4; }
+.clubhouse-pet:is(.is-going-to-sleep,.is-waking-up) :is(.tigreton-name,.chota-expand) { opacity:0; pointer-events:none; }
 .clubhouse-room .tigreton-sprite { width: 100%; height: auto; aspect-ratio: 1; margin: 0; border-radius: 0; }
 .clubhouse-room .tigreton-character { filter: drop-shadow(2px 4px 0 #0002); }
 .clubhouse-room .tigreton-name { width: auto; margin: 0; padding: 4px 9px; color: #fff4da; background: #252223d9; border-radius: 2px; font-size: clamp(10px, 1.8vw, 13px); line-height: 1.25; }
@@ -57,7 +57,8 @@
 .clubhouse-room .chota-expand svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .clubhouse-room .chota-expand[hidden] { display: none; }
 .clubhouse-pet.is-sleeping .tigreton-sprite { cursor: default; opacity: 1; transform: none; }
-.clubhouse-pet.is-sleeping .tigreton-sleep-mark { opacity: .85; right: 10%; top: 45%; }
+.clubhouse-pet:is(.is-sleeping,.is-falling-asleep,.is-waking-up) .tigreton-sleep-mark { right:10%; top:45%; }
+.clubhouse-pet.is-sleeping .tigreton-sleep-mark { opacity: .85; }
 .clubhouse-room .clubhouse-bubble { position: absolute; z-index: 4; left: 24%; top: 40%; bottom:auto; max-width: 64%; max-height:none; overflow:visible; padding: 9px 12px; border: 1px solid #302a23; border-radius: 13px; box-shadow: none; }
 .clubhouse-bubble .tigreton-comment { margin: 0; font-size: clamp(11px, 2vw, 14px); line-height: 1.4; }
 .clubhouse-room .clubhouse-bubble::before, .chota-viewer-room-scene .tigreton-bubble::before { content:""; position:absolute; top:calc(100% - 1px); left:var(--chota-tail-x,50%); width:18px; height:16px; background:#302a23; clip-path:polygon(0 0,100% 0,50% 100%); }
