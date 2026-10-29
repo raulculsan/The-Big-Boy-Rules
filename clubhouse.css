@@ -146,7 +146,7 @@ html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars) { 
 .chota-idle-ear--right { background-image:url("icons/mascot/chota-v2/chota-idle-ear-right-v1.webp"); transform-origin:74% 30%; }
 .chota-idle-body { clip-path:inset(52% 0 0); transform-origin:50% 93%; }
 .chota-idle-head { clip-path:inset(0 0 46%); transform-origin:57% 52%; }
-.tigreton-character.is-profile { background-image:url("icons/mascot/chota-v2/chota-lateral-v1.webp"); background-size:600% 200%; transform:scaleX(var(--chota-facing,1)); }
+.tigreton-character.is-directional { background-image:url("icons/mascot/chota-v2/chota-directional-v1.webp"); background-size:500% 400%; }
 .chota-idle-eyelids { display:block; position:absolute; inset:0; width:100%; height:100%; opacity:0; overflow:visible; }
 @media(prefers-reduced-motion:reduce) { .chota-idle-eyelids { display:none; } }
 html[data-reduced-motion="true"] .chota-idle-eyelids { display:none; }

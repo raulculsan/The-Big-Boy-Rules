@@ -3070,14 +3070,14 @@ const tigretonReducedMotion = (globalThis.ClubMotion?.media || window.matchMedia
 // Keep the resting pose while a shared request prepares the sheet.
 const chotaTalkSprite = new Image();
 const chotaPoseSprite = new Image();
-const chotaSideSprite = new Image();
-let chotaSideRequest = null;
-function ensureChotaSideSprite() {
-  if (!chotaSideRequest) {
-    chotaSideSprite.src = "icons/mascot/chota-v2/chota-lateral-v1.webp";
-    chotaSideRequest = chotaSideSprite.decode().then(() => chotaSideSprite.naturalWidth > 0, () => false);
+const chotaDirectionalSprite = new Image();
+let chotaDirectionalRequest = null;
+function ensureChotaDirectionalSprite() {
+  if (!chotaDirectionalRequest) {
+    chotaDirectionalSprite.src = "icons/mascot/chota-v2/chota-directional-v1.webp";
+    chotaDirectionalRequest = chotaDirectionalSprite.decode().then(() => chotaDirectionalSprite.naturalWidth > 0, () => false);
   }
-  return chotaSideRequest;
+  return chotaDirectionalRequest;
 }
 let chotaSpritesRequest = null;
 const chotaSpritesReady = {talk: false, poses: false};
@@ -3126,15 +3126,13 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   let bedtimeActive = false, bedtimeSwitch = null, wakingActive = false, wakingComplete = null, lastAmbientAction = "";
   const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping() && !bedtimeActive && !wakingActive;
   function setFrame(frame) {
-    character.classList.remove("is-profile");
-    character.style.removeProperty("--chota-facing");
+    character.classList.remove("is-directional");
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
   }
-  function setSideFrame(frame, facing = "left") {
+  function setDirectionalFrame(frame) {
     character.classList.remove("is-idling", "is-speaking");
-    character.classList.add("is-profile");
-    character.style.setProperty("--chota-facing", facing === "right" ? -1 : 1);
-    character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * 100}%`;
+    character.classList.add("is-directional");
+    character.style.backgroundPosition = `${(frame % 5) * 25}% ${Math.floor(frame / 5) * (100 / 3)}%`;
   }
   function stop() {
     const wakeDone = wakingComplete;
@@ -3225,7 +3223,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   }
   function play(gesture) {
     if (!active()) return;
-    if (gesture === "walk" || gesture === "shuffle") { playSideWalk(); return; }
+    if (gesture === "walk" || gesture === "shuffle") { playDirectionalWalk(); return; }
     if (!chotaSpritesReady.poses) {
       const request = ++spriteRequest;
       void ensureChotaSprites().then(() => { if (request === spriteRequest && active() && chotaSpritesReady.poses) play(gesture); });
@@ -3255,23 +3253,24 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     }
     advance();
   }
-  function playSideWalk() {
+  function playDirectionalWalk() {
     const request = ++spriteRequest;
-    void ensureChotaSideSprite().then(ready => {
+    void ensureChotaDirectionalSprite().then(ready => {
       if (!ready || request !== spriteRequest || !active()) return;
       stop();
       pet.classList.add("is-awake", "is-walking");
-      pet.style.transformOrigin = "50% 100%";
-      animations.push(pet.animate([{transform:"translateX(0)",offset:0},{transform:"translateX(-65%)",offset:.425},{transform:"translateX(-65%)",offset:.575},{transform:"translateX(0)",offset:1}], {duration:4000,easing:"linear",fill:"forwards"}));
+      const width = pet.querySelector(".tigreton-sprite").getBoundingClientRect().width;
+      const destination = `translate(${-width * .22}px, ${-width * .2}px)`;
+      animations.push(pet.animate([{transform:"translate(0,0)",offset:0},{transform:destination,offset:2500/5600},{transform:destination,offset:3100/5600},{transform:"translate(0,0)",offset:1}], {duration:5600,easing:"linear",fill:"forwards"}));
       const started = performance.now();
       function advanceWalk() {
         if (!active()) { refresh(); return; }
         const elapsed = performance.now() - started;
-        if (elapsed >= 4000) { idle(); return; }
-        if (elapsed < 1700) setSideFrame(Math.floor(elapsed / 135) % 8);
-        else if (elapsed < 2000) setSideFrame(8);
-        else if (elapsed < 2300) setSideFrame(8, "right");
-        else setSideFrame(Math.floor((elapsed - 2300) / 135) % 8, "right");
+        if (elapsed >= 5600) { idle(); return; }
+        if (elapsed < 2500) setDirectionalFrame(Math.floor(elapsed / 125) % 8);
+        else if (elapsed < 2800) setDirectionalFrame(16);
+        else if (elapsed < 3100) setDirectionalFrame(19);
+        else setDirectionalFrame(8 + Math.floor((elapsed - 3100) / 125) % 8);
         frameTimer = setTimeout(advanceWalk, 65);
       }
       advanceWalk();
@@ -3332,7 +3331,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     bedtimeSwitch = switchLights;
     pet.classList.add("is-going-to-sleep");
     pet.classList.add("is-awake");
-    void ensureChotaSideSprite().then(ready => {
+    void ensureChotaDirectionalSprite().then(ready => {
       if (!bedtimeActive || destroyed) return;
       if (!ready) { bedtimeSwitch?.(); bedtimeActive = false; refresh(); return; }
       startBedtime();
@@ -3343,50 +3342,50 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     const switchBox = room?.querySelector(".clubhouse-light-switch")?.getBoundingClientRect();
     const petBox = pet.getBoundingClientRect(), spriteBox = pet.querySelector(".tigreton-sprite").getBoundingClientRect();
     const scale = .68, originX = petBox.width / 2, originY = petBox.height;
-    // The fingertip in press cell 10 meets the middle of the physical rocker.
-    const fingerX = spriteBox.left - petBox.left + spriteBox.width * 20 / 256;
-    const fingerY = spriteBox.top - petBox.top + spriteBox.width * 88 / 256;
+    // Press cell 18 faces the wall; its fingertip meets the physical rocker.
+    const fingerX = spriteBox.left - petBox.left + spriteBox.width * 30 / 256;
+    const fingerY = spriteBox.top - petBox.top + spriteBox.width * 80 / 256;
     const dx = switchBox ? switchBox.left + switchBox.width / 2 - petBox.left - originX - (fingerX - originX) * scale : -petBox.width * .4;
     const dy = switchBox ? switchBox.top + switchBox.height / 2 - petBox.top - originY - (fingerY - originY) * scale : -petBox.height * .75;
     const destination = `translate(${dx}px, ${dy}px) scale(${scale})`;
     pet.style.transformOrigin = "50% 100%";
     animations.push(pet.animate([
       {transform:"translate(0,0) scale(1)",offset:0},
-      {transform:"translate(0,0) scale(1)",offset:200/6950},
-      {transform:destination,offset:2600/6950},
-      {transform:destination,offset:4350/6950},
-      {transform:"translate(0,0) scale(1)",offset:6750/6950},
+      {transform:"translate(0,0) scale(1)",offset:200/12150},
+      {transform:destination,offset:5200/12150},
+      {transform:destination,offset:6950/12150},
+      {transform:"translate(0,0) scale(1)",offset:11950/12150},
       {transform:"translate(0,0) scale(1)",offset:1}
-    ], {duration:6950,easing:"linear",fill:"forwards"}));
-    animateIdle(sleepMark, [{opacity:0}, {opacity:.2,offset:.35}, {opacity:.85}], {duration:3600,delay:9350,fill:"forwards",easing:"ease-in-out"});
+    ], {duration:12150,easing:"linear",fill:"forwards"}));
+    animateIdle(sleepMark, [{opacity:0}, {opacity:.2,offset:.35}, {opacity:.85}], {duration:3600,delay:14550,fill:"forwards",easing:"ease-in-out"});
     const started = performance.now();
     let switched = false, lastPose = -1;
     function advanceBedtime() {
       if (!bedtimeActive || destroyed) return;
       const elapsed = performance.now() - started;
-      if (elapsed >= 3350 && !switched) {
+      if (elapsed >= 5950 && !switched) {
         switched = true;
         room?.classList.add("is-switch-pressed");
         bedtimeSwitch?.();
         bedtimeSwitch = null;
       }
-      if (elapsed >= 12950) { bedtimeActive = false; refresh(); return; }
-      if (elapsed < 200) setSideFrame(8);
-      else if (elapsed < 2600) setSideFrame(Math.floor((elapsed - 200) / 145) % 8);
-      else if (elapsed < 2900) setSideFrame(8);
-      else if (elapsed < 3250) setSideFrame(9);
-      else if (elapsed < 3550) setSideFrame(10);
-      else if (elapsed < 3800) setSideFrame(9);
-      else if (elapsed < 4050) setSideFrame(8);
-      else if (elapsed < 4350) setSideFrame(8, "right");
-      else if (elapsed < 6750) setSideFrame(Math.floor((elapsed - 4350) / 145) % 8, "right");
-      else if (elapsed < 6950) setSideFrame(8, "right");
-      else if (elapsed < 7150) setFrame(0);
+      if (elapsed >= 18150) { bedtimeActive = false; refresh(); return; }
+      if (elapsed < 200) setDirectionalFrame(16);
+      else if (elapsed < 5200) setDirectionalFrame(Math.floor((elapsed - 200) / 125) % 8);
+      else if (elapsed < 5500) setDirectionalFrame(16);
+      else if (elapsed < 5850) setDirectionalFrame(17);
+      else if (elapsed < 6150) setDirectionalFrame(18);
+      else if (elapsed < 6400) setDirectionalFrame(17);
+      else if (elapsed < 6650) setDirectionalFrame(16);
+      else if (elapsed < 6950) setDirectionalFrame(19);
+      else if (elapsed < 11950) setDirectionalFrame(8 + Math.floor((elapsed - 6950) / 125) % 8);
+      else if (elapsed < 12150) setDirectionalFrame(19);
+      else if (elapsed < 12350) setFrame(0);
       else {
         pet.classList.add("is-falling-asleep");
         // Give every real pose time to read: crouch, sit, lean on an elbow,
         // then close the eyes and settle into a slower sleeping breath.
-        const pose = elapsed < 7700 ? 18 : elapsed < 8600 ? 19 : elapsed < 9750 ? 20 : elapsed < 11400 ? 21 : 22;
+        const pose = elapsed < 12900 ? 18 : elapsed < 13800 ? 19 : elapsed < 14950 ? 20 : elapsed < 16600 ? 21 : 22;
         setFrame(pose);
         if (pose !== lastPose) {
           lastPose = pose;
@@ -3456,7 +3455,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   }
   const observer = new IntersectionObserver(entries => {
     inView = entries[0].isIntersecting;
-    if (inView) void ensureChotaSideSprite();
+    if (inView) void ensureChotaDirectionalSprite();
     refresh();
     // Entering the screen or receiving a new plan must not trigger a commanded action.
   }, {threshold: .25});
