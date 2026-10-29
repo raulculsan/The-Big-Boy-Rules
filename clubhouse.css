@@ -23,8 +23,14 @@
 .clubhouse-room.is-sleeping::after { opacity:.36; }
 .clubhouse-light-effects { position:absolute; inset:0; z-index:1; pointer-events:none; transition:opacity 3s ease-in-out; }
 .clubhouse-room.is-sleeping .clubhouse-light-effects { opacity:0; }
+.clubhouse-light-switch { position:absolute; left:30.7%; top:48.2%; width:2.3%; height:3.5%; z-index:2; padding:.45%; border:1px solid #34322c; border-radius:1px; background:linear-gradient(100deg,#cabfa5,#9a927f); box-shadow:1px 2px 1px #080b1380,inset 1px 0 #e0d5ba; pointer-events:none; }
+.clubhouse-light-switch::before,.clubhouse-light-switch::after { content:""; position:absolute; left:43%; width:14%; height:4%; background:#574f42; }
+.clubhouse-light-switch::before { top:8%; }.clubhouse-light-switch::after { bottom:8%; }
+.clubhouse-light-switch i { display:block; height:100%; border:1px solid #686052; background:linear-gradient(#e4d9bd 0 45%,#958b76 47% 55%,#b6aa91 57%); box-shadow:0 -1px #f2e7c8; }
+.is-sleeping .clubhouse-light-switch i,.is-switch-pressed .clubhouse-light-switch i { background:linear-gradient(#a1957d 0 45%,#5e594f 47% 55%,#d1c5a8 57%); box-shadow:0 1px #e5d8b8; }
+.is-sleeping .clubhouse-light-switch { filter:brightness(.5) saturate(.45); }
 .clubhouse-room.is-sleeping :is(.clubhouse-plan, .clubhouse-memory, .clubhouse-bunting, .clubhouse-live-icon, #chotaArcadeEntry, .chota-room-props) { filter:brightness(.58) saturate(.45); }
-:is(.clubhouse-room,.chota-viewer-room-scene) :is(.clubhouse-plan,.clubhouse-memory,.clubhouse-bunting,.clubhouse-live-icon,#chotaArcadeEntry,.chota-room-props,.clubhouse-seasonal,.clubhouse-earned-details,.tigreton-character) { transition:filter 3s ease-in-out; }
+:is(.clubhouse-room,.chota-viewer-room-scene) :is(.clubhouse-plan,.clubhouse-memory,.clubhouse-bunting,.clubhouse-live-icon,#chotaArcadeEntry,.chota-room-props,.clubhouse-seasonal,.clubhouse-earned-details,.clubhouse-light-switch,.tigreton-character) { transition:filter 3s ease-in-out; }
 :is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping .tigreton-character { filter:brightness(.72) saturate(.7) drop-shadow(2px 4px 0 #0005); }
 
 /* Transparent seasonal objects share the room's original 1024px coordinates.
@@ -48,8 +54,8 @@
 .clubhouse-memory strong { font-size: clamp(8px, 1.45vw, 12px); line-height: 1.25; font-weight: 650; }
 .clubhouse-memory > span:last-child { font-size: clamp(7px, 1.2vw, 10px); line-height: 1.25; }
 .clubhouse-room .clubhouse-pet { position: absolute; z-index: 3; left: 36%; bottom: 15%; width: 28%; display: flex; flex-direction: column; align-items: center; }
-.clubhouse-pet:is(.is-going-to-sleep,.is-waking-up) { z-index: 4; }
-.clubhouse-pet:is(.is-going-to-sleep,.is-waking-up) :is(.tigreton-name,.chota-expand) { opacity:0; pointer-events:none; }
+.clubhouse-pet:is(.is-going-to-sleep,.is-waking-up,.is-walking) { z-index: 4; }
+.clubhouse-pet:is(.is-going-to-sleep,.is-waking-up,.is-walking) :is(.tigreton-name,.chota-expand) { opacity:0; pointer-events:none; }
 .clubhouse-room .tigreton-sprite { width: 100%; height: auto; aspect-ratio: 1; margin: 0; border-radius: 0; }
 .clubhouse-room .tigreton-character { filter: drop-shadow(2px 4px 0 #0002); }
 .clubhouse-room .tigreton-name { width: auto; margin: 0; padding: 4px 9px; color: #fff4da; background: #252223d9; border-radius: 2px; font-size: clamp(10px, 1.8vw, 13px); line-height: 1.25; }
@@ -132,11 +138,15 @@ html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars) { 
 
 /* Quiet standing pose: separate head and torso preserve the feet's floor contact.
    These layers use cell zero of the existing sheet; commanded poses use the sheet normally. */
-.chota-idle-body, .chota-idle-head { display:none; position:absolute; inset:0; background:url("icons/mascot/chota-v2/chota-poses.webp") 0 0 / 600% 400% no-repeat; image-rendering:pixelated; pointer-events:none; }
+.chota-idle-body, .chota-idle-head, .chota-idle-tail, .chota-idle-ear { display:none; position:absolute; inset:0; background:url("icons/mascot/chota-v2/chota-idle-core-v1.webp") 0 0 / 100% 100% no-repeat; image-rendering:pixelated; pointer-events:none; }
 .tigreton-character.is-idling { background-image:none; }
-.tigreton-character.is-idling :is(.chota-idle-body,.chota-idle-head) { display:block; }
+.tigreton-character.is-idling :is(.chota-idle-body,.chota-idle-head,.chota-idle-tail,.chota-idle-ear) { display:block; }
+.chota-idle-tail { background-image:url("icons/mascot/chota-v2/chota-idle-tail-v1.webp"); transform-origin:36% 72%; }
+.chota-idle-ear--left { background-image:url("icons/mascot/chota-v2/chota-idle-ear-left-v1.webp"); transform-origin:45% 25%; }
+.chota-idle-ear--right { background-image:url("icons/mascot/chota-v2/chota-idle-ear-right-v1.webp"); transform-origin:74% 30%; }
 .chota-idle-body { clip-path:inset(52% 0 0); transform-origin:50% 93%; }
 .chota-idle-head { clip-path:inset(0 0 46%); transform-origin:57% 52%; }
+.tigreton-character.is-profile { background-image:url("icons/mascot/chota-v2/chota-lateral-v1.webp"); background-size:600% 200%; transform:scaleX(var(--chota-facing,1)); }
 .chota-idle-eyelids { display:block; position:absolute; inset:0; width:100%; height:100%; opacity:0; overflow:visible; }
 @media(prefers-reduced-motion:reduce) { .chota-idle-eyelids { display:none; } }
 html[data-reduced-motion="true"] .chota-idle-eyelids { display:none; }

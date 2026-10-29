@@ -1,0 +1,382 @@
+<!doctype html><html><head><meta charset="utf-8"><base href="../../../"><link rel="stylesheet" href="club.css"><link rel="stylesheet" href="clubhouse.css"><style>*{box-sizing:border-box}body{margin:0;background:#12151b;color:white;font-family:Arial}.controls{padding:12px;display:flex;gap:12px}button{padding:10px}.clubhouse-room{width:720px;height:720px;border-radius:0}.clubhouse-pet .chota-character-row{display:block;width:100%}.tigreton-sprite{border:0;padding:0;background:transparent}</style></head><body><div class="controls"><button id="sleep">Dormirse</button><button id="wake">Despertarse</button><button id="walk">Caminar</button><button id="resume">Continuar</button></div><div class="clubhouse-room is-in-view" data-time="night"><img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp"><span class="clubhouse-light-switch" aria-hidden="true"><i></i></span><div class="clubhouse-light-effects"><div class="clubhouse-lamplight"></div></div><div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row" id="slot"></span><small class="tigreton-name">El Chota</small></div></div><script>let previewSleeping=false;function isChotaSleeping(){return previewSleeping}const tigretonReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');const chotaSpritesReady={poses:true,talk:true};const ensureChotaSprites=()=>Promise.resolve();let sidePromise;function ensureChotaSideSprite(){return sidePromise ||= new Promise(resolve=>{const im=new Image;im.onload=()=>resolve(true);im.onerror=()=>resolve(false);im.src='icons/mascot/chota-v2/chota-lateral-v1.webp'})}
+function createTigretonMotion(pet, reactToPlan, event, date) {
+  const character = pet.querySelector(".tigreton-character");
+  const shadow = pet.querySelector(".tigreton-shadow");
+  const sleepMark = pet.querySelector(".tigreton-sleep-mark");
+  const spark = pet.querySelector(".tigreton-spark");
+  const isBirthday = event?.eventType === "birthday";
+  const isToday = date && tigretonDaysUntil(date) === 0;
+  const sequences = {
+    greet: [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [3, 2], [4, 2], [2, 2], [5, 2], [1, 2], [0, 3]],
+    walk: [[0, 2], [6, 2], [7, 2], [8, 2], [9, 2], [10, 2], [11, 2], [6, 2], [7, 2], [8, 2], [9, 2], [10, 2], [11, 2], [0, 3]],
+    jump: [[0, 2], [12, 1], [13, 2], [14, 1], [15, 2], [14, 1], [16, 2], [17, 2], [0, 3]],
+    rest: [[0, 2], [18, 2], [19, 3], [20, 3], [21, 3], [22, 5], [23, 6], [22, 6], [23, 6], [22, 5], [21, 3], [20, 3], [19, 3], [18, 2], [0, 3]],
+  };
+  const idleHead = character.querySelector(".chota-idle-head");
+  const idleBody = character.querySelector(".chota-idle-body");
+  const idleTail = character.querySelector(".chota-idle-tail");
+  const idleEars = [...character.querySelectorAll(".chota-idle-ear")];
+  const eyelids = character.querySelector(".chota-idle-eyelids");
+  let inView = false, timer = 0, frameTimer = 0, blinkTimer = 0, animations = [], destroyed = false, paused = false, spriteRequest = 0, lastAmbient = 0;
+  let bedtimeActive = false, bedtimeSwitch = null, wakingActive = false, wakingComplete = null, lastAmbientAction = "";
+  const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping() && !bedtimeActive && !wakingActive;
+  function setFrame(frame) {
+    character.classList.remove("is-profile");
+    character.style.removeProperty("--chota-facing");
+    character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
+  }
+  function setSideFrame(frame, facing = "left") {
+    character.classList.remove("is-idling", "is-speaking");
+    character.classList.add("is-profile");
+    character.style.setProperty("--chota-facing", facing === "right" ? -1 : 1);
+    character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * 100}%`;
+  }
+  function stop() {
+    const wakeDone = wakingComplete;
+    wakingComplete = null;
+    wakingActive = false;
+    bedtimeActive = false;
+    bedtimeSwitch = null;
+    spriteRequest++;
+    clearTimeout(timer);
+    clearTimeout(frameTimer);
+    clearTimeout(blinkTimer);
+    animations.forEach(animation => animation.cancel());
+    animations = [];
+    pet.style.transform = "";
+    pet.style.transformOrigin = "";
+    pet.closest(".clubhouse-room, .chota-viewer-room-scene")?.classList.remove("is-switch-pressed");
+    pet.classList.remove("is-going-to-sleep", "is-falling-asleep", "is-waking-up", "is-walking");
+    pet.classList.remove("is-awake", "is-sleeping", "is-sleep-reacting");
+    character.classList.remove("is-speaking", "is-idling");
+    setFrame(0);
+    wakeDone?.();
+  }
+  function animateIdle(target, frames, options) {
+    if (!target) return;
+    const animation = target.animate(frames, options);
+    animations.push(animation);
+    animation.onfinish = () => { animations = animations.filter(item => item !== animation); };
+    return animation;
+  }
+  function scheduleBlink() {
+    clearTimeout(blinkTimer);
+    if (!active() || !character.classList.contains("is-idling")) return;
+    blinkTimer = setTimeout(() => {
+      if (!active() || !character.classList.contains("is-idling")) return;
+      const doubleBlink = Math.random() < .22;
+      animateIdle(eyelids, doubleBlink ? [{opacity:0},{opacity:1,offset:.16},{opacity:0,offset:.32},{opacity:0,offset:.55},{opacity:1,offset:.72},{opacity:0}] : [{opacity:0}, {opacity:1,offset:.3}, {opacity:1,offset:.55}, {opacity:0}], {duration:doubleBlink ? 370 : 155,easing:"linear"});
+      scheduleBlink();
+    }, 3800 + Math.random() * 4800);
+  }
+  function schedule() {
+    clearTimeout(timer);
+    if (!active() || !character.classList.contains("is-idling")) return;
+    timer = setTimeout(() => {
+      if (!active() || !character.classList.contains("is-idling")) return;
+      const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
+      const now = performance.now();
+      // Small independent body parts give the idle pose life without moving its feet.
+      const ambient = room && now - lastAmbient > 32000 && Math.random() < .6;
+      const target = ambient ? room.querySelector(".chota-room-robot-vacuum") || room.querySelector(".clubhouse-sky") : null;
+      let direction = Math.random() < .5 ? -1 : 1;
+      if (target) {
+        const targetBox = target.getBoundingClientRect(), petBox = character.getBoundingClientRect();
+        direction = targetBox.left + targetBox.width / 2 < petBox.left + petBox.width / 2 ? -1 : 1;
+        lastAmbient = now;
+      }
+      const choices = ["look", "ears", "tail", "settle", "drowsy"];
+      const available = choices.filter(action => action !== lastAmbientAction);
+      const action = target ? "look" : available[Math.floor(Math.random() * available.length)];
+      lastAmbientAction = action;
+      if (action === "look") {
+        const turn = direction * (target ? 1.8 : 1.05);
+        animateIdle(idleHead, [{transform:"translate(0,0) rotate(0deg)"},{transform:`translate(${direction * .65}%,-.25%) rotate(${turn}deg)`,offset:.28},{transform:`translate(${direction * .5}%,-.2%) rotate(${turn * .85}deg)`,offset:.72},{transform:"translate(0,0) rotate(0deg)"}], {duration:target ? 3300 : 2200,easing:"ease-in-out"});
+      } else if (action === "ears") {
+        idleEars.forEach((ear, index) => animateIdle(ear, [{transform:"rotate(0deg)"},{transform:`rotate(${index ? 3 : -4}deg)`,offset:.2},{transform:`rotate(${index ? -2 : 2}deg)`,offset:.42},{transform:"rotate(0deg)",offset:.65},{transform:`rotate(${index ? 1 : -2}deg)`,offset:.8},{transform:"rotate(0deg)"}], {duration:1150,delay:index * 140,easing:"ease-in-out"}));
+      } else if (action === "tail") {
+        animateIdle(idleTail, [{transform:"rotate(0deg)"},{transform:"rotate(-5deg)",offset:.22},{transform:"rotate(4deg)",offset:.5},{transform:"rotate(-2deg)",offset:.76},{transform:"rotate(0deg)"}], {duration:2900,easing:"ease-in-out"});
+      } else if (action === "settle") {
+        animateIdle(idleBody, [{transform:"scale(1) rotate(0deg)"},{transform:"scale(1.006,1.004) rotate(.5deg)",offset:.38},{transform:"scale(1) rotate(0deg)"}], {duration:2400,easing:"ease-in-out"});
+        animateIdle(idleHead, [{transform:"rotate(0deg)"},{transform:"rotate(-.8deg)",offset:.38},{transform:"rotate(0deg)"}], {duration:2400,easing:"ease-in-out"});
+      } else {
+        animateIdle(eyelids, [{opacity:0},{opacity:.72,offset:.3},{opacity:.72,offset:.6},{opacity:0}], {duration:1600,easing:"ease-in-out"});
+        animateIdle(idleHead, [{transform:"translateY(0) rotate(0deg)"},{transform:"translateY(.5%) rotate(.7deg)",offset:.45},{transform:"translateY(0) rotate(0deg)"}], {duration:1800,easing:"ease-in-out"});
+      }
+      schedule();
+    }, 6500 + Math.random() * 7500);
+  }
+  function idle() {
+    stop();
+    if (!active()) return;
+    pet.classList.add("is-awake");
+    character.classList.add("is-idling");
+    // The torso expands only a fraction; the shoes and contact shadow never slide.
+    const breath = 4400 + Math.random() * 1000;
+    animateIdle(idleBody, [{transform:"scale(1)"}, {transform:"scale(1.004,1.007)",offset:.48}, {transform:"scale(1)"}], {duration:breath,iterations:Infinity,easing:"ease-in-out"});
+    animateIdle(idleHead, [{transform:"translateY(0)"}, {transform:"translateY(-.3%)",offset:.48}, {transform:"translateY(0)"}], {duration:breath,iterations:Infinity,easing:"ease-in-out"});
+    scheduleBlink();
+    schedule();
+  }
+  function play(gesture) {
+    if (!active()) return;
+    if (gesture === "walk" || gesture === "shuffle") { playSideWalk(); return; }
+    if (!chotaSpritesReady.poses) {
+      const request = ++spriteRequest;
+      void ensureChotaSprites().then(() => { if (request === spriteRequest && active() && chotaSpritesReady.poses) play(gesture); });
+      return;
+    }
+    stop();
+    pet.classList.add("is-awake");
+    const action = {look: "greet", nod: "greet", shuffle: "walk", celebrate: "jump", doze: "rest"}[gesture] || gesture;
+    const frames = sequences[action] || sequences.greet;
+    const duration = frames.reduce((total, [, ticks]) => total + ticks, 0) * (1000 / 12);
+    if (action === "walk") {
+      animations.push(character.animate([{transform: "translateX(-5%)"}, {transform: "translateX(6%)", offset: .5}, {transform: "translateX(0)"}], {duration, easing: "ease-in-out"}));
+      animations.push(shadow.animate([{transform: "translateX(-5%)"}, {transform: "translateX(6%)", offset: .5}, {transform: "translateX(0)"}], {duration}));
+    } else if (action === "jump") {
+      animations.push(shadow.animate([{transform: "scaleX(1)", opacity: .6}, {transform: "scaleX(.65)", opacity: .3, offset: .48}, {transform: "scaleX(1)", opacity: .6}], {duration}));
+      animations.push(spark.animate([{opacity: 0, transform: "scale(.6)"}, {opacity: 1, offset: .45}, {opacity: 0, transform: "scale(1.1)"}], {duration}));
+    } else if (action === "rest") {
+      animations.push(sleepMark.animate([{opacity: 0}, {opacity: .85, offset: .4}, {opacity: .85, offset: .72}, {opacity: 0}], {duration}));
+    }
+    let index = 0;
+    function advance() {
+      if (!active()) return;
+      if (index >= frames.length) { idle(); return; }
+      const [frame, ticks] = frames[index++];
+      setFrame(frame);
+      frameTimer = setTimeout(advance, ticks * (1000 / 12));
+    }
+    advance();
+  }
+  function playSideWalk() {
+    const request = ++spriteRequest;
+    void ensureChotaSideSprite().then(ready => {
+      if (!ready || request !== spriteRequest || !active()) return;
+      stop();
+      pet.classList.add("is-awake", "is-walking");
+      pet.style.transformOrigin = "50% 100%";
+      animations.push(pet.animate([{transform:"translateX(0)",offset:0},{transform:"translateX(-65%)",offset:.425},{transform:"translateX(-65%)",offset:.575},{transform:"translateX(0)",offset:1}], {duration:4000,easing:"linear",fill:"forwards"}));
+      const started = performance.now();
+      function advanceWalk() {
+        if (!active()) { refresh(); return; }
+        const elapsed = performance.now() - started;
+        if (elapsed >= 4000) { idle(); return; }
+        if (elapsed < 1700) setSideFrame(Math.floor(elapsed / 135) % 8);
+        else if (elapsed < 2000) setSideFrame(8);
+        else if (elapsed < 2300) setSideFrame(8, "right");
+        else setSideFrame(Math.floor((elapsed - 2300) / 135) % 8, "right");
+        frameTimer = setTimeout(advanceWalk, 65);
+      }
+      advanceWalk();
+    });
+  }
+  function speak(text, gesture) {
+    if (bedtimeActive || wakingActive) return;
+    stop();
+    if (!active() || !String(text || "").trim()) return;
+    if (!chotaSpritesReady.talk) {
+      const request = ++spriteRequest;
+      void ensureChotaSprites().then(() => { if (request === spriteRequest && active() && chotaSpritesReady.talk) speak(text, gesture); });
+      return;
+    }
+    pet.classList.add("is-awake");
+    character.classList.add("is-speaking");
+    const words = String(text).trim().split(/\s+/);
+    const duration = Math.min(3600, Math.max(1400, words.length * 175));
+    const started = performance.now();
+    const mouths = [0, 1, 2, 1, 0, 2, 1];
+    let beat = 0;
+    function advanceSpeech() {
+      if (!active()) { stop(); return; }
+      const elapsed = performance.now() - started;
+      if (elapsed >= duration) {
+        stop();
+        if (gesture) play(gesture); else idle();
+        return;
+      }
+      const word = words[Math.min(words.length - 1, Math.floor(elapsed / duration * words.length))];
+      const punctuation = /[.,;:!?]$/.test(word) && beat % 3 === 2;
+      const mouth = punctuation ? 0 : mouths[beat++ % mouths.length];
+      character.style.backgroundPosition = `${mouth * 50}% 0`;
+      frameTimer = setTimeout(advanceSpeech, punctuation ? 220 : 95 + (beat % 3) * 25);
+    }
+    advanceSpeech();
+  }
+  function refresh() {
+    const validTransition = (bedtimeActive && isChotaSleeping()) || (wakingActive && !isChotaSleeping());
+    if (validTransition && !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches) return;
+    if (bedtimeActive && bedtimeSwitch) bedtimeSwitch();
+    stop();
+    if (!destroyed && isChotaSleeping()) {
+      // Hold the fully reclined frame, including with reduced motion enabled.
+      pet.classList.add("is-sleeping");
+      setFrame(22);
+      if (!paused && inView && !document.hidden && !tigretonReducedMotion.matches) {
+        animateIdle(character, [{transform:"scale(1)"}, {transform:"scale(1.004,1.009)",offset:.48}, {transform:"scale(1)"}], {duration:4600,iterations:Infinity,easing:"ease-in-out"});
+      }
+      return;
+    }
+    if (active()) idle();
+  }
+  function bedtime(switchLights) {
+    if (destroyed || paused || !inView || document.hidden || tigretonReducedMotion.matches || !isChotaSleeping()) return false;
+    stop();
+    bedtimeActive = true;
+    bedtimeSwitch = switchLights;
+    pet.classList.add("is-going-to-sleep");
+    pet.classList.add("is-awake");
+    void ensureChotaSideSprite().then(ready => {
+      if (!bedtimeActive || destroyed) return;
+      if (!ready) { bedtimeSwitch?.(); bedtimeActive = false; refresh(); return; }
+      startBedtime();
+    });
+    return true;
+    function startBedtime() {
+    const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
+    const switchBox = room?.querySelector(".clubhouse-light-switch")?.getBoundingClientRect();
+    const petBox = pet.getBoundingClientRect(), spriteBox = pet.querySelector(".tigreton-sprite").getBoundingClientRect();
+    const scale = .68, originX = petBox.width / 2, originY = petBox.height;
+    // The fingertip in press cell 10 meets the middle of the physical rocker.
+    const fingerX = spriteBox.left - petBox.left + spriteBox.width * 20 / 256;
+    const fingerY = spriteBox.top - petBox.top + spriteBox.width * 88 / 256;
+    const dx = switchBox ? switchBox.left + switchBox.width / 2 - petBox.left - originX - (fingerX - originX) * scale : -petBox.width * .4;
+    const dy = switchBox ? switchBox.top + switchBox.height / 2 - petBox.top - originY - (fingerY - originY) * scale : -petBox.height * .75;
+    const destination = `translate(${dx}px, ${dy}px) scale(${scale})`;
+    pet.style.transformOrigin = "50% 100%";
+    animations.push(pet.animate([
+      {transform:"translate(0,0) scale(1)",offset:0},
+      {transform:"translate(0,0) scale(1)",offset:200/6950},
+      {transform:destination,offset:2600/6950},
+      {transform:destination,offset:4350/6950},
+      {transform:"translate(0,0) scale(1)",offset:6750/6950},
+      {transform:"translate(0,0) scale(1)",offset:1}
+    ], {duration:6950,easing:"linear",fill:"forwards"}));
+    animateIdle(sleepMark, [{opacity:0}, {opacity:.2,offset:.35}, {opacity:.85}], {duration:3600,delay:9350,fill:"forwards",easing:"ease-in-out"});
+    const started = performance.now();
+    let switched = false, lastPose = -1;
+    function advanceBedtime() {
+      if (!bedtimeActive || destroyed) return;
+      const elapsed = performance.now() - started;
+      if (elapsed >= 3350 && !switched) {
+        switched = true;
+        room?.classList.add("is-switch-pressed");
+        bedtimeSwitch?.();
+        bedtimeSwitch = null;
+      }
+      if (elapsed >= 12950) { bedtimeActive = false; refresh(); return; }
+      if (elapsed < 200) setSideFrame(8);
+      else if (elapsed < 2600) setSideFrame(Math.floor((elapsed - 200) / 145) % 8);
+      else if (elapsed < 2900) setSideFrame(8);
+      else if (elapsed < 3250) setSideFrame(9);
+      else if (elapsed < 3550) setSideFrame(10);
+      else if (elapsed < 3800) setSideFrame(9);
+      else if (elapsed < 4050) setSideFrame(8);
+      else if (elapsed < 4350) setSideFrame(8, "right");
+      else if (elapsed < 6750) setSideFrame(Math.floor((elapsed - 4350) / 145) % 8, "right");
+      else if (elapsed < 6950) setSideFrame(8, "right");
+      else if (elapsed < 7150) setFrame(0);
+      else {
+        pet.classList.add("is-falling-asleep");
+        // Give every real pose time to read: crouch, sit, lean on an elbow,
+        // then close the eyes and settle into a slower sleeping breath.
+        const pose = elapsed < 7700 ? 18 : elapsed < 8600 ? 19 : elapsed < 9750 ? 20 : elapsed < 11400 ? 21 : 22;
+        setFrame(pose);
+        if (pose !== lastPose) {
+          lastPose = pose;
+          animateIdle(character, [{transform:"translateY(-.4%) rotate(.3deg)"}, {transform:"translateY(0) rotate(0deg)"}], {duration:700,easing:"ease-out"});
+        }
+      }
+      frameTimer = setTimeout(advanceBedtime, 95);
+    }
+    advanceBedtime();
+    }
+  }
+  function wakeup(onComplete) {
+    if (destroyed || paused || !inView || document.hidden || tigretonReducedMotion.matches || isChotaSleeping()) return false;
+    stop();
+    wakingActive = true;
+    wakingComplete = onComplete;
+    pet.classList.add("is-waking-up");
+    // A reluctant wake-up: stir, prop up, doze off once more, sit and slowly stand.
+    const poses = [[22,1000],[23,300],[22,650],[21,1350],[22,650],[21,1700],[20,1500],[19,1000],[18,800],[0,650]];
+    const duration = poses.reduce((total, [, hold]) => total + hold, 0);
+    const started = performance.now();
+    let lastPose = -1;
+    animateIdle(sleepMark, [{opacity:.85}, {opacity:.35,offset:.35}, {opacity:0}], {duration:3300,fill:"forwards",easing:"ease-in-out"});
+    function advanceWakeup() {
+      if (!wakingActive || destroyed) return;
+      const elapsed = performance.now() - started;
+      if (elapsed >= duration) { wakingActive = false; refresh(); return; }
+      let boundary = 0;
+      const [pose, hold] = poses.find(([, hold]) => (boundary += hold) > elapsed);
+      setFrame(pose);
+      if (pose !== lastPose) {
+        lastPose = pose;
+        animateIdle(character, [
+          {transform:"translateY(0) rotate(0deg)"},
+          {transform:`translateY(.25%) rotate(${pose === 21 ? -.8 : .45}deg)`,offset:.5},
+          {transform:"translateY(0) rotate(0deg)"}
+        ], {duration:Math.min(hold,1300),easing:"ease-in-out"});
+      }
+      frameTimer = setTimeout(advanceWakeup, Math.min(100, boundary - elapsed));
+    }
+    advanceWakeup();
+    return true;
+  }
+  function reactSleeping() {
+    if (destroyed || paused || !inView || document.hidden || !isChotaSleeping() || bedtimeActive || tigretonReducedMotion.matches || pet.classList.contains("is-sleep-reacting")) return;
+    stop();
+    pet.classList.add("is-sleeping");
+    setFrame(22);
+    pet.classList.add("is-sleep-reacting");
+    animations.push(character.animate([
+      {transform:"translateY(0) rotate(0deg)"},
+      {transform:"translateY(-.7%) rotate(-.7deg)",offset:.28},
+      {transform:"translateY(.3%) rotate(.35deg)",offset:.58},
+      {transform:"translateY(0) rotate(0deg)"}
+    ], {duration:760,easing:"ease-in-out"}));
+    // Both poses keep the eyes shut; their ear/head shift is a brief sleepy stir.
+    const frames = [[22,80],[23,150],[22,90],[23,110],[22,330]];
+    let index = 0;
+    function advanceSleepStir() {
+      if (destroyed || paused || !inView || document.hidden || !isChotaSleeping()) { refresh(); return; }
+      if (index >= frames.length) { refresh(); return; }
+      const [frame, duration] = frames[index++];
+      setFrame(frame);
+      frameTimer = setTimeout(advanceSleepStir, duration);
+    }
+    advanceSleepStir();
+  }
+  const observer = new IntersectionObserver(entries => {
+    inView = entries[0].isIntersecting;
+    if (inView) void ensureChotaSideSprite();
+    refresh();
+    // Entering the screen or receiving a new plan must not trigger a commanded action.
+  }, {threshold: .25});
+  observer.observe(pet);
+  refresh();
+  document.addEventListener("visibilitychange", refresh);
+  tigretonReducedMotion.addEventListener("change", refresh);
+  return {
+    play,
+    speak,
+    reactSleeping,
+    bedtime,
+    wakeup,
+    isWaking: () => wakingActive,
+    refresh,
+    stopSpeaking: refresh,
+    pause() { paused = true; refresh(); },
+    resume() { paused = false; refresh(); },
+    react: () => play(isBirthday && isToday ? "jump" : "greet"),
+    destroy() { if (bedtimeActive) bedtimeSwitch?.(); destroyed = true; stop(); observer.disconnect(); document.removeEventListener("visibilitychange", refresh); tigretonReducedMotion.removeEventListener("change", refresh); },
+  };
+}
+function tigretonSpriteMarkup(interactive = false) {
+  const tag = interactive ? "button" : "span";
+  return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"><span class="chota-idle-tail"></span><span class="chota-idle-body"></span><span class="chota-idle-head"><span class="chota-idle-ear chota-idle-ear--left"></span><span class="chota-idle-ear chota-idle-ear--right"></span><svg class="chota-idle-eyelids" viewBox="0 0 256 256" aria-hidden="true"><path fill="#fa7906" d="M117 84Q126 81 136 93L141 99 138 105Q126 108 119 99Z M164 98Q174 94 182 100L184 105 180 113Q172 116 164 108Z"/><path fill="none" stroke="#27170f" stroke-width="1.7" stroke-linecap="round" d="M119 96q11 10 20 3m26 5q8 7 17 1"/></svg></span></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
+}
+
+document.querySelector('#slot').innerHTML=tigretonSpriteMarkup(false);const pet=document.querySelector('.clubhouse-pet'),room=document.querySelector('.clubhouse-room');const motion=createTigretonMotion(pet,false);document.querySelector('#sleep').onclick=()=>{previewSleeping=true;motion.bedtime(()=>{room.classList.add('is-sleeping');setTimeout(()=>{document.getAnimations().forEach(a=>a.pause());},0)})};document.querySelector('#wake').onclick=()=>{previewSleeping=false;room.classList.remove('is-sleeping');motion.wakeup(()=>{})};document.querySelector('#walk').onclick=()=>motion.play('walk');document.querySelector('#resume').onclick=()=>document.getAnimations().forEach(a=>a.play());</script></body></html>

@@ -3070,6 +3070,15 @@ const tigretonReducedMotion = (globalThis.ClubMotion?.media || window.matchMedia
 // Keep the resting pose while a shared request prepares the sheet.
 const chotaTalkSprite = new Image();
 const chotaPoseSprite = new Image();
+const chotaSideSprite = new Image();
+let chotaSideRequest = null;
+function ensureChotaSideSprite() {
+  if (!chotaSideRequest) {
+    chotaSideSprite.src = "icons/mascot/chota-v2/chota-lateral-v1.webp";
+    chotaSideRequest = chotaSideSprite.decode().then(() => chotaSideSprite.naturalWidth > 0, () => false);
+  }
+  return chotaSideRequest;
+}
 let chotaSpritesRequest = null;
 const chotaSpritesReady = {talk: false, poses: false};
 function ensureChotaSprites() {
@@ -3110,12 +3119,22 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   };
   const idleHead = character.querySelector(".chota-idle-head");
   const idleBody = character.querySelector(".chota-idle-body");
+  const idleTail = character.querySelector(".chota-idle-tail");
+  const idleEars = [...character.querySelectorAll(".chota-idle-ear")];
   const eyelids = character.querySelector(".chota-idle-eyelids");
   let inView = false, timer = 0, frameTimer = 0, blinkTimer = 0, animations = [], destroyed = false, paused = false, spriteRequest = 0, lastAmbient = 0;
-  let bedtimeActive = false, bedtimeSwitch = null, wakingActive = false, wakingComplete = null;
+  let bedtimeActive = false, bedtimeSwitch = null, wakingActive = false, wakingComplete = null, lastAmbientAction = "";
   const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping() && !bedtimeActive && !wakingActive;
   function setFrame(frame) {
+    character.classList.remove("is-profile");
+    character.style.removeProperty("--chota-facing");
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
+  }
+  function setSideFrame(frame, facing = "left") {
+    character.classList.remove("is-idling", "is-speaking");
+    character.classList.add("is-profile");
+    character.style.setProperty("--chota-facing", facing === "right" ? -1 : 1);
+    character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * 100}%`;
   }
   function stop() {
     const wakeDone = wakingComplete;
@@ -3130,7 +3149,9 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     animations.forEach(animation => animation.cancel());
     animations = [];
     pet.style.transform = "";
-    pet.classList.remove("is-going-to-sleep", "is-falling-asleep", "is-waking-up");
+    pet.style.transformOrigin = "";
+    pet.closest(".clubhouse-room, .chota-viewer-room-scene")?.classList.remove("is-switch-pressed");
+    pet.classList.remove("is-going-to-sleep", "is-falling-asleep", "is-waking-up", "is-walking");
     pet.classList.remove("is-awake", "is-sleeping", "is-sleep-reacting");
     character.classList.remove("is-speaking", "is-idling");
     setFrame(0);
@@ -3148,7 +3169,8 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     if (!active() || !character.classList.contains("is-idling")) return;
     blinkTimer = setTimeout(() => {
       if (!active() || !character.classList.contains("is-idling")) return;
-      animateIdle(eyelids, [{opacity:0}, {opacity:1,offset:.3}, {opacity:1,offset:.55}, {opacity:0}], {duration:155,easing:"linear"});
+      const doubleBlink = Math.random() < .22;
+      animateIdle(eyelids, doubleBlink ? [{opacity:0},{opacity:1,offset:.16},{opacity:0,offset:.32},{opacity:0,offset:.55},{opacity:1,offset:.72},{opacity:0}] : [{opacity:0}, {opacity:1,offset:.3}, {opacity:1,offset:.55}, {opacity:0}], {duration:doubleBlink ? 370 : 155,easing:"linear"});
       scheduleBlink();
     }, 3800 + Math.random() * 4800);
   }
@@ -3159,7 +3181,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       if (!active() || !character.classList.contains("is-idling")) return;
       const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
       const now = performance.now();
-      // A quiet glance at something that is actually in this room. Feet stay planted.
+      // Small independent body parts give the idle pose life without moving its feet.
       const ambient = room && now - lastAmbient > 32000 && Math.random() < .6;
       const target = ambient ? room.querySelector(".chota-room-robot-vacuum") || room.querySelector(".clubhouse-sky") : null;
       let direction = Math.random() < .5 ? -1 : 1;
@@ -3168,15 +3190,26 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
         direction = targetBox.left + targetBox.width / 2 < petBox.left + petBox.width / 2 ? -1 : 1;
         lastAmbient = now;
       }
-      const turn = direction * (target ? 1.6 : .65);
-      animateIdle(idleHead, [
-        {transform:"translate(0,0) rotate(0deg)"},
-        {transform:`translate(${direction * (target ? .7 : .25)}%,-.25%) rotate(${turn}deg)`,offset:.28},
-        {transform:`translate(${direction * (target ? .65 : .2)}%,-.2%) rotate(${turn * .85}deg)`,offset:.72},
-        {transform:"translate(0,0) rotate(0deg)"}
-      ], {duration:target ? 3300 : 1900,easing:"ease-in-out"});
+      const choices = ["look", "ears", "tail", "settle", "drowsy"];
+      const available = choices.filter(action => action !== lastAmbientAction);
+      const action = target ? "look" : available[Math.floor(Math.random() * available.length)];
+      lastAmbientAction = action;
+      if (action === "look") {
+        const turn = direction * (target ? 1.8 : 1.05);
+        animateIdle(idleHead, [{transform:"translate(0,0) rotate(0deg)"},{transform:`translate(${direction * .65}%,-.25%) rotate(${turn}deg)`,offset:.28},{transform:`translate(${direction * .5}%,-.2%) rotate(${turn * .85}deg)`,offset:.72},{transform:"translate(0,0) rotate(0deg)"}], {duration:target ? 3300 : 2200,easing:"ease-in-out"});
+      } else if (action === "ears") {
+        idleEars.forEach((ear, index) => animateIdle(ear, [{transform:"rotate(0deg)"},{transform:`rotate(${index ? 3 : -4}deg)`,offset:.2},{transform:`rotate(${index ? -2 : 2}deg)`,offset:.42},{transform:"rotate(0deg)",offset:.65},{transform:`rotate(${index ? 1 : -2}deg)`,offset:.8},{transform:"rotate(0deg)"}], {duration:1150,delay:index * 140,easing:"ease-in-out"}));
+      } else if (action === "tail") {
+        animateIdle(idleTail, [{transform:"rotate(0deg)"},{transform:"rotate(-5deg)",offset:.22},{transform:"rotate(4deg)",offset:.5},{transform:"rotate(-2deg)",offset:.76},{transform:"rotate(0deg)"}], {duration:2900,easing:"ease-in-out"});
+      } else if (action === "settle") {
+        animateIdle(idleBody, [{transform:"scale(1) rotate(0deg)"},{transform:"scale(1.006,1.004) rotate(.5deg)",offset:.38},{transform:"scale(1) rotate(0deg)"}], {duration:2400,easing:"ease-in-out"});
+        animateIdle(idleHead, [{transform:"rotate(0deg)"},{transform:"rotate(-.8deg)",offset:.38},{transform:"rotate(0deg)"}], {duration:2400,easing:"ease-in-out"});
+      } else {
+        animateIdle(eyelids, [{opacity:0},{opacity:.72,offset:.3},{opacity:.72,offset:.6},{opacity:0}], {duration:1600,easing:"ease-in-out"});
+        animateIdle(idleHead, [{transform:"translateY(0) rotate(0deg)"},{transform:"translateY(.5%) rotate(.7deg)",offset:.45},{transform:"translateY(0) rotate(0deg)"}], {duration:1800,easing:"ease-in-out"});
+      }
       schedule();
-    }, 9500 + Math.random() * 10500);
+    }, 6500 + Math.random() * 7500);
   }
   function idle() {
     stop();
@@ -3192,6 +3225,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   }
   function play(gesture) {
     if (!active()) return;
+    if (gesture === "walk" || gesture === "shuffle") { playSideWalk(); return; }
     if (!chotaSpritesReady.poses) {
       const request = ++spriteRequest;
       void ensureChotaSprites().then(() => { if (request === spriteRequest && active() && chotaSpritesReady.poses) play(gesture); });
@@ -3220,6 +3254,28 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       frameTimer = setTimeout(advance, ticks * (1000 / 12));
     }
     advance();
+  }
+  function playSideWalk() {
+    const request = ++spriteRequest;
+    void ensureChotaSideSprite().then(ready => {
+      if (!ready || request !== spriteRequest || !active()) return;
+      stop();
+      pet.classList.add("is-awake", "is-walking");
+      pet.style.transformOrigin = "50% 100%";
+      animations.push(pet.animate([{transform:"translateX(0)",offset:0},{transform:"translateX(-65%)",offset:.425},{transform:"translateX(-65%)",offset:.575},{transform:"translateX(0)",offset:1}], {duration:4000,easing:"linear",fill:"forwards"}));
+      const started = performance.now();
+      function advanceWalk() {
+        if (!active()) { refresh(); return; }
+        const elapsed = performance.now() - started;
+        if (elapsed >= 4000) { idle(); return; }
+        if (elapsed < 1700) setSideFrame(Math.floor(elapsed / 135) % 8);
+        else if (elapsed < 2000) setSideFrame(8);
+        else if (elapsed < 2300) setSideFrame(8, "right");
+        else setSideFrame(Math.floor((elapsed - 2300) / 135) % 8, "right");
+        frameTimer = setTimeout(advanceWalk, 65);
+      }
+      advanceWalk();
+    });
   }
   function speak(text, gesture) {
     if (bedtimeActive || wakingActive) return;
@@ -3276,35 +3332,61 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     bedtimeSwitch = switchLights;
     pet.classList.add("is-going-to-sleep");
     pet.classList.add("is-awake");
-    const travel = pet.animate([
-      {transform:"translate(0, 0)", offset:0},
-      {transform:"translate(-102%, -3%)", offset:.405},
-      {transform:"translate(-102%, -3%)", offset:.619},
-      {transform:"translate(0, 0)", offset:.976},
-      {transform:"translate(0, 0)", offset:1}
-    ], {duration:4200, easing:"ease-in-out", fill:"forwards"});
-    animations.push(travel);
-    animateIdle(sleepMark, [{opacity:0}, {opacity:.2,offset:.35}, {opacity:.85}], {duration:3600,delay:6400,fill:"forwards",easing:"ease-in-out"});
+    void ensureChotaSideSprite().then(ready => {
+      if (!bedtimeActive || destroyed) return;
+      if (!ready) { bedtimeSwitch?.(); bedtimeActive = false; refresh(); return; }
+      startBedtime();
+    });
+    return true;
+    function startBedtime() {
+    const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
+    const switchBox = room?.querySelector(".clubhouse-light-switch")?.getBoundingClientRect();
+    const petBox = pet.getBoundingClientRect(), spriteBox = pet.querySelector(".tigreton-sprite").getBoundingClientRect();
+    const scale = .68, originX = petBox.width / 2, originY = petBox.height;
+    // The fingertip in press cell 10 meets the middle of the physical rocker.
+    const fingerX = spriteBox.left - petBox.left + spriteBox.width * 20 / 256;
+    const fingerY = spriteBox.top - petBox.top + spriteBox.width * 88 / 256;
+    const dx = switchBox ? switchBox.left + switchBox.width / 2 - petBox.left - originX - (fingerX - originX) * scale : -petBox.width * .4;
+    const dy = switchBox ? switchBox.top + switchBox.height / 2 - petBox.top - originY - (fingerY - originY) * scale : -petBox.height * .75;
+    const destination = `translate(${dx}px, ${dy}px) scale(${scale})`;
+    pet.style.transformOrigin = "50% 100%";
+    animations.push(pet.animate([
+      {transform:"translate(0,0) scale(1)",offset:0},
+      {transform:"translate(0,0) scale(1)",offset:200/6950},
+      {transform:destination,offset:2600/6950},
+      {transform:destination,offset:4350/6950},
+      {transform:"translate(0,0) scale(1)",offset:6750/6950},
+      {transform:"translate(0,0) scale(1)",offset:1}
+    ], {duration:6950,easing:"linear",fill:"forwards"}));
+    animateIdle(sleepMark, [{opacity:0}, {opacity:.2,offset:.35}, {opacity:.85}], {duration:3600,delay:9350,fill:"forwards",easing:"ease-in-out"});
     const started = performance.now();
     let switched = false, lastPose = -1;
     function advanceBedtime() {
       if (!bedtimeActive || destroyed) return;
       const elapsed = performance.now() - started;
-      if (elapsed >= 1940 && !switched) {
+      if (elapsed >= 3350 && !switched) {
         switched = true;
+        room?.classList.add("is-switch-pressed");
         bedtimeSwitch?.();
         bedtimeSwitch = null;
       }
-      if (elapsed >= 10000) { bedtimeActive = false; refresh(); return; }
-      if (elapsed < 1700 || (elapsed >= 2600 && elapsed < 4200)) {
-        setFrame([6,7,8,9,10,11][Math.floor(elapsed / 115) % 6]);
-      } else if (elapsed < 2600) {
-        setFrame(elapsed < 1940 ? 2 : 4);
-      } else {
+      if (elapsed >= 12950) { bedtimeActive = false; refresh(); return; }
+      if (elapsed < 200) setSideFrame(8);
+      else if (elapsed < 2600) setSideFrame(Math.floor((elapsed - 200) / 145) % 8);
+      else if (elapsed < 2900) setSideFrame(8);
+      else if (elapsed < 3250) setSideFrame(9);
+      else if (elapsed < 3550) setSideFrame(10);
+      else if (elapsed < 3800) setSideFrame(9);
+      else if (elapsed < 4050) setSideFrame(8);
+      else if (elapsed < 4350) setSideFrame(8, "right");
+      else if (elapsed < 6750) setSideFrame(Math.floor((elapsed - 4350) / 145) % 8, "right");
+      else if (elapsed < 6950) setSideFrame(8, "right");
+      else if (elapsed < 7150) setFrame(0);
+      else {
         pet.classList.add("is-falling-asleep");
         // Give every real pose time to read: crouch, sit, lean on an elbow,
         // then close the eyes and settle into a slower sleeping breath.
-        const pose = elapsed < 4750 ? 18 : elapsed < 5650 ? 19 : elapsed < 6800 ? 20 : elapsed < 8450 ? 21 : 22;
+        const pose = elapsed < 7700 ? 18 : elapsed < 8600 ? 19 : elapsed < 9750 ? 20 : elapsed < 11400 ? 21 : 22;
         setFrame(pose);
         if (pose !== lastPose) {
           lastPose = pose;
@@ -3314,7 +3396,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       frameTimer = setTimeout(advanceBedtime, 95);
     }
     advanceBedtime();
-    return true;
+    }
   }
   function wakeup(onComplete) {
     if (destroyed || paused || !inView || document.hidden || tigretonReducedMotion.matches || isChotaSleeping()) return false;
@@ -3374,6 +3456,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   }
   const observer = new IntersectionObserver(entries => {
     inView = entries[0].isIntersecting;
+    if (inView) void ensureChotaSideSprite();
     refresh();
     // Entering the screen or receiving a new plan must not trigger a commanded action.
   }, {threshold: .25});
@@ -3398,7 +3481,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
 }
 function tigretonSpriteMarkup(interactive = false) {
   const tag = interactive ? "button" : "span";
-  return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"><span class="chota-idle-body"></span><span class="chota-idle-head"><svg class="chota-idle-eyelids" viewBox="0 0 256 256" aria-hidden="true"><path fill="#fa7906" d="M117 84Q126 81 136 93L141 99 138 105Q126 108 119 99Z M164 98Q174 94 182 100L184 105 180 113Q172 116 164 108Z"/><path fill="none" stroke="#27170f" stroke-width="1.7" stroke-linecap="round" d="M119 96q11 10 20 3m26 5q8 7 17 1"/></svg></span></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
+  return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"><span class="chota-idle-tail"></span><span class="chota-idle-body"></span><span class="chota-idle-head"><span class="chota-idle-ear chota-idle-ear--left"></span><span class="chota-idle-ear chota-idle-ear--right"></span><svg class="chota-idle-eyelids" viewBox="0 0 256 256" aria-hidden="true"><path fill="#fa7906" d="M117 84Q126 81 136 93L141 99 138 105Q126 108 119 99Z M164 98Q174 94 182 100L184 105 180 113Q172 116 164 108Z"/><path fill="none" stroke="#27170f" stroke-width="1.7" stroke-linecap="round" d="M119 96q11 10 20 3m26 5q8 7 17 1"/></svg></span></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
 }
 let chotaViewerMotion = null;
 let chotaViewerMotionKey = "";
@@ -3502,6 +3585,7 @@ function openChotaViewer(trigger) {
     <img class="chota-viewer-room-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="" aria-hidden="true" decoding="async">
     ${clubhouseSkyMarkup()}
     ${clubhouseSeasonalMarkup()}
+    <span class="clubhouse-light-switch" aria-hidden="true"><i></i></span>
     <div class="tigreton-agenda chota-viewer-pet">
     <div class="chota-viewer-bubble-slot"><div class="tigreton-bubble chota-viewer-status" role="status" aria-live="polite" aria-atomic="true" hidden></div></div>
     <div class="chota-character-row"><button class="chota-viewer-touch" type="button" data-chota-action="nod" aria-label="Tocar a El Chota">${tigretonSpriteMarkup()}</button></div></div></div>
@@ -3756,6 +3840,7 @@ function renderClubhouse(upcoming) {
     <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="async" fetchpriority="low">
     ${clubhouseSkyMarkup()}
     ${clubhouseSeasonalMarkup()}
+    <span class="clubhouse-light-switch" aria-hidden="true"><i></i></span>
     <div class="clubhouse-light-effects" aria-hidden="true"><div class="clubhouse-lamplight"></div><div class="clubhouse-dust"><i></i><i></i><i></i></div></div>
     ${birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ""}
     ${plan}
