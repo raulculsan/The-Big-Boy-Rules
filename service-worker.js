@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v444";
+const CACHE_NAME = "big-boy-rules-v445";
 const APP_SHELL = [
   "./app-update.js?v=20261030-app-update-440",
   "./app-update.css?v=20261030-app-update-440",
@@ -8,7 +8,7 @@ const APP_SHELL = [
   "./index.html",
   "./native-auth.js?v=20261030-native-google-442",
   "./profile-account-sheet.js?v=20261030-neutral-interactions-444",
-  "./profile-account-sheet.css?v=20261030-neutral-interactions-444",
+  "./profile-account-sheet.css?v=20261030-account-up-445",
   "./account-security.js?v=20261030-account-screen-442",
   "./account-security.css?v=20261030-neutral-interactions-444",
   "./account-requests.js?v=20261030-native-google-442",
