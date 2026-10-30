@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <linearGradient id="air" x1="930" y1="300" x2="300" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF1C7" stop-opacity=".055"/>
+      <stop offset=".48" stop-color="#FFE6AB" stop-opacity=".025"/>
+      <stop offset="1" stop-color="#FFF0C2" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="819" y1="588" x2="291" y2="895" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF4D2" stop-opacity=".30"/>
+      <stop offset=".45" stop-color="#FFE7B2" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#FFDC99" stop-opacity=".025"/>
+    </linearGradient>
+    <linearGradient id="pane" x1="812" y1="608" x2="310" y2="883" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7DC" stop-opacity=".27"/>
+      <stop offset=".72" stop-color="#FFEAC0" stop-opacity=".19"/>
+      <stop offset="1" stop-color="#FFE2AB" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.4"/></filter>
+  </defs>
+  <!-- Light fans out from the glass; its broad edge dissolves before the left wall. -->
+  <path d="M930 206 962 421 445 792 168 785Z" fill="url(#air)"/>
+  <!-- The floor projection stays left of the right sofa and below the back wall. -->
+  <g filter="url(#soft)"><path d="M780 571 822 637 513 897 197 815Z" fill="url(#floor)"/>
+  <!-- Gaps between the panes retain the window mullions as soft unlit bands. -->
+  <path d="M779 577 790 594 377 849 233 811Z" fill="url(#pane)"/>
+  <path d="M796 603 806 619 446 868 393 854Z" fill="url(#pane)"/>
+  <path d="M811 628 820 641 515 891 461 875Z" fill="url(#pane)"/></g>
+</svg>

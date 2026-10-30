@@ -3807,6 +3807,7 @@ function openChotaViewer(trigger) {
     <div class="chota-viewer-room-scene">
     <img class="chota-viewer-room-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="" aria-hidden="true" decoding="async">
     ${clubhouseSkyMarkup()}
+    ${clubhouseDaylightMarkup()}
     ${clubhouseSeasonalMarkup()}
     <span class="clubhouse-light-switch" aria-hidden="true"><i></i></span>
     <div class="tigreton-agenda chota-viewer-pet">
@@ -3982,6 +3983,9 @@ let clubhouseObserver = null;
 function clubhouseSkyMarkup() {
   return '<div class="clubhouse-sky" aria-hidden="true"><i class="clubhouse-sky-dawn"></i><i class="clubhouse-sky-day"></i><i class="clubhouse-sky-evening"></i><i class="clubhouse-sky-night"></i><span class="clubhouse-sky-stars"></span></div>';
 }
+function clubhouseDaylightMarkup() {
+  return '<div class="clubhouse-daylight" aria-hidden="true"><i></i></div>';
+}
 function clubhouseSeasonalMarkup() {
   return '<div class="clubhouse-seasonal" aria-hidden="true"></div>';
 }
@@ -4021,16 +4025,26 @@ function clubhouseDaylight(now = new Date()) {
   const mix = Math.max(0, Math.min(1, (hour-start) / (end-start || 1)));
   const weights = {dawn:0,day:0,evening:0,night:0};
   weights[from] += 1-mix; weights[to] += mix;
-  return {weights, moment:mix < .5 ? from : to};
+  const solarProgress = (hour-sunrise) / (sunset-sunrise);
+  const sunHeight = solarProgress > 0 && solarProgress < 1 ? Math.sin(Math.PI * solarProgress) : 0;
+  const daylight = weights.day + weights.dawn * .65 + weights.evening * .65;
+  return {weights, moment:mix < .5 ? from : to, sunlight:{
+    strength:.88 * Math.pow(sunHeight, .65) * daylight,
+    reach:.82 + (1-sunHeight) * .38,
+    saturation:.55 + (1-sunHeight) * .8
+  }};
 }
 function syncClubhouseDaylight(now = new Date()) {
-  const {weights, moment} = clubhouseDaylight(now);
+  const {weights, moment, sunlight} = clubhouseDaylight(now);
   const season = clubhouseSeason(now);
   document.querySelectorAll(".clubhouse-room, .chota-viewer-room-scene").forEach(room => {
     room.dataset.time = moment;
     syncClubhouseSeason(room, season);
     room.classList.toggle("is-sleeping", chotaRoomLightsOff);
     for (const [name, weight] of Object.entries(weights)) room.style.setProperty(`--club-sky-${name}`, weight.toFixed(4));
+    room.style.setProperty("--club-sun-strength", sunlight.strength.toFixed(4));
+    room.style.setProperty("--club-sun-reach", sunlight.reach.toFixed(4));
+    room.style.setProperty("--club-sun-saturation", sunlight.saturation.toFixed(4));
   });
   const time = document.getElementById("clubhouseTime");
   if (time) time.textContent = {night:"Una noche en la sede",dawn:"Amanece en la sede",day:"Hoy en la sede",evening:"Cae la tarde"}[moment];
@@ -4063,6 +4077,7 @@ function renderClubhouse(upcoming) {
   content.innerHTML = `<div class="clubhouse-room${birthday ? " is-birthday" : ""}" data-time="${moment}">
     <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="async" fetchpriority="low">
     ${clubhouseSkyMarkup()}
+    ${clubhouseDaylightMarkup()}
     ${clubhouseSeasonalMarkup()}
     <span class="clubhouse-light-switch" aria-hidden="true"><i></i></span>
     <div class="clubhouse-light-effects" aria-hidden="true"><div class="clubhouse-lamplight"></div><div class="clubhouse-dust"><i></i><i></i><i></i></div></div>

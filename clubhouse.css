@@ -13,6 +13,10 @@
 .clubhouse-sky-evening { opacity:var(--club-sky-evening,0); }
 .clubhouse-sky-night { opacity:var(--club-sky-night,0); filter:sepia(1) saturate(1.7) hue-rotate(175deg) brightness(.34); }
 .clubhouse-sky-stars { position:absolute; inset:0; opacity:var(--club-sky-night,0); background:radial-gradient(circle .6px at 37.2% 23%,#d9e5ff 70%,transparent),radial-gradient(circle .8px at 72.1% 19.5%,#f3eddb 70%,transparent),radial-gradient(circle .5px at 52% 48.6%,#cbdcff 70%,transparent),radial-gradient(circle .7px at 74.3% 55%,#e8efff 70%,transparent),radial-gradient(circle .5px at 14.9% 53.8%,#f1e9d5 70%,transparent); transition:opacity 30s linear; }
+.clubhouse-daylight { position:absolute; inset:0; z-index:1; pointer-events:none; opacity:var(--club-sun-strength,0); mix-blend-mode:screen; transition:opacity 30s linear; }
+.clubhouse-daylight::before { content:""; position:absolute; inset:0; background:radial-gradient(ellipse 19% 31% at 91% 34%,#fff2c621,transparent 100%),radial-gradient(ellipse 19% 20% at 83% 57%,#ffe9b41a,transparent 100%); }
+.clubhouse-daylight > i { position:absolute; inset:0; display:block; background:url("icons/clubhouse/window-daylight-v1.svg") 0 0 / 100% 100% no-repeat; transform-origin:80% 60%; transform:scaleX(var(--club-sun-reach,1)); filter:saturate(var(--club-sun-saturation,1)); transition:transform 30s linear,filter 30s linear; }
+:is(.clubhouse-room,.chota-viewer-room-scene).is-sleeping .clubhouse-daylight { opacity:0; transition-duration:3s; }
 .clubhouse-room::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #0b1021; opacity: 0; transition: opacity 3s ease-in-out; }
 .clubhouse-room[data-time="night"]::after { opacity: .12; }
 /* Midnight to 06:00: suppress the warm light painted into the illustration.
@@ -132,9 +136,9 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .clubhouse-lamplight, .clubhouse-dust i { animation: none !important; }
-  .clubhouse-room::after, :is(.clubhouse-room,.chota-viewer-room-scene)::before, .clubhouse-light-effects, .clubhouse-plan, .clubhouse-sky > i, .clubhouse-sky-stars, .clubhouse-art, .chota-viewer-room-art { transition: none; }
+  .clubhouse-room::after, :is(.clubhouse-room,.chota-viewer-room-scene)::before, .clubhouse-light-effects, .clubhouse-plan, .clubhouse-sky > i, .clubhouse-sky-stars, .clubhouse-daylight, .clubhouse-daylight > i, .clubhouse-art, .chota-viewer-room-art { transition: none; }
 }
-html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars) { transition:none; }
+html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars,.clubhouse-daylight,.clubhouse-daylight > i) { transition:none; }
 
 /* Quiet standing pose: separate head and torso preserve the feet's floor contact.
    These layers use cell zero of the existing sheet; commanded poses use the sheet normally. */
