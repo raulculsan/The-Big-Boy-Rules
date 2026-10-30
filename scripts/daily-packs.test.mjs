@@ -50,6 +50,17 @@ test('collection keeps automatic server balances without a daily panel or manual
   value={error:{code:'PGRST202'}};await w.DailyPacks.refresh(true);assert.equal(w.document.getElementById('packsCount').textContent,'7');
   assert.equal(w.document.querySelector('.packs-art'),art);w.DailyPacks.reset();assert.equal(w.document.getElementById('packsCount').textContent,'—');dom.window.close();
 });
+test('the first-login welcome shows the server balance and clears on subsequent sync or logout',async()=>{
+  const dom=new JSDOM(read('index.html'),{url:'https://club.test',runScripts:'outside-only'}),w=dom.window;
+  w.eval(source);let value={data:{...response(21).data,welcome_credited_packs:20,credited_packs:21}};
+  w.DailyPacks.initialize({session:()=> 'alice',rpc:async()=>value});await w.DailyPacks.refresh();
+  assert.equal(w.document.getElementById('packsCount').textContent,'21');
+  const notice=w.document.querySelector('[data-pack-welcome]');assert.equal(notice.hidden,false);assert.match(notice.textContent,/20 sobres de bienvenida/);
+  assert.equal(w.DailyPacks.presentation(w.DailyPacks.snapshot()).heading,'20 sobres de bienvenida');
+  value={data:{...value.data,welcome_credited_packs:0,credited:false,credited_packs:0}};await w.DailyPacks.refresh(true);
+  assert.equal(w.document.getElementById('packsCount').textContent,'21');assert.equal(notice.hidden,true);assert.equal(notice.textContent,'');
+  w.DailyPacks.reset();assert.equal(notice.hidden,true);dom.window.close();
+});
 test('packs keep the four main tabs and are reachable from home, with a working back target and daily lifecycle hooks',()=>{
   const html=read('index.html'),app=read('app.js');const dom=new JSDOM(html),d=dom.window.document;
   assert.equal(d.querySelectorAll('.floating-tab-bar .app-tab').length,4);
