@@ -1,3 +1,4 @@
+import {minifyNativeJavaScript} from './optimize-native-code.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -70,11 +71,13 @@ test('packs keep the four main tabs and are reachable from home, with a working 
   assert.match(app,/function logoutCurrentUser[\s\S]*?DailyPacks\?\.reset\(\)/);
   assert.ok(app.includes('sobres: "inicio"'));dom.window.close();
 });
-test('page assets and original pack artwork reach web, offline shell and the stable iOS build',()=>{
+test('page assets and original pack artwork reach web, offline shell and the stable iOS build',async()=>{
   for(const file of ['index.html','service-worker.js','scripts/build-web.mjs','scripts/live-server.mjs','scripts/preview-club.mjs']) {
     assert.ok(read(file).includes('daily-packs.js'),file);assert.ok(read(file).includes('packs.css'),file);
   }
   for(const file of ['daily-packs.js','packs.css','icons/cards/sobre-los-nuestros-v1.jpg']) {
-    assert.deepEqual(readFileSync(new URL('../'+file,import.meta.url)),readFileSync(new URL('../ios/App/App/public/'+file,import.meta.url)));
+    const original=readFileSync(new URL('../'+file,import.meta.url));
+    const expected=file.endsWith('.js') ? Buffer.from(await minifyNativeJavaScript(original.toString(),file)) : original;
+    assert.deepEqual(expected,readFileSync(new URL('../ios/App/App/public/'+file,import.meta.url)));
   }
 });

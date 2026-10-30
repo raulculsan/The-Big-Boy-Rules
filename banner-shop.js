@@ -731,7 +731,7 @@
       const signature = JSON.stringify(owned.map(({id, name, art_key,presentation}) => [id, name, art_key,presentation]));
       if (list.dataset.signature !== signature) {
         list.dataset.signature = signature;
-        list.innerHTML = `<button type="button" class="profile-banner-option" data-profile-banner="" data-banner-id="" aria-pressed="${!state.equipped_banner_id}"><div class="profile-banner-empty" aria-hidden="true">BB</div><span>Sin banner</span></button>` + owned.map(banner => `<button type="button" class="profile-banner-option" data-profile-banner="${escape(banner.id)}" data-banner-id="${escape(banner.id)}" aria-pressed="${banner.id === state.equipped_banner_id}">${artwork(banner)}<span>${escape(banner.name)}</span></button>`).join('');
+        list.innerHTML = `<button type="button" class="profile-banner-option" data-profile-banner="" data-banner-id="" aria-pressed="${!state.equipped_banner_id}"><div class="profile-banner-empty" aria-hidden="true">BB</div><span class="profile-banner-option-name">Sin banner</span></button>` + owned.map(banner => `<button type="button" class="profile-banner-option" data-profile-banner="${escape(banner.id)}" data-banner-id="${escape(banner.id)}" aria-pressed="${banner.id === state.equipped_banner_id}">${artwork(banner)}<span class="profile-banner-option-name">${escape(banner.name)}</span></button>`).join('');
       }
     }
     list.querySelectorAll('button').forEach(button => {

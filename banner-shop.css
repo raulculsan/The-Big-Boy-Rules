@@ -37,9 +37,9 @@
 .banner-moto-mid{mask-image:linear-gradient(transparent 25%,#000 48%,#000 68%,transparent 75%);-webkit-mask-image:linear-gradient(transparent 25%,#000 48%,#000 68%,transparent 75%);animation:banner-moto-buildings 7s ease-in-out infinite alternate;will-change:transform}
 .banner-moto-near{mask-image:linear-gradient(transparent 69%,#000 79%);-webkit-mask-image:linear-gradient(transparent 69%,#000 79%);animation:banner-moto-forward 3s linear infinite;will-change:transform,opacity}
 .banner-moto-near-delayed{animation-delay:-1.5s}
-.banner-moto-road{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-.banner-moto-lane{position:absolute;left:var(--road-center);top:var(--road-horizon);display:block;background:#fff1be;box-shadow:0 0 7px #ffd69366;transform:rotate(-20deg);transform-origin:center;animation:banner-moto-lane-left 1.5s cubic-bezier(.5,.05,.85,.5) infinite;animation-delay:calc(var(--phase) * -.25s);will-change:left,top,width,height,opacity}
-.banner-moto-lane.is-right{animation-name:banner-moto-lane-right;transform:rotate(24deg)}
+.banner-moto-road{position:absolute;inset:0;overflow:hidden;pointer-events:none;container-type:size}
+.banner-moto-lane{position:absolute;left:var(--road-center);top:var(--road-horizon);display:block;width:20%;height:7px;background:#fff1be;box-shadow:0 0 7px #ffd69366;transform:rotate(-20deg) scale(.02,.14);transform-origin:0 50%;animation:banner-moto-lane-left 1.5s cubic-bezier(.5,.05,.85,.5) infinite;animation-delay:calc(var(--phase) * -.25s);will-change:transform,opacity}
+.banner-moto-lane.is-right{width:17%;animation-name:banner-moto-lane-right;transform:rotate(24deg) scale(.02,.14)}
 .banner-moto-rider-group{position:absolute;z-index:1;left:29%;bottom:-4%;width:57%;height:101%;transform-origin:55% 90%;animation:banner-moto-ride 1.65s ease-in-out infinite;will-change:transform;pointer-events:none}
 .banner-moto-rider-plane{position:absolute;left:50%;bottom:0;height:100%;aspect-ratio:1312 / 1199;transform:translateX(-50%)}
 .banner-moto-rider{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 3px 2px #10182280)}
@@ -65,8 +65,8 @@
 @keyframes banner-moto-horizon{from{transform:scale(1.015) translateY(0)}to{transform:scale(1.025) translateY(-.35%)}}
 @keyframes banner-moto-buildings{from{transform:scale(1.015)}to{transform:scale(1.045)}}
 @keyframes banner-moto-forward{0%{transform:scale(1.015);opacity:0}20%{opacity:.7}65%{opacity:.7}100%{transform:scale(1.22);opacity:0}}
-@keyframes banner-moto-lane-left{0%{left:58%;top:72%;width:1px;height:1px;opacity:0}15%{opacity:.15}70%{opacity:.45}100%{left:8%;top:118%;width:20%;height:7px;opacity:0}}
-@keyframes banner-moto-lane-right{0%{left:58%;top:72%;width:1px;height:1px;opacity:0}15%{opacity:.15}70%{opacity:.45}100%{left:97%;top:118%;width:17%;height:7px;opacity:0}}
+@keyframes banner-moto-lane-left{0%{transform:translate3d(0,0,0) rotate(-20deg) scale(.02,.14);opacity:0}15%{opacity:.15}70%{opacity:.45}100%{transform:translate3d(-250%,46cqh,0) rotate(-20deg) scale(1,1);opacity:0}}
+@keyframes banner-moto-lane-right{0%{transform:translate3d(0,0,0) rotate(24deg) scale(.02,.14);opacity:0}15%{opacity:.15}70%{opacity:.45}100%{transform:translate3d(229%,46cqh,0) rotate(24deg) scale(1,1);opacity:0}}
 @keyframes banner-moto-ride{0%,100%{transform:translateY(0) rotate(-.5deg)}25%{transform:translateY(-1px) rotate(-.1deg)}50%{transform:translateY(.7px) rotate(.5deg)}75%{transform:translateY(-.6px) rotate(.1deg)}}
 @media(max-width:480px){.banner-moto-rider-group{left:27%;width:63%;height:99%}}
 @media(prefers-reduced-motion:reduce){.banner-moto-city,.banner-moto-lane,.banner-moto-rider-group,.banner-moto-wheel-spin,.banner-moto-hair,.banner-moto-wind path,.banner-moto-clouds i{animation:none;will-change:auto}.banner-moto-mid,.banner-moto-near,.banner-moto-lane,.banner-moto-wheels,.banner-moto-wind{display:none}}
@@ -129,12 +129,12 @@
 .profile-banner-help, #profileBannerStatus { margin:0 0 12px; color:var(--club-muted,#959aa3); font-size:12px; line-height:1.5; }
 #profileBannerStatus:empty { display:none; }
 .profile-banner-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-.profile-banner-option { display:block; min-width:0; padding:6px; border:1px solid var(--club-line,#ffffff24); border-radius:14px; background:#ffffff02; color:#f1eee7; text-align:left; cursor:pointer; }
+.profile-banner-option { display:block; box-sizing:border-box; align-self:start; min-width:0; padding:6px; border:1px solid var(--club-line,#ffffff24); border-radius:14px; background:#ffffff02; color:#f1eee7; text-align:left; cursor:pointer; }
 .profile-banner-option[aria-pressed="true"] { border:2px solid var(--club-gold,#c4ad7e); padding:5px; }
 .profile-banner-option:disabled { cursor:default; }
 .profile-banner-picker[aria-busy="true"] .profile-banner-option { opacity:.55; }
-.profile-banner-option > span { display:block; padding:9px 5px 5px; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
-.profile-banner-option .banner-art, .profile-banner-empty { height:100px; border-radius:9px; }
+.profile-banner-option-name { display:block; min-height:3em; padding:9px 5px 5px; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+.profile-banner-option .banner-art, .profile-banner-empty { width:100%; height:auto; min-height:0; aspect-ratio:3/1; border-radius:9px; }
 .profile-banner-empty { display:grid; place-items:center; background:#1a1e23; color:#737780; font:600 22px/1 var(--font-body,sans-serif); }
 .profile-banner-row:focus-visible, .profile-banner-option:focus-visible { outline:2px solid var(--club-gold,#c4ad7e); outline-offset:4px; }
 @media(prefers-reduced-motion:reduce) { .profile-banner-row svg { transition:none; } }

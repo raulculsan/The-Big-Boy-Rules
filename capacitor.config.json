@@ -15,5 +15,10 @@
     "SystemBars": {
       "style": "DARK"
     }
+  },
+  "android": {
+    "webContentsDebuggingEnabled": false,
+    "loggingBehavior": "none",
+    "allowMixedContent": false
   }
 }

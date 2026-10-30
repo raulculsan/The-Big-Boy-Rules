@@ -6,7 +6,7 @@
     try { const url=new URL(origin || globalThis.BIG_BOY_CONFIG?.supabaseUrl);base=url.protocol==='https:'&&!url.username&&!url.password?`${url.origin}/storage/v1/object/public/shop-media/`:''; } catch {base='';}
   }
   configure();
-  const path = (value,folder,video=false) => typeof value==='string' && value.length<=240 && value.startsWith(`${folder}/`) && !value.split('/').some(part=>!part || part==='.' || part==='..') && /^[a-zA-Z0-9/_-]+\.(png|jpe?g|webp|gif|avif|svg|mp4|webm)$/i.test(value) && (video?/\.(mp4|webm)$/i:/\.(png|jpe?g|webp|gif|avif|svg)$/i).test(value) ? value : null;
+  const path = (value,folder,video=false) => typeof value==='string' && value.length<=240 && value.startsWith(`${folder}/`) && !value.split('/').some(part=>!part || part==='.' || part==='..') && /^[a-zA-Z0-9/_-]+\.(png|jpe?g|webp|gif|avif|mp4|webm)$/i.test(value) && (video?/\.(mp4|webm)$/i:/\.(png|jpe?g|webp|gif|avif)$/i).test(value) ? value : null;
   const number = (value,min,max) => typeof value==='number'&&Number.isFinite(value)&&value>=min&&value<=max;
   const color = value => typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
   function presentation(item,kind='banner') {

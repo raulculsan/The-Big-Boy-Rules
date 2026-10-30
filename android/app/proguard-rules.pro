@@ -1,21 +1,26 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Capacitor's library consumer rules retain annotated native plugins, plugin
+# methods and permission/activity callbacks. Do not keep the entire application.
+# Android's generated manifest/resource rules retain the Activity, widget
+# receiver, FileProvider and XML-instantiated framework components.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# The WebView calls this interface by the annotated method name, not a Java
+# reference that R8 can trace. Keep the bridge entry methods and their names.
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keepattributes RuntimeVisibleAnnotations,RuntimeInvisibleAnnotations,AnnotationDefault
+-keepattributes InnerClasses,EnclosingMethod,Signature
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep useful stack locations, but replace original source filenames. The R8
+# mapping is a private build artifact and must never be included in the APK.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Low-level verbose/debug/informational logging has no production side effects.
+# Warnings/errors remain diagnosable; Capacitor logging is disabled separately
+# in the generated native configuration by optimize-native-code.mjs.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}

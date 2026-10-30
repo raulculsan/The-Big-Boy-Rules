@@ -17,6 +17,7 @@ test('remote metadata accepts only controlled Storage paths and bounded scene va
   assert.equal(w.ShopCatalogMedia.presentation(banner).type,'video');
   for(const path of ['https://evil.test/file.mp4','banners/../secret.mp4','banners/a.mp4?x=1','banners/a\".mp4','chota/a.mp4'])assert.equal(w.ShopCatalogMedia.presentation({...banner,presentation:{...banner.presentation,path}}),null);
   assert.equal(w.ShopCatalogMedia.presentation({...banner,presentation:{...banner.presentation,poster_path:null}}),null);
+  assert.equal(w.ShopCatalogMedia.presentation({...banner,presentation:{type:'image',path:'banners/untrusted.svg',width:1440,height:480}}),null,'SVG cannot bypass the storage MIME ban through metadata');
   assert.equal(w.ShopCatalogMedia.presentation({...decor,presentation:{...decor.presentation,placement:{...decor.presentation.placement,x:101}}},'chota'),null);
   assert.equal(w.ShopCatalogMedia.presentation({...style,presentation:{...style.presentation,colors:{...style.presentation.colors,wall:'red;position:fixed'}}},'chota'),null);
   assert.match(w.ShopCatalogMedia.banner(banner),/https:\/\/project.supabase.co\/storage\/v1\/object\/public\/shop-media\/banners\/new-v1\/animation.mp4/);

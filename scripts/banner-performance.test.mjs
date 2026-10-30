@@ -25,7 +25,9 @@ test('members use one batch and mount animated SVG only in visible cards',async(
   assert.equal(h.members.querySelectorAll('img').length,3);
   assert.match(h.members.querySelector('img').style.objectFit,/contain/);
   const tile=h.members.firstElementChild;
-  h.observers[0].callback([{target:tile,isIntersecting:true}]);
+  h.observers[0].callback([{target:tile,isIntersecting:true,intersectionRect:{width:0,height:0}}]);
+  assert.equal(h.members.querySelectorAll('.banner-galicia-scene').length,0,'zero-area intersections do not mount animations');
+  h.observers[0].callback([{target:tile,isIntersecting:true,intersectionRect:{width:240,height:100}}]);
   assert.equal(h.members.querySelectorAll('.banner-galicia-scene').length,1);
   assert.equal(tile.querySelector('svg').getAttribute('viewBox'),'0 0 2172 724');
   h.w.BannerShop.mountMembers(h.members);await flush();assert.equal(h.requests.length,1,'cached members do not refetch');
@@ -34,16 +36,18 @@ test('members use one batch and mount animated SVG only in visible cards',async(
 test('Spotify polls only while visible and never overlaps getState calls',async()=>{
   const dom=new JSDOM('<div id="player"></div>',{url:'https://club.test/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;
   const timers=[];let observer,states=0,resolveState;
-  w.setInterval=fn=>{timers.push(fn);};
+  w.setInterval=(fn,delay)=>{timers.push({fn,delay});};
   w.IntersectionObserver=class{constructor(fn){observer=fn;}observe(){}disconnect(){}};
-  w.Capacitor={getPlatform:()=> 'ios',registerPlugin:()=>({addListener:async()=>{},configure:async()=>({configured:true,linked:true}),getState:()=>{states++;return new Promise(r=>{resolveState=r;});}})};
+  w.Capacitor={getPlatform:()=> 'ios',isPluginAvailable:name=>name==='ClubSpotify',registerPlugin:()=>({addListener:async()=>{},configure:async()=>({configured:true,linked:true}),getState:()=>{states++;return new Promise(r=>{resolveState=r;});}})};
   w.eval(read('spotify-player.js'));
   await w.ClubSpotify.mount(w.document.getElementById('player'),'spotify:playlist:abc','owner');
-  timers[1]();assert.equal(states,0);
+  const poll=timers.find(timer=>timer.delay===10000)?.fn;
+  assert.equal(typeof poll,'function','the native state poll is scheduled at its declared cadence');
+  poll();assert.equal(states,0);
   observer([{isIntersecting:true}]);assert.equal(states,1);
-  timers[1]();assert.equal(states,1);
+  poll();assert.equal(states,1);
   resolveState({linked:true});await flush();
-  observer([{isIntersecting:false}]);timers[1]();assert.equal(states,1);
+  observer([{isIntersecting:false}]);poll();assert.equal(states,1);
   dom.window.close();
 });
 

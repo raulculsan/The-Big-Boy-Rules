@@ -143,7 +143,11 @@
   }
   async function selectCompass(index) {
     if (!isOpen()) return;
-    if (turning) {compassQueued = index; return;}
+    if (turning) {
+      compassQueued = index;
+      pageAnimations.forEach(animation => { try { animation.playbackRate = 2; } catch {} });
+      return;
+    }
     await turn(index);
     if (compassQueued !== null && isOpen()) {
       const next = compassQueued; compassQueued = null;

@@ -358,6 +358,8 @@ function scheduleIdleStartup() {
       return;
     }
     const task = idleStartupQueue.shift();
+    // Signing out can empty the queue after its idle callback was scheduled.
+    if (!task) return;
     try { task.callback(); }
     finally {
       // Yield a painted frame between independent surfaces instead of one long
@@ -1942,6 +1944,7 @@ function releaseChatMenuFocus(menu, immediate = false) {
 function focusChatMenuSource(menu, source) {
   releaseChatMenuFocus(menu, true);
   const rect = source.getBoundingClientRect();
+  const menuWidth = menu.offsetWidth, menuHeight = menu.offsetHeight;
   const layer = document.createElement("div");
   layer.className = "chat-menu-focus-layer";
   layer.setAttribute("aria-hidden", "true");
@@ -1980,12 +1983,12 @@ function focusChatMenuSource(menu, source) {
   const viewport = window.visualViewport;
   const offsetLeft = viewport?.offsetLeft || 0, offsetTop = viewport?.offsetTop || 0;
   const width = viewport?.width || innerWidth, height = viewport?.height || innerHeight;
-  const scale = Math.min(1.025, (width - 32) / rect.width, Math.max(50, height - menu.offsetHeight - 44) / rect.height);
+  const scale = rect.width > 0 && rect.height > 0 ? Math.min(1.025, (width - 32) / rect.width, Math.max(50, height - menuHeight - 44) / rect.height) : 1;
   const previewWidth = rect.width * scale, previewHeight = rect.height * scale;
   const left = Math.max(offsetLeft + 16, Math.min(rect.left - (previewWidth - rect.width) / 2, offsetLeft + width - previewWidth - 16));
-  const top = Math.max(offsetTop + 16, Math.min(rect.top - 4, offsetTop + height - previewHeight - menu.offsetHeight - 28));
+  const top = Math.max(offsetTop + 16, Math.min(rect.top - 4, offsetTop + height - previewHeight - menuHeight - 28));
   preview.style.cssText = `left:${left}px;top:${top}px;width:${rect.width}px;height:${rect.height}px;transform:scale(${scale});transform-origin:top left;`;
-  positionChatMenu(menu, Math.min(left + previewWidth - menu.offsetWidth, left), top + previewHeight);
+  positionChatMenu(menu, Math.min(left + previewWidth - menuWidth, left), top + previewHeight, menuWidth, menuHeight);
   menu.style.transformOrigin = "top center";
   source.classList.add("chat-menu-source-hidden");
   chatMenuFocus.set(menu, {layer, source});
@@ -2036,15 +2039,15 @@ function animateChatMenu(menu, opening) {
     animation.cancel();
   });
 }
-function positionChatMenu(menu, x, y) {
+function positionChatMenu(menu, x, y, menuW = menu.offsetWidth, menuH = menu.offsetHeight) {
   const viewport = window.visualViewport;
   const left = viewport?.offsetLeft || 0, top = viewport?.offsetTop || 0;
   const width = viewport?.width || innerWidth, height = viewport?.height || innerHeight;
-  const menuLeft = Math.max(left + 12, Math.min(x, left + width - menu.offsetWidth - 12));
-  const menuTop = Math.max(top + 12, Math.min(y + 8, top + height - menu.offsetHeight - 12));
+  const menuLeft = Math.max(left + 12, Math.min(x, left + width - menuW - 12));
+  const menuTop = Math.max(top + 12, Math.min(y + 8, top + height - menuH - 12));
   menu.style.left = `${menuLeft}px`;
   menu.style.top = `${menuTop}px`;
-  menu.style.transformOrigin = `${Math.max(12, Math.min(menu.offsetWidth - 12, x - menuLeft))}px ${y > menuTop ? "bottom" : "top"}`;
+  menu.style.transformOrigin = `${Math.max(12, Math.min(menuW - 12, x - menuLeft))}px ${y > menuTop ? "bottom" : "top"}`;
 }
 function closeMessageMenu(restoreFocus = false) {
   const target = messageMenuTarget;
@@ -2556,7 +2559,10 @@ function safeAttachmentUrl(value) {
 function renderMessageAttachment(message) {
   const attachmentUrl = safeAttachmentUrl(message.attachmentUrl);
   if (!attachmentUrl) {
-    if (privateAttachmentPath(message.attachmentUrl)) void resolvePrivateAttachments();
+    if (privateAttachmentPath(message.attachmentUrl)) {
+      void resolvePrivateAttachments();
+      return `<span class="retired-content" aria-busy="true">Cargando adjunto…</span>`;
+    }
     return `<span class="retired-content">Adjunto no disponible</span>`;
   }
   if (message.attachmentType === "text/news-link") {
@@ -3152,7 +3158,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const sleepTail = character.querySelector(".chota-sleep-tail");
   let lastSleepMovement = "head";
   let inView = false, timer = 0, frameTimer = 0, blinkTimer = 0, animations = [], destroyed = false, paused = false, spriteRequest = 0;
-  let bedtimeActive = false, bedtimeSwitch = null, wakingActive = false, wakingComplete = null, lastAmbientAction = "";
+  let bedtimeActive = false, bedtimeSwitch = null, wakingActive = false, wakingComplete = null, lastAmbientAction = "", frameRaf = 0;
   const attentionTimes = new Map();
   let lastRoomMoment = pet.closest(".clubhouse-room, .chota-viewer-room-scene")?.dataset.time || "";
   let lastPersonalAt = performance.now(), lastTouchAt = -Infinity;
@@ -3179,6 +3185,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     clearTimeout(timer);
     clearTimeout(frameTimer);
     clearTimeout(blinkTimer);
+    if (frameRaf) { if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(frameRaf); else clearTimeout(frameRaf); frameRaf = 0; }
     animations.forEach(animation => animation.cancel());
     animations = [];
     pet.style.transform = "";
@@ -3384,6 +3391,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     });
   }
   function advanceRoomVisit() {
+    frameRaf = 0;
     if (!roomVisit || !active()) { refresh(); return; }
     const visit = roomVisit, elapsed = performance.now() - visit.started;
     const {home,target,approach,kind,room} = visit;
@@ -3433,7 +3441,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       else { done(); return; }
     }
     // Pixel-art gait changes at 8 fps; the path itself stays smooth at display speed.
-    frameTimer = setTimeout(advanceRoomVisit, 16);
+    frameRaf = typeof requestAnimationFrame === "function" ? requestAnimationFrame(advanceRoomVisit) : setTimeout(advanceRoomVisit, 16);
   }
   function noticeUser() {
     if (!active() || performance.now() - lastTouchAt < 3000) return;
@@ -4617,7 +4625,6 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
-    globalThis.ClubCoinMissions?.reset();
     globalThis.ClubSeasons?.reset();
     globalThis.PlanWidget?.clear();
     globalThis.AdminGrants?.reset();
@@ -4694,8 +4701,16 @@ document.getElementById('offlineAlbumAccess')?.addEventListener('click',async ev
 });
 
 function showLogin() {
+  globalThis.CardCollection?.close();
   globalThis.ClubAccountSecurity?.reset();
   globalThis.ClubOnboarding?.reset();
+  idleStartupQueue.length = 0;
+  for (const timer of realtimeRefreshTimers.values()) clearTimeout(timer);
+  realtimeRefreshTimers.clear();
+  for (const ch of [presenceChannel, messageChannel, notificationsChannel, privateChannel, eventChannel, settingsChannel, chatChannelsRealtime, helpRealtime, achievementsRealtime, profilesRealtime]) {
+    if (db && ch) db.removeChannel(ch);
+  }
+  presenceChannel = messageChannel = notificationsChannel = privateChannel = eventChannel = settingsChannel = chatChannelsRealtime = helpRealtime = achievementsRealtime = profilesRealtime = null;
   document.body.classList.remove("session-restoring");
   currentUser = null;
   globalThis.ClubDrafts?.suspend();
@@ -4704,14 +4719,12 @@ function showLogin() {
   adminConsole?.sync();
   accountRequests?.sync();
   globalThis.ClubMotion?.configure(null);
-  globalThis.CardCollection?.close();
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
   globalThis.ChotaShop?.reset();
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
-    globalThis.ClubCoinMissions?.reset();
     globalThis.ClubCoinMissions?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
@@ -4751,7 +4764,6 @@ async function logoutCurrentUser() {
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
-    globalThis.ClubCoinMissions?.reset();
     globalThis.ClubCoinMissions?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
@@ -7682,6 +7694,7 @@ async function finishPageBackGesture(event) {
 }
 document.addEventListener("pointerup", finishPageBackGesture, {passive: true});
 document.addEventListener("pointercancel", finishPageBackGesture, {passive: true});
+document.addEventListener("lostpointercapture", finishPageBackGesture, {passive: true});
 document.addEventListener("click", event => {
   if (event.isTrusted && Date.now() < suppressPageBackClickUntil) {
     event.preventDefault();
@@ -7693,6 +7706,9 @@ document.addEventListener("pointerdown", startChatBackGesture, {passive: false})
 document.addEventListener("pointermove", moveChatBackGesture, {passive: false});
 document.addEventListener("pointerup", finishChatBackGesture, {passive: true});
 document.addEventListener("pointercancel", event => {
+  if (chatBackGesture?.pointerId === event.pointerId) resetChatBackGesture({settle: true});
+}, {passive: true});
+document.addEventListener("lostpointercapture", event => {
   if (chatBackGesture?.pointerId === event.pointerId) resetChatBackGesture({settle: true});
 }, {passive: true});
 document.addEventListener("click", event => {
@@ -8319,12 +8335,6 @@ globalThis.ChotaGames?.initialize({
 });
 
 globalThis.ClubSocial?.init({db, getUser: () => currentAuthUser, refreshPacks: () => globalThis.DailyPacks?.refresh(true)});
-
-globalThis.ClubCoinMissions?.init({
-  db, getUser: () => currentAuthUser,
-  refreshWallet: () => Promise.all([globalThis.BannerShop?.refresh(true), globalThis.ChotaShop?.refresh(true)]),
-  navigate: goTo,
-});
 
 globalThis.ClubCoinMissions?.init({
   db, getUser: () => currentAuthUser,
