@@ -12,7 +12,7 @@
     dialog.id = 'accountSecurity';
     dialog.className = 'account-security';
     dialog.setAttribute('aria-labelledby', 'accountSecurityTitle');
-    dialog.innerHTML = `<header><span class="security-emblem" aria-hidden="true">✓</span><div><small>TU CUENTA · SEGURIDAD</small><h2 id="accountSecurityTitle">Protege tu acceso</h2></div><button type="button" data-security-close aria-label="Cerrar">×</button></header><div data-security-content></div><p class="security-feedback" data-security-feedback role="status" aria-live="polite"></p><footer><button type="button" data-security-recovery>He perdido el acceso</button><button type="button" data-security-logout>Cerrar sesión</button></footer>`;
+    dialog.innerHTML = `<div class="security-page"><header class="security-page-heading"><div><small>The Big Boy Rules</small><h2 id="accountSecurityTitle">Seguridad</h2></div><button type="button" data-security-close aria-label="Cerrar seguridad">Cerrar</button></header><div class="security-page-body"><div data-security-content><p role="status">Comprobando la protección de tu cuenta…</p></div><p class="security-feedback" data-security-feedback role="status" aria-live="polite"></p><footer><button type="button" data-security-recovery>Necesito ayuda con mi acceso</button><button type="button" data-security-logout>Cerrar sesión</button></footer></div></div>`;
     dialog.addEventListener('cancel', event => { if (required || busy) event.preventDefault(); else if(globalThis.ClubMotion?.closeDialog){event.preventDefault();void globalThis.ClubMotion.closeDialog(dialog);} });
     dialog.addEventListener('close', clearEnrollment);
     dialog.addEventListener('click', event => {
@@ -59,12 +59,12 @@
   };
   function providerCard(provider, linked = false, optional = false) {
     const name = provider === 'google' ? 'Google' : 'Apple';
-    return `<article class="security-method security-method--${provider}"><div class="security-method-heading"><span class="security-brand security-brand--${provider}">${securityIcons[provider]}</span><div><h4>${name}</h4><span class="security-method-label">Cuenta vinculada</span></div><span class="security-badge${linked ? ' is-active' : ''}">${linked ? 'Vinculada' : optional ? 'Opcional' : 'Sin vincular'}</span></div><p>${linked ? `Tu cuenta de ${name} está asociada a este perfil.` : `Conecta tu cuenta de ${name} con tu perfil de Big Boy.`}</p>${linked ? '<div class="security-method-confirmation"><span aria-hidden="true">✓</span> Vinculación completada</div>' : `<button type="button" class="security-method-action" data-provider="${provider}">${securityIcons[provider]}<span>Vincular con ${name}</span></button>`}</article>`;
+    return `<article class="security-method security-method--${provider}"><div class="security-method-heading"><span class="security-brand security-brand--${provider}">${securityIcons[provider]}</span><div><h4>${name}</h4><span class="security-method-label">Acceso con tu cuenta</span></div><span class="security-badge${linked ? ' is-active' : ''}">${linked ? 'Vinculada' : optional ? 'Opcional' : 'Sin vincular'}</span></div><p>${linked ? `Tu cuenta de ${name} está asociada a este perfil.` : `Conecta tu cuenta de ${name} con tu perfil de Big Boy.`}</p>${linked ? '<div class="security-method-confirmation"><span aria-hidden="true">✓</span> Vinculación completada</div>' : `<button type="button" class="security-method-action" data-provider="${provider}">${securityIcons[provider]}<span>Vincular con ${name}</span></button>`}</article>`;
   }
   const escapeText=value=>String(value||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function emailCard(optional=false){
     const active=policy?.email_verified===true;
-    return `<article class="security-method"><div class="security-method-heading"><span class="security-brand">${securityIcons.email}</span><div><h4>Correo personal</h4><span class="security-method-label">Recuperación de acceso</span></div><span class="security-badge${active?' is-active':''}">${active?'Verificado':optional?'Opcional':'Pendiente'}</span></div><p>${active?escapeText(user.email):'Vincula tu correo para recuperar tu contraseña cuando lo necesites.'}</p><label class="security-email-label">Correo electrónico<input type="email" data-security-email-input autocomplete="email" maxlength="254" placeholder="tu@email.com"></label><button type="button" class="security-method-action" data-security-email>${active?'Cambiar correo':'Verificar correo'}</button><button type="button" class="security-text" data-security-refresh>Comprobar verificación</button></article>`;
+    return `<article class="security-method security-method--email"><div class="security-method-heading"><span class="security-brand">${securityIcons.email}</span><div><h4>Correo personal</h4><span class="security-method-label">Recuperación de acceso</span></div><span class="security-badge${active?' is-active':''}">${active?'Verificado':optional?'Opcional':'Pendiente'}</span></div><p>${active?escapeText(user.email):'Vincula tu correo para recuperar tu contraseña cuando lo necesites.'}</p>${active?'<details class="security-email-change"><summary>Cambiar correo electrónico</summary>':''}<label class="security-email-label">Correo electrónico<input type="email" data-security-email-input autocomplete="email" maxlength="254" placeholder="tu@email.com"></label><button type="button" class="security-method-action" data-security-email>${active?'Cambiar correo':'Verificar correo'}</button><button type="button" class="security-text" data-security-refresh>Comprobar verificación</button>${active?'</details>':''}</article>`;
   }
   async function linkEmail(){
     const email=dialog.querySelector('[data-security-email-input]')?.value.trim();
@@ -119,7 +119,7 @@
       required = false;
       dialog.querySelector('[data-security-close]').hidden = false;
       const visibleProviders = [...new Set([...providers(), ...linked])];
-      content.innerHTML = `<h3 class="security-overview-title">Seguridad de la cuenta</h3><p class="security-overview-description">Tu correo verificado o Google vinculado protege la recuperación de tu cuenta. Solo necesitas una de las dos opciones.</p><div class="security-methods">${visibleProviders.map(p => providerCard(p, linked.includes(p), contactReady)).join('')}${emailCard(contactReady)}${authenticatorCard(verified.length > 0)}</div>${verified.length ? '<p class="security-recovery-note">Si cambias de móvil, conserva tu autenticador o contacta con administración antes de perder el acceso.</p>' : ''}`;
+      content.innerHTML = `<section class="security-account-overview"><span class="security-overview-mark" aria-hidden="true">${securityIcons.authenticator}</span><div><h3 class="security-overview-title">${contactReady && verified.length ? 'Tu cuenta está protegida' : contactReady ? 'Tu acceso está vinculado' : 'Completa la protección de tu cuenta'}</h3><p class="security-overview-description">${contactReady ? 'Puedes recuperar el acceso con tu correo verificado o tu cuenta vinculada.' : 'Verifica tu correo personal o vincula Google. Con una de las dos opciones es suficiente.'}</p></div></section><div class="security-methods">${visibleProviders.map(p => providerCard(p, linked.includes(p), contactReady)).join('')}${emailCard(contactReady)}${authenticatorCard(verified.length > 0)}</div>${verified.length ? '<p class="security-recovery-note">Si cambias de móvil, conserva tu autenticador o contacta con administración antes de perder el acceso.</p>' : ''}`;
     } else {
       dialog.close();
       resume?.(true);
@@ -175,16 +175,8 @@
       if (result.error) throw new Error('No se pudo vincular la cuenta. Si ya pertenece a otro perfil, contacta con administración.');
       if (!result.data?.url) throw new Error('No se pudo iniciar la vinculación.');
       if (native()) {
-        const bridge = window.Capacitor.registerPlugin('ClubAuth');
-        const callback = await bridge.authenticate({url:result.data.url});
-        const url = new URL(callback.url);
-        if (url.protocol !== 'bigboyrules:' || url.hostname !== 'auth' || url.pathname !== '/callback') throw new Error('La respuesta de acceso no es válida.');
-        if (url.searchParams.get('error')) throw new Error('La vinculación se canceló o no pudo completarse.');
-        const code = url.searchParams.get('code');
-        if (code) {
-          const exchanged = await client.auth.exchangeCodeForSession(code);
-          if (exchanged.error) throw exchanged.error;
-        }
+        if (!globalThis.ClubNativeAuth) throw new Error('Actualiza la app para completar la vinculación con Google.');
+        await globalThis.ClubNativeAuth.authenticate(client, result.data.url, {owner:user.id});
         await verifyPendingLink();
         await refresh();
       } else location.assign(result.data.url);
@@ -248,6 +240,7 @@
     async open(db, authUser) {
       client = db; user = authUser; management = true; required = false;
       mount();
+      dialog.querySelector('[data-security-content]').innerHTML = '<p role="status">Comprobando la protección de tu cuenta…</p>';
       if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(dialog);else if(!dialog.open)dialog.showModal();
       await run(refresh);
     },

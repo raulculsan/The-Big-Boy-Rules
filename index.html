@@ -39,7 +39,8 @@
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="account-requests.css?v=20261019-identity-353" />
-  <link rel="stylesheet" href="account-security.css?v=20261019-identity-353" />
+  <link rel="stylesheet" href="profile-account-sheet.css?v=20261030-account-sheet-442" />
+  <link rel="stylesheet" href="account-security.css?v=20261030-account-screen-442" />
   <link rel="stylesheet" href="styles.css?v=20261020-polish-357" />
   <link rel="stylesheet" href="chat.css?v=20261021-replies-359" />
   <link rel="stylesheet" href="chat-themes.css?v=20261012-277" />
@@ -56,7 +57,8 @@
   <link rel="stylesheet" href="visual-system.css?v=20261028-text-fields-427" />
   <link rel="stylesheet" href="clubhouse.css?v=20261030-chota-wake-439" />
   <link rel="stylesheet" href="chota-shop.css?v=20261027-remote-catalog-426" />
-  <link rel="stylesheet" href="club-social.css?v=20261026-missions-fullscreen-417" />
+  <link rel="stylesheet" href="coin-missions.css?v=20261030-coin-missions-442" />
+  <link rel="stylesheet" href="club-social.css?v=20261030-coin-missions-442" />
   <link rel="stylesheet" href="club-live.css?v=20261025-passport-406" />
   <link rel="stylesheet" href="chota-games.css?v=20261024-stages-401" />
   <link rel="stylesheet" href="club-experiences.css?v=20261023-club-recaps-386" />
@@ -648,8 +650,8 @@
 
   <div class="profile-quick-menu" id="profileQuickMenu" role="menu" aria-label="Opciones de la cuenta" aria-hidden="true" hidden>
     <div class="profile-quick-menu-heading"><span>MI CUENTA</span><strong>Opciones rápidas</strong></div>
-    <button type="button" role="menuitem" id="quickHelpButton"><span class="profile-quick-menu-icon">?</span><span><strong>Ayuda y sugerencias</strong><small>Hablar con administración</small></span></button>
-    <button type="button" role="menuitem" id="quickSecurityButton"><span class="profile-quick-menu-icon">✓</span><span><strong>Seguridad de la cuenta</strong><small>Correo o Google y autenticador</small></span></button>
+    <button type="button" role="menuitem" id="quickHelpButton"><span class="profile-quick-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 0 1 4.8 1c0 1.6-2.4 2-2.4 3.5M12 17h.01"/></svg></span><span><strong>Ayuda y sugerencias</strong><small>Hablar con administración</small></span></button>
+    <button type="button" role="menuitem" id="quickSecurityButton"><span class="profile-quick-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></svg></span><span><strong>Seguridad de la cuenta</strong><small>Correo o Google y autenticador</small></span></button>
     <button type="button" role="menuitem" class="danger" id="quickLogoutButton"><span class="profile-quick-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></span><span><strong>Cerrar sesión</strong><small>Salir de esta cuenta</small></span></button>
     <div class="profile-quick-menu-tip">Mantén pulsado tu perfil para abrir este menú.</div>
   </div>
@@ -977,21 +979,24 @@
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
   <script defer src="collection-social.js?v=20261022-pwa-shell-376"></script>
-  <script defer src="album.js?v=20261026-album-missions-416"></script>
+  <script defer src="album.js?v=20261030-coin-missions-442"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="shop-catalog-media.js?v=20261027-remote-catalog-426"></script>
-  <script defer src="banner-shop.js?v=20261027-remote-catalog-426"></script>
+  <script defer src="banner-shop.js?v=20261030-reward-catalog-442"></script>
   <script defer src="chota-shop.js?v=20261027-remote-catalog-426"></script>
-  <script defer src="club-social.js?v=20261026-missions-fullscreen-417"></script>
-  <script defer src="club-live.js?v=20261025-fluid-motion-407"></script>
-  <script defer src="chota-games.js?v=20261025-fluid-motion-407"></script>
+  <script defer src="coin-missions.js?v=20261030-coin-missions-442"></script>
+  <script defer src="club-social.js?v=20261030-coin-missions-442"></script>
+  <script defer src="club-live.js?v=20261030-coin-missions-442"></script>
+  <script defer src="chota-games.js?v=20261030-coin-missions-442"></script>
   <script defer src="plan-widget.js?v=20261024-social-393"></script>
   <script defer src="group-interactions.js?v=20261025-fluid-motion-407"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
   <script defer src="admin-console.js?v=20261030-app-update-440"></script>
-  <script defer src="account-security.js?v=20261025-fluid-motion-407"></script>
-  <script defer src="account-requests.js?v=20261025-fluid-motion-407"></script>
-  <script defer src="app.js?v=20261030-app-update-440"></script>
+  <script defer src="native-auth.js?v=20261030-native-google-442"></script>
+  <script defer src="profile-account-sheet.js?v=20261030-account-sheet-442"></script>
+  <script defer src="account-security.js?v=20261030-account-screen-442"></script>
+  <script defer src="account-requests.js?v=20261030-native-google-442"></script>
+  <script defer src="app.js?v=20261030-rewards-security-442"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;

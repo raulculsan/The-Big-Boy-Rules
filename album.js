@@ -7,7 +7,7 @@
   const rarityOf = item => ({common:'common',comun:'common',retro:'retro',special:'special',especial:'special',epic:'epic',epica:'epic',legendary:'legendary',legendaria:'legendary','full art':'full_art',full_art:'full_art','vice city':'vice_city',vice_city:'vice_city',halloween:'halloween'}[normalize(item.rarity || item.edition)] || 'common');
   const icon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15M5 8h4M5 11h4M15 8h4M15 11h4"/></svg>';
   let collections = [{id:'los-nuestros-01',name:'Los nuestros · Colección 01'}], selectedCollection = 'los-nuestros-01';
-  let query = '', kindFilter = '', rarityFilter = '', ownershipFilter = '', allSlots = [];
+  let query = '', kindFilter = '', rarityFilter = '', ownershipFilter = '', allSlots = [], collectibleIds = null;
   let savedAt = 0, isolatedOffline = false;
   const slotsPerPage = 5;
   let inventory = null, loading = false, failure = '', page = 0, slots = [], pages = [], refresh, navigate, opener, returnSection = 'sobres', renderedSlots = '';
@@ -18,7 +18,7 @@
   main.append(dialog);
   const isOpen = () => dialog.classList.contains('active') && !dialog.hidden;
   function buildSlots() {
-    const catalog = (globalThis.CardCollection?.catalog || []).filter(item => (item.collection || 'los-nuestros-01') === selectedCollection);
+    const catalog = (globalThis.CardCollection?.catalog || []).filter(item => (item.collection || 'los-nuestros-01') === selectedCollection && (!collectibleIds || collectibleIds.has(item.id)));
     // Partition once: the former nested filters repeatedly normalized every
     // design for all 24 rarity/kind combinations on each album opening.
     const grouped = new Map();
@@ -28,7 +28,7 @@
       grouped.get(key).push(design);
     }
     allSlots = rarities.flatMap(rarity => kinds.flatMap((kind, index) => {
-      const designs = grouped.get(`${rarity.key}:${kind.key}`) || [];
+      const designs = (grouped.get(`${rarity.key}:${kind.key}`) || []).sort((a,b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
       return Array.from({length:Math.max(rarity.capacity[index], designs.length)}, (_, position) => ({rarity,kind,design:designs[position] || null}));
     })).map((slot,index) => ({...slot,number:index + 1}));
     applyFilters();
@@ -422,7 +422,7 @@
     if (isOpen() && target !== 'album' && document.getElementById(target)?.classList.contains('page-section')) (navigate || fallbackNavigate)(target);
   });
   document.addEventListener('bb:card-catalog-updated', event => {if (event.detail?.collections?.length) collections=event.detail.collections; buildSlots(); renderedSlots=''; render();});
-  globalThis.CardAlbum = Object.freeze({icon,open,openCollection(id){if(collections.some(c=>c.id===id)){selectedCollection=id;page=0;buildSlots();renderedSlots='';}open();},openOffline,closeOffline,close,didNavigate,update(data) {if(isolatedOffline)return;inventory=data.cards; savedAt=data.savedAt || 0; loading=!!data.loading; failure=data.failure || ''; applyFilters(); render();},configure(config) {refresh=config.refresh; navigate=config.navigate; if (config.collections?.some(c => c?.id && c?.name)) {collections = config.collections.filter(c => c?.id && c?.name); if (!collections.some(c => c.id === selectedCollection)) selectedCollection = collections[0]?.id || 'los-nuestros-01'; buildSlots(); render();}},reset() {closeOffline();clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; warmedImages.clear(); inventory=null; savedAt=0; query=kindFilter=rarityFilter=ownershipFilter=''; dialog.querySelector('[data-album-search]').value=''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value=''); page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
+  globalThis.CardAlbum = Object.freeze({icon,open,openCollection(id){if(collections.some(c=>c.id===id)){selectedCollection=id;page=0;buildSlots();renderedSlots='';}open();},openOffline,closeOffline,close,didNavigate,update(data) {if(isolatedOffline)return;if(Array.isArray(data.catalog)){const next=new Set(data.catalog.map(c=>c.card_id));if(!collectibleIds||next.size!==collectibleIds.size||[...next].some(id=>!collectibleIds.has(id))){collectibleIds=next;buildSlots();renderedSlots='';}}inventory=data.cards; savedAt=data.savedAt || 0; loading=!!data.loading; failure=data.failure || ''; applyFilters(); render();},configure(config) {refresh=config.refresh; navigate=config.navigate; if (config.collections?.some(c => c?.id && c?.name)) {collections = config.collections.filter(c => c?.id && c?.name); if (!collections.some(c => c.id === selectedCollection)) selectedCollection = collections[0]?.id || 'los-nuestros-01'; buildSlots(); render();}},reset() {closeOffline();clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; warmedImages.clear(); inventory=null; collectibleIds=null; savedAt=0; query=kindFilter=rarityFilter=ownershipFilter=''; dialog.querySelector('[data-album-search]').value=''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value=''); page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
 })();
 
 /* Collection missions live with the room's other missions. Rewards remain server-owned. */

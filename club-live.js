@@ -165,7 +165,7 @@
   if(b.hasAttribute('data-cl-arrival'))return void mutate(async()=>{const own=state.arrivals.some(a=>a.user_id===uid());await query(own?cfg.db.from('club_event_arrivals').delete().eq('event_id',state.event.id).eq('occurrence',state.occurrence).eq('user_id',uid()):cfg.db.from('club_event_arrivals').insert({event_id:state.event.id,occurrence:state.occurrence,user_id:uid()}));});
   if(b.dataset.clFeature)return void mutate(async()=>{const memory=state.memories.find(m=>String(m.id)===b.dataset.clFeature);if(!memory)return;await query(cfg.db.from('club_event_memories').update({featured:!memory.featured}).eq('id',memory.id));roomCache=null;document.querySelectorAll('.clubhouse-memory').forEach(n=>void mountRoom(n));});
   if(b.dataset.clVote)return void mutate(()=>query(cfg.db.from('club_event_votes').upsert({question_id:b.dataset.clVote,user_id:uid(),option_index:Number(b.dataset.option)},{onConflict:'question_id,user_id'})));
-  if(b.dataset.clLinkPhoto)return void mutate(()=>query(cfg.db.from('club_event_memories').upsert({event_id:state.event.id,occurrence:state.occurrence,moment_id:Number(b.dataset.clLinkPhoto),created_by:uid()},{onConflict:'event_id,occurrence,moment_id',ignoreDuplicates:true})));
+  if(b.dataset.clLinkPhoto)return void mutate(async()=>{await query(cfg.db.from('club_event_memories').upsert({event_id:state.event.id,occurrence:state.occurrence,moment_id:Number(b.dataset.clLinkPhoto),created_by:uid()},{onConflict:'event_id,occurrence,moment_id',ignoreDuplicates:true}));globalThis.ClubCoinMissions?.activity({refreshWallet:true});});
  });
  document.addEventListener('submit',e=>{
   const f=e.target;if(!dialog?.contains(f)||!f.matches('[data-cl-compose],[data-cl-reveal],[data-cl-place],[data-cl-recap],[data-cl-caption],[data-cl-memory]'))return;e.preventDefault();const data=new FormData(f);
@@ -181,7 +181,7 @@
    }
    try{await query(cfg.db.from('club_event_memories').insert({event_id:eventId,occurrence,created_by:owner,caption,media_path:path,media_type:type,featured:!!path}));}
    catch(error){if(path)await cfg.db.storage.from('club-memories').remove([path]);throw error;}
-   roomCache=null;document.querySelectorAll('.clubhouse-memory').forEach(n=>void mountRoom(n));globalThis.ClubSocial?.refreshGoal(true);
+   roomCache=null;document.querySelectorAll('.clubhouse-memory').forEach(n=>void mountRoom(n));globalThis.ClubSocial?.refreshGoal(true);globalThis.ClubCoinMissions?.activity({refreshWallet:true});
   });
   if(f.hasAttribute('data-cl-recap'))return void mutate(()=>query(cfg.db.from('club_event_recaps').upsert({event_id:state.event.id,occurrence:state.occurrence,highlight:String(data.get('highlight')).trim(),created_by:uid(),updated_at:new Date().toISOString()},{onConflict:'event_id,occurrence'})));
   if(f.dataset.clCaption)return void mutate(()=>query(cfg.db.from('club_event_memories').update({caption:String(data.get('caption')).trim()}).eq('id',f.dataset.clCaption)));

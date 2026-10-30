@@ -771,7 +771,7 @@
     if (el('discardAllDuplicates')) el('discardAllDuplicates').disabled = busy || loading || !extraCopies() || !online();
     if (el('duplicatesStatus')) el('duplicatesStatus').textContent = failure || notice || (loading ? 'Actualizando repetidas…' : state ? `${extraCopies()} copias repetidas. Conservas una de cada carta.` : 'Actualiza la colección para consultar las repetidas.');
     if (state?.cards) lastInventory = state.cards;
-    globalThis.CardAlbum?.update({cards:lastInventory, loading:loading || busy, failure, savedAt:inventorySavedAt});
+    globalThis.CardAlbum?.update({cards:lastInventory, catalog:state?.card_catalog, loading:loading || busy, failure, savedAt:inventorySavedAt});
     globalThis.CollectionSocial?.update(lastInventory);
     const status = el('bannerShopStatus');
     if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); status.classList.toggle('is-passive', !failure && !!state); }

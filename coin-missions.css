@@ -1,0 +1,60 @@
+/* One wallet summary and six expandable groups; no separate navigation screen. */
+.coin-missions{min-width:0;color:#f5f3ed}
+.coin-missions-overview{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px;background:#25221b;border-radius:20px;margin-bottom:28px}
+.coin-missions-overview span{font-size:13px;color:#c4bda9}
+.coin-missions-overview h3{margin:6px 0 8px!important;font-size:32px!important;line-height:1.15!important;font-weight:600;letter-spacing:-.6px;font-variant-numeric:tabular-nums;color:#efd897!important}
+.coin-missions-overview h3 small{font-size:14px;color:#e0d4b4;font-weight:400;letter-spacing:0}
+.coin-missions-overview p{margin:0!important;font-size:13px!important;color:#c4bda9!important;line-height:1.5!important}
+.coin-missions-mark{display:block;width:54px;height:54px;flex:none}
+.coin-missions-mark svg{width:100%;height:100%;stroke:#cdb36f;stroke-width:1.5}
+.coin-missions-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 16px}
+.coin-missions-toolbar h3{margin:0!important;font-size:20px!important;letter-spacing:-.3px}
+.coin-missions-filter{display:flex;gap:4px;flex:none}
+.coin-missions button{font:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.coin-missions-filter button{border:0;border-radius:999px;background:transparent;color:#b4b4b4;padding:10px 12px;min-height:44px;font-size:12px}
+.coin-missions-filter button[aria-pressed=true]{background:#30302d;color:#f5f3ed}
+.coin-missions-feedback{margin:0 0 16px;color:#e8d5a2;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.coin-missions-feedback:empty{display:none}
+.coin-mission-group{border-top:1px solid #3d3b34}
+.coin-mission-group:last-child{border-bottom:1px solid #3d3b34}
+.coin-mission-group>summary{display:flex;align-items:center;gap:12px;min-height:80px;padding:16px 0;box-sizing:border-box;cursor:pointer;list-style:none}
+.coin-mission-group>summary::-webkit-details-marker{display:none}
+.coin-mission-group>summary>span:first-child{flex:1;min-width:0}
+.coin-mission-group h4{font-size:16px;font-weight:600;margin:0 0 5px;line-height:1.3}
+.coin-mission-group summary small{font-size:12px;line-height:1.4;color:#b8b4a9}
+.coin-mission-group-count{font-size:13px;color:#b8b4a9;font-variant-numeric:tabular-nums}
+.coin-mission-disclosure{font-size:22px;color:#c8c3b5;line-height:1;width:24px;text-align:center;transition:rotate .2s ease}
+.coin-mission-group[open] .coin-mission-disclosure{rotate:45deg}
+.coin-mission-row{display:flex;justify-content:space-between;gap:20px;padding:18px 0;border-top:1px solid #33312d}
+.coin-mission-copy{min-width:0;flex:1}
+.coin-mission-copy h5{font-size:14px;line-height:1.45;font-weight:550;margin:0 0 5px;overflow-wrap:anywhere}
+.coin-mission-copy p{font-size:12px!important;line-height:1.5!important;color:#b8b4a9!important;margin:0 0 12px!important;overflow-wrap:anywhere}
+.coin-mission-reward{flex:none;display:flex;align-items:flex-end;flex-direction:column;justify-content:flex-start;gap:10px;min-width:76px}
+.coin-mission-reward strong{font-size:20px;line-height:1.2;font-weight:600;color:#efd897;text-align:right;font-variant-numeric:tabular-nums}
+.coin-mission-reward strong small{display:block;margin-top:3px;font-size:11px;font-weight:400;color:#b8b4a9}
+.coin-mission-reward button{border:0;border-radius:999px;padding:10px 14px;min-height:44px;background:#e8d39c;color:#191811;font-size:12px;font-weight:600;white-space:nowrap}
+.coin-mission-reward button:disabled{opacity:.6;cursor:wait}
+.coin-mission-reward .coin-mission-go{border:1px solid #565044;background:none;color:#e7dec6;font-weight:400}
+.coin-mission-progress{display:flex;align-items:center;gap:10px}
+.coin-mission-progress progress{appearance:none;-webkit-appearance:none;flex:1;width:100%;height:3px;overflow:hidden;border:0;border-radius:3px;background:#3b3831;accent-color:#cdb36f}
+.coin-mission-progress progress::-webkit-progress-bar{background:#3b3831}
+.coin-mission-progress progress::-webkit-progress-value{background:#cdb36f}
+.coin-mission-progress progress::-moz-progress-bar{background:#cdb36f}
+.coin-mission-progress span{font-size:11px;white-space:nowrap;color:#c4bda9;font-variant-numeric:tabular-nums}
+.coin-mission-state{font-size:12px;color:#b8b4a9}
+.coin-mission-row.is-claimed .coin-mission-reward strong{color:#b8b4a9}
+.coin-missions-more{width:100%;min-height:44px;padding:10px 0;margin-bottom:10px;border:0;background:none;color:#e8d39c;font-size:13px}
+.coin-missions-empty,.coin-missions-loading p{font-size:14px;line-height:1.6;color:#b8b4a9}
+.coin-missions-loading{min-height:180px;padding:24px 0}
+.coin-missions-loading h3{font-size:20px;margin:0 0 12px}
+.coin-missions-loading button{min-height:44px;border:1px solid #565044;border-radius:999px;padding:10px 20px;background:none;color:#e7dec6}
+.coin-missions button:focus-visible,.coin-missions summary:focus-visible{outline:2px solid #e8d39c;outline-offset:3px}
+.club-coin-toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));translate:-50% 0;z-index:2147483000;padding:14px 22px;max-width:calc(100% - 40px);box-sizing:border-box;white-space:nowrap;border-radius:999px;background:#e8d39c;color:#17160f;font:600 15px/1.4 system-ui,sans-serif;box-shadow:0 5px 24px #0006;pointer-events:none}
+@media(max-width:420px){.coin-missions-overview{padding:20px;gap:16px}.coin-missions-mark{width:44px;height:44px}.coin-missions-toolbar{gap:8px}.coin-missions-toolbar h3{font-size:18px!important}.coin-missions-filter button{padding:10px}.coin-mission-row{gap:14px}.coin-mission-reward{min-width:70px}.coin-mission-reward button{padding:10px 12px}}
+@media(prefers-reduced-motion:reduce){.coin-mission-disclosure{transition:none}}
+.club-mission-section.club-mission-section--coins{grid-column:1 / -1;background:#1c1b18;border:1px solid #39362d;border-radius:20px;padding:24px}
+@media(min-width:1050px){.coin-missions-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px;align-items:start}.coin-mission-group{align-self:start}.coin-mission-group:last-child{border-bottom:0}.coin-missions-overview{padding:24px 28px}.coin-missions-mark{width:64px;height:64px}}
+@media(max-width:600px){.club-mission-section.club-mission-section--coins{padding:20px 18px}}
+.coin-mission-objectives{display:grid;gap:8px;list-style:none;margin:14px 0;padding:0}
+.coin-mission-objectives li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:11px;line-height:1.4;color:#c4bda9}
+.coin-mission-objectives b{font-weight:400;white-space:nowrap;color:#b8b4a9}

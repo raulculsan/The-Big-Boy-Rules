@@ -100,3 +100,26 @@ test('older policy without current_aal retains the SDK assurance check', async (
     assert.equal(context.calls.level,1);
   } finally {context.close();}
 });
+
+test('management shows fresh verified protection and keeps changing a verified email secondary', async () => {
+  const context=setup();
+  try {
+    await context.api.open(context.client,context.user);
+    assert.equal(context.window.document.querySelector('.security-overview-title').textContent,'Tu cuenta está protegida');
+    assert.ok(context.window.document.querySelector('.security-email-change [data-security-email-input]'));
+    assert.equal(context.window.document.querySelector('.security-email-change').open,false);
+    assert.match(context.window.document.querySelector('.security-method--email').textContent,/member@example.test/);
+    assert.equal(context.window.document.querySelector('[data-security-close]').hidden,false);
+  } finally {context.close();}
+});
+
+test('management does not describe missing contact or an unverified factor as protected', async () => {
+  const context=setup({user:verifiedUser([{id:'pending',factor_type:'totp',status:'unverified'}]),policy:{...allowed,enforcement_enabled:false,verified_contact_required:false,email_verified:false,identity_linked:false}});
+  try {
+    await context.api.open(context.client,context.user);
+    assert.equal(context.window.document.querySelector('.security-overview-title').textContent,'Completa la protección de tu cuenta');
+    assert.ok(context.window.document.querySelector('[data-security-enroll]'));
+    assert.equal(context.window.document.querySelector('.security-email-change'),null);
+    assert.equal(context.window.document.querySelector('[data-security-close]').hidden,false);
+  } finally {context.close();}
+});

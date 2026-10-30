@@ -867,14 +867,19 @@ document.getElementById("adminSecurityButton")?.addEventListener("click", () => 
 function openProfileQuickMenu() {
   if (!currentUser) return;
   const menu = document.getElementById("profileQuickMenu");
-  menu.hidden = false;
-  menu.setAttribute("aria-hidden", "false");
-  requestAnimationFrame(() => { if (!menu.hidden) menu.classList.add("open"); });
+  if (globalThis.ProfileAccountSheet) {
+    globalThis.ProfileAccountSheet.open({menu, user:currentUser, trigger:document.querySelector(".profile-tab")});
+  } else {
+    menu.hidden = false;
+    menu.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => { if (!menu.hidden) menu.classList.add("open"); });
+  }
   document.querySelector(".profile-tab")?.setAttribute("aria-expanded", "true");
   navigator.vibrate?.(12);
 }
 
 function closeProfileQuickMenu({immediate = false} = {}) {
+  globalThis.ProfileAccountSheet?.close({immediate,restoreFocus:false});
   const menu = document.getElementById("profileQuickMenu");
   if (!menu || menu.hidden) return;
   menu.classList.remove("open");
@@ -4611,6 +4616,8 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ChotaGames?.reset();
     globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
+    globalThis.ClubCoinMissions?.reset();
+    globalThis.ClubCoinMissions?.reset();
     globalThis.ClubSeasons?.reset();
     globalThis.PlanWidget?.clear();
     globalThis.AdminGrants?.reset();
@@ -4704,6 +4711,8 @@ function showLogin() {
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
+    globalThis.ClubCoinMissions?.reset();
+    globalThis.ClubCoinMissions?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
@@ -4742,6 +4751,8 @@ async function logoutCurrentUser() {
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
+    globalThis.ClubCoinMissions?.reset();
+    globalThis.ClubCoinMissions?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
@@ -7422,7 +7433,7 @@ document.addEventListener("click", event => {
 document.addEventListener("click", event => {
   const voiceToggle = event.target.closest("[data-voice-toggle]");
   if (voiceToggle) toggleVoiceNote(voiceToggle);
-  if (!event.target.closest("#profileQuickMenu, .profile-tab")) closeProfileQuickMenu();
+  if (!event.target.closest("#profileQuickMenu, .profile-tab, .profile-account-sheet-panel")) closeProfileQuickMenu();
 });
 document.addEventListener("input", event => {
   const seek = event.target.closest("[data-voice-seek]");
@@ -8309,6 +8320,18 @@ globalThis.ChotaGames?.initialize({
 
 globalThis.ClubSocial?.init({db, getUser: () => currentAuthUser, refreshPacks: () => globalThis.DailyPacks?.refresh(true)});
 
+globalThis.ClubCoinMissions?.init({
+  db, getUser: () => currentAuthUser,
+  refreshWallet: () => Promise.all([globalThis.BannerShop?.refresh(true), globalThis.ChotaShop?.refresh(true)]),
+  navigate: goTo,
+});
+
+globalThis.ClubCoinMissions?.init({
+  db, getUser: () => currentAuthUser,
+  refreshWallet: () => Promise.all([globalThis.BannerShop?.refresh(true), globalThis.ChotaShop?.refresh(true)]),
+  navigate: goTo,
+});
+
 globalThis.ClubLive?.init({
   db,
   getUser: () => currentAuthUser,
@@ -8413,6 +8436,7 @@ if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("l
     if (appUpdateGate?.blocked()) { showLogin(); return; }
     if (navigator.onLine === false) {showLogin();return;}
     if (backendReady) {
+      await globalThis.ClubNativeAuth?.resume(db);
       const {data, error} = await measureSessionStartup("auth-session", () => db.auth.getSession());
       if (error) throw error;
       if (data.session?.user) {

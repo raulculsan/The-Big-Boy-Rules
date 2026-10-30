@@ -151,7 +151,7 @@
     const native=window.Capacitor?.isNativePlatform?.();
     const {data,error}=await api.client.auth.signInWithOAuth({provider:'google',options:{redirectTo:native?'bigboyrules://auth/callback':`${location.origin}${location.pathname}`,skipBrowserRedirect:true,queryParams:{prompt:'select_account'}}});
     if(error||!data.url)throw new Error('No se pudo iniciar Google.');
-    if(native){const bridge=window.Capacitor.registerPlugin('ClubAuth');const result=await bridge.authenticate({url:data.url});const link=new URL(result.url);if(link.protocol!=='bigboyrules:'||link.hostname!=='auth'||link.pathname!=='/callback')throw new Error('Respuesta de Google no válida.');const code=link.searchParams.get('code');if(!code)throw new Error('La vinculación se canceló.');const resultSession=await api.client.auth.exchangeCodeForSession(code);if(resultSession.error)throw resultSession.error;await handleAuthUser(resultSession.data.user);}
+    if(native){if(!globalThis.ClubNativeAuth)throw new Error('Actualiza la app para conectar con Google.');const resultSession=await globalThis.ClubNativeAuth.authenticate(api.client,data.url);await handleAuthUser(resultSession.user);}
     else location.assign(data.url);
    }catch(error){sessionStorage.removeItem(GOOGLE_REQUEST);text(feedback,error.message);}finally{busy=false;}
   }

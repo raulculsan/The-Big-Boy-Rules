@@ -54,7 +54,8 @@ test('missions keep the close control outside the scrolling board and restore ro
   const trigger=h.w.document.querySelector('[data-club-missions-open]');trigger.focus();h.openMissions();
   const dialog=h.w.document.querySelector('.club-missions-dialog'),body=dialog.querySelector('[data-missions-body]');
   assert.equal(body.contains(dialog.querySelector('[data-missions-close]')),false);
-  assert.equal(body.querySelectorAll('.club-mission-section').length,3);
+  assert.equal(body.querySelectorAll('.club-mission-section').length,4);
+  assert.ok(body.querySelector('[data-club-coin-missions]'));
   assert.equal(h.w.document.body.classList.contains('club-missions-open'),true);
   assert.equal(trigger.getAttribute('aria-expanded'),'true');
   const cancel=new h.w.Event('cancel',{cancelable:true});dialog.dispatchEvent(cancel);await tick();
@@ -63,5 +64,15 @@ test('missions keep the close control outside the scrolling board and restore ro
   assert.equal(h.w.document.body.classList.contains('club-missions-open'),false);
   assert.equal(trigger.getAttribute('aria-expanded'),'false');
   assert.equal(h.w.document.activeElement,trigger);
+  h.dom.window.close();
+});
+
+test('album uses active collectible IDs and canonical ordering for reward pages',()=>{
+  const h=setup(async()=>({data:[]}));
+  h.w.CardCollection.catalog.reverse();
+  h.w.CardAlbum.update({catalog:[{card_id:'card-0'},{card_id:'card-2'}],cards:[{card_id:'card-2',quantity:1},{card_id:'card-0',quantity:1}]});
+  h.w.CardAlbum.open();
+  assert.equal(h.w.document.getElementById('cardAlbumSummary').textContent,'2 / 2 cartas');
+  assert.deepEqual([...h.w.document.querySelectorAll('[data-album-card]')].map(n=>n.dataset.albumCard),['card-0','card-2']);
   h.dom.window.close();
 });

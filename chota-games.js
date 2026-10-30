@@ -312,7 +312,7 @@
       if(user()!==actor)return;
       if(!sessionId)throw new Error('No server session');
       const result=config.rpc?await rpc('submit_chota_level_score',{game_session_id:sessionId,submitted_score:score,completed_round:r.completed,level_won:won}):await config.submitScore(game,score,sessionId,r.completed);
-      if(user()===actor){unlockNext(result);if(result?.reward_status==='awarded')void globalThis.DailyPacks?.refresh(true);}
+      if(user()===actor){unlockNext(result);if(result?.reward_status==='awarded')void globalThis.DailyPacks?.refresh(true);globalThis.ClubCoinMissions?.activity({coins:result?.awarded_coins});}
       confirmed=true;
       if(result?.reward_status==='awarded'){if(reward.isConnected)reward.textContent='¡1 sobre ganado! Ya está en tus sobres.';}
       else if(result?.reward_status==='already_claimed'){if(reward.isConnected)reward.textContent='Ya tienes el sobre de este juego de hoy. Vuelve mañana por otro.';}
@@ -329,7 +329,8 @@
     retry.addEventListener('click',persist);
     await persist();
   }
+  async function openGame(id){if(!games[id])return;const actor=user();await open();if(!dialog||actor!==user())return;const token=serial,inventory=await owned();if(!dialog||token!==serial||actor!==user())return;if(inventory.has(id))levels(id);else briefing(id,true);}
   function initialize(options={}){config=options;}
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&round){round.endReason='abandoned';finish(round);}});
-  globalThis.ChotaGames=Object.freeze({initialize,mount,open,mountWeeklyChallenge:weeklyChallenge,reset:()=>close({immediate:true})});
+  globalThis.ChotaGames=Object.freeze({initialize,mount,open,openGame,mountWeeklyChallenge:weeklyChallenge,reset:()=>close({immediate:true})});
 })();
