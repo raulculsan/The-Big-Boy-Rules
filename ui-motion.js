@@ -45,7 +45,7 @@
     return animation;
   }
   function presentDialog(dialog) {
-    if (!dialog?.open || dismissals.has(dialog)) return;
+    if (!dialog?.open || dialog.dataset.motionOwner || dismissals.has(dialog)) return;
     if (owners.get(dialog)?.has('dialog')) return;
     dialog.dataset.motionManaged = 'true';
     const fullscreen = matchMedia('(max-width:760px)').matches;
@@ -114,7 +114,7 @@
   function touchGlass(event) {
     if(event.isPrimary===false||event.button>0||motion.media.matches||transparency.matches||document.hidden)return;
     const element=event.target.closest?.(glassSelector);
-    if(!element||!document.body.classList.contains('authenticated')||element.disabled)return;
+    if(!element||element.closest('[data-motion-owner]')||!document.body.classList.contains('authenticated')||element.disabled)return;
     resetGlass();
     glassTouch={element,id:event.pointerId,rect:element.getBoundingClientRect(),x:event.clientX,y:event.clientY};
     element.dataset.glassTouch='true';paintGlass();

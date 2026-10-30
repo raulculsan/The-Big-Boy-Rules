@@ -81,7 +81,7 @@ body { background: var(--bb2-canvas); color: var(--bb2-ink); }
 .login-brand-copy p,.login-subtitle { color: var(--bb2-muted); line-height: 1.65; }
 .login-form h1 { font-family: "Inter",sans-serif; font-weight: 650; letter-spacing: -.04em; }
 .login-form input { border-radius: 13px; background: var(--bb2-raised); border-color: var(--bb2-line-strong); }
-.login-form input:focus { border-color: var(--bb2-gold); box-shadow: 0 0 0 3px var(--bb2-gold-wash); }
+.login-form input:focus { border-color: var(--interaction-strong); box-shadow: 0 0 0 3px var(--interaction-wash); }
 .login-submit { background: #dbba73; color: #17140c; border: 1px solid #eddaa35c; border-radius: 13px; box-shadow: none; font-weight: 650; }
 body.authenticated { font-feature-settings: "ss01" 1, "cv11" 1; }
 body.authenticated :is(h1,h2,h3) { text-wrap: balance; }
@@ -156,12 +156,12 @@ body.authenticated :is(input:where(:not([type="range"]):not([type="checkbox"]):n
   border-radius: var(--bb2-control-radius);
   color: var(--bb2-ink);
   background-color: var(--bb2-raised);
-  caret-color: var(--bb2-gold);
+  caret-color: var(--interaction-strong);
 }
 body.authenticated :is(input,textarea,select)::placeholder { color: var(--bb2-muted); opacity: 1; }
 body.authenticated :is(input,textarea,select):focus {
-  border-color: var(--bb2-gold);
-  box-shadow: 0 0 0 3px var(--bb2-gold-wash);
+  border-color: var(--interaction-strong);
+  box-shadow: 0 0 0 3px var(--interaction-wash);
 }
 body.authenticated :is(.search-hub-box input,.inbox-search input,.message-form input,.trade-search input,.achievement-search input,.group-poll-edit-option input,.request-username input) {
   background: transparent;
@@ -239,7 +239,7 @@ body.authenticated .club-dashboard > .panel {
 body.authenticated .chat-inbox { background: var(--bb2-canvas); }
 .inbox-search { border-color: var(--bb2-line); border-radius: 15px; background: var(--bb2-panel); }
 .inbox-filters button { color: var(--bb2-muted); font-weight: 550; letter-spacing: -.015em; }
-.inbox-filters button[aria-pressed="true"] { color: var(--bb2-gold); }
+.inbox-filters button[aria-pressed="true"] { color: var(--interaction-strong); }
 body.authenticated .chat-inbox .private-contact-copy strong { color: var(--bb2-ink); font-weight: 600; }
 body.authenticated .chat-inbox .private-contact-copy small,
 body.authenticated .chat-inbox .private-contact-copy time { color: var(--bb2-muted); }
@@ -277,7 +277,7 @@ body.authenticated :is(.collection-catalog-trigger,.card-album-trigger,.duplicat
 #calendario .calendar-day > .calendar-day-number { position: relative; z-index: 1; font-variant-numeric: tabular-nums; }
 /* The date badge owns its fill; the old cell pseudo-circle obscured the number. */
 #calendario .calendar-day.today::before { content: none; }
-#calendario .calendar-day.selected { background: var(--bb2-gold-wash); border-color: var(--bb2-gold); box-shadow: none; }
+#calendario .calendar-day.selected { background: var(--interaction-wash); border-color: var(--interaction-strong); box-shadow: none; }
 #calendario .calendar-day.today { box-shadow: inset 0 0 0 1px var(--bb2-line-strong); }
 #calendario .calendar-day.today > .calendar-day-number { color: #17140c; background: var(--bb2-gold); border-radius: 50%; }
 .club-profile-identity h2 { font-weight: 650; letter-spacing: -.045em; }
@@ -511,9 +511,9 @@ body.authenticated .chat-inbox .inbox-filters button {
 }
 body.authenticated .chat-inbox .inbox-filters button:last-child { margin-left: 0; }
 body.authenticated .chat-inbox .inbox-filters [aria-pressed="true"] {
-  border-color: var(--bb2-gold-dark);
-  color: var(--bb2-gold-soft);
-  background: var(--bb2-gold-wash);
+  border-color: var(--interaction-strong);
+  color: var(--interaction-strong);
+  background: var(--interaction-wash);
 }
 body.authenticated .chat-inbox .inbox-filters [aria-pressed="true"]::after { content: none; }
 body.authenticated .chat-inbox .private-contact { min-height: 94px; gap: 16px; }
@@ -521,7 +521,7 @@ body.authenticated .chat-inbox .private-contact-copy strong { font-size: 16px; l
 body.authenticated .chat-inbox .private-contact-copy small { font-size: 13px; line-height: 1.5; }
 body.authenticated .floating-tab-bar { border-radius: 26px; }
 body.authenticated .tab-selection-indicator { background: var(--bb2-gold-wash); border: 1px solid #dbba7326; border-radius: 19px; }
-body.authenticated .app-tab.active { color: var(--bb2-gold-soft); }
+body.authenticated .app-tab.active { color: var(--interaction-strong); }
 @media (max-width: 760px) {
   body.authenticated #inicio .club-dashboard { grid-template-columns: minmax(0,1fr); }
   body.authenticated #inicio .club-welcome h2 { font-size: 36px; }
@@ -619,7 +619,7 @@ body.authenticated .chat-inbox .private-contact-copy small { color: var(--bb2-se
 body.authenticated .floating-tab-bar { border: 1px solid var(--bb2-line-strong); border-radius: 20px; background: var(--bb2-panel); }
 body.authenticated .tab-selection-indicator { background: var(--bb2-gold-dark); border-color: transparent; border-radius: 13px; box-shadow: none; }
 body.authenticated .tab-selection-indicator::after { display: none; }
-body.authenticated .app-tab.active { color: var(--bb2-gold-soft); }
+body.authenticated .app-tab.active { color: var(--interaction-strong); }
 @media (max-width: 760px) {
   body.authenticated #inicio:is(.active, .page-back-preview) { grid-template-columns: minmax(0,1fr); grid-template-areas: "welcome" "search" "plans" "members" "music" "news"; grid-template-rows: repeat(6,max-content); gap: 22px; }
   body.authenticated #inicio .club-welcome { padding-bottom: 18px; flex-direction: row; align-items: center; }
@@ -644,7 +644,7 @@ body.authenticated .app-tab.active { color: var(--bb2-gold-soft); }
   .bb2-album-entry:active .bb2-album-card { transform: translateY(2px); transition-duration: 90ms; }
 }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .bb2-album-entry:hover .bb2-album-card { transform: translateY(-3px); color: #c5b488; }
+  .bb2-album-entry:hover .bb2-album-card { transform: translateY(-3px); color: #b4b4b4; }
   .bb2-album-entry:hover .bb2-album-card:nth-child(even) { transform: translateY(-6px); }
   .bb2-album-entry:active .bb2-album-card { transform: translateY(1px); }
 }
@@ -844,7 +844,7 @@ body.authenticated #sobres .bb2-album-label { display:block;margin-top:auto;padd
   body.authenticated #sobres .bb2-pack-copy h3 { font-size:29px; }
 }
 @media(hover:hover) and (prefers-reduced-motion:no-preference) {
-  body.authenticated #sobres .packs-heading :is(.collection-catalog-trigger,.duplicate-cards-trigger):hover { border-color:var(--bb2-gold-dark);color:var(--bb2-ink); }
+  body.authenticated #sobres .packs-heading :is(.collection-catalog-trigger,.duplicate-cards-trigger):hover { border-color:var(--interaction-strong);color:var(--bb2-ink); }
   body.authenticated #sobres .packs-art-button:not(:disabled):hover { transform:translateY(-3px); }
   body.authenticated #sobres .bb2-album-entry:hover { border-color:#a9bb9966; }
   body.authenticated #sobres .bb2-album-entry:hover .bb2-album-card { transform:translate(calc(-50% + var(--preview-x)),calc(var(--preview-y) - 4px)) rotate(var(--preview-angle)); }
@@ -938,9 +938,9 @@ body.authenticated #calendario .calendar-day.today { background:transparent;box-
 body.authenticated #calendario .calendar-day.today::before { content:none; }
 body.authenticated #calendario .calendar-day > .calendar-day-number { display:grid;place-items:center;flex:none;width:30px;height:30px;margin:0;color:var(--calendar-ink);background:transparent;font-size:15px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums; }
 body.authenticated #calendario .calendar-day.today > .calendar-day-number { background:#dfc38c;color:#292215;border-radius:50%; }
-body.authenticated #calendario .calendar-day.selected { border-color:#c5ab72;background:#443b2b;box-shadow:none; }
-body.authenticated #calendario .calendar-day.selected > .calendar-day-number { color:#f5e6c4; }
-body.authenticated #calendario .calendar-day.today.selected > .calendar-day-number { color:#292215; }
+body.authenticated #calendario .calendar-day.selected { border-color:#acacac;background:#3c3c3c;box-shadow:none; }
+body.authenticated #calendario .calendar-day.selected > .calendar-day-number { color:#e7e7e7; }
+body.authenticated #calendario .calendar-day.today.selected > .calendar-day-number { color:#232323; }
 body.authenticated #calendario .calendar-day > .calendar-dots { gap:4px;height:5px;margin-top:5px; }
 body.authenticated #calendario :is(.calendar-dots i,.calendar-legend i) { background:#ddbf80; }
 body.authenticated #calendario :is(.calendar-dots i.birthday,.calendar-legend i.birthday) { background:#dba5ba; }
@@ -996,13 +996,13 @@ body.authenticated #calendario :is(.calendar-empty-day p,.calendar-month-empty) 
  body.authenticated #calendario #calendarSelectedTitle { margin:17px 0 22px;font-size:24px; }
 }
 @media(hover:hover) and (prefers-reduced-motion:no-preference) {
- body.authenticated #calendario .calendar-day:not(.outside):not(.selected):hover { border-color:#c2b48a50;background:#ffffff09; }
+ body.authenticated #calendario .calendar-day:not(.outside):not(.selected):hover { border-color:#b4b4b450;background:#ffffff09; }
  body.authenticated #calendario .calendar-navigation .icon-button:hover { background:#ffffff0b; }
 }
 @media(prefers-reduced-motion:no-preference) {
  body.authenticated #calendario .calendar-day { transition:background 160ms ease,border-color 160ms ease,transform 160ms var(--bb2-ease); }
- body.authenticated #calendario .calendar-navigation .icon-button { transition:background 160ms ease,transform 160ms var(--bb2-ease); }
- body.authenticated #calendario .calendar-navigation .icon-button:active { transform:scale(.95); }
+ body.authenticated #calendario .calendar-navigation .icon-button { transition:background 160ms ease,scale 160ms var(--bb2-ease); }
+ body.authenticated #calendario .calendar-navigation .icon-button:active { scale:.95; }
 }
 html[data-reduced-motion="true"] body.authenticated #calendario :is(.calendar-day,.calendar-navigation .icon-button) { transition:none; }
 
@@ -1048,7 +1048,7 @@ body.authenticated #bannerShopDialog .is-featured .shop-card-content { padding:2
 body.authenticated #bannerShopDialog .shop-card-labels { min-height:18px;margin-bottom:12px;letter-spacing:0; }
 body.authenticated #bannerShopDialog .shop-item-kind { color:var(--bb2-muted);font-size:11px; }
 body.authenticated #bannerShopDialog .shop-ownership { color:#bacbb5;font-size:11px; }
-body.authenticated #bannerShopDialog .shop-ownership.is-active { color:var(--shop-gold); }
+body.authenticated #bannerShopDialog .shop-ownership.is-active { color:var(--interaction-strong); }
 body.authenticated #bannerShopDialog .banner-shop-item h3 { margin-bottom:9px;font-size:22px;font-weight:550;letter-spacing:-.035em; }
 body.authenticated #bannerShopDialog .is-featured h3 { font-size:28px; }
 body.authenticated #bannerShopDialog .banner-shop-item p { color:#b9bfbc;font-size:13px;line-height:1.55; }
@@ -1123,8 +1123,8 @@ body.authenticated #bannerShopDialog .shop-empty { border:1px solid var(--shop-c
  body.authenticated #bannerShopDialog .shop-text-button { max-width:80px;white-space:normal;line-height:1.4; }
 }
 @media(hover:hover) and (prefers-reduced-motion:no-preference) {
- body.authenticated #bannerShopDialog .shop-banner-card:hover { border-color:#6e735e; }
- body.authenticated #bannerShopDialog .shop-purchase-button:not(:disabled):hover { background:#efdeb9; }
+ body.authenticated #bannerShopDialog .shop-banner-card:hover { border-color:#707070; }
+ body.authenticated #bannerShopDialog .shop-purchase-button:not(:disabled):hover { background:#dfdfdf; }
 }
 @media(prefers-reduced-motion:no-preference) {
  body.authenticated #bannerShopDialog .shop-banner-card { transition:border-color 180ms ease; }

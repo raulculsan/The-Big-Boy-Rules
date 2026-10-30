@@ -48,7 +48,7 @@
 .coin-missions-loading{min-height:180px;padding:24px 0}
 .coin-missions-loading h3{font-size:20px;margin:0 0 12px}
 .coin-missions-loading button{min-height:44px;border:1px solid #565044;border-radius:999px;padding:10px 20px;background:none;color:#e7dec6}
-.coin-missions button:focus-visible,.coin-missions summary:focus-visible{outline:2px solid #e8d39c;outline-offset:3px}
+.coin-missions button:focus-visible,.coin-missions summary:focus-visible{outline:2px solid #d3d3d3;outline-offset:3px}
 .club-coin-toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));translate:-50% 0;z-index:2147483000;padding:14px 22px;max-width:calc(100% - 40px);box-sizing:border-box;white-space:nowrap;border-radius:999px;background:#e8d39c;color:#17160f;font:600 15px/1.4 system-ui,sans-serif;box-shadow:0 5px 24px #0006;pointer-events:none}
 @media(max-width:420px){.coin-missions-overview{padding:20px;gap:16px}.coin-missions-mark{width:44px;height:44px}.coin-missions-toolbar{gap:8px}.coin-missions-toolbar h3{font-size:18px!important}.coin-missions-filter button{padding:10px}.coin-mission-row{gap:14px}.coin-mission-reward{min-width:70px}.coin-mission-reward button{padding:10px 12px}}
 @media(prefers-reduced-motion:reduce){.coin-mission-disclosure{transition:none}}

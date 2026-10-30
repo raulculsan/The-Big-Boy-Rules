@@ -15,7 +15,7 @@
 /* The artwork and the original avatar form a single profile header. */
 .profile-banner-hero{position:relative;isolation:isolate;width:100%;height:170px;flex:none;margin-bottom:30px}
 .profile-banner-hero .profile-banner{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:20px;border:1px solid #d9b66730;box-sizing:border-box}
-.profile-banner-hero .club-profile-avatar{position:absolute;z-index:1;left:50%;bottom:-26px;transform:translateX(-50%);width:84px;height:84px;min-width:84px;min-height:84px;max-width:84px;max-height:84px;flex:none;box-sizing:border-box;overflow:hidden;border:4px solid var(--club-panel,#101216);border-radius:50%;outline:1px solid #d9b66760;background-color:var(--club-panel,#101216);box-shadow:0 5px 16px #0005}
+.profile-banner-hero .club-profile-avatar{position:absolute;z-index:1;left:50%;bottom:-26px;transform:translateX(-50%);width:84px;height:84px;min-width:84px;min-height:84px;max-width:84px;max-height:84px;flex:none;box-sizing:border-box;overflow:hidden;border:4px solid var(--club-panel,#101216);border-radius:50%;outline:1px solid #b8b8b860;background-color:var(--club-panel,#101216);box-shadow:0 5px 16px #0005}
 .profile-banner-hero .club-profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 @media(max-width:480px){.profile-banner-hero{height:140px}}
 .profile-banner-hero{flex-basis:100%;margin-bottom:25px}
@@ -107,7 +107,7 @@
 .pack-reveal-info h3{font-size:17px;line-height:1.35;margin:0}
 .pack-reveal-info p{font-size:12px;margin:0;color:#d9b667}
 .pack-reveal-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:12px 0}
-.pack-reveal-card:focus-visible,.duplicate-cards-trigger:focus-visible{outline:2px solid #d9b667;outline-offset:5px}
+.pack-reveal-card:focus-visible,.duplicate-cards-trigger:focus-visible{outline:2px solid #b8b8b8;outline-offset:5px}
 @media(prefers-reduced-motion:reduce){.pack-reveal-card{transition:none}.pack-reveal-stage{animation:none}}
 
 .pack-reveal-stage{touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .22s ease,opacity .22s ease}
@@ -130,13 +130,13 @@
 #profileBannerStatus:empty { display:none; }
 .profile-banner-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .profile-banner-option { display:block; box-sizing:border-box; align-self:start; min-width:0; padding:6px; border:1px solid var(--club-line,#ffffff24); border-radius:14px; background:#ffffff02; color:#f1eee7; text-align:left; cursor:pointer; }
-.profile-banner-option[aria-pressed="true"] { border:2px solid var(--club-gold,#c4ad7e); padding:5px; }
+.profile-banner-option[aria-pressed="true"] { border:2px solid var(--interaction-strong); padding:5px; }
 .profile-banner-option:disabled { cursor:default; }
 .profile-banner-picker[aria-busy="true"] .profile-banner-option { opacity:.55; }
 .profile-banner-option-name { display:block; min-height:3em; padding:9px 5px 5px; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
 .profile-banner-option .banner-art, .profile-banner-empty { width:100%; height:auto; min-height:0; aspect-ratio:3/1; border-radius:9px; }
 .profile-banner-empty { display:grid; place-items:center; background:#1a1e23; color:#737780; font:600 22px/1 var(--font-body,sans-serif); }
-.profile-banner-row:focus-visible, .profile-banner-option:focus-visible { outline:2px solid var(--club-gold,#c4ad7e); outline-offset:4px; }
+.profile-banner-row:focus-visible, .profile-banner-option:focus-visible { outline:2px solid var(--interaction-strong); outline-offset:4px; }
 @media(prefers-reduced-motion:reduce) { .profile-banner-row svg { transition:none; } }
 
 /* Miguel's basketball banner keeps its 3:1 source canvas intact at every size. */
@@ -326,7 +326,7 @@ body.authenticated #bannerShopDialog #bannerShopStatus.is-passive{position:absol
 #bannerShopDialog .shop-card-labels{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;min-height:18px}
 #bannerShopDialog .shop-item-kind{font-size:11px;font-weight:500;letter-spacing:0;color:var(--shop-muted);text-transform:none}
 #bannerShopDialog .shop-ownership{padding:0;border:0;border-radius:0;color:#bfc3c4;background:transparent;font-size:11px;line-height:1.3;white-space:nowrap}
-#bannerShopDialog .shop-ownership.is-active{color:var(--shop-gold);background:transparent;border:0}
+#bannerShopDialog .shop-ownership.is-active{color:var(--interaction-strong);background:transparent;border:0}
 #bannerShopDialog .banner-shop-item h3{margin:0 0 8px;color:#f5f3ee;font-size:22px;font-weight:600;line-height:1.2;letter-spacing:-.035em;overflow-wrap:anywhere}
 #bannerShopDialog .is-featured h3{font-size:28px}
 #bannerShopDialog .banner-shop-item p{margin:0;color:var(--shop-muted);font-size:14px;line-height:1.5}
@@ -350,7 +350,7 @@ body.authenticated #bannerShopDialog #bannerShopStatus.is-passive{position:absol
 #bannerShopDialog .shop-empty strong{display:block;font-size:18px;margin-bottom:10px;font-weight:600}
 #bannerShopDialog .shop-empty p{margin:0;font-size:14px;color:var(--shop-muted);line-height:1.5}
 #bannerShopDialog .shop-loading-art{display:block;max-width:600px;aspect-ratio:3/1;margin:0 0 24px;border-radius:8px;background:#242728}
-#bannerShopDialog button:focus-visible{outline:2px solid var(--shop-gold);outline-offset:4px}
+#bannerShopDialog button:focus-visible{outline:2px solid var(--interaction-strong);outline-offset:4px}
 @keyframes shop-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:900px){#bannerShopDialog .shop-topbar{padding-right:28px;padding-left:28px;gap:20px}#bannerShopDialog .shop-content{padding-right:28px;padding-left:28px}#bannerShopDialog .shop-banner-card.is-featured{grid-template-columns:minmax(0,1.55fr) minmax(240px,1fr)}#bannerShopDialog .is-featured .shop-card-content{padding:24px}#bannerShopDialog .is-featured h3{font-size:24px}}
 @media(max-width:640px){#bannerShopDialog .shop-topbar{min-height:72px;padding:calc(10px + var(--pwa-safe-top,env(safe-area-inset-top,0px))) max(16px,env(safe-area-inset-right,0px)) 10px max(20px,env(safe-area-inset-left,0px));gap:12px}#bannerShopDialog .shop-brand{gap:12px}#bannerShopDialog .shop-brand>span{font-size:23px;letter-spacing:-1.7px}#bannerShopDialog #bannerShopTitle{padding-left:12px;font-size:20px}#bannerShopDialog .shop-wallet{gap:6px}#bannerShopDialog .shop-wallet>span{display:none}#bannerShopDialog .shop-wallet strong{gap:5px}#bannerShopDialog .shop-wallet svg{width:18px;height:18px}#bannerShopDialog .banner-shop-balance{font-size:12px}#bannerShopDialog .shop-content{padding:0 20px calc(32px + var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px)))}#bannerShopDialog .shop-navigation{gap:28px;margin-bottom:24px}#bannerShopDialog .shop-navigation button{min-height:58px;padding:16px 0;font-size:14px}#bannerShopDialog .shop-navigation button>span{font-size:11px}#bannerShopDialog .shop-section-heading{gap:16px;align-items:flex-end;margin-bottom:20px}#bannerShopDialog .shop-section-heading h3{font-size:25px}#bannerShopDialog .shop-section-heading p{font-size:12px}#bannerShopDialog .shop-text-button{font-size:11px}#bannerShopDialog .banner-shop-items{grid-template-columns:minmax(0,1fr);gap:30px}#bannerShopDialog .shop-banner-card.is-featured{display:block;margin-bottom:0}#bannerShopDialog .shop-card-content{padding:16px 0 0}#bannerShopDialog .is-featured .shop-card-content{padding:20px}#bannerShopDialog .banner-shop-item h3,#bannerShopDialog .is-featured h3{font-size:22px}#bannerShopDialog .banner-shop-item p{font-size:14px}#bannerShopDialog .shop-card-labels{margin-bottom:9px}#bannerShopDialog .shop-card-purchase{margin-top:20px}#bannerShopDialog .is-featured .shop-card-purchase{margin-top:20px;padding-top:0}#bannerShopDialog .shop-voucher-art{min-height:180px}}
@@ -382,7 +382,7 @@ body.authenticated #bannerShopDialog #bannerShopStatus.is-passive{position:absol
 .pack-summary-card{position:relative;display:block;width:100%;aspect-ratio:4/7;padding:0;border:0;border-radius:9px;background:transparent;overflow:visible;touch-action:none;cursor:pointer;transition:transform .18s ease,opacity .18s ease;box-shadow:0 8px 18px #0005}
 .pack-summary-card img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
 .pack-summary-card:disabled{opacity:1;cursor:default}
-.pack-summary-card.is-selected{transform:translateY(-12px);outline:2px solid #e9ca85;outline-offset:3px;box-shadow:0 0 20px #e1b96120}
+.pack-summary-card.is-selected{transform:translateY(-12px);outline:2px solid #cccccc;outline-offset:3px;box-shadow:0 0 20px #bbbbbb20}
 .pack-summary-card.is-discarded{opacity:.2;filter:grayscale(1);box-shadow:none}
 .pack-summary-check{position:absolute;top:-9px;right:-6px;width:23px;height:23px;display:grid;place-items:center;border-radius:50%;background:#e6c985;color:#181b20;font-size:13px;font-weight:800;opacity:0;transform:scale(.7);transition:transform .18s ease,opacity .18s ease;pointer-events:none}
 .pack-summary-card.is-selected .pack-summary-check{opacity:1;transform:scale(1)}

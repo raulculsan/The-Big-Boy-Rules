@@ -43,16 +43,16 @@ body.authenticated :is(.chat-header-main, .private-chat-person) { flex: 1; width
 .chat-theme-category h3 { color: #d9c398; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 12px; }
 .chat-theme-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 .chat-theme-tile { display: block; width: 100%; min-width: 0; padding: 4px; border: 1px solid #ffffff13; border-radius: 17px; background: #16191f; color: #e9ebef; text-align: left; box-shadow: none; }
-.chat-theme-tile.selected { border-color: #dfc48b; box-shadow: 0 0 0 1px #dfc48b; }
+.chat-theme-tile.selected { border-color: #c6c6c6; box-shadow: 0 0 0 1px #c6c6c6; }
 .chat-theme-tile-label { display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 6px; font-size: 12px; font-weight: 500; }
 .chat-theme-check { display: grid; place-items: center; width: 18px; height: 18px; color: #191510; border-radius: 50%; }
-.selected .chat-theme-check { background: #dfc48b; }
+.selected .chat-theme-check { background: #c6c6c6; }
 .chat-theme-gallery-footer { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; padding: 12px 18px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #ffffff0b; background: #111419; }
 .chat-theme-gallery-footer button { min-height: 46px; padding: 10px 12px; border-radius: 13px; font-size: 13px; font-weight: 600; color: #c7cbd3; background: #1d2129; border: 1px solid #ffffff0e; }
 .chat-theme-gallery-footer [data-theme-apply] { color: #1a1711; background: #dfc48b; border-color: #dfc48b; }
 .chat-theme-gallery-footer p { grid-column: 1 / -1; margin: 0; color: #ffb8b8; font-size: 12px; }
 .chat-theme-gallery-footer p:empty { display: none; }
-.chat-theme-gallery :is(button):focus-visible, .chat-theme-button:focus-visible { outline: 2px solid #dfc48b; outline-offset: 3px; }
+.chat-theme-gallery :is(button):focus-visible, .chat-theme-button:focus-visible { outline: 2px solid #c6c6c6; outline-offset: 3px; }
 @media (min-width: 700px) { .chat-theme-gallery { height: min(880px, 94dvh); border-radius: 24px; } }
 
 @media (min-width: 350px) { .chat-theme-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; } .chat-theme-tile .chat-theme-preview { min-height: 70px; gap: 6px; padding: 10px 6px; } .chat-theme-tile .chat-theme-sample { font-size: 0; width: 44px; height: 14px; padding: 0; border-radius: 7px; } .chat-theme-tile-label { font-size: 10px; padding-inline: 4px; } .chat-theme-check { width: 15px; height: 15px; } }

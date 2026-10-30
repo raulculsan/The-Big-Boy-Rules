@@ -74,7 +74,7 @@ body.authenticated .club-dashboard > .panel { min-width: 0; margin: 0; padding: 
 .club-home .panel-heading h3 { margin: 7px 0 0; font: 600 20px/1.2 var(--font-body, Inter, sans-serif); letter-spacing: -.045em; }
 .club-home .eyebrow, .club-profile .eyebrow, .club-calendar-page .eyebrow { color: var(--club-gold); font-size: 9px; letter-spacing: .16em; }
 .club-heading-link { display: block; min-height: 44px; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-align: left; cursor: pointer; }
-.club-heading-link:hover { color: var(--club-gold); }
+.club-heading-link:hover { color: var(--interaction-strong); }
 .club-plans { display: flex; flex-direction: column; }
 #upcomingEvents { flex: 1; }
 .club-event { display: flex; align-items: center; gap: 13px; width: 100%; padding: 16px 0; border: 0; border-top: 1px solid var(--club-line); color: #eee; background: transparent; text-align: left; }
@@ -95,10 +95,10 @@ body.authenticated .club-dashboard > .panel { min-width: 0; margin: 0; padding: 
 .club-member { display: flex; flex-direction: column; align-items: stretch; gap: 0; min-width: 0; padding: 0; overflow: hidden; border: 1px solid var(--club-line); border-radius: 16px; text-align: left; background: #101317; color: #eceef1; cursor: pointer; }
 .club-member-hero { position: relative; isolation: isolate; height: auto; aspect-ratio: 3 / 1; margin-bottom: 22px; }
 .club-member-banner { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(135deg, #252a34, #171c22 65%, #403522); }
-.club-member .club-member-hero .avatar { position: absolute; z-index: 3; left: 12px; bottom: -18px; flex: none; width: 58px; height: 58px; min-width: 58px; max-width: 58px; min-height: 58px; max-height: 58px; aspect-ratio: 1; box-sizing: border-box; overflow: hidden; border: 3px solid #101317; border-radius: 50%; outline: 1px solid #d9b66755; box-shadow: 0 3px 10px #0005; }
+.club-member .club-member-hero .avatar { position: absolute; z-index: 3; left: 12px; bottom: -18px; flex: none; width: 58px; height: 58px; min-width: 58px; max-width: 58px; min-height: 58px; max-height: 58px; aspect-ratio: 1; box-sizing: border-box; overflow: hidden; border: 3px solid #101317; border-radius: 50%; outline: 1px solid #b8b8b855; box-shadow: 0 3px 10px #0005; }
 .club-member .club-member-hero .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .club-member-identity { padding: 6px 14px 16px; }
-.club-member:focus-visible { outline: 2px solid #d9b667; outline-offset: 3px; }
+.club-member:focus-visible { outline: 2px solid #b8b8b8; outline-offset: 3px; }
 .club-member > span:not(.avatar) { min-width: 0; }
 .club-member strong, .club-member small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .club-member strong { font-size: 15px; font-weight: 600; }
@@ -143,7 +143,7 @@ body.authenticated .club-calendar-page .calendar-grid { display: grid; grid-temp
 .club-profile-topline, .club-profile-bottom { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .club-member-number { color: var(--club-muted); font-size: 10px; font-variant-numeric: tabular-nums; letter-spacing: .14em; }
 .club-profile-identity { display: flex; align-items: center; gap: 22px; margin: 26px 0 22px; }
-.club-profile-avatar { width: 96px; height: 96px; flex: 0 0 96px; font-size: 32px; border: 3px solid #22272f; outline: 1px solid #d9b66744; }
+.club-profile-avatar { width: 96px; height: 96px; flex: 0 0 96px; font-size: 32px; border: 3px solid #22272f; outline: 1px solid #b8b8b844; }
 .club-profile-handle { color: var(--club-muted); font-size: 12px; overflow-wrap: anywhere; }
 .club-profile-identity h2 { font: 600 clamp(25px, 4vw, 38px)/1.15 var(--font-body, Inter, sans-serif); letter-spacing: -.045em; margin: 7px 0 10px; overflow-wrap: anywhere; }
 .club-profile-role { color: var(--club-gold); font-size: 9px; letter-spacing: .15em; }
@@ -200,7 +200,7 @@ body.achievement-detail-open { overflow: hidden; }
 .trophy-unlock-view, .trophy-unlock-continue { display: block; width: 100%; min-height: 46px; padding: 12px; border: 0; border-radius: 14px; font: 600 14px/1.3 var(--font-body, sans-serif); cursor: pointer; }
 .trophy-unlock-view { background: var(--unlock-accent); color: #101217; }
 .trophy-unlock-continue { margin-top: 6px; background: transparent; color: #c4c8d0; }
-.trophy-unlock-dialog button:focus-visible { outline: 2px solid var(--unlock-accent); outline-offset: 3px; }
+.trophy-unlock-dialog button:focus-visible { outline: 2px solid var(--interaction-strong); outline-offset: 3px; }
 body.trophy-unlock-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .trophy-unlock-dialog[open] { animation: none; } }
 .trophy-lottie svg { display: block; width: 100%; height: 100%; }
@@ -254,12 +254,12 @@ body.achievement-challenges-open { overflow: hidden; }
 .achievement-personal-progress progress::-webkit-progress-value { background: var(--club-gold); }
 .achievement-personal-progress progress::-moz-progress-bar { background: var(--club-gold); }
 .achievement-detail .achievement-personal-progress { border: 1px solid var(--club-line); border-radius: 16px; padding: 18px; margin-top: 24px; }
-.achievement-challenge:focus-visible { outline: 2px solid var(--club-gold); outline-offset: 3px; }
+.achievement-challenge:focus-visible { outline: 2px solid var(--interaction-strong); outline-offset: 3px; }
 @media (max-width: 380px) { .achievement-challenge { padding: 14px 12px; gap: 10px; } .achievement-challenge-art { flex-basis: 48px; height: 72px; } }
 .club-member, .club-event, #perfil .achievement-card { transition: background .15s ease, border-color .15s ease; }
-.club-member:hover, .club-event:hover { border-color: #d9b66766; background: #191b1f; }
+.club-member:hover, .club-event:hover { border-color: #b8b8b866; background: #191b1f; }
 .club-event:hover { background: #ffffff03; }
-.club-home button:focus-visible, .club-home input:focus-visible, .club-calendar-page button:focus-visible, #perfil button:focus-visible, .achievement-detail button:focus-visible { outline: 2px solid var(--club-gold); outline-offset: 3px; }
+.club-home button:focus-visible, .club-home input:focus-visible, .club-calendar-page button:focus-visible, #perfil button:focus-visible, .achievement-detail button:focus-visible { outline: 2px solid var(--interaction-strong); outline-offset: 3px; }
 @keyframes club-detail-enter { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
 @media (max-width: 760px) {
   /* One scroll owner per screen. A WKWebView document fling must not carry across tabs. */
@@ -495,7 +495,7 @@ body.authenticated .club-dashboard > .club-plans { align-self: start; padding: 1
 .club-event-open .club-event-details > strong { display: block; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
 .club-event-open .club-event-details > small { display: block; margin-top: 4px; font-size: 11px; line-height: 1.45; color: var(--club-muted); }
 button.tigreton-sprite { touch-action: pan-y; -webkit-touch-callout: none; user-select: none; padding: 0; border: 0; border-radius: 10px; background: transparent; color: inherit; cursor: pointer; }
-.club-event-open:focus-visible, button.tigreton-sprite:focus-visible { outline: 2px solid var(--club-gold); outline-offset: 4px; }
+.club-event-open:focus-visible, button.tigreton-sprite:focus-visible { outline: 2px solid var(--interaction-strong); outline-offset: 4px; }
 @media (max-width: 390px) {
   .club-event-with-tigreton { grid-template-columns: minmax(0, 1fr) 112px; }
   .club-event-open { grid-template-columns: 40px minmax(0, 1fr); gap: 8px; }
@@ -532,8 +532,8 @@ button.tigreton-sprite { touch-action: pan-y; -webkit-touch-callout: none; user-
 .chota-viewer-heading, .chota-viewer-plan, .chota-viewer-actions { flex: none; }
 .chota-viewer-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .chota-viewer-actions button { min-height: 44px; padding: 10px 12px; border: 1px solid #ffffff24; border-radius: 13px; background: #ffffff08; color: #f4f1e9; font: 600 12px/1.3 var(--font-body, sans-serif); cursor: pointer; }
-.chota-viewer-actions button:active { background: #d9b66720; }
-.chota-viewer button:focus-visible { outline: 2px solid var(--club-gold); outline-offset: 3px; }
+.chota-viewer-actions button:active { background: #b8b8b820; }
+.chota-viewer button:focus-visible { outline: 2px solid var(--interaction-strong); outline-offset: 3px; }
 
 .chota-character-row { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
 .chota-viewer-pet .chota-character-row { width: fit-content; max-width: 100%; }
@@ -559,7 +559,7 @@ body.authenticated .club-dashboard > .club-plans { padding: 16px; border-radius:
 .club-event-with-tigreton > .tigreton-agenda { position: relative; }
 .club-event-with-tigreton .chota-expand { position: absolute; z-index: 3; top: 0; right: 0; display: grid; place-items: center; width: 44px; height: 44px; padding: 13px; border: 0; border-radius: 12px; background: transparent; color: #d6bd83; cursor: pointer; }
 .club-event-with-tigreton .chota-expand svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.club-event-with-tigreton .chota-expand:focus-visible { outline: 2px solid var(--club-gold); outline-offset: 2px; }
+.club-event-with-tigreton .chota-expand:focus-visible { outline: 2px solid var(--interaction-strong); outline-offset: 2px; }
 .club-event-with-tigreton .chota-character-row { justify-content: flex-start; }
 .club-event-with-tigreton .tigreton-sprite { width: 74px; height: 74px; margin-top: 0; }
 .club-event-with-tigreton .tigreton-name { margin-top: 1px; padding-right: 26px; font-size: 9px; color: #c8cbd1; }

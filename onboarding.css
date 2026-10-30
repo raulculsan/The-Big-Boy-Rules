@@ -7,7 +7,7 @@
 .club-guide-actions{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .club-guide-actions button{border:0;background:transparent;color:#c4c0b6;font:inherit;font-size:12px;padding:11px;cursor:pointer;min-height:42px}
 .club-guide-actions [data-guide-next]{border-radius:11px;background:#dcc185;color:#171717;padding-inline:18px;font-weight:700}
-.club-guide-highlight{position:fixed;z-index:1099;pointer-events:none;border:2px solid #e4c378;border-radius:14px;box-shadow:0 0 0 5px #e4c3781a;box-sizing:border-box}
-.club-onboarding button:focus-visible{outline:2px solid #e4c378;outline-offset:3px}
+.club-guide-highlight{position:fixed;z-index:1099;pointer-events:none;border:2px solid #c5c5c5;border-radius:14px;box-shadow:0 0 0 5px #c5c5c51a;box-sizing:border-box}
+.club-onboarding button:focus-visible{outline:2px solid #c5c5c5;outline-offset:3px}
 @media(min-width:900px){.club-onboarding{left:28px;bottom:28px}}
 @media(prefers-reduced-motion:no-preference){.club-onboarding{animation:club-guide-enter .18s ease-out}@keyframes club-guide-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}

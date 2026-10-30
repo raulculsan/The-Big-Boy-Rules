@@ -8,7 +8,7 @@
 .account-security button{font:inherit;cursor:pointer;min-height:44px;padding:11px 16px;color:inherit;border:1px solid #444;border-radius:999px;background:#222;line-height:1.35}
 .account-security button:disabled{opacity:.6;cursor:wait}
 .account-security button[hidden]{display:none}
-.account-security button:focus-visible,.account-security summary:focus-visible{outline:2px solid #e7ce8f;outline-offset:4px}
+.account-security button:focus-visible,.account-security summary:focus-visible{outline:2px solid #cfcfcf;outline-offset:4px}
 .account-security .security-page-heading button{background:transparent;font-size:14px;flex:none}
 .security-page-body{max-width:700px;margin:0 auto;padding-top:28px}
 .account-security h3{margin:0 0 12px;font-size:24px;line-height:1.25;letter-spacing:-.4px;font-weight:600}

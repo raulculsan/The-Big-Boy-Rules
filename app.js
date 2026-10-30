@@ -881,7 +881,10 @@ function openProfileQuickMenu() {
 }
 
 function closeProfileQuickMenu({immediate = false} = {}) {
-  globalThis.ProfileAccountSheet?.close({immediate,restoreFocus:false});
+  if (globalThis.ProfileAccountSheet) {
+    void globalThis.ProfileAccountSheet.close({immediate,restoreFocus:false});
+    return;
+  }
   const menu = document.getElementById("profileQuickMenu");
   if (!menu || menu.hidden) return;
   menu.classList.remove("open");

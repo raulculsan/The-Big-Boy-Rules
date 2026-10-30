@@ -85,7 +85,7 @@
 .clubhouse-bunting { position: absolute; z-index: 2; top: 12%; left: 20%; width: 55%; height: 22px; display: flex; justify-content: space-between; border-top: 1px solid #c9ad74; transform: rotate(3deg); pointer-events: none; }
 .clubhouse-bunting i { width: 10%; height: 100%; background: #d6a252; clip-path: polygon(0 0, 100% 0, 50% 100%); }
 .clubhouse-bunting i:nth-child(2n) { background: #945341; }
-.clubhouse :is(button, a):focus-visible { outline: 2px solid #f5cb7e; outline-offset: 3px; }
+.clubhouse :is(button, a):focus-visible { outline: 2px solid #cecece; outline-offset: 3px; }
 /* The expanded mascot stays inside the same room; its full square scene is never cropped. */
 .chota-viewer { isolation: isolate; gap: 12px; background: #15191e; }
 .chota-viewer::before { content: ""; position: fixed; inset: -28px; z-index: 0; background: url("icons/clubhouse/club-room-v1.webp") center / cover no-repeat; filter: blur(20px) brightness(.3); pointer-events: none; }
@@ -103,7 +103,7 @@
 .chota-viewer-room-scene .tigreton-bubble { position:absolute; z-index:4; bottom:auto; max-width: min(80%, 340px); overflow:visible; margin: 0; padding: 10px 13px; border: 1px solid #302a23; border-radius:13px; box-shadow: none; }
 .chota-viewer-actions { width: min(100%, 600px); align-self: center; }
 .chota-viewer-actions button { background: #171b20ed; border-color: #f0d6a138; }
-.chota-viewer-actions button:active { background: #5e4229; }
+.chota-viewer-actions button:active { background: #464646; }
 @media (max-width: 600px) {
   .chota-viewer { padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right)); gap: 10px; }
   .chota-viewer-room-scene { width: min(100%, calc(100dvh - 282px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); border-radius: 12px; }

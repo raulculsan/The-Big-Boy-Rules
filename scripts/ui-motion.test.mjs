@@ -96,3 +96,14 @@ test('edge back accepts a deliberate flick, cancels reversal and ignores stale s
     assert.equal(context.pageBackSettling,false);
   }
 });
+
+test('an independently animated account surface is never translated by shared dialog or glass motion',async()=>{
+ const h=harness(),dialog=h.w.document.getElementById('dialog');
+ dialog.dataset.motionOwner='profile-account-sheet';dialog.className='profile-account-sheet';
+ dialog.innerHTML='<div class="profile-quick-menu"><button>Seguridad</button></div>';
+ h.w.document.body.classList.add('authenticated');dialog.showModal();await tick();
+ assert.equal(h.animations.length,0);assert.equal(dialog.dataset.motionManaged,undefined);
+ const button=dialog.querySelector('button');button.dispatchEvent(new h.w.MouseEvent('pointerdown',{bubbles:true,button:0}));
+ assert.equal(dialog.querySelector('.profile-quick-menu').dataset.glassTouch,undefined);
+ h.dom.window.close();
+});

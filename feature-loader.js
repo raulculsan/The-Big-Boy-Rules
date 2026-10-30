@@ -4,8 +4,8 @@
   'use strict';
   const registry = {
     chat: {styles:[], scripts:['chat-themes.js?v=20261010-241']},
-    collection: {styles:['album.css?v=20261026-album-missions-416']},
-    admin: {styles:['admin-grants.css?v=20261009-213','admin-console.css?v=20261030-app-update-440'], scripts:['achievement-admin.js?v=20261010-244','admin-grants.js?v=20261018-password-335']},
+    collection: {styles:['album.css?v=20261030-neutral-interactions-444']},
+    admin: {styles:['admin-grants.css?v=20261030-neutral-interactions-444','admin-console.css?v=20261030-neutral-interactions-444'], scripts:['achievement-admin.js?v=20261010-244','admin-grants.js?v=20261018-password-335']},
     spotify: {styles:['spotify-player.css?v=20261014-balanced'], scripts:['spotify-player.js?v=20261021-deferred-364']}
   };
   const loaded = new Set(), pending = new Map(), assets = new Map(), initializers = new Map();

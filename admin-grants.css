@@ -24,7 +24,7 @@
 .admin-account-fields .full-width { grid-column:1/-1; }
 .admin-account-fields input,.admin-account-fields select,.admin-account-fields textarea { width:100%; min-width:0; box-sizing:border-box; min-height:48px; padding:12px 14px; border:1px solid #34383f; border-radius:12px; background:#0c0f12; color:#f4f1e9; font:inherit; font-size:16px; color-scheme:dark; scroll-margin-top:100px; }
 .admin-account-fields textarea { resize:vertical; }
-.admin-account-fields :is(input,select,textarea):focus { outline:2px solid #bda465; outline-offset:2px; }
+.admin-account-fields :is(input,select,textarea):focus { outline:2px solid #a5a5a5; outline-offset:2px; }
 .admin-account-card [data-feedback] { min-height:20px; margin:18px 0 12px; font-size:13px; line-height:1.5; color:#cdb577; }
 .admin-account-card [data-feedback].is-error { color:#f0a5a5; }
 .admin-account-muted { font-size:13px; line-height:1.6; color:#949ba4; }
@@ -34,8 +34,8 @@
 .admin-account-banner > .banner-art,.admin-account-banner-placeholder { grid-column:1/-1; height:auto; aspect-ratio:3/1; width:100%; overflow:hidden; }
 .admin-account-banner > span:not(.banner-art):not(.admin-account-banner-placeholder) { display:flex; flex-direction:column; gap:5px; padding:12px; }
 .admin-account-banner small { color:#959da7; font-size:12px; }
-.admin-account-banner input { width:17px; accent-color:#cdb577; align-self:center; justify-self:start; }
-.admin-account-banner:has(input:checked) { border-color:#cdb577; box-shadow:0 0 0 1px #cdb577; }
+.admin-account-banner input { width:17px; accent-color:#b6b6b6; align-self:center; justify-self:start; }
+.admin-account-banner:has(input:checked) { border-color:#b6b6b6; box-shadow:0 0 0 1px #b6b6b6; }
 .admin-account-banner.is-owned { cursor:default; opacity:.65; }
 body.achievement-management-open .admin-account-page { padding-top:max(24px,var(--pwa-safe-top,env(safe-area-inset-top,0px))); }
 @media(max-width:760px) { .admin-account-page { padding-bottom:calc(32px + env(safe-area-inset-bottom,0px)); } .admin-account-header { margin-bottom:24px; gap:14px; } .admin-account-header h2 { font-size:25px; } .admin-account-grid { grid-template-columns:1fr; gap:16px; } .admin-account-card { padding:20px; border-radius:20px; } .admin-account-balances > div { padding:16px; } .admin-account-balances strong { font-size:29px; } .admin-account-identity h3 { font-size:23px; } .admin-account-card > button { width:100%; } }

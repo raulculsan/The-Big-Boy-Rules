@@ -5,12 +5,12 @@
 /* Compact administration entry and independent configuration pages. */
 #administracion .admin-heading-actions{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;width:auto;gap:10px}
 #administracion .admin-settings-gear{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:11px;border:1px solid #ffffff20;border-radius:50%;background:#ffffff06;color:#b4b8c1;cursor:pointer}
-#administracion .admin-settings-gear:focus-visible{outline:2px solid #e2c88e;outline-offset:3px}
+#administracion .admin-settings-gear:focus-visible{outline:2px solid #c9c9c9;outline-offset:3px}
 #administracion .admin-settings-gear svg,.admin-settings-entry svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-#administracion .admin-settings-gear:hover{color:#e2c88e;border-color:#e2c88e70;background:#e2c88e0b}
+#administracion .admin-settings-gear:hover{color:#c9c9c9;border-color:#c9c9c970;background:#c9c9c90b}
 .admin-settings-list{display:grid;gap:12px;max-width:780px;margin:0 auto}
 .admin-settings-entry{display:flex;align-items:center;gap:16px;width:100%;min-height:100px;padding:22px;text-align:left;border:1px solid #ffffff12;border-radius:20px;background:#14171c;color:#f4f4f6;cursor:pointer;font:inherit}
-.admin-settings-entry:hover{border-color:#d3b46a66;background:#191c21}
+.admin-settings-entry:hover{border-color:#b5b5b566;background:#191c21}
 .admin-settings-entry:active{transform:scale(.99)}
 .admin-settings-entry .admin-settings-symbol{display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;background:#d3b46a0c;border:1px solid #d3b46a25;border-radius:14px;color:#d9bc7e}
 .admin-settings-entry>span:nth-child(2){display:grid;gap:7px;flex:1;min-width:0}

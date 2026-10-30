@@ -5,7 +5,7 @@
 #notificationsDropdown.open { pointer-events: auto; transform: translateY(0); }
 #notificationsDropdown svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 #notificationsDropdown button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
-#notificationsDropdown button:focus-visible, #notificationsDropdown summary:focus-visible { outline: 2px solid #d3b46a; outline-offset: -3px; }
+#notificationsDropdown button:focus-visible, #notificationsDropdown summary:focus-visible { outline: 2px solid #b5b5b5; outline-offset: -3px; }
 #notificationsDropdown .notifications-heading { flex: 0 0 auto; align-items: center; padding: 24px 22px 18px; border: 0; gap: 10px; }
 #notificationsDropdown .notifications-heading > div { min-width: 0; gap: 7px; }
 #notificationsDropdown .eyebrow { color: #c3a866; font-size: 9px; letter-spacing: .18em; }
@@ -15,11 +15,11 @@
 .notifications-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 14px 16px 22px; border-bottom: 1px solid #ffffff0c; flex: 0 0 auto; }
 .notifications-filters { display: flex; gap: 4px; padding: 3px; border: 1px solid #2b2e34; border-radius: 14px; background: #090b0f; }
 #notificationsDropdown .notifications-filters button { min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; color: #989da6; background: transparent; font-size: 12px; font-weight: 650; white-space: nowrap; }
-#notificationsDropdown .notifications-filters button[aria-pressed="true"] { background: #2b2921; color: #e8d398; box-shadow: inset 0 0 0 1px #d3b46a24; }
+#notificationsDropdown .notifications-filters button[aria-pressed="true"] { background: #292929; color: #d3d3d3; box-shadow: inset 0 0 0 1px #b5b5b524; }
 #notificationsFilterCount { display: inline-block; margin-left: 3px; font-size: 10px; }
 #notificationsDropdown .notifications-heading-actions { gap: 1px; }
 #notificationsDropdown .notifications-heading-actions button { display: grid; place-items: center; min-width: 44px; height: 44px; padding: 0; border: 0; border-radius: 12px; background: transparent; color: #a2a6af; }
-#notificationsDropdown .notifications-heading-actions button:hover:not(:disabled) { color: #e8d398; background: #ffffff07; }
+#notificationsDropdown .notifications-heading-actions button:hover:not(:disabled) { color: #d3d3d3; background: #ffffff07; }
 #notificationsDropdown button:disabled { opacity: .3; cursor: default; }
 #notificationsDropdown .notifications-list { flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; overscroll-behavior: contain; padding: 8px 10px 14px; scrollbar-width: thin; scrollbar-color: #393c43 transparent; }
 .notifications-day h3 { font-size: 10px; letter-spacing: .13em; text-transform: uppercase; font-weight: 700; color: #838994; margin: 16px 12px 9px; }
@@ -87,10 +87,10 @@
 #notificationsDropdown .notification-preference-switch input{position:absolute;inset:0;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
 #notificationsDropdown .notification-preference-switch>span{display:block;position:absolute;inset:0;border:1px solid #ffffff24;border-radius:20px;background:#252b34;transition:background .16s,border-color .16s}
 #notificationsDropdown .notification-preference-switch>span::after{content:"";position:absolute;left:3px;top:3px;width:17px;height:17px;border-radius:50%;background:#aeb5bf;transition:transform .16s,background .16s}
-#notificationsDropdown .notification-preference-switch input:checked+span{background:#d2b978;border-color:#d2b978}
+#notificationsDropdown .notification-preference-switch input:checked+span{background:#bababa;border-color:#bababa}
 #notificationsDropdown .notification-preference-switch input:checked+span::after{transform:translateX(17px);background:#171b21}
 #notificationsDropdown .notification-preference-switch input:disabled+span{opacity:.42}
-#notificationsDropdown .notification-preference-switch input:focus-visible+span{outline:2px solid #f1d58e;outline-offset:3px}
+#notificationsDropdown .notification-preference-switch input:focus-visible+span{outline:2px solid #d6d6d6;outline-offset:3px}
 #notificationsDropdown #notificationPreferencesStatus{font-size:10px;line-height:1.6;color:#9ca5b2;margin:12px 0 0}
 #notificationsDropdown #retryNotificationPreferences{font-size:11px;padding:7px 0;border:0;background:transparent;color:#e5cb87;text-decoration:underline;min-height:36px}
 #notificationsDropdown .notification-system-symbol{display:grid;place-items:center;width:42px;height:42px;border:1px solid #d0b57433;border-radius:14px;background:#d0b5740e;color:#d8bf80;font-size:23px}

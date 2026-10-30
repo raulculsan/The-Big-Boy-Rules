@@ -5,7 +5,7 @@
 #noticias .news-toolbar { gap: 12px; margin: 0 0 14px; }
 #noticias .news-tabs { flex: 1; max-width: 440px; border: 1px solid var(--news-line); background: #0d1015; padding: 4px; gap: 4px; border-radius: 14px; }
 #noticias .news-tab { flex: 1; min-width: 0; min-height: 44px; padding: 10px 12px; font-size: 12px; border-radius: 10px; color: #a7acb5; }
-#noticias .news-tab.active { color: #211b0d; background: #d9bb79; }
+#noticias .news-tab.active { color: #1b1b1b; background: #bdbdbd; }
 #noticias #refreshNewsButton { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 12px; border: 1px solid var(--news-line); border-radius: 12px; color: #d8bd83; background: #15181e; font-size: 11px; }
 #noticias #refreshNewsButton svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; }
 #noticias .news-status { margin: 0 0 22px; color: var(--news-muted); font-size: 11px; line-height: 1.6; min-height: 18px; }
@@ -15,7 +15,7 @@
    above Members cause WebKit's scroll extent to change during a swipe. Images
    remain lazy loaded; the short news list does not need layout virtualization. */
 #noticias .news-card { content-visibility: visible; contain-intrinsic-size: none; }
-#noticias .news-card:hover { transform: none; border-color: #706041; background: #13171d; }
+#noticias .news-card:hover { transform: none; border-color: #616161; background: #13171d; }
 #noticias .news-card:active { transform: none; }
 #noticias .news-lead { grid-row: span 2; }
 #noticias .news-media-link { display: block; width: 100%; margin: 0; }

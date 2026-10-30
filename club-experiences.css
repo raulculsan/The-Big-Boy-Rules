@@ -7,7 +7,7 @@
 .clubhouse-live-icon svg circle { fill:currentColor; stroke:none; }
 .clubhouse-room:has(.clubhouse-live-icon) .clubhouse-plan-countdown { padding-right:32px; }
 .clubhouse-live-icon:active { transform:rotate(-2deg) scale(.9); }
-.clubhouse-live-icon:focus-visible { outline:2px solid #77502a; outline-offset:-5px; }
+.clubhouse-live-icon:focus-visible { outline:2px solid #565656; outline-offset:-5px; }
 .club-live-event-link { display:inline-flex; align-items:center; min-height:38px; margin:7px 0 3px; padding:7px 0; border:0; border-bottom:1px solid #8e7957; border-radius:0; background:none; color:#e5ca91; font-family:inherit; font-size:12px; font-weight:600; line-height:1.2; cursor:pointer; touch-action:manipulation; }
 .calendar-day-detail-card .club-live-event-link { display:flex; width:max-content; }
 @media(max-width:640px) { .clubhouse-heading-actions { gap:8px; flex-wrap:wrap; } .clubhouse-heading-actions #clubhouseTime { font-size:10px; } .clubhouse-heading-actions [data-club-memory-map] { font-size:11px; } .clubhouse-room .clubhouse-live-icon { top:calc(43% - 44px); } }
@@ -22,7 +22,7 @@
 .club-live-recap-attendees span{font-size:12px;padding:5px 9px;border-radius:20px;background:#25272a;color:#ccc}
 .club-live-photos figure{min-width:0}
 .club-live-photos figure>button{font-size:12px;padding:8px 0;border-bottom:1px solid #78654b}
-.club-live-photos figure>button[aria-pressed=true]{color:#e6c58b}
+.club-live-photos figure>button[aria-pressed=true]{color:#c8c8c8}
 .club-live-photos figure form{display:flex;gap:6px;align-items:center;margin-top:7px}
 .club-live-photos figure form input{min-width:0;width:100%;font-size:12px}
 .club-live-photos figure form button{flex-shrink:0;font-size:11px}
