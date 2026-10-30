@@ -3088,6 +3088,15 @@ function ensureChotaContextSprite() {
   }
   return chotaContextRequest;
 }
+const chotaRoomSprite = new Image();
+let chotaRoomRequest = null;
+function ensureChotaRoomSprite() {
+  if (!chotaRoomRequest) {
+    chotaRoomSprite.src = "icons/mascot/chota-v2/chota-room-life-v1.webp";
+    chotaRoomRequest = chotaRoomSprite.decode().then(() => chotaRoomSprite.naturalWidth > 0, () => false);
+  }
+  return chotaRoomRequest;
+}
 let chotaSpritesRequest = null;
 const chotaSpritesReady = {talk: false, poses: false};
 function ensureChotaSprites() {
@@ -3136,13 +3145,16 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const attentionTimes = new Map();
   let lastRoomMoment = pet.closest(".clubhouse-room, .chota-viewer-room-scene")?.dataset.time || "";
   let lastPersonalAt = performance.now(), lastTouchAt = -Infinity;
+  let roomVisit = null, lastRoomVisitAt = performance.now() - 18000;
+  const roomVisitTimes = new Map();
+  const motionRoot = pet.querySelector(".chota-character-row") || pet;
   const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping() && !bedtimeActive && !wakingActive;
   function setFrame(frame) {
-    character.classList.remove("is-directional", "is-contextual");
+    character.classList.remove("is-directional", "is-contextual", "is-room-pose");
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
   }
   function setDirectionalFrame(frame) {
-    character.classList.remove("is-idling", "is-speaking", "is-contextual");
+    character.classList.remove("is-idling", "is-speaking", "is-contextual", "is-room-pose");
     character.classList.add("is-directional");
     character.style.backgroundPosition = `${(frame % 5) * 25}% ${Math.floor(frame / 5) * (100 / 3)}%`;
   }
@@ -3160,6 +3172,13 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     animations = [];
     pet.style.transform = "";
     pet.style.transformOrigin = "";
+    motionRoot.style.transform = "";
+    motionRoot.style.transformOrigin = "";
+    character.style.transform = "";
+    shadow.style.opacity = "";
+    roomVisit = null;
+    pet.classList.remove("is-visiting-room", "is-sitting-on-sofa");
+    pet.closest(".clubhouse-room, .chota-viewer-room-scene")?.classList.remove("is-chota-on-sofa");
     delete pet.dataset.attention;
     pet.closest(".clubhouse-room, .chota-viewer-room-scene")?.classList.remove("is-switch-pressed");
     pet.classList.remove("is-going-to-sleep", "is-falling-asleep", "is-waking-up", "is-walking");
@@ -3200,6 +3219,11 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       return {action:"window", target:room.querySelector(".clubhouse-sky")};
     }
     const plan = room.querySelector(".clubhouse-plan:not(.clubhouse-plan-empty)");
+    // Longer actions have destinations and generous pauses; a visible comment wins.
+    if (now - lastRoomVisitAt > 42000 && now - lastTouchAt > 20000 && !room.querySelector('[aria-expanded="true"][data-chota-open]')) {
+      const destinations = ["window", "sofa", ...(plan ? ["board"] : [])].filter(kind => now - (roomVisitTimes.get(kind) ?? -Infinity) > (kind === "sofa" ? 240000 : kind === "board" ? 210000 : 180000));
+      if (destinations.length) return {action:`visit-${destinations[Math.floor(Math.random() * destinations.length)]}`};
+    }
     const days = date instanceof Date && Number.isFinite(date.getTime()) ? tigretonDaysUntil(date) : Infinity;
     if (plan && event?.id !== "clubhouse-idle" && days >= 0 && days <= 2 && canAttend("plan", now, 95000)) {
       return {action:"plan", target:plan};
@@ -3269,6 +3293,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     const {action,target} = choice, now = performance.now();
     attentionTimes.set(action, now); lastAmbientAction = action;
     pet.dataset.attention = action;
+    if (action.startsWith("visit-")) { visitRoom(action.slice(6)); return; }
     if (["plan","scratch","stretch","shirt"].includes(action)) {
       lastPersonalAt = now; playPersonal(action); return;
     }
@@ -3288,9 +3313,121 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       if (active() && character.classList.contains("is-idling")) performAttention(chooseAttention(performance.now()));
     }, 7000 + Math.random() * 6500);
   }
+  function roomPose(frame) {
+    character.classList.remove("is-directional", "is-idling", "is-speaking", "is-contextual");
+    character.classList.add("is-room-pose");
+    character.style.backgroundPosition = `${frame * (100 / 3)}% 0`;
+    character.style.transform = "";
+  }
+  function roomPosition(point) {
+    if (!roomVisit) return;
+    roomVisit.position = point;
+    const {home, size} = roomVisit;
+    motionRoot.style.transform = `translate(${(point.x - home.x) * size}px,${(point.y - home.y) * size}px) scale(${point.s})`;
+  }
+  function mixRoomPoint(from, to, progress) {
+    const p = Math.max(0, Math.min(1, progress));
+    return {x:from.x + (to.x - from.x) * p, y:from.y + (to.y - from.y) * p, s:from.s + (to.s - from.s) * p};
+  }
+  function roomWalk(from, to, progress, elapsed, away) {
+    roomPosition(mixRoomPoint(from, to, progress));
+    const mirror = away ? to.x > from.x : to.x < from.x;
+    setDirectionalFrame((away ? 0 : 8) + Math.floor(elapsed / 125) % 8);
+    character.style.transform = mirror ? "scaleX(-1)" : "";
+    shadow.style.opacity = ".6";
+  }
+  function returnFromRoom(afterReturn) {
+    if (!roomVisit) { afterReturn?.(); return; }
+    roomVisit.afterReturn = afterReturn;
+    if (roomVisit.returning) return;
+    roomVisit.returning = {
+      from:{...roomVisit.position}, started:performance.now(),
+      rise:pet.classList.contains("is-sitting-on-sofa") ? 650 : 0,
+      duration:Math.min(3700, Math.max(1600, Math.hypot(roomVisit.position.x-roomVisit.home.x, roomVisit.position.y-roomVisit.home.y) * 10000)),
+    };
+  }
+  function visitRoom(kind) {
+    const request = ++spriteRequest;
+    void Promise.all([ensureChotaDirectionalSprite(), kind === "sofa" ? ensureChotaRoomSprite() : true]).then(ready => {
+      if (request !== spriteRequest || !active()) return;
+      if (!ready.every(Boolean)) { lastRoomVisitAt = performance.now(); schedule(); return; }
+      const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
+      const roomBox = room?.getBoundingClientRect(), spriteBox = pet.querySelector(".tigreton-sprite")?.getBoundingClientRect(), rootBox = motionRoot.getBoundingClientRect();
+      if (!roomBox?.width || !spriteBox?.width) { schedule(); return; }
+      stop();
+      lastRoomVisitAt = performance.now(); roomVisitTimes.set(kind, lastRoomVisitAt);
+      const feetX = spriteBox.left + spriteBox.width * .5, feetY = spriteBox.top + spriteBox.width * .945;
+      const home = {x:(feetX-roomBox.left)/roomBox.width, y:(feetY-roomBox.top)/roomBox.width, s:1};
+      const scale = (kind === "sofa" ? .24 : kind === "board" ? .235 : .225) * roomBox.width / spriteBox.width;
+      const target = kind === "sofa" ? {x:.145,y:.667,s:scale} : kind === "board" ? {x:.345,y:.605,s:scale} : {x:.77,y:.605,s:scale};
+      const approach = {x:.16,y:.705,s:scale};
+      roomVisit = {kind, home, target, approach, position:home, size:roomBox.width, started:performance.now(), room, returning:null, afterReturn:null};
+      motionRoot.style.transformOrigin = `${feetX-rootBox.left}px ${feetY-rootBox.top}px`;
+      pet.classList.add("is-awake", "is-visiting-room", "is-walking");
+      pet.dataset.attention = `visit-${kind}`;
+      // The sofa's front arm occludes the tail just as it does the seat cushion.
+      if (kind === "sofa" && !room.querySelector(".chota-sofa-foreground")) {
+        const arm = document.createElement("i"); arm.className = "chota-sofa-foreground"; arm.setAttribute("aria-hidden", "true"); room.append(arm);
+      }
+      advanceRoomVisit();
+    });
+  }
+  function advanceRoomVisit() {
+    if (!roomVisit || !active()) { refresh(); return; }
+    const visit = roomVisit, elapsed = performance.now() - visit.started;
+    const {home,target,approach,kind,room} = visit;
+    function seated(value) {
+      pet.classList.toggle("is-sitting-on-sofa", value);
+      room.classList.toggle("is-chota-on-sofa", value);
+      shadow.style.opacity = value ? "0" : ".6";
+    }
+    function done() { const callback = visit.afterReturn; idle(); callback?.(); }
+    if (visit.returning) {
+      const back = visit.returning, t = performance.now() - back.started;
+      if (t >= back.duration + back.rise) { done(); return; }
+      if (t < back.rise) { roomPosition(mixRoomPoint(back.from, {...back.from,y:approach.y},t/back.rise)); roomPose(3); }
+      else {
+        seated(false);
+        roomWalk(back.rise ? {...back.from,y:approach.y} : back.from,home,(t-back.rise)/back.duration,t,false);
+      }
+    } else if (kind === "window" || kind === "board") {
+      const travel = kind === "board" ? 4300 : 5600;
+      const pause = kind === "board" ? 4500 : 5800;
+      if (elapsed < travel) roomWalk(home,target,elapsed/travel,elapsed,true);
+      else if (elapsed < travel + pause) {
+        roomPosition(target);
+        if (kind === "board") {
+          // A real plan gives him something to read; he points once before returning.
+          setDirectionalFrame(elapsed > travel + 2400 && elapsed < travel + 3300 ? 17 : 16);
+          character.style.transform = "";
+        } else {
+          setDirectionalFrame(elapsed > 9700 && elapsed < 10500 ? 19 : 16);
+          character.style.transform = "scaleX(-1)";
+          // A quiet look through the glass, then a glance back into the room.
+          if (elapsed < 9700) character.style.transform += ` rotate(${Math.sin((elapsed-5600)/1800)*.7}deg)`;
+        }
+      } else if (elapsed < travel * 2 + pause) roomWalk(target,home,(elapsed-travel-pause)/travel,elapsed-travel-pause,false);
+      else { done(); return; }
+    } else {
+      if (elapsed < 4900) roomWalk(home,approach,elapsed/4900,elapsed,true);
+      else if (elapsed < 6100) {
+        if (elapsed < 5350) { roomPosition(approach); setDirectionalFrame(19); character.style.transform = ""; }
+        else { seated(true); roomPosition(mixRoomPoint(approach,target,(elapsed-5350)/750)); roomPose(0); }
+      } else if (elapsed < 13500) {
+        seated(true); roomPosition(target); roomPose(elapsed > 8000 && elapsed < 11700 ? 2 : 1);
+      } else if (elapsed < 14500) { roomPosition(mixRoomPoint(target,approach,(elapsed-13500)/1000)); roomPose(elapsed < 14200 ? 3 : 0); }
+      else if (elapsed < 15700) {
+        seated(false); roomPosition(approach); setDirectionalFrame(19); character.style.transform = "";
+      } else if (elapsed < 20600) roomWalk(approach,home,(elapsed-15700)/4900,elapsed-15700,false);
+      else { done(); return; }
+    }
+    // Pixel-art gait changes at 8 fps; the path itself stays smooth at display speed.
+    frameTimer = setTimeout(advanceRoomVisit, 16);
+  }
   function noticeUser() {
     if (!active() || performance.now() - lastTouchAt < 3000) return;
     lastTouchAt = performance.now(); attentionTimes.set("user", lastTouchAt);
+    if (roomVisit) { returnFromRoom(() => play("greet")); return; }
     play("greet");
   }
   function idle() {
@@ -3307,6 +3444,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   }
   function play(gesture) {
     if (!active()) return;
+    if (roomVisit) { returnFromRoom(() => play(gesture)); return; }
     if (gesture === "walk" || gesture === "shuffle") { playDirectionalWalk(); return; }
     if (!chotaSpritesReady.poses) {
       const request = ++spriteRequest;
@@ -3362,6 +3500,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   }
   function speak(text, gesture) {
     if (bedtimeActive || wakingActive) return;
+    if (roomVisit) { returnFromRoom(() => speak(text, gesture)); return; }
     stop();
     if (!active() || !String(text || "").trim()) return;
     if (!chotaSpritesReady.talk) {
