@@ -4182,7 +4182,8 @@ function renderClubhouse(upcoming) {
     ${next ? `<button type="button" class="clubhouse-live-icon" data-club-live-event="${escapeHtml(next.event.id)}" aria-label="Abrir plan en directo: ${escapeHtml(next.event.title)}" title="Plan en directo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.1 7.1a7 7 0 0 0 0 9.8m9.8-9.8a7 7 0 0 1 0 9.8M4 4a11.3 11.3 0 0 0 0 16M20 4a11.3 11.3 0 0 1 0 16"/></svg></button>` : ""}
     <div id="chotaArcadeEntry"></div>
     <div class="clubhouse-memory"><span class="clubhouse-memory-label">Recuerdos del club</span><svg viewBox="0 0 40 32" aria-hidden="true"><path d="M4 8h8l3-5h10l3 5h8v21H4z"/><circle cx="20" cy="18" r="7"/></svg><strong>Aún no hay recuerdos compartidos</strong><span>Este sitio será para vuestra próxima foto.</span></div>
-    <div class="chota-room-depth"><div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small><button type="button" class="chota-expand" data-chota-expand aria-label="Ver a El Chota en pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 21h5v-5m0 5-7-7M16 3h5v5m0-5-7 7M8 21H3v-5m0 5 7-7"/></svg></button></div></div>
+    <div class="chota-room-depth"><div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small></div></div>
+    <button type="button" class="chota-expand" data-chota-expand aria-label="Ver a El Chota en pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 21h5v-5m0 5-7-7M16 3h5v5m0-5-7 7M8 21H3v-5m0 5 7-7"/></svg></button>
     <div class="tigreton-bubble clubhouse-bubble" hidden role="status" aria-live="polite" aria-atomic="true"></div>
   </div>`;
   const room = content.firstElementChild;

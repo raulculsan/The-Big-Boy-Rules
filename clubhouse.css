@@ -70,7 +70,7 @@
 .clubhouse-room .tigreton-sprite { width: 100%; height: auto; aspect-ratio: 1; margin: 0; border-radius: 0; }
 .clubhouse-room .tigreton-character { filter: drop-shadow(2px 4px 0 #0002); }
 .clubhouse-room .tigreton-name { width: auto; margin: 0; padding: 4px 9px; color: #fff4da; background: #252223d9; border-radius: 2px; font-size: clamp(10px, 1.8vw, 13px); line-height: 1.25; }
-.clubhouse-room .chota-expand { position: absolute; right: -3px; bottom: -30px; pointer-events:auto; width: 44px; height: 44px; display: grid; place-items: center; padding: 13px; border: 0; background: transparent; color: #f0d6a1; cursor: pointer; }
+.clubhouse-room .chota-expand { position: absolute; right: 12px; bottom: 12px; z-index:7; pointer-events:auto; width: 44px; height: 44px; display: grid; place-items: center; padding: 13px; border: 0; background: transparent; color: #f0d6a1; cursor: pointer; }
 .clubhouse-room .chota-expand svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .clubhouse-room .chota-expand[hidden] { display: none; }
 .clubhouse-pet.is-sleeping .tigreton-sprite { cursor: default; opacity: 1; transform: none; }
@@ -136,9 +136,7 @@
   .clubhouse-plan-countdown { font-size: 10px; }
   .clubhouse-memory { gap: 4px; top: 18.4%; height: 20%; }
   .clubhouse-memory > span:last-child { display: none; }
-  .clubhouse-room .clubhouse-pet { left: 34%; bottom: 14%; width: 32%; }
   .clubhouse-room .clubhouse-bubble { max-width: 68%; padding: 7px 9px; }
-  .clubhouse-room .chota-expand { right: -17px; bottom: -7px; }
   .clubhouse-bunting { height: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
