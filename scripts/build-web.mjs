@@ -17,6 +17,8 @@ const output = resolve(root, "www");
 const sources = [
   "index.html",
   "app-health.js",
+  "app-update.js",
+  "app-update.css",
   "ui-motion.js",
   "ui-motion.css",
   "feature-loader.js",

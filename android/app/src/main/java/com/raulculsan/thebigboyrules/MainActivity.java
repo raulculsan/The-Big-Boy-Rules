@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(ClubGalleryPlugin.class);
         registerPlugin(ClubDeepLinkPlugin.class);
         registerPlugin(ClubSpotifyPlugin.class);
+        registerPlugin(ClubAppUpdatePlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

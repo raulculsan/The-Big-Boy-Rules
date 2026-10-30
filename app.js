@@ -72,6 +72,8 @@ const db = backendReady
     })
   : null;
 
+const appUpdateGate = globalThis.ClubAppUpdate?.start({client:db});
+
 if (backendReady) {
   const backendOrigin = new URL(config.supabaseUrl).origin;
   ["preconnect", "dns-prefetch"].forEach(rel => {
@@ -4320,6 +4322,7 @@ const accountRequests = globalThis.ClubAccountRequests?.create({client: db, canM
 
 const adminConsole = globalThis.AdminConsole?.create({
   allowed: isSuperAdmin,
+  releaseClient: db,
   rpc: (name, args) => db.rpc(name, args),
   refreshShop: () => Promise.all([globalThis.BannerShop?.refresh(true), globalThis.ChotaShop?.refresh(true)]),
   owner: () => currentAuthUser?.id,
@@ -4821,6 +4824,8 @@ async function measureSessionStartup(name, load) {
 }
 
 async function beginAuthenticatedSession(authUser) {
+  await appUpdateGate?.ready;
+  if (appUpdateGate?.blocked()) { showLogin(); return; }
   // getUser reads the current server record, including non-user-editable app metadata.
   // A cached JWT/user_metadata/local flag must never waive a required change.
   const {data, error} = await measureSessionStartup("auth-user", () => db.auth.getUser());
@@ -4857,6 +4862,8 @@ async function beginAuthenticatedSession(authUser) {
 }
 
 async function login(username, password) {
+  await appUpdateGate?.ready;
+  if (appUpdateGate?.blocked()) throw new Error("Instala la actualización para continuar.");
   if (!backendReady) throw new Error("No se puede conectar con el servicio de acceso. Inténtalo de nuevo cuando haya conexión.");
   // A password sign-in starts a new flow. An abandoned Google-link attempt
   // must not sign out this user when the account security gate opens.
@@ -8402,6 +8409,8 @@ if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("l
   // Keep the launch/login surface until both the Auth record and profile have
   // been verified. A cached identity cannot authorize or reveal the club UI.
   try {
+    await appUpdateGate?.ready;
+    if (appUpdateGate?.blocked()) { showLogin(); return; }
     if (navigator.onLine === false) {showLogin();return;}
     if (backendReady) {
       const {data, error} = await measureSessionStartup("auth-session", () => db.auth.getSession());

@@ -70,11 +70,11 @@
     let owner = null, saved = normalize(), draft = {...saved}, dirty = false, busy = false, ready = false;
     mount.innerHTML = `
       <header class="control-heading"><div class="control-brand"><span class="control-emblem">BB<span>CONTROL</span></span><div><span class="control-kicker">THE BIG BOY RULES</span><h2>Tu centro de control.</h2><p>Contenido, personas y experiencia del club.</p></div></div><span class="control-access">Control total</span></header>
-      <nav class="control-tabs" aria-label="Secciones del centro de control"><button type="button" data-control-tab="overview" aria-pressed="true">Vista general</button><button type="button" data-control-tab="requests" aria-pressed="false">Solicitudes<span data-request-count hidden></span></button><button type="button" data-control-tab="economy" aria-pressed="false">Tienda y sobres</button><button type="button" data-control-tab="design" aria-pressed="false">Personalización<span data-control-unsaved hidden></span></button><button type="button" data-control-action="preview">${icon('eye')}<span>Ver el club</span></button></nav>
+      <nav class="control-tabs" aria-label="Secciones del centro de control"><button type="button" data-control-tab="overview" aria-pressed="true">Vista general</button><button type="button" data-control-tab="requests" aria-pressed="false">Solicitudes<span data-request-count hidden></span></button><button type="button" data-control-tab="economy" aria-pressed="false">Tienda y sobres</button><button type="button" data-control-tab="updates" aria-pressed="false">Actualizaciones</button><button type="button" data-control-tab="design" aria-pressed="false">Personalización<span data-control-unsaved hidden></span></button><button type="button" data-control-action="preview">${icon('eye')}<span>Ver el club</span></button></nav>
       <div data-control-panel="overview">
         <section class="control-overview" aria-label="Resumen del club"><article class="control-overview-lead"><span class="control-kicker">ESTADO DEL CLUB</span><strong>Administra el club.</strong><p>Gestiona las cuentas, prepara los próximos planes y ajusta la experiencia.</p><button type="button" data-control-action="design">Personalizar el club ${icon('paint')}</button></article><div class="control-metrics"><article><span>Cuentas del club</span><strong data-control-stat="members">—</strong><small>Usuarios visibles</small></article><article><span>Conectados</span><strong data-control-stat="online">—</strong><small>Presencia ahora</small></article><article><span>Próximos planes</span><strong data-control-stat="events">—</strong><small>Eventos programados</small></article><article><span>Equipo</span><strong data-control-stat="admins">—</strong><small>Administradores del club</small></article></div></section>
         <div class="control-section-label"><h3>Gestionar el club</h3><span>Accesos de trabajo</span></div>
-        <div class="control-workspaces"><button type="button" class="control-workspace" data-control-tab="requests"><span class="control-workspace-top"><i>${icon('people')}</i><small data-request-count hidden></small></span><strong>Solicitudes de cuenta</strong><span>Verifica el correo y decide quién entra al club.</span><b>Revisar accesos</b></button><button type="button" class="control-workspace" data-control-tab="economy"><span class="control-workspace-top"><i>${icon('cards')}</i><small>ECONOMÍA</small></span><strong>Tienda y sobres</strong><span>Modifica los precios y las probabilidades de cada rareza.</span><b>Configurar</b></button>${[
+        <div class="control-workspaces"><button type="button" class="control-workspace" data-control-tab="requests"><span class="control-workspace-top"><i>${icon('people')}</i><small data-request-count hidden></small></span><strong>Solicitudes de cuenta</strong><span>Verifica el correo y decide quién entra al club.</span><b>Revisar accesos</b></button><button type="button" class="control-workspace" data-control-tab="economy"><span class="control-workspace-top"><i>${icon('cards')}</i><small>ECONOMÍA</small></span><strong>Tienda y sobres</strong><span>Modifica los precios y las probabilidades de cada rareza.</span><b>Configurar</b></button><button type="button" class="control-workspace" data-control-tab="updates"><span class="control-workspace-top"><i>${icon('panel')}</i><small>ANDROID</small></span><strong>Actualizaciones</strong><span>Publica el APK y decide desde qué compilación se puede entrar.</span><b>Gestionar versiones</b></button>${[
           ['people', 'admin-cuentas', '01', 'Cuentas y perfiles', 'Usuarios, contraseñas, sobres, monedas y regalos.', 'Cuentas'],
           ['calendar', 'calendario', '02', 'Agenda del club', 'Cumpleaños, eventos y asistencia.', 'Organizar'],
           ['chat', 'chat', '03', 'Conversaciones', 'Secciones, encuestas y mensajes automáticos.', 'Abrir chats'],
@@ -92,6 +92,7 @@
         <div class="control-design-intro"><div><span class="control-kicker">ECONOMÍA DEL CLUB</span><h3>Tienda y sobres</h3><p>Precios en monedas y probabilidades de cada rareza para todos los usuarios.</p></div><button type="button" data-economy-reload>Actualizar datos</button></div>
         <div data-economy-content></div><p data-economy-feedback role="status" aria-live="polite"></p>
       </section>
+      <section data-control-panel="updates" class="control-releases" hidden aria-label="Actualizaciones de Android"><div data-release-content></div></section>
       <div data-control-panel="design" hidden>
         <div class="control-design-intro"><div><h3>Personalización del club.</h3><p>Los cambios se publican para todos en Android, iPhone y web.</p></div><div class="control-settings-sync"><span data-control-settings-state>Esperando configuración</span><button type="button" data-control-action="reload">Sincronizar</button></div></div>
         <form id="clubPresentationForm" class="control-editor">
@@ -127,6 +128,7 @@
     const economyContent = mount.querySelector('[data-economy-content]');
     const economyFeedback = mount.querySelector('[data-economy-feedback]');
     const economyReload = mount.querySelector('[data-economy-reload]');
+    const releaseAdmin = globalThis.ClubAppUpdate?.createAdmin(mount.querySelector('[data-release-content]'), {client:api.releaseClient, allowed:api.allowed, owner:api.owner});
     const rarityLabels = {common:'Común',retro:'Retro',special:'Especial',epic:'Épica',legendary:'Legendaria',full_art:'Full Art',vice_city:'Vice City',halloween:'Halloween'};
     const safe = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     let economy = null, economyBusy = false, economyOwner = null, economyRequest = 0;
@@ -192,6 +194,7 @@
     economyReload.addEventListener('click', loadEconomy);
 
     function view(tab) {
+      if (tab === 'updates') releaseAdmin?.load();
       if (tab === 'economy') loadEconomy();
       if (tab === 'requests') document.dispatchEvent(new Event('club-account-requests-open'));
       for (const node of mount.querySelectorAll('[data-control-panel]')) node.hidden = node.dataset.controlPanel !== tab;
@@ -277,6 +280,7 @@
       refreshStats: updateStats,
       sync() {
         const allowed = Boolean(api.allowed());
+        releaseAdmin?.sync();
         mount.hidden = !allowed; dock.hidden = !allowed;
         document.getElementById('standardAdminPanel').hidden = allowed;
         document.body.classList.toggle('superadmin-console-session', allowed);
