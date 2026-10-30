@@ -150,8 +150,12 @@ html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars,.cl
 .chota-idle-ear--right { background-image:url("icons/mascot/chota-v2/chota-idle-ear-right-v1.webp"); transform-origin:74% 30%; }
 .chota-idle-body { clip-path:inset(52% 0 0); transform-origin:50% 93%; }
 .chota-idle-head { clip-path:inset(0 0 46%); transform-origin:57% 52%; }
-.chota-sleep-chest,.chota-sleep-foreground { display:none; position:absolute; inset:0; background:url("icons/mascot/chota-v2/chota-poses.webp") 80% 100% / 600% 400% no-repeat; image-rendering:pixelated; pointer-events:none; }
-.is-sleep-breathing :is(.chota-sleep-chest,.chota-sleep-foreground) { display:block; }
+.chota-sleep-base,.chota-sleep-chest,.chota-sleep-head,.chota-sleep-tail,.chota-sleep-foreground { display:none; position:absolute; inset:0; background:url("icons/mascot/chota-v2/chota-poses.webp") 80% 100% / 600% 400% no-repeat; image-rendering:pixelated; pointer-events:none; }
+.tigreton-character.is-sleep-breathing { background-image:none; }
+.is-sleep-breathing :is(.chota-sleep-base,.chota-sleep-chest,.chota-sleep-head,.chota-sleep-tail,.chota-sleep-foreground) { display:block; }
+.chota-sleep-base,.chota-sleep-foreground { -webkit-mask:url("icons/mascot/chota-v2/chota-sleep-base-mask.svg") 0 0 / 100% 100%; mask:url("icons/mascot/chota-v2/chota-sleep-base-mask.svg") 0 0 / 100% 100%; }
+.chota-sleep-head { clip-path:polygon(0 0,56% 0,56% 70%,49% 73%,47% 80%,42% 85%,36% 89%,0 89%); transform-origin:38% 88%; }
+.chota-sleep-tail { clip-path:polygon(72% 57%,100% 57%,100% 85%,85% 85%,84% 77%,80% 74%,73% 75%); transform-origin:84% 82%; }
 .chota-sleep-chest { clip-path:polygon(46% 75%,55% 71%,63% 72%,59% 85%,57% 93%,47% 93%); transform-origin:56% 93%; }
 /* Restore the supported cheek/paws and trouser edge in front of the breathing shirt. */
 .chota-sleep-foreground { clip-path:polygon(0 0,50% 0,50% 91%,62% 91%,62% 0,100% 0,100% 100%,0 100%); }

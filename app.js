@@ -3141,6 +3141,9 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const idleEars = [...character.querySelectorAll(".chota-idle-ear")];
   const eyelids = character.querySelector(".chota-idle-eyelids");
   const sleepChest = character.querySelector(".chota-sleep-chest");
+  const sleepHead = character.querySelector(".chota-sleep-head");
+  const sleepTail = character.querySelector(".chota-sleep-tail");
+  let lastSleepMovement = "head";
   let inView = false, timer = 0, frameTimer = 0, blinkTimer = 0, animations = [], destroyed = false, paused = false, spriteRequest = 0;
   let bedtimeActive = false, bedtimeSwitch = null, wakingActive = false, wakingComplete = null, lastAmbientAction = "";
   const attentionTimes = new Map();
@@ -3532,6 +3535,32 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     }
     advanceSpeech();
   }
+  function scheduleSleepMovement() {
+    clearTimeout(timer);
+    if (destroyed || paused || !inView || document.hidden || tigretonReducedMotion.matches || !isChotaSleeping() || !character.classList.contains("is-sleep-breathing")) return;
+    timer = setTimeout(() => {
+      if (destroyed || paused || !inView || document.hidden || tigretonReducedMotion.matches || !isChotaSleeping() || !character.classList.contains("is-sleep-breathing")) return;
+      lastSleepMovement = lastSleepMovement === "head" ? "tail" : "head";
+      if (lastSleepMovement === "tail") {
+        animateIdle(sleepTail, [
+          {transform:"rotate(0deg)",offset:0},
+          {transform:"rotate(-5deg)",offset:.3},
+          {transform:"rotate(1.8deg)",offset:.52},
+          {transform:"rotate(-1.5deg)",offset:.7},
+          {transform:"rotate(0deg)",offset:1}
+        ], {duration:1700,easing:"ease-in-out"});
+      } else {
+        animateIdle(sleepHead, [
+          {transform:"translateY(0) rotate(0deg)",offset:0},
+          {transform:"translateY(.35%) rotate(-1.3deg)",offset:.32},
+          {transform:"translateY(.35%) rotate(-1.3deg)",offset:.52},
+          {transform:"translateY(0) rotate(.25deg)",offset:.82},
+          {transform:"translateY(0) rotate(0deg)",offset:1}
+        ], {duration:2600,easing:"ease-in-out"});
+      }
+      scheduleSleepMovement();
+    }, 7000 + Math.random() * 8500);
+  }
   function refresh() {
     const validTransition = (bedtimeActive && isChotaSleeping()) || (wakingActive && !isChotaSleeping());
     if (validTransition && !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches) return;
@@ -3554,6 +3583,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
           {transform:"scaleY(1)",offset:.92},
           {transform:"scaleY(1)",offset:1}
         ], {duration:4400,iterations:Infinity,easing:"ease-in-out"});
+        scheduleSleepMovement();
       }
       return;
     }
@@ -3716,7 +3746,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
 }
 function tigretonSpriteMarkup(interactive = false) {
   const tag = interactive ? "button" : "span";
-  return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"><span class="chota-idle-tail"></span><span class="chota-idle-body"></span><span class="chota-idle-head"><span class="chota-idle-ear chota-idle-ear--left"></span><span class="chota-idle-ear chota-idle-ear--right"></span><svg class="chota-idle-eyelids" viewBox="0 0 256 256" aria-hidden="true"><path fill="#fa7906" d="M117 84Q126 81 136 93L141 99 138 105Q126 108 119 99Z M164 98Q174 94 182 100L184 105 180 113Q172 116 164 108Z"/><path fill="none" stroke="#27170f" stroke-width="1.7" stroke-linecap="round" d="M119 96q11 10 20 3m26 5q8 7 17 1"/></svg></span><span class="chota-sleep-chest"></span><span class="chota-sleep-foreground"></span></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
+  return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"><span class="chota-idle-tail"></span><span class="chota-idle-body"></span><span class="chota-idle-head"><span class="chota-idle-ear chota-idle-ear--left"></span><span class="chota-idle-ear chota-idle-ear--right"></span><svg class="chota-idle-eyelids" viewBox="0 0 256 256" aria-hidden="true"><path fill="#fa7906" d="M117 84Q126 81 136 93L141 99 138 105Q126 108 119 99Z M164 98Q174 94 182 100L184 105 180 113Q172 116 164 108Z"/><path fill="none" stroke="#27170f" stroke-width="1.7" stroke-linecap="round" d="M119 96q11 10 20 3m26 5q8 7 17 1"/></svg></span><span class="chota-sleep-base"></span><span class="chota-sleep-tail"></span><span class="chota-sleep-chest"></span><span class="chota-sleep-head"></span><span class="chota-sleep-foreground"></span></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
 }
 let chotaViewerMotion = null;
 let chotaViewerMotionKey = "";

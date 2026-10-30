@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>El Chota · sueño tranquilo</title>
+<link rel="stylesheet" href="../../../club.css"><link rel="stylesheet" href="../../../clubhouse.css">
+<style>
+body{margin:0;padding:24px;background:#101216;color:#eee;font:16px system-ui}h1{font-size:20px}main{display:flex;gap:28px}.sample{width:256px}.tigreton-sprite{width:256px;height:256px}.tail .chota-sleep-tail{transform:rotate(-5deg)}.head .chota-sleep-head{transform:translateY(.35%) rotate(-1.3deg)}p{color:#b8bec7}.sample .tigreton-character{background-position:80% 100%}
+</style>
+<h1>El Chota · pequeños movimientos durante el sueño</h1><main id="samples"></main>
+<script>
+const sprite='<span class="tigreton-sprite"><span class="tigreton-character is-sleep-breathing"><span class="chota-sleep-base"></span><span class="chota-sleep-tail"></span><span class="chota-sleep-chest"></span><span class="chota-sleep-head"></span><span class="chota-sleep-foreground"></span></span></span>';
+document.querySelector('#samples').innerHTML=[['Reposo','rest'],['Pequeño movimiento de cola','tail'],['Acomoda la cabeza','head']].map(([label,cls])=>`<div class="sample ${cls}"><p>${label}</p>${sprite}</div>`).join('');
+</script>
