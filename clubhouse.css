@@ -57,13 +57,20 @@
 .clubhouse-memory svg { width: 28%; max-height: 30px; min-height: 16px; fill: none; stroke: #726454; stroke-width: 1.5; }
 .clubhouse-memory strong { font-size: clamp(8px, 1.45vw, 12px); line-height: 1.25; font-weight: 650; }
 .clubhouse-memory > span:last-child { font-size: clamp(7px, 1.2vw, 10px); line-height: 1.25; }
-.clubhouse-room .clubhouse-pet { position: absolute; z-index: 3; left: 36%; bottom: 15%; width: 28%; display: flex; flex-direction: column; align-items: center; }
+/* Both views use one 1024px room coordinate system. Labels never move the feet. */
+:is(.clubhouse-room,.chota-viewer-room-scene) { --chota-home-left:36%; --chota-home-top:53.54%; --chota-home-width:28%; }
+.chota-room-depth { position:absolute; inset:0; z-index:3; pointer-events:none; -webkit-mask:url("icons/clubhouse/chota-room-occlusion.svg") 0 0 / 100% 100% no-repeat; mask:url("icons/clubhouse/chota-room-occlusion.svg") 0 0 / 100% 100% no-repeat; }
+.is-chota-on-sofa .chota-room-depth { -webkit-mask-image:url("icons/clubhouse/chota-sofa-occlusion.svg"); mask-image:url("icons/clubhouse/chota-sofa-occlusion.svg"); }
+:is(.clubhouse-room,.chota-viewer-room-scene) .tigreton-agenda { position:absolute; z-index:3; inset:auto; left:var(--chota-home-left); top:var(--chota-home-top); width:var(--chota-home-width); height:var(--chota-home-width); min-height:0; display:block; pointer-events:none; }
+:is(.clubhouse-room,.chota-viewer-room-scene) .chota-character-row { position:relative; inset:auto; display:block; width:100%; height:100%; max-width:none; }
+:is(.clubhouse-room,.chota-viewer-room-scene) .tigreton-sprite { pointer-events:auto; }
+.clubhouse-room .tigreton-name { position:absolute; top:calc(100% + 2px); left:50%; transform:translateX(-50%); white-space:nowrap; }
 .clubhouse-pet:is(.is-going-to-sleep,.is-waking-up,.is-walking) { z-index: 4; }
 .clubhouse-pet:is(.is-going-to-sleep,.is-waking-up,.is-walking) :is(.tigreton-name,.chota-expand) { opacity:0; pointer-events:none; }
 .clubhouse-room .tigreton-sprite { width: 100%; height: auto; aspect-ratio: 1; margin: 0; border-radius: 0; }
 .clubhouse-room .tigreton-character { filter: drop-shadow(2px 4px 0 #0002); }
 .clubhouse-room .tigreton-name { width: auto; margin: 0; padding: 4px 9px; color: #fff4da; background: #252223d9; border-radius: 2px; font-size: clamp(10px, 1.8vw, 13px); line-height: 1.25; }
-.clubhouse-room .chota-expand { position: absolute; right: -3px; bottom: 0; width: 44px; height: 44px; display: grid; place-items: center; padding: 13px; border: 0; background: transparent; color: #f0d6a1; cursor: pointer; }
+.clubhouse-room .chota-expand { position: absolute; right: -3px; bottom: -30px; pointer-events:auto; width: 44px; height: 44px; display: grid; place-items: center; padding: 13px; border: 0; background: transparent; color: #f0d6a1; cursor: pointer; }
 .clubhouse-room .chota-expand svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .clubhouse-room .chota-expand[hidden] { display: none; }
 .clubhouse-pet.is-sleeping .tigreton-sprite { cursor: default; opacity: 1; transform: none; }
@@ -95,8 +102,7 @@
 .chota-viewer-plan { margin: 0; color: #f2e3c5; text-shadow: 0 1px 5px #000; }
 .chota-viewer-room-scene { position: relative; flex: none; align-self: center; width: min(100%, calc(100dvh - 280px), 760px); aspect-ratio: 1; margin-block: auto; overflow: hidden; isolation: isolate; border-radius: 16px; background: #171b20; }
 .chota-viewer-room-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; transition:filter 3s ease-in-out; }
-.chota-viewer-room-scene .chota-viewer-pet { position: absolute; inset: 0; min-height: 0; }
-.chota-viewer-room-scene .chota-character-row { position: absolute; bottom: 13%; left: 26%; width: 48%; max-width: none; }
+.chota-viewer-room-scene .chota-viewer-touch { pointer-events:auto; }
 .chota-viewer-room-scene .chota-viewer-touch { display: block; width: 100%; margin: 0; padding: 0; border-radius: 0; }
 .chota-viewer-room-scene .tigreton-sprite { width: 100%; max-width: none; height: auto; aspect-ratio: 1; }
 .chota-viewer-room-scene .chota-viewer-bubble-slot { display:contents; }
@@ -107,7 +113,6 @@
 @media (max-width: 600px) {
   .chota-viewer { padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right)); gap: 10px; }
   .chota-viewer-room-scene { width: min(100%, calc(100dvh - 282px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); border-radius: 12px; }
-  .chota-viewer-room-scene .chota-character-row { left: 24%; width: 52%; }
   .chota-viewer-room-scene .tigreton-bubble { padding: 8px 10px; font-size: 12px; }
   .chota-viewer-room-scene .chota-viewer-comment { max-height: 90px; }
 }
@@ -166,8 +171,6 @@ html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars,.cl
 .tigreton-character.is-room-pose { background-image:url("icons/mascot/chota-v2/chota-room-life-v1.webp"); background-size:400% 100%; }
 .is-visiting-room { z-index:4; }
 .is-visiting-room :is(.tigreton-name,.chota-expand) { opacity:0; pointer-events:none; }
-.chota-sofa-foreground { display:none; position:absolute; inset:0; z-index:5; pointer-events:none; background:url("icons/clubhouse/club-room-v1.webp") 0 0 / 100% 100%; clip-path:polygon(0 57%,4.8% 59%,6.8% 64%,7.5% 69%,0 74%); }
-.is-chota-on-sofa .chota-sofa-foreground { display:block; }
 .chota-idle-eyelids { display:block; position:absolute; inset:0; width:100%; height:100%; opacity:0; overflow:visible; }
 @media(prefers-reduced-motion:reduce) { .chota-idle-eyelids { display:none; } }
 html[data-reduced-motion="true"] .chota-idle-eyelids { display:none; }

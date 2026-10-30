@@ -3138,6 +3138,18 @@ function mountTigretonMotion(reactToPlan, event, date) {
   tigretonMotion = createTigretonMotion(pet, reactToPlan, event, date);
   if (document.getElementById("chotaViewer")?.open) tigretonMotion.pause();
 }
+// Room positions are normalised feet coordinates; sprite width is a room fraction.
+function chotaRoomVisitLayout(kind) {
+  const width = kind === "sofa" ? .235 : kind === "board" ? .235 : .225;
+  return {
+    width,
+    target:kind === "sofa" ? {x:.125,y:.667,s:width/.28} : kind === "board" ? {x:.345,y:.605,s:width/.28} : {x:.77,y:.605,s:width/.28},
+    approach:{x:.235,y:.735,s:width/.28},
+  };
+}
+function chotaRoomTransform(point, home, size) {
+  return `translate(${(point.x-home.x)*size}px,${(point.y-home.y)*size}px) scale(${point.s})`;
+}
 function createTigretonMotion(pet, reactToPlan, event, date) {
   const character = pet.querySelector(".tigreton-character");
   const shadow = pet.querySelector(".tigreton-shadow");
@@ -3165,6 +3177,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const attentionTimes = new Map();
   let lastRoomMoment = pet.closest(".clubhouse-room, .chota-viewer-room-scene")?.dataset.time || "";
   let lastPersonalAt = performance.now(), lastTouchAt = -Infinity;
+  let pendingRoomState = null;
   let roomVisit = null, lastRoomVisitAt = performance.now() - 18000;
   const roomVisitTimes = new Map();
   const motionRoot = pet.querySelector(".chota-character-row") || pet;
@@ -3344,7 +3357,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     if (!roomVisit) return;
     roomVisit.position = point;
     const {home, size} = roomVisit;
-    motionRoot.style.transform = `translate(${(point.x - home.x) * size}px,${(point.y - home.y) * size}px) scale(${point.s})`;
+    motionRoot.style.transform = chotaRoomTransform(point, home, size);
   }
   function mixRoomPoint(from, to, progress) {
     const p = Math.max(0, Math.min(1, progress));
@@ -3379,17 +3392,13 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       lastRoomVisitAt = performance.now(); roomVisitTimes.set(kind, lastRoomVisitAt);
       const feetX = spriteBox.left + spriteBox.width * .5, feetY = spriteBox.top + spriteBox.width * .945;
       const home = {x:(feetX-roomBox.left)/roomBox.width, y:(feetY-roomBox.top)/roomBox.width, s:1};
-      const scale = (kind === "sofa" ? .24 : kind === "board" ? .235 : .225) * roomBox.width / spriteBox.width;
-      const target = kind === "sofa" ? {x:.145,y:.667,s:scale} : kind === "board" ? {x:.345,y:.605,s:scale} : {x:.77,y:.605,s:scale};
-      const approach = {x:.16,y:.705,s:scale};
+      const layout = chotaRoomVisitLayout(kind);
+      const scale = layout.width * roomBox.width / spriteBox.width;
+      const target = {...layout.target,s:scale}, approach = {...layout.approach,s:scale};
       roomVisit = {kind, home, target, approach, position:home, size:roomBox.width, started:performance.now(), room, returning:null, afterReturn:null};
       motionRoot.style.transformOrigin = `${feetX-rootBox.left}px ${feetY-rootBox.top}px`;
       pet.classList.add("is-awake", "is-visiting-room", "is-walking");
       pet.dataset.attention = `visit-${kind}`;
-      // The sofa's front arm occludes the tail just as it does the seat cushion.
-      if (kind === "sofa" && !room.querySelector(".chota-sofa-foreground")) {
-        const arm = document.createElement("i"); arm.className = "chota-sofa-foreground"; arm.setAttribute("aria-hidden", "true"); room.append(arm);
-      }
       advanceRoomVisit();
     });
   }
@@ -3579,6 +3588,25 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       scheduleSleepMovement();
     }, 7000 + Math.random() * 8500);
   }
+  function captureRoomState() {
+    if (pendingRoomState) return pendingRoomState;
+    if (!roomVisit) return null;
+    const {kind,home,target,approach,position,started,returning} = roomVisit;
+    return {kind,home:{...home},target:{...target},approach:{...approach},position:{...position},elapsed:Math.max(0,performance.now()-started),returning:returning ? {from:{...returning.from},elapsed:Math.max(0,performance.now()-returning.started),rise:returning.rise,duration:returning.duration} : null};
+  }
+  function restoreRoomState(state) {
+    const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
+    const box = room?.getBoundingClientRect(), sprite = pet.querySelector(".tigreton-sprite")?.getBoundingClientRect(), root = motionRoot.getBoundingClientRect();
+    if (!box?.width || !sprite?.width) return false;
+    const now = performance.now();
+    roomVisit = {...state,room,size:box.width,started:now-state.elapsed,returning:state.returning ? {...state.returning,started:now-state.returning.elapsed} : null,afterReturn:null};
+    motionRoot.style.transformOrigin = `${sprite.left+sprite.width*.5-root.left}px ${sprite.top+sprite.width*.945-root.top}px`;
+    pet.classList.add("is-awake","is-visiting-room","is-walking");
+    pet.dataset.attention = `visit-${state.kind}`;
+    lastRoomVisitAt = now; roomVisitTimes.set(state.kind,now);
+    advanceRoomVisit();
+    return true;
+  }
   function refresh() {
     const validTransition = (bedtimeActive && isChotaSleeping()) || (wakingActive && !isChotaSleeping());
     if (validTransition && !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches) return;
@@ -3605,7 +3633,11 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       }
       return;
     }
-    if (active()) idle();
+    if (active()) {
+      const state = pendingRoomState;
+      pendingRoomState = null;
+      if (!state || !restoreRoomState(state)) idle();
+    }
   }
   function bedtime(switchLights) {
     if (destroyed || paused || !inView || document.hidden || tigretonReducedMotion.matches || !isChotaSleeping()) return false;
@@ -3756,8 +3788,9 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     isWaking: () => wakingActive,
     refresh,
     stopSpeaking: refresh,
+    captureRoomState,
     pause() { paused = true; refresh(); },
-    resume() { paused = false; refresh(); },
+    resume(state = null) { pendingRoomState = state; paused = false; refresh(); },
     react: () => play(isBirthday && isToday ? "jump" : "greet"),
     destroy() { if (bedtimeActive) bedtimeSwitch?.(); destroyed = true; stop(); observer.disconnect(); document.removeEventListener("visibilitychange", refresh); tigretonReducedMotion.removeEventListener("change", refresh); },
   };
@@ -3850,9 +3883,10 @@ function openChotaViewer(trigger) {
       document.body.classList.remove("chota-viewer-open");
       document.querySelector("main.app")?.removeAttribute("aria-hidden");
       delete viewer.dataset.requestKey;
+      const roomState = chotaViewerMotion?.captureRoomState();
       chotaViewerMotion?.pause();
       globalThis.ChotaShop?.unmountRoom(viewer.querySelector(".chota-viewer-room-scene"));
-      tigretonMotion?.resume();
+      tigretonMotion?.resume(roomState);
       const focusTarget = chotaViewerTrigger?.isConnected ? chotaViewerTrigger : document.querySelector("[data-chota-open]");
       focusTarget?.focus({preventScroll: true});
       chotaViewerTrigger = null;
@@ -3870,13 +3904,14 @@ function openChotaViewer(trigger) {
     ${clubhouseDaylightMarkup()}
     ${clubhouseSeasonalMarkup()}
     <span class="clubhouse-light-switch" aria-hidden="true"><i></i></span>
-    <div class="tigreton-agenda chota-viewer-pet">
     <div class="chota-viewer-bubble-slot"><div class="tigreton-bubble chota-viewer-status" role="status" aria-live="polite" aria-atomic="true" hidden></div></div>
-    <div class="chota-character-row"><button class="chota-viewer-touch" type="button" data-chota-action="nod" aria-label="Tocar a El Chota">${tigretonSpriteMarkup()}</button></div></div></div>
+    <div class="chota-room-depth"><div class="tigreton-agenda chota-viewer-pet">
+    <div class="chota-character-row"><button class="chota-viewer-touch" type="button" data-chota-action="nod" aria-label="Tocar a El Chota">${tigretonSpriteMarkup()}</button></div></div></div></div>
     <div class="chota-viewer-actions"><button type="button" data-chota-action="nod" >Saludar</button><button type="button" data-chota-action="shuffle">Pasitos</button><button type="button" data-chota-action="celebrate">Celebrar</button><button type="button" data-chota-action="doze">Descansar</button></div>`;
   viewer.querySelector(".chota-viewer-plan").textContent = next.event.title;
   viewer.querySelector(".chota-viewer-status").hidden = true;
   chotaViewerTrigger = trigger;
+  const roomState = tigretonMotion?.captureRoomState();
   tigretonMotion?.pause();
   document.body.classList.add("chota-viewer-open");
   viewer.show();
@@ -3888,7 +3923,8 @@ function openChotaViewer(trigger) {
     chotaViewerMotion?.destroy();
     chotaViewerMotion = createTigretonMotion(viewer.querySelector(".tigreton-agenda"), false, next.event, next.date);
     chotaViewerMotionKey = key;
-  } else chotaViewerMotion.resume();
+  }
+  chotaViewerMotion.resume(roomState);
   viewer.querySelector("[data-chota-close]").focus({preventScroll: true});
 }
 // A tap shows an agenda comment; releasing a held mascot opens its separate scene.
@@ -4146,7 +4182,7 @@ function renderClubhouse(upcoming) {
     ${next ? `<button type="button" class="clubhouse-live-icon" data-club-live-event="${escapeHtml(next.event.id)}" aria-label="Abrir plan en directo: ${escapeHtml(next.event.title)}" title="Plan en directo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.1 7.1a7 7 0 0 0 0 9.8m9.8-9.8a7 7 0 0 1 0 9.8M4 4a11.3 11.3 0 0 0 0 16M20 4a11.3 11.3 0 0 1 0 16"/></svg></button>` : ""}
     <div id="chotaArcadeEntry"></div>
     <div class="clubhouse-memory"><span class="clubhouse-memory-label">Recuerdos del club</span><svg viewBox="0 0 40 32" aria-hidden="true"><path d="M4 8h8l3-5h10l3 5h8v21H4z"/><circle cx="20" cy="18" r="7"/></svg><strong>Aún no hay recuerdos compartidos</strong><span>Este sitio será para vuestra próxima foto.</span></div>
-    <div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small><button type="button" class="chota-expand" data-chota-expand aria-label="Ver a El Chota en pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 21h5v-5m0 5-7-7M16 3h5v5m0-5-7 7M8 21H3v-5m0 5 7-7"/></svg></button></div>
+    <div class="chota-room-depth"><div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small><button type="button" class="chota-expand" data-chota-expand aria-label="Ver a El Chota en pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 21h5v-5m0 5-7-7M16 3h5v5m0-5-7 7M8 21H3v-5m0 5 7-7"/></svg></button></div></div>
     <div class="tigreton-bubble clubhouse-bubble" hidden role="status" aria-live="polite" aria-atomic="true"></div>
   </div>`;
   const room = content.firstElementChild;

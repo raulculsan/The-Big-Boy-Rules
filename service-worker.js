@@ -1,5 +1,7 @@
-const CACHE_NAME = "big-boy-rules-v445";
+const CACHE_NAME = "big-boy-rules-v446";
 const APP_SHELL = [
+  "./icons/clubhouse/chota-room-occlusion.svg",
+  "./icons/clubhouse/chota-sofa-occlusion.svg",
   "./app-update.js?v=20261030-app-update-440",
   "./app-update.css?v=20261030-app-update-440",
   "./ui-motion.js?v=20261030-neutral-interactions-444",
@@ -19,8 +21,8 @@ const APP_SHELL = [
   "./styles.css?v=20261030-neutral-interactions-444",
   "./visual-system.css?v=20261030-neutral-interactions-444",
   "./notifications.css?v=20261030-neutral-interactions-444",
-  "./club.css?v=20261030-neutral-interactions-444",
-  "./clubhouse.css?v=20261030-neutral-interactions-444",
+  "./club.css?v=20261030-room-depth-446",
+  "./clubhouse.css?v=20261030-room-depth-446",
   "./chota-shop.js?v=20261027-remote-catalog-426",
   "./chota-shop.css?v=20261027-remote-catalog-426",
   "./coin-missions.js?v=20261030-coin-missions-442",
@@ -79,7 +81,7 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261030-app-update-440",
   "./admin-console.css?v=20261030-neutral-interactions-444",
-  "./app.js?v=20261030-neutral-interactions-444",
+  "./app.js?v=20261030-room-depth-446",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261030-audit-hardening-443",
