@@ -23,6 +23,13 @@ test('club day keeps coins and votes on the server', async () => {
   assert.doesNotMatch(client, /award_coins|member_coin/);
 });
 
+test('duels read scores and ownership only on the server', async () => {
+  const [sql, client] = await Promise.all([read('supabase/migrations/20261031210000_club_day_extras.sql'), read('club-day.js')]);
+  assert.equal(sql.match(/create table club_day\./g).length, sql.match(/enable row level security/g).length);
+  assert.match(sql, /'duel:'\|\|club_day\.today\(\)/);
+  assert.doesNotMatch(client, /p_score|p_coins|p_winner/);
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);

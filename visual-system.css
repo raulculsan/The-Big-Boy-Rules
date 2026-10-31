@@ -546,8 +546,8 @@ body.authenticated .app-tab.active { color: var(--interaction-strong); }
 body.authenticated #inicio:is(.active, .page-back-preview) {
   display: grid;
   grid-template-columns: minmax(0,1fr) minmax(280px,.75fr);
-  grid-template-areas: "welcome welcome" "search search" "plans music" "members members" "news news";
-  grid-template-rows: repeat(5,max-content);
+  grid-template-areas: "welcome welcome" "search search" "plans music" "day day" "members members" "news news";
+  grid-template-rows: repeat(6,max-content);
   align-content: start;
   gap: 26px;
 }
@@ -556,6 +556,8 @@ body.authenticated #inicio.page-back-preview { display: grid !important; }
 body.authenticated #inicio > .club-welcome { grid-area: welcome; margin: 6px 0 0; padding-bottom: 22px; border-bottom: 1px solid var(--bb2-line-strong); }
 body.authenticated #inicio .club-welcome h2 { font-size: clamp(38px,5vw,54px); font-weight: 700; }
 body.authenticated #inicio > .club-search { grid-area: search; margin: 0; }
+body.authenticated #inicio .club-dashboard > .clubhouse { grid-area: plans; }
+body.authenticated #inicio > .club-day { grid-area: day; margin: 0; }
 body.authenticated #inicio > .club-dashboard { display: contents; }
 body.authenticated #inicio .club-dashboard > .club-plans { grid-area: plans; padding: 22px; background: var(--bb2-raised); border: 1px solid var(--bb2-line-strong); border-radius: 22px; }
 body.authenticated #inicio .club-dashboard > .spotify-panel { grid-area: music; padding: 22px; background: var(--bb2-panel); border-radius: 22px; }
@@ -620,7 +622,7 @@ body.authenticated .tab-selection-indicator { background: var(--bb2-gold-dark); 
 body.authenticated .tab-selection-indicator::after { display: none; }
 body.authenticated .app-tab.active { color: var(--interaction-strong); }
 @media (max-width: 760px) {
-  body.authenticated #inicio:is(.active, .page-back-preview) { grid-template-columns: minmax(0,1fr); grid-template-areas: "welcome" "search" "plans" "members" "music" "news"; grid-template-rows: repeat(6,max-content); gap: 22px; }
+  body.authenticated #inicio:is(.active, .page-back-preview) { grid-template-columns: minmax(0,1fr); grid-template-areas: "welcome" "search" "plans" "day" "members" "music" "news"; grid-template-rows: repeat(7,max-content); gap: 22px; }
   body.authenticated #inicio .club-welcome { padding-bottom: 18px; flex-direction: row; align-items: center; }
   body.authenticated #inicio .club-welcome h2 { font-size: 38px; }
   body.authenticated #inicio .club-welcome .eyebrow { font-size: 9px; }

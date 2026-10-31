@@ -41,4 +41,18 @@
 .club-day-ranking { display: grid; gap: var(--ds-space-1); margin: 0; padding: 0; list-style: none; }
 .club-day-ranking li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: var(--ds-space-2); min-height: var(--ds-control-sm); font-size: var(--ds-text-sm); }
 .club-day-ranking small { font-size: var(--ds-text-xs); color: var(--ds-text-2); }
+.club-day-cards { display: flex; gap: var(--ds-space-2); margin-inline: calc(var(--ds-space-4) * -1); padding-inline: var(--ds-space-4); overflow-x: auto; scrollbar-width: none; }
+.club-day-cards::-webkit-scrollbar { display: none; }
+.club-day-cards button { flex: none; display: grid; gap: 2px; width: 84px; padding: 0; border: 0; background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-xs); text-align: left; }
+.club-day-cards img { width: 84px; aspect-ratio: 5 / 7; object-fit: cover; border-radius: var(--ds-radius-sm); background: var(--ds-raised); }
+.club-day-cards span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.club-day-cards b { color: var(--ds-text); }
+.club-day-week { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: center; gap: var(--ds-space-3); }
+.club-day-week img { width: 104px; aspect-ratio: 5 / 7; object-fit: cover; border-radius: var(--ds-radius-sm); background: var(--ds-raised); }
+.club-day-week div { display: grid; gap: var(--ds-space-2); justify-items: start; }
+.club-day-message { margin: 0; font-size: var(--ds-text-md); line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.club-day-year { display: grid; gap: var(--ds-space-1); margin: 0; }
+.club-day-year div { display: flex; justify-content: space-between; gap: var(--ds-space-3); min-height: var(--ds-control-sm); align-items: center; font-size: var(--ds-text-sm); }
+.club-day-year dt { color: var(--ds-text-2); }
+.club-day-year dd { margin: 0; font-weight: 600; }
 .club-day button:focus-visible { outline: 2px solid var(--ds-text-2); outline-offset: 1px; }
