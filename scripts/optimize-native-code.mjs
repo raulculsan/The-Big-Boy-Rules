@@ -19,6 +19,8 @@ export async function minifyNativeJavaScript(source, filename='app.js') {
   if(typeof output.code!=='string')throw new Error(`No se pudo preparar ${filename}.`);
   return output.code+'\n';
 }
+// iCloud Drive leaves "name 2.jpg" beside generated files. No build ever references them.
+const isSyncCopy=path=>/ \d+(\.[^./]+)?$/.test(path);
 async function filesIn(directory) {
   const files=[];
   for(const entry of await readdir(directory,{withFileTypes:true})){
@@ -35,7 +37,9 @@ export async function optimizeNativeCode({root=projectRoot,platforms=['ios','and
     const native=resolve(root,platform==='android'?'android/app/src/main/assets':'ios/App/App');
     const directory=join(native,'public');
     try{if(!(await lstat(directory)).isDirectory())continue;}catch(error){if(error.code==='ENOENT')continue;throw error;}
-    const files=await filesIn(directory),rewrites=[];let before=0,after=0,maps=0;
+    const copied=await filesIn(directory);
+    for(const path of copied)if(isSyncCopy(path))await unlink(path);
+    const files=copied.filter(path=>!isSyncCopy(path)),rewrites=[];let before=0,after=0,maps=0;
     // Parse/minify every script first. Syntax failures leave this platform's
     // copied app untouched and abort the package instead of shipping half a build.
     for(const path of files){

@@ -158,6 +158,12 @@ body.authenticated :is(.top-actions>.icon-button,.top-actions .notifications-wra
   background-color:rgba(91,94,101,.55);
   box-shadow:inset 0 1px 0 #ffffff60,inset 0 -1px 0 #ffffff0d,0 4px 14px #0002;
 }
+/* Android WebView re-blurs these on every scrolled frame; iOS composites them cheaply. */
+body.authenticated.native-android :is(.top-actions>.icon-button,.top-actions .notifications-wrap>.icon-button,.back-button,.calendar-nav-button,.floating-tab-bar) {
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  background-color:#2b2d31;
+}
 body.authenticated :is(.message-context-menu,.inbox-context-menu,.profile-quick-menu,#notificationsDropdown) {
   border:1px solid #ffffff2b;
   background:linear-gradient(155deg,#ffffff0e,transparent 46%),var(--glass-panel);

@@ -10,6 +10,7 @@
 .club-day { display: grid; gap: var(--ds-space-3); padding: var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); color: var(--ds-text); }
 .club-day[hidden] { display: none; }
 .club-day h4 { margin: 0; font-size: var(--ds-text-md); font-weight: 600; line-height: 1.35; }
+.club-day.is-busy .club-day-body { opacity: .6; pointer-events: none; }
 .club-day-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ds-space-1); padding: var(--ds-space-1); border-radius: var(--ds-radius-md); background: var(--ds-raised); }
 .club-day-tabs button { min-height: var(--ds-control-sm); padding: 0 var(--ds-space-1); border: 0; border-radius: var(--ds-radius-sm); background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-sm); }
 .club-day-tabs button[aria-selected="true"] { background: var(--ds-surface); color: var(--ds-text); font-weight: 600; }

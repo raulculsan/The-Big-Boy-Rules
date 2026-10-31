@@ -4131,6 +4131,9 @@ body:not(.authenticated) .site-footer {
   pointer-events: none;
 }
 
+/* Hidden, not removed: without this their loops keep ticking behind the app. */
+.login-screen.login-hidden *, .page-loader.hidden * { animation-play-state: paused; }
+
 html.auth-session-hint .login-screen {
   opacity: 0;
   visibility: hidden;

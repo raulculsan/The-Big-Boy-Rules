@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
+import {mkdtemp,readFile,readdir,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import vm from 'node:vm';
@@ -49,4 +49,12 @@ test('release config enables optimized R8 and resource shrinking without a debug
  for(const expected of ['minifyEnabled true','shrinkResources true','debuggable false','jniDebuggable false','proguard-android-optimize.txt','signingConfig signingConfigs.debug'])assert.ok(gradle.includes(expected),expected);
  assert.match(rules,/@android\.webkit\.JavascriptInterface <methods>/);assert.ok(!rules.includes('-keep class **'));
  const pkg=JSON.parse(await readFile(join(root,'package.json'),'utf8'));assert.ok(pkg.scripts['capacitor:copy:after'].endsWith('node scripts/optimize-native-code.mjs'));assert.match(pkg.devDependencies.terser,/^\d+\.\d+\.\d+$/);
+});
+
+test('iCloud copies never reach a native package',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'bb-native-'));
+ const dir=join(root,'ios/App/App/public');await mkdir(dir,{recursive:true});
+ await writeFile(join(dir,'a.png'),'x');await writeFile(join(dir,'a 2.png'),'x');await writeFile(join(dir,'b 3.js'),'var x=1');
+ await optimizeNativeCode({root,platforms:['ios'],writeManifest:false});
+ assert.deepEqual(await readdir(dir),['a.png']);
 });
