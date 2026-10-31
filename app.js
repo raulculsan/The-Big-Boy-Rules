@@ -1187,7 +1187,7 @@ function moveChatBackGesture(event) {
       resetChatBackGesture();
       return;
     }
-    try { gesture.panel.setPointerCapture?.(event.pointerId); } catch { /* Pointer may already have been cancelled by the OS. */ }
+    if (!gesture.touch) try { gesture.panel.setPointerCapture?.(event.pointerId); } catch { /* Pointer may already have been cancelled by the OS. */ }
     messageViewTransitioning = true;
   }
   if (event.cancelable) event.preventDefault();
@@ -1232,6 +1232,50 @@ async function finishChatBackGesture(event) {
     messageViewTransitioning = false;
     window.setTimeout(() => { suppressChatGestureClick = false; }, 80);
   }
+}
+
+// Like the reply gesture, touch owns the drag once it exists. WebKit can drop the
+// pointer stream mid-drag, without pointerup, which would strand the panel; only an
+// active touchmove can claim the drag, and touchend always supplies the release.
+function bindChatBackTouch(event) {
+  const gesture = chatBackGesture;
+  if (!gesture) return;
+  if (event.touches.length !== 1) {
+    resetChatBackGesture({settle: gesture.tracking});
+    return;
+  }
+  gesture.touch = true;
+  gesture.touchId = event.changedTouches[0].identifier;
+}
+
+function chatBackTouchEvent(event) {
+  const gesture = chatBackGesture;
+  if (!gesture?.touch) return null;
+  const touch = [...event.changedTouches].find(item => item.identifier === gesture.touchId);
+  if (!touch) return null;
+  return {pointerId: gesture.pointerId, clientX: touch.clientX, clientY: touch.clientY, timeStamp: event.timeStamp,
+    cancelable: event.cancelable, preventDefault: () => event.preventDefault()};
+}
+
+function moveChatBackTouch(event) {
+  const gesture = chatBackGesture, point = chatBackTouchEvent(event);
+  if (!point) return;
+  // A noncancelable touchmove means native scrolling already won the drag.
+  if (event.touches.length !== 1 || !event.cancelable) {
+    resetChatBackGesture({settle: gesture.tracking});
+    return;
+  }
+  moveChatBackGesture(point);
+}
+
+function endChatBackTouch(event) {
+  const point = chatBackTouchEvent(event);
+  return point ? finishChatBackGesture(point) : undefined;
+}
+
+function cancelChatBackTouch(event) {
+  const gesture = chatBackGesture;
+  if (chatBackTouchEvent(event)) resetChatBackGesture({settle: gesture.tracking});
 }
 
 async function openGroupConversation(channelId = activeChatChannelId) {
@@ -7750,14 +7794,21 @@ document.addEventListener("click", event => {
 }, true);
 
 document.addEventListener("pointerdown", startChatBackGesture, {passive: false});
-document.addEventListener("pointermove", moveChatBackGesture, {passive: false});
-document.addEventListener("pointerup", finishChatBackGesture, {passive: true});
+document.addEventListener("pointermove", event => { if (!chatBackGesture?.touch) moveChatBackGesture(event); }, {passive: false});
+document.addEventListener("pointerup", event => { if (!chatBackGesture?.touch) void finishChatBackGesture(event); }, {passive: true});
 document.addEventListener("pointercancel", event => {
-  if (chatBackGesture?.pointerId === event.pointerId) resetChatBackGesture({settle: true});
+  if (chatBackGesture?.pointerId === event.pointerId && !chatBackGesture.touch) resetChatBackGesture({settle: true});
 }, {passive: true});
 document.addEventListener("lostpointercapture", event => {
-  if (chatBackGesture?.pointerId === event.pointerId) resetChatBackGesture({settle: true});
+  if (chatBackGesture?.pointerId === event.pointerId && !chatBackGesture.touch) resetChatBackGesture({settle: true});
 }, {passive: true});
+document.addEventListener("touchstart", bindChatBackTouch, {passive: true});
+// Scoped to the conversations so other pages retain fast native scrolling.
+document.querySelectorAll(".private-conversation, .group-conversation").forEach(panel => {
+  panel.addEventListener("touchmove", moveChatBackTouch, {passive: false});
+});
+document.addEventListener("touchend", endChatBackTouch, {passive: true});
+document.addEventListener("touchcancel", cancelChatBackTouch, {passive: true});
 document.addEventListener("click", event => {
   if (!suppressChatGestureClick || event.target.closest(".floating-tab-bar")) return;
   event.preventDefault();

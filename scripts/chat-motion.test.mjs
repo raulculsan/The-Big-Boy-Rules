@@ -139,25 +139,60 @@ function gestureHarness({kind = 'private', sceneAvailable = true} = {}) {
     settleChatBackScene: async (_, x) => {calls.push(['settle', x]);},
     cleanupChatBackScene: () => calls.push(['cleanup']),
     completeChatBackDestination: kind => calls.push(['destination', kind]),
+    finishChatBackKeyboard: async () => {},
     window: {setTimeout: callback => callback()},
     document: {addEventListener: (_, callback) => {context.cancel = callback;}}
   });
-  const names = ['resetChatBackGesture', 'startChatBackGesture', 'sampleChatBackGesture', 'moveChatBackGesture', 'finishChatBackGesture'];
+  const names = ['resetChatBackGesture', 'startChatBackGesture', 'sampleChatBackGesture', 'moveChatBackGesture', 'finishChatBackGesture',
+    'bindChatBackTouch', 'chatBackTouchEvent', 'moveChatBackTouch', 'endChatBackTouch', 'cancelChatBackTouch'];
   const functions = names.map(name => source.match(new RegExp(`(?:async )?function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}`))[0]).join('\n');
   const constants = source.match(/const CHAT_BACK_GESTURE = Object.freeze\(\{[\s\S]*?\n\}\);/)[0];
   const cancelListener = source.match(/document.addEventListener\("pointercancel", event => \{[\s\S]*?\n\}, \{passive: true\}\);/)[0];
   vm.runInContext(`${constants}\nlet chatBackGesture = null, messageViewTransitioning = false, suppressChatGestureClick = false;\n${functions}\n${cancelListener}`, context);
   const event = (x, y, time, extra = {}) => ({pointerId:1, pointerType:'touch', isPrimary:true, clientX:x, clientY:y, timeStamp:time, target, cancelable:true, preventDefault:() => calls.push(['preventDefault']), ...extra});
+  const touches = (x, y, time, count, extra = {}) => ({changedTouches:[{identifier:7, clientX:x, clientY:y}], touches:Array(count).fill({}), timeStamp:time, cancelable:true, preventDefault() {}, ...extra});
   return {
     calls,
     start: (extra = {}) => context.startChatBackGesture(event(20, 200, 0, extra)),
     move: (x, y, time) => context.moveChatBackGesture(event(x, y, time)),
     finish: (x, y, time) => context.finishChatBackGesture(event(x, y, time)),
+    touchStart: (count = 1) => context.bindChatBackTouch(touches(20, 200, 0, count)),
+    touchMove: (x, y, time, extra = {}) => context.moveChatBackTouch(touches(x, y, time, 1, extra)),
+    touchEnd: (x, y, time) => context.endChatBackTouch(touches(x, y, time, 0)),
+    touchCancel: () => context.cancelChatBackTouch(touches(20, 200, 0, 0)),
     cancel: pointerId => context.cancel({pointerId}),
     state: () => vm.runInContext('({active:!!chatBackGesture, transitioning:messageViewTransitioning, suppressed:suppressChatGestureClick})', context),
     completed: () => calls.some(call => call[0] === 'destination')
   };
 }
+
+test('touch finishes the gesture without pointerup, which WebKit can drop mid-drag', async () => {
+  const h = gestureHarness();
+  h.start();
+  h.touchStart();
+  h.touchMove(42, 204, 40);
+  h.touchMove(160, 210, 170);
+  await h.touchEnd(200, 212, 300);
+  assert.equal(h.completed(), true);
+  assert.equal(h.state().active, false);
+  assert.equal(h.state().transitioning, false);
+  assert.equal(h.calls.some(call => call[0] === 'capture'), false);
+});
+
+test('touchcancel and a touchmove claimed by native scrolling release the panel', async () => {
+  for (const interrupt of [h => h.touchCancel(), h => h.touchMove(90, 205, 90, {cancelable: false})]) {
+    const h = gestureHarness();
+    h.start();
+    h.touchStart();
+    h.touchMove(60, 202, 60);
+    interrupt(h);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(h.state().active, false);
+    assert.equal(h.state().transitioning, false);
+    assert.deepEqual(h.calls.filter(call => call[0] === 'settle'), [['settle', 0]]);
+    assert.equal(h.completed(), false);
+  }
+});
 
 for (const kind of ['private', 'group']) {
   test(`${kind}: horizontal intent stays locked through diagonal drift and final release coordinates`, async () => {
