@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Apertura de sobres v3</title>
+<link rel="stylesheet" href="../../../../banner-shop.css">
+<style>
+html,body{margin:0;min-height:100%;background:#08090c;color:#eee;font:14px system-ui}
+main{display:flex;flex-direction:column;align-items:center;gap:44px;padding:64px 16px 24px}
+.pack-reveal-stage{position:relative;height:440px;width:251px;margin:0;aspect-ratio:4/7}
+.card-end{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+button,select{font:inherit;padding:8px 12px;border-radius:8px;border:1px solid #444;background:#16181d;color:#eee}
+</style></head><body><main>
+<div class="pack-reveal-stage" id="stage"><img class="card-end" src="../../../../icons/cards/reverso-comun-unificado-v1.jpg" alt=""></div>
+<div class="bar"><select id="edition"><option>common</option><option>retro</option><option>special</option><option>epic</option><option>legendary</option><option>full_art</option><option>halloween</option><option>vice_city</option></select>
+<button id="replay">Repetir</button></div>
+</main>
+<script>globalThis.PACK_OPENING_ROOT="../../../../";</script>
+<script src="../../../../pack-opening.js"></script>
+<script>
+const stage=document.getElementById('stage'),edition=document.getElementById('edition');let run;
+const start=()=>{run?.stop();run=PackOpening.play({stage,back:'../../../../icons/cards/reverso-comun-unificado-v1.jpg',count:6,edition:edition.value,onDone:()=>{run=null;}});};
+document.getElementById('replay').onclick=start;edition.onchange=start;start();
+</script></body></html>

@@ -72,6 +72,7 @@ const sources = [
   "group-interactions.js",
   "group-interactions.css",
   "packs.css",
+  "pack-opening.js",
   "banner-shop.js",
   "banner-shop.css",
   "album.js",

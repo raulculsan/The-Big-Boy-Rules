@@ -280,6 +280,7 @@ $(SRCROOT)/App/public/news.css
 $(SRCROOT)/App/public/notifications.css
 $(SRCROOT)/App/public/onboarding.css
 $(SRCROOT)/App/public/onboarding.js
+$(SRCROOT)/App/public/pack-opening.js
 $(SRCROOT)/App/public/packs.css
 $(SRCROOT)/App/public/pending-actions.css
 $(SRCROOT)/App/public/pending-actions.js

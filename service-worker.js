@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v451";
+const CACHE_NAME = "big-boy-rules-v452";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -94,8 +94,9 @@ const APP_SHELL = [
   "./admin-grants.js?v=20261018-password-335",
   "./admin-grants.css?v=20261030-neutral-interactions-444",
   "./shop-catalog-media.js?v=20261030-audit-hardening-443",
-  "./banner-shop.js?v=20261030-banner-picker-443",
-  "./banner-shop.css?v=20261030-neutral-interactions-444",
+  "./pack-opening.js?v=20261031-pack-tear-452",
+  "./banner-shop.js?v=20261031-pack-tear-452",
+  "./banner-shop.css?v=20261031-pack-tear-452",
   "./collection-social.js?v=20261022-pwa-shell-376",
   "./collection-social.css?v=20261030-neutral-interactions-444",
   "./pending-actions.js?v=20261016-release-322",

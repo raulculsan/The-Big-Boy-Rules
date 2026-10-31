@@ -71,6 +71,7 @@ const allowedFiles = new Set([
   "pending-actions.css",
   "group-interactions.js",
   "group-interactions.css",
+  "pack-opening.js",
   "banner-shop.js",
   "banner-shop.css",
   "album.js",

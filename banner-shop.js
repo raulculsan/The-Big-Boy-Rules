@@ -191,6 +191,7 @@
   function showRevealSummary() {
     if (!reveal || reveal.discarding) return;
     clearTimeout(revealTimer);
+    stopRevealOpening();
     detachRevealVfx?.(); detachRevealVfx = null;
     detachRevealFoil?.(); detachRevealFoil = null;
     const gesture = swipe; swipe = null;
@@ -307,14 +308,14 @@
   revealDialog.addEventListener('lostpointercapture',finishSummarySwipe);
   const revealReduced = () => (globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).matches;
   const motionTimings = globalThis.CollectionMotion?.timings || {flip:420, opening:720, advance:200, discard:480, reward:620};
-  let revealTimer = 0;
+  let revealTimer = 0, revealOpening = null;
+  const stopRevealOpening = () => {revealOpening?.stop();revealOpening = null;revealDialog.classList.remove('is-opening-pack');};
   function finishRevealMotion(current) {
     clearTimeout(revealTimer);
     if (reveal !== current || !revealDialog.open) return;
     current.phase = 'idle';
     revealDialog.classList.remove('is-opening-pack');
     revealDialog.querySelector('.pack-reveal-center')?.classList.remove('is-arriving');
-    revealDialog.querySelector('.pack-opening-wrap')?.remove();
   }
   function flipReveal() {
     if (!reveal || reveal.flipped || reveal.phase !== 'idle') return;
@@ -333,24 +334,14 @@
     delete revealDialog.dataset.cardIndex;
     if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(revealDialog);else revealDialog.showModal(); renderReveal();
     if (!revealReduced()) {
-      // Keep the opening self-contained: no network player, layout loop or
-      // changes to the reward/flip gesture state. Only transforms and opacity.
-      const openingDuration = 1240;
-      reveal.phase = 'opening';
-      revealDialog.style.setProperty('--pack-opening-duration', `${openingDuration}ms`);
+      // The draw is already saved: the tear is presentation and can be skipped at any point.
+      const current = reveal;
+      current.phase = 'opening';
       revealDialog.classList.add('is-opening-pack');
-      // RGBA cutout is preserved by native packaging so the wrapper has no matte.
-      const back = escape(card(cards[0].card_id)?.back || 'icons/cards/reverso-comun-unificado-v1.jpg');
-      const fan = cards.slice(1).map((_, index) => {
-        const lane = index - (cards.length - 2) / 2;
-        return `<img class="pack-opening-fan" src="${back}" width="948" height="1660" alt="" draggable="false" style="--fan-x:${lane * 10}%;--fan-turn:${lane * 4}deg;--fan-lift:${Math.abs(lane) * 2}%">`;
-      }).join('');
-      const sparks = Array.from({length:14}, (_, index) => {
-        const angle = index * Math.PI * 2 / 14;
-        return `<i class="pack-opening-spark" style="--spark-x:${Math.round(Math.cos(angle) * 120)}px;--spark-y:${Math.round(Math.sin(angle) * 95)}px;--spark-delay:${index % 3 * 22}ms"></i>`;
-      }).join('');
-      revealDialog.querySelector('.pack-reveal-stage').insertAdjacentHTML('beforeend', `<div class="pack-opening-wrap" aria-hidden="true"><span class="pack-opening-aura"></span><span class="pack-opening-ring"></span><div class="pack-opening-deck">${fan}</div><svg class="pack-opening-wrapper" viewBox="120 95 780 1345"><defs><image id="packOpeningArt" href="icons/cards/sobre-los-nuestros-recortado-v2.png" width="1024" height="1536"/><clipPath id="packOpeningSeal"><path d="M136 115H880V182H138Z"/></clipPath><clipPath id="packOpeningLeft"><path d="M138 182H510V1420H137V1370L156 1300L157 275Z"/></clipPath><clipPath id="packOpeningRight"><path d="M510 182H879L868 240L858 1290L882 1370V1420H510Z"/></clipPath></defs><g class="pack-opening-left"><use href="#packOpeningArt" clip-path="url(#packOpeningLeft)"/></g><g class="pack-opening-right"><use href="#packOpeningArt" clip-path="url(#packOpeningRight)"/></g><g class="pack-opening-seal"><use href="#packOpeningArt" clip-path="url(#packOpeningSeal)"/></g></svg><span class="pack-opening-cut"></span><img class="pack-opening-flare" src="icons/cards/pack-seal-flare-v2.png" width="768" height="256" alt="" draggable="false"><span class="pack-opening-particles">${sparks}</span></div>`);
-      const current = reveal; revealTimer = setTimeout(() => finishRevealMotion(current), openingDuration);
+      revealOpening = globalThis.PackOpening?.play({stage:revealDialog.querySelector('.pack-reveal-stage'),
+        back:escape(card(cards[0].card_id)?.back || 'icons/cards/reverso-comun-unificado-v1.jpg'),count:cards.length,
+        edition:globalThis.PackOpening.bestEdition(cards),onDone:() => {revealOpening = null; finishRevealMotion(current);}});
+      if (!revealOpening) finishRevealMotion(current);
     }
   }
   revealDialog.addEventListener('click', event => {
@@ -366,7 +357,7 @@
     }
     if (event.target.closest('[data-summary-discard]')) {void discardRevealCards([...reveal.selected]); return;}
     if (event.target.closest('[data-summary-discard-all]')) {void discardRevealCards(reveal.cards.map((_,index) => index)); return;}
-    if (event.target.closest('[data-reveal-flip]')) activateReveal();
+    if (event.target.closest('[data-reveal-flip]')) {if (revealOpening) revealOpening.tear(); else activateReveal();}
     if (event.target.closest('[data-reveal-discard]') && reveal?.flipped) void mutate('discard_duplicate_card', {target_card_id:reveal.cards[reveal.index].card_id,copies:1}, 'Repetida descartada. Monedas añadidas.', reveal.index);
   });
   function activateReveal() {
@@ -460,7 +451,7 @@
   revealDialog.addEventListener('pointercancel', finishSwipe);
   revealDialog.addEventListener('lostpointercapture', finishSwipe);
   revealDialog.addEventListener('dragstart',event => {if (event.target.closest('.pack-reveal-stage, .pack-summary-card')) event.preventDefault();});
-  (globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).addEventListener('change',event => {if (event.matches) {detachRevealVfx?.();detachRevealVfx=null;if(reveal && reveal.phase !== 'advancing') finishRevealMotion(reveal);}});
+  (globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)')).addEventListener('change',event => {if (event.matches) {if (revealOpening) {const current = reveal; stopRevealOpening(); finishRevealMotion(current);}detachRevealVfx?.();detachRevealVfx=null;if(reveal && reveal.phase !== 'advancing') finishRevealMotion(reveal);}});
   revealDialog.addEventListener('keydown', event => {
     if (event.key === 'ArrowLeft' && reveal && !reveal.summary && reveal.phase === 'idle' && !reveal.advancing && !event.repeat && !event.target.closest('[data-reveal-discard], [data-reveal-close]')) {
       event.preventDefault();
@@ -468,7 +459,7 @@
       else flipReveal();
     }
   });
-  revealDialog.addEventListener('close', () => {detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); el('ownedPackOpen')?.focus({preventScroll:true});});
+  revealDialog.addEventListener('close', () => {stopRevealOpening();detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); el('ownedPackOpen')?.focus({preventScroll:true});});
   const el = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);

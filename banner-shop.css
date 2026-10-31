@@ -235,40 +235,55 @@
 .pack-reveal-card.is-flipped .pack-reveal-front::after{animation:pack-reveal-glint var(--collection-flip-duration,420ms) ease-out}
 /* Krita seal flare + compositor-only choreography. The six-card fan fits
    inside the existing safe-area stage; it never changes the dialog height. */
-.pack-opening-wrap{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:visible;user-select:none;-webkit-user-select:none}
-.pack-opening-wrapper{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 12px 16px #0006);animation:pack-wrapper-tension var(--pack-opening-duration,1240ms) linear both}
-.pack-opening-left,.pack-opening-right,.pack-opening-seal{transform-box:fill-box;transform-origin:center;will-change:transform,opacity}
-.pack-opening-left{animation:pack-wrapper-left var(--pack-opening-duration,1240ms) cubic-bezier(.22,1,.36,1) both}
-.pack-opening-right{animation:pack-wrapper-right var(--pack-opening-duration,1240ms) cubic-bezier(.22,1,.36,1) both}
-.pack-opening-seal{animation:pack-seal-release var(--pack-opening-duration,1240ms) cubic-bezier(.22,1,.36,1) both}
-.pack-opening-aura{position:absolute;inset:-18% -45%;background:radial-gradient(ellipse,#ffe5a448,#ddab4818 38%,transparent 67%);border-radius:50%;animation:pack-opening-aura var(--pack-opening-duration,1240ms) ease-out both}
-.pack-opening-ring{position:absolute;left:-10%;top:15%;width:120%;height:70%;box-sizing:border-box;border:1px solid #ffe3a675;border-radius:50%;box-shadow:0 0 22px #e4ba5825,inset 0 0 18px #e4ba5810;animation:pack-opening-ring var(--pack-opening-duration,1240ms) ease-out both}
-.pack-opening-deck{position:absolute;inset:0;perspective:900px}
-.pack-opening-fan{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:50% 88%;filter:drop-shadow(0 4px 6px #0005);animation:pack-opening-fan var(--pack-opening-duration,1240ms) cubic-bezier(.22,1,.36,1) both}
-.pack-opening-cut{position:absolute;left:3%;right:3%;top:6.4%;height:2px;background:#fff6d9;box-shadow:0 0 8px #ffe3a5,0 0 22px #e4ba58;transform-origin:left;animation:pack-opening-cut var(--pack-opening-duration,1240ms) linear both}
-.pack-opening-flare{position:absolute;left:-25%;top:-8%;width:150%;height:30%;object-fit:fill;animation:pack-opening-flare var(--pack-opening-duration,1240ms) ease-out both}
-.pack-opening-particles{position:absolute;left:50%;top:10%}
-.pack-opening-spark{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff3cf;box-shadow:0 0 8px #ffe3a5;animation:pack-opening-spark 640ms cubic-bezier(.1,.65,.25,1) calc(290ms + var(--spark-delay)) both}
+/* Pack opening v3 (pack-opening.js). Pack frame inside the 1024x1536 artwork: x 120-900, y 95. */
+.pack-tear{--tone:#f0c773;--tone-soft:#d9a64a55;position:absolute;inset:0;z-index:2;overflow:visible;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;perspective:900px}
+.pack-tear[data-edition=retro]{--tone:#c9b08a;--tone-soft:#a98c6055}
+.pack-tear[data-edition=special]{--tone:#8fc7ff;--tone-soft:#4e92dd55}
+.pack-tear[data-edition=epic]{--tone:#c79bff;--tone-soft:#8a55dd66}
+.pack-tear[data-edition=legendary]{--tone:#ffd76e;--tone-soft:#f0b12c77}
+.pack-tear[data-edition=full_art]{--tone:#9ff2e6;--tone-soft:#6f8cff77}
+.pack-tear[data-edition=halloween]{--tone:#ff9a4a;--tone-soft:#a13fd066}
+.pack-tear[data-edition=vice_city]{--tone:#ff6fc4;--tone-soft:#22d3ee77}
+.pack-tear-pack{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .18s ease-out;will-change:transform}
+.pack-tear-float{position:absolute;inset:0;transform-style:preserve-3d}
+.pack-tear.is-entering .pack-tear-float{animation:pack-tear-enter 420ms cubic-bezier(.2,1.2,.35,1) both}
+.pack-tear.is-idle .pack-tear-float{animation:pack-tear-float 3.2s ease-in-out infinite}
+.pack-tear-shell{position:absolute;inset:0;pointer-events:none;will-change:transform,opacity}
+.pack-tear-art{position:absolute;left:-15.38%;top:-6.96%;width:131.28%;max-width:none;height:auto;aspect-ratio:2/3;pointer-events:none;-webkit-user-drag:none}
+.pack-tear-shell-front .pack-tear-art{filter:drop-shadow(0 14px 18px #0007)}
+.pack-tear-inside{filter:brightness(.16) saturate(.4)}
+.pack-tear-strip-rest,.pack-tear-strip-torn{will-change:transform,clip-path}
+.pack-tear-sheen{position:absolute;left:-15.38%;top:-6.96%;width:131.28%;aspect-ratio:2/3;overflow:hidden;pointer-events:none;mix-blend-mode:screen;opacity:.75;background:linear-gradient(112deg,transparent 34%,#ffffff12 44%,#fff4d44d 50%,#ffffff12 56%,transparent 66%);background-size:220% 100%;background-position:calc(50% + var(--sheen-x,0%)) 0;-webkit-mask:url(icons/cards/sobre-los-nuestros-recortado-v2.png) center/100% 100% no-repeat;mask:url(icons/cards/sobre-los-nuestros-recortado-v2.png) center/100% 100% no-repeat;transition:background-position .18s ease-out}
+.pack-tear.is-idle .pack-tear-sheen{animation:pack-tear-sheen 3.2s ease-in-out infinite}
+.pack-tear-edge{overflow:visible}
+.pack-tear-edge polyline{stroke:#fff8e6;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 7px var(--tone)) drop-shadow(0 0 18px var(--tone));opacity:0}
+.pack-tear-deck{position:absolute;inset:0;pointer-events:none;transform-style:preserve-3d}
+.pack-tear-card{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform:translateY(4%) scale(.88);transform-origin:50% 80%;filter:drop-shadow(0 6px 9px #0007);-webkit-user-drag:none;will-change:transform}
+.pack-tear-aura{position:absolute;inset:-26% -52%;border-radius:50%;background:radial-gradient(ellipse,var(--tone) 0,var(--tone-soft) 34%,transparent 68%);opacity:0;pointer-events:none}
+.pack-tear-rays{position:absolute;inset:-38% -78%;background:repeating-conic-gradient(from 0deg at 50% 44%,var(--tone-soft) 0 7deg,transparent 7deg 21deg);-webkit-mask:radial-gradient(circle at 50% 44%,#000 12%,transparent 62%);mask:radial-gradient(circle at 50% 44%,#000 12%,transparent 62%);opacity:0;pointer-events:none}
+.pack-tear-flare{position:absolute;left:-25%;top:-5%;width:150%;height:24%;max-width:none;object-fit:fill;opacity:0;pointer-events:none;-webkit-user-drag:none}
+.pack-tear-sparks{position:absolute;left:0;right:0;top:6.2%;height:0;pointer-events:none}
+.pack-tear-spark{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff8e6;box-shadow:0 0 8px var(--tone),0 0 16px var(--tone);opacity:0}
+.pack-tear-guide{position:absolute;left:1%;right:1%;top:6.2%;height:2px;opacity:0;overflow:hidden;pointer-events:none;transition:opacity .2s ease}
+.pack-tear-guide i{position:absolute;top:0;left:0;width:34%;height:100%;background:linear-gradient(90deg,transparent,#fffdf5,transparent)}
+.pack-tear-hint{position:absolute;left:0;right:0;bottom:-30px;margin:0;color:#d8d8dc;font-size:13px;letter-spacing:.06em;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.pack-tear.is-idle .pack-tear-guide,.pack-tear.is-idle .pack-tear-hint{opacity:1}
+.pack-tear.is-idle .pack-tear-guide i{animation:pack-tear-guide 1.5s cubic-bezier(.4,0,.3,1) infinite}
+.pack-tear.is-bursting{cursor:default;pointer-events:none}
+.pack-tear.is-bursting .pack-tear-pack{transition:none}
 .is-opening-pack .pack-reveal-stage{animation:none}
-.is-opening-pack .pack-reveal-card{animation:pack-card-emerge var(--pack-opening-duration,1240ms) cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
+.is-opening-pack .pack-reveal-card{opacity:0}
+@keyframes pack-tear-enter{from{opacity:0;transform:translateY(34px) scale(.9) rotateX(10deg)}to{opacity:1;transform:translateY(0) scale(1) rotateX(0)}}
+@keyframes pack-tear-float{0%,100%{transform:translateY(0) rotateZ(-.5deg)}50%{transform:translateY(-6px) rotateZ(.5deg)}}
+@keyframes pack-tear-sheen{0%,100%{background-position:calc(70% + var(--sheen-x,0%)) 0}50%{background-position:calc(30% + var(--sheen-x,0%)) 0}}
+@keyframes pack-tear-guide{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
 .pack-reveal-center.is-arriving{animation:pack-next-arrive 220ms cubic-bezier(.22,1,.36,1) both}
 .is-opening-pack .pack-reveal-info,.is-opening-pack .pack-reveal-actions{visibility:hidden}
-@keyframes pack-wrapper-tension{0%{transform:translateY(8px) scale(.96)}14%{transform:translateY(0) scale(1.015)}23%{transform:rotate(-1.1deg) scale(1.015)}29%{transform:rotate(1deg) scale(1.02)}35%,100%{transform:rotate(0) scale(1)}}
-@keyframes pack-seal-release{0%,25%{transform:translate(0,0) rotate(0);opacity:1}48%{transform:translate(28px,-75px) rotate(9deg);opacity:1}70%,100%{transform:translate(68px,-110px) rotate(18deg);opacity:0}}
-@keyframes pack-wrapper-left{0%,37%{transform:translate(0,0) rotate(0);opacity:1}76%,100%{transform:translate(-70px,170px) rotate(-13deg);opacity:0}}
-@keyframes pack-wrapper-right{0%,37%{transform:translate(0,0) rotate(0);opacity:1}76%,100%{transform:translate(70px,170px) rotate(13deg);opacity:0}}
-@keyframes pack-card-emerge{0%,33%{transform:translateY(24px) scale(.94);opacity:0}58%{transform:translateY(-9px) scale(1.025);opacity:1}82%,100%{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes pack-opening-aura{0%,15%{opacity:0;transform:scale(.6)}36%{opacity:1;transform:scale(1)}75%{opacity:.5;transform:scale(1.12)}100%{opacity:0;transform:scale(1.15)}}
-@keyframes pack-opening-ring{0%,31%{opacity:0;transform:scale(.35)}37%{opacity:.8}80%,100%{opacity:0;transform:scale(1.3)}}
-@keyframes pack-opening-fan{0%,39%{opacity:0;transform:translateY(15px) scale(.94)}56%,68%{opacity:1;transform:translate(var(--fan-x),calc(-10px - var(--fan-lift))) rotate(var(--fan-turn)) scale(.96)}92%,100%{opacity:0;transform:translate(0,0) rotate(0) scale(.98)}}
-@keyframes pack-opening-cut{0%,19%{opacity:0;transform:scaleX(0)}28%{opacity:1;transform:scaleX(1)}43%,100%{opacity:0;transform:scaleX(1)}}
-@keyframes pack-opening-flare{0%,23%{opacity:0;transform:translateX(-18%) scale(.5)}29%{opacity:1;transform:translateX(0) scale(1)}48%,100%{opacity:0;transform:translateX(18%) scale(1.1)}}
-@keyframes pack-opening-spark{0%{opacity:0;transform:translate(0,0) scale(.4)}12%{opacity:1}100%{opacity:0;transform:translate(var(--spark-x),var(--spark-y)) scale(.2)}}
 @keyframes pack-next-arrive{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 .pack-reveal-card.is-flipped{animation:none}
 @keyframes pack-reveal-glint{0%,40%,100%{opacity:0}65%{opacity:.5}}
 @media(max-height:560px){.pack-reveal-dialog{--pack-footer-height:174px;--pack-card-height:max(96px,min(440px,calc(var(--pack-available-height) - 252px),calc((100vw - var(--pack-safe-left) - var(--pack-safe-right) - 64px) * 7 / 4)))}.pack-reveal-dialog[open]{grid-template-rows:minmax(44px,1fr) auto var(--pack-footer-height)}.pack-reveal-stage{margin:6px auto}.pack-reveal-info{min-height:36px}.pack-reveal-header button{min-height:44px}.pack-reveal-info h3{font-size:13px}.pack-reveal-actions{margin:4px 0}.pack-reveal-swipe-hint{font-size:10px}}
-@media(prefers-reduced-motion:reduce){.pack-reveal-center.is-arriving,.pack-reveal-stage,.pack-reveal-card,.pack-reveal-card.is-flipped,.pack-reveal-card.is-flipped .pack-reveal-front::after{animation:none;transition:none}.pack-opening-wrap{display:none}}
+@media(prefers-reduced-motion:reduce){.pack-reveal-center.is-arriving,.pack-reveal-stage,.pack-reveal-card,.pack-reveal-card.is-flipped,.pack-reveal-card.is-flipped .pack-reveal-front::after{animation:none;transition:none}.pack-tear{display:none}}
 
 /* Confirmed duplicate exchanges: the copy travels into the server coin reward. */
 .card-discard-effect{position:fixed;inset:0;z-index:20;pointer-events:none;overflow:hidden}
