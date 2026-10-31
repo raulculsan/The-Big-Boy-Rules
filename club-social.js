@@ -1,7 +1,7 @@
 /* Shared social season and a member's three chosen cards. Rewards and ownership stay server-owned. */
 (() => {
  'use strict';
- let cfg, epoch=0, goalCache=null,goalRequest=null,showcaseRequests=new Map(),picker=null,missionsDialog=null,missionsTrigger=null,missionsObserver=null,missionsRoom=null;
+ let cfg, epoch=0, arcNode=null,lastProfile=null, goalCache=null,goalRequest=null,showcaseRequests=new Map(),picker=null,missionsDialog=null,missionsTrigger=null,missionsObserver=null,missionsRoom=null;
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const user=()=>cfg?.getUser?.()?.id;
  const catalog=()=>globalThis.CardCollection?.catalog||[];
@@ -10,19 +10,37 @@
  const image=c=>`<img src="${esc(art(c))}" alt="${esc(c.name)} · ${Number(c.score)||0} PTS" loading="lazy" decoding="async" draggable="false">`;
  async function rpc(name,args={}){if(!user())throw new Error('Inicia sesión.');const {data,error}=await cfg.db.rpc(name,args);if(error)throw error;return data;}
  const friendly=e=>['PGRST202','42883','42P01'].includes(e?.code)?'Esta función se está preparando. Vuelve a intentarlo más tarde.':e?.message||'No se pudo cargar. Inténtalo de nuevo.';
+ // The chosen cards float beside the member's details, right under the edit row.
+ function placeShowcase(){
+  const host=document.getElementById('profileContent'),anchor=host?.querySelector('.profile-card-vitrine');
+  if(arcNode&&anchor&&anchor.nextElementSibling!==arcNode)anchor.after(arcNode);
+ }
+ function renderArc(shown){
+  if(arcNode&&!shown.length){arcNode.remove();arcNode=null;}
+  if(!shown.length)return;
+  arcNode||=Object.assign(document.createElement('div'),{className:'profile-vitrine-arc'});
+  arcNode.dataset.count=String(shown.length);arcNode.setAttribute('role','group');arcNode.setAttribute('aria-label','Vitrina de cartas');
+  const markup=shown.map(c=>`<button type="button" data-vitrine-open="${esc(c.id)}" aria-label="Ver ${esc(c.name)}">${image(c)}</button>`).join('');
+  if(arcNode.dataset.markup!==markup){arcNode.innerHTML=markup;arcNode.dataset.markup=markup;}
+  placeShowcase();
+ }
  async function mountProfile(node,owner,own){
   if(!node||!owner||!user())return;
+  lastProfile={node,owner,own};
   let section=node.querySelector('.profile-card-vitrine');
-  if(!section){section=document.createElement('section');section.className='profile-card-vitrine';section.setAttribute('aria-label','Vitrina de cartas');node.append(section);}
+  if(!section){section=document.createElement('section');section.className='profile-card-vitrine';section.setAttribute('aria-label','Tu vitrina');(node.querySelector('.club-profile-identity')||node).after(section);}
   section.dataset.owner=owner;
   if(!showcaseRequests.has(owner))showcaseRequests.set(owner,rpc('get_profile_card_showcase',{target_user_id:owner}).catch(e=>{showcaseRequests.delete(owner);throw e;}));
   const version=epoch;
   try{
    const ids=await showcaseRequests.get(owner);if(version!==epoch||!section.isConnected||section.dataset.owner!==owner)return;
    const shown=ids.map(card).filter(Boolean);
-   section.innerHTML=`<header><h3>Vitrina</h3>${own?'<button type="button" data-vitrine-edit>Elegir cartas</button>':''}</header>${shown.length?`<div class="profile-vitrine-cards">${shown.map(c=>`<button type="button" data-vitrine-open="${esc(c.id)}" aria-label="Ver ${esc(c.name)}">${image(c)}</button>`).join('')}</div>`:`<p>${own?'Elige hasta tres cartas de tu colección para mostrarlas aquí.':'Todavía no ha elegido sus cartas.'}</p>`}`;
+   if(arcNode&&!arcNode.isConnected)arcNode=null;
+   renderArc(shown);
+   section.hidden=!own;
+   section.innerHTML=own?`<p>${shown.length?'Se muestran junto a tus datos.':'Elige hasta tres cartas para lucirlas en tu perfil.'}</p><button type="button" data-vitrine-edit>${shown.length?'Cambiar cartas':'Elegir cartas'}</button>`:'';
    section.querySelector('[data-vitrine-edit]')?.addEventListener('click',()=>void editShowcase(owner,ids));
-  }catch(e){if(version===epoch&&section.isConnected)section.innerHTML=`<p role="status">${esc(friendly(e))}</p><button type="button" data-vitrine-retry>Volver a cargar</button>`;section.querySelector('[data-vitrine-retry]')?.addEventListener('click',()=>void mountProfile(node,owner,own));}
+  }catch(e){if(version===epoch&&section.isConnected){section.hidden=false;section.innerHTML=`<p role="status">${esc(friendly(e))}</p><button type="button" data-vitrine-retry>Volver a cargar</button>`;section.querySelector('[data-vitrine-retry]')?.addEventListener('click',()=>void mountProfile(node,owner,own));}}
  }
  async function editShowcase(owner,ids){
   picker?.remove();const version=epoch;
@@ -31,7 +49,8 @@
   dialog.addEventListener('close',()=>{dialog.remove();if(picker===dialog)picker=null;},{once:true});dialog.querySelector('[data-close]').onclick=()=>dialog.close();
   let selected=[...ids];
   try{
-   const {data,error}=await cfg.db.from('member_card_inventory').select('card_id,quantity').eq('user_id',owner).gt('quantity',0);if(error)throw error;
+   // The inventory table is closed to clients: the server state is the only reader.
+   const data=((await rpc('get_banner_shop_state'))?.cards||[]).filter(i=>Number(i.quantity)>0);
    if(version!==epoch||!dialog.isConnected)return;
    const owned=data.map(i=>card(i.card_id)).filter(Boolean).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));selected=selected.filter(id=>owned.some(c=>c.id===id));
    dialog.innerHTML=`<header><h2>Tu vitrina</h2><button type="button" data-close>Cerrar</button></header><p>Elige hasta tres. Se muestran en el orden en que las tocas.</p><label class="vitrine-search">Buscar carta<input type="search" maxlength="100" placeholder="Nombre de la carta" autocomplete="off"></label><p class="vitrine-feedback" role="status"></p><div class="vitrine-picker-grid">${owned.map(c=>`<button type="button" data-vitrine-pick="${esc(c.id)}" aria-pressed="${selected.includes(c.id)}" data-name="${esc(c.name.toLocaleLowerCase('es'))}">${image(c)}<span>${esc(c.name)}</span><small>${esc(c.edition||c.rarity)} · ${Number(c.score)||0} PTS</small><b>${selected.includes(c.id)?selected.indexOf(c.id)+1:''}</b></button>`).join('')||'<p>Aún no tienes cartas para exponer.</p>'}</div><footer><span data-selection-count></span><button type="button" data-save>Guardar vitrina</button></footer>`;
@@ -92,5 +111,6 @@
  }
  document.addEventListener('click',e=>{const mission=e.target.closest('[data-club-missions-open]');if(mission){openMissions(mission);return;}const b=e.target.closest('[data-vitrine-open]');if(b)globalThis.CardCollection?.open(b.dataset.vitrineOpen,b);});
  document.addEventListener('collection-social-change',()=>{goalCache=null;showcaseRequests.clear();});
- globalThis.ClubSocial={init(options){cfg=options;},mountProfile,mountGoal,refreshGoal,reset(){epoch++;goalCache=null;goalRequest=null;showcaseRequests.clear();picker?.close();closeMissions(false);}};
+ document.addEventListener('bb:card-catalog-updated',()=>{if(lastProfile?.node.isConnected)void mountProfile(lastProfile.node,lastProfile.owner,lastProfile.own);});
+ globalThis.ClubSocial={init(options){cfg=options;},mountProfile,mountGoal,refreshGoal,reset(){epoch++;arcNode=null;lastProfile=null;goalCache=null;goalRequest=null;showcaseRequests.clear();picker?.close();closeMissions(false);}};
 })();
