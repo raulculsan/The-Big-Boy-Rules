@@ -1,0 +1,33 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><base href="../../">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'">
+<title>Habitación · prueba local de categorías</title>
+<link rel="stylesheet" href="banner-shop.css"><link rel="stylesheet" href="chota-shop.css">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif}#bannerShopDialog{font-family:Inter,system-ui,sans-serif}button{font-family:inherit}*{box-sizing:border-box}button:focus-visible{outline:2px solid #c2c6c8;outline-offset:2px}button:focus:not(:focus-visible){outline:none}</style>
+<body class="authenticated"><main id="bannerShopDialog" data-ui>
+<header class="shop-topbar"><div class="shop-brand"><span>BB</span><h1 id="bannerShopTitle">Tienda</h1></div><div class="shop-wallet"><span>Tu saldo</span><strong id="bannerShopBalance" class="banner-shop-balance">150 monedas</strong></div></header>
+<div class="shop-content"><nav class="shop-navigation" aria-label="Secciones de la tienda"><button disabled>Banners</button><button aria-current="page" aria-selected="true">Habitación</button><button disabled>Vales</button></nav>
+<section id="shopChotaPanel"><header class="chota-shop-intro"><h2>Para su habitación</h2></header><p id="chotaShopStatus" role="status" aria-live="polite"></p><div id="chotaShopItems" class="chota-shop-items"></div></section></div></main>
+<script src="shop-catalog-media.js"></script><script src="chota-shop.js"></script>
+<script type="module">
+// Isolated sample data and RPC; CSP blocks all external images/connections.
+const mapImages=()=>document.querySelectorAll('img[data-shop-media]').forEach(img=>{
+ if(img.getAttribute('src')?.startsWith('https://fixture.invalid/')){img.hidden=false;img.src='artwork/chota/ps-portal/ps-portal-v1.png';}
+});new MutationObserver(mapImages).observe(document.body,{childList:true,subtree:true});
+const portal=await(await fetch('artwork/chota/ps-portal/catalog.json')).json();
+let state={balance:150,room_style:null,items:[
+ {id:'midnight',name:'Azul noche',description:'Paredes profundas y un suelo de madera cálido.',art_key:'room-midnight',price:60,active:true},
+ {id:'forest',name:'Bosque',description:'Verdes tranquilos para la habitación del club.',art_key:'room-forest',price:60,owned:true,active:true},
+ {id:'terracotta',name:'Terracota',description:'Un ambiente cálido para las tardes en la sede.',art_key:'room-terracotta',price:60,active:true},
+ portal,
+ {id:'ball',name:'Pelota de fútbol',description:'El balón del Chota para sus ratos libres.',art_key:'football',price:10,active:true},
+ {id:'skate',name:'Monopatín',description:'Su tabla, apoyada junto al sofá.',art_key:'skateboard',price:20,active:true},
+ {id:'vacuum',name:'Robot aspirador',description:'Un pequeño ayudante para el suelo de la sede.',art_key:'robot-vacuum',price:30,active:true},
+ {id:'radio',name:'Radio vintage',description:'Una radio de madera para su rincón favorito.',art_key:'vintage-radio',price:30,active:true}
+]};
+ChotaShop.initialize({session:()=> 'room-sections-preview',cacheNamespace:'https://fixture.invalid',rpc:async(name,args)=>{
+ if(name==='buy_chota_item'){const item=state.items.find(item=>item.id===args.target_item_id);state={...state,balance:state.balance-item.price,items:state.items.map(row=>row===item?{...row,owned:true}:row),room_style:item.art_key.startsWith('room-')?item.id:state.room_style};}
+ if(name==='equip_chota_room_style')state={...state,room_style:args.target_item_id};
+ return {data:state};
+}});await ChotaShop.refresh(true);
+</script></body></html>
