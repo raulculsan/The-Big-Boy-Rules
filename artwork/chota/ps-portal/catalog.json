@@ -1,0 +1,18 @@
+{
+  "id": "chota-ps-portal",
+  "name": "PS Portal",
+  "description": "Una PS Portal blanca, descansando junto al sofá de la sede.",
+  "art_key": "ps-portal",
+  "price": 35,
+  "active": true,
+  "sort_order": 14,
+  "presentation": {
+    "type": "decoration",
+    "path": "chota/ps-portal-v1.png",
+    "width": 720,
+    "height": 300,
+    "animated": false,
+    "placement": { "x": 25.8, "y": 59, "width": 10, "rotation": 0, "z": 2 },
+    "motion": "none"
+  }
+}
