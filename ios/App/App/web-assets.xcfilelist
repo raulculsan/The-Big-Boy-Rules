@@ -62,6 +62,12 @@ $(SRCROOT)/App/public/icons/banners/alberto-galicia-member-bg-v1.webp
 $(SRCROOT)/App/public/icons/banners/alberto-galicia-member-figures-v1.webp
 $(SRCROOT)/App/public/icons/banners/alberto-galicia-member-v1.png
 $(SRCROOT)/App/public/icons/banners/costa-atlantica-v1.jpg
+$(SRCROOT)/App/public/icons/banners/duelo-cruce-v1/duelo-cruce-v1.mp4
+$(SRCROOT)/App/public/icons/banners/duelo-cruce-v1/poster.jpg
+$(SRCROOT)/App/public/icons/banners/duelo-golpe-v1/duelo-golpe-v1.mp4
+$(SRCROOT)/App/public/icons/banners/duelo-golpe-v1/poster.jpg
+$(SRCROOT)/App/public/icons/banners/duelo-mirada-v1/duelo-mirada-v1.mp4
+$(SRCROOT)/App/public/icons/banners/duelo-mirada-v1/poster.jpg
 $(SRCROOT)/App/public/icons/banners/fufi-supervuelo-v1/fufi-supervuelo-v1.mp4
 $(SRCROOT)/App/public/icons/banners/fufi-supervuelo-v1/poster.jpg
 $(SRCROOT)/App/public/icons/banners/jose-enrique-ojos-v1/jose-enrique-ojos-v2.mp4

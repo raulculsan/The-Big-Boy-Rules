@@ -535,6 +535,12 @@
       const remote = 'https://raulculsan.github.io/The-Big-Boy-Rules/icons/banners/jose-enrique-ojos-v1/jose-enrique-ojos-v2.mp4';
       return `<div class="banner-art banner-fufi-flight banner-jose-eyes ${extra}" style="background-image:url('${base}poster.jpg');background-color:#0b1020" role="img" aria-label="${escape(banner.name || 'José Enrique bajo la lluvia, con los ojos iluminándose')}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}jose-enrique-ojos-v2.mp4" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" autoplay muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
     }
+    const duel = {'duelo-mirada-v1':'Jose Enrique y Miguel, cara a cara en el bosque','duelo-golpe-v1':'Jose Enrique y Miguel chocan los puños','duelo-cruce-v1':'Jose Enrique y Miguel caminan hasta cruzar miradas'}[banner?.art_key];
+    if (duel) {
+      const base = `icons/banners/${banner.art_key}/`, file = `${banner.art_key}.mp4`;
+      const remote = `https://raulculsan.github.io/The-Big-Boy-Rules/${base}${file}`;
+      return `<div class="banner-art banner-fufi-flight ${extra}" style="background-image:url('${base}poster.jpg');background-color:#1c3320" role="img" aria-label="${escape(banner.name || duel)}"><img src="${base}poster.jpg" width="1440" height="480" alt="" decoding="async" aria-hidden="true"><video data-banner-src="${base}${file}" data-banner-remote="${remote}" poster="${base}poster.jpg" width="1440" height="480" autoplay muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true"></video></div>`;
+    }
     if (banner?.art_key === 'fufi-supervuelo-v1') {
       const base = 'icons/banners/fufi-supervuelo-v1/';
       const remote = 'https://nfvggpgeypkkqceivkaq.supabase.co/storage/v1/object/public/group-media/banners/fufi-supervuelo-v1.mp4';
