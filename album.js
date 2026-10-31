@@ -9,7 +9,7 @@
   let collections = [{id:'los-nuestros-01',name:'Los nuestros · Colección 01'}], selectedCollection = 'los-nuestros-01';
   let query = '', kindFilter = '', rarityFilter = '', ownershipFilter = '', allSlots = [], collectibleIds = null;
   let savedAt = 0, isolatedOffline = false;
-  const slotsPerPage = 5;
+  const slotsPerPage = 9;
   let inventory = null, loading = false, failure = '', page = 0, slots = [], pages = [], refresh, navigate, opener, returnSection = 'sobres', renderedSlots = '';
   const dialog = document.createElement('section');
   dialog.id = 'album'; dialog.className = 'page-section card-album-page'; dialog.hidden = true; dialog.setAttribute('aria-labelledby','cardAlbumTitle');
@@ -17,6 +17,35 @@
   const main = document.querySelector('main.app') || document.body.appendChild(Object.assign(document.createElement('main'),{className:'app'}));
   main.append(dialog);
   const isOpen = () => dialog.classList.contains('active') && !dialog.hidden;
+  // One lookup per inventory: loading and balance updates reuse it on every render.
+  let ownedSource, ownedCache = new Map();
+  function ownedCards() {
+    if (ownedSource !== inventory) {ownedSource = inventory; ownedCache = new Map((inventory || []).map(item => [item.card_id,Number(item.quantity)]));}
+    return ownedCache;
+  }
+  // The cover shows real cards: owned ones in colour, missing ones as their shadow.
+  const coverRarity = ['vice_city','full_art','halloween','legendary','epic','special','retro','common'];
+  let coverKey = '';
+  function renderCover() {
+    const holders = [...document.querySelectorAll('.bb2-album-card')], catalog = (globalThis.CardCollection?.catalog || []).filter(card => card.front);
+    if (!holders.length || !catalog.length) return;
+    const owned = ownedCards(), rank = card => coverRarity.indexOf(rarityOf(card));
+    const ranked = [...catalog].sort((a,b) => (owned.get(b.id) > 0) - (owned.get(a.id) > 0) || rank(a) - rank(b) || ((b.folder || 'miembros') === 'miembros') - ((a.folder || 'miembros') === 'miembros') || (a.id < b.id ? -1 : 1));
+    const seen = new Set(), picks = [];
+    for (const card of ranked) if (!seen.has(rarityOf(card)) && picks.length < holders.length) {seen.add(rarityOf(card)); picks.push(card);}
+    for (const card of ranked) if (!picks.includes(card) && picks.length < holders.length) picks.push(card);
+    // The most valuable card sits on top, in the middle of the fan.
+    const fan = [picks[3],picks[1],picks[0],picks[2],picks[4]].filter(Boolean);
+    const key = fan.map(card => `${card.id}:${owned.get(card.id) > 0}`).join();
+    if (key === coverKey) return;
+    coverKey = key;
+    holders.forEach((holder,index) => {
+      const card = fan[index]; if (!card) return;
+      const src = globalThis.CardCollection.thumbnail(card), image = holder.querySelector('img') || holder.appendChild(Object.assign(new Image(),{alt:'',decoding:'async',loading:'lazy',width:948,height:1659,draggable:false}));
+      if (image.getAttribute('src') !== src) image.src = src;
+      holder.classList.toggle('is-missing',!(owned.get(card.id) > 0));
+    });
+  }
   function buildSlots() {
     const catalog = (globalThis.CardCollection?.catalog || []).filter(item => (item.collection || 'los-nuestros-01') === selectedCollection && (!collectibleIds || collectibleIds.has(item.id)));
     // Partition once: the former nested filters repeatedly normalized every
@@ -34,7 +63,7 @@
     applyFilters();
   }
   function applyFilters() {
-    const owned = new Map((inventory || []).map(item => [item.card_id,Number(item.quantity)]));
+    const owned = ownedCards();
     const filtering = query || kindFilter || rarityFilter || ownershipFilter;
     const normalizedQuery = normalize(query), normalizedKind = normalize(kindFilter);
     slots = filtering ? allSlots.filter(slot => slot.design && (!query || normalize(slot.design.name).includes(normalizedQuery)) && (!kindFilter || normalize(slot.design.kind) === normalizedKind) && (!rarityFilter || slot.rarity.key === rarityFilter) && (!ownershipFilter || (ownershipFilter === 'owned' ? owned.get(slot.design.id) > 0 : !(owned.get(slot.design.id) > 0)))) : allSlots;
@@ -58,8 +87,37 @@
     dialog.querySelector('[data-album-filter-count]').textContent = [kindFilter,rarityFilter,ownershipFilter].filter(Boolean).length || '';
   }
   function changeFilters() {stopTurn(); page = 0; compassQueued = null; renderedSlots = ''; applyFilters(); render();}
-  const warmedImages = new Set();
-  let warmGeneration = 0;
+  // Built pages keep their decoded images, so turning back never reloads them.
+  const pageNodes = new Map();
+  function pageNode(markup) {
+    let node = pageNodes.get(markup);
+    if (node) pageNodes.delete(markup);
+    else {node = document.createElement('div'); node.className = 'card-album-page-grid'; node.innerHTML = markup;}
+    pageNodes.set(markup,node);
+    if (pageNodes.size > 5) pageNodes.delete(pageNodes.keys().next().value);
+    return node;
+  }
+  function pageMarkup(index, owned, offline) {
+    return (pages[index] || []).map(slot => {
+      const quantity = slot.design && owned.get(slot.design.id), number = String(slot.number).padStart(3,'0');
+      const mark = slot.design ? (!offline ? globalThis.CollectionSocial?.actions(slot.design.id,quantity > 0) : '') || '' : '';
+      const face = quantity > 0 ? `<button type="button" class="card-album-slot is-owned" data-album-card="${escape(slot.design.id)}" aria-label="Ver ${escape(slot.design.name)}, ${escape(slot.rarity.label)}, ${quantity} copias"><img data-card-original="${escape(slot.design.front)}" src="${escape(globalThis.CardCollection.thumbnail(slot.design))}" alt="${escape(slot.design.name)}" width="948" height="1659" loading="eager" decoding="async">${quantity > 1 ? `<span class="card-album-copies">×${quantity}</span>` : ''}<strong>${escape(slot.design.name)}</strong></button>` : `<div class="card-album-slot is-empty" role="img" aria-label="Hueco ${number}, ${slot.rarity.label}, ${slot.kind.label}, ${slot.design ? 'carta por conseguir' : 'reservado para una nueva carta'}"><div class="card-album-silhouette"><span>${number}</span></div><strong>${slot.design ? escape(slot.design.name) : 'Próximamente'}</strong></div>`;
+      return `<article class="card-album-cell">${face}${mark}</article>`;
+    }).join('') || '<p class="album-empty-results">Prueba otro nombre o limpia los filtros.</p>';
+  }
+  let warmGeneration = 0, warmTimer = 0;
+  // Prepare both neighbours once the page is idle: the next turn then has its images ready.
+  function warmNeighbors(owned, offline) {
+    const generation = ++warmGeneration;
+    clearTimeout(warmTimer);
+    warmTimer = setTimeout(() => {
+      if (generation !== warmGeneration || !isOpen() || document.hidden || turning) return;
+      for (const index of [page + 1,page - 1]) {
+        if (!pages[index]) continue;
+        pageNode(pageMarkup(index,owned,offline)).querySelectorAll('img').forEach(image => {void image.decode?.().catch(() => {});});
+      }
+    },160);
+  }
   let pageAnimations = [], pageGhost = null, pageMotionToken = 0, turning = false, pendingRender = false, pageOrderTimer = 0;
   const motionMedia = globalThis.ClubMotion?.media || window.matchMedia('(prefers-reduced-motion: reduce)');
   const reducedMotion = () => motionMedia.matches;
@@ -76,7 +134,7 @@
   function render(prepare = false) {
     if (!isOpen() && !prepare) return;
     if (turning) {pendingRender = true; return;}
-    const owned = new Map((inventory || []).map(item => [item.card_id, Number(item.quantity)]));
+    const owned = ownedCards();
     const totalPages = Math.max(1,pages.length);
     page = Math.min(page, Math.max(0,totalPages - 1));
     const visible = pages[page] || [], rarity = visible[0]?.rarity;
@@ -98,32 +156,14 @@
     dialog.setAttribute('aria-busy',String(loading));
     document.getElementById('cardAlbumPageTitle').textContent = visible.length ? `${rarity?.label || ''} · ${[...new Set(visible.map(slot => slot.kind.label))].join(' / ')}` : 'No hay cartas con estos filtros';
     document.getElementById('cardAlbumLeaf').dataset.rarity = rarity?.key;
-    const markup = visible.map((slot,index) => {
-      const quantity = slot.design && owned.get(slot.design.id), number = String(slot.number).padStart(3,'0');
-      const mark = slot.design ? (!offline ? globalThis.CollectionSocial?.actions(slot.design.id,quantity > 0) : '') || '' : '';
-      const face = quantity > 0 ? `<button type="button" class="card-album-slot is-owned" data-album-card="${escape(slot.design.id)}" aria-label="Ver ${escape(slot.design.name)}, ${escape(slot.rarity.label)}, ${quantity} copias"><img data-card-original="${escape(slot.design.front)}" src="${escape(globalThis.CardCollection.thumbnail(slot.design))}" alt="${escape(slot.design.name)}" loading="eager" decoding="async"><span class="card-album-slot-number">${number}</span><strong>${escape(slot.design.name)}</strong><small>${slot.kind.label} · ${quantity} ${quantity === 1 ? 'copia' : 'copias'}</small></button>` : `<div class="card-album-slot is-empty" aria-label="Hueco ${number}, ${slot.rarity.label}, ${slot.kind.label}, ${slot.design ? 'carta por conseguir' : 'reservado para una nueva carta'}"><div class="card-album-silhouette">${icon}<span>${number}</span></div><span class="card-album-slot-number" aria-hidden="true">${number}</span><strong>${slot.design ? escape(slot.design.name) : 'Próximamente'}</strong><small>${slot.kind.label} · ${slot.rarity.label}</small></div>`;
-      return `<article class="card-album-cell">${face}${mark}</article>`;
-    }).join('') || '<p class="album-empty-results">Prueba otro nombre o limpia los filtros.</p>';
+    const markup = pageMarkup(page,owned,offline);
     // Keep decoded image elements across loading/balance updates and reopening.
-    if (markup !== renderedSlots) {document.getElementById('cardAlbumSlots').innerHTML = markup; renderedSlots = markup;}
-    // Small list thumbnails decode to ~0.9 MiB. Warm only two sequentially
-    // and cancel when navigation changes; originals decode only in the viewer.
-    const generation = ++warmGeneration;
-    const neighbors = (pages[page + 1] || [])
-      .filter(slot => slot.design && owned.get(slot.design.id) && !warmedImages.has(globalThis.CardCollection.thumbnail(slot.design)))
-      .slice(0,2);
-    void (async () => {
-      for (const slot of neighbors) {
-        if (generation !== warmGeneration || !isOpen() || document.hidden) break;
-        const src = globalThis.CardCollection.thumbnail(slot.design);
-        warmedImages.add(src);
-        const image = new Image(); image.decoding = 'async'; image.src = src;
-        try { await image.decode?.(); } catch { warmedImages.delete(src); }
-      }
-    })();
+    if (markup !== renderedSlots) {document.getElementById('cardAlbumSlots').replaceChildren(pageNode(markup)); renderedSlots = markup;}
+    warmNeighbors(owned,offline);
     document.getElementById('cardAlbumPageCount').textContent = `${page + 1} / ${totalPages}`;
     renderCompass(totalPages);
-    dialog.querySelectorAll('[data-album-rarity]').forEach(button => {button.setAttribute('aria-pressed',String(button.dataset.albumRarity === rarity?.key)); button.disabled = !slots.some(slot => slot.rarity.key === button.dataset.albumRarity);});
+    const available = new Set(slots.map(slot => slot.rarity.key));
+    dialog.querySelectorAll('[data-album-rarity]').forEach(button => {button.setAttribute('aria-pressed',String(button.dataset.albumRarity === rarity?.key)); button.disabled = !available.has(button.dataset.albumRarity);});
   }
   const compass = document.getElementById('cardAlbumPageCompass');
   let compassTimer = 0, compassDragging = false, compassQueued = null, compassMouse = null, compassSuppressClick = 0;
@@ -352,6 +392,7 @@
     void globalThis.CollectionSocial?.refresh();
   }
   document.addEventListener('collection-social-change',() => render());
+  renderCover();
   document.addEventListener('click',event => {const trigger = event.target.closest('[data-card-album]'); if (trigger) open(trigger);});
   let viewerPosition = null;
   function rememberViewerPosition() {
@@ -386,7 +427,9 @@
     }
   });
 
-  dialog.addEventListener('input',event => {if (event.target.matches('[data-album-search]')) {query = event.target.value.trim(); changeFilters();}});
+  // Filter after a short pause, not on every keystroke.
+  let searchTimer = 0;
+  dialog.addEventListener('input',event => {if (event.target.matches('[data-album-search]')) {query = event.target.value.trim(); clearTimeout(searchTimer); searchTimer = setTimeout(changeFilters,140);}});
   dialog.addEventListener('change',event => {const field = event.target; if (field.matches('[data-album-collection]')) {selectedCollection = field.value; buildSlots(); changeFilters();} if (field.matches('[data-album-filter]')) {if (field.dataset.albumFilter === 'rarity') rarityFilter = field.value; if (field.dataset.albumFilter === 'kind') kindFilter = field.value; if (field.dataset.albumFilter === 'ownership') ownershipFilter = field.value; changeFilters();}});
   dialog.addEventListener('keydown',event => {if (event.target.matches('input,select,summary')) return; if (event.key === 'Escape') {event.preventDefault(); close(); return;} if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); turn((compassQueued ?? page) + (event.key === 'ArrowRight' ? 1 : -1));}});
   let touchStart = null;
@@ -425,8 +468,8 @@
     const target = location.hash.slice(1);
     if (isOpen() && target !== 'album' && document.getElementById(target)?.classList.contains('page-section')) (navigate || fallbackNavigate)(target);
   });
-  document.addEventListener('bb:card-catalog-updated', event => {if (event.detail?.collections?.length) collections=event.detail.collections; buildSlots(); renderedSlots=''; render();});
-  globalThis.CardAlbum = Object.freeze({icon,open,openCollection(id){if(collections.some(c=>c.id===id)){selectedCollection=id;page=0;buildSlots();renderedSlots='';}open();},openOffline,closeOffline,close,didNavigate,update(data) {if(isolatedOffline)return;if(Array.isArray(data.catalog)){const next=new Set(data.catalog.map(c=>c.card_id));if(!collectibleIds||next.size!==collectibleIds.size||[...next].some(id=>!collectibleIds.has(id))){collectibleIds=next;buildSlots();renderedSlots='';}}inventory=data.cards; savedAt=data.savedAt || 0; loading=!!data.loading; failure=data.failure || ''; applyFilters(); render();},configure(config) {refresh=config.refresh; navigate=config.navigate; if (config.collections?.some(c => c?.id && c?.name)) {collections = config.collections.filter(c => c?.id && c?.name); if (!collections.some(c => c.id === selectedCollection)) selectedCollection = collections[0]?.id || 'los-nuestros-01'; buildSlots(); render();}},reset() {closeOffline();clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; warmedImages.clear(); inventory=null; collectibleIds=null; savedAt=0; query=kindFilter=rarityFilter=ownershipFilter=''; dialog.querySelector('[data-album-search]').value=''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value=''); page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
+  document.addEventListener('bb:card-catalog-updated', event => {if (event.detail?.collections?.length) collections=event.detail.collections; buildSlots(); renderedSlots=''; pageNodes.clear(); render(); renderCover();});
+  globalThis.CardAlbum = Object.freeze({icon,open,openCollection(id){if(collections.some(c=>c.id===id)){selectedCollection=id;page=0;buildSlots();renderedSlots='';}open();},openOffline,closeOffline,close,didNavigate,update(data) {if(isolatedOffline)return;if(Array.isArray(data.catalog)){const next=new Set(data.catalog.map(c=>c.card_id));if(!collectibleIds||next.size!==collectibleIds.size||[...next].some(id=>!collectibleIds.has(id))){collectibleIds=next;buildSlots();renderedSlots='';}}inventory=data.cards; savedAt=data.savedAt || 0; loading=!!data.loading; failure=data.failure || ''; applyFilters(); render(); renderCover();},configure(config) {refresh=config.refresh; navigate=config.navigate; if (config.collections?.some(c => c?.id && c?.name)) {collections = config.collections.filter(c => c?.id && c?.name); if (!collections.some(c => c.id === selectedCollection)) selectedCollection = collections[0]?.id || 'los-nuestros-01'; buildSlots(); render();} renderCover();},reset() {closeOffline();clearTimeout(warmTimer);clearTimeout(searchTimer);pageNodes.clear();coverKey='';clearTimeout(compassTimer); compassQueued=null; compassDragging=false; compassMouse=null; compass.classList.remove('is-dragging'); document.body.classList.remove('album-page-open'); stopTurn(); pendingRender=false; inventory=null; collectibleIds=null; savedAt=0; query=kindFilter=rarityFilter=ownershipFilter=''; dialog.querySelector('[data-album-search]').value=''; dialog.querySelectorAll('[data-album-filter]').forEach(input => input.value=''); page=0; renderedSlots=''; opener=null; viewerPosition=null; touchStart=null; dialog.hidden=true; dialog.classList.remove('active'); dialog.inert=true;}});
 })();
 
 /* Collection missions live with the room's other missions. Rewards remain server-owned. */

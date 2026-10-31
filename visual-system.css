@@ -597,9 +597,8 @@ body.authenticated #sobres .packs-information { gap: 18px; }
 .bb2-album-pages { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; margin: 2px 0; padding: 8px 0 4px; }
 .bb2-album-card { position: relative; display: block; min-width: 0; aspect-ratio: 4 / 7; overflow: hidden; border: 1px solid var(--bb2-line-strong); border-radius: 6px; background: var(--bb2-raised); color: #77746b; }
 .bb2-album-card::after { content: ""; position: absolute; inset: 4px; border: 1px solid #d0b88320; border-radius: 3px; pointer-events: none; }
-.bb2-album-card svg { display: block; width: 100%; height: 100%; fill: currentColor; }
-.bb2-album-card .bb2-album-cutout { fill: var(--bb2-raised); }
-.bb2-album-card .bb2-album-detail { fill: none; stroke: var(--bb2-raised); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bb2-album-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bb2-album-card.is-missing img { filter: grayscale(1) brightness(.38) contrast(1.25); }
 .bb2-album-card:nth-child(2),.bb2-album-card:nth-child(5) { color: #a29475; }
 .bb2-album-label { color: var(--bb2-gold); font-size: 12px; font-weight: 600; }
 

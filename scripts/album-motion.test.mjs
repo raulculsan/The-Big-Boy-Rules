@@ -36,3 +36,26 @@ test('reduced motion changes the album page immediately without creating moving 
   assert.equal(h.album.querySelector('.card-album-turn-layer'),null);
   h.dom.window.close();
 });
+
+test('the cover uses real cards: owned in colour, missing ones as their shadow',() => {
+  const h = setup();
+  h.w.CardAlbum.update({cards:[{card_id:'card-2',quantity:1}]});
+  const cards = [...h.w.document.querySelectorAll('.bb2-album-card')];
+  assert.equal(cards.length,5);
+  assert.equal(cards.filter(card => card.querySelector('img')).length,5);
+  assert.equal(new Set(cards.map(card => card.querySelector('img').getAttribute('src'))).size,5);
+  assert.equal(cards[2].querySelector('img').getAttribute('src'),'card-2.webp');
+  assert.equal(cards[2].classList.contains('is-missing'),false);
+  assert.equal(cards.filter(card => card.classList.contains('is-missing')).length,4);
+  h.dom.window.close();
+});
+test('pages hold nine pockets and returning to a page reuses its decoded images',() => {
+  const h = setup(true);
+  assert.equal(h.album.querySelectorAll('.card-album-cell').length,9);
+  const first = h.album.querySelector('.card-album-page-grid');
+  h.album.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+  assert.notEqual(h.album.querySelector('.card-album-page-grid'),first);
+  h.album.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
+  assert.equal(h.album.querySelector('.card-album-page-grid'),first);
+  h.dom.window.close();
+});
