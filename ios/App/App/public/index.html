@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="theme-color" content="#0b0b0d" />
   <meta name="color-scheme" content="dark" />
-  <link rel="stylesheet" href="app-health.css?v=20261016-improvements-319">
+  <link rel="stylesheet" href="app-health.css?v=20261030-neutral-interactions-444">
   <script defer src="app-health.js?v=20261017-startup-logs-331"></script>
+  <script defer src="ui-motion.js?v=20261030-neutral-interactions-444"></script>
   <style id="startup-paint">
     html, body { background:#08090c; color:#f4f1e9; }
     #pageLoader { position:fixed; inset:0; z-index:9999; display:grid; place-items:center; background:#08090c; }
@@ -37,24 +38,33 @@
   <link rel="manifest" href="manifest.webmanifest?v=20260901-125" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="account-requests.css?v=20261019-identity-353" />
-  <link rel="stylesheet" href="account-security.css?v=20261019-identity-353" />
-  <link rel="stylesheet" href="styles.css?v=20261020-polish-357" />
-  <link rel="stylesheet" href="chat.css?v=20261021-replies-359" />
-  <link rel="stylesheet" href="chat-themes.css?v=20261012-277" />
-  <link rel="stylesheet" href="packs.css?v=20261021-halloween-365" />
-  <link rel="stylesheet" href="achievement-admin.css?v=20261011-256" />
-  <link rel="stylesheet" href="club.css?v=20261021-performance-363" />
-  <link rel="stylesheet" href="banner-shop.css?v=20261021-performance-363" />
-  <link rel="stylesheet" href="onboarding.css?v=20261016-improvements-319" />
-  <link rel="stylesheet" href="news.css?v=20261014-home-scroll-291" />
+  <link rel="stylesheet" href="account-requests.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="profile-account-sheet.css?v=20261030-account-up-445" />
+  <link rel="stylesheet" href="account-security.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="styles.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="chat.css?v=20261031-chat-back-swipe-450" />
+  <link rel="stylesheet" href="chat-themes.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="packs.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="achievement-admin.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="club.css?v=20261030-room-depth-446" />
+  <link rel="stylesheet" href="banner-shop.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="onboarding.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="news.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="pending-actions.css?v=20261016-release-322" />
-  <link rel="stylesheet" href="notifications.css?v=20261015-notifications-polls-307" />
-  <link rel="stylesheet" href="collection-social.css?v=20261022-trade-art-377" />
-  <link rel="stylesheet" href="group-interactions.css?v=20261015-poll-focus-315" />
-  <link rel="stylesheet" href="visual-system.css?v=20261022-pwa-shell-376" />
-  <link rel="stylesheet" href="clubhouse.css?v=20261022-chota-contact-381" />
-  <link rel="stylesheet" href="chota-shop.css?v=20261022-chota-contact-381" />
+  <link rel="stylesheet" href="notifications.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="collection-social.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="group-interactions.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="visual-system.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="clubhouse.css?v=20261030-expand-corner-447" />
+  <link rel="stylesheet" href="chota-outdoor.css?v=20261030-outdoor-events-448" />
+  <link rel="stylesheet" href="chota-shop.css?v=20261031-room-tabs-449" />
+  <link rel="stylesheet" href="coin-missions.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="club-social.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="club-live.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="chota-games.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="club-experiences.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="app-update.css?v=20261030-app-update-440" />
+  <link rel="stylesheet" href="ui-motion.css?v=20261026-glass-lens-410" />
 </head>
 <body>
 
@@ -196,7 +206,7 @@
       </section>
       <div class="club-dashboard">
         <section class="clubhouse" aria-labelledby="clubhouseTitle">
-          <div class="clubhouse-heading"><h3 id="clubhouseTitle">La sede del club</h3><span id="clubhouseTime">El Chota está en casa</span></div>
+          <div class="clubhouse-heading"><h3 id="clubhouseTitle">La sede del club</h3><div class="clubhouse-heading-actions"><button type="button" data-club-memory-map>Pasaporte</button><span id="clubhouseTime">El Chota está en casa</span></div></div>
           <div id="clubhouseContent" class="clubhouse-content"></div>
         </section>
         <article class="panel spotify-panel">
@@ -213,29 +223,31 @@
     <section class="page-section packs-page" id="sobres" aria-labelledby="packsTitle">
       <header class="packs-heading">
         <button class="packs-back" type="button" data-go="inicio" aria-label="Volver a Inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
-        <div><span class="eyebrow">TU COLECCIÓN PERSONAL</span><h2 id="packsTitle" tabindex="-1">Los nuestros.</h2></div>
-        <button type="button" class="collection-catalog-trigger" data-go="catalogo" aria-label="Ver todas las cartas de la colección"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6 9-3 4 13-9 3zM15 5h5v16H10v-2"/><path d="m7 9 5-1M8 12l5-1"/></svg></button>
-        <button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span data-duplicates-count>0</span></button>
+        <div class="collection-overview-title"><span class="eyebrow">LOS NUESTROS · COLECCIÓN 01</span><h2 id="packsTitle" tabindex="-1">Colección</h2></div>
+        <button type="button" class="collection-catalog-trigger" data-go="catalogo" aria-label="Ver todas las cartas de la colección"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6 9-3 4 13-9 3zM15 5h5v16H10v-2"/><path d="m7 9 5-1M8 12l5-1"/></svg><span class="collection-control-label">Catálogo</span></button>
+        <button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span class="collection-control-label">Repetidas</span><span data-duplicates-count>0</span></button>
       </header>
       <div class="packs-layout">
         <div class="packs-display">
-          <div class="bb2-pack-copy"><span class="packs-display-edition">BIG BOYS · COLECCIÓN 01</span><h3>Tu próxima<br>apertura.</h3><span class="bb2-pack-action">Toca el sobre para abrir</span></div>
+          <div class="bb2-pack-copy"><span class="collection-section-label"><span aria-hidden="true">01</span> Sobres</span><h3>Los nuestros.</h3><span class="packs-display-edition">6 CARTAS POR SOBRE</span><span class="bb2-pack-action">Toca el sobre para abrir</span></div>
           <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-los-nuestros-recortado-v2.png" width="1024" height="1536" loading="lazy" decoding="async" alt=""></button>
           <span id="packsCount" class="packs-count-badge" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
           <button type="button" class="packs-info-trigger" id="packsInfoTrigger" aria-label="Información y saldo de sobres" aria-expanded="false" aria-controls="packsInfoPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button>
-          <aside class="packs-info-panel" id="packsInfoPanel" hidden aria-labelledby="packsInfoTitle"><strong id="packsInfoTitle">Información del sobre</strong><p><span>Sobres disponibles</span><b id="packsInfoBalance">—</b></p><p><span>Monedas</span><b id="packsInfoCoins">—</b></p><p class="pack-rarity-odds" id="packRarityOdds">Actualiza para consultar las probabilidades.</p></aside>
+          <aside class="packs-info-panel" id="packsInfoPanel" hidden tabindex="0" aria-labelledby="packsInfoTitle"><strong id="packsInfoTitle">Información del sobre</strong><p><span>Sobres disponibles</span><b id="packsInfoBalance">—</b></p><p><span>Monedas</span><b id="packsInfoCoins">—</b></p><p class="pack-rarity-odds" id="packRarityOdds">Actualiza para consultar las probabilidades.</p></aside>
           <div id="ownedPackResult" class="owned-pack-result packs-screen-reader" aria-live="polite"></div>
         </div>
         <div class="packs-information">
-          <button type="button" class="bb2-album-entry" data-card-album aria-label="Abrir mi álbum de cartas"><span class="eyebrow">COLECCIÓN ORIGINAL</span><strong>Mi álbum</strong><span class="bb2-album-pages" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="bb2-album-label">Ver mis cartas</span></button>
-          <section class="packs-daily-panel" id="packsDailyPanel" aria-labelledby="packsStatusTitle" data-state="idle">
-            <span class="eyebrow" id="packsDailyLabel">SOBRE DIARIO</span>
-            <h3 id="packsStatusTitle">Sobres disponibles</h3>
-            <progress id="packsDailyProgress" max="1" value="0" aria-label="Recarga del sobre diario"></progress>
-            <p id="packsStatusMessage" role="status">Saldo sincronizado con tu cuenta.</p>
-            <div class="packs-reset"><span>Próximo acceso diario</span><strong id="packsNextReset">Pendiente de sincronización</strong><small>Hora de Madrid</small></div>
-            <button class="packs-sync" type="button" id="packsSyncButton">Actualizar saldo</button>
-          </section>
+          <button type="button" class="bb2-album-entry" data-card-album aria-label="Abrir mi álbum de cartas">
+            <span class="collection-section-label"><span aria-hidden="true">02</span> Tus cartas</span><strong>Mi álbum</strong>
+            <span class="bb2-album-pages" aria-hidden="true">
+              <span class="bb2-album-card"><svg viewBox="0 0 72 126" focusable="false"><path d="M12 108V83c0-10 7-17 15-20-6-5-9-13-9-22 0-17 8-28 18-28s18 11 18 28c0 9-3 17-9 22 8 3 15 10 15 20v25Z"/><path class="bb2-album-cutout" d="M26 40c0-8 4-14 10-14s10 6 10 14v9c0 9-4 15-10 15s-10-6-10-15Z"/><path class="bb2-album-detail" d="m28 70 8 9 8-9M28 87v15m16-15v15"/></svg></span>
+              <span class="bb2-album-card"><svg viewBox="0 0 72 126" focusable="false"><path d="m20 43-7-27 20 15 10-2 16-14-3 31c7 10 4 25-7 31l5 23 7 7v4H44l-7-23-6 23H15v-5l6-8 1-19C9 72 5 62 9 53l7 6c-1 6 0 9 5 10-5-9-5-18-1-26Z"/><path class="bb2-album-cutout" d="m24 53 6 2-4 4Zm18 2 7-2-3 6Zm-7 11h7l-4 5Z"/></svg></span>
+              <span class="bb2-album-card"><svg viewBox="0 0 72 126" focusable="false"><path d="M6 107v-7h60v7ZM10 96V58h8v38Zm44 0V58h8v38ZM6 50l14-7v7h8V32h5V22h6v10h5v18h8v-7l14 7v8H6Zm17 46V62h7v34Zm19 0V62h7v34ZM32 96V53h8v43Z"/><path class="bb2-album-detail" d="M6 87h60M27 39h18M35 16h2v7"/></svg></span>
+              <span class="bb2-album-card"><svg viewBox="0 0 72 126" focusable="false"><path fill-rule="evenodd" d="M28 24v-5c0-6 16-6 16 0v5c10 4 16 13 16 27v51c0 7-48 7-48 0V51c0-14 6-23 16-27Zm5-2h6v-3h-6Z"/><path class="bb2-album-cutout" d="M22 70h28v24H22Z"/><path class="bb2-album-detail" d="M22 49c0-19 28-19 28 0M19 61h34M28 77h16"/></svg></span>
+              <span class="bb2-album-card"><svg viewBox="0 0 72 126" focusable="false"><path d="m13 47 13-10 8-25 16 24 12 11-16 3c5 7 5 18 2 25l13 32H11l13-32c-4-8-3-17 2-25Z"/><path class="bb2-album-cutout" d="M29 53h14v10c0 10-14 10-14 0Z"/><path class="bb2-album-detail" d="m27 38 20 3M28 80l8 7 8-7"/></svg></span>
+            </span>
+            <span class="bb2-album-label">Abrir álbum</span>
+          </button>
         </div>
       </div>
 
@@ -389,7 +401,7 @@
     </section>
 
     <section class="page-section club-calendar-page" id="calendario">
-      <div class="club-calendar-heading"><div><span class="eyebrow">EL CLUB · AGENDA</span><h2>Calendario</h2></div><button class="secondary-button" id="calendarTodayButton" type="button">Hoy</button></div>
+      <div class="club-calendar-heading"><div class="calendar-heading-copy"><span class="eyebrow">AGENDA DEL CLUB</span><h2>Calendario</h2></div><button class="secondary-button" id="calendarTodayButton" type="button">Hoy</button></div>
       <div class="calendar-actions">
         <button class="secondary-button" id="addBirthdayButton" type="button">Añadir mi cumpleaños</button>
         <button class="primary-button admin-only" id="addEventButton" type="button">＋ Crear un plan</button>
@@ -397,18 +409,18 @@
       <div class="calendar-layout">
         <div class="calendar-month-panel panel">
           <div class="calendar-toolbar"><div class="calendar-navigation">
-            <button class="icon-button" id="previousMonthButton" type="button" aria-label="Mes anterior">‹</button>
+            <button class="icon-button" id="previousMonthButton" type="button" aria-label="Mes anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
             <h3 id="calendarMonthTitle"></h3>
-            <button class="icon-button" id="nextMonthButton" type="button" aria-label="Mes siguiente">›</button>
+            <button class="icon-button" id="nextMonthButton" type="button" aria-label="Mes siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
           </div></div>
           <div class="calendar-grid" id="calendarGrid"></div>
           <p class="calendar-legend"><span><i></i>Planes</span><span><i class="birthday"></i>Cumpleaños</span></p>
         </div>
         <aside class="panel calendar-agenda-panel">
-          <div class="calendar-agenda-heading"><span class="eyebrow">TU DÍA</span><span id="calendarDayCount" class="calendar-count"></span></div>
+          <div class="calendar-agenda-heading"><span class="calendar-section-label">Día seleccionado</span><span id="calendarDayCount" class="calendar-count"></span></div>
           <h3 id="calendarSelectedTitle"></h3>
           <div id="calendarSelectedEvents" class="calendar-selected-events"></div>
-          <div class="calendar-month-agenda"><div class="calendar-agenda-heading"><span class="eyebrow">ESTE MES</span><span id="calendarMonthCount" class="calendar-count"></span></div><div id="calendarEventList"></div></div>
+          <div class="calendar-month-agenda"><div class="calendar-agenda-heading"><h4 class="calendar-section-label">Este mes</h4><span id="calendarMonthCount" class="calendar-count"></span></div><div id="calendarEventList"></div></div>
         </aside>
       </div>
     </section>
@@ -639,8 +651,8 @@
 
   <div class="profile-quick-menu" id="profileQuickMenu" role="menu" aria-label="Opciones de la cuenta" aria-hidden="true" hidden>
     <div class="profile-quick-menu-heading"><span>MI CUENTA</span><strong>Opciones rápidas</strong></div>
-    <button type="button" role="menuitem" id="quickHelpButton"><span class="profile-quick-menu-icon">?</span><span><strong>Ayuda y sugerencias</strong><small>Hablar con administración</small></span></button>
-    <button type="button" role="menuitem" id="quickSecurityButton"><span class="profile-quick-menu-icon">✓</span><span><strong>Seguridad de la cuenta</strong><small>Correo o Google y autenticador</small></span></button>
+    <button type="button" role="menuitem" id="quickHelpButton"><span class="profile-quick-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 0 1 4.8 1c0 1.6-2.4 2-2.4 3.5M12 17h.01"/></svg></span><span><strong>Ayuda y sugerencias</strong><small>Hablar con administración</small></span></button>
+    <button type="button" role="menuitem" id="quickSecurityButton"><span class="profile-quick-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></svg></span><span><strong>Seguridad de la cuenta</strong><small>Correo o Google y autenticador</small></span></button>
     <button type="button" role="menuitem" class="danger" id="quickLogoutButton"><span class="profile-quick-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/></svg></span><span><strong>Cerrar sesión</strong><small>Salir de esta cuenta</small></span></button>
     <div class="profile-quick-menu-tip">Mantén pulsado tu perfil para abrir este menú.</div>
   </div>
@@ -918,17 +930,24 @@
     </div>
   </dialog>
 
-  <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle"><header class="banner-shop-heading"><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2><button type="button" data-duplicates-close aria-label="Cerrar repetidas">✕</button></header><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Descartar todas</button><div id="ownedCardInventory" class="owned-card-inventory"></div></dialog>
+  <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle">
+    <header class="banner-shop-heading duplicates-heading"><div><span class="duplicates-kicker">LOS NUESTROS · COLECCIÓN</span><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2></div><button type="button" data-duplicates-close aria-label="Cerrar repetidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+    <div class="duplicates-toolbar"><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Descartar todas</button></div>
+    <div id="ownedCardInventory" class="owned-card-inventory"></div>
+  </dialog>
 
   <dialog id="bannerShopDialog" class="banner-shop-dialog" aria-labelledby="bannerShopTitle">
-    <header class="banner-shop-heading shop-topbar"><span class="shop-brand">BB <span>STORE</span></span><button id="bannerShopClose" type="button" aria-label="Cerrar tienda">×</button></header>
+    <header class="banner-shop-heading shop-topbar">
+      <div class="shop-brand"><span class="shop-brand-mark" aria-hidden="true">BB</span><div class="shop-brand-copy"><span class="shop-kicker">THE BIG BOY RULES</span><h2 id="bannerShopTitle">Tienda</h2></div></div>
+      <div class="shop-wallet"><span>Saldo</span><strong><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.8 8.5h-4a2 2 0 0 0 0 4h2.4a2 2 0 0 1 0 4H9M12 6v12"/></svg><span id="bannerShopBalance" class="banner-shop-balance">— monedas</span></strong></div>
+      <button id="bannerShopClose" type="button" aria-label="Cerrar tienda"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </header>
     <div class="shop-content">
-      <section class="shop-intro"><div><span class="shop-kicker">EL CLUB · PERSONALIZACIÓN</span><h2 id="bannerShopTitle">Tienda</h2><p>Banners, objetos para El Chota y premios del club.</p></div><div class="shop-wallet"><span>Tu saldo</span><strong><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.8 8.5h-4a2 2 0 0 0 0 4h2.4a2 2 0 0 1 0 4H9M12 6v12"/></svg><span id="bannerShopBalance" class="banner-shop-balance">— monedas</span></strong></div></section>
       <div class="shop-navigation" role="tablist" aria-label="Secciones de la tienda"><button type="button" id="shopBannersTab" role="tab" aria-selected="true" aria-controls="shopBannersPanel" data-shop-tab="banners">Banners <span data-shop-banner-count>—</span></button><button type="button" id="shopChotaTab" role="tab" aria-selected="false" aria-controls="shopChotaPanel" tabindex="-1" data-shop-tab="chota">El Chota <span data-shop-chota-count>—</span></button><button type="button" id="shopVouchersTab" role="tab" aria-selected="false" aria-controls="shopVouchersPanel" tabindex="-1" data-shop-tab="vouchers">Vales <span data-shop-voucher-count>—</span></button></div>
       <p id="bannerShopStatus" class="shop-status" role="status" aria-live="polite"></p>
-      <section id="shopBannersPanel" role="tabpanel" aria-labelledby="shopBannersTab"><header class="shop-section-heading"><div><h3>Para tu perfil</h3><p>Vista completa de cada diseño.</p></div><button id="bannerUnequip" class="shop-text-button" type="button" disabled>Quitar banner</button></header><div id="bannerShopItems" class="banner-shop-items"></div></section>
-      <section id="shopChotaPanel" role="tabpanel" aria-labelledby="shopChotaTab" hidden><header class="chota-shop-intro"><div><h3>Cosas para su habitación</h3><p>Cada compra encuentra su sitio en la sede. El robot aspirador recorrerá el suelo mientras limpia.</p></div></header><p id="chotaShopStatus" role="status" aria-live="polite"></p><div id="chotaShopItems" class="chota-shop-items"></div></section>
-      <section id="shopVouchersPanel" class="reward-voucher-shop" role="tabpanel" aria-labelledby="shopVouchersTab" hidden><header class="shop-section-heading"><div><h3 id="rewardVoucherTitle">Premios del club</h3><p>Desbloquea un vale y canjéalo cuando quieras.</p></div></header><div id="rewardVoucherItems" class="banner-shop-items"></div></section>
+      <section id="shopBannersPanel" role="tabpanel" aria-labelledby="shopBannersTab"><header class="shop-section-heading shop-department-heading"><div><span class="shop-department-label">Banners de perfil</span><h3>Selección de hoy</h3><p>Actualización diaria</p></div><button id="bannerUnequip" class="shop-text-button" type="button" disabled>Quitar banner</button></header><div id="bannerShopItems" class="banner-shop-items"></div></section>
+      <section id="shopChotaPanel" role="tabpanel" aria-labelledby="shopChotaTab" hidden><header class="chota-shop-intro shop-department-heading"><div><span class="shop-department-label">El Chota</span><h3>Para su habitación</h3><p>Estilos y objetos para la sede.</p></div></header><p id="chotaShopStatus" role="status" aria-live="polite"></p><div id="chotaShopItems" class="chota-shop-items"></div></section>
+      <section id="shopVouchersPanel" class="reward-voucher-shop" role="tabpanel" aria-labelledby="shopVouchersTab" hidden><header class="shop-section-heading shop-department-heading"><div><span class="shop-department-label">Vales</span><h3 id="rewardVoucherTitle">Premios del club</h3><p>Desbloquea un vale y canjéalo cuando quieras.</p></div></header><div id="rewardVoucherItems" class="banner-shop-items"></div></section>
     </div>
   </dialog>
 
@@ -944,32 +963,42 @@
   </dialog>
   <script defer src="vendor/supabase.js?v=20260901-125"></script>
   <script defer src="config.js?v=20261008-210"></script>
-  <script defer src="feature-loader.js?v=20261021-halloween-365"></script>
+  <script defer src="feature-loader.js?v=20261030-neutral-interactions-444"></script>
   <script defer src="club-model.js?v=20260902-126"></script>
   <script defer src="chat-motion.js?v=20260902-128"></script>
   <script defer src="vendor/capacitor.js?v=8.5.0"></script>
-  <script defer src="chat-keyboard.js?v=20261016-improvements-319"></script>
-  <script defer src="tab-navigation.js?v=20260903-130"></script>
+  <script defer src="app-update.js?v=20261030-app-update-440"></script>
+  <script defer src="chat-keyboard.js?v=20261028-chat-keyboard-slide-429"></script>
+  <script defer src="tab-navigation.js?v=20261026-dock-drag-411"></script>
   <script defer src="trophy-motion.js?v=20260904-150"></script>
   <script defer src="trophy-unlock.js?v=20260903-138"></script>
-  <script defer src="daily-packs.js?v=20261021-activity-packs-372"></script>
+  <script defer src="daily-packs.js?v=20261030-welcome-packs-441"></script>
   <script defer src="collection-motion.js?v=20261021-halloween-365"></script>
-  <script defer src="card-thumbnails.js?v=20261021-halloween-jose-366"></script>
-  <script defer src="card-media.js?v=20261022-pwa-shell-376"></script>
-  <script defer src="card-collection.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="card-thumbnails.js?v=20261023-jose-vice-city-388"></script>
+  <script defer src="card-media.js?v=20261025-audit-404"></script>
+  <script defer src="card-collection.js?v=20261025-fluid-motion-407"></script>
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
   <script defer src="collection-social.js?v=20261022-pwa-shell-376"></script>
-  <script defer src="album.js?v=20261021-dynamic-cards-367"></script>
+  <script defer src="album.js?v=20261030-audit-hardening-443"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
-  <script defer src="banner-shop.js?v=20261022-member-motion-378"></script>
-  <script defer src="chota-shop.js?v=20261022-chota-contact-381"></script>
-  <script defer src="group-interactions.js?v=20261021-activity-packs-372"></script>
+  <script defer src="shop-catalog-media.js?v=20261030-audit-hardening-443"></script>
+  <script defer src="banner-shop.js?v=20261030-banner-picker-443"></script>
+  <script defer src="chota-shop.js?v=20261031-room-tabs-449"></script>
+  <script defer src="coin-missions.js?v=20261030-coin-missions-442"></script>
+  <script defer src="club-social.js?v=20261030-coin-missions-442"></script>
+  <script defer src="club-live.js?v=20261030-coin-missions-442"></script>
+  <script defer src="chota-games.js?v=20261030-coin-missions-442"></script>
+  <script defer src="plan-widget.js?v=20261024-social-393"></script>
+  <script defer src="group-interactions.js?v=20261025-fluid-motion-407"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
-  <script defer src="admin-console.js?v=20261022-chota-shop-378"></script>
-  <script defer src="account-security.js?v=20261021-email-359"></script>
-  <script defer src="account-requests.js?v=20261021-email-359"></script>
-  <script defer src="app.js?v=20261022-chota-contact-381"></script>
+  <script defer src="admin-console.js?v=20261030-app-update-440"></script>
+  <script defer src="native-auth.js?v=20261030-native-google-442"></script>
+  <script defer src="profile-account-sheet.js?v=20261030-neutral-interactions-444"></script>
+  <script defer src="account-security.js?v=20261030-account-screen-442"></script>
+  <script defer src="account-requests.js?v=20261030-native-google-442"></script>
+  <script defer src="chota-outdoor.js?v=20261030-outdoor-events-448"></script>
+  <script defer src="app.js?v=20261030-outdoor-events-448"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
@@ -999,7 +1028,13 @@
       document.addEventListener("visibilitychange", () => { if (!document.hidden) { sync(); setTimeout(sync, 200); } });
       sync();
     })();
-    if ("serviceWorker" in navigator) {
+    const nativeWebView = location.protocol === "capacitor:" || location.origin === "https://localhost" || Boolean(globalThis.Capacitor?.isNativePlatform?.());
+    if (nativeWebView && "serviceWorker" in navigator) {
+      // Native builds already bundle their shell. Remove workers left by older builds.
+      navigator.serviceWorker.getRegistrations().then(registrations =>
+        Promise.all(registrations.map(registration => registration.unregister()))).catch(() => {});
+    }
+    if (!nativeWebView && "serviceWorker" in navigator) {
       // Asset revisions identify the document actually on screen, including an
       // older document restored by iOS while a newer worker is already active.
       const documentRelease = Math.max(0, ...Array.from(document.querySelectorAll("link[href],script[src]"), element =>

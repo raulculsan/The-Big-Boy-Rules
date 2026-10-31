@@ -5,7 +5,7 @@
 .clubhouse-heading > span { color: var(--club-muted, #a7abb3); font-size: 12px; }
 .clubhouse-content { width: min(100%, 680px); margin-inline: auto; }
 .clubhouse-room { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; isolation: isolate; border-radius: 18px; background: #171b20; contain: layout paint; }
-.clubhouse-art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
+.clubhouse-art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; transition: filter 3s ease-in-out; }
 .clubhouse-sky { position:absolute; left:83.984375%; top:0; width:13.4765625%; height:39.0625%; z-index:0; pointer-events:none; -webkit-mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; }
 .clubhouse-sky > i { position:absolute; inset:0; display:block; background:url("icons/clubhouse/club-room-v1.webp") 97.06546275% 0 / 742.0289855% 256% no-repeat; transition:opacity 30s linear; }
 .clubhouse-sky-dawn { opacity:var(--club-sky-dawn,0); filter:sepia(1) saturate(1.45) hue-rotate(325deg) brightness(1.05); }
@@ -13,8 +13,36 @@
 .clubhouse-sky-evening { opacity:var(--club-sky-evening,0); }
 .clubhouse-sky-night { opacity:var(--club-sky-night,0); filter:sepia(1) saturate(1.7) hue-rotate(175deg) brightness(.34); }
 .clubhouse-sky-stars { position:absolute; inset:0; opacity:var(--club-sky-night,0); background:radial-gradient(circle .6px at 37.2% 23%,#d9e5ff 70%,transparent),radial-gradient(circle .8px at 72.1% 19.5%,#f3eddb 70%,transparent),radial-gradient(circle .5px at 52% 48.6%,#cbdcff 70%,transparent),radial-gradient(circle .7px at 74.3% 55%,#e8efff 70%,transparent),radial-gradient(circle .5px at 14.9% 53.8%,#f1e9d5 70%,transparent); transition:opacity 30s linear; }
-.clubhouse-room::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #0b1021; opacity: 0; transition: opacity .4s; }
+.clubhouse-daylight { position:absolute; inset:0; z-index:1; pointer-events:none; opacity:var(--club-sun-strength,0); mix-blend-mode:screen; transition:opacity 30s linear; }
+.clubhouse-daylight::before { content:""; position:absolute; inset:0; background:radial-gradient(ellipse 19% 31% at 91% 34%,#fff2c621,transparent 100%),radial-gradient(ellipse 19% 20% at 83% 57%,#ffe9b41a,transparent 100%); }
+.clubhouse-daylight > i { position:absolute; inset:0; display:block; background:url("icons/clubhouse/window-daylight-v1.svg") 0 0 / 100% 100% no-repeat; transform-origin:80% 60%; transform:scaleX(var(--club-sun-reach,1)); filter:saturate(var(--club-sun-saturation,1)); transition:transform 30s linear,filter 30s linear; }
+:is(.clubhouse-room,.chota-viewer-room-scene).is-sleeping .clubhouse-daylight { opacity:0; transition-duration:3s; }
+.clubhouse-room::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #0b1021; opacity: 0; transition: opacity 3s ease-in-out; }
 .clubhouse-room[data-time="night"]::after { opacity: .12; }
+/* Midnight to 06:00: suppress the warm light painted into the illustration.
+   The separate window sky stays visible, with a little cool ambient light. */
+:is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping :is(.clubhouse-art, .chota-viewer-room-art) { filter: brightness(.29) saturate(.28); }
+:is(.clubhouse-room, .chota-viewer-room-scene)::before { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; opacity:0; transition:opacity 3s ease-in-out; background:radial-gradient(ellipse 8% 6% at 41% 8%,#050a14d9,transparent 100%),radial-gradient(ellipse 8% 22% at 8% 43%,#050a14a6,transparent 100%),radial-gradient(ellipse 8% 12% at 6% 75%,#050a14c9,transparent 100%),radial-gradient(ellipse 7% 10% at 95% 72%,#050a14c9,transparent 100%),linear-gradient(100deg,#080f2533 0%,transparent 78%); }
+:is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping::before { opacity:1; }
+.clubhouse-room.is-sleeping::after { opacity:.36; }
+.clubhouse-light-effects { position:absolute; inset:0; z-index:1; pointer-events:none; transition:opacity 3s ease-in-out; }
+.clubhouse-room.is-sleeping .clubhouse-light-effects { opacity:0; }
+.clubhouse-light-switch { position:absolute; left:30.7%; top:48.2%; width:2.3%; height:3.5%; z-index:2; padding:.45%; border:1px solid #34322c; border-radius:1px; background:linear-gradient(100deg,#cabfa5,#9a927f); box-shadow:1px 2px 1px #080b1380,inset 1px 0 #e0d5ba; pointer-events:none; }
+.clubhouse-light-switch::before,.clubhouse-light-switch::after { content:""; position:absolute; left:43%; width:14%; height:4%; background:#574f42; }
+.clubhouse-light-switch::before { top:8%; }.clubhouse-light-switch::after { bottom:8%; }
+.clubhouse-light-switch i { display:block; height:100%; border:1px solid #686052; background:linear-gradient(#e4d9bd 0 45%,#958b76 47% 55%,#b6aa91 57%); box-shadow:0 -1px #f2e7c8; }
+.is-sleeping .clubhouse-light-switch i,.is-switch-pressed .clubhouse-light-switch i { background:linear-gradient(#a1957d 0 45%,#5e594f 47% 55%,#d1c5a8 57%); box-shadow:0 1px #e5d8b8; }
+.is-sleeping .clubhouse-light-switch { filter:brightness(.5) saturate(.45); }
+.clubhouse-room.is-sleeping :is(.clubhouse-plan, .clubhouse-memory, .clubhouse-bunting, .clubhouse-live-icon, #chotaArcadeEntry, .chota-room-props) { filter:brightness(.58) saturate(.45); }
+:is(.clubhouse-room,.chota-viewer-room-scene) :is(.clubhouse-plan,.clubhouse-memory,.clubhouse-bunting,.clubhouse-live-icon,#chotaArcadeEntry,.chota-room-props,.clubhouse-seasonal,.clubhouse-earned-details,.clubhouse-light-switch,.tigreton-character) { transition:filter 3s ease-in-out; }
+:is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping .tigreton-character { filter:brightness(.72) saturate(.7) drop-shadow(2px 4px 0 #0005); }
+
+/* Transparent seasonal objects share the room's original 1024px coordinates.
+   The agenda, memory photograph and mascot stay above this decorative layer. */
+.clubhouse-seasonal { position:absolute; inset:0; z-index:1; pointer-events:none; user-select:none; }
+.clubhouse-seasonal > img { display:block; width:100%; height:100%; object-fit:contain; }
+:is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping .clubhouse-seasonal { filter:brightness(.4) saturate(.4); }
+
 .clubhouse-plan { position: absolute; z-index: 2; left: 19%; top: 23%; width: 32%; height: 19%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; margin: 0; padding: 10px; border: 0; border-radius: 1px; background: #f1e0b5; color: #292621; text-align: left; font-family: inherit; transform: rotate(-2deg); cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .clubhouse-plan::before { content: ""; position: absolute; width: 8px; height: 8px; left: 48%; top: -3px; background: #bd6136; border: 2px solid #753a26; border-radius: 50%; }
 .clubhouse-note-label { font-size: clamp(9px, 1.7vw, 12px); line-height: 1.2; color: #645a42; }
@@ -29,15 +57,27 @@
 .clubhouse-memory svg { width: 28%; max-height: 30px; min-height: 16px; fill: none; stroke: #726454; stroke-width: 1.5; }
 .clubhouse-memory strong { font-size: clamp(8px, 1.45vw, 12px); line-height: 1.25; font-weight: 650; }
 .clubhouse-memory > span:last-child { font-size: clamp(7px, 1.2vw, 10px); line-height: 1.25; }
-.clubhouse-room .clubhouse-pet { position: absolute; z-index: 3; left: 36%; bottom: 15%; width: 28%; display: flex; flex-direction: column; align-items: center; }
+/* Both views use one 1024px room coordinate system. Labels never move the feet. */
+:is(.clubhouse-room,.chota-viewer-room-scene) { --chota-home-left:36%; --chota-home-top:53.54%; --chota-home-width:28%; }
+.chota-room-depth { position:absolute; inset:0; z-index:3; pointer-events:none; -webkit-mask:url("icons/clubhouse/chota-room-occlusion.svg") 0 0 / 100% 100% no-repeat; mask:url("icons/clubhouse/chota-room-occlusion.svg") 0 0 / 100% 100% no-repeat; }
+.is-chota-on-sofa .chota-room-depth { -webkit-mask-image:url("icons/clubhouse/chota-sofa-occlusion.svg"); mask-image:url("icons/clubhouse/chota-sofa-occlusion.svg"); }
+:is(.clubhouse-room,.chota-viewer-room-scene) .tigreton-agenda { position:absolute; z-index:3; inset:auto; left:var(--chota-home-left); top:var(--chota-home-top); width:var(--chota-home-width); height:var(--chota-home-width); min-height:0; display:block; pointer-events:none; }
+:is(.clubhouse-room,.chota-viewer-room-scene) .chota-character-row { position:relative; inset:auto; display:block; width:100%; height:100%; max-width:none; }
+:is(.clubhouse-room,.chota-viewer-room-scene) .tigreton-sprite { pointer-events:auto; }
+.clubhouse-room .tigreton-name { position:absolute; top:calc(100% + 2px); left:50%; transform:translateX(-50%); white-space:nowrap; }
+.clubhouse-pet:is(.is-going-to-sleep,.is-waking-up,.is-walking) { z-index: 4; }
+.clubhouse-pet:is(.is-going-to-sleep,.is-waking-up,.is-walking) :is(.tigreton-name,.chota-expand) { opacity:0; pointer-events:none; }
 .clubhouse-room .tigreton-sprite { width: 100%; height: auto; aspect-ratio: 1; margin: 0; border-radius: 0; }
 .clubhouse-room .tigreton-character { filter: drop-shadow(2px 4px 0 #0002); }
 .clubhouse-room .tigreton-name { width: auto; margin: 0; padding: 4px 9px; color: #fff4da; background: #252223d9; border-radius: 2px; font-size: clamp(10px, 1.8vw, 13px); line-height: 1.25; }
-.clubhouse-room .chota-expand { position: absolute; right: -3px; bottom: 0; width: 44px; height: 44px; display: grid; place-items: center; padding: 13px; border: 0; background: transparent; color: #f0d6a1; cursor: pointer; }
+.clubhouse-room .chota-expand { position: absolute; right: 12px; bottom: 12px; z-index:7; pointer-events:auto; width: 44px; height: 44px; display: grid; place-items: center; padding: 13px; border: 0; background: transparent; color: #f0d6a1; cursor: pointer; }
 .clubhouse-room .chota-expand svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .clubhouse-room .chota-expand[hidden] { display: none; }
 .clubhouse-pet.is-sleeping .tigreton-sprite { cursor: default; opacity: 1; transform: none; }
-.clubhouse-pet.is-sleeping .tigreton-sleep-mark { opacity: .85; right: 10%; top: 45%; }
+/* Sleep/wake disables touch, without fading the character like a form control. */
+.tigreton-sprite:disabled,.chota-viewer-touch:disabled { opacity:1; cursor:default; }
+.clubhouse-pet:is(.is-sleeping,.is-falling-asleep,.is-waking-up) .tigreton-sleep-mark { right:10%; top:45%; }
+.clubhouse-pet.is-sleeping .tigreton-sleep-mark { opacity: .85; }
 .clubhouse-room .clubhouse-bubble { position: absolute; z-index: 4; left: 24%; top: 40%; bottom:auto; max-width: 64%; max-height:none; overflow:visible; padding: 9px 12px; border: 1px solid #302a23; border-radius: 13px; box-shadow: none; }
 .clubhouse-bubble .tigreton-comment { margin: 0; font-size: clamp(11px, 2vw, 14px); line-height: 1.4; }
 .clubhouse-room .clubhouse-bubble::before, .chota-viewer-room-scene .tigreton-bubble::before { content:""; position:absolute; top:calc(100% - 1px); left:var(--chota-tail-x,50%); width:18px; height:16px; background:#302a23; clip-path:polygon(0 0,100% 0,50% 100%); }
@@ -52,7 +92,7 @@
 .clubhouse-bunting { position: absolute; z-index: 2; top: 12%; left: 20%; width: 55%; height: 22px; display: flex; justify-content: space-between; border-top: 1px solid #c9ad74; transform: rotate(3deg); pointer-events: none; }
 .clubhouse-bunting i { width: 10%; height: 100%; background: #d6a252; clip-path: polygon(0 0, 100% 0, 50% 100%); }
 .clubhouse-bunting i:nth-child(2n) { background: #945341; }
-.clubhouse :is(button, a):focus-visible { outline: 2px solid #f5cb7e; outline-offset: 3px; }
+.clubhouse :is(button, a):focus-visible { outline: 2px solid #cecece; outline-offset: 3px; }
 /* The expanded mascot stays inside the same room; its full square scene is never cropped. */
 .chota-viewer { isolation: isolate; gap: 12px; background: #15191e; }
 .chota-viewer::before { content: ""; position: fixed; inset: -28px; z-index: 0; background: url("icons/clubhouse/club-room-v1.webp") center / cover no-repeat; filter: blur(20px) brightness(.3); pointer-events: none; }
@@ -61,20 +101,18 @@
 .chota-viewer-heading button { background: #171b20e8; border-color: #f0d6a138; }
 .chota-viewer-plan { margin: 0; color: #f2e3c5; text-shadow: 0 1px 5px #000; }
 .chota-viewer-room-scene { position: relative; flex: none; align-self: center; width: min(100%, calc(100dvh - 280px), 760px); aspect-ratio: 1; margin-block: auto; overflow: hidden; isolation: isolate; border-radius: 16px; background: #171b20; }
-.chota-viewer-room-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
-.chota-viewer-room-scene .chota-viewer-pet { position: absolute; inset: 0; min-height: 0; }
-.chota-viewer-room-scene .chota-character-row { position: absolute; bottom: 13%; left: 26%; width: 48%; max-width: none; }
+.chota-viewer-room-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; transition:filter 3s ease-in-out; }
+.chota-viewer-room-scene .chota-viewer-touch { pointer-events:auto; }
 .chota-viewer-room-scene .chota-viewer-touch { display: block; width: 100%; margin: 0; padding: 0; border-radius: 0; }
 .chota-viewer-room-scene .tigreton-sprite { width: 100%; max-width: none; height: auto; aspect-ratio: 1; }
 .chota-viewer-room-scene .chota-viewer-bubble-slot { display:contents; }
 .chota-viewer-room-scene .tigreton-bubble { position:absolute; z-index:4; bottom:auto; max-width: min(80%, 340px); overflow:visible; margin: 0; padding: 10px 13px; border: 1px solid #302a23; border-radius:13px; box-shadow: none; }
 .chota-viewer-actions { width: min(100%, 600px); align-self: center; }
 .chota-viewer-actions button { background: #171b20ed; border-color: #f0d6a138; }
-.chota-viewer-actions button:active { background: #5e4229; }
+.chota-viewer-actions button:active { background: #464646; }
 @media (max-width: 600px) {
   .chota-viewer { padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right)); gap: 10px; }
   .chota-viewer-room-scene { width: min(100%, calc(100dvh - 282px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); border-radius: 12px; }
-  .chota-viewer-room-scene .chota-character-row { left: 24%; width: 52%; }
   .chota-viewer-room-scene .tigreton-bubble { padding: 8px 10px; font-size: 12px; }
   .chota-viewer-room-scene .chota-viewer-comment { max-height: 90px; }
 }
@@ -98,13 +136,49 @@
   .clubhouse-plan-countdown { font-size: 10px; }
   .clubhouse-memory { gap: 4px; top: 18.4%; height: 20%; }
   .clubhouse-memory > span:last-child { display: none; }
-  .clubhouse-room .clubhouse-pet { left: 34%; bottom: 14%; width: 32%; }
   .clubhouse-room .clubhouse-bubble { max-width: 68%; padding: 7px 9px; }
-  .clubhouse-room .chota-expand { right: -17px; bottom: -7px; }
   .clubhouse-bunting { height: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .clubhouse-lamplight, .clubhouse-dust i { animation: none !important; }
-  .clubhouse-room::after, .clubhouse-plan, .clubhouse-sky > i, .clubhouse-sky-stars { transition: none; }
+  .clubhouse-room::after, :is(.clubhouse-room,.chota-viewer-room-scene)::before, .clubhouse-light-effects, .clubhouse-plan, .clubhouse-sky > i, .clubhouse-sky-stars, .clubhouse-daylight, .clubhouse-daylight > i, .clubhouse-art, .chota-viewer-room-art { transition: none; }
 }
-html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars) { transition:none; }
+html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars,.clubhouse-daylight,.clubhouse-daylight > i) { transition:none; }
+
+/* Quiet standing pose: separate head and torso preserve the feet's floor contact.
+   These layers use cell zero of the existing sheet; commanded poses use the sheet normally. */
+.chota-idle-body, .chota-idle-head, .chota-idle-tail, .chota-idle-ear { display:none; position:absolute; inset:0; background:url("icons/mascot/chota-v2/chota-idle-core-v1.webp") 0 0 / 100% 100% no-repeat; image-rendering:pixelated; pointer-events:none; }
+.tigreton-character.is-idling { background-image:none; }
+.tigreton-character.is-idling :is(.chota-idle-body,.chota-idle-head,.chota-idle-tail,.chota-idle-ear) { display:block; }
+.chota-idle-tail { background-image:url("icons/mascot/chota-v2/chota-idle-tail-v1.webp"); transform-origin:36% 72%; }
+.chota-idle-ear--left { background-image:url("icons/mascot/chota-v2/chota-idle-ear-left-v1.webp"); transform-origin:45% 25%; }
+.chota-idle-ear--right { background-image:url("icons/mascot/chota-v2/chota-idle-ear-right-v1.webp"); transform-origin:74% 30%; }
+.chota-idle-body { clip-path:inset(52% 0 0); transform-origin:50% 93%; }
+.chota-idle-head { clip-path:inset(0 0 46%); transform-origin:57% 52%; }
+.chota-sleep-base,.chota-sleep-chest,.chota-sleep-head,.chota-sleep-tail,.chota-sleep-foreground { display:none; position:absolute; inset:0; background:url("icons/mascot/chota-v2/chota-poses.webp") 80% 100% / 600% 400% no-repeat; image-rendering:pixelated; pointer-events:none; }
+.tigreton-character.is-sleep-breathing { background-image:none; }
+.is-sleep-breathing :is(.chota-sleep-base,.chota-sleep-chest,.chota-sleep-head,.chota-sleep-tail,.chota-sleep-foreground) { display:block; }
+.chota-sleep-base,.chota-sleep-foreground { -webkit-mask:url("icons/mascot/chota-v2/chota-sleep-base-mask.svg") 0 0 / 100% 100%; mask:url("icons/mascot/chota-v2/chota-sleep-base-mask.svg") 0 0 / 100% 100%; }
+.chota-sleep-head { clip-path:polygon(0 0,56% 0,56% 70%,49% 73%,47% 80%,42% 85%,36% 89%,0 89%); transform-origin:38% 88%; }
+.chota-sleep-tail { clip-path:polygon(72% 57%,100% 57%,100% 85%,85% 85%,84% 77%,80% 74%,73% 75%); transform-origin:84% 82%; }
+.chota-sleep-chest { clip-path:polygon(46% 75%,55% 71%,63% 72%,59% 85%,57% 93%,47% 93%); transform-origin:56% 93%; }
+/* Restore the supported cheek/paws and trouser edge in front of the breathing shirt. */
+.chota-sleep-foreground { clip-path:polygon(0 0,50% 0,50% 91%,62% 91%,62% 0,100% 0,100% 100%,0 100%); }
+.tigreton-character.is-directional { background-image:url("icons/mascot/chota-v2/chota-directional-v1.webp"); background-size:500% 400%; }
+.tigreton-character.is-contextual { background-image:url("icons/mascot/chota-v2/chota-contextual-v1.webp"); background-size:400% 400%; }
+.tigreton-character.is-room-pose { background-image:url("icons/mascot/chota-v2/chota-room-life-v1.webp"); background-size:400% 100%; }
+.is-visiting-room { z-index:4; }
+.is-visiting-room :is(.tigreton-name,.chota-expand) { opacity:0; pointer-events:none; }
+.chota-idle-eyelids { display:block; position:absolute; inset:0; width:100%; height:100%; opacity:0; overflow:visible; }
+@media(prefers-reduced-motion:reduce) { .chota-idle-eyelids { display:none; } }
+html[data-reduced-motion="true"] .chota-idle-eyelids { display:none; }
+
+/* Earned objects share the illustration's 1024px coordinate space and resting surfaces. */
+.clubhouse-earned-details{position:absolute;inset:0;z-index:2;pointer-events:none}
+.clubhouse-earned-object{position:absolute;display:block;min-width:0;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:none;pointer-events:none}
+.clubhouse-earned-object svg{display:block;width:100%;height:100%;overflow:visible}
+.earned-first_plan{left:21%;top:46%;width:7%;height:9%}
+.earned-memory_wall{left:31%;top:46.5%;width:18%;height:8%}
+.earned-places_souvenir{left:74%;top:47.2%;width:4.8%;height:2.7%}
+.earned-club_trophy{left:66.3%;top:44.5%;width:4.4%;height:5%}
+:is(.clubhouse-room,.chota-viewer-room-scene).is-sleeping .clubhouse-earned-details{filter:brightness(.48) saturate(.4)}

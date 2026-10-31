@@ -2,6 +2,13 @@
 .chota-room-props { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }
 .chota-room-prop { position:absolute; line-height:0; transform-origin:50% 90%; }
 .chota-room-prop img { display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none; }
+/* Positions use the illustrated room's 1024px coordinates, including its furniture. */
+.chota-room-warm-lights { left:13%; top:.7%; width:67%; }
+.chota-room-club-neon { left:29%; top:45.5%; width:20%; }
+.chota-room-club-cushion { left:9.6%; top:53%; width:8.5%; }
+.chota-room-vintage-radio { left:64.5%; top:46%; width:6%; }
+:is(.clubhouse-room,.chota-viewer-room-scene).is-sleeping .chota-room-prop--decoration { filter:brightness(.32) saturate(.35); }
+.chota-room-prop--decoration img { image-rendering:pixelated; }
 .chota-room-football { left:20%; top:79%; width:7%; }
 .chota-room-skateboard { left:82.1%; top:61%; width:10.5%; transform:rotate(14deg); transform-origin:25% 94%; }
 .chota-room-skateboard::before { content:""; position:absolute; z-index:-1; left:9%; bottom:0; width:57%; height:7%; border-radius:50%; background:#1b0d0be6; filter:blur(1.2px); transform:rotate(-14deg) scaleX(1.25); }
@@ -23,52 +30,115 @@
   70%,75% { transform:translate3d(0,-22%,0); }
   94%,100% { transform:translate3d(0,0,0); }
 }
-#shopChotaPanel { padding-top:4px; }
-.chota-shop-intro { display:flex; align-items:baseline; justify-content:space-between; gap:18px; margin:0 0 22px; }
-.chota-shop-intro h3 { margin:0 0 7px; color:#f4f1e9; font-size:20px; letter-spacing:-.025em; }
-.chota-shop-intro p { margin:0; max-width:500px; color:#aaaeb5; font-size:13px; line-height:1.6; }
-.chota-shop-items { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
-.chota-shop-item { min-width:0; background:#191b1f; border-radius:12px; overflow:hidden; }
-.chota-shop-object { position:relative; display:grid; place-items:center; height:170px; background:#242526; }
-.chota-shop-object::after { content:""; position:absolute; left:12%; right:12%; bottom:21%; height:1px; background:#ffffff10; }
-.chota-shop-object img { position:relative; z-index:1; display:block; width:120px; max-width:82%; max-height:128px; object-fit:contain; }
-.chota-shop-skateboard img { width:190px; max-width:88%; }
-.chota-shop-robot-vacuum img { width:150px; }
-
-.chota-shop-copy { padding:18px; }
-.chota-shop-copy h4 { margin:0 0 8px; color:#f5f2eb; font-size:18px; font-weight:650; letter-spacing:-.025em; }
-.chota-shop-copy p { margin:0; min-height:63px; color:#a7abb2; font-size:13px; line-height:1.6; }
-.chota-shop-purchase { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:20px; }
-.chota-shop-purchase > span { color:#b7b4ad; font-size:12px; }
-.chota-shop-purchase strong { margin-right:4px; color:#ecd19a; font-size:22px; font-weight:600; font-variant-numeric:tabular-nums; }
-.chota-shop-purchase button, .chota-shop-empty button { min-height:44px; padding:10px 16px; border:0; border-radius:7px; background:#e7c991; color:#201e19; font:650 13px var(--font-body,sans-serif); cursor:pointer; touch-action:manipulation; }
-.chota-shop-purchase button:disabled { cursor:default; opacity:.42; }
-.chota-shop-item.is-owned .chota-shop-purchase { color:#abb5a6; }
-.chota-shop-item.is-owned .chota-shop-purchase button { background:#30372f; color:#becbb6; opacity:1; }
-.chota-shop-item.is-owned .chota-shop-purchase > span { color:#b4bfae; }
-#chotaShopStatus { margin:0 0 16px; color:#d9c496; font-size:13px; line-height:1.5; }
+#shopChotaPanel { padding-top:0; }
+#bannerShopDialog .chota-shop-intro { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin:0 0 26px; }
+#bannerShopDialog .chota-shop-intro h3 { margin:0 0 8px; color:#f5f3ee; font-size:30px; font-weight:600; letter-spacing:-.045em; line-height:1.15; }
+#bannerShopDialog .chota-shop-intro p { margin:0; max-width:500px; color:var(--shop-muted,#a9adaf); font-size:14px; line-height:1.5; }
+#bannerShopDialog .chota-shop-items { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:28px; }
+#bannerShopDialog .chota-shop-tabs { display:flex;grid-column:1/-1;gap:4px;justify-self:start;padding:4px;background:#202426;border-radius:6px; }
+#bannerShopDialog .chota-shop-tabs button { min-height:44px;min-width:110px;padding:10px 18px;border:0;border-radius:3px;background:transparent;color:var(--shop-muted,#a9adaf);font-family:inherit;font-size:14px;font-weight:500;line-height:1.3;cursor:pointer;touch-action:manipulation;user-select:none; }
+#bannerShopDialog .chota-shop-tabs button[aria-selected="true"] { background:#393e40;color:#f5f3ee;box-shadow:none; }
+#bannerShopDialog .chota-shop-tabs button:hover { color:#f5f3ee; }
+#bannerShopDialog .chota-shop-tabs button:focus-visible { outline:2px solid #c2c6c8;outline-offset:2px; }
+#bannerShopDialog .chota-object-grid { display:grid;grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px; }
+#bannerShopDialog .chota-shop-items [role="tabpanel"][hidden] { display:none; }
+#bannerShopDialog .chota-shop-item { min-width:0; background:transparent; border:0; border-radius:0; overflow:visible; }
+#bannerShopDialog .chota-shop-object { position:relative; display:grid; place-items:center; height:230px; background:#1c1f20; border-radius:8px; overflow:hidden; }
+#bannerShopDialog .chota-shop-object::after { display:none; }
+#bannerShopDialog .chota-shop-object img { position:relative; display:block; width:140px; max-width:82%; max-height:160px; object-fit:contain; }
+#bannerShopDialog .chota-shop-kind { display:block; margin:0 0 9px; color:#b3bcae; font-size:11px; line-height:1.4; }
+#bannerShopDialog :is(.chota-shop-warm-lights,.chota-shop-club-neon,.chota-shop-club-cushion,.chota-shop-vintage-radio) img { image-rendering:pixelated; }
+#bannerShopDialog .chota-shop-warm-lights img { width:92%; max-width:92%; }
+#bannerShopDialog .chota-shop-club-neon img { width:230px; max-width:86%; }
+#bannerShopDialog .chota-shop-club-cushion img { width:130px; }
+#bannerShopDialog .chota-shop-vintage-radio img { width:170px; }
+#bannerShopDialog .chota-shop-skateboard img { width:260px; max-width:88%; }
+#bannerShopDialog .chota-shop-robot-vacuum img { width:190px; }
+#bannerShopDialog .chota-shop-copy { display:flex; flex-direction:column; padding:20px 0 0; }
+#bannerShopDialog .chota-shop-copy h4 { margin:0 0 8px; color:#f5f3ee; font-size:22px; font-weight:600; letter-spacing:-.035em; line-height:1.2; }
+#bannerShopDialog .chota-shop-copy p { margin:0; min-height:63px; color:var(--shop-muted,#a9adaf); font-size:14px; line-height:1.5; }
+#bannerShopDialog .chota-shop-purchase { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:24px; }
+#bannerShopDialog .chota-shop-purchase > span { color:var(--shop-muted,#a9adaf); font-size:12px; }
+#bannerShopDialog .chota-shop-purchase strong { margin-right:4px; color:var(--shop-gold,#e5c78a); font-size:22px; font-weight:600; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+#bannerShopDialog .chota-shop-purchase button, #bannerShopDialog .chota-shop-empty button { min-height:44px; padding:11px 18px; border:1px solid #5a5d5f; border-radius:5px; background:#f0eee8; color:#1a1c1d; font:600 13px/1.3 "Inter",sans-serif; cursor:pointer; touch-action:manipulation; transition:transform .16s,background .16s; }
+#bannerShopDialog .chota-shop-purchase button:not(:disabled):active { transform:scale(.97); }
+#bannerShopDialog .chota-shop-purchase button:disabled { cursor:default; opacity:.42; }
+#bannerShopDialog .chota-shop-item.is-owned .chota-shop-purchase button { border-color:#45494a; background:transparent; color:#bfc3c4; opacity:1; }
+#bannerShopDialog .chota-shop-item.is-owned .chota-shop-purchase > span { color:#bfc3c4; }
+#chotaShopStatus { margin:0 0 24px; color:var(--shop-gold,#e5c78a); font-size:14px; line-height:1.5; }
 #chotaShopStatus:empty { display:none; }
-#chotaShopStatus.is-error { color:#e7a997; }
-.chota-shop-empty { grid-column:1/-1; padding:30px 0; color:#b6bac1; }
-.chota-shop-empty strong { display:block; color:#f4f1e9; font-size:18px; }
-.chota-shop-empty p { max-width:440px; font-size:13px; line-height:1.6; }
-@media(max-width:700px) {
-  .chota-shop-items { grid-template-columns:1fr; gap:14px; }
-  .chota-shop-item { display:grid; grid-template-columns:minmax(112px,32%) minmax(0,1fr); }
-  .chota-shop-object { height:100%; min-height:194px; }
-  .chota-shop-object img { width:90px; max-width:84%; }
-  .chota-shop-skateboard img { width:142px; max-width:96%; }
-  .chota-shop-robot-vacuum img { width:112px; }
-  .chota-shop-copy { padding:17px 15px; }
-  .chota-shop-copy h4 { font-size:17px; }
-  .chota-shop-copy p { min-height:0; font-size:12px; line-height:1.5; }
-  .chota-shop-purchase { margin-top:17px; flex-wrap:wrap; gap:9px; }
-  .chota-shop-purchase button { margin-left:auto; padding-inline:13px; }
-  .chota-shop-purchase strong { font-size:20px; }
-  .chota-shop-intro { margin-bottom:16px; }
-  .chota-shop-intro h3 { font-size:18px; }
-  #bannerShopDialog .shop-navigation { width:100%; box-sizing:border-box; }
-  #bannerShopDialog .shop-navigation button { min-width:0; padding-inline:10px; }
+#chotaShopStatus.is-error { color:#f0b49f; }
+/* Success is already reflected on the card; announce it without moving the grid. */
+#chotaShopStatus.is-notice { position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+#bannerShopDialog .chota-shop-empty { grid-column:1/-1; padding:40px 0; color:var(--shop-muted,#a9adaf); border-top:1px solid var(--shop-line,#303335); }
+#bannerShopDialog .chota-shop-empty strong { display:block; color:#f5f3ee; font-size:18px; font-weight:600; }
+#bannerShopDialog .chota-shop-empty p { max-width:440px; font-size:14px; line-height:1.5; }
+@media(max-width:900px) { #bannerShopDialog :is(.chota-shop-items,.chota-object-grid) { gap:24px; } #bannerShopDialog .chota-shop-object { height:190px; } #bannerShopDialog .chota-shop-purchase { align-items:flex-start; flex-wrap:wrap; } }
+@media(max-width:640px) {
+  #bannerShopDialog .chota-shop-items { grid-template-columns:1fr; gap:28px; }
+  #bannerShopDialog .chota-object-grid { grid-template-columns:minmax(0,1fr);gap:28px; }
+  #bannerShopDialog .chota-shop-item { display:grid; grid-template-columns:minmax(100px,34%) minmax(0,1fr); gap:18px; }
+  #bannerShopDialog .chota-shop-object { height:100%; min-height:190px; }
+  #bannerShopDialog .chota-shop-object img { width:90px; max-width:84%; }
+  #bannerShopDialog .chota-shop-skateboard img { width:142px; max-width:96%; }
+  #bannerShopDialog .chota-shop-robot-vacuum img { width:112px; }
+  #bannerShopDialog .chota-shop-kind { margin-bottom:7px; }
+  #bannerShopDialog .chota-shop-club-neon img { width:115px; max-width:88%; }
+  #bannerShopDialog .chota-shop-club-cushion img { width:90px; }
+  #bannerShopDialog .chota-shop-vintage-radio img { width:112px; }
+  #bannerShopDialog .chota-shop-copy { padding:10px 0; }
+  #bannerShopDialog .chota-shop-copy h4 { font-size:20px; }
+  #bannerShopDialog .chota-shop-copy p { min-height:0; font-size:13px; line-height:1.5; }
+  #bannerShopDialog .chota-shop-purchase { margin-top:18px; flex-wrap:wrap; gap:12px; }
+  #bannerShopDialog .chota-shop-purchase button { padding-inline:16px; }
+  #bannerShopDialog .chota-shop-purchase strong { font-size:21px; }
+  #bannerShopDialog .chota-shop-intro { margin-bottom:20px; }
+  #bannerShopDialog .chota-shop-intro h3 { font-size:25px; }
+  #bannerShopDialog .chota-shop-intro p { font-size:12px; }
 }
 @media(prefers-reduced-motion:reduce) { .chota-room-robot-vacuum, .chota-vacuum-brush svg { animation:none; } }
 html[data-reduced-motion="true"] :is(.chota-room-robot-vacuum,.chota-vacuum-brush svg) { animation:none; }
+
+/* Surface masks preserve the illustration's shadows, furniture and pixel geometry. */
+.chota-room-style { position:absolute;inset:0;z-index:0;pointer-events:none;mix-blend-mode:color;opacity:.94; }
+.chota-room-style > span { position:absolute;inset:0;display:block;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat; }
+.chota-style-wall { background:var(--room-wall);-webkit-mask-image:url("icons/clubhouse/styles/wall-mask.svg");mask-image:url("icons/clubhouse/styles/wall-mask.svg"); }
+.chota-style-floor { background:var(--room-floor);-webkit-mask-image:url("icons/clubhouse/styles/floor-mask.svg");mask-image:url("icons/clubhouse/styles/floor-mask.svg"); }
+.chota-style-rug { background:var(--room-rug);-webkit-mask-image:url("icons/clubhouse/styles/rug-mask.svg");mask-image:url("icons/clubhouse/styles/rug-mask.svg"); }
+[data-room-style="original"] > .chota-room-style { display:none; }
+[data-room-style="room-midnight"] { --room-wall:#425d9a;--room-floor:#776077;--room-rug:#65539e; }
+[data-room-style="room-forest"] { --room-wall:#43755c;--room-floor:#8a754c;--room-rug:#397765; }
+[data-room-style="room-terracotta"] { --room-wall:#a7654d;--room-floor:#b67d4e;--room-rug:#985f43; }
+body.authenticated #bannerShopDialog .chota-shop-section-heading { grid-column:1/-1;padding-top:8px; }
+body.authenticated #bannerShopDialog .chota-shop-section-heading h4 { margin:0 0 7px;font-size:22px;font-weight:550;color:#f5f3ee;letter-spacing:-.025em; }
+body.authenticated #bannerShopDialog .chota-shop-section-heading p { margin:0;font-size:12px;line-height:1.5;color:#b8c2b5; }
+body.authenticated #bannerShopDialog .chota-style-grid { display:grid;grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-bottom:12px; }
+body.authenticated #bannerShopDialog .chota-style-preview { position:relative;isolation:isolate;width:100%;aspect-ratio:1;overflow:hidden; }
+body.authenticated #bannerShopDialog .chota-style-preview > img { width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;filter:none; }
+body.authenticated #bannerShopDialog .chota-shop-style .chota-shop-object { position:relative;height:auto;min-height:0;aspect-ratio:1.5; }
+body.authenticated #bannerShopDialog .chota-shop-style .chota-style-preview { position:absolute;left:0;top:50%;transform:translateY(-50%);width:100%;height:auto;aspect-ratio:1; }
+body.authenticated #bannerShopDialog .chota-shop-style .chota-style-preview > img { object-position:center 57%; }
+body.authenticated #bannerShopDialog .chota-style-grid .chota-shop-item { display:flex;flex-direction:column;grid-column:auto; }
+body.authenticated #bannerShopDialog .chota-shop-style .chota-shop-purchase { flex-wrap:wrap; }
+body.authenticated #bannerShopDialog .chota-shop-style .chota-shop-purchase button { min-width:112px; }
+body.authenticated #bannerShopDialog .chota-shop-style.is-equipped { border-color:#bbceaa; }
+body.authenticated #bannerShopDialog .chota-shop-style.is-equipped .chota-shop-purchase button { background:#40513c;color:#e3efd9; }
+@media(max-width:640px) {
+ body.authenticated #bannerShopDialog .chota-style-grid { grid-template-columns:minmax(0,1fr);gap:18px; }
+ body.authenticated #bannerShopDialog .chota-style-grid .chota-shop-item { display:flex; }
+ body.authenticated #bannerShopDialog .chota-shop-style .chota-shop-object { aspect-ratio:1.6; }
+}
+.chota-remote-motion img[hidden]{display:none}
+.chota-remote-motion{display:block;width:100%;transform-origin:50% 90%}
+.chota-room-remote .chota-remote-motion{animation-duration:4s;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-play-state:paused}
+.chota-room-remote [data-chota-motion="sway"]{animation-name:chota-decor-sway}
+.chota-room-remote [data-chota-motion="float"]{animation-name:chota-decor-float}
+.chota-room-remote [data-chota-motion="spin"]{animation-name:chota-decor-spin;animation-duration:8s;animation-timing-function:linear;transform-origin:50% 50%}
+.chota-props-moving .chota-room-remote .chota-remote-motion{animation-play-state:running}
+.chota-shop-remote .chota-remote-motion{display:grid;place-items:center;width:100%;height:100%}
+.chota-shop-remote .chota-remote-motion img{max-width:90%;max-height:90%;width:auto;height:auto}
+@keyframes chota-decor-sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes chota-decor-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5%)}}
+@keyframes chota-decor-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.chota-room-remote .chota-remote-motion{animation:none}}
+html[data-reduced-motion="true"] .chota-room-remote .chota-remote-motion{animation:none}
