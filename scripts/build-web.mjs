@@ -28,6 +28,8 @@ const sources = [
   "notifications.css",
   "club.css",
   "clubhouse.css",
+  "chota-outdoor.js",
+  "chota-outdoor.css",
   "shop-catalog-media.js",
   "chota-shop.js",
   "chota-shop.css",

@@ -3886,6 +3886,7 @@ function openChotaViewer(trigger) {
       const roomState = chotaViewerMotion?.captureRoomState();
       chotaViewerMotion?.pause();
       globalThis.ChotaShop?.unmountRoom(viewer.querySelector(".chota-viewer-room-scene"));
+      globalThis.ClubOutdoor?.unmount(viewer.querySelector(".chota-viewer-room-scene"));
       tigretonMotion?.resume(roomState);
       const focusTarget = chotaViewerTrigger?.isConnected ? chotaViewerTrigger : document.querySelector("[data-chota-open]");
       focusTarget?.focus({preventScroll: true});
@@ -4141,7 +4142,9 @@ function syncClubhouseDaylight(now = new Date()) {
     room.style.setProperty("--club-sun-strength", sunlight.strength.toFixed(4));
     room.style.setProperty("--club-sun-reach", sunlight.reach.toFixed(4));
     room.style.setProperty("--club-sun-saturation", sunlight.saturation.toFixed(4));
+    if (currentUser) globalThis.ClubOutdoor?.mount(room);
   });
+  globalThis.ClubOutdoor?.sync();
   const time = document.getElementById("clubhouseTime");
   if (time) time.textContent = {night:"Una noche en la sede",dawn:"Amanece en la sede",day:"Hoy en la sede",evening:"Cae la tarde"}[moment];
 }
@@ -4168,6 +4171,7 @@ function renderClubhouse(upcoming) {
     return;
   }
   clubhouseObserver?.disconnect();
+  globalThis.ClubOutdoor?.unmount(content.firstElementChild);
   content.dataset.roomSignature = signature;
   const plan = next ? `<button class="clubhouse-plan" type="button" data-calendar-date="${tigretonDayKey(next.date)}" aria-label="Ver plan: ${escapeHtml(next.event.title)}"><span class="clubhouse-note-label">Próximo plan</span><strong>${escapeHtml(next.event.title)}</strong><span class="clubhouse-plan-date">${escapeHtml(date)} · ${escapeHtml(schedule)}</span><span class="clubhouse-plan-countdown">${countdown}</span></button>` : `<div class="clubhouse-plan clubhouse-plan-empty"><span class="clubhouse-note-label">La agenda</span><strong>${homeEventsReady ? "El próximo plan está por llegar" : "Consultando la agenda…"}</strong>${homeEventsReady ? '<button type="button" data-go="calendario">Ver calendario</button>' : ""}</div>`;
   content.innerHTML = `<div class="clubhouse-room${birthday ? " is-birthday" : ""}" data-time="${moment}">
@@ -4661,6 +4665,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ClubOnboarding?.reset();
     globalThis.BannerShop?.reset();
     globalThis.ChotaShop?.reset();
+    globalThis.ClubOutdoor?.reset();
     globalThis.ChotaGames?.reset();
     globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
@@ -4762,6 +4767,7 @@ function showLogin() {
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
   globalThis.ChotaShop?.reset();
+  globalThis.ClubOutdoor?.reset();
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
@@ -4801,6 +4807,7 @@ async function logoutCurrentUser() {
   globalThis.DailyPacks?.reset();
   globalThis.BannerShop?.reset();
   globalThis.ChotaShop?.reset();
+  globalThis.ClubOutdoor?.reset();
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();

@@ -1,0 +1,15 @@
+/* Exterior details live behind the window frame, never above the room UI. */
+.club-outdoor-sky-events{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.club-outdoor-flyer{position:absolute;left:0;display:block;width:22%;height:auto;color:#332f32;pointer-events:none;will-change:transform,opacity}
+.club-outdoor-flyer svg{display:block;width:100%;height:auto;overflow:visible;fill:currentColor;transform:scaleX(var(--outdoor-facing,1))}
+.club-outdoor-bird{width:17%}
+.club-outdoor-wings-down{opacity:0}
+.club-outdoor-plane{width:26%;color:#e6e1d8}
+.club-outdoor-plane.is-night{color:#96a6bc}
+.club-outdoor-plane-light{fill:#d86659;opacity:0}
+.club-outdoor-patrol{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;mix-blend-mode:screen;-webkit-mask:url("icons/clubhouse/window-glazing-mask.svg") 0 0 / 100% 100% no-repeat;mask:url("icons/clubhouse/window-glazing-mask.svg") 0 0 / 100% 100% no-repeat}
+.club-outdoor-patrol>i{position:absolute;inset:0;display:block;opacity:0}
+.club-outdoor-patrol-red{background:radial-gradient(ellipse 22% 44% at 96% 46%,#f84b5ab8,transparent 85%)}
+.club-outdoor-patrol-blue{background:radial-gradient(ellipse 24% 40% at 85% 43%,#4387ffc9,transparent 86%)}
+@media(prefers-reduced-motion:reduce){.club-outdoor-sky-events,.club-outdoor-patrol{display:none}}
+html[data-reduced-motion="true"] :is(.club-outdoor-sky-events,.club-outdoor-patrol){display:none}
