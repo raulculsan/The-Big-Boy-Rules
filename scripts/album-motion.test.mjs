@@ -59,3 +59,7 @@ test('pages hold nine pockets and returning to a page reuses its decoded images'
   assert.equal(h.album.querySelector('.card-album-page-grid'),first);
   h.dom.window.close();
 });
+
+test('album swipes reach the page on Android', () => {
+  assert.match(read('album.css'), /#album \.card-album-leaf\{[^}]*overflow:clip;overscroll-behavior:auto/);
+});
