@@ -104,6 +104,11 @@ test('keyboard return keeps outgoing geometry fixed and cancellation restores in
   assert.equal(classes.has('chat-back-transition-active'),false);
 });
 
+test('the transcript scroller leaves horizontal drags to the back gesture', () => {
+  const rule = read('chat.css').match(/body\.authenticated\.chat-focus :is\(#chat, #privados\) \.messages \{[^}]*\}/)[0];
+  assert.match(rule, /touch-action: pan-y;/);
+});
+
 test('chat motion assets are bundled, cached and served locally', () => {
   for (const path of ['index.html','service-worker.js','scripts/build-web.mjs','scripts/live-server.mjs','scripts/preview-club.mjs']) {
     const file = read(path);

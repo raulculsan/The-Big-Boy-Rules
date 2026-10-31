@@ -245,6 +245,9 @@ body.authenticated.chat-focus :is(#chat, #privados) .messages {
   scrollbar-width: thin;
   scrollbar-color: #373b42 transparent;
   overflow-x: hidden;
+  /* touch-action stops at the nearest scroller: without this the browser takes
+     horizontal drags and cancels the pointer stream of the back gesture. */
+  touch-action: pan-y;
 }
 body.authenticated :is(.private-conversation, .group-conversation) .messages::-webkit-scrollbar { width: 3px; }
 body.authenticated :is(.private-conversation, .group-conversation) .messages::-webkit-scrollbar-thumb { border-radius: 3px; background: #373b42; }
