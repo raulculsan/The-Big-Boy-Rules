@@ -1,0 +1,41 @@
+# Entorno unificado de The Big Boy Rules (web + Android).
+#   docker compose up web                     → servidor de desarrollo en http://localhost:5173
+#   docker compose run --rm android           → APK de prueba en ./dist
+#   docker compose run --rm android --release → APK de release en ./dist
+# iOS se sigue compilando en macOS con Xcode (npm run ios:open).
+
+x-base: &base
+  build:
+    context: ./docker
+    platforms: [linux/amd64]
+  image: bigboy-build:1
+  platform: linux/amd64
+  working_dir: /workspace
+  volumes:
+    - .:/workspace
+    # node_modules propio de Linux, separado del de macOS.
+    - node_modules:/workspace/node_modules
+
+services:
+  web:
+    <<: *base
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev"
+    ports:
+      - "5173:5173"
+
+  android:
+    <<: *base
+    entrypoint: ["/workspace/docker/build-android.sh"]
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+      # Caché de Gradle y salidas intermedias (persisten entre compilaciones).
+      - gradle:/gradle
+      # SDK de la imagen en lugar del de Android Studio.
+      - ./docker/android-local.properties:/workspace/android/local.properties:ro
+      # Misma firma que los APK ya instalados (solo lectura).
+      - ${HOME}/.android/debug.keystore:/root/.android/debug.keystore:ro
+
+volumes:
+  node_modules:
+  gradle:

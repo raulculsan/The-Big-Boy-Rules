@@ -21,3 +21,4 @@ icons/cards/* 2.png
 supabase/.temp/
 __pycache__/
 .taste-skill/
+dist/
