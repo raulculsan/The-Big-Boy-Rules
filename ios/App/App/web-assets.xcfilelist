@@ -34,6 +34,8 @@ $(SRCROOT)/App/public/chota-outdoor.css
 $(SRCROOT)/App/public/chota-outdoor.js
 $(SRCROOT)/App/public/chota-shop.css
 $(SRCROOT)/App/public/chota-shop.js
+$(SRCROOT)/App/public/club-day.css
+$(SRCROOT)/App/public/club-day.js
 $(SRCROOT)/App/public/club-experiences.css
 $(SRCROOT)/App/public/club-live.css
 $(SRCROOT)/App/public/club-live.js

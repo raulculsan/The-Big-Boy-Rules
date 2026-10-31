@@ -4709,6 +4709,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
+    globalThis.ClubDay?.reset();
     globalThis.ClubSeasons?.reset();
     globalThis.PlanWidget?.clear();
     globalThis.AdminGrants?.reset();
@@ -4754,6 +4755,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   if (backendReady && authUser) {
     void hydrateAuthenticatedData(authUser);
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.BannerShop?.refresh(); });
+    runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.ClubDay?.refresh(); });
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
     renderPresence();
@@ -4811,6 +4813,7 @@ function showLogin() {
   globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
+    globalThis.ClubDay?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
@@ -4851,6 +4854,7 @@ async function logoutCurrentUser() {
   globalThis.ClubLive?.reset();
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
+    globalThis.ClubDay?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
@@ -8433,6 +8437,12 @@ globalThis.ClubCoinMissions?.init({
   db, getUser: () => currentAuthUser,
   refreshWallet: () => Promise.all([globalThis.BannerShop?.refresh(true), globalThis.ChotaShop?.refresh(true)]),
   navigate: goTo,
+});
+
+globalThis.ClubDay?.init({
+  db, getUser: () => currentAuthUser, getMember: getMemberByAuthId, getMembers: () => members,
+  avatar: getAvatar, canManage: canManageSite,
+  refreshWallet: () => Promise.all([globalThis.BannerShop?.refresh(true), globalThis.ChotaShop?.refresh(true), globalThis.ClubCoinMissions?.refresh?.(true)]),
 });
 
 globalThis.ClubLive?.init({
