@@ -30,6 +30,12 @@ test('duels read scores and ownership only on the server', async () => {
   assert.doesNotMatch(client, /p_score|p_coins|p_winner/);
 });
 
+test('whois keeps authors on the server until the round ends', async () => {
+  const sql = await read('supabase/migrations/20261031220000_club_whois.sql');
+  assert.equal(sql.match(/create table club_day\./g).length, sql.match(/enable row level security/g).length);
+  assert.doesNotMatch(sql, /'answers',case when guessing[^\n]*\n[^\n]*'author'/);
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);

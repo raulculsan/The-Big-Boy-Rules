@@ -6,7 +6,7 @@
 .club-day h3 { margin: 0; font-size: var(--ds-text-lg); font-weight: 600; }
 .club-day h4 { margin: 0; font-size: var(--ds-text-md); font-weight: 600; line-height: 1.35; }
 .club-day-streak { flex: none; font-size: var(--ds-text-xs); color: var(--ds-text-2); }
-.club-day-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--ds-space-1); padding: var(--ds-space-1); border-radius: var(--ds-radius-md); background: var(--ds-raised); }
+.club-day-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ds-space-1); padding: var(--ds-space-1); border-radius: var(--ds-radius-md); background: var(--ds-raised); }
 .club-day-tabs button { min-height: var(--ds-control-sm); padding: 0 var(--ds-space-1); border: 0; border-radius: var(--ds-radius-sm); background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-sm); }
 .club-day-tabs button[aria-selected="true"] { background: var(--ds-surface); color: var(--ds-text); font-weight: 600; }
 .club-day-body { display: grid; gap: var(--ds-space-3); min-width: 0; }
@@ -36,7 +36,7 @@
 .club-day-manage button { display: block; width: 100%; min-height: var(--ds-control-sm); margin-top: var(--ds-space-1); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: transparent; color: var(--ds-text); font: inherit; }
 .club-day-form { display: grid; gap: var(--ds-space-2); }
 .club-day-form label { display: grid; gap: var(--ds-space-1); font-size: var(--ds-text-sm); color: var(--ds-text-2); }
-.club-day-form input, .club-day-form textarea { width: 100%; min-height: var(--ds-control); padding: var(--ds-space-2) var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-raised); color: var(--ds-text); font: inherit; font-size: 16px; }
+.club-day-form input, .club-day-form textarea, .club-day-form select { width: 100%; min-height: var(--ds-control); padding: var(--ds-space-2) var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-raised); color: var(--ds-text); font: inherit; font-size: 16px; }
 .club-day-form div { display: flex; gap: var(--ds-space-2); }
 .club-day-ranking { display: grid; gap: var(--ds-space-1); margin: 0; padding: 0; list-style: none; }
 .club-day-ranking li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: var(--ds-space-2); min-height: var(--ds-control-sm); font-size: var(--ds-text-sm); }
@@ -55,4 +55,8 @@
 .club-day-year div { display: flex; justify-content: space-between; gap: var(--ds-space-3); min-height: var(--ds-control-sm); align-items: center; font-size: var(--ds-text-sm); }
 .club-day-year dt { color: var(--ds-text-2); }
 .club-day-year dd { margin: 0; font-weight: 600; }
+.club-day-whois { display: grid; gap: var(--ds-space-2); margin: 0; padding: 0; list-style: none; }
+.club-day-whois p { margin: 0; font-size: var(--ds-text-sm); overflow-wrap: anywhere; }
+.club-day-whois small { font-size: var(--ds-text-xs); color: var(--ds-text-2); }
+.club-day-form select { appearance: auto; }
 .club-day button:focus-visible { outline: 2px solid var(--ds-text-2); outline-offset: 1px; }

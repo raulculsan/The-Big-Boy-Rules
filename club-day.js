@@ -1,10 +1,10 @@
 /* Daily club play on Inicio. Votes, results and coins come only from authenticated RPCs. */
 (() => {
  'use strict';
- const tabs=[['pregunta','Pregunta'],['porra','Porra'],['premios','Premios'],['ranking','Ranking'],['duelos','Duelos'],['carta','Carta'],['capsula','Cápsula'],['ano','Mi año']];
+ const tabs=[['pregunta','Pregunta'],['quien','Quién es'],['porra','Porra'],['premios','Premios'],['ranking','Ranking'],['duelos','Duelos'],['carta','Carta'],['capsula','Cápsula'],['ano','Mi año']];
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
- let config={},cache=null,extras=null,owner=null,tab='pregunta',busy=false,notice='',failed='',epoch=0,draft=false,duelRival=null,duelAnswer=null;
+ let config={},cache=null,extras=null,whois=null,guesses={},owner=null,tab='pregunta',busy=false,notice='',failed='',epoch=0,draft=false,duelRival=null,duelAnswer=null;
  const host=()=>document.getElementById('clubDay');
  const actor=()=>config.getUser?.()?.id||null;
  const person=id=>config.getMember?.(id)||null;
@@ -92,15 +92,32 @@
   const rows=[['Preguntas respondidas',y.answers],['Mejor racha',plural(y.best_streak,'día','días')],['Porras acertadas',y.hits],['Duelos ganados',y.duels_won],['Premios ganados',y.awards_won],['Monedas ganadas',y.coins],['Cartas nuevas',y.cards],['Sobres abiertos',y.packs]];
   return `<h4>Tu ${y.year} en el club</h4><dl class="club-day-year">${rows.map(([label,value])=>`<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>`;
  }
+ function timeLeft(value){
+  const hours=Math.max(1,Math.ceil((new Date(value)-Date.now())/36e5));
+  return hours<48?plural(hours,'hora','horas'):plural(Math.ceil(hours/24),'día','días');
+ }
+ function whoisLast(last){
+  if(!last)return '';
+  const scores=last.scores.map(r=>`${esc(nameOf(r.id))} ${r.score}/${r.total}`).join(' · ');
+  return `<article class="club-day-award"><h4>Ronda anterior: ${esc(last.prompt)}</h4><ul class="club-day-whois">${last.answers.map(a=>`<li><p>${esc(a.body)}</p><small>${esc(nameOf(a.author))}</small></li>`).join('')}</ul>${scores?`<p class="club-day-note">${scores}</p>`:''}</article>`;
+ }
+ function quien(){
+  const r=whois.round;let body;
+  if(r.phase==='answer')body=`<p class="club-day-note">${plural(r.answered,'respuesta','respuestas')}. Quedan ${timeLeft(r.until)} para responder. Luego tocará adivinar de quién es cada una. Responder da 3 monedas.</p><form class="club-day-form" data-day-whois><label>Tu respuesta<textarea name="body" rows="2" maxlength="140" required>${esc(r.own||'')}</textarea></label><div><button type="submit" class="club-day-action"${busy?' disabled':''}>${r.own?'Cambiar':'Enviar'}</button></div></form>`;
+  else if(r.guessed)body=`<p class="club-day-note">Has acertado ${r.guessed.score} de ${r.guessed.total}. Los autores se ven en ${timeLeft(r.until)}.</p>`;
+  else if(!r.answers.length)body=`<p class="club-day-note">Esta ronda no tiene respuestas para ti. Termina en ${timeLeft(r.until)}.</p>`;
+  else body=`<p class="club-day-note">¿De quién es cada respuesta? Solo tienes un intento. Cada acierto da 2 monedas. Quedan ${timeLeft(r.until)}.</p><form class="club-day-form" data-day-guess>${r.answers.map(a=>`<label><span class="club-day-message">${esc(a.body)}</span><select name="${esc(a.id)}" required><option value="">Elige</option>${r.authors.map(id=>`<option value="${esc(id)}"${guesses[a.id]===id?' selected':''}>${esc(nameOf(id))}</option>`).join('')}</select></label>`).join('')}<div><button type="submit" class="club-day-action"${busy?' disabled':''}>Enviar</button></div></form>`;
+  return `<h4>${esc(r.prompt)}</h4>${body}${whoisLast(whois.last)}`;
+ }
  function render(){
   const node=host();if(!node)return;
   const data=owner===actor()?cache:null;
   if(!data){node.hidden=!failed;node.innerHTML=failed?`<p class="club-day-note">${esc(failed)}</p><button type="button" class="club-day-action is-quiet" data-day-retry>Reintentar</button>`:'';return;}
   node.hidden=false;
   const extra=['duelos','carta','capsula','ano'].includes(tab);
-  if(extra&&!extras)tab='pregunta';
-  const view={pregunta:question,porra,premios,ranking,duelos,carta,capsula,ano}[tab](data);
-  node.innerHTML=`<header><h3>Hoy en el club</h3><span class="club-day-streak" aria-label="Racha de ${plural(data.streak,'día','días')}">${plural(data.streak,'día','días')} de racha</span></header><div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div><div class="club-day-body">${view}</div><p class="club-day-notice" role="status">${esc(notice)}</p>`;
+  if((extra&&!extras)||(tab==='quien'&&!whois))tab='pregunta';
+  const view={pregunta:question,quien,porra,premios,ranking,duelos,carta,capsula,ano}[tab](data);
+  node.innerHTML=`<header><h3>Hoy en el club</h3><span class="club-day-streak" aria-label="Racha de ${plural(data.streak,'día','días')}">${plural(data.streak,'día','días')} de racha</span></header><div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>id==='quien'?whois:extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div><div class="club-day-body">${view}</div><p class="club-day-notice" role="status">${esc(notice)}</p>`;
  }
  function message(error){return ['PGRST202','42883','42P01'].includes(error?.code)?'Esta sección se está preparando.':error?.message||'No hemos podido conectar con el club.';}
  async function call(name,args={},done=''){
@@ -109,7 +126,7 @@
    const {data,error}=await config.db.rpc(name,args);
    if(error)throw error;
    if(run!==epoch)return;
-   if(Array.isArray(data?.cards))extras=data;else cache=data;
+   if(data?.round)whois=data;else if(Array.isArray(data?.cards))extras=data;else cache=data;
    owner=actor();failed='';
    const earned=Number(data?.earned)||0;
    notice=earned?`+${earned} monedas`:done;
@@ -121,14 +138,14 @@
   if(!config.db||!actor())return;
   const run=++epoch;busy=false;
   try{
-   const [day,more]=await Promise.all([config.db.rpc('get_club_day'),config.db.rpc('get_club_extras')]);
+   const [day,more,who]=await Promise.all([config.db.rpc('get_club_day'),config.db.rpc('get_club_extras'),config.db.rpc('get_club_whois')]);
    if(day.error)throw day.error;
    if(run!==epoch)return;
-   cache=day.data;extras=more.error?null:more.data;owner=actor();failed='';
+   cache=day.data;extras=more.error?null:more.data;whois=who.error?null:who.data;owner=actor();failed='';
   }catch(error){if(run===epoch){cache=null;failed=['PGRST202','42883','42P01'].includes(error?.code)?'':message(error);}}
   if(run===epoch)render();
  }
- function reset(){epoch++;cache=null;extras=null;owner=null;tab='pregunta';busy=false;notice='';failed='';draft=false;duelRival=null;duelAnswer=null;render();}
+ function reset(){epoch++;cache=null;extras=null;whois=null;guesses={};owner=null;tab='pregunta';busy=false;notice='';failed='';draft=false;duelRival=null;duelAnswer=null;render();}
  function publish(form){
   const fields=new FormData(form),options=String(fields.get('options')).split('\n').map(s=>s.trim()).filter(Boolean),closes=new Date(String(fields.get('closes')));
   if(Number.isNaN(closes.getTime())){notice='Pon una fecha de cierre válida.';return render();}
@@ -156,9 +173,17 @@
  function init(options){
   config=options;
   document.addEventListener('click',click);
+  document.addEventListener('change',event=>{
+   const pick=event.target.closest?.('[data-day-guess] select');
+   if(pick)guesses[pick.name]=pick.value;
+  });
   document.addEventListener('submit',event=>{
    const form=event.target.closest?.('[data-day-form]');
    if(form){event.preventDefault();publish(form);}
+   const answer=event.target.closest?.('[data-day-whois]');
+   if(answer){event.preventDefault();void call('answer_club_whois',{p_body:String(new FormData(answer).get('body'))},'Respuesta guardada');}
+   const guess=event.target.closest?.('[data-day-guess]');
+   if(guess){event.preventDefault();void call('guess_club_whois',{p_guesses:Object.fromEntries(new FormData(guess))});}
    const capsule=event.target.closest?.('[data-day-capsule]');
    if(capsule){
     event.preventDefault();
