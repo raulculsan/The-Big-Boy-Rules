@@ -1,35 +1,39 @@
 <!doctype html>
-<html lang="es"><meta charset="utf-8">
+<html lang="es" data-reduced-motion="true"><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PS Portal · catálogo local</title>
 <link rel="stylesheet" href="../../../clubhouse.css"><link rel="stylesheet" href="../../../chota-shop.css">
 <style>
-body{margin:24px;background:#15191e;color:#eee;font:15px system-ui}button{padding:10px}main{display:flex;flex-wrap:wrap;gap:24px;align-items:start}section{max-width:100%}.clubhouse-room{width:340px;max-width:100%}.chota-viewer-room-scene{width:760px;max-width:100%;margin:0}.room-base{position:absolute;inset:0;width:100%;height:100%}#bannerShopDialog{margin-top:24px;max-width:650px}#chotaShopItems .chota-shop-object{height:160px}#chotaShopItems .chota-shop-style{display:none}.chota-shop-section-heading{display:none}#status{min-height:24px}
+body{margin:12px;background:#15191e;color:#eee;font:13px system-ui}h1{font-size:20px;margin:0 0 6px}h2{font-size:15px;margin:8px 0}p{margin:6px 0}button,summary{min-height:44px;padding:10px;cursor:pointer}main{display:flex;flex-wrap:wrap;gap:24px;align-items:start}section{max-width:100%}.clubhouse-room{width:340px;max-width:100%}.chota-viewer-room-scene{width:760px;max-width:100%;margin:0}.room-base{position:absolute;inset:0;width:100%;height:100%}.fixture-chota{position:absolute;left:36%;top:53.54%;width:28%;aspect-ratio:1;background:url('../../../icons/mascot/chota-v2/chota-poses.webp') 0 0 / 600% 400% no-repeat;image-rendering:pixelated;z-index:3}#bannerShopDialog{margin-top:12px;max-width:650px}#chotaShopItems .chota-shop-object{height:120px}#chotaShopItems .chota-shop-style{display:none}#status{min-height:18px}.fixture-closeup{display:none}.crop-window{position:relative;overflow:hidden;width:448px;height:360px;max-width:100%}.clubhouse-room.fixture-detail-room{position:absolute;width:2048px;max-width:none;height:2048px;left:-1600px;top:-1120px;border-radius:0}body[data-view="detail"] main{display:none}body[data-view="detail"] .fixture-closeup{display:block}
 </style>
-<h1>PS Portal · prueba local</h1>
-<p>Catálogo y compra simulados. Mismos renderers y CSS de producción, sin conexión a Supabase.</p>
-<button id="restore">Restaurar compra desde caché</button><p id="status"></p>
+<h1>PS Portal v2 · revisión del apoyo en el asiento</h1>
+<p>Habitat real con Chota y todos los objetos. Renderer compartido, datos simulados y movimiento reducido.</p>
+<button id="restore">Restaurar compra desde caché</button> <button id="detail">Ver detalle del asiento</button><p id="status"></p>
 <main><section><h2>Habitación normal · 340 px</h2><div class="clubhouse-room"><img class="room-base" src="../../../icons/clubhouse/club-room-v1.webp" alt="Habitación"><div class="clubhouse-seasonal" data-seasonal-sentinel="preserved"></div></div></section>
 <section><h2>Ampliada · 760 px</h2><div class="chota-viewer-room-scene"><img class="room-base" src="../../../icons/clubhouse/club-room-v1.webp" alt="Habitación ampliada"><div class="clubhouse-seasonal" data-seasonal-sentinel="preserved"></div></div></section></main>
-<div id="bannerShopDialog"><div id="chotaShopStatus"></div><div id="chotaShopItems"></div></div>
+<section class="fixture-closeup"><h2>Asiento naranja · detalle a 2×</h2><div class="crop-window"><div class="clubhouse-room fixture-detail-room"><img class="room-base" src="../../../icons/clubhouse/club-room-v1.webp" alt="Detalle del asiento"><div class="clubhouse-seasonal" data-seasonal-sentinel="preserved"></div></div></div></section>
+<details id="shop"><summary>Tienda simulada · abre Objetos para comprar</summary><div id="bannerShopDialog"><div id="chotaShopStatus"></div><div id="chotaShopItems" class="chota-shop-items"></div></div></details>
 <script src="../../../shop-catalog-media.js"></script><script src="../../../chota-shop.js"></script>
 <script type="module">
 // CSP prevents any remote image request. Map only this fixture's media URL to its local PNG.
 const mapImages=()=>document.querySelectorAll('img').forEach(img=>{
  const src=img.getAttribute('src');
- if(src?.startsWith('https://fixture.invalid/')) {img.hidden=false;img.src='./ps-portal-v1.png';}
+ if(src?.startsWith('https://fixture.invalid/')) {img.hidden=false;img.src='./ps-portal-v2.png';}
  if(src?.startsWith('icons/')) img.src='../../../'+src;
 });
 new MutationObserver(mapImages).observe(document.body,{childList:true,subtree:true});
 const item=await (await fetch('./catalog.json')).json();
-let current={balance:100,items:[{...item,owned:false},{id:'chota-vintage-radio',name:'Radio vintage',description:'Referencia de posición',art_key:'vintage-radio',price:30,active:true,owned:true}]};
+const props=['football','skateboard','robot-vacuum','warm-lights','club-neon','club-cushion','vintage-radio'].map(art_key=>({id:`fixture-${art_key}`,name:art_key,art_key,price:30,active:true,owned:true}));
+let current={balance:100,items:[{...item,owned:false},...props]};
 const status=document.getElementById('status');
 ChotaShop.initialize({session:()=> 'ps-portal-preview',cacheNamespace:'https://fixture.invalid',rpc:async(name,args)=>{
  if(name==='buy_chota_item') {current={...current,balance:65,items:current.items.map(row=>row.id===args.target_item_id?{...row,owned:true}:row)};status.textContent='Compra simulada: 35 monedas. Objeto visible en ambas habitaciones.';}
  return {data:current};
 }});
 await ChotaShop.refresh(true);
-const rooms=[...document.querySelectorAll('.clubhouse-room,.chota-viewer-room-scene')];rooms.forEach(ChotaShop.mountRoom);
+const rooms=[...document.querySelectorAll('.clubhouse-room,.chota-viewer-room-scene')];
+rooms.forEach(room=>{const chota=document.createElement('div');chota.className='fixture-chota';chota.setAttribute('role','img');chota.setAttribute('aria-label','El Chota, pose real en su posición habitual');room.append(chota);ChotaShop.mountRoom(room);});
 document.getElementById('restore').onclick=()=>{ChotaShop.reset();rooms.forEach(ChotaShop.mountRoom);status.textContent='Compra restaurada desde la caché local.';};
+document.getElementById('detail').onclick=()=>{document.body.dataset.view=document.body.dataset.view==='detail'?'room':'detail';};
 </script></html>

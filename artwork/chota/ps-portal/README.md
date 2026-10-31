@@ -1,14 +1,28 @@
-# PS Portal · objeto remoto publicado
+# PS Portal v2 · apoyo en el asiento naranja
 
-Ilustración SVG original, PNG transparente de 720 × 300 y metadatos para el renderer remoto existente. Sin cambios en JS/CSS de producción, versiones, builds, permisos ni economía existente. Publicado el 31 de octubre de 2026 en el catálogo remoto: 35 monedas, activo para web, iOS y Android compatibles. Imagen pública verificada byte a byte (SHA256 `6f5508eb25edf764dee17efc1c1afea9abc8d1eeada800c35dfbad25dcfc0381`). No requiere una versión nueva de las aplicaciones.
+Revisión publicada el 31 de octubre de 2026 en Supabase. Archivo público verificado byte a byte y presentación remota validada; precio 35, activación y orden conservados. La v1 publicada queda intacta como histórico: `ps-portal-v1.svg`, `ps-portal-v1.png`, `catalog-v1.json`, `publish.sql`, `README-v1.md` y sus capturas anteriores. No se ha modificado código de producción, builds, versiones ni permisos; solo la descripción y presentación remota de este objeto.
 
-`catalog.json`: `chota-ps-portal`, art_key `ps-portal`, precio inicial 35 monedas, decoración estática (`motion: none`). Pantalla oscura sin juego ni comportamiento. Mandos blancos, cruceta izquierda, botones derechos y sticks inferiores simétricos. Sombra de contacto incluida en el PNG.
+La v2 está tumbada sobre la parte izquierda del asiento naranja. Su pantalla 16:9 y ambos mandos se proyectan en un mismo plano oblicuo visto desde arriba; el borde inferior aporta grosor. Los blancos recogen luz cálida y la pantalla apagada refleja el ambiente sin emitir luz azul. La sombra de contacto está dibujada dentro del PNG y comparte el plano del asiento. Cruceta izquierda, botones derechos y sticks simétricos permanecen reconocibles.
 
-Colocación: `x:25.8, y:59, width:10, rotation:0, z:2` (porcentajes de la habitación). Sobre el suelo de madera delante del sofá y antes de la alfombra, a la izquierda del área base del Chota (x:36%). El contenedor ocupa x:264.2–366.6, y:604.2–646.8 sobre la habitación de 1024 px. No pisa la radio (x:64.5%, y:46%), marcos, neón, cojín, balón, monopatín ni recorrido de la aspiradora. Ambas vistas usan los mismos valores.
+## Colocación y evidencia
 
-## Reproducir y revisar
+`catalog.json` conserva `id: chota-ps-portal`, `art_key: ps-portal`, precio de referencia inicial 35 monedas y `motion: none`. La ruta nueva es `chota/ps-portal-v2.png`, PNG transparente de 1020 × 495 px.
 
-Desde la raíz del repositorio, con `sharp` disponible en el entorno:
+Placement común a normal/ampliado: `{x:82.5, y:60.3, width:7.2, rotation:0, z:2}`. Sobre la ilustración de 1024 px, el contenedor ocupa x 844.8–918.5, y 617.5–653.3; el dibujo útil, más pequeño, apoya a la izquierda del cojín y queda separado de la mesita/linterna y la punta del monopatín. Se comprobó con todos los objetos comprables y Chota presentes. No invade el recorrido de la aspiradora ni sustituye capas estacionales.
+
+Capturas tomadas en Safari con `ShopCatalogMedia`, `ChotaShop` y su CSS real:
+
+- `preview-v2-room.png`: habitación completa en ambas escalas, con Chota y todos los objetos.
+- `preview-v2-normal.png`: vista real a 340 × 340 px.
+- `preview-v2-zoom.png`: vista real a 760 × 760 px.
+- `preview-v2-contact.png`: detalle del asiento a 2×, con monopatín, mesita y linterna.
+- `composition-draft-v2.png`: primera composición de revisión sobre la ilustración original, sin props superpuestos.
+
+El fixture `preview.html` usa datos y RPC simulados, usuario/namespace exclusivos y una CSP que bloquea conexión externa. Abrir «Tienda simulada», seleccionar **Objetos** y comprar PS Portal. Cerrar la tienda para revisar ambas habitaciones; «Ver detalle del asiento» abre el tercer contenedor del mismo renderer ampliado a 2×. «Restaurar compra desde caché» comprueba la persistencia. La pose de Chota procede de su sprite real en las coordenadas habituales. El movimiento reducido mantiene quietos los objetos para comparar el apoyo.
+
+## Reproducir
+
+Desde la raíz, con un módulo `sharp` ya instalado:
 
 ```sh
 node artwork/chota/ps-portal/build.mjs
@@ -16,23 +30,25 @@ node --test artwork/chota/ps-portal/validate.test.mjs
 python3 -m http.server 8874 --bind 127.0.0.1
 ```
 
-El exportador admite una ruta absoluta al módulo sharp ya instalado como argumento. No instala dependencias ni usa la red. En el entorno Codex utilizado:
+Abrir `http://127.0.0.1:8874/artwork/chota/ps-portal/preview.html`.
+
+El exportador admite una ruta absoluta a sharp como primer argumento, no instala dependencias ni usa la red. Ruta usada en este entorno:
 
 ```sh
 node artwork/chota/ps-portal/build.mjs /Users/raulculsan/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp/dist/index.mjs
 ```
 
-Abrir `http://127.0.0.1:8874/artwork/chota/ps-portal/preview.html`. Pulsar Comprar y Restaurar compra desde caché. El fixture carga `ShopCatalogMedia`, `ChotaShop` y el CSS real; solo simula el RPC. Incluye la radio como referencia. Una CSP bloquea imágenes remotas y el fixture sustituye sus URLs por el PNG local. No se conecta a Supabase. El almacenamiento local usa un usuario y namespace exclusivos del fixture. No añadir este fixture al bundle.
+Genera exclusivamente `ps-portal-v2.png` y `update-placement-v2.sql`; preserva la exportación y el INSERT históricos de v1.
 
-`preview-purchased.png` y `preview-zoom.png` documentan revisión visual en navegador (340/760 px). Los tests locales comprueban el validador SQL existente, INSERT idempotente sin sobrescribir precio, compra en ambos contenedores reales, restauración offline, conservación de nodos estacionales, dos RPC esperados (carga/compra), cero RPC adicionales y cero RAF.
+Validación local: 3/3 pruebas. La presentación supera el validador SQL existente; el UPDATE preserva precio administrado (42), activación, orden, identidad, compras y saldo, y no reescribe ediciones posteriores al aplicar otra vez. El renderer compra en Objetos, muestra la misma colocación en ambas vistas, restaura offline sin más RPC/RAF y conserva nodos estacionales. Una compra ya cacheada en v1 se actualiza a v2 al revalidar sin otra compra. Exportación comprobada: alpha presente, no opaca.
+
+SHA256 del PNG v2: `6325f7d5246ae3c158ba16ed9e88503950ca0eca1e2fc97d7701ebcb9bfb0051`.
 
 ## Procedimiento reproducible de publicación
 
-1. Subir exclusivamente `ps-portal-v1.png` a bucket público `shop-media`, objeto `chota/ps-portal-v1.png`, MIME `image/png`, sin sobrescritura (`upsert:false`). No subir el SVG: el cliente y el bucket exigen formato raster para estas imágenes.
-2. Verificar el PNG en la URL pública del bucket antes del alta.
-3. Ejecutar `publish.sql` como administrador autorizado. Solo contiene `INSERT ... ON CONFLICT (id) DO NOTHING`; activa el objeto al insertarlo. Si ya existe, preserva su precio y todos sus metadatos. No modifica wallets ni permisos.
-4. Reabrir la tienda de los clientes compatibles para cargar el catálogo. No requiere APK, cambio de versión ni assets empaquetados.
+1. Subir `ps-portal-v2.png` al objeto nuevo `shop-media/chota/ps-portal-v2.png`, MIME `image/png`, sin sobrescribir v1. El mecanismo existente es Storage más metadatos, documentado en `docs/shop/REMOTE_CATALOG.md`; el coordinador verificó Supabase CLI `storage cp` con `--project-ref REF --experimental --content-type image/png` y destino `ss:///shop-media/chota/ps-portal-v2.png`.
+2. Verificar el archivo público antes del cambio de catálogo.
+3. Ejecutar **solo** `update-placement-v2.sql`: cambia description/presentation si el ID coincide y la ruta actual sigue siendo `chota/ps-portal-v1.png`. No altera precio, active, art_key, ownership ni wallets. Si la ruta ya cambió, no actualiza ninguna fila.
+4. Reabrir la tienda para revalidar el catálogo. Los propietarios conservan su compra; no requiere APK ni actualización del bundle.
 
-El mecanismo documentado en `docs/shop/REMOTE_CATALOG.md` es Storage + registro `chota_item_catalog.presentation`. No se ha encontrado un script específico de upload de shop-media. El ejemplo existente de upload en `scripts/migrate-private-chat-files.mjs` usa Supabase JS `storage.from(bucket).upload(path, bytes, {contentType, upsert:false})`, pero migra chats privados y **no debe ejecutarse para esta publicación**. Para este objeto se puede emplear el mismo método del cliente Supabase administrativo ya autenticado o Storage del dashboard. La publicación final utilizó la CLI oficial autenticada (`storage cp --project-ref ... --experimental`) y el conector SQL de Supabase. Se comprobó la imagen pública y la presentación guardada. No se mostraron credenciales.
-
-El coordinador también ha verificado la CLI oficial Supabase v2.121 instalada y el comando `storage cp` con destino `ss:///shop-media/chota/ps-portal-v1.png`, `--project-ref REF --experimental --content-type image/png`. La subida y revisión remotas quedan a cargo del coordinador; este paquete no inicia ninguna operación externa.
+No ejecutar `publish.sql` para esta revisión: es el INSERT histórico de v1. La publicación final utilizó la CLI oficial autenticada para el PNG y el conector SQL de Supabase para el UPDATE protegido. No se mostraron credenciales.

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="495" viewBox="0 0 680 330" shape-rendering="crispEdges">
+ <title>PS Portal tumbada sobre el asiento naranja, vista oblicua desde arriba</title>
+ <defs><path id="shell" d="M40 42 64 28h57l33 20h292l33-20h57l24 14 24 44-7 87-20 48-22 13h-33l-33-37H151l-33 37H85l-22-13-20-48-7-87z"/></defs>
+ <!-- The whole top plane recedes along the cushion. Thickness and contact shadows
+      share that plane; no frontal icon, stand, drop shadow, or emitted blue light. -->
+ <g transform="matrix(.94 -.22 .4 .6 0 145)">
+  <use href="#shell" fill="#3d1c10" opacity=".20" transform="translate(7 16)"/>
+  <use href="#shell" fill="#32180f" opacity=".48" transform="translate(3 10)"/>
+  <use href="#shell" fill="#746457" transform="translate(0 7)"/>
+  <use href="#shell" fill="#302b29"/>
+  <!-- The shaded underside is exposed only at the near edge. -->
+  <path fill="#aaa092" d="m45 157 20 60 22 14h28l30-37 17-4-43 46H84l-23-14-21-48zm510 0-20 60-22 14h-28l-30-37-17-4 43 46h35l23-14 21-48z"/>
+  <path fill="#e0d9c8" d="M43 45 65 32h53l34 22 8 124-26 14-24 35H88l-20-14-18-48-10-73zm405 9 34-22h53l22 13 3 47-10 73-18 48-20 14h-22l-24-35-26-14z"/>
+  <path fill="#f3e9d1" d="m43 45 22-13h53l34 22-3 8-33-21H69L48 54l-3 39h-5zm405 9 34-22h53l22 13-8 6-18-10h-47l-33 21z"/>
+  <path fill="#c4bcab" d="m52 145 21 54 19 14h13l32-36 23 1-26 14-24 35H88l-20-14-18-48zm496 0-21 54-19 14h-13l-32-36-23 1 26 14 24 35h22l20-14 18-48z"/>
+  <!-- Black screen assembly, 16:9 panel before its perspective projection. -->
+  <path fill="#131b1f" d="M148 32h304v171H148z"/>
+  <path fill="#5e625d" d="M149 32h302v3H149z"/>
+  <path fill="#242f32" d="M157 40h286v155H157z"/>
+  <path fill="#172326" d="M161 44h278v147H161z"/>
+  <path fill="#263639" d="M161 44h175L208 191h-47z"/>
+  <path fill="#354544" opacity=".5" d="M166 48h69l-69 80z"/>
+  <path fill="#82735b" opacity=".35" d="M161 44h278v3H161z"/>
+  <path fill="#0f1518" d="M148 197h304v8H148z"/>
+  <path fill="#8a8374" d="M133 59h7v4h-7zm327 0h7v4h-7z"/>
+  <!-- Symmetric analogs, left cruciform pad, four right face buttons. -->
+  <path fill="#8c8980" d="M66 58h18v18h18v18H84v18H66V94H48V76h18z"/>
+  <path fill="#323b3d" d="M69 61h12v18h18v12H81v18H69V91H51V79h18z"/>
+  <path fill="#656b65" d="M70 62h9v5h-9zm-17 18h7v3h-7z"/>
+  <g fill="#353d3f"><circle cx="525" cy="62" r="12"/><circle cx="503" cy="85" r="12"/><circle cx="547" cy="85" r="12"/><circle cx="525" cy="108" r="12"/></g>
+  <g fill="none" stroke="#c0bbac" stroke-width="2"><path d="m525 56-5 9h10zm-26 25h8v8h-8zm21 23 10 9m0-9-10 9"/><circle cx="547" cy="85" r="5"/></g>
+  <g fill="#9d978a"><circle cx="119" cy="145" r="23"/><circle cx="481" cy="145" r="23"/></g>
+  <g fill="#222d30"><circle cx="119" cy="141" r="20"/><circle cx="481" cy="141" r="20"/></g>
+  <g fill="#475151"><circle cx="119" cy="137" r="14"/><circle cx="481" cy="137" r="14"/></g>
+  <path fill="#7c8075" d="M112 125h12v3h-12zm362 0h12v3h-12z"/>
+  <!-- Tactile shoulder seams, warm highlights and a few pixel facets. -->
+  <path fill="#645d53" d="M66 28h48v4H66zm420 0h48v4h-48z"/>
+  <path fill="#b2a896" d="M57 119h6v17h-6zm480 0h6v17h-6zM86 217h13v3H86zm415 0h13v3h-13z"/>
+ </g>
+</svg>
