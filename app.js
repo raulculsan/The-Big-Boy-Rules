@@ -1381,34 +1381,29 @@ function achievementsForMember(member) {
 const achievementProfilePages = new Map();
 function renderProfileAchievementCard(achievement) {
   const tier = achievementTier(achievement.tier);
-  return `<button type="button" class="achievement-card tier-${escapeHtml(achievement.tier)}" data-open-achievement="${escapeHtml(achievement.id)}" aria-label="Ver logro: ${escapeHtml(achievement.name)}">
+  return `<button type="button" class="achievement-card tier-${escapeHtml(achievement.tier)}" data-open-achievement="${escapeHtml(achievement.id)}" aria-label="Ver logro: ${escapeHtml(achievement.name)}, ${escapeHtml(tier.label)}">
     <span class="achievement-emblem" aria-hidden="true">${achievementTrophyIcon(achievement.tier, achievement.icon)}</span>
-    <span class="achievement-card-copy"><small>${escapeHtml(tier.label)}</small><strong>${escapeHtml(achievement.name)}</strong></span>
+    <span class="achievement-card-copy"><strong>${escapeHtml(achievement.name)}</strong></span>
   </button>`;
 }
 
 function renderMemberAchievements(member) {
   const tierOrder = {platinum: 0, gold: 1, silver: 2, bronze: 3};
   const assigned = achievementsForMember(member).sort((a, b) => (tierOrder[a.tier] ?? 4) - (tierOrder[b.tier] ?? 4) || String(a.name).localeCompare(String(b.name), "es"));
-  const visible = assigned.slice(0, 4);
-  const archived = assigned.slice(4);
+  const visible = assigned.slice(0, 8);
+  const archived = assigned.slice(8);
   const pageKey = String(member.id);
   achievementProfilePages.delete(pageKey);
   if (archived.length) {
     achievementProfilePages.set(pageKey, {items: archived, offset: 0});
     while (achievementProfilePages.size > 8) achievementProfilePages.delete(achievementProfilePages.keys().next().value);
   }
-  const tierSummary = Object.entries({platinum:"Platino",gold:"Oro",silver:"Plata",bronze:"Bronce"})
-    .map(([tier, label]) => [tier, label, assigned.filter(item => item.tier === tier).length])
-    .filter(([, , count]) => count)
-    .map(([tier, label, count]) => `<span class="achievement-tier-count tier-${tier}"><i aria-hidden="true"></i>${label} <strong>${count}</strong></span>`).join("");
   return `<section class="profile-achievements">
     <div class="profile-feed-heading"><div><h3>Logros</h3></div><span class="club-profile-achievement-summary"><span class="club-profile-earned"><strong>${assigned.length}</strong> ${assigned.length === 1 ? "conseguido" : "conseguidos"}</span>${renderAchievementChallengeTrigger(member)}</span></div>
-    ${assigned.length ? `<div class="achievement-tier-summary" aria-label="Logros por categoría">${tierSummary}</div>` : ""}
     <div class="achievement-showcase">
       ${assigned.length ? visible.map(renderProfileAchievementCard).join("") : `<div class="empty-state compact achievement-empty"><strong>${achievementsLoading ? "Cargando logros…" : "Aún no hay logros"}</strong><span>Los logros conseguidos aparecerán aquí.</span></div>`}
     </div>
-    ${archived.length ? `<button type="button" class="achievement-show-all" data-load-achievement-page="${escapeHtml(pageKey)}">Cargar ${Math.min(8, archived.length)} más · ${archived.length} pendientes</button>` : ""}
+    ${archived.length ? `<button type="button" class="achievement-show-all" data-load-achievement-page="${escapeHtml(pageKey)}">Ver ${Math.min(8, archived.length)} más</button>` : ""}
   </section>`;
 }
 
@@ -7470,7 +7465,7 @@ document.addEventListener("click", event => {
     state.offset += next.length;
     const remaining = state.items.length - state.offset;
     if (!remaining) achievementPageButton.remove();
-    else achievementPageButton.textContent = `Cargar ${Math.min(8, remaining)} más · ${remaining} pendientes`;
+    else achievementPageButton.textContent = `Ver ${Math.min(8, remaining)} más`;
     return;
   }
   const goTarget = event.target.closest("[data-go]");
