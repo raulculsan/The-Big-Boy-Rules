@@ -109,7 +109,20 @@
   else body=`<p class="club-day-note">¿De quién es cada respuesta? Solo tienes un intento. Cada acierto da 2 monedas. Quedan ${timeLeft(r.until)}.</p><form class="club-day-form" data-day-guess>${r.answers.map(a=>`<label><span class="club-day-message">${esc(a.body)}</span><select name="${esc(a.id)}" required><option value="">Elige</option>${r.authors.map(id=>`<option value="${esc(id)}"${guesses[a.id]===id?' selected':''}>${esc(nameOf(id))}</option>`).join('')}</select></label>`).join('')}<div><button type="submit" class="club-day-action"${busy?' disabled':''}>Enviar</button></div></form>`;
   return `<h4>${esc(r.prompt)}</h4>${body}${whoisLast(whois.last)}`;
  }
+ function pending(data){
+  const round=whois?.round;
+  return [!data.question.results,round?.phase==='answer'&&!round.own,round?.phase==='guess'&&!round.guessed&&round.answers.length>0,
+   ...data.predictions.map(p=>(!p.closed&&p.pick===null)||(p.resolved&&p.pick===p.correct&&!p.claimed)),
+   ...(extras?.duels||[]).map(d=>d.incoming||(d.winner===actor()&&!d.claimed))].filter(Boolean).length;
+ }
+ function renderEntry(data){
+  const entry=document.getElementById('clubDayEntry');if(!entry)return;
+  entry.hidden=!data;if(!data)return;
+  const left=pending(data),streak=`${plural(data.streak,'día','días')} de racha`;
+  entry.querySelector('small').textContent=left?`${plural(left,'cosa pendiente','cosas pendientes')} · ${streak}`:streak;
+ }
  function render(){
+  renderEntry(owner===actor()?cache:null);
   const node=host();if(!node)return;
   const data=owner===actor()?cache:null;
   if(!data){node.hidden=!failed;node.innerHTML=failed?`<p class="club-day-note">${esc(failed)}</p><button type="button" class="club-day-action is-quiet" data-day-retry>Reintentar</button>`:'';return;}
@@ -117,7 +130,7 @@
   const extra=['duelos','carta','capsula','ano'].includes(tab);
   if((extra&&!extras)||(tab==='quien'&&!whois))tab='pregunta';
   const view={pregunta:question,quien,porra,premios,ranking,duelos,carta,capsula,ano}[tab](data);
-  node.innerHTML=`<header><h3>Hoy en el club</h3><span class="club-day-streak" aria-label="Racha de ${plural(data.streak,'día','días')}">${plural(data.streak,'día','días')} de racha</span></header><div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>id==='quien'?whois:extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div><div class="club-day-body">${view}</div><p class="club-day-notice" role="status">${esc(notice)}</p>`;
+  node.innerHTML=`<div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>id==='quien'?whois:extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div><div class="club-day-body">${view}</div><p class="club-day-notice" role="status">${esc(notice)}</p>`;
  }
  function message(error){return ['PGRST202','42883','42P01'].includes(error?.code)?'Esta sección se está preparando.':error?.message||'No hemos podido conectar con el club.';}
  async function call(name,args={},done=''){
@@ -153,6 +166,7 @@
   void call('create_club_prediction',{p_question:String(fields.get('question')).trim(),p_options:options,p_closes_at:closes.toISOString()},'Porra publicada');
  }
  function click(event){
+  if(event.target.closest('#clubDayEntry'))void refresh();
   const b=event.target.closest('#clubDay button');if(!b||b.disabled)return;
   const d=b.dataset;
   if(d.dayTab){tab=d.dayTab;notice='';duelRival=null;duelAnswer=null;return render();}

@@ -1,11 +1,15 @@
 /* Hoy en el club. Quiet surface built on the shared tokens; the own choice uses
    weight and a neutral line, never a warm highlight. */
-.club-day { display: grid; gap: var(--ds-space-3); margin-block: var(--ds-space-4); padding: var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); color: var(--ds-text); }
+.club-day-entry { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); width: 100%; min-height: 60px; padding: var(--ds-space-3) var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); color: var(--ds-text); font: inherit; text-align: left; }
+.club-day-entry[hidden] { display: none; }
+.club-day-entry span { display: grid; gap: 2px; min-width: 0; }
+.club-day-entry strong { font-size: var(--ds-text-md); font-weight: 600; }
+.club-day-entry small { font-size: var(--ds-text-xs); color: var(--ds-text-2); }
+.club-day-entry svg { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--ds-text-2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.club-day-page { width: min(100%, 720px); margin-inline: auto; }
+.club-day { display: grid; gap: var(--ds-space-3); padding: var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); color: var(--ds-text); }
 .club-day[hidden] { display: none; }
-.club-day header { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); }
-.club-day h3 { margin: 0; font-size: var(--ds-text-lg); font-weight: 600; }
 .club-day h4 { margin: 0; font-size: var(--ds-text-md); font-weight: 600; line-height: 1.35; }
-.club-day-streak { flex: none; font-size: var(--ds-text-xs); color: var(--ds-text-2); }
 .club-day-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ds-space-1); padding: var(--ds-space-1); border-radius: var(--ds-radius-md); background: var(--ds-raised); }
 .club-day-tabs button { min-height: var(--ds-control-sm); padding: 0 var(--ds-space-1); border: 0; border-radius: var(--ds-radius-sm); background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-sm); }
 .club-day-tabs button[aria-selected="true"] { background: var(--ds-surface); color: var(--ds-text); font-weight: 600; }
@@ -59,4 +63,4 @@
 .club-day-whois p { margin: 0; font-size: var(--ds-text-sm); overflow-wrap: anywhere; }
 .club-day-whois small { font-size: var(--ds-text-xs); color: var(--ds-text-2); }
 .club-day-form select { appearance: auto; }
-.club-day button:focus-visible { outline: 2px solid var(--ds-text-2); outline-offset: 1px; }
+.club-day button:focus-visible, .club-day-entry:focus-visible { outline: 2px solid var(--ds-text-2); outline-offset: 1px; }

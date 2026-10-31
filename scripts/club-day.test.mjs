@@ -13,6 +13,8 @@ test('club day is shipped everywhere the app loads files from', async () => {
     assert.ok(live.includes(`"${file}"`));
   }
   assert.ok(index.includes('id="clubDay"'));
+  assert.ok(index.includes('data-go="hoy"'));
+  assert.ok(index.includes('id="hoy"'));
 });
 
 test('club day keeps coins and votes on the server', async () => {

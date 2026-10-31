@@ -54,12 +54,12 @@
   <link rel="stylesheet" href="notifications.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="collection-social.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="group-interactions.css?v=20261030-neutral-interactions-444" />
-  <link rel="stylesheet" href="visual-system.css?v=20261031-home-order-467" />
+  <link rel="stylesheet" href="visual-system.css?v=20261031-club-day-469" />
   <link rel="stylesheet" href="clubhouse.css?v=20261030-expand-corner-447" />
   <link rel="stylesheet" href="chota-outdoor.css?v=20261030-outdoor-events-448" />
   <link rel="stylesheet" href="chota-shop.css?v=20261031-room-tabs-449" />
   <link rel="stylesheet" href="coin-missions.css?v=20261030-neutral-interactions-444" />
-  <link rel="stylesheet" href="club-day.css?v=20261031-club-day-468" />
+  <link rel="stylesheet" href="club-day.css?v=20261031-club-day-469" />
   <link rel="stylesheet" href="club-social.css?v=20261031-vitrina-461" />
   <link rel="stylesheet" href="club-live.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="chota-games.css?v=20261030-neutral-interactions-444" />
@@ -206,7 +206,7 @@
           <div class="news-grid" id="newsGrid"></div>
         </div>
       </section>
-      <section class="club-day" id="clubDay" aria-label="Hoy en el club" hidden></section>
+      <button class="club-day-entry" id="clubDayEntry" type="button" data-go="hoy" hidden><span><strong>Hoy en el club</strong><small></small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
       <div class="club-dashboard">
         <section class="clubhouse" aria-labelledby="clubhouseTitle">
           <div class="clubhouse-heading"><h3 id="clubhouseTitle">La sede del club</h3><div class="clubhouse-heading-actions"><button type="button" data-club-memory-map>Pasaporte</button><span id="clubhouseTime">El Chota está en casa</span></div></div>
@@ -221,6 +221,14 @@
         <div class="panel-heading"><div><span class="eyebrow">EL CLUB</span><h3 id="clubMembersTitle">Miembros</h3></div></div>
         <div class="members-grid" id="membersGrid"></div>
       </section>
+    </section>
+
+    <section class="page-section club-day-page" id="hoy" aria-labelledby="clubDayTitle">
+      <header class="packs-heading">
+        <button class="packs-back" type="button" data-go="inicio" aria-label="Volver a Inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+        <div><h2 id="clubDayTitle" tabindex="-1">Hoy en el club</h2></div>
+      </header>
+      <div class="club-day" id="clubDay" hidden></div>
     </section>
 
     <section class="page-section packs-page" id="sobres" aria-labelledby="packsTitle">
@@ -984,7 +992,7 @@
   <script defer src="banner-shop.js?v=20261031-vitrina-456"></script>
   <script defer src="chota-shop.js?v=20261031-room-tabs-449"></script>
   <script defer src="coin-missions.js?v=20261030-coin-missions-442"></script>
-  <script defer src="club-day.js?v=20261031-club-day-468"></script>
+  <script defer src="club-day.js?v=20261031-club-day-469"></script>
   <script defer src="club-social.js?v=20261031-vitrina-461"></script>
   <script defer src="club-live.js?v=20261030-coin-missions-442"></script>
   <script defer src="chota-games.js?v=20261030-coin-missions-442"></script>

@@ -44,7 +44,7 @@
   'use strict';
   const key = 'bb-local-health-v1', limit = 300;
   const session = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  const areas = {inicio:'Inicio', chat:'Chats', privados:'Chat privado', perfil:'Perfil', calendario:'Calendario', sobres:'Sobres', album:'Álbum', catalogo:'Catálogo', administracion:'Administración', 'admin-configuracion':'Configuración', 'admin-cuentas':'Cuentas', 'admin-logros':'Logros', 'admin-diagnostico':'Diagnóstico', otra:'Otras'};
+  const areas = {inicio:'Inicio', chat:'Chats', privados:'Chat privado', perfil:'Perfil', calendario:'Calendario', sobres:'Sobres', album:'Álbum', catalogo:'Catálogo',hoy:'Hoy en el club', administracion:'Administración', 'admin-configuracion':'Configuración', 'admin-cuentas':'Cuentas', 'admin-logros':'Logros', 'admin-diagnostico':'Diagnóstico', otra:'Otras'};
   const kinds = ['session-start','authenticated','shell-ready','home-ready','main-thread','network','stall','image','image-error','script-error','promise-error','interaction','editor-focus','editor-input'];
   let previous = [];
   try {

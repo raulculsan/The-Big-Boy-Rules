@@ -557,7 +557,7 @@ body.authenticated #inicio > .club-welcome { grid-area: welcome; margin: 6px 0 0
 body.authenticated #inicio .club-welcome h2 { font-size: clamp(38px,5vw,54px); font-weight: 700; }
 body.authenticated #inicio > .club-search { grid-area: search; margin: 0; }
 body.authenticated #inicio .club-dashboard > .clubhouse { grid-area: plans; }
-body.authenticated #inicio > .club-day { grid-area: day; margin: 0; }
+body.authenticated #inicio > .club-day-entry { grid-area: day; margin: 0; }
 body.authenticated #inicio > .club-dashboard { display: contents; }
 body.authenticated #inicio .club-dashboard > .club-plans { grid-area: plans; padding: 22px; background: var(--bb2-raised); border: 1px solid var(--bb2-line-strong); border-radius: 22px; }
 body.authenticated #inicio .club-dashboard > .spotify-panel { grid-area: music; padding: 22px; background: var(--bb2-panel); border-radius: 22px; }

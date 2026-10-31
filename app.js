@@ -679,7 +679,7 @@ function resetSectionScroll(sectionId) {
 }
 
 function updateFloatingTabIndicator(sectionId) {
-  const navigationSection = sectionId === "privados" ? "chat" : ["sobres", "album", "catalogo"].includes(sectionId) ? "inicio" : sectionId;
+  const navigationSection = sectionId === "privados" ? "chat" : ["sobres", "album", "catalogo", "hoy"].includes(sectionId) ? "inicio" : sectionId;
   const index = navLinks.findIndex(link => link.dataset.section === navigationSection);
   if (index < 0) return;
   const tabBar = document.getElementById("floatingTabBar");
@@ -790,7 +790,7 @@ function goTo(sectionId) {
   globalThis.CardAlbum?.didNavigate(sectionId, currentSection);
   globalThis.AdminGrants?.didNavigate(sectionId);
   adminConsole?.didNavigate(sectionId);
-  const navigationSection = sectionId === "privados" ? "chat" : ["sobres", "album", "catalogo"].includes(sectionId) ? "inicio" : sectionId;
+  const navigationSection = sectionId === "privados" ? "chat" : ["sobres", "album", "catalogo", "hoy"].includes(sectionId) ? "inicio" : sectionId;
   navLinks.forEach(link => {
     const active = link.dataset.section === navigationSection;
     link.classList.toggle("active", active);
@@ -812,7 +812,7 @@ function goTo(sectionId) {
   const titles = {
     "seccion-chat": "Sección del grupo", inicio: "El Club", chat: "Mensajes", miembros: "Miembros",
     privados: "Mensajes privados", perfil: "Perfil", calendario: "Calendario",
-    noticias: "Noticias", administracion: "Administración", ayuda: "Ayuda y sugerencias", sobres: "Colección", album: "Álbum", catalogo: "Cartas de la colección",
+    noticias: "Noticias", administracion: "Administración", ayuda: "Ayuda y sugerencias", sobres: "Colección", album: "Álbum", catalogo: "Cartas de la colección", hoy: "Hoy en el club",
     "admin-configuracion": "Configuración", "admin-diagnostico": "Rendimiento y diagnóstico", "admin-cuentas": "Control de cuentas", "admin-logros": "Configuración de logros", "crear-logro": "Crear un logro", "asignar-logro": "Asignar logro", "editar-usuario": "Editar usuario"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
@@ -7585,6 +7585,7 @@ const pageBackControls = {
   "editar-usuario": "[data-account-back]",
   sobres: ".packs-back",
   catalogo: ".packs-back",
+  hoy: ".packs-back",
   perfil: "[data-profile-back]",
   ayuda: null
 };
@@ -7605,7 +7606,7 @@ function pageBackDestination(page) {
   if (page.id === "seccion-chat") return {id: "chat", chat: {section: "chat", channelId: activeChatChannelId}};
   if (page.id === "perfil") return profileChatReturn ? {id: profileChatReturn.section, chat: profileChatReturn} : profilePageReturn || {id: "inicio"};
   if (page.id === "ayuda") return helpReturnPage || {id: "inicio"};
-  const routes = {"admin-configuracion": "administracion", "admin-diagnostico": "admin-configuracion", "admin-cuentas": "admin-configuracion", "admin-logros": "admin-configuracion", "crear-logro": "admin-logros", "asignar-logro": "admin-logros", "editar-usuario": "admin-cuentas", sobres: "inicio", catalogo: "sobres"};
+  const routes = {"admin-configuracion": "administracion", "admin-diagnostico": "admin-configuracion", "admin-cuentas": "admin-configuracion", "admin-logros": "admin-configuracion", "crear-logro": "admin-logros", "asignar-logro": "admin-logros", "editar-usuario": "admin-cuentas", sobres: "inicio", catalogo: "sobres", hoy: "inicio"};
   const button = page.querySelector(pageBackControls[page.id]);
   return {id: button?.dataset.go || routes[page.id]};
 }
@@ -8567,7 +8568,7 @@ if (localStorage.getItem("bb-theme") === "light") document.body.classList.add("l
 
 const requestedInitialSection = location.hash.replace("#", "");
 const initialSection = requestedInitialSection === "privados" ? "chat" : requestedInitialSection;
-if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "buscar", "calendario", "perfil", "ayuda", "sobres", "album", "catalogo"].includes(initialSection)) {
+if (["inicio", "chat", "privados", "miembros", "contenido", "momentos", "publicaciones", "noticias", "buscar", "calendario", "perfil", "ayuda", "sobres", "album", "catalogo", "hoy"].includes(initialSection)) {
   if (initialSection === "perfil" && currentUser) renderProfile(currentUser.id);
   else goTo(initialSection);
 }
