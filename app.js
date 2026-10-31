@@ -2369,17 +2369,21 @@ function renderPresence() {
   updateSurfaceMarkup(document.getElementById("heroOnlineStatus"), `<i></i> ${count ? `${label} ahora` : "Nadie conectado"}`);
   const panel = document.getElementById("onlineMembers");
   if (!panel) return;
-  if (!count) {
-    updateSurfaceMarkup(panel, `<div class="empty-state compact">Nadie conectado ahora.</div>`);
-    return;
-  }
-  updateSurfaceMarkup(panel, onlineUsers.map(user => {
-    const member = getMember(user.legacy_id);
-    return `<div class="online-member">
-      ${getAvatar(member)}
-      <div><strong>${escapeHtml(member?.name || user.name || "Miembro")}</strong><small>En línea ahora</small></div><i></i>
-    </div>`;
-  }).join(""));
+  const others = onlineUsers.map(user => getMember(user.legacy_id)).filter(member => member && member.id !== currentUser?.id);
+  panel.hidden = !others.length;
+  updateSurfaceMarkup(panel, others.length ? `<h4>Conectados ahora</h4><div>${others.map(member => `<button type="button" data-private-member="${member.id}" aria-label="Escribir a ${escapeHtml(member.name)}"><span class="online-avatar">${getAvatar(member)}<i></i></span><small>${escapeHtml(member.name.split(" ")[0])}</small></button>`).join("")}</div>` : "");
+  if (document.getElementById("chat")?.classList.contains("active")) renderPrivateContacts();
+  const peerLabel = document.querySelector("#privateChatHeader .chat-username");
+  const peer = getMember(activePrivateMemberId);
+  if (peerLabel && peer) peerLabel.textContent = privatePresenceLabel(peer);
+}
+
+function memberIsOnline(member) {
+  return onlineUsers.some(user => Number(user.legacy_id) === member.id);
+}
+
+function privatePresenceLabel(member) {
+  return memberIsOnline(member) ? "En línea" : `@${member.username}`;
 }
 
 // Warm only the newest attachments while the inbox is open. Keep this small:
@@ -2928,7 +2932,7 @@ function renderPrivateContacts() {
     const unread = unreadByMember.get(member.authId) || 0;
     const favorite = userFavorites.has(String(member.authId));
     return `<button type="button" class="private-contact ${unread ? "has-unread" : ""} ${activePrivateMemberId === member.id ? "active" : ""}" data-private-member="${member.id}" data-kind="private" data-favorite-id="${escapeHtml(member.authId || "")}" data-favorite="${favorite}" data-search="${escapeHtml(`${member.name} ${member.username || ""}`)}" data-conversation="${Boolean(latest) || unread > 0}" data-unread="${unread}" aria-description="Mantén pulsado para gestionar favoritos">
-      ${getAvatar(member)}
+      <span class="online-avatar">${getAvatar(member)}${memberIsOnline(member) ? '<i aria-label="En línea"></i>' : ""}</span>
       <span class="private-contact-copy"><span><strong>${escapeHtml(member.name)}</strong>${latest ? `<time datetime="${escapeHtml(latest.createdAt)}">${formatInboxTime(latest.createdAt)}</time>` : ""}</span><small>${latest ? `${latest.senderId === currentAuthUser?.id ? "Tú: " : ""}${escapeHtml(messagePreviewText(latest.body, latest.attachmentType))}` : "Iniciar conversación"}</small></span>
       ${unread ? `<span class="inbox-unread-count" aria-label="${unread} avisos sin leer">${unread > 99 ? "99+" : unread}</span>` : ""}
     </button>`;
@@ -2998,7 +3002,7 @@ function renderPrivateConversation() {
       <button type="button" class="private-chat-avatar" data-profile="${escapeHtml(String(member.id))}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
         ${getAvatar(member)}
       </button>
-      <div><h3>${escapeHtml(member.name)}</h3><span class="chat-username">@${escapeHtml(member.username)}</span></div>
+      <div><h3>${escapeHtml(member.name)}</h3><span class="chat-username">${escapeHtml(privatePresenceLabel(member))}</span></div>
     </div>`);
   globalThis.ChatThemes?.sync("private");
   const finishReading = preserveConversationReading(container, `private:${member.id}`);

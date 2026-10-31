@@ -498,3 +498,16 @@ body.authenticated .message.own [data-message-bubble].is-reply-springing { trans
   body.authenticated .message [data-message-bubble].is-reply-springing { animation: none; }
   .chat-reply-highlight { animation-duration: 1ms; }
 }
+
+/* Who is connected: a strip above the inbox and a dot on each avatar. */
+.online-avatar { position: relative; display: block; flex: none; }
+.online-avatar > i { position: absolute; right: 0; bottom: 0; width: 13px; height: 13px; border: 2px solid var(--bb2-canvas, #0d0f12); border-radius: 50%; background: #72b796; }
+.private-contact > .online-avatar { display: block; flex: none; width: max-content; overflow: visible; }
+.online-strip { display: grid; gap: 8px; padding: 4px 0 12px; }
+.online-strip[hidden] { display: none; }
+.online-strip h4 { margin: 0; font-size: 12px; font-weight: 500; color: #999da6; }
+.online-strip > div { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; }
+.online-strip > div::-webkit-scrollbar { display: none; }
+.online-strip button { flex: none; display: grid; justify-items: center; gap: 4px; width: 60px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; }
+.online-strip .avatar { width: 48px; height: 48px; }
+.online-strip small { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #c9ccd2; }
