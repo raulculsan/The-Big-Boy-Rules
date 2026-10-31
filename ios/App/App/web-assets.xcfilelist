@@ -51,6 +51,7 @@ $(SRCROOT)/App/public/config.js
 $(SRCROOT)/App/public/cordova.js
 $(SRCROOT)/App/public/cordova_plugins.js
 $(SRCROOT)/App/public/daily-packs.js
+$(SRCROOT)/App/public/design-system.css
 $(SRCROOT)/App/public/feature-loader.js
 $(SRCROOT)/App/public/group-interactions.css
 $(SRCROOT)/App/public/group-interactions.js

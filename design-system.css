@@ -1,0 +1,77 @@
+/* Big Boy design system. The one source for type, colour, space and controls.
+   Loaded last on purpose. Screens join by being listed in the :is() scopes below,
+   so the rest of the app keeps its look until it is migrated. Card art, banners
+   and pack art stay outside: the interface is quiet so they can stand out. */
+:root {
+  /* Type scale: nothing on a migrated screen goes below --ds-text-xs. */
+  --ds-text-xs: 12px;
+  --ds-text-sm: 13px;
+  --ds-text-md: 15px;
+  --ds-text-lg: 20px;
+  --ds-text-xl: 26px;
+  /* Spacing runs on a 4 px grid. */
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 24px;
+  --ds-space-6: 32px;
+  --ds-radius-sm: 10px;
+  --ds-radius-md: 12px;
+  --ds-radius-lg: 18px;
+  --ds-radius-pill: 999px;
+  --ds-control: 44px;
+  --ds-control-sm: 36px;
+  --ds-surface: var(--bb2-panel);
+  --ds-raised: var(--bb2-raised);
+  --ds-line: var(--bb2-line);
+  --ds-line-strong: var(--bb2-line-strong);
+  --ds-text: var(--bb2-ink);
+  --ds-text-2: var(--bb2-secondary);
+  --ds-text-3: var(--bb2-muted);
+  --ds-accent: var(--bb2-gold);
+  --bb2-radius: var(--ds-radius-lg);
+  --bb2-control-radius: var(--ds-radius-md);
+}
+
+/* Headings */
+body.authenticated :is(#inicio,#sobres,#perfil) :is(h2) { font-size: var(--ds-text-xl); font-weight: 600; line-height: 1.15; letter-spacing: -.03em; color: var(--ds-text); }
+body.authenticated :is(#inicio,#sobres,#perfil) :is(.panel-heading h3,.profile-feed-heading h3,.clubhouse-heading h2,.club-news-heading h2) { font-size: var(--ds-text-lg); font-weight: 600; line-height: 1.2; letter-spacing: -.02em; color: var(--ds-text); }
+
+/* Small labels */
+body.authenticated :is(#inicio,#sobres,#perfil) :is(.eyebrow,.collection-section-label,.club-member-number,.club-profile-role) { font-size: var(--ds-text-xs); font-weight: 500; letter-spacing: .02em; text-transform: none; color: var(--ds-text-3); }
+body.authenticated :is(#inicio,#sobres,#perfil) :is(.club-profile-handle,.club-profile-bio,.profile-card-vitrine p,.bb2-album-label) { font-size: var(--ds-text-sm); color: var(--ds-text-2); }
+body.authenticated :is(#inicio,#sobres,#perfil) .club-profile-nickname { font-size: var(--ds-text-md); font-weight: 500; color: var(--ds-text); }
+
+/* Buttons: one shape, two weights. */
+body.authenticated :is(#inicio,#sobres,#perfil) :is(.primary-button,.secondary-button,.packs-sync,.packs-buy,.achievement-show-all,.profile-card-vitrine>button,.profile-edit-compact) { display: inline-flex; align-items: center; justify-content: center; gap: var(--ds-space-2); box-sizing: border-box; min-width: 0; min-height: var(--ds-control); padding: 0 var(--ds-space-4); border-radius: var(--ds-radius-md); font-size: var(--ds-text-sm); font-weight: 600; letter-spacing: 0; line-height: 1; }
+body.authenticated :is(#inicio,#sobres,#perfil) :is(.primary-button,.packs-buy) { border: 1px solid transparent; background: var(--ds-text); color: var(--bb2-canvas); box-shadow: none; }
+body.authenticated :is(#inicio,#sobres,#perfil) :is(.secondary-button,.packs-sync,.achievement-show-all,.profile-card-vitrine>button,.profile-edit-compact) { border: 1px solid var(--ds-line-strong); background: transparent; color: var(--ds-text); box-shadow: none; }
+body.authenticated :is(#inicio,#sobres,#perfil) :is(.profile-edit-compact,.profile-card-vitrine>button,.achievement-show-all) { min-height: var(--ds-control-sm); padding-inline: var(--ds-space-3); }
+
+/* Surfaces: flat, one border, one radius. Colour belongs to the content. */
+body.authenticated #sobres :is(.packs-display,.bb2-album-entry) { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
+body.authenticated #sobres :is(.packs-display,.bb2-album-entry)::before,body.authenticated #sobres :is(.packs-display,.bb2-album-entry)::after { content: none; }
+body.authenticated #sobres .bb2-album-label { border-top-color: var(--ds-line); }
+
+/* Icon buttons */
+body.authenticated :is(#inicio,#sobres,#perfil) :is(.packs-back,.collection-catalog-trigger,.duplicate-cards-trigger,.packs-info-trigger) { width: var(--ds-control); height: var(--ds-control); min-width: var(--ds-control); min-height: var(--ds-control); padding: 0; border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text); box-shadow: none; }
+
+/* Chips */
+body.authenticated #perfil .profile-tags { gap: var(--ds-space-2); }
+body.authenticated #perfil .profile-tags span { display: inline-flex; align-items: center; min-height: 28px; padding: 0 var(--ds-space-3); border: 0; border-radius: var(--ds-radius-pill); background: var(--ds-raised); color: var(--ds-text-2); font-size: var(--ds-text-xs); font-weight: 500; }
+
+/* Quiet secondary text: the accent is kept for state, not decoration. */
+body.authenticated #sobres :is(.collection-section-label>span,.packs-display-edition,.bb2-pack-copy p,.bb2-album-label) { color: var(--ds-text-3); text-transform: none; letter-spacing: 0; font-size: var(--ds-text-xs); }
+body.authenticated #sobres .bb2-pack-copy p { font-size: var(--ds-text-sm); color: var(--ds-text-2); }
+body.authenticated #sobres .bb2-album-entry>strong,body.authenticated #sobres .packs-display h2 { font-size: var(--ds-text-xl); font-weight: 600; letter-spacing: -.03em; line-height: 1.15; }
+
+/* Profile toolbar: three controls, one shape. */
+body.authenticated #perfil .club-profile-topline { align-items: center; gap: var(--ds-space-2); }
+body.authenticated #perfil :is(.profile-coin-balance,.banner-shop-trigger,.card-album-trigger) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; height: var(--ds-control-sm); min-width: var(--ds-control-sm); min-height: var(--ds-control-sm); padding: 0 var(--ds-space-2); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-surface); color: var(--ds-text); box-shadow: none; font-size: var(--ds-text-sm); font-weight: 600; }
+body.authenticated #perfil :is(.profile-coin-balance,.banner-shop-trigger,.card-album-trigger) svg { width: 18px; height: 18px; }
+body.authenticated #perfil .club-profile-earned strong { color: var(--ds-text); }
+
+/* Inicio: readable small text. The clubhouse art keeps its own hand-set labels. */
+body.authenticated #inicio :is(.club-news-heading p,.news-collapse-button span,.clubhouse-heading-actions>*,.panel-heading .text-button) { font-size: var(--ds-text-xs); }
+body.authenticated #inicio .clubhouse-heading-actions>* { color: var(--ds-text-2); border-bottom-color: var(--ds-line-strong); }

@@ -75,6 +75,7 @@ const sources = [
   "pack-opening.js",
   "banner-shop.js",
   "banner-shop.css",
+  "design-system.css",
   "album.js",
   "album.css",
   "onboarding.js",

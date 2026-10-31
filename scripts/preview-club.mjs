@@ -50,6 +50,7 @@ fixtureLabel.textContent='VISTA LOCAL · DATOS DE PRUEBA';
 fixtureLabel.style.cssText='position:fixed;top:0;left:0;z-index:5000;font:8px sans-serif;color:#999;pointer-events:none';
 document.body.appendChild(fixtureLabel);
 if (currentUser) { refreshProfileSurfaces(); renderCalendar(); renderPrivateContacts(); }
+if (!document.body.classList.contains('authenticated')) void applyUserInterface(members[0], {id:'fixture-1'});
 `;
 const allow = new Set(['index.html','styles.css','club.css','club-model.js','chat.css','chat-motion.js','chat-keyboard.js','vendor/capacitor.js','app.js','manifest.webmanifest']);
 allow.add('tab-navigation.js');
@@ -66,7 +67,9 @@ allow.add('achievement-admin.css');
 allow.add('vendor/lottie-light.min.js');
 createServer(async(req,res) => {
   const path = new URL(req.url,'http://localhost').pathname.slice(1) || 'index.html';
-  if ((!allow.has(path) && !/^vendor\/fonts\/[\w.-]+$/.test(path) && !/^icons\/[\w.-]+$/.test(path) && !/^icons\/cards\/[\w.-]+\.(png|json)$/.test(path) && !/^icons\/trophies\/(bronze|silver|gold|platinum)\.(svg|json)$/.test(path)) || path.includes('..')) { res.writeHead(404).end(); return; }
+  // Stay fully local: without these two files the app never reaches the real backend.
+  if (path === 'config.js' || path.startsWith('vendor/supabase')) { res.writeHead(404).end(); return; }
+  if ((!allow.has(path) && !/^[\w-]+\.(?:css|js|json|webmanifest)$/.test(path) && !/^vendor\/[\w./-]+$/.test(path) && !/^vendor\/fonts\/[\w.-]+$/.test(path) && !/^icons\/[\w./-]+$/.test(path)) || path.includes('..')) { res.writeHead(404).end(); return; }
   try {
     let body = await readFile(new URL(path,root));
     if (path === 'index.html') body = body.toString().replace(/<script src="(?:vendor\/supabase|config)\.js[^>]+><\/script>/g,'').replace(/<script>\s*if \("serviceWorker"[\s\S]*?<\/script>/,'');
