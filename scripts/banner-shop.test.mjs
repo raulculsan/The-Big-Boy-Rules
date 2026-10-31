@@ -79,3 +79,44 @@ test('a late equip result cannot restore banners after the account is reset',asy
     assert.equal(h.d.getElementById('profileBannerOptions').children.length,0);
   } finally {h.dom.window.close();}
 });
+
+test('swiping a revealed duplicate up discards it and moves on; copy stays out of the way',async()=>{
+  const packs=[{id:1}],draw=[{card_id:'repe',edition:'common',kind:'object',quantity:2},{card_id:'nueva',edition:'common',kind:'object',quantity:1}];
+  let quantity=2;const discards=[];
+  const h=setup(async(name,args)=>{
+    if(name==='get_banner_shop_state')return {data:{...snapshot('galicia'),available_packs:packs,discard_rewards:{common:5},cards:[{card_id:'repe',quantity}]}};
+    if(name==='open_owned_card_pack')return {data:{cards:draw}};
+    if(name==='discard_duplicate_card'){discards.push(args);quantity=1;return {data:{quantity:1,balance:105,coins_earned:5}};}
+    throw new Error(`Unexpected RPC ${name}`);
+  });
+  try {
+    const {w,d}=h;
+    w.matchMedia=()=>({matches:true,addEventListener(){},removeEventListener(){}});
+    w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+    w.Element.prototype.setPointerCapture=function(){};w.Element.prototype.hasPointerCapture=()=>false;w.Element.prototype.releasePointerCapture=function(){};
+    w.Element.prototype.getAnimations=()=>[];
+    w.CardCollection={thumbnail:source=>source,catalog:[{id:'repe',name:'Repe',front:'a.jpg'},{id:'nueva',name:'Nueva',front:'b.jpg'}]};
+    await h.w.BannerShop.refresh();
+    d.getElementById('ownedPackOpen').disabled=false;d.getElementById('ownedPackOpen').click();
+    for(let i=0;i<6;i++)await flush();
+    const dialog=d.querySelector('.pack-reveal-dialog');
+    assert.equal(dialog.querySelector('.pack-reveal-status').textContent,'');
+    const pointer=(type,x,y)=>{const event=new w.Event(type,{bubbles:true});Object.assign(event,{pointerId:1,isPrimary:true,button:0,clientX:x,clientY:y});dialog.querySelector('.pack-reveal-stage').dispatchEvent(event);};
+    const swipeUp=()=>{pointer('pointerdown',100,300);pointer('pointermove',100,270);pointer('pointermove',100,120);pointer('pointerup',100,120);};
+    swipeUp();await flush();
+    assert.equal(discards.length,0,'a hidden card cannot be discarded');
+    pointer('pointerdown',100,300);pointer('pointerup',100,300);
+    await new Promise(resolve=>setTimeout(resolve,20));
+    assert.doesNotMatch(dialog.textContent,/Descartar|Pulsa la carta|Pulsa o desliza/);
+    swipeUp();
+    for(let i=0;i<8;i++)await flush();
+    await new Promise(resolve=>setTimeout(resolve,20));
+    assert.deepEqual(discards.map(item=>item.target_card_id),['repe']);
+    assert.match(dialog.querySelector('.pack-reveal-header').textContent,/Carta 2 de 2/);
+    assert.equal(dialog.querySelector('.pack-reveal-status').textContent,'');
+    pointer('pointerdown',100,300);pointer('pointerup',100,300);
+    await new Promise(resolve=>setTimeout(resolve,20));
+    swipeUp();await flush();
+    assert.equal(discards.length,1,'a card without copies cannot be discarded');
+  } finally {h.dom.window.close();}
+});
