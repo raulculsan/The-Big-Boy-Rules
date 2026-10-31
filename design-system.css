@@ -75,3 +75,28 @@ body.authenticated #perfil .club-profile-earned strong { color: var(--ds-text); 
 /* Inicio: readable small text. The clubhouse art keeps its own hand-set labels. */
 body.authenticated #inicio :is(.club-news-heading p,.news-collapse-button span,.clubhouse-heading-actions>*,.panel-heading .text-button) { font-size: var(--ds-text-xs); }
 body.authenticated #inicio .clubhouse-heading-actions>* { color: var(--ds-text-2); border-bottom-color: var(--ds-line-strong); }
+
+/* Repetidas: pick cards, adjust copies, discard from one bar. Selection stays neutral. */
+body.authenticated #duplicatesDialog #ownedCardInventory { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: var(--ds-space-3); padding-bottom: 96px; }
+body.authenticated #duplicatesDialog .dup-editions { display: flex; gap: var(--ds-space-2); width: calc(100% - 40px); margin: var(--ds-space-3) auto 0; overflow-x: auto; scrollbar-width: none; }
+body.authenticated #duplicatesDialog .dup-editions:empty { display: none; }
+body.authenticated #duplicatesDialog .dup-editions button { flex: none; min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-sm); text-transform: capitalize; }
+body.authenticated #duplicatesDialog .dup-editions button[aria-pressed="true"] { border-color: var(--ds-text-2); background: var(--ds-raised); color: var(--ds-text); font-weight: 600; }
+body.authenticated #duplicatesDialog .dup-card { display: grid; align-content: start; gap: 2px; min-width: 0; }
+body.authenticated #duplicatesDialog .dup-pick { position: relative; display: block; width: 100%; padding: 0; border: 2px solid transparent; border-radius: var(--ds-radius-md); background: transparent; }
+body.authenticated #duplicatesDialog .dup-pick img { display: block; width: 100%; aspect-ratio: 948 / 1660; object-fit: cover; border-radius: var(--ds-radius-sm); }
+body.authenticated #duplicatesDialog .dup-card.is-picked .dup-pick { border-color: var(--ds-text); }
+body.authenticated #duplicatesDialog .dup-card.is-picked .dup-pick img { opacity: .72; }
+body.authenticated #duplicatesDialog .dup-count { position: absolute; right: 6px; bottom: 6px; padding: 2px 7px; border-radius: var(--ds-radius-pill); background: #000000c7; color: #fff; font-size: var(--ds-text-xs); font-weight: 600; }
+body.authenticated #duplicatesDialog .dup-check { position: absolute; top: 6px; right: 6px; display: none; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ds-text); }
+body.authenticated #duplicatesDialog .dup-check svg { width: 16px; height: 16px; fill: none; stroke: var(--ds-surface); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+body.authenticated #duplicatesDialog .dup-card.is-picked .dup-check { display: grid; }
+body.authenticated #duplicatesDialog .dup-card h4 { margin: 4px 0 0; overflow: hidden; color: var(--ds-text); font-size: var(--ds-text-xs); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+body.authenticated #duplicatesDialog .dup-card p { margin: 0; color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+body.authenticated #duplicatesDialog .dup-stepper { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; margin-top: 4px; border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); }
+body.authenticated #duplicatesDialog .dup-stepper[hidden] { display: none; }
+body.authenticated #duplicatesDialog .dup-stepper button { min-height: var(--ds-control-sm); padding: 0; border: 0; background: transparent; color: var(--ds-text); font: inherit; font-size: 18px; }
+body.authenticated #duplicatesDialog .dup-stepper output { color: var(--ds-text); font-size: var(--ds-text-sm); text-align: center; }
+body.authenticated #duplicatesDialog .dup-bar { position: fixed; z-index: 3; inset: auto 16px calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); max-width: 560px; margin-inline: auto; padding: var(--ds-space-2) var(--ds-space-2) var(--ds-space-2) var(--ds-space-4); border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-pill); background: var(--ds-raised); color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
+body.authenticated #duplicatesDialog .dup-bar[hidden] { display: none; }
+body.authenticated #duplicatesDialog .dup-bar button { min-height: var(--ds-control); padding: 0 var(--ds-space-5); border: 0; border-radius: var(--ds-radius-pill); background: var(--ds-text); color: var(--ds-surface); font: inherit; font-weight: 600; }

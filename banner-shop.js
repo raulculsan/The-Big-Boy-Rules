@@ -145,6 +145,11 @@
   document.body.append(revealDialog);
   const discardEffects = new Set();
   const extraCopies = () => (state?.cards || []).reduce((sum, item) => sum + Math.max(0, Number(item.quantity) - 1), 0);
+  const discardPicks = new Map();
+  // Cheapest first: the copies people most often want gone sit at the top.
+  const duplicateRows = () => (state?.cards || []).filter(item => Number(item.quantity) > 1)
+    .map(item => ({id:item.card_id, edition:item.edition, extra:Number(item.quantity) - 1, reward:state.discard_rewards?.[item.edition] || 1}))
+    .sort((a, b) => a.reward - b.reward || String(a.id).localeCompare(String(b.id)));
   const characterCardIds = new Set(['francisco-trigo-vice-city','cristobal-fabrik-vice-city','ruben-king-vice-city','felipe-hp-full-art','felipe-hp','daniel-gonzalez-motos-full-art','daniel-gonzalez-motos','jose-enrique-fernandez-cruz-normal','juan-manuel-perez-saldana-retro','juan-carlos-vega-quevedo-retro','carlos-sanchez-rodriguez-retro']);
   function renderReveal() {
     if (!reveal || !revealDialog.open) return;
@@ -766,7 +771,6 @@
     renderReveal();
     renderEditor();
     document.querySelectorAll('[data-duplicates-count]').forEach(node => {node.textContent = state ? extraCopies() : '—'; node.closest('button')?.setAttribute('aria-label', `Gestionar ${state ? extraCopies() : ''} cartas repetidas`);});
-    if (el('discardAllDuplicates')) el('discardAllDuplicates').disabled = busy || loading || !extraCopies() || !online();
     if (el('duplicatesStatus')) el('duplicatesStatus').textContent = failure || notice || (loading ? 'Actualizando repetidas…' : state ? `${extraCopies()} copias repetidas. Conservas una de cada carta.` : 'Actualiza la colección para consultar las repetidas.');
     if (state?.cards) lastInventory = state.cards;
     globalThis.CardAlbum?.update({cards:lastInventory, catalog:state?.card_catalog, loading:loading || busy, failure, savedAt:inventorySavedAt});
@@ -845,9 +849,14 @@
   function renderInventory() {
     const inventory = el('ownedCardInventory');
     if (!inventory) return;
-    const markup = state ? (extraCopies() ? state.cards.filter(item => Number(item.quantity) > 1).map(item => {
-      const design = card(item.card_id), reward = state.discard_rewards?.[item.edition] || 1;
-      return `<article class="owned-card" data-owned-card="${escape(item.card_id)}">${design ? `<img data-card-original="${escape(design.front)}" src="${escape(globalThis.CardCollection.thumbnail(design))}" alt="${escape(design.name)}" loading="lazy" decoding="async">` : ''}<h4>${escape(design?.name || item.card_id)}</h4><p>${escape(design?.edition || item.edition)} · ${escape(item.quantity)} ${Number(item.quantity) === 1 ? 'copia' : 'copias'}</p>${Number(item.quantity) > 1 ? `<button type="button" class="packs-sync" data-discard-card="${escape(item.card_id)}">Descartar 1 repetida · +${escape(reward)} monedas</button>` : '<small>Única copia</small>'}</article>`;
+    const rows = duplicateRows();
+    for (const [id, copies] of discardPicks) {
+      const row = rows.find(item => item.id === id);
+      if (!row) discardPicks.delete(id); else if (copies > row.extra) discardPicks.set(id, row.extra);
+    }
+    const markup = state ? (rows.length ? rows.map(item => {
+      const design = card(item.id);
+      return `<article class="dup-card" data-owned-card="${escape(item.id)}"><button type="button" class="dup-pick" data-dup-toggle="${escape(item.id)}">${design ? `<img data-card-original="${escape(design.front)}" src="${escape(globalThis.CardCollection.thumbnail(design))}" alt="" loading="lazy" decoding="async">` : ''}<span class="dup-count">×${item.extra}</span><span class="dup-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span></button><h4>${escape(design?.name || item.id)}</h4><p>${item.reward} ${item.reward === 1 ? 'moneda' : 'monedas'}</p>${item.extra > 1 ? `<div class="dup-stepper" hidden><button type="button" data-dup-step="-1" data-dup-card="${escape(item.id)}" aria-label="Una copia menos">−</button><output></output><button type="button" data-dup-step="1" data-dup-card="${escape(item.id)}" aria-label="Una copia más">+</button></div>` : ''}</article>`;
     }).join('') : '<p>No tienes cartas repetidas.</p>') : '<p>Tu inventario se mostrará al sincronizar la colección.</p>';
     // Loading and busy state only change controls, keeping decoded card images
     // and focus intact while an unchanged inventory is refreshed.
@@ -855,9 +864,41 @@
       inventory.innerHTML = markup;
       inventory.dataset.signature = markup;
     }
-    inventory.querySelectorAll('[data-discard-card]').forEach(button => {
-      button.disabled = busy || loading || !state || !online();
+    paintDiscardPicks();
+  }
+  // Selection repaints in place, so decoded card images are never rebuilt.
+  function paintDiscardPicks() {
+    const rows = duplicateRows(), blocked = busy || loading || !state || !online();
+    el('ownedCardInventory')?.querySelectorAll('.dup-card').forEach(node => {
+      const picked = discardPicks.get(node.dataset.ownedCard) || 0, stepper = node.querySelector('.dup-stepper');
+      node.classList.toggle('is-picked', picked > 0);
+      node.querySelector('.dup-pick').setAttribute('aria-pressed', String(picked > 0));
+      node.querySelector('.dup-pick').disabled = blocked;
+      if (stepper) {
+        stepper.hidden = !picked; stepper.querySelector('output').textContent = picked;
+        const extra = rows.find(item => item.id === node.dataset.ownedCard)?.extra || 0;
+        stepper.querySelector('[data-dup-step="-1"]').disabled = blocked || picked < 1;
+        stepper.querySelector('[data-dup-step="1"]').disabled = blocked || picked >= extra;
+      }
     });
+    const editions = new Map();
+    rows.forEach(item => editions.set(item.edition, [...(editions.get(item.edition) || []), item]));
+    const chips = el('duplicatesEditions');
+    if (chips) {
+      const markup = editions.size > 1 ? [...editions].map(([edition, items]) => `<button type="button" data-dup-edition="${escape(edition)}">${escape(card(items[0].id)?.edition || edition)}</button>`).join('') : '';
+      if (chips.dataset.signature !== markup) { chips.innerHTML = markup; chips.dataset.signature = markup; }
+      chips.querySelectorAll('[data-dup-edition]').forEach(button => {
+        button.disabled = blocked;
+        button.setAttribute('aria-pressed', String(editions.get(button.dataset.dupEdition).every(item => discardPicks.get(item.id) === item.extra)));
+      });
+    }
+    const copies = [...discardPicks.values()].reduce((sum, value) => sum + value, 0);
+    const coins = rows.reduce((sum, item) => sum + (discardPicks.get(item.id) || 0) * item.reward, 0);
+    const all = rows.length > 0 && rows.every(item => discardPicks.get(item.id) === item.extra);
+    if (el('discardAllDuplicates')) { el('discardAllDuplicates').disabled = blocked || !rows.length; el('discardAllDuplicates').textContent = all ? 'Quitar selección' : 'Elegir todas'; }
+    if (el('duplicatesBar')) el('duplicatesBar').hidden = !copies;
+    if (el('duplicatesBarText')) el('duplicatesBarText').textContent = `${copies} ${copies === 1 ? 'carta' : 'cartas'} · +${coins} ${coins === 1 ? 'moneda' : 'monedas'}`;
+    if (el('discardSelected')) el('discardSelected').disabled = blocked || !copies;
   }
   function refresh(forceDaily = false) {
     if (request) return request;
@@ -884,7 +925,7 @@
     if (!host?.open || !copies) return;
     const sourceImages = inReveal
       ? [...revealDialog.querySelectorAll('.pack-reveal-front img')]
-      : [...host.querySelectorAll('[data-owned-card]')].filter(node => name === 'discard_all_duplicate_cards' || node.dataset.ownedCard === cardId).map(node => node.querySelector('img')).filter(Boolean);
+      : [...host.querySelectorAll('[data-owned-card]')].filter(node => name === 'discard_selected_duplicates' ? cardId.includes(node.dataset.ownedCard) : node.dataset.ownedCard === cardId).map(node => node.querySelector('img')).filter(Boolean);
     const layer = document.createElement('div'); layer.className = 'card-discard-effect';
     const hostRect = host.getBoundingClientRect();
     const rewardX = Math.max(65,Math.min(innerWidth-65,hostRect.left+hostRect.width/2));
@@ -964,12 +1005,13 @@
         await options.synchronizePacks?.(true);
         if (token !== generation || user !== options.session()) return;
       }
-      if (name === 'discard_duplicate_card' || name === 'discard_all_duplicate_cards') {
+      if (name === 'discard_duplicate_card' || name === 'discard_selected_duplicates') {
         const earned = Number(data.coins_earned) || 0;
-        const copies = name === 'discard_all_duplicate_cards' ? Number(data.copies_discarded) || 0 : 1;
+        const copies = name === 'discard_selected_duplicates' ? Number(data.copies_discarded) || 0 : 1;
+        if (name === 'discard_selected_duplicates') discardPicks.clear();
         // Inside a pack the floating reward is the confirmation; no line follows to the next card.
         message = discardedIndex != null ? '' : `${copies} ${copies === 1 ? 'carta repetida descartada' : 'cartas repetidas descartadas'} · +${earned} ${earned === 1 ? 'moneda' : 'monedas'}.`;
-        await animateDiscard(name,args.target_card_id,earned,copies,discardedIndex != null && reveal === revealAtStart);
+        await animateDiscard(name,args.target_card_id || args.p_items.map(item => item.card_id),earned,copies,discardedIndex != null && reveal === revealAtStart);
         if (token !== generation || user !== options.session()) return;
       }
       notice = message;
@@ -978,7 +1020,7 @@
     finally {if (token === generation) {
       if (reveal === revealAtStart && reveal) reveal.discarding = false;
       busy = false; render();
-      const destination = [...document.querySelectorAll('[data-discard-card], [data-banner-id]')].find(button => !button.disabled && ((focusCard && button.dataset.discardCard === focusCard) || (focusBanner && button.dataset.bannerId === focusBanner)));
+      const destination = [...document.querySelectorAll('[data-banner-id]')].find(button => !button.disabled && ( (focusBanner && button.dataset.bannerId === focusBanner)));
       if (focusProfileBanner !== undefined) {
         if (!el('profileBannerSettings').hidden && !el('profileBannerPicker').hidden) {
           const option = [...el('profileBannerOptions').querySelectorAll('[data-profile-banner]')].find(button => button.dataset.profileBanner === focusProfileBanner);
@@ -1032,6 +1074,7 @@
     if (duplicatesDialog?.parentElement !== document.body && duplicatesDialog) document.body.append(duplicatesDialog);
     duplicatesDialog?.addEventListener('close',() => {
       discardEffects.forEach(cleanup => cleanup());
+      discardPicks.clear();
       const trigger = duplicatesOpener; duplicatesOpener = null;
       if (trigger?.isConnected && !trigger.closest('[inert], [hidden]')) trigger.focus({preventScroll:true});
     });
@@ -1061,10 +1104,33 @@
       const duplicatesTrigger = event.target.closest('[data-duplicates-open]');
       if (duplicatesTrigger) openDuplicates(duplicatesTrigger);
       if (event.target.closest('[data-duplicates-close]')) globalThis.ClubMotion?.closeDialog ? void globalThis.ClubMotion.closeDialog(el('duplicatesDialog')) : el('duplicatesDialog').close();
-      const discard = event.target.closest('[data-discard-card]');
-      if (discard) void mutate('discard_duplicate_card', {target_card_id:discard.dataset.discardCard,copies:1}, 'Carta repetida descartada. Monedas añadidas a tu cuenta.');
+      const pick = event.target.closest('[data-dup-toggle]');
+      if (pick) {
+        const id = pick.dataset.dupToggle;
+        if (discardPicks.has(id)) discardPicks.delete(id); else discardPicks.set(id, duplicateRows().find(item => item.id === id)?.extra || 1);
+        paintDiscardPicks();
+      }
+      const step = event.target.closest('[data-dup-step]');
+      if (step) {
+        const id = step.dataset.dupCard, next = (discardPicks.get(id) || 0) + Number(step.dataset.dupStep);
+        if (next > 0) discardPicks.set(id, next); else discardPicks.delete(id);
+        paintDiscardPicks();
+      }
+      const edition = event.target.closest('[data-dup-edition]');
+      if (edition) {
+        const rows = duplicateRows().filter(item => item.edition === edition.dataset.dupEdition);
+        const all = rows.every(item => discardPicks.get(item.id) === item.extra);
+        rows.forEach(item => { if (all) discardPicks.delete(item.id); else discardPicks.set(item.id, item.extra); });
+        paintDiscardPicks();
+      }
     });
-    el('discardAllDuplicates').addEventListener('click', () => void mutate('discard_all_duplicate_cards', {}, 'Todas las repetidas descartadas. Monedas añadidas a tu cuenta.'));
+    el('discardSelected').addEventListener('click', () => void mutate('discard_selected_duplicates', {p_items:[...discardPicks].map(([card_id, copies]) => ({card_id, copies}))}, ''));
+    el('discardAllDuplicates').addEventListener('click', () => {
+      const rows = duplicateRows(), all = rows.every(item => discardPicks.get(item.id) === item.extra);
+      discardPicks.clear();
+      if (!all) rows.forEach(item => discardPicks.set(item.id, item.extra));
+      paintDiscardPicks();
+    });
     el('profileBannerToggle').addEventListener('click', () => {
       const picker = el('profileBannerPicker');
       picker.hidden = !picker.hidden;

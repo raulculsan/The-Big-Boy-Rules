@@ -67,7 +67,7 @@
   <link rel="stylesheet" href="club-experiences.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="app-update.css?v=20261030-app-update-440" />
   <link rel="stylesheet" href="ui-motion.css?v=20261031-smooth-470" />
-  <link rel="stylesheet" href="design-system.css?v=20261031-base-464" />
+  <link rel="stylesheet" href="design-system.css?v=20261101-duplicates-474" />
 </head>
 <body>
 
@@ -939,8 +939,10 @@
 
   <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle">
     <header class="banner-shop-heading duplicates-heading"><div><span class="duplicates-kicker">LOS NUESTROS · COLECCIÓN</span><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2></div><button type="button" data-duplicates-close aria-label="Cerrar repetidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
-    <div class="duplicates-toolbar"><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Descartar todas</button></div>
+    <div class="duplicates-toolbar"><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Elegir todas</button></div>
+    <div class="dup-editions" id="duplicatesEditions"></div>
     <div id="ownedCardInventory" class="owned-card-inventory"></div>
+    <div class="dup-bar" id="duplicatesBar" hidden><span id="duplicatesBarText"></span><button type="button" id="discardSelected">Descartar</button></div>
   </dialog>
 
   <dialog id="bannerShopDialog" class="banner-shop-dialog" aria-labelledby="bannerShopTitle">
@@ -991,7 +993,7 @@
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="shop-catalog-media.js?v=20261030-audit-hardening-443"></script>
   <script defer src="pack-opening.js?v=20261031-pack-tear-452"></script>
-  <script defer src="banner-shop.js?v=20261031-vitrina-456"></script>
+  <script defer src="banner-shop.js?v=20261101-duplicates-474"></script>
   <script defer src="chota-shop.js?v=20261031-room-tabs-449"></script>
   <script defer src="coin-missions.js?v=20261030-coin-missions-442"></script>
   <script defer src="club-day.js?v=20261031-smooth-470"></script>

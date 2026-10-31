@@ -46,6 +46,14 @@ test('chat customization only writes through checked functions', async () => {
   for (const file of ['chat-custom.js', 'chat-custom.css']) { assert.ok(index.includes(`${file}?v=`)); assert.ok(worker.includes(`./${file}?v=`)); }
 });
 
+test('discarding a selection keeps the last copy and stays atomic', async () => {
+  const [sql, shop, css] = await Promise.all(['supabase/migrations/20261101100000_discard_selected_duplicates.sql', 'banner-shop.js', 'design-system.css'].map(read));
+  assert.match(sql, /picked\.copies>=held/);
+  assert.match(sql, /group by card_id/);
+  assert.doesNotMatch(shop, /discard_all_duplicate_cards/);
+  assert.doesNotMatch(css.slice(css.indexOf('Repetidas:')), /gold|yellow|--ds-accent/);
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);
