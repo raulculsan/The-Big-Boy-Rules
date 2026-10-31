@@ -4,7 +4,7 @@
   const STORAGE_KEY = 'bb-chat-themes-v1';
   const DEFAULT_ID = 'big-boy';
   const paletteIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.2a2 2 0 0 0 1.5-3.3 1.4 1.4 0 0 1 1.1-2.3H17a4 4 0 0 0 4-4c0-4.7-4-8.4-9-8.4Z"/><circle cx="7.5" cy="10" r=".8"/><circle cx="10" cy="6.5" r=".8"/><circle cx="14.5" cy="6.5" r=".8"/><circle cx="17" cy="10" r=".8"/></svg>';
-  let catalog = [], getContext = () => null, dialog, draft, opener, loadPromise;
+  let catalog = [], getContext = () => null, getShared = () => null, publish = () => {}, afterSync = () => {}, dialog, draft, opener, loadPromise;
   const escape = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   function key(context) {
     return context?.userId && context?.conversationId != null && ['group', 'private'].includes(context.kind)
@@ -17,7 +17,8 @@
     } catch { return {}; }
   }
   function saved(context) {
-    const id = read()[key(context)];
+    const shared = getShared(context);
+    const id = shared || read()[key(context)];
     return catalog.some(theme => theme.id === id) ? id : DEFAULT_ID;
   }
   function save(context, id) {
@@ -59,6 +60,7 @@
     if (dialog?.open && key(getContext(draft.context.kind)) !== key(draft.context)) close();
     const theme = catalog.find(item => item.id === saved(context)) || catalog[0];
     if (theme) apply(container, theme);
+    afterSync(kind);
     const existing = header?.querySelector('[data-chat-themes]');
     if (!key(context)) { existing?.remove(); if (container) delete container.dataset.chatTheme; return; }
     if (header && !existing) {
@@ -95,7 +97,7 @@
         if (event.target.closest('[data-theme-apply]')) {
           if (key(getContext(draft.context.kind)) !== key(draft.context)) { close(); return; }
           if (!save(draft.context, draft.id)) { dialog.querySelector('[data-theme-status]').textContent = 'No se ha podido guardar. Inténtalo de nuevo.'; return; }
-          const kind = draft.context.kind; close(); sync(kind);
+          const kind = draft.context.kind; publish(draft.context, draft.id); close(); sync(kind);
         }
       });
       dialog.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.target.matches('button')) event.preventDefault(); });
@@ -104,6 +106,7 @@
   }
   function init(options) {
     getContext = options.getContext;
+    getShared = options.getShared || getShared; publish = options.publish || publish; afterSync = options.afterSync || afterSync;
     loadPromise = fetch('./chat-theme-catalog.json?v=20261010-241').then(response => { if (!response.ok) throw new Error('Catalog unavailable'); return response.json(); })
       .then(value => { catalog = Array.isArray(value) ? value.filter(item => /^[a-z0-9-]+$/.test(item.id) && /^icons\/chat-backgrounds\/[a-z0-9-]+\.svg$/.test(item.background) && ['incoming','outgoing','text','muted','accent'].every(field => /^#[\da-f]{6}$/i.test(item[field]))) : []; sync('group'); sync('private'); })
       .catch(() => { catalog = []; });

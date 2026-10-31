@@ -1692,12 +1692,13 @@ function renderMessages() {
       ${own ? "" : `<button type="button" class="message-avatar-link" data-profile="${escapeHtml(String(member?.id || message.member))}" aria-label="Ver perfil de ${escapeHtml(member?.name || "miembro")}">${getAvatar(member)}</button>`}
       <div class="message-bubble" data-message-bubble data-message-kind="group" data-message-id="${escapeHtml(String(message.id))}" tabindex="0" role="button" aria-haspopup="menu" aria-label="Mensaje de ${escapeHtml(member?.name || "Miembro")}: ${escapeHtml(String(message.text || "Adjunto").slice(0, 160))}. Mantén pulsado para ver opciones">
         ${own ? "" : `<div class="message-head">
-          <button class="message-author" data-profile="${message.member}">${escapeHtml(member?.name || "Miembro")}</button>
+          <button class="message-author" data-profile="${message.member}">${escapeHtml(globalThis.ChatCustom?.name("group", member) || member?.name || "Miembro")}</button>
         </div>`}
         ${renderChatQuote("group", message)}
         ${message.text ? `<p>${escapeHtml(message.text)}</p>` : ""}${attachment}
         <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>
         </div>
+        ${globalThis.ChatCustom?.chips("group", message.id) || ""}
       </div>
     </div>`;
   }).join(""));
@@ -2137,7 +2138,9 @@ function showMessageMenu(bubble, x, y) {
   const own = (target.kind === "group" ? message.userId : message.senderId) === currentAuthUser.id;
   const canDelete = own || (target.kind === "group" && canManageSite());
   const menu = document.getElementById("messageContextMenu");
-  menu.innerHTML = `<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="reply">Responder</button>${target.kind === "group" && canManageSite() && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="plan">Crear plan</button>' : ""}<button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
+  const reactionRow = (globalThis.ChatCustom?.emojis(target.kind) || []).map(emoji => `<button role="menuitem" type="button" data-message-action="react" data-emoji="${escapeHtml(emoji)}" aria-label="Reaccionar con ${escapeHtml(emoji)}">${escapeHtml(emoji)}</button>`).join("");
+  const pinned = globalThis.ChatCustom?.isPinned(target.kind, target.id);
+  menu.innerHTML = `${reactionRow ? `<div class="message-reaction-row">${reactionRow}</div>` : ""}<span class="message-context-caption">Mensaje</span><button role="menuitem" type="button" data-message-action="reply">Responder</button><button role="menuitem" type="button" data-message-action="pin">${pinned ? "Quitar fijado" : "Fijar"}</button>${target.kind === "group" && canManageSite() && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="plan">Crear plan</button>' : ""}<button role="menuitem" type="button" data-message-action="info"><span aria-hidden="true">ⓘ</span>Información</button>${own && (message.text || message.body) ? '<button role="menuitem" type="button" data-message-action="edit"><span aria-hidden="true">✎</span>Editar mensaje</button>' : ""}${canDelete ? '<button role="menuitem" type="button" class="danger" data-message-action="delete"><span aria-hidden="true">⌫</span>Eliminar mensaje</button>' : ""}`;
   messageMenuTarget = target; menu.hidden = false;
   positionChatMenu(menu, x, y);
   focusChatMenuSource(menu, bubble);
@@ -2926,7 +2929,7 @@ function renderPrivateContacts() {
   });
   const groupContact = `<button class="private-contact group-chat-contact ${document.getElementById("chat")?.classList.contains("conversation-open") ? "active" : ""}" type="button" data-open-group-chat data-kind="group" data-favorite-id="group" data-favorite="${userFavorites.has("group")}" data-search="Bigboys The Big Boy Rules grupo" data-conversation="true" data-unread="0" aria-description="Mantén pulsado para gestionar favoritos">
     ${groupAvatarMarkup()}
-    <span class="private-contact-copy"><span><strong>Bigboys</strong>${latestGroupMessage ? `<time datetime="${escapeHtml(latestGroupMessage.createdAt)}">${formatInboxTime(latestGroupMessage.createdAt)}</time>` : ""}</span><small><span class="inbox-group-label">Grupo · </span>${latestGroupChannel ? `#${escapeHtml(latestGroupChannel.name)} · ` : ""}${escapeHtml(groupPreview)}</small></span>
+    <span class="private-contact-copy"><span><strong>${escapeHtml(siteSettings.group_name || "Bigboys")}</strong>${latestGroupMessage ? `<time datetime="${escapeHtml(latestGroupMessage.createdAt)}">${formatInboxTime(latestGroupMessage.createdAt)}</time>` : ""}</span><small><span class="inbox-group-label">Grupo · </span>${latestGroupChannel ? `#${escapeHtml(latestGroupChannel.name)} · ` : ""}${escapeHtml(groupPreview)}</small></span>
   </button>`;
   const privateContactsMarkup = contacts.map(({member, latest}) => {
     const unread = unreadByMember.get(member.authId) || 0;
@@ -3002,7 +3005,7 @@ function renderPrivateConversation() {
       <button type="button" class="private-chat-avatar" data-profile="${escapeHtml(String(member.id))}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
         ${getAvatar(member)}
       </button>
-      <div><h3>${escapeHtml(member.name)}</h3><span class="chat-username">${escapeHtml(privatePresenceLabel(member))}</span></div>
+      <div><h3>${escapeHtml(globalThis.ChatCustom?.name("private", member) || member.name)}</h3><span class="chat-username">${escapeHtml(privatePresenceLabel(member))}</span></div>
     </div>`);
   globalThis.ChatThemes?.sync("private");
   const finishReading = preserveConversationReading(container, `private:${member.id}`);
@@ -3018,6 +3021,7 @@ function renderPrivateConversation() {
         ${message.attachmentUrl ? renderMessageAttachment(message) : ""}
         <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>
         </div>
+        ${globalThis.ChatCustom?.chips("private", message.id) || ""}
       </div>
     </div>`;
   }).join("") : `<div class="empty-state"><strong>Sin mensajes todavía</strong><span>Esta conversación es privada entre ${escapeHtml(currentUser.name)} y ${escapeHtml(member.name)}.</span></div>`);
@@ -4714,6 +4718,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
     globalThis.ClubDay?.reset();
+    globalThis.ChatCustom?.reset();
     globalThis.ClubSeasons?.reset();
     globalThis.PlanWidget?.clear();
     globalThis.AdminGrants?.reset();
@@ -4760,6 +4765,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     void hydrateAuthenticatedData(authUser);
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.BannerShop?.refresh(); });
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.ClubDay?.refresh(); });
+    runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) globalThis.ChatCustom?.start(); });
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
     renderPresence();
@@ -4818,6 +4824,7 @@ function showLogin() {
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
     globalThis.ClubDay?.reset();
+    globalThis.ChatCustom?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
@@ -4859,6 +4866,7 @@ async function logoutCurrentUser() {
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
     globalThis.ClubDay?.reset();
+    globalThis.ChatCustom?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
   globalThis.AdminGrants?.reset();
@@ -7853,12 +7861,15 @@ document.getElementById("chatImageViewer").addEventListener("close", () => {
 });
 document.getElementById("messageContextMenu").addEventListener("click", event => {
   event.stopPropagation();
-  const action = event.target.closest("[data-message-action]")?.dataset.messageAction;
+  const actionButton = event.target.closest("[data-message-action]");
+  const action = actionButton?.dataset.messageAction;
   const target = messageMenuTarget;
   if (!action || !contextMessage(target)) return;
   closeMessageMenu(event.detail === 0);
   if (action === "plan") { const message = contextMessage(target); openEventEditor(null, "event", {title: (message.text || message.body || "").slice(0, 160), description: message.text || message.body || ""}); }
   else if (action === "reply") selectChatReply(target);
+  else if (action === "react") void globalThis.ChatCustom?.react(target.kind, target.id, actionButton.dataset.emoji);
+  else if (action === "pin") void globalThis.ChatCustom?.pin(target.kind, globalThis.ChatCustom.isPinned(target.kind, target.id) ? null : target.id);
   else if (action === "info") showMessageInfo({...target, restoreFocus: event.detail === 0});
   else if (action === "edit") (target.kind === "group" ? editGroupMessage : editPrivateMessage)(target.id);
   else if (action === "delete") (target.kind === "group" ? deleteGroupMessage : deletePrivateMessage)(target.id);
@@ -8605,7 +8616,33 @@ const revealObserver = new IntersectionObserver(entries => entries.forEach(entry
 document.querySelectorAll(".reveal").forEach(element => revealObserver.observe(element));
 
 // Wallpaper preferences are personal and never enter the shared message backend.
+globalThis.ChatCustom?.init({
+  db, getUser: () => currentAuthUser, getChannel: () => activeChatChannelId, getPeer: () => getMember(activePrivateMemberId),
+  getSelf: () => currentUser, getMembers: () => members, canManage: canManageSite,
+  getGroupName: () => siteSettings.group_name || "Bigboys",
+  getMessage(kind, id) {
+    const message = (kind === "group" ? messages : privateMessages).find(item => String(item.id) === String(id));
+    return message ? (message.text || message.body || "Adjunto") : null;
+  },
+  notify: text => globalThis.ClubFeatures?.feedback(text),
+  openGroupPhoto: () => document.getElementById("editGroupAvatarButton")?.click(),
+  async saveGroupName(value) {
+    const {error} = await db.from("site_settings").upsert({key: "group_name", value, updated_by: currentAuthUser.id, updated_at: new Date().toISOString()});
+    if (error) throw error;
+    await loadSiteSettings();
+    renderPrivateContacts();
+  },
+  onChange() {
+    renderPrivateContacts();
+    if (document.getElementById("chat")?.classList.contains("active")) renderMessages();
+    if (activePrivateMemberId != null) renderPrivateConversation();
+  },
+});
+
 globalThis.ChatThemes?.init({
+  getShared: context => globalThis.ChatCustom?.sharedTheme(context),
+  publish: (context, id) => globalThis.ChatCustom?.publishTheme(context, id),
+  afterSync: kind => globalThis.ChatCustom?.sync(kind),
   getContext(kind) {
     const userId = currentAuthUser?.id || currentUser?.authId || currentUser?.id;
     const member = kind === "private" ? getMember(activePrivateMemberId) : null;

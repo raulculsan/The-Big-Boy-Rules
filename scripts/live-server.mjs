@@ -52,6 +52,8 @@ const allowedFiles = new Set([
   "coin-missions.css",
   "club-day.js",
   "club-day.css",
+  "chat-custom.js",
+  "chat-custom.css",
   "club-social.css",
   "club-live.css",
   "chota-games.js",

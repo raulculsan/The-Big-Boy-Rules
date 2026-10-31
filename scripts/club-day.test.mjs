@@ -38,6 +38,14 @@ test('whois keeps authors on the server until the round ends', async () => {
   assert.doesNotMatch(sql, /'answers',case when guessing[^\n]*\n[^\n]*'author'/);
 });
 
+test('chat customization only writes through checked functions', async () => {
+  const [sql, client, css, index, worker] = await Promise.all(['supabase/migrations/20261101090000_chat_customization.sql', 'chat-custom.js', 'chat-custom.css', 'index.html', 'service-worker.js'].map(read));
+  assert.doesNotMatch(sql, /grant (insert|update|delete|all)/i);
+  assert.doesNotMatch(client, /\.(insert|update|upsert|delete)\(/);
+  assert.doesNotMatch(css, /gold|yellow/);
+  for (const file of ['chat-custom.js', 'chat-custom.css']) { assert.ok(index.includes(`${file}?v=`)); assert.ok(worker.includes(`./${file}?v=`)); }
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);

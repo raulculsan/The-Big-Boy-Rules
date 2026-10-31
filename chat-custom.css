@@ -1,0 +1,33 @@
+/* Chat editor, reactions and the pinned message. Choices stay neutral: never a warm highlight. */
+.chat-edit-button { margin-left: 0; }
+.messages[data-chat-bubble] .message.own .message-bubble:not(:has(> .message-image)) { background: var(--chat-outgoing); }
+.chat-pin-banner { order: 2; display: flex; align-items: center; gap: 4px; padding: 6px 12px; border-bottom: 1px solid #ffffff1a; background: #15181d; }
+.chat-pin-banner button { min-height: 40px; border: 0; background: transparent; color: #f4f5f7; font: inherit; }
+.chat-pin-banner button:first-child { display: grid; flex: 1; min-width: 0; text-align: left; }
+.chat-pin-banner small { font-size: 12px; color: #999da6; }
+.chat-pin-banner span { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.chat-pin-banner button:last-child { flex: none; width: 40px; font-size: 20px; color: #999da6; }
+.message-reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.message-reactions button { display: inline-flex; align-items: center; gap: 3px; min-height: 28px; padding: 0 8px; border: 1px solid #ffffff2b; border-radius: 999px; background: #0000002e; color: inherit; font: inherit; font-size: 14px; }
+.message-reactions button[aria-pressed="true"] { border-color: #ffffff80; }
+.message-reactions b { font-size: 12px; font-weight: 500; }
+.message-reaction-row { display: flex; justify-content: space-between; gap: 2px; padding: 4px; }
+.message-context-menu .message-reaction-row button { flex: 1; min-width: 36px; min-height: 40px; padding: 0; font-size: 20px; text-align: center; }
+.chat-edit { width: min(100% - 24px, 460px); max-height: 86dvh; padding: 0; overflow: auto; border: 1px solid #ffffff26; border-radius: 18px; background: #15181d; color: #f4f5f7; }
+.chat-edit::backdrop { background: #000a; }
+.chat-edit-sheet { display: grid; gap: 20px; padding: 16px; }
+.chat-edit header { display: flex; align-items: center; justify-content: space-between; }
+.chat-edit h2 { margin: 0; font-size: 20px; font-weight: 600; }
+.chat-edit h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.chat-edit p { margin: 0; font-size: 13px; color: #999da6; }
+.chat-edit section { display: grid; gap: 8px; }
+.chat-edit form { display: flex; align-items: flex-end; gap: 8px; }
+.chat-edit label { display: grid; flex: 1; min-width: 0; gap: 4px; font-size: 13px; color: #c9ccd2; }
+.chat-edit input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid #ffffff26; border-radius: 10px; background: #1f2329; color: inherit; font: inherit; font-size: 16px; }
+.chat-edit button { min-height: 44px; padding: 0 14px; border: 1px solid #ffffff26; border-radius: 10px; background: transparent; color: inherit; font: inherit; font-size: 13px; }
+.chat-edit header button { width: 44px; padding: 0; border: 0; font-size: 22px; }
+.chat-edit-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.chat-edit-swatches button { width: 44px; padding: 0; border-radius: 50%; font-size: 12px; }
+.chat-edit-swatches button[aria-pressed="true"] { border: 2px solid #f4f5f7; }
+.chat-edit-status { min-height: 18px; }
+.chat-edit button:focus-visible, .chat-pin-banner button:focus-visible, .message-reactions button:focus-visible { outline: 2px solid #c6c6c6; outline-offset: 2px; }
