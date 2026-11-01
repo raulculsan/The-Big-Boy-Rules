@@ -8503,6 +8503,7 @@ globalThis.PullRefresh?.init({
 
 globalThis.ClubPlus?.init({
   db, getUser: () => currentAuthUser, getMember: getMemberByAuthId, getMembers: () => members,
+  upload: (file, folder) => uploadGroupMedia(file, folder),
   onChange() { globalThis.ClubDay?.paintEntry(); renderMembers(); },
 });
 

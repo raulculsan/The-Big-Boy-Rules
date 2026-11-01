@@ -14,6 +14,16 @@
 .club-day-tabs::-webkit-scrollbar { display: none; }
 .club-day-tabs button { flex: none; min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-sm); }
 .club-day-tabs button[aria-selected="true"] { border-color: var(--ds-text-2); background: var(--ds-raised); color: var(--ds-text); font-weight: 600; }
+.club-day-tabs-host { display: grid; gap: var(--ds-space-2); min-width: 0; }
+.club-day-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ds-space-1); padding: var(--ds-space-1); border-radius: var(--ds-radius-md); background: var(--ds-raised); }
+.club-day-groups button { min-height: var(--ds-control-sm); border: 0; border-radius: var(--ds-radius-sm); background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-sm); }
+.club-day-groups button[aria-pressed="true"] { background: var(--ds-surface); color: var(--ds-text); font-weight: 600; }
+.plus-upload { display: inline-flex; align-items: center; justify-self: start; }
+.plus-photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ds-space-2); }
+.plus-photo { margin: 0; }
+.plus-photo img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--ds-radius-sm); background: var(--ds-raised); }
+.plus-photo figcaption { margin-top: 4px; font-size: var(--ds-text-xs); color: var(--ds-text-2); }
+.club-day audio { width: 100%; }
 .club-day-body { display: grid; gap: var(--ds-space-3); min-width: 0; }
 .club-day-note, .club-day-notice { margin: 0; font-size: var(--ds-text-sm); line-height: 1.4; color: var(--ds-text-2); }
 .club-day-notice:empty { display: none; }

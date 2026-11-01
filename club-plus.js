@@ -82,7 +82,20 @@
   const recent=(state.matches||[]).map(m=>`<li><span>${esc(m.game)}<small>${esc(nameOf(m.winner))} ganó a ${esc(nameOf(m.loser))}</small></span></li>`).join('');
   return `<ol class="club-day-ranking">${rows||'<li><span>Aún no hay partidas.</span></li>'}</ol>${recent?`<details><summary>Últimas partidas</summary><ul class="plus-lines">${recent}</ul></details>`:''}<form class="club-day-form" data-plus-form="match"><label>Juego<input name="game" required minlength="2" maxlength="40" placeholder="FIFA, pádel, cartas…"></label><label>Ganó<select name="winner">${options(me)}</select></label><label>Perdió<select name="loser">${options(people().find(m=>m.authId!==me)?.authId)}</select></label><div><button type="submit" class="club-day-action">Apuntar partida</button></div></form>`;
  }
- const views={estado:status,recuerdos:memories,fechas:dates,bote:tabs,radio,juicio:court,reto:weekly,mentira:liar,liga:league};
+ const safeFile=url=>/^https:\/\/[^\s"'<>]+\/storage\/v1\/object\/public\/group-media\//.test(url||'')?url:'';
+ function photo(){
+  const p=state.photo||{},time=p.opens_at?new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit'}).format(new Date(p.opens_at)):'';
+  const grid=(p.photos||[]).map(x=>{const url=safeFile(x.url);return url?`<figure class="plus-photo"><img src="${esc(url)}" alt="Foto de ${esc(nameOf(x.user))}" loading="lazy"><figcaption>${esc(nameOf(x.user))}${x.late?' · tarde':''}</figcaption></figure>`:'';}).join('');
+  if(!p.opens_at)return '<h4>La foto del día</h4><p class="club-day-note">Hoy sale a una hora sorpresa entre las 10:00 y las 21:00. Vuelve más tarde.</p>';
+  const upload=p.own?'':`<label class="club-day-action plus-upload">${busy?'Subiendo…':'Subir mi foto'}<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-plus-file="photo" hidden></label>`;
+  return `<h4>La foto del día</h4><p class="club-day-note">${p.on_time?`Es la hora: quedan menos de 10 minutos desde las ${esc(time)}.`:`Salió a las ${esc(time)}.`} ${p.own?'':`${p.count} ${p.count===1?'persona la ha subido':'personas la han subido'}. Sube la tuya para verlas.`}</p>${upload}<div class="plus-photos">${grid}</div>`;
+ }
+ function karaoke(){
+  const k=state.karaoke||{},me=config.getUser?.()?.id,own=(k.entries||[]).some(e=>e.user===me);
+  const rows=(k.entries||[]).map(e=>{const url=safeFile(e.url);return `<article class="club-day-award"><h4>${esc(nameOf(e.user))}</h4>${url?`<audio controls preload="none" src="${esc(url)}"></audio>`:''}<button type="button" class="club-day-action is-quiet" data-plus-karaoke="${esc(e.user)}" aria-pressed="${k.vote===e.user}"${e.user===me?' disabled':''}>Votar · ${e.votes}</button></article>`;}).join('');
+  return `<h4>${esc(k.prompt||'')}</h4><p class="club-day-note">Canta esto esta semana y vota la mejor.</p><label class="club-day-action plus-upload">${busy?'Subiendo…':own?'Cambiar mi audio':'Subir mi audio'}<input type="file" accept="audio/*" capture data-plus-file="karaoke" hidden></label>${rows}`;
+ }
+ const views={estado:status,recuerdos:memories,fechas:dates,bote:tabs,radio,juicio:court,reto:weekly,mentira:liar,liga:league,foto:photo,karaoke};
  function view(id){return `${views[id]?.()||''}${notice?`<p class="club-day-note" role="status">${esc(notice)}</p>`:''}`;}
  async function refresh(){
   if(!config.db||!config.getUser?.())return;
@@ -107,6 +120,7 @@
   if(d.plusSong)void call('vote_club_song',{p_song:d.plusSong});
   if(d.plusTrial)void call('vote_club_trial',{p_trial:d.plusTrial,p_guilty:d.guilty==='true'});
   if(d.plusEntry)void call('toggle_challenge_vote',{p_author:d.plusEntry});
+  if(d.plusKaraoke)void call('vote_karaoke',{p_author:d.plusKaraoke});
   if(d.plusLie)void call('guess_club_lie',{p_id:d.plusLie,p_guess:Number(d.guess)});
  }
  function submit(event){
@@ -135,7 +149,17 @@
    void call('add_tab_expense',{p_tab:form.dataset.tab,p_payer:String(f.get('payer')),p_concept:String(f.get('concept')),p_cents:cents,p_people:shared},'Gasto guardado');
   }
  }
+ async function upload(event){
+  const input=event.target.closest?.('[data-plus-file]'),file=input?.files?.[0];if(!file)return;
+  const kind=input.dataset.plusFile;
+  if(busy)return;busy=true;notice='';config.onChange?.();
+  try{
+   const url=await config.upload(file,kind==='photo'?'club-foto':'club-karaoke');
+   busy=false;
+   await call(kind==='photo'?'post_day_photo':'post_karaoke',{p_url:url},kind==='photo'?'Foto subida':'Audio subido');
+  }catch(error){busy=false;notice=error?.message||'No se ha podido subir.';config.onChange?.();}
+ }
  function reset(){epoch++;state=null;notice='';busy=false;}
- function init(options){config=options;document.addEventListener('click',click);document.addEventListener('submit',submit);}
+ function init(options){config=options;document.addEventListener('click',click);document.addEventListener('submit',submit);document.addEventListener('change',upload);}
  globalThis.ClubPlus={init,refresh,reset,view,ready:()=>Boolean(state),clearNotice(){notice='';},statusFor:id=>state?.statuses?.[id]||''};
 })();

@@ -1,8 +1,9 @@
 /* Daily club play on Inicio. Votes, results and coins come only from authenticated RPCs. */
 (() => {
  'use strict';
- const tabs=[['pregunta','Pregunta'],['quien','Quién es'],['porra','Porra'],['premios','Premios'],['ranking','Ranking'],['duelos','Duelos'],['carta','Carta'],['capsula','Cápsula'],['ano','Mi año'],['estado','Estado'],['recuerdos','Recuerdos'],['fechas','Fechas'],['bote','Bote'],['radio','Radio'],['juicio','Tribunal'],['reto','Reto'],['mentira','Mentira'],['liga','Liga'],['mapa','Mapa']];
- const plusTabs=['estado','recuerdos','fechas','bote','radio','juicio','reto','mentira','liga'];
+ const tabs=[['pregunta','Pregunta'],['estado','Estado'],['recuerdos','Recuerdos'],['foto','Foto'],['quien','Quién es'],['mentira','Mentira'],['juicio','Tribunal'],['reto','Reto'],['karaoke','Karaoke'],['duelos','Duelos'],['porra','Porra'],['liga','Liga'],['fechas','Fechas'],['bote','Bote'],['radio','Radio'],['carta','Carta'],['capsula','Cápsula'],['premios','Premios'],['ranking','Ranking'],['ano','Mi año'],['mapa','Mapa']];
+ const groups=[['hoy','Hoy',['pregunta','estado','recuerdos','foto']],['juegos','Juegos',['quien','mentira','juicio','reto','karaoke','duelos','porra','liga']],['grupo','Grupo',['fechas','bote','radio','carta','capsula','premios','ranking','ano','mapa']]];
+ const plusTabs=['estado','recuerdos','fechas','bote','radio','juicio','reto','mentira','liga','foto','karaoke'];
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
  let painted={},lastRefresh=0,config={},cache=null,extras=null,whois=null,guesses={},owner=null,tab='pregunta',busy=false,notice='',failed='',epoch=0,draft=false,duelRival=null,duelAnswer=null;
@@ -130,11 +131,11 @@
  }
  // Only what changed is rebuilt, so a half-written answer survives a notice or a reply.
  function paint(node,tabsMarkup,view){
-  if(!node.firstElementChild?.matches('.club-day-tabs')){
-   node.innerHTML='<div class="club-day-tabs"></div><div class="club-day-body"></div><p class="club-day-notice" role="status"></p>';
+  if(!node.querySelector('.club-day-tabs-host')){
+   node.innerHTML='<div class="club-day-tabs-host"></div><div class="club-day-body"></div><p class="club-day-notice" role="status"></p>';
    painted={};
   }
-  if(painted.tabs!==tabsMarkup)node.firstElementChild.outerHTML=painted.tabs=tabsMarkup;
+  if(painted.tabs!==tabsMarkup)node.querySelector('.club-day-tabs-host').innerHTML=painted.tabs=tabsMarkup;
   if(painted.view!==view)node.querySelector('.club-day-body').innerHTML=painted.view=view;
   node.querySelector('.club-day-notice').textContent=notice;
   node.classList.toggle('is-busy',busy);
@@ -149,7 +150,8 @@
   if((extra&&!extras)||(tab==='quien'&&!whois))tab='pregunta';
   if(plusTabs.includes(tab)&&!globalThis.ClubPlus?.ready())tab='pregunta';
   const view=plusTabs.includes(tab)?globalThis.ClubPlus.view(tab):{pregunta:question,quien,porra,premios,ranking,duelos,carta,capsula,ano}[tab](data);
-  paint(node,`<div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>id==='mapa'?true:plusTabs.includes(id)?globalThis.ClubPlus?.ready():id==='quien'?whois:extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div>`,view);
+  const group=groups.find(g=>g[2].includes(tab))||groups[0];
+  paint(node,`<div class="club-day-groups">${groups.map(g=>`<button type="button" data-day-group="${g[0]}" aria-pressed="${g===group}">${g[1]}</button>`).join('')}</div><div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>group[2].includes(id)).filter(([id])=>id==='mapa'?true:plusTabs.includes(id)?globalThis.ClubPlus?.ready():id==='quien'?whois:extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div>`,view);
  }
  function message(error){return ['PGRST202','42883','42P01'].includes(error?.code)?'Esta sección se está preparando.':error?.message||'No hemos podido conectar con el club.';}
  async function call(name,args={},done=''){
@@ -189,6 +191,7 @@
   if(event.target.closest('#clubDayEntry')&&Date.now()-lastRefresh>3e4)void refresh();
   const b=event.target.closest('#clubDay button');if(!b||b.disabled||busy)return;
   const d=b.dataset;
+  if(d.dayGroup){tab=groups.find(g=>g[0]===d.dayGroup)[2].find(id=>tabs.some(t=>t[0]===id)&&(!plusTabs.includes(id)||globalThis.ClubPlus?.ready())&&(id!=='quien'||whois)&&(extras||!['duelos','carta','capsula','ano'].includes(id)))||'pregunta';notice='';return render();}
   if(d.dayTab==='mapa')return document.querySelector('[data-club-memory-map]')?.click();
   if(d.dayTab){tab=d.dayTab;notice='';globalThis.ClubPlus?.clearNotice();duelRival=null;duelAnswer=null;return render();}
   if(d.dayDuelRival){duelRival=d.dayDuelRival;return render();}

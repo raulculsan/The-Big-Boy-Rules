@@ -95,6 +95,13 @@ test('group games keep answers on the server', async () => {
   assert.match(sql, /Ya has abierto 2 juicios esta semana/);
 });
 
+test('media games only accept the member own files', async () => {
+  const [sql, client] = await Promise.all([read('supabase/migrations/20261101200000_club_media_games.sql'), read('club-plus.js')]);
+  assert.match(sql, /group-media\/'\|\|actor::text/);
+  assert.match(sql, /then\s+coalesce\(\(select jsonb_agg\(jsonb_build_object\('user',p\.user_id/);
+  assert.match(client, /const safeFile=/);
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);
