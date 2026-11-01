@@ -1331,7 +1331,7 @@ function memberTileMarkup(member, index) {
   return `
     <button class="club-member" type="button" data-profile="${member.id}" data-member-priority="${index < 2}" data-member-banner-user="${escapeHtml(member.authId || '')}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
       <div class="club-member-hero"><div class="club-member-banner" aria-hidden="true"></div>${getAvatar(member, "avatar", index < 2)}</div>
-      <span class="club-member-identity"><strong>${escapeHtml(member.name)}</strong><small>@${escapeHtml(member.username)}</small></span>
+      <span class="club-member-identity"><strong>${escapeHtml(member.name)}</strong><small>${escapeHtml(globalThis.ClubPlus?.statusFor(member.authId) || `@${member.username}`)}</small></span>
     </button>`;
 }
 
@@ -4770,6 +4770,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
     globalThis.ClubDay?.reset();
+    globalThis.ClubPlus?.reset();
     globalThis.ChatCustom?.reset();
     globalThis.ClubSeasons?.reset();
     globalThis.PlanWidget?.clear();
@@ -4821,6 +4822,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     void hydrateAuthenticatedData(authUser);
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.BannerShop?.refresh(); });
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.ClubDay?.refresh(); });
+    runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.ClubPlus?.refresh(); });
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) globalThis.ChatCustom?.start(); });
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.ClubCoinMissions?.refresh(); });
   } else {
@@ -4881,6 +4883,7 @@ function showLogin() {
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
     globalThis.ClubDay?.reset();
+    globalThis.ClubPlus?.reset();
     globalThis.ChatCustom?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
@@ -4923,6 +4926,7 @@ async function logoutCurrentUser() {
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
     globalThis.ClubDay?.reset();
+    globalThis.ClubPlus?.reset();
     globalThis.ChatCustom?.reset();
   globalThis.ClubSeasons?.reset();
   globalThis.PlanWidget?.clear();
@@ -8475,7 +8479,7 @@ async function refreshCurrentPage() {
   const tasks = [loadRemoteProfiles(), loadGroupEvents(), loadSiteSettings(), loadNotifications(),
     globalThis.BannerShop?.refresh(true), globalThis.DailyPacks?.refresh(true)];
   if (active === "inicio") tasks.push(loadNews(true));
-  if (active === "hoy") tasks.push(globalThis.ClubDay?.refresh());
+  if (active === "hoy" || active === "inicio") tasks.push(globalThis.ClubDay?.refresh(), globalThis.ClubPlus?.refresh());
   if (active === "ayuda") tasks.push(globalThis.Tickets?.refresh());
   if (active === "chat") tasks.push(loadMessages(), loadPrivateMessages());
   await Promise.allSettled(tasks);
@@ -8495,6 +8499,11 @@ globalThis.PullRefresh?.init({
   // A conversation scrolls its own messages; dialogs and overlays keep their gestures.
   canPull: () => Boolean(currentAuthUser) && !document.querySelector("dialog[open], .conversation-open")
     && !document.body.classList.contains("chat-focus"),
+});
+
+globalThis.ClubPlus?.init({
+  db, getUser: () => currentAuthUser, getMember: getMemberByAuthId, getMembers: () => members,
+  onChange() { globalThis.ClubDay?.paintEntry(); renderMembers(); },
 });
 
 globalThis.ChatMentions?.init({

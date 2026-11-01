@@ -1,7 +1,8 @@
 /* Daily club play on Inicio. Votes, results and coins come only from authenticated RPCs. */
 (() => {
  'use strict';
- const tabs=[['pregunta','Pregunta'],['quien','Quién es'],['porra','Porra'],['premios','Premios'],['ranking','Ranking'],['duelos','Duelos'],['carta','Carta'],['capsula','Cápsula'],['ano','Mi año']];
+ const tabs=[['pregunta','Pregunta'],['quien','Quién es'],['porra','Porra'],['premios','Premios'],['ranking','Ranking'],['duelos','Duelos'],['carta','Carta'],['capsula','Cápsula'],['ano','Mi año'],['estado','Estado'],['recuerdos','Recuerdos'],['fechas','Fechas'],['bote','Bote'],['radio','Radio']];
+ const plusTabs=['estado','recuerdos','fechas','bote','radio'];
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
  let painted={},lastRefresh=0,config={},cache=null,extras=null,whois=null,guesses={},owner=null,tab='pregunta',busy=false,notice='',failed='',epoch=0,draft=false,duelRival=null,duelAnswer=null;
@@ -146,8 +147,9 @@
   node.hidden=false;
   const extra=['duelos','carta','capsula','ano'].includes(tab);
   if((extra&&!extras)||(tab==='quien'&&!whois))tab='pregunta';
-  const view={pregunta:question,quien,porra,premios,ranking,duelos,carta,capsula,ano}[tab](data);
-  paint(node,`<div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>id==='quien'?whois:extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div>`,view);
+  if(plusTabs.includes(tab)&&!globalThis.ClubPlus?.ready())tab='pregunta';
+  const view=plusTabs.includes(tab)?globalThis.ClubPlus.view(tab):{pregunta:question,quien,porra,premios,ranking,duelos,carta,capsula,ano}[tab](data);
+  paint(node,`<div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>plusTabs.includes(id)?globalThis.ClubPlus?.ready():id==='quien'?whois:extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div>`,view);
  }
  function message(error){return ['PGRST202','42883','42P01'].includes(error?.code)?'Esta sección se está preparando.':error?.message||'No hemos podido conectar con el club.';}
  async function call(name,args={},done=''){
@@ -187,7 +189,7 @@
   if(event.target.closest('#clubDayEntry')&&Date.now()-lastRefresh>3e4)void refresh();
   const b=event.target.closest('#clubDay button');if(!b||b.disabled||busy)return;
   const d=b.dataset;
-  if(d.dayTab){tab=d.dayTab;notice='';duelRival=null;duelAnswer=null;return render();}
+  if(d.dayTab){tab=d.dayTab;notice='';globalThis.ClubPlus?.clearNotice();duelRival=null;duelAnswer=null;return render();}
   if(d.dayDuelRival){duelRival=d.dayDuelRival;return render();}
   if(d.dayDuelOpen){duelAnswer=d.dayDuelOpen;return render();}
   if(d.dayDuelNew){const rival=duelRival;duelRival=null;return void call('create_club_duel',{p_rival:rival,p_card:d.dayDuelNew},'Duelo lanzado');}

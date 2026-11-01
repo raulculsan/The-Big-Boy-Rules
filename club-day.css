@@ -10,9 +10,10 @@
 .club-day[hidden] { display: none; }
 .club-day h4 { margin: 0; font-size: var(--ds-text-md); font-weight: 600; line-height: 1.35; }
 .club-day.is-busy .club-day-body { opacity: .6; pointer-events: none; }
-.club-day-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ds-space-1); padding: var(--ds-space-1); border-radius: var(--ds-radius-md); background: var(--ds-raised); }
-.club-day-tabs button { min-height: var(--ds-control-sm); padding: 0 var(--ds-space-1); border: 0; border-radius: var(--ds-radius-sm); background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-sm); }
-.club-day-tabs button[aria-selected="true"] { background: var(--ds-surface); color: var(--ds-text); font-weight: 600; }
+.club-day-tabs { display: flex; gap: var(--ds-space-2); margin-inline: calc(var(--ds-space-4) * -1); padding-inline: var(--ds-space-4); overflow-x: auto; scrollbar-width: none; }
+.club-day-tabs::-webkit-scrollbar { display: none; }
+.club-day-tabs button { flex: none; min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-sm); }
+.club-day-tabs button[aria-selected="true"] { border-color: var(--ds-text-2); background: var(--ds-raised); color: var(--ds-text); font-weight: 600; }
 .club-day-body { display: grid; gap: var(--ds-space-3); min-width: 0; }
 .club-day-note, .club-day-notice { margin: 0; font-size: var(--ds-text-sm); line-height: 1.4; color: var(--ds-text-2); }
 .club-day-notice:empty { display: none; }
@@ -40,6 +41,22 @@
 .club-day-manage button { display: block; width: 100%; min-height: var(--ds-control-sm); margin-top: var(--ds-space-1); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: transparent; color: var(--ds-text); font: inherit; }
 .club-day-form { display: grid; gap: var(--ds-space-2); }
 .club-day-form label { display: grid; gap: var(--ds-space-1); font-size: var(--ds-text-sm); color: var(--ds-text-2); }
+.plus-lines, .plus-days { display: grid; gap: var(--ds-space-1); margin: 0; padding: 0; list-style: none; }
+.plus-lines li, .plus-days li { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-2); min-height: var(--ds-control-sm); font-size: var(--ds-text-sm); }
+.plus-lines li > span { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.plus-lines b { flex: none; font-weight: 600; }
+.plus-lines a { color: inherit; text-decoration: underline; }
+.plus-lines small { font-size: var(--ds-text-xs); color: var(--ds-text-2); }
+.plus-days li.is-own { font-weight: 600; }
+.plus-days [data-plus-day], .plus-songs button, .plus-choose { display: inline-flex; align-items: center; gap: var(--ds-space-2); min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text); font: inherit; font-size: var(--ds-text-sm); }
+.plus-days [data-plus-day] { flex: 1; justify-content: space-between; }
+.plus-days [aria-pressed="true"], .plus-songs [aria-pressed="true"] { border-color: var(--ds-text-2); background: var(--ds-raised); font-weight: 600; }
+.club-day details { font-size: var(--ds-text-sm); color: var(--ds-text-2); }
+.club-day summary { min-height: var(--ds-control-sm); line-height: var(--ds-control-sm); }
+.plus-people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ds-space-1); margin: 0; padding: 0; border: 0; }
+.plus-people legend { margin-bottom: var(--ds-space-1); font-size: var(--ds-text-sm); }
+.club-day-form .plus-people label { display: flex; align-items: center; gap: var(--ds-space-2); min-height: var(--ds-control-sm); }
+.club-day-form input[type="checkbox"] { width: 18px; min-height: 18px; accent-color: var(--ds-text-2); }
 .club-day-form input, .club-day-form textarea, .club-day-form select { width: 100%; min-height: var(--ds-control); padding: var(--ds-space-2) var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-raised); color: var(--ds-text); font: inherit; font-size: 16px; }
 .club-day-form div { display: flex; gap: var(--ds-space-2); }
 .club-day-ranking { display: grid; gap: var(--ds-space-1); margin: 0; padding: 0; list-style: none; }

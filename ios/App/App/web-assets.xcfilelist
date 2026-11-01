@@ -43,6 +43,7 @@ $(SRCROOT)/App/public/club-experiences.css
 $(SRCROOT)/App/public/club-live.css
 $(SRCROOT)/App/public/club-live.js
 $(SRCROOT)/App/public/club-model.js
+$(SRCROOT)/App/public/club-plus.js
 $(SRCROOT)/App/public/club-social.css
 $(SRCROOT)/App/public/club-social.js
 $(SRCROOT)/App/public/club.css

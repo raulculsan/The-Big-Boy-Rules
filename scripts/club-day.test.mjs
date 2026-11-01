@@ -79,6 +79,15 @@ test('tickets only write through checked functions and escape what members type'
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);
 });
 
+test('everyday tools stay on the server and never open unsafe links', async () => {
+  const [sql, client, index, worker] = await Promise.all(['supabase/migrations/20261101160000_club_plus.sql', 'club-plus.js', 'index.html', 'service-worker.js'].map(read));
+  assert.equal(sql.match(/create table club_plus\./g).length, sql.match(/enable row level security/g).length);
+  assert.doesNotMatch(client, /\.from\(/);
+  assert.match(client, /const safeLink=/);
+  assert.ok(index.includes('club-plus.js?v='));
+  assert.ok(worker.includes('./club-plus.js?v='));
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);
