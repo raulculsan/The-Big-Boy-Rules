@@ -63,3 +63,63 @@ body.authenticated #editar-usuario .admin-account-banner:has(:focus-visible) { o
 body.authenticated #editar-usuario .admin-account-banner.is-owned { cursor:default; opacity:.55; }
 @media(max-width:360px) { body.authenticated #editar-usuario .admin-account-fields > label,body.authenticated #editar-usuario .admin-account-amount { grid-template-columns:78px minmax(0,1fr); } }
 @media(prefers-reduced-motion:reduce) { body.authenticated #editar-usuario .admin-account-section > summary svg:last-child { transition:none; } }
+
+/* Account control: a searchable people list, in the same language as the editors. */
+#admin-cuentas#admin-cuentas { --row-muted:color-mix(in srgb,var(--bb2-ink) 58%,transparent); max-width:600px; margin:0 auto; padding:0 0 calc(40px + env(safe-area-inset-bottom,0px)); color:var(--bb2-ink); box-sizing:border-box; }
+#admin-cuentas#admin-cuentas .achievement-page-header { position:sticky; top:0; z-index:3; display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:0; min-height:48px; margin:0; padding:max(4px,var(--pwa-safe-top,env(safe-area-inset-top,0px))) 4px 4px; background:var(--bb2-canvas); border:0; border-bottom:.5px solid var(--bb2-line); }
+#admin-cuentas#admin-cuentas .achievement-back { width:44px; height:44px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:transparent; color:inherit; box-shadow:none; }
+#admin-cuentas#admin-cuentas .achievement-back svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+#admin-cuentas#admin-cuentas .achievement-page-header small { display:none; }
+#admin-cuentas#admin-cuentas .achievement-page-header h2 { margin:0; font:600 17px/1.2 var(--ds-font); letter-spacing:-.01em; text-align:center; }
+#admin-cuentas#admin-cuentas .admin-accounts-content { display:block; max-width:none; margin:0; padding:12px 16px 0; }
+#admin-cuentas#admin-cuentas .admin-accounts-search { display:grid; grid-template-columns:20px minmax(0,1fr); align-items:center; gap:8px; height:38px; padding:0 12px; border-radius:10px; background:color-mix(in srgb,var(--bb2-ink) 11%,transparent); color:var(--row-muted); }
+#admin-cuentas#admin-cuentas .admin-accounts-search:has(:focus-visible) { box-shadow:inset 0 0 0 1.5px var(--bb2-ink); }
+#admin-cuentas#admin-cuentas .admin-accounts-search svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+#admin-cuentas#admin-cuentas .admin-accounts-search input { width:100%; min-width:0; min-height:0; height:36px; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; outline:none; color:var(--bb2-ink); font-size:16px; -webkit-appearance:none; appearance:none; }
+#admin-cuentas#admin-cuentas .admin-accounts-search input::placeholder { color:var(--row-muted); }
+#admin-cuentas#admin-cuentas .admin-accounts-search input::-webkit-search-cancel-button { -webkit-appearance:none; }
+#admin-cuentas#admin-cuentas .admin-accounts-filters { display:flex; gap:8px; margin:12px -16px 4px; padding:0 16px; overflow-x:auto; scrollbar-width:none; }
+#admin-cuentas#admin-cuentas .admin-accounts-filters::-webkit-scrollbar { display:none; }
+#admin-cuentas#admin-cuentas .admin-accounts-filters button { flex:none; min-height:34px; padding:0 14px; border:0; border-radius:10px; background:color-mix(in srgb,var(--bb2-ink) 11%,transparent); color:var(--bb2-ink); box-shadow:none; font-size:14px; font-weight:600; touch-action:manipulation; }
+#admin-cuentas#admin-cuentas .admin-accounts-filters button span { margin-left:2px; font-weight:400; opacity:.65; font-variant-numeric:tabular-nums; }
+#admin-cuentas#admin-cuentas .admin-accounts-filters button[aria-pressed="true"] { background:var(--bb2-ink); color:var(--bb2-canvas); }
+#admin-cuentas#admin-cuentas .admin-accounts-filters button:focus-visible { outline:2px solid var(--bb2-ink); outline-offset:2px; }
+#admin-cuentas#admin-cuentas .superadmin-tools { display:block; margin:8px 0 0; padding:0; border:0; border-bottom:.5px solid var(--bb2-line); border-radius:0; background:transparent !important; box-shadow:none; }
+#admin-cuentas#admin-cuentas .superadmin-tools::before, #admin-cuentas#admin-cuentas .superadmin-tools::after { display:none; }
+#admin-cuentas#admin-cuentas .superadmin-tools > summary { display:grid; grid-template-columns:48px minmax(0,1fr) 18px; align-items:center; gap:12px; min-height:64px; margin:0; padding:8px 0; border:0; list-style:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+#admin-cuentas#admin-cuentas .superadmin-tools > summary::-webkit-details-marker { display:none; }
+#admin-cuentas#admin-cuentas .superadmin-tools > summary > svg { box-sizing:border-box; width:48px; height:48px; padding:12px; border-radius:50%; background:color-mix(in srgb,var(--bb2-ink) 11%,transparent); fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+#admin-cuentas#admin-cuentas .superadmin-tools > summary h3 { margin:0; font:600 15px/1.2 var(--ds-font); letter-spacing:0; }
+#admin-cuentas#admin-cuentas .admin-disclosure-icon { display:block; width:18px; height:18px; margin:0; padding:0; border:0; background:transparent; color:var(--row-muted); transition:transform .22s cubic-bezier(.16,1,.3,1); }
+#admin-cuentas#admin-cuentas .admin-disclosure-icon svg { display:block; width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+#admin-cuentas#admin-cuentas .superadmin-tools[open] .admin-disclosure-icon { transform:rotate(90deg); }
+#admin-cuentas#admin-cuentas .superadmin-tools > summary:focus-visible { outline:2px solid var(--bb2-ink); outline-offset:2px; border-radius:8px; }
+#admin-cuentas#admin-cuentas .admin-tool-content { margin:0; padding:0 0 16px; border:0; }
+#admin-cuentas#admin-cuentas .admin-create-user-form { display:grid; gap:0; grid-template-columns:minmax(0,1fr); }
+#admin-cuentas#admin-cuentas .admin-create-user-form > label { display:grid; grid-template-columns:96px minmax(0,1fr); align-items:center; column-gap:12px; min-height:46px; margin:0; border-top:.5px solid var(--bb2-line); font-size:15px; font-weight:400; letter-spacing:0; text-transform:none; }
+#admin-cuentas#admin-cuentas .admin-create-user-form > label:has(:focus-visible) { border-top-color:var(--bb2-ink); }
+#admin-cuentas#admin-cuentas .admin-create-user-form > label > span { color:var(--row-muted); }
+#admin-cuentas#admin-cuentas .admin-create-user-form input { width:100%; min-width:0; min-height:44px; padding:11px 0; border:0; border-radius:0; background:transparent; box-shadow:none; outline:none; color:var(--bb2-ink); font-size:16px; }
+#admin-cuentas#admin-cuentas .admin-create-user-form small { grid-column:1/-1; margin:8px 0 0; color:var(--row-muted); font-size:13px; line-height:1.45; }
+#admin-cuentas#admin-cuentas .admin-create-user-form button { grid-column:1/-1; width:100%; min-height:44px; margin:12px 0 0; border:0; border-radius:10px; font-size:15px; font-weight:600; }
+#admin-cuentas#admin-cuentas .form-feedback { margin:10px 0 0; color:var(--row-muted); font-size:13px; }
+#admin-cuentas#admin-cuentas .form-feedback:empty { display:none; }
+#admin-cuentas#admin-cuentas .admin-users-panel { margin:0; padding:0; border:0; background:transparent; box-shadow:none; }
+#admin-cuentas#admin-cuentas .admin-users-panel::before, #admin-cuentas#admin-cuentas .admin-users-panel::after { display:none; }
+#admin-cuentas#admin-cuentas .admin-member-list { display:block; }
+#admin-cuentas#admin-cuentas .admin-member-card { position:relative; display:grid; grid-template-columns:48px minmax(0,1fr) auto 18px; align-items:center; gap:12px; width:100%; min-height:64px; margin:0; padding:8px 0; border:0; border-radius:0; background:transparent; box-shadow:none; color:inherit; text-align:left; transform:none; }
+#admin-cuentas#admin-cuentas .admin-member-card[hidden] { display:none; }
+#admin-cuentas#admin-cuentas .admin-member-card::after { content:""; grid-column:4; grid-row:1; justify-self:center; width:7px; height:7px; border-top:1.75px solid var(--row-muted); border-right:1.75px solid var(--row-muted); transform:rotate(45deg); }
+#admin-cuentas#admin-cuentas .admin-member-card:focus-visible { outline:2px solid var(--bb2-ink); outline-offset:2px; border-radius:8px; }
+#admin-cuentas#admin-cuentas .admin-member-avatar { grid-column:1; grid-row:1; display:block; width:48px; height:48px; }
+#admin-cuentas#admin-cuentas .admin-member-avatar .avatar { display:grid; place-items:center; width:48px; height:48px; border:0; border-radius:50%; font-size:18px; object-fit:cover; box-shadow:none; }
+#admin-cuentas#admin-cuentas .admin-member-copy { grid-column:2; grid-row:1; display:block; min-width:0; }
+#admin-cuentas#admin-cuentas .admin-member-copy strong { display:block; font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#admin-cuentas#admin-cuentas .admin-member-copy small { display:block; margin-top:1px; color:var(--row-muted); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#admin-cuentas#admin-cuentas .role-chip { grid-column:3; grid-row:1; margin:0; padding:0; border:0; border-radius:0; background:transparent; color:var(--row-muted); font-size:13px; font-weight:400; letter-spacing:0; text-transform:none; }
+#admin-cuentas#admin-cuentas .role-chip.member { display:none; }
+#admin-cuentas#admin-cuentas .account-status { display:block; position:absolute; left:34px; top:calc(50% + 9px); width:14px; height:14px; margin:0; padding:0; overflow:hidden; border-radius:50%; background:#30d158; box-shadow:0 0 0 2.5px var(--bb2-canvas); color:transparent; font-size:0; }
+#admin-cuentas#admin-cuentas .account-status i { display:none; }
+#admin-cuentas#admin-cuentas .account-status.offline { display:none; }
+#admin-cuentas#admin-cuentas .admin-users-empty { margin:28px 0; color:var(--row-muted); font-size:14px; text-align:center; }
+@media(prefers-reduced-motion:reduce) { #admin-cuentas#admin-cuentas .admin-disclosure-icon { transition:none; } }

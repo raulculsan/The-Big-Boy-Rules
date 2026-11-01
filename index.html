@@ -74,7 +74,7 @@
   <link rel="stylesheet" href="app-update.css?v=20261030-app-update-440" />
   <link rel="stylesheet" href="ui-motion.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="design-system.css?v=20261102-theme-509" />
-  <link rel="stylesheet" href="app-theme.css?v=20261102-theme-524" />
+  <link rel="stylesheet" href="app-theme.css?v=20261102-theme-526" />
 </head>
 <body>
 
@@ -479,36 +479,34 @@
     <section class="page-section achievement-admin-page admin-settings-page" id="admin-cuentas">
       <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="admin-configuracion" aria-label="Volver a configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Control de cuentas</h2></div><span aria-hidden="true"></span></header>
       <div class="achievement-page-content admin-accounts-content">
+      <label class="admin-accounts-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><input id="adminUsersSearch" type="search" name="adminUsersSearch" placeholder="Buscar por nombre o @…" aria-label="Buscar usuarios" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+      <div class="admin-accounts-filters" id="adminUsersFilters" role="group" aria-label="Filtrar usuarios">
+        <button type="button" data-account-filter="all" aria-pressed="true">Todos <span></span></button>
+        <button type="button" data-account-filter="online" aria-pressed="false">En línea <span></span></button>
+        <button type="button" data-account-filter="admin" aria-pressed="false">Administradores <span></span></button>
+      </div>
       <details class="panel superadmin-tools admin-tool-disclosure" id="superAdminTools">
         <summary class="panel-heading">
-          <div>
-            <span class="eyebrow">CONTROL DE CUENTAS</span>
-            <h3>Crear un usuario</h3>
-          </div>
-          <span class="admin-disclosure-icon" aria-hidden="true">⌄</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          <h3>Crear usuario</h3>
+          <span class="admin-disclosure-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></span>
         </summary>
         <div class="admin-tool-content">
           <form class="admin-create-user-form" id="createUserForm">
-            <label>Usuario<input id="newUsername" name="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]+" autocomplete="off"></label>
-            <label>Nombre visible<input id="newDisplayName" name="displayName" required maxlength="60" autocomplete="off"></label>
-            <small id="newPasswordRules">Entre 8 y 128 caracteres, un símbolo (!, @, #) y sin el nombre, apellidos ni usuario.</small>
-            <label>Contraseña temporal<input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" aria-describedby="newPasswordRules" autocomplete="new-password"></label>
+            <label><span>Usuario</span><input id="newUsername" name="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]+" autocomplete="off"></label>
+            <label><span>Nombre</span><input id="newDisplayName" name="displayName" required maxlength="60" autocomplete="off"></label>
+            <label><span>Contraseña</span><input id="newUserPassword" name="password" type="password" required minlength="8" maxlength="128" aria-describedby="newPasswordRules" autocomplete="new-password"></label>
+            <small id="newPasswordRules">Entre 8 y 128 caracteres, un símbolo (!, @, #) y sin el nombre, apellidos ni usuario. Es temporal: tendrá que cambiarla al entrar.</small>
             <button class="primary-button" type="submit">Crear usuario</button>
           </form>
           <p class="form-feedback" id="createUserFeedback" aria-live="polite"></p>
         </div>
       </details>
 
-      <article class="panel admin-users-panel">
-        <div class="panel-heading">
-          <div>
-            <span class="eyebrow">CUENTAS REGISTRADAS</span>
-            <h3>Usuarios del club</h3>
-          </div>
-          <span class="admin-badge">Pulsa un usuario para gestionarlo</span>
-        </div>
+      <div class="admin-users-panel">
         <div class="admin-member-list" id="adminUsersTable"></div>
-      </article>
+        <p class="admin-users-empty" id="adminUsersEmpty" hidden>Ningún usuario coincide con la búsqueda.</p>
+      </div>
       </div>
     </section>
 

@@ -134,6 +134,7 @@
   }
   function initialize(options) {
     config = options;
+    watchAccounts();
     page()?.addEventListener('submit', submit);
     page()?.addEventListener('change', event => { if (event.target.name === 'resource') page().querySelector('[name=amount]').max = event.target.value === 'packs' ? '10000' : '2147483647'; });
     page()?.addEventListener('click', async event => {
@@ -144,6 +145,39 @@
         finally { if (token === generation) { busy = false; setControls(false); } }
       }
     }); render();
+  }
+  // The list is rebuilt by the app on every presence change, so the filters
+  // read each row and reapply themselves whenever its contents are replaced.
+  let accountFilter = 'all';
+  const folded = value => String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const rowMatches = (row, filter) => filter === 'online' ? !row.querySelector('.account-status.offline') : filter === 'admin' ? !!row.querySelector('.role-chip.admin') : true;
+  function filterAccounts() {
+    const table = document.getElementById('adminUsersTable');
+    if (!table) return;
+    const rows = [...table.querySelectorAll('.admin-member-card')], query = folded(document.getElementById('adminUsersSearch')?.value).replace(/^@/, '').trim();
+    let shown = 0;
+    rows.forEach(row => {
+      const visible = rowMatches(row, accountFilter) && folded(row.querySelector('.admin-member-copy')?.textContent).includes(query);
+      row.hidden = !visible; if (visible) shown++;
+    });
+    document.querySelectorAll('[data-account-filter]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.accountFilter === accountFilter));
+      button.querySelector('span').textContent = rows.filter(row => rowMatches(row, button.dataset.accountFilter)).length;
+    });
+    const empty = document.getElementById('adminUsersEmpty');
+    if (empty) empty.hidden = shown > 0 || !rows.length;
+  }
+  function watchAccounts() {
+    const table = document.getElementById('adminUsersTable');
+    if (!table || table.dataset.filtersReady) return;
+    table.dataset.filtersReady = 'true';
+    new MutationObserver(filterAccounts).observe(table, {childList:true});
+    document.getElementById('adminUsersSearch')?.addEventListener('input', filterAccounts);
+    document.getElementById('adminUsersFilters')?.addEventListener('click', event => {
+      const button = event.target.closest('[data-account-filter]');
+      if (button) { accountFilter = button.dataset.accountFilter; filterAccounts(); }
+    });
+    filterAccounts();
   }
   function reset() { generation++; selectedId = null; state = null; busy = false; pending = null; if (page()) page().innerHTML = ''; document.getElementById('adminRewardGrants')?.remove(); }
   globalThis.AdminGrants = Object.freeze({initialize, render, reset, open, didNavigate});
