@@ -1,6 +1,10 @@
 /* Dedicated administrator account page; balances are only changed by atomic server RPCs. */
 (() => {
-  let config, selectedId = null, state = null, details = null, busy = false, generation = 0, pending = null;
+  let config, selectedId = null, state = null, details = null, openSection = 'account', busy = false, generation = 0, pending = null;
+  // Reopening an account paints its last known figures at once and refreshes behind them.
+  const accounts = new Map();
+  const accountKey = user => `${config.session()}:${user.authId}`;
+  const bone = '<i class="admin-account-bone"></i>';
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const page = () => document.getElementById('editar-usuario');
   const member = () => config?.members().find(item => String(item.id) === String(selectedId));
@@ -21,9 +25,9 @@
   }
   const identityLine = user => `@${user.username} · ${user.roleKey === 'admin' ? 'Administrador' : 'Miembro'}`;
   const chevron = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
-  const section = (icon, title, detail, body, open = false, live = '') => `<details class="admin-account-section" name="admin-account-section"${open ? ' open' : ''}><summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${icon}"/></svg><span><strong>${title}</strong><small${live}>${detail}</small></span>${chevron}</summary>${body}</details>`;
+  const section = (key, icon, title, detail, body, live = '') => `<details class="admin-account-section" name="admin-account-section" data-section="${key}"${openSection === key ? ' open' : ''}><summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${icon}"/></svg><span><strong>${title}</strong><small${live}>${detail}</small></span>${chevron}</summary>${body}</details>`;
   function balanceMarkup() {
-    return `<div><strong data-pack-balance>${state ? number(state.available_packs) : '—'}</strong><span>Sobres</span></div><div><strong data-coin-balance>${state ? number(state.balance) : '—'}</strong><span>Monedas</span></div>`;
+    return `<div><strong data-pack-balance>${state ? number(state.available_packs) : bone}</strong><span>Sobres</span></div><div><strong data-coin-balance>${state ? number(state.balance) : bone}</strong><span>Monedas</span></div>`;
   }
   function renderBalances() {
     const node = page().querySelector('[data-account-balances]');
@@ -60,7 +64,7 @@
     const summary = page().querySelector('[data-account-safety]');
     if (!node) return;
     if (failed || !details) {
-      node.innerHTML = failed ? '<p class="admin-account-muted">No se han podido consultar los datos de la cuenta.</p>' : '<p class="admin-account-muted">Consultando la cuenta…</p>';
+      node.innerHTML = failed ? '<p class="admin-account-muted">No se han podido consultar los datos de la cuenta.</p>' : `<p class="admin-account-safety"><i></i><span>${bone}</span></p><dl class="admin-account-facts">${['Correo','Google','Autenticador','Contraseña','Estado','Última conexión','Último acceso','Dispositivo','Sesiones','Alta'].map(label => `<div><dt>${label}</dt><dd>${bone}</dd></div>`).join('')}</dl>`;
       summary.textContent = failed ? 'No disponible' : 'Consultando…';
       return;
     }
@@ -88,7 +92,7 @@
       const {data, error} = await config.rpc('get_admin_user_account_details', {target_user_id:user.authId});
       if (token !== generation || actor !== config.session()) return;
       if (error || data?.user_id !== user.authId) throw error || new Error('Respuesta no válida');
-      details = data; renderDetails();
+      details = data; accounts.set(accountKey(user), {...accounts.get(accountKey(user)), details:data}); renderDetails();
     } catch { if (token === generation) renderDetails(true); }
   }
   async function loadState(token = generation) {
@@ -99,7 +103,7 @@
     if (token !== generation || actor !== config.session()) return false;
     if (error) throw error;
     if (!data || data.user_id !== user.authId) throw new Error('No se han podido consultar los recursos de la cuenta.');
-    state = data; renderBalances(); renderBanners();
+    state = data; accounts.set(accountKey(user), {...accounts.get(accountKey(user)), state:data}); renderBalances(); renderBanners();
     page().querySelector('[data-account-load-status]').textContent = '';
     page().querySelector('[data-retry-account]').hidden = true;
     return true;
@@ -108,21 +112,21 @@
     if (!config?.canManage() || !config.session()) return;
     const user = config.members().find(item => String(item.id) === String(id) && !item.hidden);
     if (!user?.authId) return;
-    selectedId = user.id; state = null; details = null; pending = null; busy = false;
+    selectedId = user.id; ({state = null, details = null} = accounts.get(accountKey(user)) || {}); pending = null; busy = false;
     const token = ++generation, self = config.session() === user.authId;
     const countries = document.getElementById('profileFlag')?.innerHTML || '<option value="">Sin bandera</option>';
     page().innerHTML = `<header class="admin-account-header"><button type="button" data-account-back aria-label="Volver a control de cuentas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><h2>Editar usuario</h2></header>
       <div class="admin-account-content"><div class="admin-account-identity">${config.avatar?.(user, 'avatar') || `<span class="avatar">${escape(user.name.charAt(0))}</span>`}<div><h3 data-account-name>${escape(user.name)}</h3><p data-account-username>${escape(identityLine(user))}</p></div></div>
-      <div class="admin-account-balances" data-account-balances>${balanceMarkup()}</div><div class="admin-account-loading"><p data-account-load-status role="status">Consultando sobres, monedas y banners…</p><button class="text-button" type="button" data-retry-account hidden>Reintentar</button></div>
-      ${section('M12 3 5 6v5.5c0 4.4 2.9 7.9 7 9.5 4.1-1.6 7-5.1 7-9.5V6l-7-3Z','Cuenta y seguridad','Consultando…','<div class="admin-account-form" data-account-details></div>',true,' data-account-safety')}
-      ${section('M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20c1-3.6 3.9-5.5 7.5-5.5s6.5 1.9 7.5 5.5','Perfil','Nombre, usuario, bio y rango',`<form data-account-form="profile" class="admin-account-form"><div class="admin-account-fields"><label><span>Nombre</span><input name="displayName" value="${escape(user.name)}" maxlength="60" required autocomplete="off"></label><label><span>Usuario</span><input name="username" value="${escape(user.username)}" minlength="3" maxlength="32" pattern="[a-zA-Z0-9._-]+" required autocomplete="off" ${self ? 'disabled' : ''}></label><label><span>Apodo</span><input name="nickname" value="${escape(user.nickname)}" maxlength="50" autocomplete="off"></label><label><span>Bio</span><textarea name="bio" maxlength="350" rows="3">${escape(user.bio)}</textarea></label><label><span>Intereses</span><input name="tags" value="${escape((user.tags || []).join(', '))}" maxlength="120" placeholder="Música, viajes, deporte"></label><label><span>País</span><select name="countryFlag">${countries}</select></label><label><span>Rango</span><select name="role" ${self ? 'disabled' : ''}><option value="member">Miembro</option><option value="admin">Administrador</option></select></label></div><p data-feedback role="status" aria-live="polite"></p><button class="primary-button" type="submit">Guardar perfil</button></form>`)}
-      ${section('M3 8.5 12 4l9 4.5-9 4.5-9-4.5ZM3 12.5l9 4.5 9-4.5M3 16l9 4.5 9-4.5','Sobres y monedas','Añadir o retirar recursos',`<form data-account-form="resources" class="admin-account-form"><fieldset class="admin-account-segment" aria-label="Recurso"><label><input type="radio" name="resource" value="packs" checked>Sobres</label><label><input type="radio" name="resource" value="coins">Monedas</label></fieldset><fieldset class="admin-account-segment" aria-label="Operación"><label><input type="radio" name="operation" value="add" checked>Añadir</label><label><input type="radio" name="operation" value="remove">Retirar</label></fieldset><label class="admin-account-amount"><span>Cantidad</span><input name="amount" type="number" inputmode="numeric" min="1" max="10000" step="1" value="1" required></label><p class="admin-account-muted">Solo se pueden retirar sobres que todavía no se han abierto.</p><p data-feedback role="status" aria-live="polite"></p><button class="primary-button" type="submit">Aplicar cambio</button></form>`)}
-      ${section('M6.5 10.5V8a5.5 5.5 0 0 1 11 0v2.5M5.5 10.5h13v10h-13z','Contraseña','Asignar una contraseña temporal',`<form data-account-form="password" class="admin-account-form">${self ? '<p class="admin-account-muted">La contraseña de tu propia cuenta se cambia desde tu perfil.</p>' : '<div class="admin-account-fields"><label><span>Nueva</span><input name="password" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></label><label><span>Repetir</span><input name="confirmation" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></label></div><p class="admin-account-muted">Usa 8–128 caracteres, un símbolo (!, @, #) y evita su nombre, apellidos y usuario. Al entrar tendrá que elegir una contraseña personal.</p><p data-feedback role="status" aria-live="polite"></p><button class="secondary-button" type="submit">Actualizar contraseña</button>'}</form>`)}
-      ${section('M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-7-3.5-6 0M12 7c2-4 7-3.5 6 0','Regalar banner','Se añade a su colección',`<form data-account-form="banner" class="admin-account-form"><div class="admin-account-banner-options" data-banner-options></div><p class="admin-account-muted">El miembro elige cuándo equiparlo.</p><p data-feedback role="status" aria-live="polite"></p><button class="primary-button" type="submit">Regalar banner</button></form>`)}</div>`;
+      <div class="admin-account-balances" data-account-balances>${balanceMarkup()}</div><div class="admin-account-loading"><p data-account-load-status role="status"></p><button class="text-button" type="button" data-retry-account hidden>Reintentar</button></div>
+      ${section('account','M12 3 5 6v5.5c0 4.4 2.9 7.9 7 9.5 4.1-1.6 7-5.1 7-9.5V6l-7-3Z','Cuenta y seguridad','Consultando…','<div class="admin-account-form" data-account-details></div>',' data-account-safety')}
+      ${section('profile','M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20c1-3.6 3.9-5.5 7.5-5.5s6.5 1.9 7.5 5.5','Perfil','Nombre, usuario, bio y rango',`<form data-account-form="profile" class="admin-account-form"><div class="admin-account-fields"><label><span>Nombre</span><input name="displayName" value="${escape(user.name)}" maxlength="60" required autocomplete="off"></label><label><span>Usuario</span><input name="username" value="${escape(user.username)}" minlength="3" maxlength="32" pattern="[a-zA-Z0-9._-]+" required autocomplete="off" ${self ? 'disabled' : ''}></label><label><span>Apodo</span><input name="nickname" value="${escape(user.nickname)}" maxlength="50" autocomplete="off"></label><label><span>Bio</span><textarea name="bio" maxlength="350" rows="3">${escape(user.bio)}</textarea></label><label><span>Intereses</span><input name="tags" value="${escape((user.tags || []).join(', '))}" maxlength="120" placeholder="Música, viajes, deporte"></label><label><span>País</span><select name="countryFlag">${countries}</select></label><label><span>Rango</span><select name="role" ${self ? 'disabled' : ''}><option value="member">Miembro</option><option value="admin">Administrador</option></select></label></div><p data-feedback role="status" aria-live="polite"></p><button class="primary-button" type="submit">Guardar perfil</button></form>`)}
+      ${section('resources','M3 8.5 12 4l9 4.5-9 4.5-9-4.5ZM3 12.5l9 4.5 9-4.5M3 16l9 4.5 9-4.5','Sobres y monedas','Añadir o retirar recursos',`<form data-account-form="resources" class="admin-account-form"><fieldset class="admin-account-segment" aria-label="Recurso"><label><input type="radio" name="resource" value="packs" checked>Sobres</label><label><input type="radio" name="resource" value="coins">Monedas</label></fieldset><fieldset class="admin-account-segment" aria-label="Operación"><label><input type="radio" name="operation" value="add" checked>Añadir</label><label><input type="radio" name="operation" value="remove">Retirar</label></fieldset><label class="admin-account-amount"><span>Cantidad</span><input name="amount" type="number" inputmode="numeric" min="1" max="10000" step="1" value="1" required></label><p class="admin-account-muted">Solo se pueden retirar sobres que todavía no se han abierto.</p><p data-feedback role="status" aria-live="polite"></p><button class="primary-button" type="submit">Aplicar cambio</button></form>`)}
+      ${section('password','M6.5 10.5V8a5.5 5.5 0 0 1 11 0v2.5M5.5 10.5h13v10h-13z','Contraseña','Asignar una contraseña temporal',`<form data-account-form="password" class="admin-account-form">${self ? '<p class="admin-account-muted">La contraseña de tu propia cuenta se cambia desde tu perfil.</p>' : '<div class="admin-account-fields"><label><span>Nueva</span><input name="password" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></label><label><span>Repetir</span><input name="confirmation" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></label></div><p class="admin-account-muted">Usa 8–128 caracteres, un símbolo (!, @, #) y evita su nombre, apellidos y usuario. Al entrar tendrá que elegir una contraseña personal.</p><p data-feedback role="status" aria-live="polite"></p><button class="secondary-button" type="submit">Actualizar contraseña</button>'}</form>`)}
+      ${section('banner','M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-7-3.5-6 0M12 7c2-4 7-3.5 6 0','Regalar banner','Se añade a su colección',`<form data-account-form="banner" class="admin-account-form"><div class="admin-account-banner-options" data-banner-options></div><p class="admin-account-muted">El miembro elige cuándo equiparlo.</p><p data-feedback role="status" aria-live="polite"></p><button class="primary-button" type="submit">Regalar banner</button></form>`)}</div>`;
     page().querySelector('[name=countryFlag]').value = user.countryFlag || '';
     page().querySelector('[name=role]').value = user.roleKey === 'admin' ? 'admin' : 'member';
     config.navigate('editar-usuario');
-    renderDetails();
+    renderDetails(); renderBanners();
     setControls(true);
     try { await loadState(token); }
     catch (error) { if (token === generation) loadError(error); }
@@ -194,6 +198,12 @@
     config = options;
     watchAccounts();
     page()?.addEventListener('submit', submit);
+    // toggle does not bubble; capture it to remember the open section between visits.
+    page()?.addEventListener('toggle', event => {
+      const key = event.target.dataset?.section;
+      if (!key) return;
+      if (event.target.open) openSection = key; else if (openSection === key) openSection = null;
+    }, true);
     page()?.addEventListener('change', event => { if (event.target.name === 'resource') page().querySelector('[name=amount]').max = event.target.value === 'packs' ? '10000' : '2147483647'; });
     page()?.addEventListener('click', async event => {
       if (event.target.closest('[data-account-back]')) { config.navigate('admin-cuentas'); return; }
@@ -237,6 +247,6 @@
     });
     filterAccounts();
   }
-  function reset() { generation++; selectedId = null; state = null; details = null; busy = false; pending = null; if (page()) page().innerHTML = ''; document.getElementById('adminRewardGrants')?.remove(); }
+  function reset() { generation++; selectedId = null; state = null; details = null; accounts.clear(); busy = false; pending = null; if (page()) page().innerHTML = ''; document.getElementById('adminRewardGrants')?.remove(); }
   globalThis.AdminGrants = Object.freeze({initialize, render, reset, open, didNavigate});
 })();

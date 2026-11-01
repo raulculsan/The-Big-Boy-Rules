@@ -125,12 +125,20 @@ body.authenticated #editar-usuario .admin-account-banner.is-owned { cursor:defau
 @media(prefers-reduced-motion:reduce) { #admin-cuentas#admin-cuentas .admin-disclosure-icon { transition:none; } }
 
 body.authenticated #editar-usuario .admin-account-safety { display:grid; grid-template-columns:10px minmax(0,1fr); align-items:start; gap:10px; margin:0 0 12px; padding:12px; border-radius:12px; background:color-mix(in srgb,var(--bb2-ink) 8%,transparent); }
-body.authenticated #editar-usuario .admin-account-safety i { width:10px; height:10px; margin-top:5px; border-radius:50%; background:#ff453a; }
-body.authenticated #editar-usuario .admin-account-safety[data-level="mid"] i { background:#ff9f0a; }
-body.authenticated #editar-usuario .admin-account-safety[data-level="high"] i { background:#30d158; }
+body.authenticated #editar-usuario .admin-account-safety > i { width:10px; height:10px; margin-top:5px; border-radius:50%; background:#ff453a; }
+body.authenticated #editar-usuario .admin-account-safety[data-level="mid"] > i { background:#ff9f0a; }
+body.authenticated #editar-usuario .admin-account-safety[data-level="high"] > i { background:#30d158; }
 body.authenticated #editar-usuario .admin-account-safety strong { display:block; font-size:15px; font-weight:600; }
 body.authenticated #editar-usuario .admin-account-safety small { display:block; margin-top:2px; color:var(--row-muted); font-size:13px; line-height:1.35; }
 body.authenticated #editar-usuario .admin-account-facts { margin:0; }
 body.authenticated #editar-usuario .admin-account-facts > div { display:grid; grid-template-columns:116px minmax(0,1fr); align-items:baseline; column-gap:12px; padding:12px 0; border-top:.5px solid var(--bb2-line); font-size:15px; }
 body.authenticated #editar-usuario .admin-account-facts dt { color:var(--row-muted); }
 body.authenticated #editar-usuario .admin-account-facts dd { min-width:0; margin:0; overflow-wrap:anywhere; -webkit-user-select:text; user-select:text; }
+body.authenticated #editar-usuario .admin-account-safety { min-height:64px; box-sizing:border-box; align-items:center; }
+body.authenticated #editar-usuario .admin-account-safety > i { margin-top:0; }
+body.authenticated #editar-usuario .admin-account-safety:not([data-level]) > i { background:color-mix(in srgb,var(--bb2-ink) 18%,transparent); }
+body.authenticated #editar-usuario .admin-account-safety .admin-account-bone { width:150px; }
+body.authenticated #editar-usuario .admin-account-bone { display:inline-block; width:64px; max-width:100%; height:.85em; border-radius:5px; background:color-mix(in srgb,var(--bb2-ink) 13%,transparent); vertical-align:-.04em; animation:admin-account-bone 1.1s ease-in-out infinite alternate; }
+body.authenticated #editar-usuario .admin-account-balances .admin-account-bone { width:44px; }
+@keyframes admin-account-bone { to { opacity:.45; } }
+@media(prefers-reduced-motion:reduce) { body.authenticated #editar-usuario .admin-account-bone { animation:none; } }

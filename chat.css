@@ -34,7 +34,8 @@
     overflow: hidden;
   }
   body.authenticated:is(.chat-inbox-view, .chat-focus) #chat { z-index: 0; }
-  body.authenticated.chat-focus #privados.active { z-index: 1; pointer-events: none; }
+  /* The inbox lives under this layer: the swipe back must be able to reveal it. */
+  body.authenticated.chat-focus #privados.active { z-index: 1; pointer-events: none; background: transparent; }
   body.authenticated:is(.chat-inbox-view, .chat-focus) #chat .messages-hub,
   body.authenticated.chat-focus #privados .private-chat-layout {
     position: relative;
