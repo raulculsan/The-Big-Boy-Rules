@@ -48,7 +48,8 @@
 .plus-lines a { color: inherit; text-decoration: underline; }
 .plus-lines small { font-size: var(--ds-text-xs); color: var(--ds-text-2); }
 .plus-days li.is-own { font-weight: 600; }
-.plus-days [data-plus-day], .plus-songs button, .plus-choose { display: inline-flex; align-items: center; gap: var(--ds-space-2); min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text); font: inherit; font-size: var(--ds-text-sm); }
+.plus-days [data-plus-lie] { width: 100%; text-align: left; }
+.plus-days [data-plus-day], .plus-days [data-plus-lie], .plus-songs button, .plus-choose { display: inline-flex; align-items: center; gap: var(--ds-space-2); min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text); font: inherit; font-size: var(--ds-text-sm); }
 .plus-days [data-plus-day] { flex: 1; justify-content: space-between; }
 .plus-days [aria-pressed="true"], .plus-songs [aria-pressed="true"] { border-color: var(--ds-text-2); background: var(--ds-raised); font-weight: 600; }
 .club-day details { font-size: var(--ds-text-sm); color: var(--ds-text-2); }

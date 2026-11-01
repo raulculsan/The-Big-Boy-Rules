@@ -88,6 +88,13 @@ test('everyday tools stay on the server and never open unsafe links', async () =
   assert.ok(worker.includes('./club-plus.js?v='));
 });
 
+test('group games keep answers on the server', async () => {
+  const sql = await read('supabase/migrations/20261101180000_club_games.sql');
+  assert.equal(sql.match(/create table club_plus\./g).length, sql.match(/enable row level security/g).length);
+  assert.match(sql, /'lie',case when l\.author=actor or g\.guess is not null then l\.lie end/);
+  assert.match(sql, /Ya has abierto 2 juicios esta semana/);
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);

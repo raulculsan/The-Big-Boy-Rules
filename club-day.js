@@ -1,8 +1,8 @@
 /* Daily club play on Inicio. Votes, results and coins come only from authenticated RPCs. */
 (() => {
  'use strict';
- const tabs=[['pregunta','Pregunta'],['quien','Quién es'],['porra','Porra'],['premios','Premios'],['ranking','Ranking'],['duelos','Duelos'],['carta','Carta'],['capsula','Cápsula'],['ano','Mi año'],['estado','Estado'],['recuerdos','Recuerdos'],['fechas','Fechas'],['bote','Bote'],['radio','Radio']];
- const plusTabs=['estado','recuerdos','fechas','bote','radio'];
+ const tabs=[['pregunta','Pregunta'],['quien','Quién es'],['porra','Porra'],['premios','Premios'],['ranking','Ranking'],['duelos','Duelos'],['carta','Carta'],['capsula','Cápsula'],['ano','Mi año'],['estado','Estado'],['recuerdos','Recuerdos'],['fechas','Fechas'],['bote','Bote'],['radio','Radio'],['juicio','Tribunal'],['reto','Reto'],['mentira','Mentira'],['liga','Liga'],['mapa','Mapa']];
+ const plusTabs=['estado','recuerdos','fechas','bote','radio','juicio','reto','mentira','liga'];
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
  let painted={},lastRefresh=0,config={},cache=null,extras=null,whois=null,guesses={},owner=null,tab='pregunta',busy=false,notice='',failed='',epoch=0,draft=false,duelRival=null,duelAnswer=null;
@@ -83,9 +83,9 @@
   return `<div class="club-day-week"><img src="${esc(c.thumb)}" alt=""><div><h4>${esc(c.name)}</h4><p class="club-day-note">${c.owners===1?'La tiene 1 miembro':`La tienen ${c.owners} miembros`}</p>${foot}</div></div>`;
  }
  function capsula(){
-  const c=extras.capsules,min=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
+  const c=extras.capsules,min=new Date(Date.now()+7*864e5).toISOString().slice(0,10),yearEnd=`${new Date().getFullYear()}-12-31`;
   const opened=c.opened.map(o=>`<article class="club-day-award"><h4>${esc(nameOf(o.author))}</h4><p class="club-day-message">${esc(o.body)}</p><p class="club-day-note">Escrito el ${esc(String(o.created_at).slice(0,10).split('-').reverse().join('/'))}</p></article>`).join('');
-  const form=c.mine.length<3?`<form class="club-day-form" data-day-capsule><label>Mensaje para el futuro<textarea name="body" rows="3" maxlength="500" required></textarea></label><label>Se abre el<input name="opens" type="date" min="${min}" required></label><div><button type="submit" class="club-day-action">Sellar</button></div></form>`:'<p class="club-day-note">Ya tienes 3 cápsulas selladas.</p>';
+  const form=c.mine.length<3?`<form class="club-day-form" data-day-capsule><label>Mensaje o predicción para el futuro<textarea name="body" rows="3" maxlength="500" required></textarea></label><label>Se abre el<input name="opens" type="date" min="${min}" value="${esc(yearEnd>min?yearEnd:'')}" required></label><div><button type="submit" class="club-day-action">Sellar</button></div></form>`:'<p class="club-day-note">Ya tienes 3 cápsulas selladas.</p>';
   return `<p class="club-day-note">Lo verá todo el club cuando llegue la fecha. Hasta entonces, nadie puede leerlo. ${plural(c.sealed,'cápsula sellada','cápsulas selladas')}.</p>${form}${opened}`;
  }
  function ano(){
@@ -149,7 +149,7 @@
   if((extra&&!extras)||(tab==='quien'&&!whois))tab='pregunta';
   if(plusTabs.includes(tab)&&!globalThis.ClubPlus?.ready())tab='pregunta';
   const view=plusTabs.includes(tab)?globalThis.ClubPlus.view(tab):{pregunta:question,quien,porra,premios,ranking,duelos,carta,capsula,ano}[tab](data);
-  paint(node,`<div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>plusTabs.includes(id)?globalThis.ClubPlus?.ready():id==='quien'?whois:extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div>`,view);
+  paint(node,`<div class="club-day-tabs" role="tablist">${tabs.filter(([id])=>id==='mapa'?true:plusTabs.includes(id)?globalThis.ClubPlus?.ready():id==='quien'?whois:extras||!['duelos','carta','capsula','ano'].includes(id)).map(([id,label])=>`<button type="button" role="tab" data-day-tab="${id}" aria-selected="${tab===id}">${label}</button>`).join('')}</div>`,view);
  }
  function message(error){return ['PGRST202','42883','42P01'].includes(error?.code)?'Esta sección se está preparando.':error?.message||'No hemos podido conectar con el club.';}
  async function call(name,args={},done=''){
@@ -189,6 +189,7 @@
   if(event.target.closest('#clubDayEntry')&&Date.now()-lastRefresh>3e4)void refresh();
   const b=event.target.closest('#clubDay button');if(!b||b.disabled||busy)return;
   const d=b.dataset;
+  if(d.dayTab==='mapa')return document.querySelector('[data-club-memory-map]')?.click();
   if(d.dayTab){tab=d.dayTab;notice='';globalThis.ClubPlus?.clearNotice();duelRival=null;duelAnswer=null;return render();}
   if(d.dayDuelRival){duelRival=d.dayDuelRival;return render();}
   if(d.dayDuelOpen){duelAnswer=d.dayDuelOpen;return render();}
