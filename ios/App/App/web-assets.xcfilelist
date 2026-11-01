@@ -306,6 +306,8 @@ $(SRCROOT)/App/public/spotify-player.css
 $(SRCROOT)/App/public/spotify-player.js
 $(SRCROOT)/App/public/styles.css
 $(SRCROOT)/App/public/tab-navigation.js
+$(SRCROOT)/App/public/tickets.css
+$(SRCROOT)/App/public/tickets.js
 $(SRCROOT)/App/public/trophy-motion.js
 $(SRCROOT)/App/public/trophy-unlock.js
 $(SRCROOT)/App/public/ui-motion.css

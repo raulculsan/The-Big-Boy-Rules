@@ -229,8 +229,6 @@ let channelAutomationMessages = [];
 let calendarChatSyncDay = "";
 let calendarChatRequest = null;
 let chatChannels = [];
-let helpRequests = [];
-let helpMessages = [];
 let achievements = [];
 let achievementAwards = [];
 let achievementProgress = [];
@@ -254,8 +252,6 @@ let helpRealtime = null;
 let achievementsRealtime = null;
 let profilesRealtime = null;
 let activeNewsCategory = "deportes";
-let activeHelpRequestId = null;
-let activeHelpFilter = "all";
 let lastNewsRefreshAt = 0;
 let newsLoadToken = 0;
 let pendingPrivateMessageFile = null;
@@ -303,10 +299,8 @@ let chatBackGesture = null;
 let suppressChatGestureClick = false;
 let sharingMedia = null;
 let achievementsLoaded = false;
-let helpCenterLoaded = false;
 let achievementsLoading = false;
 let achievementsRequest = null;
-let helpCenterLoading = false;
 const realtimeRefreshTimers = new Map();
 let initialLaunchCompleted = false;
 let profileLoadGeneration = 0;
@@ -804,7 +798,7 @@ function goTo(sectionId) {
   document.body.classList.toggle("chat-focus", sectionId === "privados");
   document.body.classList.toggle("chat-inbox-view", sectionId === "chat");
   document.body.classList.toggle("achievement-management-open", ["admin-configuracion", "admin-diagnostico", "admin-cuentas", "admin-logros", "crear-logro", "asignar-logro", "editar-usuario"].includes(sectionId));
-  if (sectionId === "ayuda") { globalThis.ClubDrafts?.begin("helpRequestForm", "new"); globalThis.ClubDrafts?.begin("helpReplyForm", activeHelpRequestId == null ? null : `request:${activeHelpRequestId}`); }
+  if (sectionId === "ayuda") { globalThis.ClubDrafts?.begin("helpRequestForm", "new"); globalThis.ClubDrafts?.begin("helpReplyForm", globalThis.Tickets?.activeId() == null ? null : `request:${globalThis.Tickets.activeId()}`); }
   if (sectionId === "admin-logros") renderAdminAchievements();
   if (sectionId === "admin-diagnostico") globalThis.ClubHealth?.show();
   if (sectionId === "admin-cuentas" || sectionId === "administracion") renderAdminPanel();
@@ -813,7 +807,7 @@ function goTo(sectionId) {
   const titles = {
     "seccion-chat": "Sección del grupo", inicio: "El Club", chat: "Mensajes", miembros: "Miembros",
     privados: "Mensajes privados", perfil: "Perfil", calendario: "Calendario",
-    noticias: "Noticias", administracion: "Administración", ayuda: "Ayuda y sugerencias", sobres: "Colección", album: "Álbum", catalogo: "Cartas de la colección", hoy: "Hoy en el club",
+    noticias: "Noticias", administracion: "Administración", ayuda: "Tickets", sobres: "Colección", album: "Álbum", catalogo: "Cartas de la colección", hoy: "Hoy en el club",
     "admin-configuracion": "Configuración", "admin-diagnostico": "Rendimiento y diagnóstico", "admin-cuentas": "Control de cuentas", "admin-logros": "Configuración de logros", "crear-logro": "Crear un logro", "asignar-logro": "Asignar logro", "editar-usuario": "Editar usuario"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
@@ -851,7 +845,7 @@ function goTo(sectionId) {
       }
       if (sectionId === "inicio" && currentUser) renderSpotify();
       if ((requestedSection === "noticias" || sectionId === "inicio") && currentUser) loadNews(false);
-      if (sectionId === "ayuda" && currentUser) loadHelpCenter();
+      if (sectionId === "ayuda" && currentUser) globalThis.Tickets?.refresh();
       if (sectionId === "sobres" && currentUser) { void globalThis.BannerShop?.refresh(true); void globalThis.DailyPacks?.refresh(true); }
       if (["perfil", "administracion", "admin-logros", "crear-logro", "asignar-logro"].includes(sectionId) && currentUser && !achievementsLoaded) loadAchievements();
     }, 120);
@@ -4809,7 +4803,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   refreshProfileSurfaces();
   runWhenIdle(() => { if (currentAuthUser?.id === authUser?.id) renderCalendar(); });
   runWhenIdle(() => { if (currentAuthUser?.id === authUser?.id) renderSpotify(); });
-  for (const render of [renderNotifications, renderHelpCenter, renderAdminAchievements]) {
+  for (const render of [renderNotifications, () => globalThis.Tickets?.render(), renderAdminAchievements]) {
     runWhenIdle(() => { if (currentUser === user) render(); });
   }
   if (document.getElementById("chat")?.classList.contains("active")) runWhenIdle(() => { if (currentUser === user) renderPrivateContacts(); });
@@ -4972,8 +4966,6 @@ async function logoutCurrentUser() {
   adminConsole?.sync();
   accountRequests?.sync();
   chatChannels = [];
-  helpRequests = [];
-  helpMessages = [];
   achievements = [];
   achievementAwards = [];
   achievementProgress = [];
@@ -4981,11 +4973,9 @@ async function logoutCurrentUser() {
   achievementProgressStatus = "loading";
   dailyParticipation.reset();
   achievementsLoaded = false;
-  helpCenterLoaded = false;
   achievementsLoading = false;
   achievementsRequest = null;
-  helpCenterLoading = false;
-  activeHelpRequestId = null;
+  globalThis.Tickets?.reset();
   activeChatChannelId = null;
   if (db && presenceChannel) db.removeChannel(presenceChannel);
   if (db && messageChannel) db.removeChannel(messageChannel);
@@ -5360,6 +5350,7 @@ function notificationPresentation(item,actor) {
     group_message:{title:who,kind:"Mensaje en el grupo"},
     group_poll:{title:who,kind:"Nueva encuesta en el grupo"},
     group_mention:{title:who,kind:"Te ha mencionado en el grupo"},
+    help_update:{title:who,kind:"Novedad en un ticket"},
     account_request:{title:"Solicitud de cuenta",kind:"Administración · acceso al club",system:true,symbol:"＋"},
     like:{title:who,kind:"Le gusta tu contenido"},reply:{title:who,kind:"Ha respondido a tu contenido"},media_created:{title:who,kind:item.targetType==="moment"?"Ha compartido una historia":"Ha publicado contenido"},
     event_created:{title:"Nuevo plan",kind:`Agenda · ${who}`,system:true,symbol:"◷"},
@@ -5576,6 +5567,7 @@ async function openNotification(id) {
     else goTo("sobres");
   } else if (item.type === "account_request" && canManageSite()) {goTo("administracion");document.querySelector("[data-open-account-requests]")?.click();}
   else if (item.type === "group_poll" || item.type === "group_mention") void openGroupConversation(item.targetId);
+  else if (item.type === "help_update") { globalThis.Tickets?.show(item.targetId); goTo("ayuda"); }
   else if (item.type === "group_message") goTo("chat");
   else if (item.type === "news_update") {goTo("inicio");document.getElementById("noticias")?.classList.remove("is-collapsed");document.getElementById("noticias")?.scrollIntoView({behavior:(globalThis.ClubMotion?.media || matchMedia("(prefers-reduced-motion: reduce)")).matches?"instant":"smooth",block:"start"});}
   else {
@@ -5877,10 +5869,10 @@ function connectRealtime() {
     .subscribe();
   helpRealtime = db.channel("help-center-live")
     .on("postgres_changes", {event: "*", schema: "public", table: "help_requests"}, () => {
-      if (helpCenterLoaded || document.getElementById("ayuda")?.classList.contains("active")) scheduleRealtimeRefresh("help", loadHelpCenter);
+      if (globalThis.Tickets?.isLoaded() || document.getElementById("ayuda")?.classList.contains("active")) scheduleRealtimeRefresh("help", () => globalThis.Tickets?.refresh());
     })
     .on("postgres_changes", {event: "*", schema: "public", table: "help_messages"}, () => {
-      if (helpCenterLoaded || document.getElementById("ayuda")?.classList.contains("active")) scheduleRealtimeRefresh("help", loadHelpCenter);
+      if (globalThis.Tickets?.isLoaded() || document.getElementById("ayuda")?.classList.contains("active")) scheduleRealtimeRefresh("help", () => globalThis.Tickets?.refresh());
     })
     .subscribe();
   let achievementsRealtimeSubscribedOnce = false;
@@ -7009,195 +7001,6 @@ async function saveProfile(form) {
   }
 }
 
-function helpStatus(status) {
-  return HELP_STATUS[status] || HELP_STATUS.new;
-}
-
-async function loadHelpCenter() {
-  if (!backendReady || !currentAuthUser || helpCenterLoading) return;
-  helpCenterLoading = true;
-  const isAdmin = canManageSite();
-  let requestsQuery = db.from("help_requests").select("*").order("updated_at", {ascending: false}).limit(250);
-  if (!isAdmin) requestsQuery = requestsQuery.eq("user_id", currentAuthUser.id);
-  const requestResult = await requestsQuery;
-  let messageResult = {data: [], error: null};
-  if (!requestResult.error) {
-    const requestIds = (requestResult.data || []).map(item => item.id);
-    if (isAdmin) {
-      messageResult = await db.from("help_messages").select("*").order("created_at").limit(1000);
-    } else if (requestIds.length) {
-      messageResult = await db.from("help_messages").select("*").in("request_id", requestIds).order("created_at").limit(1000);
-    }
-  }
-  if (requestResult.error || messageResult.error) {
-    const list = document.getElementById("helpRequestList");
-    if (list) list.innerHTML = `<div class="empty-state compact"><strong>No se pudo abrir Ayuda</strong><span>${escapeHtml(requestResult.error?.message || messageResult.error?.message || "Inténtalo de nuevo.")}</span></div>`;
-    helpCenterLoading = false;
-    return;
-  }
-  helpCenterLoaded = true;
-  const visibleRequests = isAdmin
-    ? (requestResult.data || [])
-    : (requestResult.data || []).filter(item => item.user_id === currentAuthUser.id);
-  helpRequests = visibleRequests.map(item => ({
-    id: item.id, userId: item.user_id, type: item.request_type, status: item.status,
-    handledBy: item.handled_by, createdAt: item.created_at, updatedAt: item.updated_at,
-  }));
-  const visibleRequestIds = new Set(helpRequests.map(item => String(item.id)));
-  helpMessages = (messageResult.data || []).filter(item => visibleRequestIds.has(String(item.request_id))).map(item => ({
-    id: item.id, requestId: item.request_id, senderId: item.sender_id,
-    body: item.body, createdAt: item.created_at,
-  }));
-  if (activeHelpRequestId && !helpRequests.some(item => String(item.id) === String(activeHelpRequestId))) activeHelpRequestId = null;
-  renderHelpCenter();
-  helpCenterLoading = false;
-}
-
-function renderHelpCenter() {
-  const list = document.getElementById("helpRequestList");
-  if (!list) return;
-  const isAdmin = canManageSite();
-  document.getElementById("helpCenterTitle").textContent = isAdmin ? "Bandeja de administración." : "Ayuda y sugerencias.";
-  document.getElementById("helpCenterDescription").textContent = isAdmin
-    ? "Todas las peticiones del club llegan aquí. Respóndelas y actualiza su estado sin mezclarlas con los mensajes privados."
-    : "Crea una petición privada para el equipo de administración y sigue aquí todas sus respuestas.";
-  document.getElementById("helpInboxEyebrow").textContent = isAdmin ? "TODAS LAS PETICIONES" : "MIS PETICIONES";
-  document.getElementById("helpRequestCount").textContent = String(helpRequests.length);
-
-  const filtered = activeHelpFilter === "all" ? helpRequests : helpRequests.filter(item => item.status === activeHelpFilter);
-  list.innerHTML = filtered.length ? filtered.map(item => {
-    const status = helpStatus(item.status);
-    const author = getMemberByAuthId(item.userId);
-    const latest = [...helpMessages].reverse().find(message => String(message.requestId) === String(item.id));
-    return `<button class="help-request-card ${String(activeHelpRequestId) === String(item.id) ? "active" : ""}" type="button" data-help-request="${item.id}">
-      <span class="help-request-card-top"><b>${escapeHtml(HELP_TYPES[item.type] || "Ayuda")} · #${item.id}</b><i class="help-status-badge ${status.className}">${status.label}</i></span>
-      ${isAdmin ? `<strong>${escapeHtml(author?.name || "Miembro")}</strong>` : ""}
-      <small>${escapeHtml(latest?.body || "Petición creada")}</small>
-      <time datetime="${escapeHtml(item.updatedAt)}">${formatRelativeTime(item.updatedAt)}</time>
-    </button>`;
-  }).join("") : `<div class="empty-state compact">No hay peticiones en este estado.</div>`;
-
-  const active = helpRequests.find(item => String(item.id) === String(activeHelpRequestId));
-  globalThis.ClubDrafts?.begin("helpReplyForm", active ? `request:${active.id}` : null);
-  const conversation = document.getElementById("helpConversation");
-  const empty = document.getElementById("helpConversationEmpty");
-  conversation.hidden = !active;
-  empty.hidden = Boolean(active);
-  if (!active) {
-    document.getElementById("helpClosedNotice").hidden = true;
-    const replyForm = document.getElementById("helpReplyForm");
-    replyForm.hidden = false;
-    replyForm.querySelector("textarea").disabled = false;
-    replyForm.querySelector("button").disabled = false;
-    document.getElementById("helpRequestStatus").disabled = false;
-    document.getElementById("helpAdminStatus").classList.remove("locked");
-    return;
-  }
-
-  const status = helpStatus(active.status);
-  const isClosed = active.status === "closed";
-  const author = getMemberByAuthId(active.userId);
-  document.getElementById("helpConversationMeta").textContent = `PETICIÓN #${active.id} · ${HELP_TYPES[active.type] || "AYUDA"}`;
-  document.getElementById("helpConversationTitle").textContent = isAdmin ? author?.name || "Miembro" : HELP_TYPES[active.type] || "Ayuda";
-  document.getElementById("helpConversationAuthor").textContent = isAdmin ? `@${author?.username || "usuario"}` : "Conversación privada con administración";
-  const adminStatus = document.getElementById("helpAdminStatus");
-  adminStatus.hidden = !isAdmin;
-  const statusSelect = document.getElementById("helpRequestStatus");
-  statusSelect.value = active.status;
-  statusSelect.disabled = isClosed;
-  adminStatus.classList.toggle("locked", isClosed);
-  const memberStatus = document.getElementById("helpMemberStatus");
-  memberStatus.hidden = isAdmin;
-  memberStatus.className = `help-status-badge ${status.className}`;
-  memberStatus.textContent = status.label;
-
-  const messages = helpMessages.filter(message => String(message.requestId) === String(active.id));
-  const messageList = document.getElementById("helpMessageList");
-  messageList.innerHTML = messages.map(message => {
-    const sender = getMemberByAuthId(message.senderId);
-    const own = message.senderId === currentAuthUser?.id;
-    const senderIsAdmin = sender?.roleKey === "admin" || sender?.roleKey === "superadmin";
-    return `<article class="help-message ${own ? "own" : ""} ${senderIsAdmin ? "from-admin" : ""}">
-      ${getAvatar(sender, "avatar tiny")}<div><span><strong>${escapeHtml(sender?.name || (senderIsAdmin ? "Administración" : "Miembro"))}</strong><time datetime="${escapeHtml(message.createdAt)}">${formatMessageDate(message.createdAt)}</time></span><p>${escapeHtml(message.body).replace(/\n/g, "<br>")}</p></div>
-    </article>`;
-  }).join("");
-  document.getElementById("helpClosedNotice").hidden = !isClosed;
-  const replyForm = document.getElementById("helpReplyForm");
-  replyForm.hidden = isClosed;
-  replyForm.querySelector("textarea").disabled = isClosed;
-  replyForm.querySelector("button").disabled = isClosed;
-  document.getElementById("helpReplyFeedback").textContent = "";
-  requestAnimationFrame(() => { messageList.scrollTop = messageList.scrollHeight; });
-}
-
-async function submitHelpRequest(form) {
-  const draftToken = globalThis.ClubDrafts?.token(form.id);
-  if (!backendReady || !currentAuthUser) return;
-  const message = document.getElementById("helpRequestMessage").value.trim();
-  const type = document.getElementById("helpRequestType").value;
-  const feedback = document.getElementById("helpRequestFeedback");
-  if (!message) return;
-  const submit = form.querySelector("[type=submit]");
-  submit.disabled = true;
-  feedback.textContent = "Enviando petición…";
-  try {
-    const {data: requestId, error} = await db.rpc("create_help_request", {new_type: type, initial_body: message});
-    if (error) throw error;
-    globalThis.ClubDrafts?.clear("helpRequestForm", draftToken);
-    if (globalThis.ClubDrafts?.token(form.id) === draftToken) form.reset();
-    feedback.textContent = "Petición enviada a todos los administradores.";
-    activeHelpRequestId = requestId;
-    activeHelpFilter = "all";
-    document.querySelectorAll("[data-help-filter]").forEach(button => button.classList.toggle("active", button.dataset.helpFilter === "all"));
-    await loadHelpCenter();
-  } catch (error) {
-    feedback.textContent = error.message || "No se pudo enviar la petición.";
-  } finally {
-    submit.disabled = false;
-  }
-}
-
-async function submitHelpReply(form) {
-  const draftToken = globalThis.ClubDrafts?.token(form.id);
-  const body = document.getElementById("helpReplyMessage").value.trim();
-  const feedback = document.getElementById("helpReplyFeedback");
-  if (!body || !activeHelpRequestId || !currentAuthUser) return;
-  const active = helpRequests.find(item => String(item.id) === String(activeHelpRequestId));
-  if (active?.status === "closed") {
-    feedback.textContent = "Esta petición está cerrada y ya no admite respuestas.";
-    return;
-  }
-  const submit = form.querySelector("[type=submit]");
-  submit.disabled = true;
-  feedback.textContent = "Enviando…";
-  const {error} = await db.from("help_messages").insert({request_id: activeHelpRequestId, sender_id: currentAuthUser.id, body});
-  submit.disabled = false;
-  if (error) return void (feedback.textContent = error.message || "No se pudo enviar la respuesta.");
-  globalThis.ClubDrafts?.clear("helpReplyForm", draftToken);
-  if (globalThis.ClubDrafts?.token(form.id) === draftToken) form.reset();
-  feedback.textContent = "";
-  await loadHelpCenter();
-}
-
-async function updateHelpRequestStatus(status) {
-  if (!canManageSite() || !activeHelpRequestId || !HELP_STATUS[status]) return;
-  const active = helpRequests.find(item => String(item.id) === String(activeHelpRequestId));
-  const select = document.getElementById("helpRequestStatus");
-  if (!active || active.status === "closed") {
-    if (active) select.value = active.status;
-    return window.alert("Una petición cerrada no puede volver a abrirse ni modificarse.");
-  }
-  if (status === "closed" && !window.confirm("¿Cerrar esta petición definitivamente? Después no se podrá responder ni cambiar su estado.")) {
-    select.value = active.status;
-    return;
-  }
-  const values = {status, handled_by: status === "new" ? null : currentAuthUser.id, updated_at: new Date().toISOString()};
-  const {data, error} = await db.from("help_requests").update(values).eq("id", activeHelpRequestId).neq("status", "closed").select("id").maybeSingle();
-  if (error) return window.alert(error.message || "No se pudo cambiar el estado.");
-  if (!data) return void window.alert("La petición ya estaba cerrada y no puede modificarse.");
-  await loadHelpCenter();
-}
-
 async function editGroupMessage(id) {
   if (!backendReady || !currentAuthUser) return;
   const message = messages.find(item => String(item.id) === String(id));
@@ -7669,6 +7472,7 @@ let suppressPageBackClickUntil = 0;
 Object.keys(pageBackControls).forEach(id => document.getElementById(id)?.setAttribute("data-edge-back", ""));
 function pageBackAction(page) {
   if (page.id === "ayuda") return () => {
+    if (globalThis.Tickets?.back()) return;
     const destination = helpReturnPage;
     goTo(destination?.id || "inicio");
     restorePagePosition(destination);
@@ -8006,23 +7810,6 @@ document.getElementById("clearAllNotifications").addEventListener("click", event
 });
 document.addEventListener("click", () => {
   closeNotifications();
-});
-document.getElementById("helpRequestForm").addEventListener("submit", event => { event.preventDefault(); submitHelpRequest(event.currentTarget); });
-document.getElementById("helpReplyForm").addEventListener("submit", event => { event.preventDefault(); submitHelpReply(event.currentTarget); });
-document.getElementById("helpRequestStatus").addEventListener("change", event => updateHelpRequestStatus(event.target.value));
-document.getElementById("helpStatusTabs").addEventListener("click", event => {
-  const button = event.target.closest("[data-help-filter]");
-  if (!button) return;
-  activeHelpFilter = button.dataset.helpFilter;
-  document.querySelectorAll("[data-help-filter]").forEach(item => item.classList.toggle("active", item === button));
-  renderHelpCenter();
-});
-document.getElementById("helpRequestList").addEventListener("click", event => {
-  const request = event.target.closest("[data-help-request]");
-  if (!request) return;
-  activeHelpRequestId = request.dataset.helpRequest;
-  globalThis.ClubDrafts?.begin("helpReplyForm", `request:${activeHelpRequestId}`);
-  renderHelpCenter();
 });
 // Failed sends retain their exact draft and destination until retried or dismissed.
 // Other conversations remain usable while an upload is in progress.
@@ -8685,10 +8472,19 @@ async function refreshCurrentPage() {
     globalThis.BannerShop?.refresh(true), globalThis.DailyPacks?.refresh(true)];
   if (active === "inicio") tasks.push(loadNews(true));
   if (active === "hoy") tasks.push(globalThis.ClubDay?.refresh());
+  if (active === "ayuda") tasks.push(globalThis.Tickets?.refresh());
   if (active === "chat") tasks.push(loadMessages(), loadPrivateMessages());
   await Promise.allSettled(tasks);
   if (active === "perfil" && currentUser) renderProfile(currentUser.id, false);
 }
+
+globalThis.Tickets?.init({
+  db, getUser: () => currentAuthUser, getMember: getMemberByAuthId, canManage: canManageSite, avatar: getAvatar,
+  leave() { const destination = helpReturnPage; goTo(destination?.id || "inicio"); restorePagePosition(destination); },
+  drafts: id => globalThis.ClubDrafts?.begin("helpReplyForm", id == null ? null : `request:${id}`),
+  clearDraft: id => globalThis.ClubDrafts?.clear(id, globalThis.ClubDrafts?.token(id)),
+  onRead: () => loadNotifications(),
+});
 
 globalThis.PullRefresh?.init({
   onRefresh: refreshCurrentPage,
@@ -8807,7 +8603,7 @@ document.getElementById("groupEventNotice")?.addEventListener("click", event => 
     const form = event.target.form;
     if (!form || !whitelist[form.id] || !fields(form).includes(event.target)) return;
     if (!forms.has(form.id)) {
-      const scope = form.id === 'helpRequestForm' ? 'new' : form.id === 'helpReplyForm' && activeHelpRequestId ? `request:${activeHelpRequestId}` : null;
+      const scope = form.id === 'helpRequestForm' ? 'new' : form.id === 'helpReplyForm' && globalThis.Tickets?.activeId() ? `request:${globalThis.Tickets.activeId()}` : null;
       if (!scope || !account()) return;
       // Bind without restoring over the user's first typed character.
       forms.set(form.id,{key:keyFor(form.id,scope,account()),owner:account(),dirty:false});

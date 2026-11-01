@@ -1,0 +1,71 @@
+/* Tickets. Choices and status stay neutral; only the urgent mark and open state use colour words. */
+#ayuda .ticket-page { display: grid; gap: var(--ds-space-4); width: min(100%, 980px); margin-inline: auto; color: var(--ds-text); }
+#ayuda .ticket-top { display: flex; align-items: center; gap: var(--ds-space-3); }
+#ayuda .ticket-top > div { flex: 1; min-width: 0; }
+#ayuda .ticket-top h2 { margin: 0; font-size: var(--ds-text-xl); font-weight: 600; line-height: 1.2; }
+#ayuda .ticket-top p { margin: 2px 0 0; font-size: var(--ds-text-sm); color: var(--ds-text-2); }
+#ayuda .ticket-round { display: grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--ds-line); border-radius: 50%; background: var(--ds-surface); color: var(--ds-text); }
+#ayuda .ticket-round svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#ayuda .ticket-primary { flex: none; min-height: var(--ds-control); padding: 0 var(--ds-space-4); border: 0; border-radius: var(--ds-radius-pill); background: var(--ds-text); color: var(--ds-surface); font: inherit; font-size: var(--ds-text-sm); font-weight: 600; }
+#ayuda .ticket-primary:disabled { opacity: .55; }
+#ayuda .ticket-layout { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: var(--ds-space-4); align-items: start; }
+#ayuda .ticket-column { display: grid; gap: var(--ds-space-3); min-width: 0; }
+#ayuda .ticket-filters { display: flex; gap: var(--ds-space-2); overflow-x: auto; scrollbar-width: none; }
+#ayuda .ticket-filters::-webkit-scrollbar { display: none; }
+#ayuda .ticket-filters button { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); font: inherit; font-size: var(--ds-text-sm); }
+#ayuda .ticket-filters b { font-size: var(--ds-text-xs); font-weight: 500; }
+#ayuda .ticket-filters button[aria-pressed="true"] { border-color: var(--ds-text-2); background: var(--ds-raised); color: var(--ds-text); font-weight: 600; }
+#ayuda .ticket-list { display: grid; gap: var(--ds-space-2); }
+#ayuda .ticket-row { display: grid; gap: 4px; width: 100%; min-width: 0; padding: var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text); font: inherit; text-align: left; }
+#ayuda .ticket-row.is-active { border-color: var(--ds-text-2); background: var(--ds-raised); }
+#ayuda .ticket-row-top { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-2); min-width: 0; }
+#ayuda .ticket-row-top strong { overflow: hidden; font-size: var(--ds-text-md); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+#ayuda .ticket-row.is-unread strong { font-weight: 700; }
+#ayuda .ticket-row-top i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--ds-text); }
+#ayuda .ticket-row-preview { overflow: hidden; font-size: var(--ds-text-sm); color: var(--ds-text-2); text-overflow: ellipsis; white-space: nowrap; }
+#ayuda .ticket-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+#ayuda .ticket-row-meta small { font-size: var(--ds-text-xs); color: var(--ds-text-3); }
+#ayuda .ticket-status, #ayuda .ticket-urgent { padding: 2px 8px; border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); font-size: var(--ds-text-xs); color: var(--ds-text-2); }
+#ayuda .ticket-status.is-new { border-color: var(--ds-text-2); color: var(--ds-text); font-weight: 600; }
+#ayuda .ticket-status.is-closed { border-style: dashed; color: var(--ds-text-3); }
+#ayuda .ticket-urgent { border-color: #d4757566; color: #e39a9a; }
+#ayuda .ticket-empty { display: grid; justify-items: start; gap: var(--ds-space-1); padding: var(--ds-space-5) var(--ds-space-4); border: 1px dashed var(--ds-line); border-radius: var(--ds-radius-md); }
+#ayuda .ticket-empty strong { font-size: var(--ds-text-md); font-weight: 600; }
+#ayuda .ticket-empty p, #ayuda .ticket-note { margin: 0; font-size: var(--ds-text-sm); color: var(--ds-text-2); }
+#ayuda .ticket-empty button { min-height: var(--ds-control-sm); margin-top: var(--ds-space-2); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text); font: inherit; font-size: var(--ds-text-sm); }
+#ayuda .ticket-pane { display: grid; gap: var(--ds-space-4); min-width: 0; padding: var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); }
+#ayuda .ticket-pane[hidden] { display: none; }
+#ayuda .ticket-pane h3 { margin: 0; font-size: var(--ds-text-lg); font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+#ayuda .ticket-head { display: grid; gap: var(--ds-space-2); }
+#ayuda .ticket-head p { margin: 0; font-size: var(--ds-text-sm); color: var(--ds-text-2); }
+#ayuda .ticket-pane-back { display: none; }
+#ayuda .ticket-actions { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); }
+#ayuda .ticket-actions:empty { display: none; }
+#ayuda .ticket-actions button { min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text); font: inherit; font-size: var(--ds-text-sm); }
+#ayuda .ticket-thread { display: grid; gap: var(--ds-space-3); }
+#ayuda .ticket-message { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--ds-space-2); }
+#ayuda .ticket-message .avatar { width: 32px; height: 32px; }
+#ayuda .ticket-message > div { padding: var(--ds-space-2) var(--ds-space-3); border-radius: var(--ds-radius-md); background: var(--ds-raised); }
+#ayuda .ticket-message.is-own > div { background: transparent; box-shadow: inset 0 0 0 1px var(--ds-line); }
+#ayuda .ticket-message header { display: flex; justify-content: space-between; gap: var(--ds-space-2); }
+#ayuda .ticket-message strong { font-size: var(--ds-text-sm); font-weight: 600; }
+#ayuda .ticket-message time { flex: none; font-size: var(--ds-text-xs); color: var(--ds-text-3); }
+#ayuda .ticket-message p { margin: 2px 0 0; font-size: var(--ds-text-md); line-height: 1.45; overflow-wrap: anywhere; white-space: pre-wrap; }
+#ayuda .ticket-form { display: grid; gap: var(--ds-space-3); }
+#ayuda .ticket-form label { display: grid; gap: var(--ds-space-1); font-size: var(--ds-text-sm); color: var(--ds-text-2); }
+#ayuda .ticket-form :is(input:not([type="checkbox"]), textarea, select) { width: 100%; box-sizing: border-box; min-height: var(--ds-control); padding: 10px var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-raised); color: var(--ds-text); font: inherit; font-size: 16px; }
+#ayuda .ticket-form label.ticket-check { display: flex; align-items: center; gap: var(--ds-space-2); min-height: var(--ds-control-sm); }
+#ayuda .ticket-form input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--ds-text-2); }
+#ayuda .ticket-reply { display: flex; align-items: flex-end; gap: var(--ds-space-2); }
+#ayuda .ticket-reply[hidden], #ayuda .ticket-note[hidden] { display: none; }
+#ayuda .ticket-reply textarea { flex: 1; min-width: 0; min-height: var(--ds-control); padding: 10px var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-raised); color: var(--ds-text); font: inherit; font-size: 16px; resize: none; }
+#ayuda .ticket-feedback { margin: 0; font-size: var(--ds-text-sm); color: var(--ds-text-2); }
+#ayuda .ticket-feedback:empty { display: none; }
+#ayuda button:focus-visible, #ayuda .ticket-form :focus-visible { outline: 2px solid var(--ds-text-2); outline-offset: 1px; }
+@media (max-width: 760px) {
+  #ayuda .ticket-layout { grid-template-columns: minmax(0, 1fr); }
+  #ayuda[data-ticket-view="list"] .ticket-pane { display: none; }
+  #ayuda:not([data-ticket-view="list"]) .ticket-column { display: none; }
+  #ayuda:not([data-ticket-view="list"]) .ticket-primary-new { display: none; }
+  #ayuda .ticket-primary-new { padding: 0 var(--ds-space-3); }
+}

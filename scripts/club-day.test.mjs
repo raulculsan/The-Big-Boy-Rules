@@ -70,6 +70,15 @@ test('pull to refresh ships everywhere and leaves conversations alone', async ()
   assert.match(app, /dialog\[open\], \.conversation-open/);
 });
 
+test('tickets only write through checked functions and escape what members type', async () => {
+  const [sql, client, index, css] = await Promise.all(['supabase/migrations/20261101140000_tickets.sql', 'tickets.js', 'index.html', 'tickets.css'].map(read));
+  assert.doesNotMatch(client, /\.(insert|update|upsert|delete)\(/);
+  assert.match(sql, /club\.ticket_reopen/);
+  assert.match(sql, /Solo administración puede cambiar ese estado/);
+  assert.ok(index.includes('id="helpReplyForm"'));
+  assert.doesNotMatch(css, /gold|yellow|--ds-accent/);
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);

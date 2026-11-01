@@ -46,6 +46,7 @@
   <link rel="stylesheet" href="styles.css?v=20261101-home-load-477" />
   <link rel="stylesheet" href="chat.css?v=20261031-online-472" />
   <link rel="stylesheet" href="chat-themes.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="tickets.css?v=20261101-tickets-483" />
   <link rel="stylesheet" href="chat-custom.css?v=20261101-mentions-480" />
   <link rel="stylesheet" href="packs.css?v=20261031-smooth-470" />
   <link rel="stylesheet" href="achievement-admin.css?v=20261031-logros-462" />
@@ -570,53 +571,40 @@
       </form>
     </section>
 
-    <section class="page-section" id="ayuda">
-      <div class="section-intro help-center-intro">
-        <div><span class="eyebrow">CENTRO DE AYUDA</span><h2 id="helpCenterTitle">Ayuda y sugerencias.</h2></div>
-        <p id="helpCenterDescription">Crea una petición privada para el equipo de administración y sigue aquí todas sus respuestas.</p>
-      </div>
-
-      <div class="help-center-layout">
-        <aside class="panel help-requests-panel">
-          <form class="help-create-form" id="helpRequestForm">
-            <div class="panel-heading"><div><span class="eyebrow">NUEVA PETICIÓN</span><h3>¿En qué podemos ayudarte?</h3></div></div>
-            <label><span>Motivo</span><select id="helpRequestType"><option value="help">Necesito ayuda</option><option value="suggestion">Quiero hacer una sugerencia</option><option value="complaint">Quiero comunicar una queja</option></select></label>
-            <label><span>Mensaje</span><textarea id="helpRequestMessage" maxlength="2000" rows="4" placeholder="Cuéntanos qué ha ocurrido o qué te gustaría mejorar..." required></textarea></label>
-            <div class="form-feedback" id="helpRequestFeedback" role="status"></div>
-            <button class="primary-button" type="submit">Enviar petición</button>
-          </form>
-
-          <div class="help-inbox-heading">
-            <div><span class="eyebrow" id="helpInboxEyebrow">MIS PETICIONES</span><h3>Bandeja de ayuda</h3></div>
-            <span class="help-request-count" id="helpRequestCount">0</span>
+    <section class="page-section" id="ayuda" data-ticket-view="list" aria-labelledby="ticketPageTitle">
+      <div class="ticket-page">
+        <header class="ticket-top">
+          <button class="ticket-round" type="button" data-ticket-back aria-label="Volver"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+          <div><h2 id="ticketPageTitle" tabindex="-1">Soporte</h2><p id="ticketIntro"></p></div>
+          <button class="ticket-primary ticket-primary-new" type="button" data-ticket-new>Nuevo ticket</button>
+        </header>
+        <div class="ticket-layout">
+          <div class="ticket-column">
+            <div class="ticket-filters" id="ticketFilters"></div>
+            <div class="ticket-list" id="ticketList"></div>
           </div>
-          <div class="help-status-tabs" id="helpStatusTabs" role="tablist" aria-label="Filtrar peticiones">
-            <button class="active" type="button" data-help-filter="all">Todas</button>
-            <button type="button" data-help-filter="new">Nuevas</button>
-            <button type="button" data-help-filter="in_progress">En proceso</button>
-            <button type="button" data-help-filter="answered">Respondidas</button>
-            <button type="button" data-help-filter="closed">Cerradas</button>
-          </div>
-          <div class="help-request-list" id="helpRequestList"><div class="empty-state compact">Todavía no hay peticiones.</div></div>
-        </aside>
-
-        <article class="panel help-conversation-panel" id="helpConversationPanel">
-          <div class="help-conversation-empty" id="helpConversationEmpty"><strong>Selecciona una petición</strong><span>Aquí aparecerá la conversación independiente con administración.</span></div>
-          <div class="help-conversation" id="helpConversation" hidden>
-            <header class="help-conversation-header">
-              <div><span class="eyebrow" id="helpConversationMeta">PETICIÓN</span><h3 id="helpConversationTitle">Ayuda</h3><small id="helpConversationAuthor"></small></div>
-              <label class="help-admin-status" id="helpAdminStatus" hidden><span>Estado</span><select id="helpRequestStatus"><option value="new">Nueva</option><option value="in_progress">En proceso</option><option value="answered">Respondida</option><option value="closed">Cerrada</option></select></label>
-              <span class="help-status-badge" id="helpMemberStatus"></span>
-            </header>
-            <div class="help-message-list" id="helpMessageList"></div>
-            <div class="help-closed-notice" id="helpClosedNotice" hidden><span aria-hidden="true">✓</span><div><strong>Petición cerrada</strong><small>Esta conversación ha finalizado y ya no admite nuevas respuestas.</small></div></div>
-            <form class="help-reply-form" id="helpReplyForm">
-              <textarea id="helpReplyMessage" maxlength="2000" rows="2" placeholder="Escribe una respuesta..." required></textarea>
-              <button class="primary-button" type="submit">Enviar</button>
+          <div class="ticket-pane" id="ticketEmptyPane"><p class="ticket-note">Elige un ticket para ver la conversación.</p></div>
+          <section class="ticket-pane" id="ticketNew" hidden aria-label="Nuevo ticket">
+            <h3>Nuevo ticket</h3>
+            <form class="ticket-form" id="helpRequestForm">
+              <label>Tipo<select id="helpRequestType"><option value="help">Necesito ayuda</option><option value="suggestion">Sugerencia</option><option value="complaint">Queja</option></select></label>
+              <label>Asunto<input id="ticketSubject" maxlength="80" minlength="3" required autocomplete="off" placeholder="Resúmelo en una frase"></label>
+              <label>Mensaje<textarea id="helpRequestMessage" maxlength="2000" rows="5" required placeholder="Cuéntanos qué ha pasado o qué te gustaría mejorar"></textarea></label>
+              <label class="ticket-check"><input id="ticketUrgent" type="checkbox"> Es urgente</label>
+              <button class="ticket-primary" type="submit">Enviar ticket</button>
             </form>
-            <div class="form-feedback" id="helpReplyFeedback" role="status"></div>
-          </div>
-        </article>
+          </section>
+          <section class="ticket-pane" id="ticketDetail" hidden aria-label="Ticket">
+            <div class="ticket-head" id="ticketHead"></div>
+            <div class="ticket-thread" id="ticketThread"></div>
+            <p class="ticket-note" id="ticketClosed" hidden>Este ticket está cerrado. Reábrelo si necesitas seguir.</p>
+            <form class="ticket-reply" id="helpReplyForm">
+              <textarea id="helpReplyMessage" maxlength="2000" rows="2" required placeholder="Escribe una respuesta" aria-label="Respuesta"></textarea>
+              <button class="ticket-primary" type="submit">Enviar</button>
+            </form>
+          </section>
+        </div>
+        <p class="ticket-feedback" id="ticketFeedback" role="status"></p>
       </div>
     </section>
 
@@ -999,6 +987,7 @@
   <script defer src="chota-shop.js?v=20261031-room-tabs-449"></script>
   <script defer src="coin-missions.js?v=20261030-coin-missions-442"></script>
   <script defer src="club-day.js?v=20261101-home-load-477"></script>
+  <script defer src="tickets.js?v=20261101-tickets-483"></script>
   <script defer src="pull-refresh.js?v=20261101-pull-482"></script>
   <script defer src="chat-mentions.js?v=20261101-mentions-481"></script>
   <script defer src="chat-custom.js?v=20261101-chat-custom-473"></script>
@@ -1014,7 +1003,7 @@
   <script defer src="account-security.js?v=20261030-account-screen-442"></script>
   <script defer src="account-requests.js?v=20261030-native-google-442"></script>
   <script defer src="chota-outdoor.js?v=20261030-outdoor-events-448"></script>
-  <script defer src="app.js?v=20261101-pull-482"></script>
+  <script defer src="app.js?v=20261101-tickets-483"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
