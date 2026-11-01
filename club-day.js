@@ -117,9 +117,15 @@
  }
  function renderEntry(data){
   const entry=document.getElementById('clubDayEntry');if(!entry)return;
-  entry.hidden=!data;if(!data)return;
+  const small=entry.querySelector('small'),cacheKey=`bb-club-day-entry-${actor()}`;
+  if(!data){
+   // Last known status keeps the button from changing a moment after opening.
+   try{small.textContent=localStorage.getItem(cacheKey)||'Pregunta, porra y más';}catch{small.textContent='Pregunta, porra y más';}
+   return;
+  }
   const left=pending(data),streak=`${plural(data.streak,'día','días')} de racha`;
-  entry.querySelector('small').textContent=left?`${plural(left,'cosa pendiente','cosas pendientes')} · ${streak}`:streak;
+  small.textContent=left?`${plural(left,'cosa pendiente','cosas pendientes')} · ${streak}`:streak;
+  try{localStorage.setItem(cacheKey,small.textContent);}catch{}
  }
  // Only what changed is rebuilt, so a half-written answer survives a notice or a reply.
  function paint(node,tabsMarkup,view){
@@ -218,5 +224,5 @@
    }
   });
  }
- globalThis.ClubDay={init,refresh,reset};
+ globalThis.ClubDay={init,refresh,reset,paintEntry:render};
 })();

@@ -85,6 +85,7 @@ if (backendReady) {
   });
 }
 const AUTH_STORAGE_KEY = "bb-auth-session";
+const MEMBER_CACHE_KEY = "bb-home-members-v1";
 const AUTH_SESSION_KEY = "bb-auth-temporary";
 const AUTH_PROFILE_CACHE_KEY = "bb-auth-profile";
 const PROFILE_STORAGE_KEY = "bb-local-profiles";
@@ -1329,11 +1330,41 @@ function renderFeatured() {
 }
 
 let memberProfilesOwner = null, memberProfilesFailedOwner = null;
+function memberTileMarkup(member, index) {
+  return `
+    <button class="club-member" type="button" data-profile="${member.id}" data-member-priority="${index < 2}" data-member-banner-user="${escapeHtml(member.authId || '')}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
+      <div class="club-member-hero"><div class="club-member-banner" aria-hidden="true"></div>${getAvatar(member, "avatar", index < 2)}</div>
+      <span class="club-member-identity"><strong>${escapeHtml(member.name)}</strong><small>@${escapeHtml(member.username)}</small></span>
+    </button>`;
+}
+
+// Last seen members paint the first frame; identical server data then changes nothing.
+function readMemberCache() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MEMBER_CACHE_KEY) || "null");
+    return saved?.owner === currentAuthUser?.id && Array.isArray(saved.rows) ? saved.rows : [];
+  } catch { return []; }
+}
+
+function saveMemberCache() {
+  try {
+    localStorage.setItem(MEMBER_CACHE_KEY, JSON.stringify({owner: currentAuthUser?.id, rows: members.filter(member => !member.hidden)
+      .map(({id, authId, name, username, avatarUrl}) => ({id, authId, name, username, avatarUrl}))}));
+  } catch {}
+}
+
 function renderMembers() {
   const grid = document.getElementById("membersGrid");
   if (!grid) return;
   const pending = backendReady && currentAuthUser?.id && memberProfilesOwner !== currentAuthUser.id;
   grid.setAttribute("aria-busy", String(Boolean(pending && memberProfilesFailedOwner !== currentAuthUser?.id)));
+  const cachedMembers = pending ? readMemberCache() : [];
+  if (cachedMembers.length) {
+    grid.setAttribute("aria-busy", "false");
+    updateSurfaceMarkup(grid, cachedMembers.map(memberTileMarkup).join(""));
+    globalThis.BannerShop?.mountMembers(grid);
+    return;
+  }
   if (pending) {
     if (memberProfilesFailedOwner === currentAuthUser.id) {
       if (updateSurfaceMarkup(grid, '<p class="club-placeholder" role="status">No se pudieron cargar los miembros. <button type="button" class="text-button" data-members-retry>Reintentar</button></p>')) {
@@ -1344,11 +1375,7 @@ function renderMembers() {
     }
     return;
   }
-  updateSurfaceMarkup(grid, members.filter(member => !member.hidden).map((member, index) => `
-    <button class="club-member" type="button" data-profile="${member.id}" data-member-priority="${index < 2}" data-member-banner-user="${escapeHtml(member.authId || '')}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
-      <div class="club-member-hero"><div class="club-member-banner" aria-hidden="true"></div>${getAvatar(member, "avatar", index < 2)}</div>
-      <span class="club-member-identity"><strong>${escapeHtml(member.name)}</strong><small>@${escapeHtml(member.username)}</small></span>
-    </button>`).join(""));
+  updateSurfaceMarkup(grid, members.filter(member => !member.hidden).map(memberTileMarkup).join(""));
   // Rebind after session resets even when identity markup is unchanged.
   globalThis.BannerShop?.mountMembers(grid);
 }
@@ -4217,20 +4244,38 @@ function renderClubhouse(upcoming) {
     syncChotaSleepControls();
     return;
   }
-  clubhouseObserver?.disconnect();
-  globalThis.ClubOutdoor?.unmount(content.firstElementChild);
   content.dataset.roomSignature = signature;
   const plan = next ? `<button class="clubhouse-plan" type="button" data-calendar-date="${tigretonDayKey(next.date)}" aria-label="Ver plan: ${escapeHtml(next.event.title)}"><span class="clubhouse-note-label">Próximo plan</span><strong>${escapeHtml(next.event.title)}</strong><span class="clubhouse-plan-date">${escapeHtml(date)} · ${escapeHtml(schedule)}</span><span class="clubhouse-plan-countdown">${countdown}</span></button>` : `<div class="clubhouse-plan clubhouse-plan-empty"><span class="clubhouse-note-label">La agenda</span><strong>${homeEventsReady ? "El próximo plan está por llegar" : "Consultando la agenda…"}</strong>${homeEventsReady ? '<button type="button" data-go="calendario">Ver calendario</button>' : ""}</div>`;
+  const liveIcon = next ? `<button type="button" class="clubhouse-live-icon" data-club-live-event="${escapeHtml(next.event.id)}" aria-label="Abrir plan en directo: ${escapeHtml(next.event.title)}" title="Plan en directo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.1 7.1a7 7 0 0 0 0 9.8m9.8-9.8a7 7 0 0 1 0 9.8M4 4a11.3 11.3 0 0 0 0 16M20 4a11.3 11.3 0 0 1 0 16"/></svg></button>` : "";
+  const bunting = birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : "";
+  const existing = content.firstElementChild;
+  // Agenda news only swaps the note. Rebuilding would blank the art, Chota and every prop.
+  if (existing?.querySelector(".clubhouse-plan")) {
+    existing.classList.toggle("is-birthday", birthday);
+    existing.querySelectorAll(".clubhouse-live-icon,.clubhouse-bunting").forEach(node => node.remove());
+    const note = existing.querySelector(".clubhouse-plan");
+    note.insertAdjacentHTML("afterend", liveIcon);
+    note.insertAdjacentHTML("beforebegin", bunting);
+    note.outerHTML = plan;
+    globalThis.ChotaShop?.mountRoom(existing);
+    globalThis.ChotaGames?.mount(content.querySelector("#chotaArcadeEntry"));
+    globalThis.ClubLive?.mountRoom?.(content.querySelector(".clubhouse-memory"));
+    syncClubhouseDaylight();
+    syncChotaSleepControls();
+    return;
+  }
+  clubhouseObserver?.disconnect();
+  globalThis.ClubOutdoor?.unmount(existing);
   content.innerHTML = `<div class="clubhouse-room${birthday ? " is-birthday" : ""}" data-time="${moment}">
-    <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="async" fetchpriority="low">
+    <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="sync" fetchpriority="high">
     ${clubhouseSkyMarkup()}
     ${clubhouseDaylightMarkup()}
     ${clubhouseSeasonalMarkup()}
     <span class="clubhouse-light-switch" aria-hidden="true"><i></i></span>
     <div class="clubhouse-light-effects" aria-hidden="true"><div class="clubhouse-lamplight"></div><div class="clubhouse-dust"><i></i><i></i><i></i></div></div>
-    ${birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : ""}
+    ${bunting}
     ${plan}
-    ${next ? `<button type="button" class="clubhouse-live-icon" data-club-live-event="${escapeHtml(next.event.id)}" aria-label="Abrir plan en directo: ${escapeHtml(next.event.title)}" title="Plan en directo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.1 7.1a7 7 0 0 0 0 9.8m9.8-9.8a7 7 0 0 1 0 9.8M4 4a11.3 11.3 0 0 0 0 16M20 4a11.3 11.3 0 0 1 0 16"/></svg></button>` : ""}
+    ${liveIcon}
     <div id="chotaArcadeEntry"></div>
     <div class="clubhouse-memory"><span class="clubhouse-memory-label">Recuerdos del club</span><svg viewBox="0 0 40 32" aria-hidden="true"><path d="M4 8h8l3-5h10l3 5h8v21H4z"/><circle cx="20" cy="18" r="7"/></svg><strong>Aún no hay recuerdos compartidos</strong><span>Este sitio será para vuestra próxima foto.</span></div>
     <div class="chota-room-depth"><div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small></div></div>
@@ -4238,6 +4283,11 @@ function renderClubhouse(upcoming) {
     <div class="tigreton-bubble clubhouse-bubble" hidden role="status" aria-live="polite" aria-atomic="true"></div>
   </div>`;
   const room = content.firstElementChild;
+  // The motion engine starts later: the first frame must already hold the sleeping pose.
+  if (isChotaSleeping()) {
+    room.querySelector(".clubhouse-pet").classList.add("is-sleeping");
+    room.querySelector(".tigreton-character").style.backgroundPosition = "80% 100%";
+  }
   globalThis.ClubLive?.mountRoom?.(content.querySelector(".clubhouse-memory"));
   clubhouseObserver = new IntersectionObserver(entries => room.classList.toggle("is-in-view", entries[0].isIntersecting), {threshold: .15});
   clubhouseObserver.observe(room);
@@ -4742,6 +4792,10 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   document.getElementById("loginScreen")?.classList.add("login-hidden");
   applyUserHeader(user);
   if (isSuperAdmin() && document.getElementById("inicio")?.classList.contains("active")) goTo("administracion");
+  // The launch screen lifts onto a finished room, not an empty box that then jumps.
+  renderClubhouse(ClubModel.upcomingEvents(groupEvents));
+  renderMembers();
+  globalThis.ClubDay?.paintEntry();
   completeInitialLaunch();
   // Authentication and role checks are already finished. Let the authenticated
   // shell paint before DOM-heavy surfaces or network completion callbacks run.
@@ -4882,6 +4936,7 @@ async function logoutCurrentUser() {
   if (db) await db.auth.signOut();
   localStorage.removeItem(AUTH_STORAGE_KEY);
   localStorage.removeItem(AUTH_PROFILE_CACHE_KEY);
+  localStorage.removeItem(MEMBER_CACHE_KEY);
   sessionStorage.removeItem(AUTH_SESSION_KEY);
   currentUser = null;
   globalThis.ClubDrafts?.suspend();
@@ -5141,6 +5196,7 @@ async function loadRemoteProfiles() {
   rebuildMemberIndexes();
   activeProfiles.forEach(profile => mergeRemoteProfile(profile));
   rebuildMemberIndexes();
+  saveMemberCache();
   if (currentUser && !currentUser.hidden) {
     currentUser = getMember(currentUser.id) || currentUser;
   }

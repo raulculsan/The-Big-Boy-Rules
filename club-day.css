@@ -1,7 +1,6 @@
 /* Hoy en el club. Quiet surface built on the shared tokens; the own choice uses
    weight and a neutral line, never a warm highlight. */
 .club-day-entry { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); width: 100%; min-height: 60px; padding: var(--ds-space-3) var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); color: var(--ds-text); font: inherit; text-align: left; }
-.club-day-entry[hidden] { display: none; }
 .club-day-entry span { display: grid; gap: 2px; min-width: 0; }
 .club-day-entry strong { font-size: var(--ds-text-md); font-weight: 600; }
 .club-day-entry small { font-size: var(--ds-text-xs); color: var(--ds-text-2); }

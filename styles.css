@@ -2038,7 +2038,8 @@ select:focus,
   animation: bbSectionSettle .24s var(--bb-ease) both;
 }
 body.tab-switching .page-section.active > *,
-body.chat-focus .page-section.active > * { animation: none; }
+body.chat-focus .page-section.active > *,
+#inicio.active > * { animation: none; }
 
 @keyframes bbSectionSettle {
   from { opacity: .82; transform: translateY(5px); }

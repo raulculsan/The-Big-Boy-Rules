@@ -4,6 +4,8 @@
 .clubhouse-heading h3 { margin: 0; color: var(--club-text, #f4f1e9); font: 650 20px/1.2 var(--font-body, sans-serif); letter-spacing: -.025em; }
 .clubhouse-heading > span { color: var(--club-muted, #a7abb3); font-size: 12px; }
 .clubhouse-content { width: min(100%, 680px); margin-inline: auto; }
+/* Holds the room's place so nothing below moves when it appears. */
+.clubhouse-content:empty { aspect-ratio: 1; border-radius: 12px; background: #171b20; }
 .clubhouse-room { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; isolation: isolate; border-radius: 18px; background: #171b20; contain: layout paint; }
 .clubhouse-art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; transition: filter 3s ease-in-out; }
 .clubhouse-sky { position:absolute; left:83.984375%; top:0; width:13.4765625%; height:39.0625%; z-index:0; pointer-events:none; -webkit-mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; }
