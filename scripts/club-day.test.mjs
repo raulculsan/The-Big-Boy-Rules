@@ -102,6 +102,12 @@ test('media games only accept the member own files', async () => {
   assert.match(client, /const safeFile=/);
 });
 
+test('the page ships a restrictive content policy', async () => {
+  const index = await read('index.html');
+  assert.match(index, /Content-Security-Policy[^>]*default-src 'self'/);
+  assert.match(index, /object-src 'none'/);
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);

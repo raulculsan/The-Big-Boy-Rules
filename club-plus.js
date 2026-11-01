@@ -32,7 +32,7 @@
  function tabs(){
   const list=state.tabs.map(t=>{
    const rows=t.balances.map(b=>`<li><span>${esc(nameOf(b.id))}</span><b>${b.cents>0?'recibe':'debe'} ${esc(money.format(Math.abs(b.cents)/100))}</b></li>`).join('');
-   const spent=t.expenses.map(e=>`<li><span>${esc(e.concept)} · ${esc(nameOf(e.payer))}</span><b>${esc(money.format(e.cents/100))}</b></li>`).join('');
+   const spent=t.expenses.map(e=>`<li><span>${esc(e.concept)} · ${esc(nameOf(e.payer))}</span><b>${esc(money.format(e.cents/100))}</b>${t.settled?'':`<button type="button" class="plus-remove" data-plus-expense="${esc(e.id)}" aria-label="Borrar ${esc(e.concept)}">×</button>`}</li>`).join('');
    const add=t.settled?'':`<details><summary>Añadir gasto</summary><form class="club-day-form" data-plus-form="expense" data-tab="${esc(t.id)}"><label>Concepto<input name="concept" required maxlength="60"></label><label>Importe en euros<input name="amount" required inputmode="decimal" placeholder="12,50"></label><label>Pagó<select name="payer">${people().map(m=>`<option value="${esc(m.authId)}"${m.authId===config.getUser?.()?.id?' selected':''}>${esc(m.name)}</option>`).join('')}</select></label><fieldset class="plus-people"><legend>Entre quién se reparte</legend>${people().map(m=>`<label><input type="checkbox" name="people" value="${esc(m.authId)}" checked> ${esc(m.name)}</label>`).join('')}</fieldset><div><button type="submit" class="club-day-action">Guardar gasto</button></div></form></details>`;
    return `<article class="club-day-prediction"><h4>${esc(t.title)}${t.settled?' · cerrado':''}</h4><ul class="plus-lines">${rows||'<li><span>Sin deudas</span></li>'}</ul>${spent?`<details><summary>Gastos</summary><ul class="plus-lines">${spent}</ul></details>`:''}${add}${t.own&&!t.settled?`<button type="button" class="club-day-action is-quiet" data-plus-settle="${esc(t.id)}">Cerrar bote</button>`:''}</article>`;
   }).join('');
@@ -79,7 +79,7 @@
  function league(){
   const me=config.getUser?.()?.id;
   const rows=(state.league||[]).map((r,i)=>`<li><b>${i+1}</b><span>${esc(nameOf(r.id))}</span><small>${r.points} pts · ${r.won}G ${r.lost}P</small></li>`).join('');
-  const recent=(state.matches||[]).map(m=>`<li><span>${esc(m.game)}<small>${esc(nameOf(m.winner))} ganó a ${esc(nameOf(m.loser))}</small></span></li>`).join('');
+  const recent=(state.matches||[]).map(m=>`<li><span>${esc(m.game)}<small>${esc(nameOf(m.winner))} ganó a ${esc(nameOf(m.loser))}</small></span>${m.own?`<button type="button" class="plus-remove" data-plus-match="${esc(m.id)}" aria-label="Borrar partida">×</button>`:''}</li>`).join('');
   return `<ol class="club-day-ranking">${rows||'<li><span>Aún no hay partidas.</span></li>'}</ol>${recent?`<details><summary>Últimas partidas</summary><ul class="plus-lines">${recent}</ul></details>`:''}<form class="club-day-form" data-plus-form="match"><label>Juego<input name="game" required minlength="2" maxlength="40" placeholder="FIFA, pádel, cartas…"></label><label>Ganó<select name="winner">${options(me)}</select></label><label>Perdió<select name="loser">${options(people().find(m=>m.authId!==me)?.authId)}</select></label><div><button type="submit" class="club-day-action">Apuntar partida</button></div></form>`;
  }
  const safeFile=url=>/^https:\/\/[^\s"'<>]+\/storage\/v1\/object\/public\/group-media\//.test(url||'')?url:'';
@@ -120,6 +120,8 @@
   if(d.plusSong)void call('vote_club_song',{p_song:d.plusSong});
   if(d.plusTrial)void call('vote_club_trial',{p_trial:d.plusTrial,p_guilty:d.guilty==='true'});
   if(d.plusEntry)void call('toggle_challenge_vote',{p_author:d.plusEntry});
+  if(d.plusExpense)void call('delete_tab_expense',{p_expense:d.plusExpense},'Gasto borrado');
+  if(d.plusMatch)void call('delete_club_match',{p_match:d.plusMatch},'Partida borrada');
   if(d.plusKaraoke)void call('vote_karaoke',{p_author:d.plusKaraoke});
   if(d.plusLie)void call('guess_club_lie',{p_id:d.plusLie,p_guess:Number(d.guess)});
  }
