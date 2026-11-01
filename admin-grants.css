@@ -123,3 +123,14 @@ body.authenticated #editar-usuario .admin-account-banner.is-owned { cursor:defau
 #admin-cuentas#admin-cuentas .account-status.offline { display:none; }
 #admin-cuentas#admin-cuentas .admin-users-empty { margin:28px 0; color:var(--row-muted); font-size:14px; text-align:center; }
 @media(prefers-reduced-motion:reduce) { #admin-cuentas#admin-cuentas .admin-disclosure-icon { transition:none; } }
+
+body.authenticated #editar-usuario .admin-account-safety { display:grid; grid-template-columns:10px minmax(0,1fr); align-items:start; gap:10px; margin:0 0 12px; padding:12px; border-radius:12px; background:color-mix(in srgb,var(--bb2-ink) 8%,transparent); }
+body.authenticated #editar-usuario .admin-account-safety i { width:10px; height:10px; margin-top:5px; border-radius:50%; background:#ff453a; }
+body.authenticated #editar-usuario .admin-account-safety[data-level="mid"] i { background:#ff9f0a; }
+body.authenticated #editar-usuario .admin-account-safety[data-level="high"] i { background:#30d158; }
+body.authenticated #editar-usuario .admin-account-safety strong { display:block; font-size:15px; font-weight:600; }
+body.authenticated #editar-usuario .admin-account-safety small { display:block; margin-top:2px; color:var(--row-muted); font-size:13px; line-height:1.35; }
+body.authenticated #editar-usuario .admin-account-facts { margin:0; }
+body.authenticated #editar-usuario .admin-account-facts > div { display:grid; grid-template-columns:116px minmax(0,1fr); align-items:baseline; column-gap:12px; padding:12px 0; border-top:.5px solid var(--bb2-line); font-size:15px; }
+body.authenticated #editar-usuario .admin-account-facts dt { color:var(--row-muted); }
+body.authenticated #editar-usuario .admin-account-facts dd { min-width:0; margin:0; overflow-wrap:anywhere; -webkit-user-select:text; user-select:text; }
