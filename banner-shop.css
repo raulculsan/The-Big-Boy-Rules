@@ -401,6 +401,7 @@ body.authenticated #bannerShopDialog #bannerShopStatus.is-passive{position:absol
 @supports(width:1cqw){.pack-summary-grid{--summary-cell:min(calc((100cqw - var(--summary-gap) * 2) / 3),calc((100cqh - var(--summary-gap) * 2) * 4 / 21))}.pack-summary-grid:not(.is-featured){--summary-cell:min(calc((100cqw - var(--summary-gap) * 2) / 3),calc((100cqh - var(--summary-gap)) * 2 / 7))}}
 .pack-summary-grid.is-featured>:first-child{grid-column:span 2;grid-row:span 2}
 .pack-summary-item{--rarity:#8e8e93;position:relative;min-width:0;min-height:0}
+.pack-summary-item.is-dragging{z-index:2;will-change:transform,opacity}
 [data-rarity="retro"]{--rarity:#d0804f}[data-rarity="special"]{--rarity:#34c0d9}[data-rarity="epic"]{--rarity:#bf5af2}[data-rarity="legendary"]{--rarity:#ff9f0a}[data-rarity="full_art"]{--rarity:#64d2ff}[data-rarity="vice_city"]{--rarity:#ff3b9a}[data-rarity="halloween"]{--rarity:#ff6a1f}
 .pack-summary-aura{position:absolute;inset:-9%;border-radius:32px;background:radial-gradient(closest-side,color-mix(in srgb,var(--rarity) 58%,transparent),transparent);filter:blur(22px);opacity:0;pointer-events:none}
 .pack-summary-grid.is-featured>:first-child:not([data-rarity="common"]) .pack-summary-aura{opacity:.72}

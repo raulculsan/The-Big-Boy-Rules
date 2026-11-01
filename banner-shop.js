@@ -186,9 +186,10 @@
   }
   function canDiscardReveal(index) {
     const item = reveal?.cards[index];
-    if (!item || reveal.discarded.has(index) || reveal.uncertain.has(index) || Number(item.quantity) <= 1) return false;
+    if (!item || reveal.discarded.has(index) || reveal.pending.has(index) || reveal.uncertain.has(index) || Number(item.quantity) <= 1) return false;
     const owned = state?.cards?.find(row => row.card_id === item.card_id);
-    return !state || Number(owned?.quantity) > 1;
+    const leaving = [...reveal.pending].filter(pending => reveal.cards[pending].card_id === item.card_id).length;
+    return !state || Number(owned?.quantity) - leaving > 1;
   }
   function showRevealSummary() {
     if (!reveal || reveal.discarding) return;
@@ -213,7 +214,7 @@
   const summaryOrder = cards => cards.map((item,index) => ({item,index}))
     .sort((a,b) => summaryRank(a.item) - summaryRank(b.item) || Number(a.item.quantity > 1) - Number(b.item.quantity > 1) || a.index - b.index)
     .map(entry => entry.index);
-  const summaryStatus = index => reveal.discarded.has(index) ? 'Descartada' : reveal.uncertain.has(index) ? 'Revisar' : Number(reveal.cards[index].quantity) > 1 ? 'Repetida' : 'Nueva';
+  const summaryStatus = index => reveal.discarded.has(index) || reveal.pending.has(index) ? 'Descartada' : reveal.uncertain.has(index) ? 'Revisar' : Number(reveal.cards[index].quantity) > 1 ? 'Repetida' : 'Nueva';
   const summaryKind = item => item.kind === 'member' ? (characterCardIds.has(item.card_id) ? 'Personaje' : 'Miembro') : item.kind === 'object' ? 'Objeto' : item.kind === 'location' ? 'Ubicación' : '';
   const summaryArt = item => {const design = card(item.card_id); return design?.front || design?.back || 'icons/cards/reverso-comun-unificado-v1.jpg';};
   function renderRevealSummary() {
@@ -230,7 +231,7 @@
     }
     reveal.cards.forEach((item,index) => {
       const button = revealDialog.querySelector(`[data-summary-card="${index}"]`), status = summaryStatus(index);
-      button.classList.toggle('is-discarded',reveal.discarded.has(index));
+      button.classList.toggle('is-discarded',reveal.discarded.has(index) || reveal.pending.has(index));
       button.setAttribute('aria-label',`Ver en grande: ${card(item.card_id)?.name || item.card_id}, ${rarityNames[item.edition] || item.edition}, ${status}`);
       const label = button.parentElement.querySelector('.pack-summary-label');
       label.textContent = status; label.dataset.status = status;
@@ -239,8 +240,8 @@
     revealDialog.querySelector('.pack-summary-tally').textContent = [fresh ? `${fresh} ${fresh === 1 ? 'nueva' : 'nuevas'}` : '', repeated ? `${repeated} ${repeated === 1 ? 'repetida' : 'repetidas'}` : ''].filter(Boolean).join(' · ');
     revealDialog.querySelector('[data-reveal-save]').textContent = reveal.discarded.size ? 'Guardar restantes' : 'Guardar todo';
     revealDialog.querySelector('.pack-summary-balance').textContent = state ? coins() : 'Actualizando saldo…';
-    const hint = reveal.cards.some((item,index) => canDiscardReveal(index)) && online() ? 'Desliza una repetida hacia arriba para cambiarla por monedas' : '';
-    revealDialog.querySelector('.pack-summary-footer .pack-reveal-status').textContent = failure || (busy ? 'Descartando repetidas…' : loading ? 'Actualizando colección…' : notice || hint);
+    const hint = reveal.cards.some((item,index) => canDiscardReveal(index)) && online() ? 'Desliza una repetida arriba para cambiarla' : '';
+    revealDialog.querySelector('.pack-summary-footer .pack-reveal-status').textContent = failure || notice || hint;
     renderPackViewer();
   }
   // The six cards land from one point and the best pull arrives last.
@@ -277,8 +278,8 @@
     root.querySelector('.pack-viewer-info p').textContent = [summaryKind(item), rarityNames[item.edition] || item.edition, summaryStatus(index)].filter(Boolean).join(' · ');
     const discard = root.querySelector('[data-viewer-discard]'), reward = state?.discard_rewards?.[item.edition] || 1;
     discard.hidden = !canDiscardReveal(index);
-    discard.disabled = busy || loading || !online();
-    discard.textContent = busy ? 'Cambiando…' : `Cambiar por ${reward} ${reward === 1 ? 'moneda' : 'monedas'}`;
+    discard.disabled = !online();
+    discard.textContent = `Cambiar por ${reward} ${reward === 1 ? 'moneda' : 'monedas'}`;
     root.querySelectorAll('[data-viewer-go]').forEach((button,position) => {
       button.toggleAttribute('data-current',position === packViewer.position);
       if (position === packViewer.position) button.setAttribute('aria-current','true'); else button.removeAttribute('aria-current');
@@ -338,53 +339,72 @@
     setSummaryInert(false);
     trigger.focus({preventScroll:true});
   }
-  async function discardRevealCards(indices) {
-    if (!reveal?.summary || busy || loading || !online()) return;
-    const current = reveal, token = generation, user = options.session();
+  // The card leaves on release and the server catches up behind it, so a slow
+  // reply or a full shop render can never hold the gesture. Requests stay
+  // sequential; the collection refresh waits for the dialog to close.
+  function discardRevealCards(indices) {
+    const current = reveal;
+    if (!current?.summary || !online()) return;
     const targets = [...new Set(indices)].filter(canDiscardReveal);
     if (!targets.length) return;
-    busy = true; current.discarding = true; failure = ''; notice = ''; render();
-    let earned = 0, completed = 0, discardError = '';
+    failure = '';
+    targets.forEach(index => {current.pending.add(index); current.queue.push(index); playSummaryExit(index);});
+    renderRevealSummary();
+    if (!current.draining) void drainRevealDiscards(current);
+  }
+  function playSummaryExit(index) {
+    const node = revealDialog.querySelector(`[data-summary-card="${index}"]`)?.closest('.pack-summary-item');
+    if (!node) return;
+    const pose = {transform:node.style.transform || 'none',opacity:node.style.opacity || 1};
+    node.classList.remove('is-dragging');
+    node.style.removeProperty('transform'); node.style.removeProperty('opacity');
+    if (revealReduced() || packViewer) return;
+    node.getAnimations().forEach(animation => animation.cancel());
+    node.animate([pose,{transform:'translateY(-120px) rotate(-4deg) scale(.86)',opacity:0,offset:.58,easing:'step-end'},{transform:'translateY(12px) scale(.96)',opacity:0,offset:.6,easing:'cubic-bezier(.16,1,.3,1)'},{transform:'none',opacity:1}],{duration:520,easing:'cubic-bezier(.3,0,.2,1)'});
+  }
+  async function drainRevealDiscards(current) {
+    const token = generation, user = options.session();
+    let discardError = '';
+    busy = true; current.draining = true; current.discarding = true;
     try {
-      for (const index of targets) {
+      while (current.queue.length) {
         if (token !== generation || user !== options.session()) return;
-        const item = current.cards[index];
+        const index = current.queue.shift(), item = current.cards[index];
         try {
           // The server checks ownership and always retains the last copy.
           const data = await rpc('discard_duplicate_card',{target_card_id:item.card_id,copies:1});
           if (token !== generation || user !== options.session()) return;
-          current.discarded.add(index);
+          current.discarded.add(index); current.dirty = true;
           const owned = state?.cards?.find(row => row.card_id === item.card_id);
           if (owned && Number.isFinite(Number(data.quantity))) owned.quantity = Number(data.quantity);
           if (state && Number.isFinite(Number(data.balance))) state.balance = Number(data.balance);
-          earned += Number(data.coins_earned) || 0; completed++;
-          if (reveal === current && revealDialog.open) {
-            const image = revealDialog.querySelector(`[data-summary-card="${index}"]`);
-            if (image && !packViewer && !revealReduced()) await image.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(-42px) scale(.88)',opacity:0}],{duration:220,easing:'ease-out'}).finished.catch(() => {});
-            renderRevealSummary();
-          }
+          current.earned += Number(data.coins_earned) || 0;
+          notice = `+${current.earned} monedas`;
         } catch (error) {
           // A lost response may follow a committed exchange. Never retry that
           // copy automatically or let a second tap spend another stored copy.
-          current.uncertain.add(index);
-          discardError = errorMessage(error); break;
+          current.uncertain.add(index); current.dirty = true;
+          discardError = errorMessage(error);
+          [...current.queue].forEach(waiting => current.pending.delete(waiting));
+          current.queue.length = 0;
         }
+        current.pending.delete(index);
+        renderRevealSummary();
       }
-      state = null;
-      await refresh();
-      if (token !== generation || user !== options.session()) return;
-      notice = completed ? `+${earned} monedas` : '';
-      if (discardError) failure = `${discardError} Las demás cartas siguen guardadas. Revisa la colección para comprobar el descarte pendiente.`;
+      if (discardError) {failure = `${discardError} Las demás cartas siguen guardadas. Revisa la colección para comprobar el descarte pendiente.`; renderRevealSummary();}
     } finally {
-      if (token === generation) {current.discarding = false; busy = false; render();
-        if (reveal === current && revealDialog.open && !packViewer) revealDialog.querySelector('[data-reveal-save]')?.focus({preventScroll:true});}
+      current.draining = false; current.discarding = false;
+      if (token === generation) busy = false;
+      if (reveal !== current && current.dirty && token === generation) void refresh();
     }
   }
   let summarySwipe = null;
   revealDialog.addEventListener('pointerdown',event => {
     const target = event.target.closest('[data-summary-card]');
-    if (!target || busy || loading || !online() || !canDiscardReveal(Number(target.dataset.summaryCard)) || summarySwipe || !event.isPrimary || event.button !== 0) return;
-    summarySwipe = {target,id:event.pointerId,x:event.clientX,y:event.clientY,dy:0,vertical:false};
+    if (!target || !online() || !canDiscardReveal(Number(target.dataset.summaryCard)) || summarySwipe || !event.isPrimary || event.button !== 0) return;
+    const node = target.closest('.pack-summary-item');
+    node.getAnimations().forEach(animation => animation.cancel());
+    summarySwipe = {target,node,id:event.pointerId,x:event.clientX,y:event.clientY,dy:0,vertical:false};
     target.setPointerCapture(event.pointerId);
   });
   revealDialog.addEventListener('pointermove',event => {
@@ -392,18 +412,22 @@
     if (!gesture || event.pointerId !== gesture.id) return;
     gesture.dy = event.clientY - gesture.y;
     gesture.vertical ||= gesture.dy < -10 && -gesture.dy > Math.abs(event.clientX - gesture.x) * 1.3;
-    if (gesture.vertical) {gesture.target.style.transform = `translateY(${Math.max(-55,Math.min(0,gesture.dy))}px)`; gesture.target.style.opacity = String(Math.max(.35,1 + gesture.dy / 160));}
+    if (gesture.vertical) {const lift = Math.min(0,gesture.dy + 10); gesture.node.classList.add('is-dragging'); gesture.node.style.transform = `translateY(${lift}px) rotate(${lift / -60}deg)`; gesture.node.style.opacity = String(Math.max(.45,1 + lift / 260));}
   });
   function finishSummarySwipe(event) {
     const gesture = summarySwipe;
     if (!gesture || gesture.id !== event.pointerId) return;
     summarySwipe = null;
     if (event.type === 'pointerup') gesture.dy = event.clientY - gesture.y;
-    gesture.target.style.removeProperty('transform'); gesture.target.style.removeProperty('opacity');
     if (gesture.target.hasPointerCapture(event.pointerId)) gesture.target.releasePointerCapture(event.pointerId);
     if (!gesture.vertical) return;
     suppressRevealClickUntil = Date.now() + 500;
-    if (event.type === 'pointerup' && gesture.dy < -35) void discardRevealCards([Number(gesture.target.dataset.summaryCard)]);
+    const index = Number(gesture.target.dataset.summaryCard);
+    if (event.type === 'pointerup' && gesture.dy < -35 && canDiscardReveal(index)) {discardRevealCards([index]); return;}
+    const pose = {transform:gesture.node.style.transform,opacity:gesture.node.style.opacity};
+    gesture.node.classList.remove('is-dragging');
+    gesture.node.style.removeProperty('transform'); gesture.node.style.removeProperty('opacity');
+    if (!revealReduced()) gesture.node.animate([pose,{transform:'none',opacity:1}],{duration:260,easing:'cubic-bezier(.16,1,.3,1)'});
   }
   revealDialog.addEventListener('pointerup',finishSummarySwipe);
   revealDialog.addEventListener('pointercancel',finishSummarySwipe);
@@ -431,7 +455,7 @@
   }
   function startReveal(cards) {
     if (!cards.length) return;
-    reveal = {cards,index:0,flipped:false,discarded:new Set(),uncertain:new Set(),phase:'idle'};
+    reveal = {cards,index:0,flipped:false,discarded:new Set(),uncertain:new Set(),pending:new Set(),queue:[],earned:0,phase:'idle'};
     revealDialog.classList.remove('is-pack-summary');
     delete revealDialog.dataset.cardIndex;
     if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(revealDialog);else revealDialog.showModal(); renderReveal();
@@ -454,7 +478,7 @@
     if (viewerRoot) {
       const go = event.target.closest('[data-viewer-go]');
       if (go) showViewerCard(Number(go.dataset.viewerGo),Math.sign(Number(go.dataset.viewerGo) - packViewer.position));
-      else if (event.target.closest('[data-viewer-discard]')) void discardRevealCards([reveal.order[packViewer.position]]);
+      else if (event.target.closest('[data-viewer-discard]')) discardRevealCards([reveal.order[packViewer.position]]);
       else if (event.target.closest('[data-viewer-close]') || !event.target.closest('.pack-viewer-tilt,.pack-viewer-info')) void closePackViewer();
       return;
     }
@@ -579,7 +603,7 @@
   revealDialog.addEventListener('keydown', event => {
     if (event.key === 'ArrowUp' && reveal && !event.repeat) {
       const summaryCard = event.target.closest('[data-summary-card]');
-      if (summaryCard) {event.preventDefault(); void discardRevealCards([Number(summaryCard.dataset.summaryCard)]);}
+      if (summaryCard) {event.preventDefault(); discardRevealCards([Number(summaryCard.dataset.summaryCard)]);}
       else if (!reveal.summary) {event.preventDefault(); void discardRevealCard(revealDialog.querySelector('.pack-reveal-stage'));}
     }
     if (event.key === 'ArrowLeft' && reveal && !reveal.summary && reveal.phase === 'idle' && !reveal.advancing && !event.repeat && !event.target.closest('[data-reveal-close]')) {
@@ -588,7 +612,7 @@
       else flipReveal();
     }
   });
-  revealDialog.addEventListener('close', () => {stopRevealOpening();detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;detachViewerMotion?.();detachViewerMotion=null;packViewer=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); el('ownedPackOpen')?.focus({preventScroll:true});});
+  revealDialog.addEventListener('close', () => {const syncAfterClose = reveal?.dirty && !reveal.draining;stopRevealOpening();detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;detachViewerMotion?.();detachViewerMotion=null;packViewer=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); el('ownedPackOpen')?.focus({preventScroll:true});if (syncAfterClose) void refresh();});
   const el = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);
