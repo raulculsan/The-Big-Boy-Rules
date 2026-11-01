@@ -111,10 +111,10 @@
       if(e.pointerId!==pointer)return;
       dx=e.clientX-origin.x;dy=e.clientY-origin.y;
       const flip=Math.abs(dx)>Math.max(48,bounds.width*.28)&&Math.abs(dx)>Math.abs(dy)*1.2;
-      reset();if(flip)onFlip();
+      const direction=Math.sign(dx);reset();if(flip)onFlip(direction);
     }
     const cancel=e=>{if(e.pointerId===pointer)reset();};
-    const keyboard=e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();reset();onFlip();}};
+    const keyboard=e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();reset();onFlip(e.key==='ArrowLeft'?1:-1);}};
     function configure() {
       reset();dispose?.();dispose=null;player=null;
       if(fullArt){foil.style.removeProperty('opacity');dispose=attachFullArtFoil(surface,foil,edition);return;}

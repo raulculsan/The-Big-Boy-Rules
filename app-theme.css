@@ -33,7 +33,7 @@ input, textarea, select { font-size: 16px; }
 
 /* Press feedback replaces hover on touch. Zero specificity: a component's own motion always wins. */
 /* Never on 3D cards: opacity flattens preserve-3d and shows the back mirrored mid-press. */
-:where(button:not(.pack-reveal-card, .pack-tear), .app-tab, summary):where(:active:not(:disabled)):not(:where(.collection-card-dialog *, .pack-reveal-dialog .pack-reveal-stage *)) { opacity: .6; }
+:where(button:not(.pack-reveal-card, .pack-tear, .pack-summary-card), .app-tab, summary):where(:active:not(:disabled)):not(:where(.collection-card-dialog *, .pack-reveal-dialog .pack-reveal-stage *)) { opacity: .6; }
 
 /* Labels above headings add noise; the heading is enough. */
 .eyebrow, .duplicates-kicker, .packs-display-edition { display: none !important; }
