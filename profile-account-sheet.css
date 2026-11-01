@@ -37,3 +37,22 @@ body.profile-account-sheet-open>.app{pointer-events:none}
 .profile-account-sheet,.profile-account-sheet::backdrop,.profile-account-sheet .profile-account-sheet-actions,.profile-account-sheet .profile-account-sheet-actions>button{animation:none!important}
 .profile-account-sheet{outline:none!important;transform:none!important;scale:1!important}
 .profile-account-sheet .profile-account-sheet-actions,.profile-account-sheet .profile-account-sheet-actions>button{transition:none!important;scale:1!important;translate:none!important}
+
+/* A plain action sheet: identity first, then one list of rows. */
+.profile-account-sheet .profile-account-sheet-panel { border:0; border-radius:16px 16px 0 0; background:#1c1c1e; }
+.profile-account-sheet .profile-account-sheet-handle span { width:36px; background:#636366; }
+.profile-account-sheet .profile-account-sheet-account { gap:12px; padding:6px 16px 14px; border-bottom:.5px solid #ffffff1f; }
+.profile-account-sheet .profile-account-sheet-initial { position:relative; width:48px; height:48px; overflow:hidden; background:#3a3a3c; color:#fff; font-size:20px; }
+.profile-account-sheet .profile-account-sheet-initial img { display:block; width:100%; height:100%; object-fit:cover; }
+.profile-account-sheet .profile-account-sheet-account h2 { order:-1; margin:0; color:#fff; font:600 17px/1.2 var(--ds-font); letter-spacing:-.01em; }
+.profile-account-sheet .profile-account-sheet-account > div { display:flex; flex-direction:column; gap:2px; }
+.profile-account-sheet .profile-account-sheet-account small { color:#98989f; font-size:14px; }
+.profile-account-sheet .profile-account-sheet-close { display:none; }
+.profile-account-sheet .profile-account-sheet-content { padding:0; }
+.profile-account-sheet .profile-account-sheet-actions { gap:0; padding:4px 0 8px; background:transparent; border:0; }
+.profile-account-sheet .profile-account-sheet-actions > button, .profile-account-sheet .profile-account-sheet-actions > button:first-of-type, .profile-account-sheet .profile-account-sheet-actions > button:nth-last-of-type(2), .profile-account-sheet .profile-account-sheet-actions > button:last-of-type { min-height:54px; margin:0; padding:8px 16px; gap:14px; border:0; border-radius:0; background:transparent; color:#fff; text-align:left; }
+.profile-account-sheet .profile-account-sheet-actions > button:last-of-type { position:relative; margin-top:8px; color:#ff453a; }
+.profile-account-sheet .profile-account-sheet-actions > button:last-of-type::before { content:""; position:absolute; left:16px; right:16px; top:-4px; height:.5px; background:#ffffff1f; }
+.profile-account-sheet .profile-account-sheet-actions strong { color:inherit; font-size:16px; font-weight:400; }
+.profile-account-sheet .profile-account-sheet-actions small { display:none; }
+.profile-account-sheet .profile-account-sheet-actions > button:active { background:#ffffff14; }

@@ -56,7 +56,41 @@
 .account-security .security-feedback:empty{display:none}
 .account-security footer{border-top:1px solid #303030;margin-top:28px;padding-top:16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .account-security footer button{border:0;background:none;color:#b4b4b4;font-size:13px;padding:8px 0}
-.account-security footer [data-security-logout]{color:#e7b4ae}
+.account-security footer [data-security-logout]{color:#ff453a}
 @media(max-width:600px){.security-page{padding-left:20px;padding-right:20px}.security-page-body{padding-top:24px}.security-method{padding:20px}.account-security h2{font-size:26px}.account-security .security-overview-title{font-size:20px}.security-account-overview{gap:12px}.security-overview-mark{width:40px}.security-overview-mark svg{width:40px}.security-method-heading{gap:10px}.security-badge{font-size:11px;padding:5px 6px}.account-security .security-method h4{font-size:16px}}
 @media(prefers-reduced-motion:no-preference){.account-security[open]{animation:security-page-in .28s cubic-bezier(.22,.7,.18,1)}@keyframes security-page-in{from{transform:translateY(28px);opacity:0}to{transform:none;opacity:1}}}
 @media(hover:hover){.account-security button:hover:not(:disabled){filter:brightness(1.12)}}
+
+/* Same page language as the profile editors: one column, flat rows, neutral actions. */
+.account-security { background:#000; }
+.account-security .security-page { max-width:none; padding:0 0 calc(32px + env(safe-area-inset-bottom)); }
+.account-security .security-page-heading { position:sticky; top:0; z-index:2; display:grid; grid-template-columns:72px 1fr 72px; align-items:center; gap:0; min-height:48px; padding:max(4px,env(safe-area-inset-top)) 12px 4px; background:#000; border-bottom:.5px solid #ffffff1f; }
+.account-security .security-page-heading > div { grid-column:2; grid-row:1; text-align:center; }
+.account-security .security-page-heading small { display:none; }
+.account-security h2 { margin:0; font-size:17px; font-weight:600; line-height:1.2; letter-spacing:-.01em; }
+.account-security .security-page-heading button { grid-column:3; grid-row:1; justify-self:end; min-height:44px; padding:0; border:0; color:#0a84ff; font-size:16px; font-weight:600; }
+.account-security .security-page-body { max-width:600px; padding:0 16px; }
+.account-security button { border-radius:10px; }
+.account-security .security-account-overview { display:grid; justify-items:center; gap:8px; padding:24px 0 20px; text-align:center; }
+.account-security .security-overview-mark { width:64px; height:64px; color:#fff; }
+.account-security .security-overview-mark svg { width:56px; height:56px; }
+.account-security .security-overview-title, .account-security h3 { margin:0 0 6px; font-size:20px; font-weight:700; letter-spacing:-.01em; }
+.account-security p { color:#98989f; line-height:1.4; }
+.account-security .security-methods { gap:0; border-bottom:.5px solid #ffffff1f; }
+.account-security .security-method { padding:14px 0; border:0; border-top:.5px solid #ffffff1f; border-radius:0; background:transparent; }
+.account-security .security-method-heading { gap:12px; }
+.account-security .security-brand, .account-security .security-brand--authenticator svg { width:28px; height:28px; }
+.account-security .security-method h4 { margin:0 0 1px; font-size:16px; }
+.account-security .security-method-label { color:#98989f; font-size:13px; }
+.account-security .security-badge { align-self:center; padding:0; border-radius:0; background:transparent; color:#98989f; font-size:14px; }
+.account-security .security-badge.is-active { background:transparent; color:#30d158; }
+.account-security .security-method > p { margin:10px 0 12px 40px; }
+.account-security .security-method-action, .account-security .security-method--google .security-method-action, .account-security .security-method--authenticator .security-method-action { min-height:44px; border:0; border-radius:10px; background:#fff; color:#000; font-size:15px; font-weight:600; }
+.account-security .security-method-confirmation { margin-left:40px; color:#30d158; }
+.account-security .security-method-note { margin-left:40px; color:#98989f; font-size:13px; line-height:1.4; }
+.account-security .security-email-label { margin:10px 0 12px; color:#98989f; }
+.account-security input { border:0; border-radius:10px; background:#1c1c1e; color:#fff; }
+.account-security input:focus-visible { outline:2px solid #fff; outline-offset:1px; }
+.account-security .security-primary { min-height:48px; border:0; border-radius:10px; background:#fff; color:#000; font-size:16px; font-weight:600; }
+.account-security .security-text { border:0; background:none; color:#0a84ff; font-size:15px; font-weight:600; }
+.account-security details { color:#fff; }

@@ -142,3 +142,28 @@ body.authenticated #editar-usuario .admin-account-bone { display:inline-block; w
 body.authenticated #editar-usuario .admin-account-balances .admin-account-bone { width:44px; }
 @keyframes admin-account-bone { to { opacity:.45; } }
 @media(prefers-reduced-motion:reduce) { body.authenticated #editar-usuario .admin-account-bone { animation:none; } }
+
+/* Settings pages share the account control bar and flat rows. */
+#admin-configuracion#admin-configuracion .achievement-page-header { position:sticky; top:0; z-index:3; display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:0; min-height:48px; margin:0; padding:max(4px,var(--pwa-safe-top,env(safe-area-inset-top,0px))) 4px 4px; background:var(--bb2-canvas); border:0; border-bottom:.5px solid var(--bb2-line); }
+#admin-diagnostico#admin-diagnostico .achievement-page-header { position:sticky; top:0; z-index:3; display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:0; min-height:48px; margin:0; padding:max(4px,var(--pwa-safe-top,env(safe-area-inset-top,0px))) 4px 4px; background:var(--bb2-canvas); border:0; border-bottom:.5px solid var(--bb2-line); }
+#admin-configuracion#admin-configuracion .achievement-back { width:44px; height:44px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:transparent; color:inherit; box-shadow:none; }
+#admin-diagnostico#admin-diagnostico .achievement-back { width:44px; height:44px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:transparent; color:inherit; box-shadow:none; }
+#admin-configuracion#admin-configuracion .achievement-back svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+#admin-diagnostico#admin-diagnostico .achievement-back svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+#admin-configuracion#admin-configuracion .achievement-page-header small { display:none; }
+#admin-diagnostico#admin-diagnostico .achievement-page-header small { display:none; }
+#admin-configuracion#admin-configuracion .achievement-page-header h2 { margin:0; font:600 17px/1.2 var(--ds-font); letter-spacing:-.01em; text-align:center; }
+#admin-diagnostico#admin-diagnostico .achievement-page-header h2 { margin:0; font:600 17px/1.2 var(--ds-font); letter-spacing:-.01em; text-align:center; }
+#admin-configuracion#admin-configuracion, #admin-diagnostico#admin-diagnostico { max-width:600px; margin:0 auto; padding:0 0 calc(40px + env(safe-area-inset-bottom,0px)); box-sizing:border-box; color:var(--bb2-ink); }
+#admin-configuracion#admin-configuracion .achievement-page-content { max-width:none; margin:0; padding:4px 16px 0; }
+#admin-diagnostico#admin-diagnostico .achievement-page-content { max-width:none; margin:0; padding:12px 16px 0; }
+#admin-configuracion#admin-configuracion .admin-settings-list { display:block; }
+#admin-configuracion#admin-configuracion .admin-settings-entry { display:grid; grid-template-columns:24px minmax(0,1fr) 18px; align-items:center; gap:14px; min-height:62px; margin:0; padding:10px 0; border:0; border-bottom:.5px solid var(--bb2-line); border-radius:0; background:transparent; box-shadow:none; color:inherit; transform:none; }
+#admin-configuracion#admin-configuracion .admin-settings-symbol { display:block; width:24px; height:24px; flex:none; padding:0; border:0; border-radius:0; background:transparent; color:inherit; }
+#admin-configuracion#admin-configuracion .admin-settings-symbol svg { display:block; width:24px; height:24px; stroke-width:1.7; }
+#admin-configuracion#admin-configuracion .admin-settings-entry > span:nth-child(2) { display:block; }
+#admin-configuracion#admin-configuracion .admin-settings-entry strong { display:block; font-size:16px; font-weight:600; letter-spacing:0; }
+#admin-configuracion#admin-configuracion .admin-settings-entry small { display:block; margin-top:2px; color:color-mix(in srgb,var(--bb2-ink) 58%,transparent); font-size:13px; line-height:1.3; }
+#admin-configuracion#admin-configuracion .admin-settings-entry .admin-settings-chevron { width:18px; height:18px; color:color-mix(in srgb,var(--bb2-ink) 58%,transparent); }
+#admin-configuracion#admin-configuracion .admin-settings-entry::after { content:""; justify-self:center; width:7px; height:7px; border-top:1.75px solid color-mix(in srgb,var(--bb2-ink) 58%,transparent); border-right:1.75px solid color-mix(in srgb,var(--bb2-ink) 58%,transparent); transform:rotate(45deg); }
+#admin-configuracion#admin-configuracion .admin-settings-entry:focus-visible { outline:2px solid var(--bb2-ink); outline-offset:2px; border-radius:8px; }

@@ -259,3 +259,89 @@ body.light .control-publish-bar button[type=submit] { color:white; }
 .control-release-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px}.control-release-heading h3{margin:0 0 8px;font-size:24px;font-weight:600;letter-spacing:-.025em}.control-release-heading p{margin:0;color:var(--control-muted);font-size:14px;line-height:1.5}.control-release-heading>button{flex:none;min-height:40px;padding:8px 14px;border:1px solid var(--control-border);border-radius:8px;background:transparent;color:var(--text);font-size:13px}
 .control-release-form{max-width:840px}.control-release-summary{padding:20px;background:var(--bb2-raised);border-radius:12px;margin-bottom:24px}.control-release-summary strong{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}.control-release-summary p{color:var(--control-muted);font-size:13px;line-height:1.6;margin:10px 0 0;max-width:640px}.control-release-fields{display:grid;grid-template-columns:1fr 1fr;gap:20px 24px}.control-release-fields label{display:flex;flex-direction:column;gap:9px;font-size:14px;font-weight:500;min-width:0}.control-release-fields input,.control-release-fields textarea{width:100%;box-sizing:border-box;min-height:44px;border:1px solid var(--control-border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;font-variant-numeric:tabular-nums}.control-release-fields small{font-size:12px;line-height:1.5;font-weight:400;color:var(--control-muted)}.control-release-wide{grid-column:1/-1}.control-release-publish{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:28px;padding-top:20px;border-top:1px solid var(--control-border)}.control-release-publish p{max-width:460px;font-size:13px;line-height:1.6;color:var(--control-muted);margin:0}.control-release-publish button{flex:none;min-height:44px;border:0;border-radius:10px;background:var(--text);color:var(--bg);font-size:14px;font-weight:600;padding:10px 18px}.control-release-form [data-release-feedback]{font-size:13px;color:var(--control-muted);line-height:1.5;min-height:20px;margin-top:16px}
 @media(max-width:640px){.control-release-heading{flex-direction:column;gap:16px}.control-release-fields{grid-template-columns:1fr}.control-release-publish{align-items:stretch;flex-direction:column;gap:16px}.control-release-publish button{width:100%}}
+
+/* Administration: a list first, each tool as its own page behind one back button. */
+#administracion#administracion { --row-muted:color-mix(in srgb,var(--bb2-ink) 58%,transparent); max-width:600px; margin:0 auto; padding:0 0 calc(110px + env(safe-area-inset-bottom,0px)); box-sizing:border-box; color:var(--bb2-ink); }
+#administracion#administracion.active { display:flex; flex-direction:column; }
+#administracion #standardAdminPanel:not([hidden]) { display:contents; }
+#administracion#administracion .section-intro { display:contents; }
+#administracion#administracion .section-intro > div:first-child { display:none; }
+#administracion#administracion .admin-heading-actions { order:-1; display:block; width:auto; margin:0 16px; }
+#administracion#administracion .admin-settings-gear { display:flex; align-items:center; gap:14px; width:100%; min-height:60px; padding:10px 0; border:0; border-bottom:.5px solid var(--bb2-line); border-radius:0; background:transparent; color:inherit; box-shadow:none; }
+#administracion#administracion .admin-settings-gear::after { content:"Configuración"; font-size:16px; font-weight:600; }
+#administracion#administracion .admin-settings-gear svg { flex:none; width:24px; height:24px; }
+body.superadmin-console-session #administracion#administracion .request-admin-entry { display:none; }
+#administracion#administracion .request-admin-entry [data-request-count][hidden] { display:none; }
+#administracion#administracion .admin-summary { order:-2; display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin:0; padding:18px 16px; border:0; border-bottom:.5px solid var(--bb2-line); border-radius:0; background:transparent !important; text-align:center; }
+#administracion#administracion .admin-stat-card { display:flex; flex-direction:column-reverse; gap:2px; min-height:0; padding:0; border:0; border-radius:0; background:transparent !important; box-shadow:none; }
+#administracion#administracion .admin-stat-card strong { font:700 18px/1.2 var(--ds-font); font-variant-numeric:tabular-nums; }
+#administracion#administracion .admin-stat-card span { display:block; color:var(--row-muted); font-size:13px; font-weight:400; letter-spacing:0; text-transform:lowercase; }
+#administracion#administracion .admin-stat-card span::first-letter { text-transform:uppercase; }
+#administracion#administracion .admin-stat-card small { display:none; }
+#administracion#administracion .request-admin-entry, #administracion#administracion .admin-help-entry { order:-1; display:flex; align-items:center; justify-content:space-between; gap:12px; width:auto; min-height:60px; margin:0 16px; padding:10px 0; border:0; border-bottom:.5px solid var(--bb2-line); border-radius:0; background:transparent !important; box-shadow:none; color:inherit !important; font-size:16px; font-weight:600; text-align:left; }
+#administracion#administracion .request-admin-entry strong { display:block; font-size:16px; font-weight:600; }
+#administracion#administracion .request-admin-entry small { display:block; margin-top:2px; color:var(--row-muted); font-size:13px; font-weight:400; }
+#superAdminConsole#superAdminConsole { display:block; width:100%; max-width:none; margin:0; padding:0; color:var(--bb2-ink); }
+#superAdminConsole .control-bar:has([data-control-back][hidden]) { display:none; }
+#superAdminConsole .control-bar { position:sticky; top:0; z-index:3; display:grid; grid-template-columns:44px 1fr 44px; align-items:center; min-height:48px; padding:max(4px,var(--pwa-safe-top,env(safe-area-inset-top,0px))) 4px 4px; background:var(--bb2-canvas); border-bottom:.5px solid var(--bb2-line); }
+#superAdminConsole .control-bar h2 { grid-column:2; margin:0; font:600 17px/1.2 var(--ds-font); letter-spacing:-.01em; text-align:center; }
+#superAdminConsole .control-bar button { grid-column:1; grid-row:1; display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; border-radius:50%; background:transparent; color:inherit; }
+#superAdminConsole .control-bar svg { width:24px; height:24px; stroke-width:2; }
+#superAdminConsole .control-stats { display:grid; grid-template-columns:repeat(4,1fr); padding:18px 16px; border-bottom:.5px solid var(--bb2-line); text-align:center; }
+#superAdminConsole .control-stats strong { display:block; font:700 18px/1.2 var(--ds-font); font-variant-numeric:tabular-nums; }
+#superAdminConsole .control-stats span { display:block; margin-top:2px; color:var(--row-muted); font-size:13px; }
+#superAdminConsole .control-group { padding:16px 16px 0; }
+#superAdminConsole .control-group h3 { margin:0 0 2px; color:var(--row-muted); font:600 13px/1.3 var(--ds-font); letter-spacing:0; }
+#superAdminConsole .control-row { display:grid; grid-template-columns:24px minmax(0,1fr) auto; align-items:center; gap:14px; width:100%; min-height:60px; margin:0; padding:8px 0; border:0; border-bottom:.5px solid var(--bb2-line); border-radius:0; background:transparent; box-shadow:none; color:inherit; text-align:left; }
+#superAdminConsole .control-row:has(> small, > .control-unsaved) { grid-template-columns:24px minmax(0,1fr) auto auto; }
+#superAdminConsole .control-row:last-child { border-bottom:0; }
+#superAdminConsole .control-row > svg { width:24px; height:24px; stroke-width:1.7; }
+#superAdminConsole .control-row strong { display:block; font-size:16px; font-weight:600; }
+#superAdminConsole .control-row > span small { display:block; margin-top:2px; color:var(--row-muted); font-size:13px; font-weight:400; line-height:1.3; }
+#superAdminConsole .control-row > i { width:7px; height:7px; margin-right:4px; border-top:1.75px solid var(--row-muted); border-right:1.75px solid var(--row-muted); transform:rotate(45deg); }
+#superAdminConsole .control-row > small[data-request-count]:not([hidden]) { min-width:20px; padding:2px 6px; border-radius:99px; background:#ff3b30; color:#fff; font-size:12px; font-weight:700; text-align:center; }
+#superAdminConsole .control-unsaved { color:var(--row-muted); font-size:13px; }
+#superAdminConsole .control-row[hidden], #superAdminConsole .control-unsaved[hidden] { display:none; }
+#superAdminConsole .admin-account-security.control-row > b { display:none; }
+#superAdminConsole .control-session { display:grid; gap:4px; margin:16px 16px 0; padding:0; border:0; background:transparent; color:var(--row-muted); font-size:13px; text-align:center; }
+#superAdminConsole .control-session button { order:-1; min-height:46px; padding:0; border:0; border-radius:10px; background:transparent; color:#ff453a; font-size:16px; font-weight:600; }
+#superAdminConsole > [data-control-panel]:not([data-control-panel="overview"]) { padding:12px 16px 90px; }
+#superAdminConsole .control-design-intro, #superAdminConsole .request-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 12px; }
+#superAdminConsole .control-design-intro p, #superAdminConsole .request-section-heading p { color:var(--row-muted); font-size:13px; line-height:1.35; }
+#superAdminConsole .control-design-intro button, #superAdminConsole .request-section-heading button { flex:none; min-height:34px; padding:0 12px; border:0; border-radius:10px; background:color-mix(in srgb,var(--bb2-ink) 11%,transparent); color:var(--bb2-ink); font-size:14px; font-weight:600; }
+#superAdminConsole .control-editor { display:block; }
+#superAdminConsole .control-editor-fields { display:block; }
+#superAdminConsole .control-editor-section { margin:0; padding:14px 0; border:0; border-top:.5px solid var(--bb2-line); border-radius:0; background:transparent; box-shadow:none; }
+#superAdminConsole .control-editor-section > header { margin:0 0 8px; }
+#superAdminConsole .control-editor-section > header > i { display:none; }
+#superAdminConsole .control-editor-section > header h4 { margin:0 0 2px; font:700 16px/1.25 var(--ds-font); letter-spacing:0; }
+#superAdminConsole .control-editor-section > header p { color:var(--row-muted); font-size:13px; line-height:1.35; }
+#superAdminConsole .control-editor-section label { font-size:13px; font-weight:400; color:var(--row-muted); letter-spacing:0; text-transform:none; }
+#superAdminConsole .control-editor-section :is(input:not([type=radio],[type=checkbox]),select,textarea) { min-height:44px; padding:10px 12px; border:0; border-radius:10px; background:color-mix(in srgb,var(--bb2-ink) 9%,transparent); color:var(--bb2-ink); box-shadow:none; font-size:16px; }
+#superAdminConsole .control-preview-column { margin:14px 0 0; padding:14px 0 0; border-top:.5px solid var(--bb2-line); }
+#superAdminConsole .control-publish-bar { position:fixed; left:50%; bottom:calc(88px + env(safe-area-inset-bottom,0px)); z-index:4; box-sizing:border-box; width:min(600px,100%); transform:translateX(-50%); display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; margin:0; padding:10px 16px; border:0; border-top:.5px solid var(--bb2-line); border-radius:0; background:var(--bb2-canvas); box-shadow:none; }
+#superAdminConsole .control-publish-bar strong { display:block; font-size:14px; font-weight:600; }
+#superAdminConsole .control-publish-bar small { display:block; color:var(--row-muted); font-size:12px; line-height:1.3; }
+#superAdminConsole .control-publish-bar > div:last-child { display:flex; gap:8px; }
+#superAdminConsole .control-publish-bar button { min-height:40px; padding:0 14px; border:0; border-radius:10px; background:color-mix(in srgb,var(--bb2-ink) 11%,transparent); color:var(--bb2-ink); font-size:14px; font-weight:600; }
+#superAdminConsole .control-publish-bar button[type=submit] { background:var(--bb2-ink); color:var(--bb2-canvas); }
+#superAdminConsole .control-publish-bar button:disabled { opacity:.4; }
+#superAdminConsole .control-defaults { width:100%; min-height:44px; margin:8px 0 0; border:0; background:transparent; color:var(--row-muted); font-size:14px; }
+#superAdminConsole .control-price-row { padding:8px 0; border:0; border-top:.5px solid var(--bb2-line); border-radius:0; background:transparent; }
+.control-dock.control-dock { border:.5px solid var(--bb2-line-strong); border-radius:20px; background:var(--bb2-panel); box-shadow:0 8px 24px #0006; }
+.control-dock.control-dock button { border:0; background:transparent; color:color-mix(in srgb,var(--bb2-ink) 58%,transparent); }
+.control-dock.control-dock button.active { background:transparent; color:var(--bb2-ink); }
+#superAdminConsole .admin-account-security.control-row { display:grid; grid-template-columns:24px minmax(0,1fr) auto; align-items:center; gap:14px; width:100%; min-height:60px; padding:8px 0; border:0; border-bottom:.5px solid var(--bb2-line); border-radius:0; background:transparent !important; box-shadow:none; }
+#superAdminConsole .admin-account-security.control-row > svg { width:24px; height:24px; }
+#superAdminConsole .control-session.control-session { display:grid; justify-items:stretch; gap:4px; margin:16px 16px 0; padding:0; border:0; background:transparent; text-align:center; }
+#superAdminConsole .control-session.control-session button { order:-1; display:block; width:100%; min-height:46px; padding:0; border:0; background:transparent; color:#ff453a; font-size:16px; font-weight:600; text-align:center; }
+#superAdminConsole .control-palette legend { color:var(--row-muted); font-size:13px; font-weight:400; }
+#superAdminConsole .control-palette label { border:0; background:color-mix(in srgb,var(--bb2-ink) 7%,transparent); }
+#superAdminConsole .control-palette label:has(input:checked) { box-shadow:inset 0 0 0 2px var(--bb2-ink); background:color-mix(in srgb,var(--bb2-ink) 7%,transparent); border-color:transparent; }
+#superAdminConsole .control-palette label:has(input:focus-visible) { outline:2px solid var(--bb2-ink); }
+#superAdminConsole .control-palette label > small { color:var(--bb2-ink); font-size:11px; }
+#superAdminConsole .admin-account-security.control-row { border:0 !important; border-bottom:.5px solid var(--bb2-line) !important; border-radius:0 !important; padding:8px 0 !important; }
+#superAdminConsole .admin-account-security.control-row strong { font-size:16px; font-weight:600; }
+#superAdminConsole .admin-account-security.control-row small { color:var(--row-muted); font-size:13px; line-height:1.3; }
+#superAdminConsole .control-session.control-session { justify-items:stretch !important; flex-direction:column; }
+#superAdminConsole .control-session.control-session button { width:100% !important; font-size:16px !important; justify-content:center; }

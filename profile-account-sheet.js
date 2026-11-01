@@ -36,6 +36,8 @@
     const name=String(user?.name||user?.user_metadata?.name||user?.username||'Tu cuenta');
     dialog.querySelector('h2').textContent=name;
     dialog.querySelector('.profile-account-sheet-initial').textContent=name.slice(0,1).toLocaleUpperCase('es');
+    if(user?.username)dialog.querySelector('.profile-account-sheet-account small').textContent=`@${user.username}`;
+    if(user?.avatarUrl){const photo=new Image();photo.alt='';photo.referrerPolicy='no-referrer';photo.src=user.avatarUrl;dialog.querySelector('.profile-account-sheet-initial').replaceChildren(photo);}
     menu.classList.add('profile-account-sheet-actions');menu.hidden=false;menu.setAttribute('aria-hidden','false');
     dialog.querySelector('.profile-account-sheet-content').append(menu);
     document.body.append(dialog);document.body.classList.add('profile-account-sheet-open');trigger?.setAttribute('aria-expanded','true');
