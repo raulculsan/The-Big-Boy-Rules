@@ -1722,7 +1722,7 @@ function renderMessages() {
           <button class="message-author" data-profile="${message.member}">${escapeHtml(globalThis.ChatCustom?.name("group", member) || member?.name || "Miembro")}</button>
         </div>`}
         ${renderChatQuote("group", message)}
-        ${message.text ? `<p>${escapeHtml(message.text)}</p>` : ""}${attachment}
+        ${message.text ? `<p>${formatChatText(message.text)}</p>` : ""}${attachment}
         <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>
         </div>
         ${globalThis.ChatCustom?.chips("group", message.id) || ""}
@@ -2971,6 +2971,11 @@ function renderPrivateContacts() {
   filterInboxContacts();
 }
 
+function formatChatText(text) {
+  const safe = escapeHtml(text);
+  return globalThis.ChatMentions?.format(safe) ?? safe;
+}
+
 function messagePreviewText(body, attachmentType) {
   if (body?.trim()) return body.trim();
   if (attachmentType?.startsWith("audio/")) return "Nota de voz";
@@ -3044,7 +3049,7 @@ function renderPrivateConversation() {
     return `${conversationDayDivider(message.createdAt, items[index - 1]?.createdAt)}<div class="message private-message ${own ? "own own-message" : ""}">
       <div class="message-bubble" data-message-bubble data-message-kind="private" data-message-id="${escapeHtml(String(message.id))}" tabindex="0" role="button" aria-haspopup="menu" aria-label="Mensaje de ${escapeHtml(own ? currentUser?.name || "Tú" : member.name)}: ${escapeHtml(String(message.body || "Adjunto").slice(0, 160))}. Mantén pulsado para ver opciones">
         ${renderChatQuote("private", message)}
-        ${message.body ? `<p>${escapeHtml(message.body)}</p>` : ""}
+        ${message.body ? `<p>${formatChatText(message.body)}</p>` : ""}
         ${message.attachmentUrl ? renderMessageAttachment(message) : ""}
         <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>
         </div>
@@ -5354,6 +5359,7 @@ function notificationPresentation(item,actor) {
     private_message:{title:who,kind:"Te ha enviado un mensaje"},
     group_message:{title:who,kind:"Mensaje en el grupo"},
     group_poll:{title:who,kind:"Nueva encuesta en el grupo"},
+    group_mention:{title:who,kind:"Te ha mencionado en el grupo"},
     account_request:{title:"Solicitud de cuenta",kind:"Administración · acceso al club",system:true,symbol:"＋"},
     like:{title:who,kind:"Le gusta tu contenido"},reply:{title:who,kind:"Ha respondido a tu contenido"},media_created:{title:who,kind:item.targetType==="moment"?"Ha compartido una historia":"Ha publicado contenido"},
     event_created:{title:"Nuevo plan",kind:`Agenda · ${who}`,system:true,symbol:"◷"},
@@ -5569,7 +5575,7 @@ async function openNotification(id) {
     if(item.type.startsWith("trade_")) globalThis.CollectionSocial?.openTrades();
     else goTo("sobres");
   } else if (item.type === "account_request" && canManageSite()) {goTo("administracion");document.querySelector("[data-open-account-requests]")?.click();}
-  else if (item.type === "group_poll") void openGroupConversation(item.targetId);
+  else if (item.type === "group_poll" || item.type === "group_mention") void openGroupConversation(item.targetId);
   else if (item.type === "group_message") goTo("chat");
   else if (item.type === "news_update") {goTo("inicio");document.getElementById("noticias")?.classList.remove("is-collapsed");document.getElementById("noticias")?.scrollIntoView({behavior:(globalThis.ClubMotion?.media || matchMedia("(prefers-reduced-motion: reduce)")).matches?"instant":"smooth",block:"start"});}
   else {
@@ -8672,6 +8678,10 @@ const revealObserver = new IntersectionObserver(entries => entries.forEach(entry
 document.querySelectorAll(".reveal").forEach(element => revealObserver.observe(element));
 
 // Wallpaper preferences are personal and never enter the shared message backend.
+globalThis.ChatMentions?.init({
+  getSelf: () => currentUser, getPeer: () => getMember(activePrivateMemberId), getMembers: () => members, avatar: getAvatar,
+});
+
 globalThis.ChatCustom?.init({
   db, getUser: () => currentAuthUser, getChannel: () => activeChatChannelId, getPeer: () => getMember(activePrivateMemberId),
   getSelf: () => currentUser, getMembers: () => members, canManage: canManageSite,

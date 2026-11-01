@@ -13,6 +13,16 @@
 .message-reactions b { font-size: 12px; font-weight: 500; }
 .message-reaction-row { display: flex; justify-content: space-between; gap: 2px; padding: 4px; }
 .message-context-menu .message-reaction-row button { flex: 1; min-width: 36px; min-height: 40px; padding: 0; font-size: 20px; text-align: center; }
+/* Sits in the conversation's column like the reply bar, so the keyboard can never hide it. */
+.mention-suggest { order: 4; flex: none; z-index: 30; margin: 0 8px 6px; display: grid; overflow: hidden; border: 1px solid #ffffff26; border-radius: 14px; background: #1f2329; box-shadow: 0 8px 24px #0006; }
+.mention-suggest[hidden] { display: none; }
+.mention-suggest button { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 12px; border: 0; background: transparent; color: #f4f5f7; font: inherit; text-align: left; }
+.mention-suggest button + button { border-top: 1px solid #ffffff14; }
+.mention-suggest span { display: grid; min-width: 0; }
+.mention-suggest strong { overflow: hidden; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.mention-suggest small { font-size: 12px; color: #999da6; }
+.message-mention { display: inline; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.message-mention.is-self { padding: 0 4px; border-radius: 5px; background: #ffffff26; }
 .chat-edit { width: min(100% - 24px, 460px); max-height: 86dvh; padding: 0; overflow: auto; border: 1px solid #ffffff26; border-radius: 18px; background: #15181d; color: #f4f5f7; }
 .chat-edit::backdrop { background: #000a; }
 .chat-edit-sheet { display: grid; gap: 20px; padding: 16px; }

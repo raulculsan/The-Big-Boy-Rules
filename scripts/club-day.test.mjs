@@ -54,6 +54,13 @@ test('discarding a selection keeps the last copy and stays atomic', async () => 
   assert.doesNotMatch(css.slice(css.indexOf('Repetidas:')), /gold|yellow|--ds-accent/);
 });
 
+test('mentions come from the stored text and never open markup', async () => {
+  const [sql, client] = await Promise.all([read('supabase/migrations/20261101120000_group_mentions.sql'), read('chat-mentions.js')]);
+  assert.match(sql, /regexp_matches\(new\.body/);
+  assert.doesNotMatch(client, /\.rpc\(|\.from\(/);
+  assert.match(client, /Takes already-escaped text/);
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);

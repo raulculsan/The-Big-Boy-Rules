@@ -40,6 +40,7 @@ const sources = [
   "club-day.js",
   "club-day.css",
   "chat-custom.js",
+  "chat-mentions.js",
   "chat-custom.css",
   "club-social.css",
   "club-live.css",

@@ -25,6 +25,7 @@ $(SRCROOT)/App/public/card-thumbnails.js
 $(SRCROOT)/App/public/chat-custom.css
 $(SRCROOT)/App/public/chat-custom.js
 $(SRCROOT)/App/public/chat-keyboard.js
+$(SRCROOT)/App/public/chat-mentions.js
 $(SRCROOT)/App/public/chat-motion.js
 $(SRCROOT)/App/public/chat-theme-catalog.json
 $(SRCROOT)/App/public/chat-themes.css
