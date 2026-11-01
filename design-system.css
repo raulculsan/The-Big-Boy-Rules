@@ -260,3 +260,29 @@ body.authenticated #album .album-card-search input { border: 0; background: tran
 body.authenticated #album .album-card-search > span { color: var(--ds-text-2); }
 body.authenticated #album .card-album-tools :is(button, summary) { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); box-shadow: none; }
 body.authenticated #album #cardAlbumPageTitle { color: var(--ds-text-2); letter-spacing: normal; text-transform: none; }
+
+/* Plan and birthday form. Same fields and pills as tickets; birthdays keep only their pink dot. */
+#eventEditor, #eventEditor.is-birthday { --editor-accent: var(--ds-text-2); --interaction-strong: var(--ds-text-2); }
+#eventEditor .calendar-editor, #eventEditor.is-birthday .calendar-editor { padding: var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
+#eventEditor .eyebrow { display: none; }
+#eventEditor h2 { font-size: var(--ds-text-xl); font-weight: 600; letter-spacing: normal; }
+#eventEditor .calendar-editor-intro { margin-bottom: var(--ds-space-4); color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+#eventEditor .icon-button { width: var(--ds-control-sm); height: var(--ds-control-sm); min-height: var(--ds-control-sm); border: 1px solid var(--ds-line); border-radius: 50%; background: transparent; color: var(--ds-text); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#eventEditor .calendar-event-form { gap: var(--ds-space-3); }
+#eventEditor .event-kind-picker { gap: var(--ds-space-2); }
+#eventEditor .event-kind-picker button { padding: var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: transparent; color: var(--ds-text-2); }
+#eventEditor .event-kind-picker button[aria-pressed="true"] { border-color: var(--ds-text-2); background: var(--ds-raised); color: var(--ds-text); }
+#eventEditor .event-kind-picker strong { font-size: var(--ds-text-sm); }
+#eventEditor .event-kind-picker small { color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+#eventEditor .calendar-event-form label { gap: var(--ds-space-1); }
+#eventEditor .calendar-event-form label > span { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+#eventEditor label small { color: var(--ds-text-3); font-size: var(--ds-text-xs); }
+#eventEditor input:not([type="hidden"]), #eventEditor textarea { min-height: var(--ds-control); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-raised); color: var(--ds-text); font-size: 16px; }
+#eventEditor input:focus, #eventEditor textarea:focus { border-color: var(--ds-text-2); box-shadow: none; }
+#eventEditor .birthday-all-day-note { padding: var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: transparent; }
+#eventEditor .birthday-all-day-note strong { font-size: var(--ds-text-sm); }
+#eventEditor .birthday-all-day-note small { color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+#eventEditor .event-modal-actions { padding-top: var(--ds-space-3); border-top: 1px solid var(--ds-line); }
+#eventEditor .event-modal-actions :is(.primary-button, .secondary-button) { min-height: var(--ds-control); border-radius: var(--ds-radius-pill); font-size: var(--ds-text-sm); box-shadow: none; }
+#eventEditor .event-modal-actions .secondary-button { border: 1px solid var(--ds-line); background: transparent; color: var(--ds-text); }
+#eventEditor .event-modal-actions .primary-button { border: 0; background: var(--ds-text); color: var(--ds-surface); font-weight: 600; }
