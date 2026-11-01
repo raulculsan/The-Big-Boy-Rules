@@ -286,3 +286,104 @@ body.authenticated #album #cardAlbumPageTitle { color: var(--ds-text-2); letter-
 #eventEditor .event-modal-actions :is(.primary-button, .secondary-button) { min-height: var(--ds-control); border-radius: var(--ds-radius-pill); font-size: var(--ds-text-sm); box-shadow: none; }
 #eventEditor .event-modal-actions .secondary-button { border: 1px solid var(--ds-line); background: transparent; color: var(--ds-text); }
 #eventEditor .event-modal-actions .primary-button { border: 0; background: var(--ds-text); color: var(--ds-surface); font-weight: 600; }
+
+/* Administration subpages and the achievements library. Trophies keep their own colours. */
+.achievement-admin-page { --club-gold: var(--ds-text-2); --bb2-gold: var(--ds-text-2); --accent: var(--ds-text-2); }
+body.authenticated .achievement-admin-page .achievement-page-header { display: flex; align-items: center; gap: var(--ds-space-3); padding: 0 0 var(--ds-space-3); border: 0; background: transparent; text-align: left; }
+body.authenticated .achievement-admin-page .achievement-page-header > div { flex: 1; min-width: 0; }
+body.authenticated .achievement-admin-page .achievement-page-header > span { display: none; }
+body.authenticated .achievement-admin-page .achievement-page-header small { display: none; }
+body.authenticated .achievement-admin-page .achievement-page-header h2 { margin: 0; font-size: var(--ds-text-xl); font-weight: 600; letter-spacing: normal; }
+body.authenticated .achievement-admin-page .achievement-back { display: grid; flex: none; place-items: center; width: var(--ds-control); height: var(--ds-control); padding: 0; border: 1px solid var(--ds-line); border-radius: 50%; background: var(--ds-surface); color: var(--ds-text); box-shadow: none; }
+body.authenticated .achievement-admin-page .achievement-page-content { gap: var(--ds-space-3); padding: 0; }
+body.authenticated #admin-logros .achievement-library-intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ds-space-3); margin: 0; padding: 0; border: 0; background: transparent; }
+body.authenticated #admin-logros .achievement-library-intro > div { flex: 1 1 200px; min-width: 0; }
+body.authenticated #admin-logros .achievement-library-intro :is(.eyebrow, h3) { display: none; }
+body.authenticated #admin-logros .achievement-library-intro p { margin: 0; color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+body.authenticated #admin-logros .achievement-library-intro button { flex: none; width: auto; min-height: var(--ds-control); padding: 0 var(--ds-space-4); border: 0; border-radius: var(--ds-radius-pill); background: var(--ds-text); color: var(--ds-surface); font-size: var(--ds-text-sm); font-weight: 600; box-shadow: none; }
+body.authenticated #admin-logros .achievement-library-stats { display: flex; gap: var(--ds-space-4); margin: 0; padding: 0; border: 0; color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+body.authenticated #admin-logros .achievement-library-stats strong { color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 600; }
+body.authenticated #admin-logros .achievement-library-tools { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin: 0; }
+body.authenticated .achievement-admin-page .achievement-search { flex: 1 1 200px; min-height: var(--ds-control); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text); }
+body.authenticated .achievement-admin-page .achievement-search input { border: 0; background: transparent; color: var(--ds-text); font-size: 16px; }
+body.authenticated #admin-logros #achievementLibraryTier { flex: 1 1 140px; min-height: var(--ds-control); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text); font-size: 16px; }
+body.authenticated #admin-logros .achievement-library { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--ds-space-2); }
+body.authenticated #admin-logros .achievement-library-card { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: start; gap: var(--ds-space-1) var(--ds-space-3); padding: var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); box-shadow: none; }
+body.authenticated #admin-logros .achievement-library-card::before, body.authenticated #admin-logros .achievement-library-card::after { content: none; }
+body.authenticated #admin-logros .achievement-library-art { grid-row: span 2; width: 56px; height: 56px; margin: 0; padding: 0; background: transparent; }
+body.authenticated #admin-logros .achievement-library-art :is(img, svg) { width: 100%; height: 100%; object-fit: contain; }
+body.authenticated #admin-logros .achievement-library-copy { min-width: 0; padding: 0; }
+body.authenticated #admin-logros .achievement-library-copy small { color: var(--ds-text-2); font-size: var(--ds-text-xs); letter-spacing: normal; text-transform: none; }
+body.authenticated #admin-logros .achievement-library-copy h3 { margin: 2px 0; color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 600; }
+body.authenticated #admin-logros .achievement-library-copy p { margin: 0; color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.4; }
+body.authenticated #admin-logros .achievement-library-recipients { grid-column: 2; display: flex; align-items: center; gap: var(--ds-space-2); margin: 0; padding: 0; border: 0; color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+body.authenticated #admin-logros .achievement-library-actions { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-2); margin: var(--ds-space-2) 0 0; padding: var(--ds-space-2) 0 0; border-top: 1px solid var(--ds-line); }
+body.authenticated #admin-logros .achievement-library-actions .secondary-button { flex: 1; min-height: var(--ds-control-sm); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text); font-size: var(--ds-text-sm); box-shadow: none; }
+body.authenticated #admin-logros .achievement-automatic-label { flex: 1; color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+body.authenticated #admin-logros .achievement-delete { display: grid; flex: none; place-items: center; width: var(--ds-control-sm); height: var(--ds-control-sm); border: 1px solid var(--ds-line); border-radius: 50%; background: transparent; color: var(--ds-text-2); }
+body.authenticated .achievement-admin-page :is(.achievement-form-section, .achievement-editor-preview, .achievement-assignment-summary, .admin-settings-entry) { padding: var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
+body.authenticated .achievement-admin-page .achievement-step > span { display: none; }
+body.authenticated .achievement-admin-page .achievement-step h3, body.authenticated .achievement-admin-page .achievement-form-section > h3 { color: var(--ds-text); font-size: var(--ds-text-lg); font-weight: 600; }
+body.authenticated .achievement-admin-page :is(.achievement-step p, .achievement-section-hint, .achievement-preview-label) { color: var(--ds-text-2); font-size: var(--ds-text-sm); letter-spacing: normal; }
+body.authenticated .achievement-admin-page .achievement-field { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+body.authenticated .achievement-admin-page .achievement-field :is(input, textarea, select) { min-height: var(--ds-control); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-raised); color: var(--ds-text); font-size: 16px; }
+body.authenticated .achievement-admin-page .achievement-rank { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: transparent; box-shadow: none; }
+body.authenticated .achievement-admin-page .achievement-rank:has(input:checked), body.authenticated .achievement-admin-page .achievement-mode-picker label:has(input:checked) { border-color: var(--ds-text-2); background: var(--ds-raised); }
+body.authenticated .achievement-admin-page .achievement-mode-picker label { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: transparent; }
+body.authenticated .achievement-admin-page .achievement-editor-footer :is(.primary-button, .secondary-button) { min-height: var(--ds-control); border-radius: var(--ds-radius-pill); font-size: var(--ds-text-sm); box-shadow: none; }
+body.authenticated .achievement-admin-page .achievement-editor-footer .primary-button { border: 0; background: var(--ds-text); color: var(--ds-surface); font-weight: 600; }
+body.authenticated .achievement-admin-page .achievement-editor-footer .secondary-button { border: 1px solid var(--ds-line); background: transparent; color: var(--ds-text); }
+body.authenticated .achievement-admin-page .achievement-page-header { padding: calc(var(--pwa-safe-top, env(safe-area-inset-top, 0px)) + var(--ds-space-3)) 16px var(--ds-space-3); background: var(--bb2-canvas); }
+body.authenticated .achievement-admin-page .achievement-page-header h2 { text-align: left; }
+body.authenticated .achievement-admin-page .achievement-page-content { width: 100%; max-width: 980px; box-sizing: border-box; margin-inline: auto; padding: 0 16px var(--ds-space-5); }
+body.authenticated .achievement-admin-page .achievement-page-content > :empty { display: none; }
+body.authenticated #admin-logros .achievement-library-intro { min-height: 0; }
+body.authenticated #admin-logros .achievement-library-intro button { margin: 0; }
+body.authenticated .achievement-admin-page .achievement-picker-tools button { min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+body.authenticated #admin-logros .achievement-library-intro { flex-direction: row; flex-wrap: nowrap; }
+body.authenticated #admin-logros .achievement-library-intro > div { flex: 1 1 0; }
+body.authenticated #admin-logros .achievement-library-stats { margin-block: var(--ds-space-1); }
+
+/* Control de cuentas and the account editor. */
+body.authenticated #admin-cuentas :is(.superadmin-tools, .admin-users-panel) { padding: var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
+body.authenticated #admin-cuentas :is(.superadmin-tools, .admin-users-panel)::before, body.authenticated #admin-cuentas :is(.superadmin-tools, .admin-users-panel)::after { content: none; }
+body.authenticated #admin-cuentas .panel-heading { align-items: center; margin: 0 0 var(--ds-space-3); }
+body.authenticated #admin-cuentas .panel-heading h3 { margin: 0; color: var(--ds-text); font-size: var(--ds-text-lg); font-weight: 600; }
+body.authenticated #admin-cuentas .admin-disclosure-icon { border: 1px solid var(--ds-line); background: transparent; color: var(--ds-text-2); }
+body.authenticated #admin-cuentas .admin-users-panel .panel-heading > :not(div) { padding: 0; border: 0; background: transparent; color: var(--ds-text-2); font-size: var(--ds-text-xs); font-weight: 400; }
+body.authenticated #admin-cuentas .admin-member-card { min-height: 64px; padding: var(--ds-space-2) var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: transparent; color: var(--ds-text); box-shadow: none; }
+body.authenticated #admin-cuentas .admin-member-copy strong { color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 600; }
+body.authenticated #admin-cuentas .admin-member-copy small { color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+body.authenticated #admin-cuentas .role-chip { padding: 2px 8px; border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); font-size: var(--ds-text-xs); font-weight: 500; letter-spacing: normal; text-transform: none; box-shadow: none; }
+body.authenticated #admin-cuentas .role-chip.admin { border-color: var(--ds-text-2); color: var(--ds-text); font-weight: 600; }
+body.authenticated #admin-cuentas .admin-create-user-form label { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+body.authenticated #admin-cuentas .admin-create-user-form input { min-height: var(--ds-control); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-raised); color: var(--ds-text); font-size: 16px; }
+body.authenticated #admin-cuentas .admin-create-user-form .primary-button { min-height: var(--ds-control); border: 0; border-radius: var(--ds-radius-pill); background: var(--ds-text); color: var(--ds-surface); font-size: var(--ds-text-sm); font-weight: 600; box-shadow: none; }
+body.authenticated .admin-account-page, body.authenticated.achievement-management-open .admin-account-page { box-sizing: border-box; padding: calc(var(--pwa-safe-top, env(safe-area-inset-top, 0px)) + var(--ds-space-3)) 16px calc(var(--pwa-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ds-space-6)); }
+.admin-account-page { --accent: var(--ds-text-2); --club-gold: var(--ds-text-2); --bb2-gold: var(--ds-text-2); }
+.admin-account-header { margin: 0 0 var(--ds-space-4); gap: var(--ds-space-3); }
+.admin-account-header > button { width: var(--ds-control); height: var(--ds-control); border: 1px solid var(--ds-line); background: var(--ds-surface); color: var(--ds-text); }
+.admin-account-header span, .admin-account-card-heading > span { display: none; }
+.admin-account-header h2 { margin: 0; font-size: var(--ds-text-xl); font-weight: 600; letter-spacing: normal; }
+.admin-account-identity { margin-bottom: var(--ds-space-3); gap: var(--ds-space-3); }
+.admin-account-identity .avatar { width: 56px; height: 56px; }
+.admin-account-identity h3 { font-size: var(--ds-text-lg); font-weight: 600; }
+.admin-account-identity span, .admin-account-identity small { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+.admin-account-balances { gap: var(--ds-space-2); }
+.admin-account-balances > div, .admin-account-card { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
+.admin-account-balances > div { padding: var(--ds-space-3); }
+.admin-account-card { padding: var(--ds-space-4); }
+.admin-account-card h3 { margin: 0 0 var(--ds-space-3); color: var(--ds-text); font-size: var(--ds-text-lg); font-weight: 600; }
+.admin-account-card label { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+.admin-account-card :is(input:not([type="checkbox"], [type="radio"]), select, textarea) { min-height: var(--ds-control); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-raised); color: var(--ds-text); font-size: 16px; }
+.admin-account-card button[type="submit"], .admin-account-card .primary-button { min-height: var(--ds-control); border: 0; border-radius: var(--ds-radius-pill); background: var(--ds-text); color: var(--ds-surface); font-size: var(--ds-text-sm); font-weight: 600; box-shadow: none; }
+.admin-account-balances span { color: var(--ds-text-2); font-size: var(--ds-text-xs); font-weight: 500; letter-spacing: normal; }
+.admin-account-balances strong { color: var(--ds-text); font-size: var(--ds-text-lg); font-weight: 600; }
+body.authenticated #admin-cuentas #superAdminTools > summary { margin: 0; padding: 0; }
+
+/* These pages hide the top bar, so nothing else covers the status bar while scrolling. */
+@media (max-width: 760px) {
+  body.authenticated.achievement-management-open::before { content: ""; position: fixed; z-index: 60; inset: 0 0 auto 0; display: block; height: var(--pwa-safe-top, env(safe-area-inset-top, 0px)); background: var(--bb2-canvas); animation: none; pointer-events: none; }
+}
+body.authenticated.achievement-management-open .admin-account-page { padding-top: 0; }
+.admin-account-header { position: sticky; z-index: 4; top: 0; margin-inline: -16px; padding: calc(var(--pwa-safe-top, env(safe-area-inset-top, 0px)) + var(--ds-space-3)) 16px var(--ds-space-3); background: var(--bb2-canvas); }

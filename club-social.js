@@ -7,7 +7,8 @@
  const catalog=()=>globalThis.CardCollection?.catalog||[];
  const card=id=>catalog().find(c=>c.id===id);
  const art=c=>globalThis.CardMedia?.source(globalThis.CardCollection?.thumbnail(c))||globalThis.CardCollection?.thumbnail(c)||'';
- const image=c=>`<img src="${esc(art(c))}" alt="${esc(c.name)} · ${Number(c.score)||0} PTS" loading="lazy" decoding="async" draggable="false">`;
+ // A missing thumbnail falls back to the full card through the shared image handler.
+ const image=c=>`<img data-card-original="${esc(c.front)}" src="${esc(art(c))}" alt="${esc(c.name)} · ${Number(c.score)||0} PTS" decoding="async" draggable="false">`;
  async function rpc(name,args={}){if(!user())throw new Error('Inicia sesión.');const {data,error}=await cfg.db.rpc(name,args);if(error)throw error;return data;}
  const friendly=e=>['PGRST202','42883','42P01'].includes(e?.code)?'Esta función se está preparando. Vuelve a intentarlo más tarde.':e?.message||'No se pudo cargar. Inténtalo de nuevo.';
  // The chosen cards float beside the member's details, right under the edit row.

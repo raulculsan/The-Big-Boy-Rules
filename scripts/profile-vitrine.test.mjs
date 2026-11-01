@@ -59,3 +59,7 @@ test('the picker lists owned cards from the server state, never the closed inven
   w.document.querySelector('[data-save]').click(); await flush();
   assert.deepEqual(calls.find(call => call[0] === 'set_profile_card_showcase')[1].card_ids.length,1);
 });
+
+test('vitrine images fall back to the full card', () => {
+  assert.match(read('club-social.js'), /<img data-card-original="\$\{esc\(c\.front\)\}"/);
+});
