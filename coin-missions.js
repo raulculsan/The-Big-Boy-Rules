@@ -40,7 +40,7 @@
   host.dataset.coinRendered='true';
  }
  async function refresh(force=false){
-  const nodes=hosts(),owner=actor(),version=epoch;if(!nodes.length||!owner)return;
+  const nodes=hosts(),owner=actor(),version=epoch;if(!owner)return;
   if(!force&&cache?.owner===owner&&Date.now()-cache.at<15000){nodes.forEach(n=>render(n));return;}
   if(inflight?.owner===owner)return inflight.promise;
   const request={owner,promise:null};inflight=request;

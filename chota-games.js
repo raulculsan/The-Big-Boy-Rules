@@ -56,7 +56,7 @@
     previousFocus=document.activeElement;
     dialog=document.createElement('dialog');dialog.className='chota-arcade';dialog.setAttribute('aria-label','Minijuegos de El Chota');
     dialog.innerHTML='<div class="chota-arcade-shell"><header><h2>Juegos</h2><button type="button" data-arcade-close aria-label="Cerrar minijuegos">Cerrar</button></header><div data-arcade-body aria-live="polite"><p>Cargando sus objetos…</p></div></div>';
-    document.body.append(dialog);dialog.showModal();
+    document.body.append(dialog);if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(dialog);else dialog.showModal();
     dialog.querySelector('[data-arcade-close]').addEventListener('click',close);
     dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
     dialog.addEventListener('click',event=>{if(event.target===dialog)close();});

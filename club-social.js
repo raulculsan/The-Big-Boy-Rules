@@ -87,7 +87,7 @@
   const dialog=document.createElement('dialog');missionsDialog=dialog;missionsTrigger=trigger;missionsRoom=room;
   dialog.className='club-missions-dialog';dialog.setAttribute('aria-labelledby','clubMissionsTitle');
   dialog.innerHTML='<div class="club-missions-shell"><header class="club-missions-heading"><div class="club-missions-heading-copy"><span>La sede del club</span><h2 id="clubMissionsTitle">Misiones</h2><p>Monedas, sobres y objetivos del club.</p></div><button type="button" data-missions-close aria-label="Cerrar misiones"><span>Cerrar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="club-missions-body" data-missions-body><div class="club-missions-board"><section class="club-mission-section club-mission-section--coins" data-club-coin-missions aria-label="Misiones de monedas"></section><section class="club-mission-section club-mission-section--weekly" aria-labelledby="clubWeeklyMissionLabel"><header class="club-mission-category"><span aria-hidden="true">01</span><h3 id="clubWeeklyMissionLabel">Esta semana</h3></header><section class="club-weekly-challenge" data-club-weekly-mission aria-label="Reto de la semana" aria-live="polite"><p role="status">Cargando reto de la semana…</p></section></section><section class="club-mission-section club-mission-section--collection" aria-labelledby="clubCollectionMissionLabel"><header class="club-mission-category"><span aria-hidden="true">02</span><h3 id="clubCollectionMissionLabel">Tu colección</h3></header><section class="collection-season-strip" data-collection-seasons aria-label="Misiones de colección"><p role="status">Cargando misiones de colección…</p></section></section><section class="club-mission-section club-mission-section--social" aria-labelledby="clubSocialMissionLabel"><header class="club-mission-category"><span aria-hidden="true">03</span><h3 id="clubSocialMissionLabel">En equipo</h3></header><section class="club-social-season" data-club-social-goal aria-label="Progreso de las misiones"><p role="status">Consultando las misiones…</p></section></section></div></div></div>';
-  document.body.append(dialog);trigger.setAttribute('aria-expanded','true');document.body.classList.add('club-missions-open');dialog.showModal();
+  document.body.append(dialog);trigger.setAttribute('aria-expanded','true');document.body.classList.add('club-missions-open');if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(dialog);else dialog.showModal();
   dialog.querySelector('[data-missions-close]').addEventListener('click',()=>closeMissions());
   dialog.addEventListener('cancel',event=>{event.preventDefault();closeMissions();});
   dialog.addEventListener('close',()=>{if(missionsDialog===dialog)closeMissions();});
@@ -95,10 +95,11 @@
   // A room rerender removes its trigger; never leave that room's modal in the top layer.
   missionsObserver=new MutationObserver(()=>{if(!room.isConnected)closeMissions(false);});
   missionsObserver.observe(room.parentElement,{childList:true});
+  // Every panel fills in behind the sheet, so it appears once instead of four times.
+  const body=dialog.querySelector('[data-missions-body]');body.style.opacity='0';
   globalThis.ClubCoinMissions?.mount(dialog.querySelector('[data-club-coin-missions]'));
-  void refreshGoal();
-  void globalThis.ClubSeasons?.refresh(true);
-  void globalThis.ChotaGames?.mountWeeklyChallenge?.(dialog.querySelector('[data-club-weekly-mission]'));
+  const panels=Promise.allSettled([refreshGoal(),globalThis.ClubCoinMissions?.refresh(),globalThis.ClubSeasons?.refresh(true),globalThis.ChotaGames?.mountWeeklyChallenge?.(dialog.querySelector('[data-club-weekly-mission]'))]);
+  void Promise.race([panels,new Promise(done=>setTimeout(done,450))]).then(()=>{if(missionsDialog!==dialog)return;body.style.opacity='';body.animate?.([{opacity:0},{opacity:1}],{duration:180,easing:'ease-out'});});
  }
  function mountGoal(host){
   if(!host||!user())return;

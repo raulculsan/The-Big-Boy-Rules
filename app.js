@@ -793,7 +793,10 @@ function goTo(sectionId) {
   });
   updateFloatingTabIndicator(navigationSection);
   if (switchingSection && !document.body.classList.contains("message-slide-transition") && !pageBackSettling && !activeChatMotionScene) {
-    globalThis.ClubMotion?.enterSection(document.getElementById(sectionId));
+    const tabOrder = ["inicio", "chat", "calendario", "perfil"], navigatingBack = backTarget?.id === sectionId;
+    const fromTab = tabOrder.indexOf(currentSection), toTab = tabOrder.indexOf(sectionId);
+    const direction = navigatingBack ? -1 : fromTab >= 0 && toTab >= 0 ? Math.sign(toTab - fromTab) : 1;
+    globalThis.ClubMotion?.enterSection(document.getElementById(sectionId), direction);
   }
   document.body.classList.toggle("chat-focus", sectionId === "privados");
   document.body.classList.toggle("chat-inbox-view", sectionId === "chat");
@@ -4819,6 +4822,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.BannerShop?.refresh(); });
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.ClubDay?.refresh(); });
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) globalThis.ChatCustom?.start(); });
+    runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.ClubCoinMissions?.refresh(); });
   } else {
     onlineUsers = [{legacy_id: user.id, name: user.name}];
     renderPresence();

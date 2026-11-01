@@ -387,3 +387,6 @@ body.authenticated #admin-cuentas #superAdminTools > summary { margin: 0; paddin
 }
 body.authenticated.achievement-management-open .admin-account-page { padding-top: 0; }
 .admin-account-header { position: sticky; z-index: 4; top: 0; margin-inline: -16px; padding: calc(var(--pwa-safe-top, env(safe-area-inset-top, 0px)) + var(--ds-space-3)) 16px var(--ds-space-3); background: var(--bb2-canvas); }
+
+/* Missions keep their shape while data arrives. */
+.club-missions-dialog .club-mission-section { min-height: 132px; }

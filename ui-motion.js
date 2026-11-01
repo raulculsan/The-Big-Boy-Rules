@@ -6,7 +6,7 @@
   const motion = globalThis.ClubMotion;
   if (!motion) return;
   const ease = 'cubic-bezier(.2,.8,.2,1)';
-  const timings = Object.freeze({press:90, feedback:160, settle:260, sheet:300, exit:160, navigation:180});
+  const timings = Object.freeze({press:90, feedback:160, settle:260, sheet:300, exit:160, navigation:220});
   const owners = new WeakMap(), active = new Set(), dismissals = new WeakMap();
   const stop = (element, channel='surface') => {
     const animation = owners.get(element)?.get(channel);
@@ -80,9 +80,12 @@
     if(!dialog.open)dialog.showModal();
     presentDialog(dialog);
   }
-  function enterSection(section) {
+  // direction: 1 moves forward (new page arrives from the right), -1 back, 0 fades in place.
+  function enterSection(section, direction=0) {
     if (!section?.classList.contains('active')) return;
-    run(section,[{opacity:.68},{opacity:1}],{channel:'navigation',duration:timings.navigation,reduced:'fade'});
+    const from=direction?{opacity:0,transform:`translate3d(${direction*16}px,0,0)`}:{opacity:0};
+    const to=direction?{opacity:1,transform:'none'}:{opacity:1};
+    run(section,[from,to],{channel:'navigation',duration:timings.navigation,reduced:'fade'});
   }
   function settleDuration(distance, extent, velocity=0) {
     if (motion.media.matches || distance < .5) return 0;
