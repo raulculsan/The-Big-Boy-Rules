@@ -186,3 +186,77 @@ body.authenticated .messages[data-chat-theme="big-boy"]:not([data-chat-bubble]) 
 body.authenticated :is(.chat-channel, .channel-add-button) { min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); font-size: var(--ds-text-sm); }
 body.authenticated .chat-channel.active { border-color: var(--ds-text-2); background: var(--ds-raised); color: var(--ds-text); font-weight: 600; }
 body.authenticated .group-conversation .chat-channel-bar { border-bottom: 1px solid var(--ds-line); background: var(--ds-surface); }
+
+/* Catalogue, album, missions, games and administration. Inherited gold tokens go neutral
+   here, so nested rules follow; card art, the binder and game art keep their own colour. */
+:is(#catalogo, #album, #administracion, .admin-settings-page, .club-missions-dialog, .chota-arcade) {
+  --bb2-gold: var(--ds-text-2); --bb2-gold-dark: var(--ds-line-strong); --bb2-gold-wash: var(--ds-raised);
+  --club-gold: var(--ds-text-2); --accent: var(--ds-text-2); --mission-gold: var(--ds-text); }
+body.authenticated :is(#catalogo, #album, #administracion, .admin-settings-page) .eyebrow { display: none; }
+body.authenticated :is(#catalogo, #album) :is(h2, #cardAlbumTitle) { font-size: var(--ds-text-xl); font-weight: 600; letter-spacing: normal; }
+body.authenticated :is(#catalogo, #album) .packs-back, body.authenticated #album :is(.card-album-trigger, .duplicate-cards-trigger) { width: var(--ds-control); height: var(--ds-control); border: 1px solid var(--ds-line); border-radius: 50%; background: var(--ds-surface); color: var(--ds-text); box-shadow: none; }
+body.authenticated #catalogo .collection-catalog-note { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+body.authenticated #catalogo .collection-card-tile { padding: var(--ds-space-2); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); box-shadow: none; }
+body.authenticated #catalogo .collection-card-tile > strong { color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
+body.authenticated #catalogo :is(.collection-card-meta, .collection-card-hint) { color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+body.authenticated #album #cardAlbumStatus { padding: var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+body.authenticated #album :is(#cardAlbumStatus button, .card-album-tools button, .card-album-tabs button) { min-height: var(--ds-control-sm); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); font-size: var(--ds-text-sm); box-shadow: none; }
+body.authenticated #album .card-album-tabs :is(button.active, [aria-selected="true"], [aria-pressed="true"]) { border-color: var(--ds-text-2); background: var(--ds-raised); color: var(--ds-text); font-weight: 600; }
+body.authenticated #album .card-album-tools input { min-height: var(--ds-control); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text); }
+body.authenticated #album .card-album-compass { border-color: var(--ds-line); background: transparent; }
+body.authenticated #album .card-album-compass-needle { background: var(--ds-text-2); }
+body.authenticated #album .card-album-compass-tick { color: var(--ds-text-3); }
+body.authenticated #album .card-album-compass-tick[aria-current=page] { color: var(--ds-text); }
+body.authenticated #administracion .section-intro h2 { margin: 0; font-size: var(--ds-text-xl); font-weight: 600; letter-spacing: normal; }
+body.authenticated #administracion :is(.request-admin-entry, .control-diagnostics, .admin-stat-card, .control-workspace, .control-overview article) { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); color: var(--ds-text); box-shadow: none; }
+body.authenticated #administracion .admin-stat-card span, body.authenticated #administracion .control-kicker { color: var(--ds-text-2); font-size: var(--ds-text-xs); letter-spacing: normal; text-transform: none; }
+body.authenticated #administracion .admin-stat-card strong { color: var(--ds-text); font-family: inherit; font-size: var(--ds-text-lg); font-weight: 600; }
+body.authenticated #administracion :is(.admin-help-entry, .admin-settings-gear) { border: 1px solid var(--ds-line); background: transparent; color: var(--ds-text); box-shadow: none; }
+body.authenticated #administracion .admin-help-entry { min-height: var(--ds-control-sm); border-radius: var(--ds-radius-pill); font-size: var(--ds-text-sm); font-weight: 500; }
+body.authenticated #administracion .admin-settings-gear { border-radius: 50%; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#superAdminConsole .control-tabs button { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+#superAdminConsole .control-tabs button[aria-pressed="true"] { border-color: var(--ds-text-2); background: var(--ds-raised); color: var(--ds-text); font-weight: 600; }
+#superAdminConsole .control-emblem { border-color: var(--ds-line); background: var(--ds-surface); color: var(--ds-text); }
+.club-missions-dialog, .club-missions-dialog::backdrop, .chota-arcade { background: var(--bb2-canvas); }
+.club-missions-heading::before { content: none; }
+.club-missions-heading-copy > span { display: none; }
+.club-missions-heading h2, .chota-arcade-shell > header h2 { font-size: var(--ds-text-xl); font-weight: 600; letter-spacing: normal; }
+.club-missions-heading p { color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+.club-missions-dialog .coin-missions-overview { padding: var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); }
+.club-missions-dialog .coin-missions-overview span, .club-missions-dialog .coin-missions-overview h3 small, .club-missions-dialog .coin-missions-overview p { color: var(--ds-text-2); }
+.club-missions-dialog .coin-missions-overview h3 { color: var(--ds-text) !important; font-size: var(--ds-text-xl) !important; letter-spacing: normal; }
+.club-missions-dialog .coin-missions-filter button { min-height: var(--ds-control-sm); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); }
+.club-missions-dialog .coin-missions-filter button[aria-pressed=true] { border-color: var(--ds-text-2); background: var(--ds-raised); color: var(--ds-text); }
+.club-missions-dialog .coin-mission-group { border-color: var(--ds-line); }
+.club-missions-dialog .coin-mission-copy h5, .club-missions-dialog .coin-mission-group h4 { color: var(--ds-text); }
+.club-missions-dialog :is(.coin-mission-copy p, .coin-mission-group summary small) { color: var(--ds-text-2); }
+.club-missions-dialog .coin-mission-reward strong { color: var(--ds-text); }
+.club-missions-dialog .coin-mission-reward button { border: 0; border-radius: var(--ds-radius-pill); background: var(--ds-text); color: var(--ds-surface); font-weight: 600; }
+.club-missions-dialog .coin-mission-reward button:disabled { background: var(--ds-raised); color: var(--ds-text-3); }
+.chota-arcade-shell > header { border-bottom: 1px solid var(--ds-line); }
+.chota-arcade-shell > header button { min-height: var(--ds-control-sm); padding: 0 var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text); font-size: var(--ds-text-sm); }
+.chota-arcade .chota-arcade-results-actions [data-next] { border: 0; border-radius: var(--ds-radius-pill); background: var(--ds-text); color: var(--ds-surface); }
+
+.club-missions-dialog .club-mission-section { --mission-accent: var(--ds-text-2); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); }
+.club-missions-dialog .club-mission-section button, .club-missions-dialog .coin-missions-loading button { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text); font-size: var(--ds-text-sm); }
+.club-missions-dialog .club-mission-category h3 { color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; letter-spacing: normal; }
+.club-missions-dialog .collection-season-bottom > strong, .club-missions-dialog .club-weekly-ranking strong { color: var(--ds-text); }
+body.authenticated #administracion .admin-summary { gap: var(--ds-space-2); }
+body.authenticated #administracion .admin-stat-card { min-width: 0; padding: var(--ds-space-3) var(--ds-space-1); }
+body.authenticated #administracion .admin-stat-card span { overflow-wrap: anywhere; font-size: 11px; }
+
+body.authenticated #album { color: var(--ds-text); }
+body.authenticated #album :is(.social-album-trigger, .album-filter > summary, .album-filter-toggle, [data-album-filter-toggle]) { border: 1px solid var(--ds-line); border-radius: 50%; background: var(--ds-surface); color: var(--ds-text); box-shadow: none; }
+body.authenticated #album .album-filter > summary, body.authenticated #album [data-album-filter-toggle] { border-radius: var(--ds-radius-pill); }
+body.authenticated #album [data-duplicates-count], body.authenticated #album .social-album-trigger [class*="count"] { background: var(--ds-text); color: var(--ds-surface); }
+body.authenticated #album .album-search { border: 0; background: transparent; box-shadow: none; }
+body.authenticated #album .album-search svg, body.authenticated #album .album-search::before { color: var(--ds-text-2); stroke: currentColor; }
+body.authenticated #album :is(.card-album-page-controls, .card-album-page-count, .card-album-compass, .card-album-compass-track) { color: var(--ds-text-2); }
+body.authenticated #administracion .request-admin-entry > span:last-child { background: var(--ds-raised); color: var(--ds-text); }
+.chota-arcade .chota-arcade-game > :last-child { color: var(--ds-text-2); }
+
+body.authenticated #album .album-card-search { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-surface); box-shadow: none; }
+body.authenticated #album .album-card-search input { border: 0; background: transparent; }
+body.authenticated #album .album-card-search > span { color: var(--ds-text-2); }
+body.authenticated #album .card-album-tools :is(button, summary) { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); background: transparent; color: var(--ds-text-2); box-shadow: none; }
+body.authenticated #album #cardAlbumPageTitle { color: var(--ds-text-2); letter-spacing: normal; text-transform: none; }

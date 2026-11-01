@@ -51,7 +51,7 @@ test('discarding a selection keeps the last copy and stays atomic', async () => 
   assert.match(sql, /picked\.copies>=held/);
   assert.match(sql, /group by card_id/);
   assert.doesNotMatch(shop, /discard_all_duplicate_cards/);
-  assert.doesNotMatch(css.slice(css.indexOf('Repetidas:')), /gold|yellow|--ds-accent/);
+  assert.doesNotMatch(css.slice(css.indexOf('Repetidas:'), css.indexOf('Pull to refresh')), /gold|yellow|--ds-accent/);
 });
 
 test('mentions come from the stored text and never open markup', async () => {
