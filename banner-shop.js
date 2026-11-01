@@ -348,19 +348,30 @@
     const targets = [...new Set(indices)].filter(canDiscardReveal);
     if (!targets.length) return;
     failure = '';
-    targets.forEach(index => {current.pending.add(index); current.queue.push(index); playSummaryExit(index);});
+    targets.forEach(index => {current.pending.add(index); current.queue.push(index); void playSummaryExit(index);});
     renderRevealSummary();
     if (!current.draining) void drainRevealDiscards(current);
   }
-  function playSummaryExit(index) {
-    const node = revealDialog.querySelector(`[data-summary-card="${index}"]`)?.closest('.pack-summary-item');
+  async function playSummaryExit(index) {
+    const button = revealDialog.querySelector(`[data-summary-card="${index}"]`), node = button?.closest('.pack-summary-item');
     if (!node) return;
-    const pose = {transform:node.style.transform || 'none',opacity:node.style.opacity || 1};
-    node.classList.remove('is-dragging');
-    node.style.removeProperty('transform'); node.style.removeProperty('opacity');
-    if (revealReduced() || packViewer) return;
+    if (packViewer) {
+      const surface = viewerMotionTarget(), ash = globalThis.CollectionMotion?.dissolveCard(surface,viewerNode().querySelector('.pack-viewer-image'),revealDialog);
+      surface.style.visibility = 'hidden';
+      await ash;
+      surface.style.removeProperty('visibility');
+      if (packViewer && reveal?.order[packViewer.position] === index) stepPackViewer(1);
+      return;
+    }
+    // Read the dragged pose first: the ash starts exactly where the finger left the card.
+    const ash = globalThis.CollectionMotion?.dissolveCard(button,button.querySelector('img'),revealDialog);
     node.getAnimations().forEach(animation => animation.cancel());
-    node.animate([pose,{transform:'translateY(-120px) rotate(-4deg) scale(.86)',opacity:0,offset:.58,easing:'step-end'},{transform:'translateY(12px) scale(.96)',opacity:0,offset:.6,easing:'cubic-bezier(.16,1,.3,1)'},{transform:'none',opacity:1}],{duration:520,easing:'cubic-bezier(.3,0,.2,1)'});
+    node.classList.remove('is-dragging');
+    node.classList.add('is-dissolving');
+    node.style.removeProperty('transform'); node.style.removeProperty('opacity');
+    await ash;
+    node.classList.remove('is-dissolving');
+    if (!revealReduced()) button.animate([{opacity:0},{opacity:1}],{duration:320,easing:'ease-out'});
   }
   async function drainRevealDiscards(current) {
     const token = generation, user = options.session();

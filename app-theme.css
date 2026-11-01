@@ -264,3 +264,55 @@ body.authenticated #inicio .club-dashboard > :not(.clubhouse)::before, body.auth
 .club-missions-dialog .coin-mission-reward .coin-mission-go { background: var(--ds-raised) !important; color: var(--ds-text) !important; }
 .club-missions-dialog :is(.club-mission-section, .coin-mission-group) { border: 0 !important; }
 .club-missions-dialog .club-mission-section header > span:first-child:not(:only-child) { display: none; }
+
+/* Profile editing: full-screen, one column, inline rows and a fixed action bar. */
+#profileEditor#profileEditor .profile-editor-modal { --row-muted:color-mix(in srgb,var(--bb2-ink) 58%,transparent); position:fixed; inset:0; width:100%; max-width:none; height:100dvh; max-height:none; margin:0; padding:0; border:0; border-radius:0; background:var(--bb2-canvas); box-shadow:none; overflow-y:auto; overscroll-behavior:contain; }
+#profileEditor#profileEditor { padding:0; overflow:hidden; }
+#profileEditor#profileEditor .profile-form { display:block; width:auto; max-width:600px; margin:0 auto; padding:0 16px calc(40px + var(--pwa-safe-bottom,env(safe-area-inset-bottom,0px))); }
+#profileEditor#profileEditor .modal-heading { position:sticky; top:0; z-index:3; display:grid; grid-template-columns:72px 1fr 72px; align-items:center; gap:0; min-height:48px; margin:0 -16px; padding:max(4px,var(--pwa-safe-top,env(safe-area-inset-top,0px))) 12px 4px 4px; background:var(--bb2-canvas); border-bottom:.5px solid var(--bb2-line); }
+#profileEditor#profileEditor .modal-heading > div { display:block; min-width:0; padding:0; text-align:center; }
+#profileEditor#profileEditor .modal-heading .eyebrow { display:none; }
+#profileEditor#profileEditor .modal-heading h2 { margin:0; font:600 17px/1.2 var(--ds-font); letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#profileEditor#profileEditor .profile-editor-back { position:static; width:44px; height:44px; margin:0; padding:0; border:0; border-radius:50%; background:transparent; color:var(--bb2-ink); box-shadow:none; }
+#profileEditor#profileEditor .profile-editor-save { justify-self:end; width:auto; min-width:0; min-height:44px; margin:0; padding:0 4px; border:0; border-radius:8px; background:transparent !important; color:#0a84ff !important; box-shadow:none; font-size:16px; font-weight:600; }
+#profileEditor#profileEditor .profile-editor-save:disabled { opacity:.45; }
+#profileEditor#profileEditor .avatar-editor { display:grid; grid-template-columns:minmax(0,1fr); justify-items:center; gap:10px; width:100%; margin:0; padding:22px 0 18px; border:0; background:transparent; }
+#profileEditor#profileEditor .avatar-editor .avatar-preview { width:88px; height:88px; flex:none; margin:0; border:0; box-shadow:none; border-radius:50%; font-size:32px; }
+#profileEditor#profileEditor .avatar-actions { display:flex; align-items:center; justify-content:center; gap:20px; margin:0; }
+#profileEditor#profileEditor .avatar-actions :is(.file-button,.text-button) { width:auto; min-width:0; min-height:32px; margin:0; padding:0; border:0; background:transparent !important; box-shadow:none; color:#0a84ff !important; font-size:15px; font-weight:600; cursor:pointer; }
+#profileEditor#profileEditor .avatar-actions .danger-text { color:var(--row-muted) !important; }
+#profileEditor#profileEditor .avatar-editor > small { color:var(--row-muted); font-size:12px; }
+#profileEditor#profileEditor .avatar-cropper { width:100%; margin:6px 0 0; padding:0; border:0; background:transparent; }
+#profileEditor#profileEditor .avatar-crop-stage { margin:0 auto; }
+#profileEditor#profileEditor .avatar-crop-controls { margin-top:10px; }
+#profileEditor#profileEditor .avatar-crop-controls input[type=range] { padding:0; min-height:28px; accent-color:var(--bb2-ink); }
+#profileEditor#profileEditor .admin-profile-fields { display:block; margin:0; padding:0; border:0; border-radius:0; background:transparent; }
+#profileEditor#profileEditor .admin-profile-fields-heading { display:none; }
+#profileEditor#profileEditor :is(.profile-form > label,.admin-profile-fields > label,.motion-preference) { display:grid; grid-template-columns:96px minmax(0,1fr); align-items:center; column-gap:12px; min-height:46px; margin:0; padding:0; border:0; border-top:.5px solid var(--bb2-line); border-radius:0; background:transparent; font-size:15px; }
+#profileEditor#profileEditor :is(.profile-form > label,.admin-profile-fields > label,.motion-preference)[hidden] { display:none; }
+#profileEditor#profileEditor :is(.profile-form > label,.admin-profile-fields > label,.motion-preference) > span { margin:0; color:var(--row-muted); font-size:15px; font-weight:400; letter-spacing:0; text-transform:none; }
+#profileEditor#profileEditor :is(.profile-form > label,.admin-profile-fields > label) > small { grid-column:2; margin:-6px 0 8px; color:var(--row-muted); font-size:12px; line-height:1.35; }
+#profileEditor#profileEditor .profile-form :is(input:not([type=range]):not([type=file]),select,textarea) { width:100%; min-width:0; min-height:44px; margin:0; padding:11px 0; border:0; border-radius:0; background:transparent; color:var(--bb2-ink); box-shadow:none; outline:none; font-size:16px; font-weight:400; }
+#profileEditor#profileEditor .profile-form select { appearance:none; -webkit-appearance:none; }
+#profileEditor#profileEditor .profile-form textarea { min-height:96px; resize:none; line-height:1.4; }
+#profileEditor#profileEditor .profile-form input:disabled { color:var(--row-muted); opacity:1; -webkit-text-fill-color:var(--row-muted); }
+#profileEditor#profileEditor .profile-form > label:has(textarea) { align-items:start; }
+#profileEditor#profileEditor .profile-form > label:has(textarea) > span { padding-top:12px; }
+#profileEditor#profileEditor .profile-form > label:has(textarea) > small { justify-self:end; margin:0 0 8px; font-variant-numeric:tabular-nums; }
+#profileEditor#profileEditor :is(.profile-form > label,.admin-profile-fields > label):has(:focus-visible) { border-top-color:var(--bb2-ink); }
+#profileEditor#profileEditor .profile-banner-settings { margin:0; padding:0; border:0; border-top:.5px solid var(--bb2-line); border-radius:0; background:transparent; }
+#profileEditor#profileEditor .profile-banner-row { display:grid; grid-template-columns:minmax(0,1fr) 18px; align-items:center; width:100%; min-height:46px; padding:0; border:0; border-radius:0; background:transparent; color:var(--bb2-ink); text-align:left; }
+#profileEditor#profileEditor .profile-banner-row > span { display:grid; grid-template-columns:96px minmax(0,1fr); align-items:center; column-gap:12px; }
+#profileEditor#profileEditor .profile-banner-row strong { color:var(--row-muted); font-size:15px; font-weight:400; }
+#profileEditor#profileEditor .profile-banner-row small { margin:0; color:var(--bb2-ink); font-size:16px; }
+#profileEditor#profileEditor .profile-banner-row svg { width:18px; height:18px; fill:none; stroke:var(--row-muted); stroke-width:2; }
+#profileEditor#profileEditor .profile-admin-actions { margin:22px 0 0; padding:0; border:0; border-radius:0; background:transparent; }
+#profileEditor#profileEditor .profile-admin-actions-heading { display:block; margin:0 0 6px; }
+#profileEditor#profileEditor .profile-admin-actions-heading span { color:var(--bb2-ink); font-size:15px; font-weight:600; letter-spacing:0; text-transform:none; }
+#profileEditor#profileEditor .profile-admin-actions-heading small { display:none; }
+#profileEditor#profileEditor .profile-admin-action-grid { display:block; }
+#profileEditor#profileEditor .profile-admin-action-grid button { display:block; width:100%; min-height:46px; margin:0; padding:0; border:0; border-top:.5px solid var(--bb2-line); border-radius:0; background:transparent !important; box-shadow:none; color:var(--bb2-ink) !important; font-size:15px; font-weight:400; text-align:left; }
+#profileEditor#profileEditor .profile-admin-action-grid button[hidden] { display:none; }
+#profileEditor#profileEditor .profile-admin-action-grid .danger { color:#ff453a !important; }
+#profileEditor#profileEditor .form-feedback { margin:12px 0 0; font-size:13px; text-align:center; color:var(--row-muted); }
+#profileEditor#profileEditor .form-feedback:empty { display:none; }

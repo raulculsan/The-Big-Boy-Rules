@@ -191,5 +191,47 @@
   // One timing contract for direct gestures and their CSS counterparts.
   const timings = Object.freeze({flip:420, opening:720, advance:200, page:480, settle:140, discard:480, reward:620});
   for (const [name, duration] of Object.entries(timings)) document.documentElement.style.setProperty(`--collection-${name}-duration`, `${duration}ms`);
-  globalThis.CollectionMotion=Object.freeze({timings,playPackReveal,attachCard,attachFullArtFoil,attachViceCityFoil,close(){if(dialog?.open)dialog.close();}});
+  // Turns a card into ash that blows away from one edge. Only drawImage runs per
+  // frame, so the tiles stay cheap and remote art never needs pixel access.
+  function dissolveCard(element,image,host) {
+    const motion=(globalThis.ClubMotion?.media || window.matchMedia?.('(prefers-reduced-motion: reduce)'));
+    const rect=element.getBoundingClientRect(),hostRect=host.getBoundingClientRect();
+    if(motion?.matches||!image?.naturalWidth||!rect.width||!rect.height)return Promise.resolve();
+    const dpr=Math.min(window.devicePixelRatio||1,2),pad={left:70,top:190,right:260,bottom:50};
+    const width=rect.width,height=rect.height,art=document.createElement('canvas');
+    art.width=Math.ceil(width*dpr);art.height=Math.ceil(height*dpr);
+    const paint=art.getContext('2d');paint.scale(dpr,dpr);
+    paint.beginPath();paint.roundRect?.(0,0,width,height,Math.min(16,width*.06));paint.clip();
+    paint.drawImage(image,0,0,width,height);
+    const canvas=document.createElement('canvas');canvas.className='card-dissolve';canvas.setAttribute('aria-hidden','true');
+    canvas.width=Math.ceil((width+pad.left+pad.right)*dpr);canvas.height=Math.ceil((height+pad.top+pad.bottom)*dpr);
+    canvas.style.cssText=`left:${rect.left-hostRect.left-pad.left}px;top:${rect.top-hostRect.top-pad.top}px;width:${width+pad.left+pad.right}px;height:${height+pad.top+pad.bottom}px`;
+    host.append(canvas);
+    const context=canvas.getContext('2d');context.scale(dpr,dpr);
+    const size=Math.max(3,Math.sqrt(width*height/2000)),columns=Math.ceil(width/size),rows=Math.ceil(height/size),total=columns*rows;
+    const motes=new Array(total);
+    for(let i=0;i<total;i++){
+      const column=i%columns,row=Math.floor(i/columns),u=column/columns,v=row/rows,noise=Math.random();
+      motes[i]={x:column*size,y:row*size,delay:(u*.68+noise*.24+(1-v)*.08)*.92,life:.5+Math.random()*.42,vx:90+Math.random()*190,vy:-(40+Math.random()*170),phase:noise*6.3};
+    }
+    return new Promise(resolve=>{
+      const start=performance.now();let last=0;
+      function frame(now) {
+        if(!canvas.isConnected||host.open===false){canvas.remove();resolve();return;}
+        const t=(now-start)/1000;last=0;
+        context.clearRect(0,0,canvas.width,canvas.height);
+        for(const mote of motes){
+          const p=(t-mote.delay)/mote.life;
+          if(p>=1)continue;last++;
+          if(p<=0){context.globalAlpha=1;context.drawImage(art,mote.x*dpr,mote.y*dpr,size*dpr,size*dpr,mote.x+pad.left,mote.y+pad.top,size+.5,size+.5);continue;}
+          const ease=p*p,scale=size*(1-.6*p);
+          context.globalAlpha=1-p*p*p;
+          context.drawImage(art,mote.x*dpr,mote.y*dpr,size*dpr,size*dpr,mote.x+pad.left+mote.vx*ease+Math.sin(p*7+mote.phase)*9*p,mote.y+pad.top+mote.vy*ease,scale,scale);
+        }
+        if(last)requestAnimationFrame(frame);else{canvas.remove();resolve();}
+      }
+      frame(start);
+    });
+  }
+  globalThis.CollectionMotion=Object.freeze({timings,playPackReveal,attachCard,attachFullArtFoil,attachViceCityFoil,dissolveCard,close(){if(dialog?.open)dialog.close();}});
 })();
