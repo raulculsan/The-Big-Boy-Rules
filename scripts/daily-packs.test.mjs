@@ -65,7 +65,7 @@ test('the first-login welcome shows the server balance and clears on subsequent 
 test('packs keep the four main tabs and are reachable from home, with a working back target and daily lifecycle hooks',()=>{
   const html=read('index.html'),app=read('app.js');const dom=new JSDOM(html),d=dom.window.document;
   assert.equal(d.querySelectorAll('.floating-tab-bar .app-tab').length,4);
-  assert.ok(d.querySelector('#packsTopButton[data-go="sobres"]'));assert.ok(d.querySelector('#sobres [data-go="inicio"]'));
+  assert.ok(d.querySelector('#packsTopButton[data-section="sobres"]'));assert.ok(d.querySelector('#sobres [data-go="inicio"]'));
   assert.match(app,/function refreshDailyParticipation[\s\S]*?DailyPacks\?\.refresh\(force\)/);
   assert.match(app,/function loadAchievements[\s\S]*?DailyPacks\?\.refresh\(\)/);
   assert.match(app,/function logoutCurrentUser[\s\S]*?DailyPacks\?\.reset\(\)/);

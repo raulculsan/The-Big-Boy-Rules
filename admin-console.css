@@ -12,7 +12,7 @@ html[data-club-density="compact"] #inicio :is(.home-members-section,.home-news-s
 body.superadmin-console-session .floating-tab-bar { display:none!important; }
 body.superadmin-console-session .app { padding-bottom:calc(118px + env(safe-area-inset-bottom,0px)); }
 body.superadmin-console-session #administracion { max-width:1160px; margin-inline:auto; }
-#superAdminConsole { --control-border:var(--bb2-line-strong); --control-muted:var(--bb2-secondary); font-family:Inter,sans-serif; padding:4px 0 20px; }
+#superAdminConsole { --control-border:var(--bb2-line-strong); --control-muted:var(--bb2-secondary); font-family: var(--ds-font); padding:4px 0 20px; }
 #superAdminConsole :is(button,input,select,textarea) { font:inherit; }
 #superAdminConsole button { cursor:pointer; -webkit-tap-highlight-color:transparent; }
 #superAdminConsole button:disabled { opacity:.45; cursor:default; }
@@ -21,9 +21,9 @@ body.superadmin-console-session #administracion { max-width:1160px; margin-inlin
 .control-heading { display:flex; gap:20px; align-items:flex-start; justify-content:space-between; margin-bottom:26px; }
 .control-brand { display:flex; gap:20px; align-items:center; }
 .control-emblem { display:flex; flex-direction:column; align-items:center; justify-content:center; width:76px; height:86px; color:var(--accent); border:1px solid var(--control-border); border-radius:18px; background:var(--bb2-raised); font-family:Anton,sans-serif; font-size:36px; line-height:1; }
-.control-emblem span { margin-top:9px; font-family:Inter,sans-serif; font-size:8px; letter-spacing:.2em; }
+.control-emblem span { margin-top:9px; font-family: var(--ds-font); font-size:8px; letter-spacing:.2em; }
 .control-kicker { font-size:10px; letter-spacing:.15em; font-weight:700; color:var(--control-muted); }
-.control-heading h2 { margin:8px 0 7px; font-size:clamp(25px,3.5vw,38px); line-height:1.12; font-family:Inter,sans-serif; font-weight:650; letter-spacing:-.05em; }
+.control-heading h2 { margin:8px 0 7px; font-size:clamp(25px,3.5vw,38px); line-height:1.12; font-family: var(--ds-font); font-weight:650; letter-spacing:-.05em; }
 .control-heading p { margin:0; color:var(--control-muted); font-size:13px; }
 .control-access { display:flex; gap:7px; align-items:center; padding:9px 12px; background:var(--bb2-gold-wash); color:var(--accent); border:1px solid var(--control-border); border-radius:30px; font-size:10px; white-space:nowrap; }
 .control-access:before { content:""; width:5px; height:5px; border-radius:50%; background:currentColor; }
@@ -45,7 +45,7 @@ body.superadmin-console-session #administracion { max-width:1160px; margin-inlin
 .control-metrics strong { display:block; margin:10px 0 5px; font-size:33px; font-weight:600; line-height:1; letter-spacing:-.05em; font-variant-numeric:tabular-nums; }
 .control-metrics small { font-size:10px; color:var(--muted); }
 .control-section-label { display:flex; gap:12px; justify-content:space-between; align-items:center; margin:29px 0 14px; }
-.control-section-label h3 { font-family:Inter,sans-serif; font-size:15px; font-weight:650; margin:0; }
+.control-section-label h3 { font-family: var(--ds-font); font-size:15px; font-weight:650; margin:0; }
 .control-section-label>span { color:var(--muted); font-size:10px; }
 .control-workspaces { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
 .control-workspace { text-align:left; background:var(--surface); border:1px solid var(--control-border); border-radius:18px; padding:22px; color:var(--text); display:flex; flex-direction:column; min-width:0; transition:transform 160ms ease,border-color 160ms ease; }
@@ -65,7 +65,7 @@ body.superadmin-console-session #administracion { max-width:1160px; margin-inlin
 body.superadmin-console-session .admin-account-security { display:flex; }
 .admin-account-security>svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
 .control-design-intro { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 0 22px; }
-.control-design-intro h3 { font-family:Inter,sans-serif; font-size:24px; font-weight:600; letter-spacing:-.04em; margin:0 0 8px; }
+.control-design-intro h3 { font-family: var(--ds-font); font-size:24px; font-weight:600; letter-spacing:-.04em; margin:0 0 8px; }
 .control-design-intro p { font-size:12px; color:var(--control-muted); line-height:1.6; margin:0; }
 .control-design-intro>span { font-size:10px; color:var(--muted); text-align:right; }
 .control-editor { display:grid; grid-template-columns:minmax(0,1fr) 290px; gap:22px; align-items:start; }
@@ -73,7 +73,7 @@ body.superadmin-console-session .admin-account-security { display:flex; }
 .control-editor-section { border:1px solid var(--control-border); border-radius:20px; padding:24px; background:var(--surface); display:grid; gap:19px; }
 .control-editor-section>header { display:flex; gap:13px; align-items:flex-start; margin-bottom:3px; }
 .control-editor-section>header>i { display:grid; place-items:center; width:34px; height:34px; color:var(--accent); border-radius:10px; background:var(--surface-2); }
-.control-editor-section>header h4 { font-family:Inter,sans-serif; font-size:14px; margin:0 0 5px; }
+.control-editor-section>header h4 { font-family: var(--ds-font); font-size:14px; margin:0 0 5px; }
 .control-editor-section>header p { margin:0; font-size:11px; line-height:1.5; color:var(--control-muted); }
 .control-editor-section label { display:grid; gap:8px; font-size:11px; font-weight:600; color:var(--control-muted); min-width:0; }
 .control-editor-section :is(input:not([type=radio],[type=checkbox]),select,textarea) { display:block; width:100%; border:1px solid var(--control-border); background:var(--surface-2); border-radius:10px; padding:12px; min-height:44px; color:var(--text); font-size:13px!important; font-weight:450; }
@@ -104,12 +104,12 @@ body.superadmin-console-session .admin-account-security { display:flex; }
 .control-preview-label { display:flex; align-items:center; justify-content:space-between; padding:0 5px; margin:0 0 14px; }
 .control-preview-label>span { font-size:9px; color:var(--control-muted); letter-spacing:.12em; }
 .control-preview-label>small { font-size:9px; color:var(--muted); }
-.control-phone-preview { --preview-accent:var(--preview-tone,#dbba73); background:var(--bg); border:5px solid var(--surface-3); outline:1px solid var(--control-border); border-radius:30px; min-height:475px; padding:21px 17px; overflow:hidden; }
+.control-phone-preview { --preview-accent:var(--preview-tone,var(--ds-text)); background:var(--bg); border:5px solid var(--surface-3); outline:1px solid var(--control-border); border-radius:30px; min-height:475px; padding:21px 17px; overflow:hidden; }
 .control-phone-preview>header { display:flex; align-items:center; gap:9px; margin-bottom:25px; }
 .control-phone-preview>header>span { font-family:Anton,sans-serif; font-size:19px; color:var(--preview-accent); margin-right:auto; }
 .control-phone-preview>header>i { width:13px; height:13px; border:1px solid var(--control-border); border-radius:50%; }
 .control-preview-welcome>small { font-size:7px; color:var(--control-muted); text-transform:uppercase; letter-spacing:.08em; overflow-wrap:anywhere; }
-.control-preview-welcome>h4 { font-family:Inter,sans-serif; font-size:23px; line-height:1.2; margin:7px 0 23px; overflow-wrap:anywhere; }
+.control-preview-welcome>h4 { font-family: var(--ds-font); font-size:23px; line-height:1.2; margin:7px 0 23px; overflow-wrap:anywhere; }
 .control-phone-preview section { margin:0 0 18px; }
 .control-phone-preview section>span { display:block; font-size:6px; letter-spacing:.1em; color:var(--muted); margin-bottom:7px; }
 .control-phone-preview section>strong { font-size:10px; display:block; overflow-wrap:anywhere; }
@@ -142,7 +142,7 @@ body.superadmin-console-session .admin-account-security { display:flex; }
 .control-session button { display:flex; align-items:center; gap:8px; min-height:40px; background:transparent; border:0; color:var(--control-muted); font-size:10px!important; }
 .control-session button svg { width:15px!important; height:15px!important; }
 .control-dock { display:flex; align-items:center; justify-content:center; position:fixed; z-index:80; gap:5px; bottom:calc(15px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%); padding:6px; width:min(390px,calc(100% - 32px)); border:1px solid var(--bb2-line-strong); border-radius:19px; background:var(--surface); box-shadow:0 8px 32px #0004; }
-.control-dock button { display:flex; flex-direction:column; gap:5px; align-items:center; justify-content:center; min-height:52px; min-width:0; flex:1; border:0; border-radius:13px; background:transparent; color:var(--bb2-secondary); font-family:Inter,sans-serif; font-size:9px; cursor:pointer; }
+.control-dock button { display:flex; flex-direction:column; gap:5px; align-items:center; justify-content:center; min-height:52px; min-width:0; flex:1; border:0; border-radius:13px; background:transparent; color:var(--bb2-secondary); font-family: var(--ds-font); font-size:9px; cursor:pointer; }
 .control-dock button.active { background:var(--surface-3); color:var(--interaction-strong); }
 body:not(.authenticated) .control-dock { display:none!important; }
 @media (hover:hover) {
@@ -236,7 +236,7 @@ body.light .control-publish-bar button[type=submit] { color:white; }
 .control-odds-grid label {display:grid;gap:8px;font-size:13px;color:var(--muted,#aaa)}
 .control-odds-grid label>span {display:flex;align-items:center;gap:8px}
 .control-economy input {box-sizing:border-box;width:100%;min-width:0;padding:12px;border:1px solid #ffffff26;border-radius:12px;background:#ffffff09;color:inherit;font:inherit}
-.control-odds-total {color:var(--club-accent-color,#dbba73);font-weight:650}
+.control-odds-total {color:var(--club-accent-color,var(--ds-text));font-weight:650}
 .control-odds-total.is-invalid {color:#f5a58e}
 .control-economy .control-price-row {display:flex;justify-content:space-between;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid #ffffff12}
 .control-price-row>span:first-child {display:grid;gap:5px}

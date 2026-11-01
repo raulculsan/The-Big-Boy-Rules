@@ -674,7 +674,7 @@ function resetSectionScroll(sectionId) {
 }
 
 function updateFloatingTabIndicator(sectionId) {
-  const navigationSection = sectionId === "privados" ? "chat" : ["sobres", "album", "catalogo", "hoy"].includes(sectionId) ? "inicio" : sectionId;
+  const navigationSection = sectionId === "privados" ? "chat" : ["sobres", "album", "catalogo"].includes(sectionId) ? "sobres" : sectionId === "hoy" ? "inicio" : sectionId;
   const index = navLinks.findIndex(link => link.dataset.section === navigationSection);
   if (index < 0) return;
   const tabBar = document.getElementById("floatingTabBar");
@@ -785,7 +785,7 @@ function goTo(sectionId) {
   globalThis.CardAlbum?.didNavigate(sectionId, currentSection);
   globalThis.AdminGrants?.didNavigate(sectionId);
   adminConsole?.didNavigate(sectionId);
-  const navigationSection = sectionId === "privados" ? "chat" : ["sobres", "album", "catalogo", "hoy"].includes(sectionId) ? "inicio" : sectionId;
+  const navigationSection = sectionId === "privados" ? "chat" : ["sobres", "album", "catalogo"].includes(sectionId) ? "sobres" : sectionId === "hoy" ? "inicio" : sectionId;
   navLinks.forEach(link => {
     const active = link.dataset.section === navigationSection;
     link.classList.toggle("active", active);
@@ -793,7 +793,7 @@ function goTo(sectionId) {
   });
   updateFloatingTabIndicator(navigationSection);
   if (switchingSection && !document.body.classList.contains("message-slide-transition") && !pageBackSettling && !activeChatMotionScene) {
-    const tabOrder = ["inicio", "chat", "calendario", "perfil"], navigatingBack = backTarget?.id === sectionId;
+    const tabOrder = ["inicio", "sobres", "chat", "perfil"], navigatingBack = backTarget?.id === sectionId;
     const fromTab = tabOrder.indexOf(currentSection), toTab = tabOrder.indexOf(sectionId);
     const direction = navigatingBack ? -1 : fromTab >= 0 && toTab >= 0 ? Math.sign(toTab - fromTab) : 1;
     globalThis.ClubMotion?.enterSection(document.getElementById(sectionId), direction);
@@ -2385,7 +2385,7 @@ function setChatEnabled(enabled) {
   media.disabled = !enabled;
   camera.disabled = !enabled;
   audio.disabled = !enabled;
-  input.placeholder = readOnly ? "Solo los administradores pueden publicar" : enabled ? "Mensaje..." : "El chat necesita conexión";
+  input.placeholder = readOnly ? "Solo los administradores pueden publicar" : enabled ? "Mensaje…" : "El chat necesita conexión";
 }
 
 function renderPresence() {

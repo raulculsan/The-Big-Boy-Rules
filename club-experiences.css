@@ -8,7 +8,7 @@
 .clubhouse-room:has(.clubhouse-live-icon) .clubhouse-plan-countdown { padding-right:32px; }
 .clubhouse-live-icon:active { transform:rotate(-2deg) scale(.9); }
 .clubhouse-live-icon:focus-visible { outline:2px solid #565656; outline-offset:-5px; }
-.club-live-event-link { display:inline-flex; align-items:center; min-height:38px; margin:7px 0 3px; padding:7px 0; border:0; border-bottom:1px solid #8e7957; border-radius:0; background:none; color:#e5ca91; font-family:inherit; font-size:12px; font-weight:600; line-height:1.2; cursor:pointer; touch-action:manipulation; }
+.club-live-event-link { display:inline-flex; align-items:center; min-height:38px; margin:7px 0 3px; padding:7px 0; border:0; border-bottom:1px solid #8e7957; border-radius:0; background:none; color:var(--ds-text); font-family:inherit; font-size:12px; font-weight:600; line-height:1.2; cursor:pointer; touch-action:manipulation; }
 .calendar-day-detail-card .club-live-event-link { display:flex; width:max-content; }
 @media(max-width:640px) { .clubhouse-heading-actions { gap:8px; flex-wrap:wrap; } .clubhouse-heading-actions #clubhouseTime { font-size:10px; } .clubhouse-heading-actions [data-club-memory-map] { font-size:11px; } .clubhouse-room .clubhouse-live-icon { top:calc(43% - 44px); } }
 @media(prefers-reduced-motion:reduce) { .clubhouse-live-icon { transition:none; } }
@@ -33,7 +33,7 @@
 .club-weekly-challenge h3,.collection-season h3{font-size:25px;line-height:1.12;font-weight:650;letter-spacing:-.035em;margin:14px 0 10px}
 .club-weekly-challenge p,.collection-season p{font-size:13px;line-height:1.6;color:#aaa;margin:8px 0 16px;max-width:65ch}
 .club-weekly-progress,.collection-season-meter{display:flex;align-items:center;gap:14px;margin:18px 0;font-size:12px;color:#ccc}
-.club-weekly-progress progress,.collection-season-meter progress{width:100%;height:4px;accent-color:#c9a76a;flex:1;min-width:60px;border:0;background:#343331}
+.club-weekly-progress progress,.collection-season-meter progress{width:100%;height:4px;accent-color:var(--ds-text);flex:1;min-width:60px;border:0;background:#343331}
 .club-weekly-progress span,.collection-season-meter strong{flex-shrink:0;font-size:11px;font-weight:500}
 .club-weekly-ranking{list-style:none;padding:0;margin:15px 0}
 .club-weekly-ranking li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #ffffff0e;font-size:13px}
@@ -43,5 +43,5 @@
 .collection-season-unavailable{font-size:12px;color:#999}
 @media(max-width:540px){.collection-season h3{font-size:23px}.collection-season-bottom{align-items:flex-start;flex-direction:column}.club-weekly-progress{flex-wrap:wrap}.club-weekly-progress span{width:100%}.club-live-highlight{font-size:16px}}
 .club-weekly-progress progress::-webkit-progress-bar,.collection-season-meter progress::-webkit-progress-bar{background:#343331}
-.club-weekly-progress progress::-webkit-progress-value,.collection-season-meter progress::-webkit-progress-value{background:#c9a76a}
-.club-weekly-progress progress::-moz-progress-bar,.collection-season-meter progress::-moz-progress-bar{background:#c9a76a}
+.club-weekly-progress progress::-webkit-progress-value,.collection-season-meter progress::-webkit-progress-value{background:var(--ds-text)}
+.club-weekly-progress progress::-moz-progress-bar,.collection-season-meter progress::-moz-progress-bar{background:var(--ds-text)}

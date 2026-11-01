@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://open.spotify.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: capacitor:; media-src 'self' data: blob: https: capacitor:; font-src 'self' data:; connect-src 'self' capacitor: https://nfvggpgeypkkqceivkaq.supabase.co wss://nfvggpgeypkkqceivkaq.supabase.co https://raulculsan.github.io; frame-src https://open.spotify.com https://www.openstreetmap.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
-  <meta name="theme-color" content="#0b0b0d" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="color-scheme" content="dark light" />
   <meta name="color-scheme" content="dark" />
   <link rel="stylesheet" href="app-health.css?v=20261030-neutral-interactions-444">
   <script defer src="app-health.js?v=20261101-chota-pose-478"></script>
@@ -44,35 +45,36 @@
   <link rel="stylesheet" href="account-security.css?v=20261030-neutral-interactions-444" />
   <link rel="preload" as="image" href="icons/clubhouse/club-room-v1.webp" fetchpriority="high" />
   <link rel="preload" as="image" href="icons/mascot/chota-v2/chota-poses.webp" />
-  <link rel="stylesheet" href="styles.css?v=20261101-home-load-477" />
-  <link rel="stylesheet" href="chat.css?v=20261031-online-472" />
+  <link rel="stylesheet" href="styles.css?v=20261102-theme-510" />
+  <link rel="stylesheet" href="chat.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="chat-themes.css?v=20261030-neutral-interactions-444" />
-  <link rel="stylesheet" href="tickets.css?v=20261101-tickets-483" />
+  <link rel="stylesheet" href="tickets.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="chat-custom.css?v=20261101-mentions-480" />
-  <link rel="stylesheet" href="packs.css?v=20261031-smooth-470" />
-  <link rel="stylesheet" href="achievement-admin.css?v=20261031-logros-462" />
-  <link rel="stylesheet" href="club.css?v=20261030-room-depth-446" />
-  <link rel="stylesheet" href="banner-shop.css?v=20261031-pack-copy-453" />
+  <link rel="stylesheet" href="packs.css?v=20261102-theme-510" />
+  <link rel="stylesheet" href="achievement-admin.css?v=20261102-theme-510" />
+  <link rel="stylesheet" href="club.css?v=20261102-theme-510" />
+  <link rel="stylesheet" href="banner-shop.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="onboarding.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="news.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="pending-actions.css?v=20261016-release-322" />
-  <link rel="stylesheet" href="notifications.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="notifications.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="collection-social.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="group-interactions.css?v=20261030-neutral-interactions-444" />
-  <link rel="stylesheet" href="visual-system.css?v=20261031-smooth-470" />
-  <link rel="stylesheet" href="clubhouse.css?v=20261101-sede-476" />
+  <link rel="stylesheet" href="visual-system.css?v=20261102-theme-510" />
+  <link rel="stylesheet" href="clubhouse.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="chota-outdoor.css?v=20261030-outdoor-events-448" />
-  <link rel="stylesheet" href="chota-shop.css?v=20261031-room-tabs-449" />
+  <link rel="stylesheet" href="chota-shop.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="coin-missions.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="club-day.css?v=20261102-night-507" />
   <link rel="stylesheet" href="club-night.css?v=20261102-night-507" />
-  <link rel="stylesheet" href="club-social.css?v=20261031-vitrina-461" />
-  <link rel="stylesheet" href="club-live.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="club-social.css?v=20261102-theme-510" />
+  <link rel="stylesheet" href="club-live.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="chota-games.css?v=20261030-neutral-interactions-444" />
-  <link rel="stylesheet" href="club-experiences.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="club-experiences.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="app-update.css?v=20261030-app-update-440" />
-  <link rel="stylesheet" href="ui-motion.css?v=20261031-smooth-470" />
-  <link rel="stylesheet" href="design-system.css?v=20261101-motion-500" />
+  <link rel="stylesheet" href="ui-motion.css?v=20261102-theme-510" />
+  <link rel="stylesheet" href="design-system.css?v=20261102-theme-509" />
+  <link rel="stylesheet" href="app-theme.css?v=20261102-theme-516" />
 </head>
 <body>
 
@@ -105,7 +107,7 @@
 
           <label>
             <span>Usuario</span>
-            <input id="loginUsername" name="username" autocomplete="username" placeholder="Ej. kike" required>
+            <input id="loginUsername" name="username" autocomplete="username" placeholder="Ej. kike…" required>
           </label>
 
           <label>
@@ -143,16 +145,16 @@
     </div>
   </div>
 
+  <a class="skip-link" href="#inicio">Saltar al contenido</a>
   <main class="app">
     <header class="topbar">
       <div class="topbar-title">
         <span class="eyebrow">COMUNIDAD PRIVADA</span>
-        <h1 id="pageTitle">The Big Boy Rules</h1>
+        <h1 id="pageTitle" translate="no">The Big Boy Rules</h1>
       </div>
       <div class="top-actions">
-        <button class="icon-button packs-top-button monochrome-top-button" id="packsTopButton" type="button" data-go="sobres" aria-label="Abrir mis sobres. Saldo pendiente de sincronización" title="Mis sobres">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 7h16M4 17h16m-9-5 4-3 4 3-4 3-4-3Z"/></svg>
-          <span id="packsHomeBalance" class="packs-top-count" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
+        <button class="icon-button monochrome-top-button" type="button" data-go="calendario" aria-label="Abrir calendario" title="Calendario">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 11h18"/></svg>
         </button>
         <div class="notifications-wrap">
           <button class="icon-button notification-button monochrome-top-button" id="notificationsButton" type="button" aria-label="Abrir notificaciones" aria-expanded="false" title="Notificaciones">
@@ -193,7 +195,7 @@
       <div class="club-search">
         <label class="search-hub-box" for="globalSearchInput">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-          <input id="globalSearchInput" type="search" placeholder="Buscar miembros" aria-label="Buscar miembros" autocomplete="off">
+          <input id="globalSearchInput" name="globalSearchInput" type="search" placeholder="Buscar miembros…" aria-label="Buscar miembros" autocomplete="off">
         </label>
         <div class="search-results search-hub-results" id="searchResults" aria-live="polite" hidden></div>
       </div>
@@ -280,7 +282,7 @@
             <header class="bb2-inbox-heading"><span class="eyebrow">EL CLUB</span><h2>Chats</h2></header>
             <label class="inbox-search" for="inboxSearchInput">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-              <input id="inboxSearchInput" type="search" placeholder="Buscar conversación" aria-label="Buscar conversación o miembro" autocomplete="off">
+              <input id="inboxSearchInput" name="inboxSearchInput" type="search" placeholder="Buscar conversación…" aria-label="Buscar conversación o miembro" autocomplete="off">
             </label>
             <div class="inbox-filters" role="group" aria-label="Filtrar conversaciones">
               <button type="button" data-inbox-filter="all" aria-pressed="true">Todos</button>
@@ -327,7 +329,7 @@
             <button type="button" class="composer-tool-button composer-camera-button" id="captureMessageCameraButton" aria-label="Abrir cámara" title="Cámara">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6.5 9.4 4h5.2L16 6.5h2.5A2.5 2.5 0 0 1 21 9v8.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5V9a2.5 2.5 0 0 1 2.5-2.5Z"/><circle cx="12" cy="13" r="3.5"/></svg>
             </button>
-            <input id="messageInput" type="text" placeholder="Mensaje..." autocomplete="off" autocapitalize="sentences" enterkeyhint="send" />
+            <input id="messageInput" name="messageInput" aria-label="Escribe un mensaje" type="text" placeholder="Mensaje…" autocomplete="off" autocapitalize="sentences" enterkeyhint="send" />
             <button type="button" class="composer-tool-button record-audio-button" id="recordGroupAudioButton" aria-label="Grabar nota de voz" title="Grabar nota de voz">
               <svg class="record-microphone-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
               <svg class="record-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3.5-6.5Z"/><path d="m11.5 13.5 4-4"/></svg>
@@ -341,10 +343,10 @@
             <span class="recording-time" id="groupRecordingTime" hidden>00:00</span>
             <span class="recording-wave" id="groupRecordingWave" aria-hidden="true" hidden><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
             <button type="button" class="recording-action recording-pause" id="pauseGroupAudioButton" aria-label="Pausar grabación" title="Pausar" hidden><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7v10M15 7v10"/></svg><svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 9 5-9 5Z"/></svg></button>
-            <input id="messageCameraAttachment" type="file" accept="image/*,video/*" capture="environment" hidden>
-            <input id="messageAttachment" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
-            <input id="messageGifAttachment" type="file" accept="image/gif,.gif" hidden>
-            <input id="messageMediaAttachment" type="file" accept="image/*,video/*" hidden>
+            <input id="messageCameraAttachment" aria-label="Hacer una foto" type="file" accept="image/*,video/*" capture="environment" hidden>
+            <input id="messageAttachment" aria-label="Adjuntar archivo" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <input id="messageGifAttachment" aria-label="Adjuntar GIF" type="file" accept="image/gif,.gif" hidden>
+            <input id="messageMediaAttachment" aria-label="Adjuntar foto o vídeo" type="file" accept="image/*,video/*" hidden>
           </form>
           <div class="chat-send-status" id="messageSendStatus" hidden>
             <span data-send-label role="status" aria-live="polite" aria-atomic="true"></span>
@@ -378,7 +380,7 @@
             <button type="button" class="composer-tool-button composer-camera-button" id="capturePrivateMessageCameraButton" aria-label="Abrir cámara" title="Cámara" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6.5 9.4 4h5.2L16 6.5h2.5A2.5 2.5 0 0 1 21 9v8.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5V9a2.5 2.5 0 0 1 2.5-2.5Z"/><circle cx="12" cy="13" r="3.5"/></svg>
             </button>
-            <input id="privateMessageInput" type="text" maxlength="1200" placeholder="Mensaje..." autocomplete="off" autocapitalize="sentences" enterkeyhint="send" disabled>
+            <input id="privateMessageInput" name="privateMessageInput" aria-label="Escribe un mensaje" type="text" maxlength="1200" placeholder="Mensaje…" autocomplete="off" autocapitalize="sentences" enterkeyhint="send" disabled>
             <button type="button" class="composer-tool-button record-audio-button" id="recordPrivateAudioButton" aria-label="Grabar nota de voz" title="Grabar nota de voz" disabled>
               <svg class="record-microphone-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
               <svg class="record-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-5 16-3.5-6.5Z"/><path d="m11.5 13.5 4-4"/></svg>
@@ -392,10 +394,10 @@
             <span class="recording-time" id="privateRecordingTime" hidden>00:00</span>
             <span class="recording-wave" id="privateRecordingWave" aria-hidden="true" hidden><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
             <button type="button" class="recording-action recording-pause" id="pausePrivateAudioButton" aria-label="Pausar grabación" title="Pausar" hidden><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7v10M15 7v10"/></svg><svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 9 5-9 5Z"/></svg></button>
-            <input id="privateMessageCameraAttachment" type="file" accept="image/*,video/*" capture="environment" hidden>
-            <input id="privateMessageAttachment" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
-            <input id="privateMessageGifAttachment" type="file" accept="image/gif,.gif" hidden>
-            <input id="privateMessageMediaAttachment" type="file" accept="image/*,video/*" hidden>
+            <input id="privateMessageCameraAttachment" aria-label="Hacer una foto" type="file" accept="image/*,video/*" capture="environment" hidden>
+            <input id="privateMessageAttachment" aria-label="Adjuntar archivo" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" hidden>
+            <input id="privateMessageGifAttachment" aria-label="Adjuntar GIF" type="file" accept="image/gif,.gif" hidden>
+            <input id="privateMessageMediaAttachment" aria-label="Adjuntar foto o vídeo" type="file" accept="image/*,video/*" hidden>
           </form>
           <div class="chat-send-status" id="privateMessageSendStatus" hidden>
             <span data-send-label role="status" aria-live="polite" aria-atomic="true"></span>
@@ -470,7 +472,7 @@
         <div id="healthDashboard"></div>
         <p class="health-note">Las pausas se estiman mientras la app está visible. Los tamaños de imágenes externas pueden no estar disponibles. Solo se guardan datos técnicos; nunca mensajes, contraseñas ni direcciones.</p>
         <div class="health-actions"><button type="button" class="secondary-button" onclick="ClubHealth.export()">Compartir diagnóstico</button><button type="button" class="text-button" onclick="ClubHealth.clear()">Limpiar registro</button></div>
-        <p id="healthSummary" role="status" aria-live="polite"></p><details class="health-json"><summary>Ver datos técnicos</summary><textarea id="healthReport" readonly rows="10" aria-label="Diagnóstico local"></textarea></details>
+        <p id="healthSummary" role="status" aria-live="polite"></p><details class="health-json"><summary>Ver datos técnicos</summary><textarea id="healthReport" name="healthReport" readonly rows="10" aria-label="Diagnóstico local"></textarea></details>
       </div>
     </section>
 
@@ -517,7 +519,7 @@
       <div class="achievement-page-content">
         <div class="achievement-library-intro"><div><span class="eyebrow">CADA RECONOCIMIENTO CUENTA</span><h3>Un lugar para destacar.</h3><p>Reconoce a un miembro o crea un objetivo que el club pueda conquistar.</p></div><button class="primary-button" id="newAchievementButton" type="button"><span aria-hidden="true">＋</span> Crear logro</button></div>
         <div class="achievement-library-stats" id="achievementLibraryStats"></div>
-        <div class="achievement-library-tools"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" id="achievementLibrarySearch" placeholder="Buscar un logro" aria-label="Buscar un logro" autocomplete="off"></label><select id="achievementLibraryTier" aria-label="Filtrar por rango"><option value="all">Todos los rangos</option><option value="bronze">Bronce</option><option value="silver">Plata</option><option value="gold">Oro</option><option value="platinum">Platino</option></select></div>
+        <div class="achievement-library-tools"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" id="achievementLibrarySearch" name="achievementLibrarySearch" placeholder="Buscar un logro…" aria-label="Buscar un logro" autocomplete="off"></label><select id="achievementLibraryTier" aria-label="Filtrar por rango"><option value="all">Todos los rangos</option><option value="bronze">Bronce</option><option value="silver">Plata</option><option value="gold">Oro</option><option value="platinum">Platino</option></select></div>
         <p class="form-feedback" id="achievementLibraryFeedback" role="status"></p>
         <div class="achievement-library" id="adminAchievementsList"></div>
       </div>
@@ -529,8 +531,8 @@
         <aside class="achievement-editor-preview" id="achievementCreatePreview" aria-label="Vista previa del logro"></aside>
         <fieldset class="achievement-editor-fields" id="achievementCreateFields">
           <div class="achievement-form-section"><div class="achievement-step"><span>01</span><div><h3>Dale una identidad</h3><p>Un nombre y una historia que merezcan recordarse.</p></div></div>
-            <label class="achievement-field" for="achievementName">Nombre<input id="achievementName" minlength="2" maxlength="70" required placeholder="Ej. Leyenda de la temporada" autocomplete="off"></label>
-            <label class="achievement-field" for="achievementDescription">Descripción<textarea id="achievementDescription" maxlength="240" rows="3" placeholder="¿Qué hace especial este reconocimiento?"></textarea><small id="achievementDescriptionCount">0 / 240</small></label>
+            <label class="achievement-field" for="achievementName">Nombre<input id="achievementName" name="achievementName" minlength="2" maxlength="70" required placeholder="Ej. Leyenda de la temporada" autocomplete="off"></label>
+            <label class="achievement-field" for="achievementDescription">Descripción<textarea id="achievementDescription" name="achievementDescription" maxlength="240" rows="3" placeholder="¿Qué hace especial este reconocimiento?"></textarea><small id="achievementDescriptionCount">0 / 240</small></label>
             <fieldset class="achievement-rank-picker"><legend>Elige el rango</legend><div id="achievementTierChoices"></div></fieldset>
           </div>
           <div class="achievement-form-section"><div class="achievement-step"><span>02</span><div><h3>Cómo se consigue</h3><p>Un reconocimiento personal o un reto para todos.</p></div></div>
@@ -548,12 +550,12 @@
                 <label class="achievement-field" for="achievementEdition">Rareza<select id="achievementEdition"><option value="">Todas las rarezas</option><option value="common">Común</option><option value="special">Especial</option><option value="epic">Épica</option><option value="legendary">Legendaria</option><option value="retro">Retro</option><option value="full_art">Full Art</option><option value="vice_city">Vice City</option></select></label>
                 <label class="achievement-field" for="achievementKind">Tipo de carta<select id="achievementKind"><option value="">Todos los tipos</option><option value="member">Miembros</option><option value="object">Objetos</option><option value="location">Ubicaciones</option></select></label>
               </div>
-              <label class="achievement-field" for="achievementTarget">Meta<input id="achievementTarget" type="number" inputmode="numeric" min="1" max="100000" step="1" value="10" disabled required></label>
+              <label class="achievement-field" for="achievementTarget">Meta<input id="achievementTarget" name="achievementTarget" type="number" inputmode="numeric" min="1" max="100000" step="1" value="10" disabled required></label>
               <p class="achievement-rule-note">Para todos los miembros, también los nuevos. Mensajes y participación suman como máximo una vez al día, desde la creación del logro. Las cartas conseguidas y los días registrados también cuentan para los objetivos nuevos. La meta queda fijada al crearlo.</p>
             </div>
           </div>
           <div class="achievement-form-section" id="achievementManualRecipients"><div class="achievement-step"><span>03</span><div><h3>Elige a quién reconocer</h3><p>Puedes seleccionar uno o varios miembros.</p></div></div>
-            <div class="achievement-people-picker" id="achievementCreatePicker"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" placeholder="Buscar por nombre o usuario" aria-label="Buscar miembros para el nuevo logro" data-picker-search autocomplete="off"></label><div class="achievement-picker-tools"><button type="button" data-picker-all>Seleccionar visibles</button><button type="button" data-picker-clear>Limpiar selección</button><span data-picker-count role="status"></span></div><div class="achievement-people-list" id="achievementMembers"></div><p class="achievement-picker-empty" data-picker-empty hidden>No hay miembros que coincidan con tu búsqueda.</p></div>
+            <div class="achievement-people-picker" id="achievementCreatePicker"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" placeholder="Buscar por nombre o usuario…" aria-label="Buscar miembros para el nuevo logro" data-picker-search autocomplete="off"></label><div class="achievement-picker-tools"><button type="button" data-picker-all>Seleccionar visibles</button><button type="button" data-picker-clear>Limpiar selección</button><span data-picker-count role="status"></span></div><div class="achievement-people-list" id="achievementMembers"></div><p class="achievement-picker-empty" data-picker-empty hidden>No hay miembros que coincidan con tu búsqueda.</p></div>
           </div>
           <footer class="achievement-editor-footer"><p class="form-feedback" id="achievementFeedback" role="status"></p><button class="primary-button" type="submit">Crear y asignar logro</button></footer>
         </fieldset>
@@ -566,7 +568,7 @@
         <div class="achievement-assignment-summary" id="achievementAssignmentSummary"></div>
         <fieldset class="achievement-editor-fields" id="achievementAssignmentFields">
           <div class="achievement-form-section"><h3>¿Quién se lo ha ganado?</h3><p class="achievement-section-hint">Marca los miembros que tendrán este logro. Desmarcar a alguien retirará su asignación al guardar.</p>
-            <div class="achievement-people-picker" id="achievementAssignPicker"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" placeholder="Buscar por nombre o usuario" aria-label="Buscar miembros para asignar" data-picker-search autocomplete="off"></label><div class="achievement-picker-tools"><button type="button" data-picker-all>Seleccionar visibles</button><button type="button" data-picker-clear>Limpiar selección</button><span data-picker-count role="status"></span></div><div class="achievement-people-list" id="achievementAssignmentMembers"></div><p class="achievement-picker-empty" data-picker-empty hidden>No hay miembros que coincidan con tu búsqueda.</p></div>
+            <div class="achievement-people-picker" id="achievementAssignPicker"><label class="achievement-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input type="search" placeholder="Buscar por nombre o usuario…" aria-label="Buscar miembros para asignar" data-picker-search autocomplete="off"></label><div class="achievement-picker-tools"><button type="button" data-picker-all>Seleccionar visibles</button><button type="button" data-picker-clear>Limpiar selección</button><span data-picker-count role="status"></span></div><div class="achievement-people-list" id="achievementAssignmentMembers"></div><p class="achievement-picker-empty" data-picker-empty hidden>No hay miembros que coincidan con tu búsqueda.</p></div>
           </div>
           <footer class="achievement-editor-footer"><p class="achievement-selection-review" id="achievementAssignmentReview" role="status"></p><p class="form-feedback" id="achievementAssignmentFeedback" role="status"></p><button class="primary-button" type="submit">Guardar asignaciones</button></footer>
         </fieldset>
@@ -590,8 +592,8 @@
             <h3>Nuevo ticket</h3>
             <form class="ticket-form" id="helpRequestForm">
               <label>Tipo<select id="helpRequestType"><option value="help">Necesito ayuda</option><option value="suggestion">Sugerencia</option><option value="complaint">Queja</option></select></label>
-              <label>Asunto<input id="ticketSubject" maxlength="80" minlength="3" required autocomplete="off" placeholder="Resúmelo en una frase"></label>
-              <label>Mensaje<textarea id="helpRequestMessage" maxlength="2000" rows="5" required placeholder="Cuéntanos qué ha pasado o qué te gustaría mejorar"></textarea></label>
+              <label>Asunto<input id="ticketSubject" name="ticketSubject" maxlength="80" minlength="3" required autocomplete="off" placeholder="Resúmelo en una frase"></label>
+              <label>Mensaje<textarea id="helpRequestMessage" name="helpRequestMessage" maxlength="2000" rows="5" required placeholder="Cuéntanos qué ha pasado o qué te gustaría mejorar"></textarea></label>
               <label class="ticket-check"><input id="ticketUrgent" type="checkbox"> Es urgente</label>
               <button class="ticket-primary" type="submit">Enviar ticket</button>
             </form>
@@ -601,7 +603,7 @@
             <div class="ticket-thread" id="ticketThread"></div>
             <p class="ticket-note" id="ticketClosed" hidden>Este ticket está cerrado. Reábrelo si necesitas seguir.</p>
             <form class="ticket-reply" id="helpReplyForm">
-              <textarea id="helpReplyMessage" maxlength="2000" rows="2" required placeholder="Escribe una respuesta" aria-label="Respuesta"></textarea>
+              <textarea id="helpReplyMessage" name="helpReplyMessage" maxlength="2000" rows="2" required placeholder="Escribe una respuesta…" aria-label="Respuesta"></textarea>
               <button class="ticket-primary" type="submit">Enviar</button>
             </form>
           </section>
@@ -617,11 +619,11 @@
     <a class="app-tab active" href="#inicio" data-section="inicio" aria-label="Inicio" aria-current="page" title="Inicio">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v10h-6v-6H9v6H3Z"/></svg><span>Inicio</span>
     </a>
+    <a class="app-tab packs-top-button" id="packsTopButton" href="#sobres" data-section="sobres" aria-label="Abrir mis sobres. Saldo pendiente de sincronización" title="Mis sobres">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="11" height="16" rx="2"/><path d="M19 7v12a2 2 0 0 1-2 2H9"/></svg><span id="packsHomeBalance" class="packs-top-count" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span><span>Cartas</span>
+    </a>
     <a class="app-tab" href="#chat" data-section="chat" aria-label="Mensajes" title="Mensajes">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4-.9L3 21l1.7-4.6A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 9h8M8 13h5"/></svg><i class="tab-alert" id="chatTabAlert" aria-hidden="true" hidden></i><span>Chats</span>
-    </a>
-    <a class="app-tab" href="#calendario" data-section="calendario" aria-label="Calendario" title="Calendario">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 11h18M8 15h2M14 15h2M8 18h2"/></svg><span>Calendario</span>
     </a>
     <a class="app-tab profile-tab" href="#perfil" data-section="perfil" aria-label="Mi perfil" aria-haspopup="menu" aria-expanded="false" title="Mi perfil · mantén pulsado para más opciones">
       <span class="profile-tab-photo" id="bottomNavAvatar" aria-hidden="true">U</span><span>Perfil</span>
@@ -693,13 +695,13 @@
         </div>
         <label>
           <span>Nombre</span>
-          <input id="profileName" maxlength="40" required>
+          <input id="profileName" name="profileName" maxlength="40" required>
         </label>
         <div class="admin-profile-fields" id="adminProfileFields" hidden>
           <div class="admin-profile-fields-heading"><span>GESTIÓN DE CUENTA</span><small>Solo visible para administradores</small></div>
           <label id="profileUsernameField">
             <span>Usuario (@)</span>
-            <input id="profileUsername" maxlength="32" autocomplete="off">
+            <input id="profileUsername" name="profileUsername" maxlength="32" autocomplete="off">
             <small id="profileUsernameHelp">Entre 3 y 32 caracteres; letras, números, punto, guion o guion bajo.</small>
           </label>
           <label id="profileRoleField">
@@ -718,7 +720,7 @@
         </section>
         <label>
           <span>Apodo</span>
-          <input id="profileNickname" maxlength="50" required>
+          <input id="profileNickname" name="profileNickname" maxlength="50" required>
         </label>
         <label>
           <span>País</span>
@@ -755,7 +757,7 @@
         </label>
         <label>
           <span>Bio</span>
-          <textarea id="profileBio" maxlength="350" rows="5" required></textarea>
+          <textarea id="profileBio" name="profileBio" maxlength="350" rows="5" required></textarea>
           <small><span id="bioCount">0</span>/350</small>
         </label>
         <section class="profile-banner-settings" id="profileBannerSettings" hidden>
@@ -769,7 +771,7 @@
         </section>
         <label>
           <span>Intereses (separados por comas)</span>
-          <input id="profileTags" maxlength="120" placeholder="Música, viajes, deporte">
+          <input id="profileTags" name="profileTags" maxlength="120" placeholder="Música, viajes, deporte">
         </label>
         <div class="form-feedback" id="profileFeedback" role="status"></div>
         <div class="modal-actions">
@@ -792,11 +794,11 @@
       <form id="requiredPasswordChangeForm" class="profile-form">
         <label>
           <span>Nueva contraseña</span>
-          <input id="requiredNewPassword" type="password" minlength="8" maxlength="128" aria-describedby="requiredPasswordRules" autocomplete="new-password" required>
+          <input id="requiredNewPassword" name="requiredNewPassword" type="password" minlength="8" maxlength="128" aria-describedby="requiredPasswordRules" autocomplete="new-password" required>
         </label>
         <label>
           <span>Confirma de nuevo la contraseña</span>
-          <input id="requiredNewPasswordConfirmation" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
+          <input id="requiredNewPasswordConfirmation" name="requiredNewPasswordConfirmation" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
         </label>
         <small id="requiredPasswordRules">Entre 8 y 128 caracteres, al menos un símbolo (!, @, #) y sin tu nombre, apellidos ni usuario.</small>
         <div class="form-feedback" id="requiredPasswordFeedback" role="status" aria-live="polite"></div>
@@ -845,15 +847,15 @@
           <button type="button" data-event-kind="event" aria-pressed="true"><span class="event-kind-icon">◇</span><span><strong>Plan del club</strong><small>Nos juntamos</small></span></button>
           <button type="button" data-event-kind="birthday" aria-pressed="false"><span class="event-kind-icon">✦</span><span><strong>Cumpleaños</strong><small>Lo celebramos</small></span></button>
         </div>
-        <label class="event-title-field"><span id="eventTitleLabel">¿Qué vamos a hacer?</span><input id="eventTitle" maxlength="80" required placeholder="Cena, escapada, partido…"></label>
+        <label class="event-title-field"><span id="eventTitleLabel">¿Qué vamos a hacer?</span><input id="eventTitle" name="eventTitle" maxlength="80" required placeholder="Cena, escapada, partido…"></label>
         <div class="event-date-fields" id="eventDateFields">
-          <label><span>Comienza</span><input id="eventStartsAt" type="datetime-local" required></label>
-          <label><span>Termina <small>opcional</small></span><input id="eventEndsAt" type="datetime-local"></label>
+          <label><span>Comienza</span><input id="eventStartsAt" name="eventStartsAt" type="datetime-local" required></label>
+          <label><span>Termina <small>opcional</small></span><input id="eventEndsAt" name="eventEndsAt" type="datetime-local"></label>
         </div>
-        <label id="birthdayDateField" hidden><span>El día que celebramos</span><input id="birthdayDate" type="date"></label>
+        <label id="birthdayDateField" hidden><span>El día que celebramos</span><input id="birthdayDate" name="birthdayDate" type="date"></label>
         <div class="birthday-all-day-note" id="birthdayAllDayNote" hidden><span>✦</span><div><strong>Una fecha para recordar</strong><small>Todo el día, cada año. Lo guardamos en la agenda del club.</small></div></div>
-        <label><span>¿Dónde quedamos? <small>opcional</small></span><input id="eventLocation" maxlength="120" placeholder="Un sitio, una dirección…"></label>
-        <label><span id="eventDescriptionLabel">Los detalles <small>opcional</small></span><textarea id="eventDescription" maxlength="500" rows="3" placeholder="Todo lo que el grupo necesita saber"></textarea></label>
+        <label><span>¿Dónde quedamos? <small>opcional</small></span><input id="eventLocation" name="eventLocation" maxlength="120" placeholder="Un sitio, una dirección…"></label>
+        <label><span id="eventDescriptionLabel">Los detalles <small>opcional</small></span><textarea id="eventDescription" name="eventDescription" maxlength="500" rows="3" placeholder="Todo lo que el grupo necesita saber"></textarea></label>
         <div class="form-feedback" id="eventFeedback" role="status" aria-live="polite"></div>
         <div class="modal-actions event-modal-actions"><button class="text-button danger-text" id="deleteEventButton" type="button" hidden>Eliminar</button><button class="secondary-button" id="cancelEventEditor" type="button">Cancelar</button><button class="primary-button" type="submit" id="eventSaveButton">Crear plan</button></div>
       </form>
@@ -892,7 +894,7 @@
       <form id="spotifyForm" class="profile-form">
         <label>
           <span>Enlace público de la playlist</span>
-          <input id="spotifyPlaylistUrl" type="url" placeholder="https://open.spotify.com/playlist/..." required>
+          <input id="spotifyPlaylistUrl" name="spotifyPlaylistUrl" type="url" placeholder="https://open.spotify.com/playlist/…" required>
           <small>Abre la playlist en Spotify, pulsa Compartir y copia su enlace.</small>
         </label>
         <div class="form-feedback" id="spotifyFeedback" role="status"></div>
@@ -996,7 +998,7 @@
   <script defer src="chat-mentions.js?v=20261101-mentions-481"></script>
   <script defer src="chat-custom.js?v=20261101-chat-custom-473"></script>
   <script defer src="club-social.js?v=20261101-motion-500"></script>
-  <script defer src="club-live.js?v=20261102-night-508"></script>
+  <script defer src="club-live.js?v=20261102-theme-516"></script>
   <script defer src="chota-games.js?v=20261101-motion-500"></script>
   <script defer src="plan-widget.js?v=20261024-social-393"></script>
   <script defer src="group-interactions.js?v=20261025-fluid-motion-407"></script>
@@ -1007,7 +1009,7 @@
   <script defer src="account-security.js?v=20261030-account-screen-442"></script>
   <script defer src="account-requests.js?v=20261030-native-google-442"></script>
   <script defer src="chota-outdoor.js?v=20261030-outdoor-events-448"></script>
-  <script defer src="app.js?v=20261102-night-507"></script>
+  <script defer src="app.js?v=20261102-theme-516"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;

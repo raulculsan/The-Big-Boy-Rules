@@ -65,7 +65,7 @@ body.authenticated .app > .achievement-admin-page { padding: 0 0 calc(20px + env
 .achievement-library-actions { display: flex; gap: 8px; padding-top: 14px; border-top: 1px solid #ffffff0b; }
 .achievement-library-actions .secondary-button { display: flex; align-items: center; justify-content: space-between; flex: 1; gap: 5px; min-height: 44px; padding: 10px; border-radius: 12px; font-size: 11px; }
 .achievement-delete { display: grid; place-items: center; flex: 0 0 44px; border: 1px solid #ffffff12; border-radius: 12px; background: #ffffff03; color: #9ca3af; cursor: pointer; }
-.achievement-delete:hover { color: #f29399; border-color: #f2939955; }
+@media (hover: hover) and (pointer: fine) { .achievement-delete:hover { color: #f29399; border-color: #f2939955; } }
 .achievement-delete svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .achievement-library-empty { grid-column: 1/-1; text-align: center; padding: 50px 24px; border: 1px dashed var(--club-line); border-radius: 22px; }
 .achievement-library-empty p { color: var(--club-muted); font-size: 13px; line-height: 1.6; }
@@ -176,7 +176,7 @@ body.authenticated .app > .achievement-admin-page { padding: 0 0 calc(20px + env
 .profile-achievements .achievement-emblem .achievement-trophy{width:30px;height:30px}
 .profile-achievements .achievement-archive[hidden]{display:none!important}
 .profile-achievements .achievement-show-all{justify-self:start;min-height:38px;padding:0 12px;border:1px solid #ffffff15;border-radius:11px;color:#d8c18e;background:#ffffff05;font:600 11px/1.2 system-ui,sans-serif;cursor:pointer}
-.profile-achievements .achievement-show-all:hover{border-color:#b8b8b866;background:#b8b8b80b}
+@media (hover: hover) and (pointer: fine) { .profile-achievements .achievement-show-all:hover {border-color:#b8b8b866;background:#b8b8b80b} }
 @media(max-width:760px){
   #perfil .profile-achievements .achievement-showcase{grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
   #perfil .profile-achievements .achievement-card{flex:auto;grid-template-columns:36px minmax(0,1fr);padding:9px;gap:8px}

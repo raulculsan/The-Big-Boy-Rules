@@ -58,7 +58,7 @@
 .club-room-milestones h4{margin-bottom:6px}
 .club-room-milestones p{margin:0 0 8px;font-size:13px}
 .club-room-milestones small{display:block;font-size:12px;line-height:1.5;color:#b3b5b7;font-variant-numeric:tabular-nums}
-.club-room-milestones progress{display:block;width:100%;height:4px;margin-top:12px;accent-color:#c9ab73}
+.club-room-milestones progress{display:block;width:100%;height:4px;margin-top:12px;accent-color:var(--ds-text)}
 .club-room-progress>p:last-child{margin-top:26px}
 @media(max-width:640px){
  .club-passport-dialog{width:100%;max-width:100%;height:100dvh;max-height:100dvh;margin:0;border-radius:0}

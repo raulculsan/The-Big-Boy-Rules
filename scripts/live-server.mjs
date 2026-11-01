@@ -86,6 +86,7 @@ const allowedFiles = new Set([
   "banner-shop.js",
   "banner-shop.css",
   "design-system.css",
+  "app-theme.css",
   "album.js",
   "album.css",
   "onboarding.js",

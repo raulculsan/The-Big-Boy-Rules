@@ -298,7 +298,7 @@
 
 /* The store has its own layout; inventory and duplicate dialogs retain theirs. */
 /* Shop grid: 1200px catalog, two equal columns and 28px gutter; featured art uses 2/3. */
-#bannerShopDialog{--shop-gold:#e5c78a;--shop-muted:#a9adaf;--shop-line:#303335;--shop-ground:#121415;position:fixed;inset:0;box-sizing:border-box;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:var(--shop-ground);color:#f5f3ee;box-shadow:none;overscroll-behavior:contain;overflow:auto;scrollbar-width:thin;scrollbar-color:#555a5c transparent;font-family:"Inter",sans-serif}
+#bannerShopDialog{--shop-gold:var(--ds-text);--shop-muted:#a9adaf;--shop-line:#303335;--shop-ground:#121415;position:fixed;inset:0;box-sizing:border-box;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:var(--shop-ground);color:#f5f3ee;box-shadow:none;overscroll-behavior:contain;overflow:auto;scrollbar-width:thin;scrollbar-color:#555a5c transparent;font-family: var(--ds-font)}
 #bannerShopDialog::backdrop{background:#121415}
 #bannerShopDialog[open]{animation:shop-enter .2s ease-out}
 #bannerShopDialog .shop-topbar{position:sticky;top:0;z-index:4;box-sizing:border-box;display:flex;align-items:center;gap:28px;min-height:84px;padding:calc(16px + var(--pwa-safe-top,env(safe-area-inset-top,0px))) max(40px,calc((100vw - 1200px)/2)) 16px;background:var(--shop-ground);border-bottom:1px solid var(--shop-line)}
@@ -360,7 +360,7 @@ body.authenticated #bannerShopDialog #bannerShopStatus.is-passive{position:absol
 #bannerShopDialog .shop-voucher-art{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:200px;background:#202324;border:1px solid #3b3f40;border-radius:8px;overflow:hidden}
 #bannerShopDialog .shop-voucher-art::after{content:"";position:absolute;left:0;right:0;bottom:24px;border-bottom:1px dashed #55595a}
 #bannerShopDialog .shop-voucher-art>span:last-child{font-size:11px;letter-spacing:.12em;color:var(--shop-muted)}
-#bannerShopDialog .reward-voucher-mark{display:grid;place-items:center;width:auto;height:auto;margin:0;border:0;border-radius:0;background:transparent;color:#e5c78a;font:750 48px/1 "Inter",sans-serif;letter-spacing:-4px;transform:none;box-shadow:none}
+#bannerShopDialog .reward-voucher-mark{display:grid;place-items:center;width:auto;height:auto;margin:0;border:0;border-radius:0;background:transparent;color:var(--ds-text);font:750 48px/1 "Inter",sans-serif;letter-spacing:-4px;transform:none;box-shadow:none}
 #bannerShopDialog .shop-empty{grid-column:1/-1;padding:40px 0;border:0;border-top:1px solid var(--shop-line);border-radius:0;text-align:left;color:#f5f3ee}
 #bannerShopDialog .shop-empty strong{display:block;font-size:18px;margin-bottom:10px;font-weight:600}
 #bannerShopDialog .shop-empty p{margin:0;font-size:14px;color:var(--shop-muted);line-height:1.5}
@@ -402,7 +402,7 @@ body.authenticated #bannerShopDialog #bannerShopStatus.is-passive{position:absol
 .pack-summary-actions{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px}
 .pack-summary-actions button{min-height:44px;max-width:100%;margin:0;padding:11px 17px;font-size:12px;border-radius:12px;touch-action:manipulation}
 .pack-summary-actions [hidden]{display:none}
-.pack-summary-actions [data-reveal-save]{border:1px solid #e5ca8d;background:#e5ca8d;color:#191a1d;font-weight:750}
+.pack-summary-actions [data-reveal-save]{border:1px solid var(--ds-text);background:var(--ds-text);color:#191a1d;font-weight:750}
 .pack-summary-actions button:disabled{opacity:.4}
 .pack-summary-card:focus-visible,.pack-summary-actions button:focus-visible,.pack-reveal-skip:focus-visible{outline:2px solid #fff;outline-offset:4px}
 .pack-summary-footer .pack-reveal-status{min-height:34px;margin:12px auto 0;max-width:460px;color:#c6c1b7;font-size:11px;line-height:1.5}

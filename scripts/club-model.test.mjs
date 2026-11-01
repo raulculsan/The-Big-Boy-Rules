@@ -41,7 +41,7 @@ const root = new URL('../',import.meta.url);
 const html = readFileSync(new URL('index.html',root),'utf8');
 const app = readFileSync(new URL('app.js',root),'utf8');
 test('four navigation destinations exist and retired interfaces are absent', () => {
-  assert.deepEqual([...html.matchAll(/data-section="([^"]+)"/g)].map(match=>match[1]),['inicio','chat','calendario','perfil']);
+  assert.deepEqual([...html.matchAll(/data-section="([^"]+)"/g)].map(match=>match[1]),['inicio','sobres','chat','perfil']);
   for (const id of ['contenido','mediaUploader','storyCamera','postViewer','mediaViewer','mediaReplyModal']) assert.ok(!html.includes(`id="${id}"`));
   for (const id of ['profileEditor','groupAvatarEditor','messageMediaAttachment','privateMessageMediaAttachment']) assert.ok(html.includes(`id="${id}"`),id);
 });

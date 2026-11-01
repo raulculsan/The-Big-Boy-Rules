@@ -4,12 +4,12 @@
     "name": "Big Boy",
     "section": "Esenciales",
     "background": "icons/chat-backgrounds/big-boy.svg",
-    "color": "#0c0e12",
-    "incoming": "#1c2027",
-    "outgoing": "#332c1f",
-    "text": "#f0f1f3",
-    "muted": "#b7bbc4",
-    "accent": "#dbc48d",
+    "color": "#000000",
+    "incoming": "#1c1c1e",
+    "outgoing": "#0a84ff",
+    "text": "#ffffff",
+    "muted": "#a1a1aa",
+    "accent": "#ffffff",
     "light": false
   },
   {

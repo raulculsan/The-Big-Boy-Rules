@@ -107,7 +107,7 @@
   function init(options) {
     getContext = options.getContext;
     getShared = options.getShared || getShared; publish = options.publish || publish; afterSync = options.afterSync || afterSync;
-    loadPromise = fetch('./chat-theme-catalog.json?v=20261010-241').then(response => { if (!response.ok) throw new Error('Catalog unavailable'); return response.json(); })
+    loadPromise = fetch('./chat-theme-catalog.json?v=20261102-514').then(response => { if (!response.ok) throw new Error('Catalog unavailable'); return response.json(); })
       .then(value => { catalog = Array.isArray(value) ? value.filter(item => /^[a-z0-9-]+$/.test(item.id) && /^icons\/chat-backgrounds\/[a-z0-9-]+\.svg$/.test(item.background) && ['incoming','outgoing','text','muted','accent'].every(field => /^#[\da-f]{6}$/i.test(item[field]))) : []; sync('group'); sync('private'); })
       .catch(() => { catalog = []; });
     document.addEventListener('click', event => { const button = event.target.closest('[data-chat-themes]'); if (button) void open(button.dataset.chatThemes, button); });

@@ -15,7 +15,7 @@
    above Members cause WebKit's scroll extent to change during a swipe. Images
    remain lazy loaded; the short news list does not need layout virtualization. */
 #noticias .news-card { content-visibility: visible; contain-intrinsic-size: none; }
-#noticias .news-card:hover { transform: none; border-color: #616161; background: #13171d; }
+@media (hover: hover) and (pointer: fine) { #noticias .news-card:hover { transform: none; border-color: #616161; background: #13171d; } }
 #noticias .news-card:active { transform: none; }
 #noticias .news-lead { grid-row: span 2; }
 #noticias .news-media-link { display: block; width: 100%; margin: 0; }
@@ -30,7 +30,7 @@
 #noticias .news-card-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 12px; font-size: 10px; text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--news-muted); }
 #noticias .news-card-meta > span { color: #dcc18d; font-weight: 700; }
 #noticias .news-card-meta time { font-size: 10px; white-space: normal; }
-#noticias .news-card h3 { margin: 0; font-family: Inter, sans-serif; font-size: 19px; line-height: 1.35; letter-spacing: -.5px; font-weight: 700; overflow-wrap: anywhere; }
+#noticias .news-card h3 { margin: 0; font-family: var(--ds-font); font-size: 19px; line-height: 1.35; letter-spacing: -.5px; font-weight: 700; overflow-wrap: anywhere; }
 #noticias .news-card h3 a { display: inline; color: #f0f1f3; font-size: inherit; font-weight: inherit; line-height: inherit; text-decoration: none; }
 #noticias .news-lead h3 { font-size: clamp(24px, 2.8vw, 32px); line-height: 1.25; letter-spacing: -.9px; }
 #noticias .news-summary { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin: 0; color: #b3b7bf; font-size: 13px; line-height: 1.65; }
