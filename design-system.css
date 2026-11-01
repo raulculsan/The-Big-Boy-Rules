@@ -110,3 +110,44 @@ body.authenticated #duplicatesDialog .dup-bar button { min-height: var(--ds-cont
 .pull-refresh.is-refreshing svg { animation: pull-refresh-spin .8s linear infinite; }
 @keyframes pull-refresh-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .pull-refresh.is-refreshing svg { animation: none; } }
+
+/* Calendario: same surfaces, pills and neutral selection as Tickets and Hoy en el club. */
+body.authenticated #calendario .club-calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); margin: 0 0 var(--ds-space-3); padding: 0; border: 0; }
+body.authenticated #calendario .calendar-heading-copy .eyebrow { display: none; }
+body.authenticated #calendario .club-calendar-heading h2 { margin: 0; font-size: var(--ds-text-xl); font-weight: 600; line-height: 1.2; letter-spacing: normal; }
+body.authenticated #calendario :is(#calendarTodayButton, #addBirthdayButton, #addEventButton) { min-height: var(--ds-control-sm); padding: 0 var(--ds-space-4); border-radius: var(--ds-radius-pill); font-size: var(--ds-text-sm); font-weight: 500; }
+body.authenticated #calendario :is(#calendarTodayButton, #addBirthdayButton) { border: 1px solid var(--ds-line); background: transparent; color: var(--ds-text); }
+body.authenticated #calendario #addEventButton { border: 0; background: var(--ds-text); color: var(--ds-surface); font-weight: 600; }
+body.authenticated #calendario .calendar-actions { display: flex; flex-wrap: wrap; gap: var(--ds-space-2); margin: 0 0 var(--ds-space-4); padding: 0; }
+body.authenticated #calendario .calendar-actions > button { flex: 0 1 auto; width: auto; }
+body.authenticated #calendario .calendar-layout { gap: var(--ds-space-4); }
+body.authenticated #calendario :is(.calendar-month-panel, .calendar-agenda-panel) { padding: var(--ds-space-4); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
+body.authenticated #calendario :is(.calendar-month-panel, .calendar-agenda-panel)::before, body.authenticated #calendario :is(.calendar-month-panel, .calendar-agenda-panel)::after { content: none; }
+body.authenticated #calendario .calendar-toolbar { margin: 0 0 var(--ds-space-3); padding: 0; border: 0; }
+body.authenticated #calendario .calendar-navigation { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-2); }
+body.authenticated #calendario #calendarMonthTitle { margin: 0; color: var(--ds-text); font-size: var(--ds-text-lg); font-weight: 600; letter-spacing: normal; text-align: center; text-transform: none; }
+body.authenticated #calendario #calendarMonthTitle::first-letter { text-transform: uppercase; }
+body.authenticated #calendario .calendar-navigation .icon-button { display: grid; place-items: center; width: var(--ds-control-sm); height: var(--ds-control-sm); min-width: var(--ds-control-sm); padding: 0; border: 1px solid var(--ds-line); border-radius: 50%; background: transparent; color: var(--ds-text); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+body.authenticated #calendario .calendar-grid { gap: 2px; }
+body.authenticated #calendario .calendar-weekday { padding: 0 0 var(--ds-space-2); color: var(--ds-text-3); font-size: var(--ds-text-xs); }
+body.authenticated #calendario .calendar-day { min-height: 52px; padding: 4px 2px; border: 1px solid transparent; border-radius: var(--ds-radius-sm); background: transparent; color: var(--ds-text); }
+body.authenticated #calendario .calendar-day.has-events:not(.selected) { background: transparent; }
+body.authenticated #calendario .calendar-day > .calendar-day-number { color: var(--ds-text); font-size: var(--ds-text-md); }
+body.authenticated #calendario .calendar-day.today > .calendar-day-number { background: var(--ds-text); color: var(--ds-surface); font-weight: 600; }
+body.authenticated #calendario .calendar-day.selected { border-color: var(--ds-line-strong); background: var(--ds-raised); box-shadow: none; }
+body.authenticated #calendario .calendar-day.selected > .calendar-day-number { color: var(--ds-text); font-weight: 600; }
+body.authenticated #calendario .calendar-day.today.selected > .calendar-day-number { color: var(--ds-surface); }
+body.authenticated #calendario .calendar-legend { margin: var(--ds-space-3) 0 0; padding: var(--ds-space-3) 0 0; border-top: 1px solid var(--ds-line); color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+body.authenticated #calendario .calendar-legend i:not(.birthday), body.authenticated #calendario .calendar-day .calendar-event-dot:not(.birthday), body.authenticated #calendario .calendar-dots i:not(.birthday) { background: var(--ds-text-2); }
+body.authenticated #calendario .calendar-section-label { color: var(--ds-text-2); font-size: var(--ds-text-xs); letter-spacing: normal; text-transform: none; }
+body.authenticated #calendario #calendarSelectedTitle { margin: var(--ds-space-1) 0 var(--ds-space-3); color: var(--ds-text); font-size: var(--ds-text-lg); font-weight: 600; letter-spacing: normal; text-transform: none; }
+body.authenticated #calendario #calendarSelectedTitle::first-letter { text-transform: uppercase; }
+body.authenticated #calendario .calendar-count { color: var(--ds-text-2); font-size: var(--ds-text-xs); background: transparent; border: 0; }
+body.authenticated #calendario .calendar-agenda-event { gap: var(--ds-space-3); padding: var(--ds-space-3); border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md); background: var(--ds-raised); box-shadow: none; }
+body.authenticated #calendario .calendar-event-date { background: transparent; border: 0; color: var(--ds-text); }
+body.authenticated #calendario .calendar-event-date span, body.authenticated #calendario .calendar-event-type, body.authenticated #calendario .calendar-event-copy p { color: var(--ds-text-2); }
+body.authenticated #calendario .calendar-event-copy h4 { color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 600; }
+body.authenticated #calendario .calendar-agenda-event { align-items: start; margin: 0; }
+body.authenticated #calendario .calendar-selected-events, body.authenticated #calendario #calendarEventList { display: grid; gap: var(--ds-space-2); }
+body.authenticated #calendario .calendar-agenda-event :is(button, a):not([data-attendance], [class*="attendance"]) { color: var(--ds-text); border-color: var(--ds-line); }
+body.authenticated #calendario .calendar-month-agenda { margin-top: var(--ds-space-4); padding-top: var(--ds-space-3); border-top: 1px solid var(--ds-line); }
