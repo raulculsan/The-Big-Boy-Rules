@@ -120,6 +120,11 @@ test('la Sala stays with the attendees and scores on the server', async () => {
   assert.ok(worker.includes('./club-night.js?v='));
 });
 
+test('press feedback never flattens a 3D card', async () => {
+  const css = await read('app-theme.css');
+  assert.match(css, /button:not\(\.pack-reveal-card/);
+});
+
 test('the page ships a restrictive content policy', async () => {
   const index = await read('index.html');
   assert.match(index, /Content-Security-Policy[^>]*default-src 'self'/);

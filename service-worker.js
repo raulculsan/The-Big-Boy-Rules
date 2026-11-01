@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v518";
+const CACHE_NAME = "big-boy-rules-v519";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -9,7 +9,7 @@ const APP_SHELL = [
   "./ui-motion.js?v=20261101-motion-500",
   "./ui-motion.css?v=20261102-theme-510",
   "./design-system.css?v=20261102-theme-510",
-  "./app-theme.css?v=20261102-theme-518",
+  "./app-theme.css?v=20261102-theme-519",
   "./",
   "./index.html",
   "./native-auth.js?v=20261030-native-google-442",
@@ -32,10 +32,10 @@ const APP_SHELL = [
   "./coin-missions.js?v=20261101-motion-500",
   "./club-day.js?v=20261102-night-507",
   "./club-day.css?v=20261102-night-507",
-  "./coin-missions.css?v=20261102-theme-518",
+  "./coin-missions.css?v=20261102-theme-519",
   "./club-social.js?v=20261101-motion-500",
   "./club-social.css?v=20261102-theme-510",
-  "./club-live.js?v=20261102-theme-518",
+  "./club-live.js?v=20261102-theme-519",
   "./club-live.css?v=20261102-theme-510",
   "./chota-games.js?v=20261101-motion-500",
   "./chota-games.css?v=20261030-neutral-interactions-444",
@@ -97,7 +97,7 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261030-app-update-440",
   "./admin-console.css?v=20261102-theme-510",
-  "./app.js?v=20261102-theme-518",
+  "./app.js?v=20261102-theme-519",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261031-album-binder-455",

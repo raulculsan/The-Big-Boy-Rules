@@ -32,7 +32,8 @@ input, textarea, select { font-size: 16px; }
 :is(button, a, summary, [role="button"], input, textarea, select):focus-visible { outline: 2px solid var(--ds-text); outline-offset: 2px; }
 
 /* Press feedback replaces hover on touch. Zero specificity: a component's own motion always wins. */
-:where(button, .app-tab, summary):where(:active:not(:disabled)) { opacity: .6; }
+/* Never on 3D cards: opacity flattens preserve-3d and shows the back mirrored mid-press. */
+:where(button:not(.pack-reveal-card, .pack-tear), .app-tab, summary):where(:active:not(:disabled)):not(:where(.collection-card-dialog *, .pack-reveal-dialog .pack-reveal-stage *)) { opacity: .6; }
 
 /* Labels above headings add noise; the heading is enough. */
 .eyebrow, .duplicates-kicker, .packs-display-edition { display: none !important; }
