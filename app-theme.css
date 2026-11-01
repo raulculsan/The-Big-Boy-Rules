@@ -245,3 +245,21 @@ body.authenticated #inicio #noticias .club-news-heading p { overflow: hidden; te
 body.authenticated #inicio .club-dashboard > * { flex: none; align-self: stretch; width: 100%; min-width: 0; height: auto; max-height: none; overflow: visible; }
 body.authenticated #inicio .club-dashboard > :not(.clubhouse) { order: 2; padding: 16px; border: 0; border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
 body.authenticated #inicio .club-dashboard > :not(.clubhouse)::before, body.authenticated #inicio .club-dashboard > :not(.clubhouse)::after { content: none; }
+
+/* Missions */
+.coin-missions-overview { border-radius: var(--ds-radius-lg); }
+.club-mission-section.club-mission-section--coins { padding: 0; border: 0; }
+.coin-mission-group, .coin-mission-group:last-child { margin-bottom: 12px; padding: 0 16px; border: 0; border-radius: var(--ds-radius-lg); background: var(--ds-surface); }
+.coin-mission-progress progress { height: 4px; }
+.coin-missions-filter button { background: var(--ds-surface); color: var(--ds-text-2); font-weight: 600; }
+.coin-missions-toolbar h3 { font-size: var(--ds-text-lg) !important; font-weight: 700; }
+.club-missions-dialog :is(.club-mission-section, .club-mission-card) { border: 0; border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
+.club-missions-dialog .club-mission-section--coins { background: transparent; }
+.club-missions-dialog, .club-missions-dialog .club-missions-shell, .club-missions-dialog .club-missions-heading { border: 0 !important; background: var(--bb2-canvas) !important; box-shadow: none !important; }
+.club-missions-dialog .coin-missions-overview { border: 0 !important; background: var(--ds-surface) !important; }
+.club-missions-dialog .coin-missions-filter button { border: 0 !important; background: var(--ds-surface) !important; color: var(--ds-text-2) !important; }
+.club-missions-dialog .coin-missions-filter button[aria-pressed=true] { background: var(--ds-text) !important; color: var(--bb2-canvas) !important; }
+.club-missions-dialog .coin-mission-reward button { border: 0 !important; border-radius: 22px; background: var(--ds-text) !important; color: var(--bb2-canvas) !important; font-weight: 600; }
+.club-missions-dialog .coin-mission-reward .coin-mission-go { background: var(--ds-raised) !important; color: var(--ds-text) !important; }
+.club-missions-dialog :is(.club-mission-section, .coin-mission-group) { border: 0 !important; }
+.club-missions-dialog .club-mission-section header > span:first-child:not(:only-child) { display: none; }
