@@ -102,6 +102,24 @@ test('media games only accept the member own files', async () => {
   assert.match(client, /const safeFile=/);
 });
 
+test('the Chota story decides on the server', async () => {
+  const [sql, client] = await Promise.all([read('supabase/migrations/20261102090000_club_story.sql'), read('club-plus.js')]);
+  assert.equal(sql.match(/create table club_story\./g).length, sql.match(/enable row level security/g).length);
+  assert.match(sql, /revoke all on schema club_story from public,anon,authenticated/);
+  assert.match(sql, /Ya has usado tu giro esta temporada/);
+  assert.match(client, /vote_club_story',\{p_day:d\.storyDay,p_option:Number\(d\.storyOption\)\}/);
+});
+
+test('la Sala stays with the attendees and scores on the server', async () => {
+  const [sql, client, index, worker] = await Promise.all(['supabase/migrations/20261102120000_club_night.sql', 'club-night.js', 'index.html', 'service-worker.js'].map(read));
+  assert.equal(sql.match(/create table club_night\./g).length, sql.match(/enable row level security/g).length);
+  assert.match(sql, /La Sala es para quienes vienen a este plan/);
+  assert.match(sql, /r\.game='draw' and r\.revealed_at is null and r\.drawer<>actor then null/);
+  assert.doesNotMatch(client, /\.from\(/);
+  assert.ok(index.includes('club-night.js?v='));
+  assert.ok(worker.includes('./club-night.js?v='));
+});
+
 test('the page ships a restrictive content policy', async () => {
   const index = await read('index.html');
   assert.match(index, /Content-Security-Policy[^>]*default-src 'self'/);

@@ -1,9 +1,9 @@
 /* Daily club play on Inicio. Votes, results and coins come only from authenticated RPCs. */
 (() => {
  'use strict';
- const tabs=[['pregunta','Pregunta'],['estado','Estado'],['recuerdos','Recuerdos'],['foto','Foto'],['quien','Quién es'],['mentira','Mentira'],['juicio','Tribunal'],['reto','Reto'],['karaoke','Karaoke'],['duelos','Duelos'],['porra','Porra'],['liga','Liga'],['fechas','Fechas'],['bote','Bote'],['radio','Radio'],['carta','Carta'],['capsula','Cápsula'],['premios','Premios'],['ranking','Ranking'],['ano','Mi año'],['mapa','Mapa']];
- const groups=[['hoy','Hoy',['pregunta','estado','recuerdos','foto']],['juegos','Juegos',['quien','mentira','juicio','reto','karaoke','duelos','porra','liga']],['grupo','Grupo',['fechas','bote','radio','carta','capsula','premios','ranking','ano','mapa']]];
- const plusTabs=['estado','recuerdos','fechas','bote','radio','juicio','reto','mentira','liga','foto','karaoke'];
+ const tabs=[['chota','El Chota'],['pregunta','Pregunta'],['estado','Estado'],['recuerdos','Recuerdos'],['foto','Foto'],['quien','Quién es'],['mentira','Mentira'],['juicio','Tribunal'],['reto','Reto'],['karaoke','Karaoke'],['duelos','Duelos'],['porra','Porra'],['liga','Liga'],['fechas','Fechas'],['bote','Bote'],['radio','Radio'],['carta','Carta'],['capsula','Cápsula'],['premios','Premios'],['ranking','Ranking'],['ano','Mi año'],['mapa','Mapa']];
+ const groups=[['hoy','Hoy',['chota','pregunta','estado','recuerdos','foto']],['juegos','Juegos',['quien','mentira','juicio','reto','karaoke','duelos','porra','liga']],['grupo','Grupo',['fechas','bote','radio','carta','capsula','premios','ranking','ano','mapa']]];
+ const plusTabs=['chota','estado','recuerdos','fechas','bote','radio','juicio','reto','mentira','liga','foto','karaoke'];
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
  let painted={},lastRefresh=0,config={},cache=null,extras=null,whois=null,guesses={},owner=null,tab='pregunta',busy=false,notice='',failed='',epoch=0,draft=false,duelRival=null,duelAnswer=null;

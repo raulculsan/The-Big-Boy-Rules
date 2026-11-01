@@ -57,6 +57,10 @@
 .plus-lines b { flex: none; font-weight: 600; }
 .plus-lines a { color: inherit; text-decoration: underline; }
 .plus-lines small { font-size: var(--ds-text-xs); color: var(--ds-text-2); }
+.plus-meters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ds-space-1) var(--ds-space-2); margin: 0; padding: 0; list-style: none; }
+.plus-meters li { display: grid; gap: 2px; font-size: 13px; color: var(--ds-text-2); }
+.plus-meters meter { width: 100%; height: 8px; }
+.plus-story button { display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-2); width: 100%; min-height: var(--ds-control-md, 44px); padding: 0 var(--ds-space-2); text-align: left; }
 .plus-remove { flex: none; width: var(--ds-control-sm); height: var(--ds-control-sm); padding: 0; border: 1px solid var(--ds-line); border-radius: 50%; background: transparent; color: var(--ds-text-2); font: inherit; font-size: 18px; }
 .plus-days li.is-own { font-weight: 600; }
 .plus-days [data-plus-lie] { width: 100%; text-align: left; }
@@ -93,3 +97,5 @@
 .club-day-whois small { font-size: var(--ds-text-xs); color: var(--ds-text-2); }
 .club-day-form select { appearance: auto; }
 .club-day button:focus-visible, .club-day-entry:focus-visible { outline: 2px solid var(--ds-text-2); outline-offset: 1px; }
+
+.chota-story-line { position: relative; z-index: 2; margin: 0; padding: 4px 12px; font-size: 13px; color: var(--ds-text-2); }

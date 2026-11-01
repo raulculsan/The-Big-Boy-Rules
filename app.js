@@ -4279,6 +4279,7 @@ function renderClubhouse(upcoming) {
     ${plan}
     ${liveIcon}
     <div id="chotaArcadeEntry"></div>
+    <p class="chota-story-line" data-chota-story hidden></p>
     <div class="clubhouse-memory"><span class="clubhouse-memory-label">Recuerdos del club</span><svg viewBox="0 0 40 32" aria-hidden="true"><path d="M4 8h8l3-5h10l3 5h8v21H4z"/><circle cx="20" cy="18" r="7"/></svg><strong>Aún no hay recuerdos compartidos</strong><span>Este sitio será para vuestra próxima foto.</span></div>
     <div class="chota-room-depth"><div class="tigreton-agenda clubhouse-pet"><span class="chota-character-row">${tigretonSpriteMarkup(true)}</span><small class="tigreton-name">El Chota</small></div></div>
     <button type="button" class="chota-expand" data-chota-expand aria-label="Ver a El Chota en pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 21h5v-5m0 5-7-7M16 3h5v5m0-5-7 7M8 21H3v-5m0 5 7-7"/></svg></button>
@@ -4767,6 +4768,7 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
     globalThis.ClubOutdoor?.reset();
     globalThis.ChotaGames?.reset();
     globalThis.ClubLive?.reset();
+    globalThis.ClubNight?.close();
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
     globalThis.ClubDay?.reset();
@@ -4880,6 +4882,7 @@ function showLogin() {
   globalThis.ClubOutdoor?.reset();
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
+    globalThis.ClubNight?.close();
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
     globalThis.ClubDay?.reset();
@@ -4923,6 +4926,7 @@ async function logoutCurrentUser() {
   globalThis.ClubOutdoor?.reset();
   globalThis.ChotaGames?.reset();
   globalThis.ClubLive?.reset();
+    globalThis.ClubNight?.close();
     globalThis.ClubSocial?.reset();
     globalThis.ClubCoinMissions?.reset();
     globalThis.ClubDay?.reset();
@@ -8318,6 +8322,7 @@ globalThis.ClubDay?.init({
   refreshWallet: () => Promise.all([globalThis.BannerShop?.refresh(true), globalThis.ChotaShop?.refresh(true), globalThis.ClubCoinMissions?.refresh?.(true)]),
 });
 
+globalThis.ClubNight?.init({ db, getUser: () => currentAuthUser, getMember: getMemberByAuthId });
 globalThis.ClubLive?.init({
   db,
   getUser: () => currentAuthUser,

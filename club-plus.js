@@ -15,7 +15,7 @@
   const cards=[];
   if(message)cards.push(`<article class="club-day-award"><h4>${esc(nameOf(message.author))} dijo</h4><p class="club-day-message">${esc(message.body)}</p><p class="club-day-note">${esc(longDate.format(new Date(message.at)))}</p></article>`);
   if(plan)cards.push(`<article class="club-day-award"><h4>${esc(plan.title)}</h4><p class="club-day-note">Plan del ${esc(longDate.format(new Date(plan.at)))}</p></article>`);
-  return `<h4>Un recuerdo para hoy</h4>${cards.join('')||'<p class="club-day-note">Aún no hay recuerdos. Volverán cuando el club tenga más historia.</p>'}<p class="club-day-note">Cada día sale uno distinto.</p>`;
+  return `<h4>Un recuerdo para hoy</h4>${cards.join('')||'<p class="club-day-note">Aún no hay recuerdos. Volverán cuando el club tenga más historia.</p>'}<p class="club-day-note">Cada día sale uno distinto.</p>${(state.story?.endings||[]).map(e=>`<article class="club-day-award"><h4>Temporada ${e.number}: ${esc(e.title)}</h4><p>${esc(e.body)}</p></article>`).join('')}${(state.nights||[]).map(n=>`<article class="club-day-award"><h4>La Sala: ${esc(n.title)}</h4><p>Ganó ${esc(nameOf(n.winner))}.${n.highlight?` Mejor momento: ${esc(n.highlight)}`:''}</p></article>`).join('')}`;
  }
  function dates(){
   const polls=state.polls.map(p=>{
@@ -95,25 +95,50 @@
   const rows=(k.entries||[]).map(e=>{const url=safeFile(e.url);return `<article class="club-day-award"><h4>${esc(nameOf(e.user))}</h4>${url?`<audio controls preload="none" src="${esc(url)}"></audio>`:''}<button type="button" class="club-day-action is-quiet" data-plus-karaoke="${esc(e.user)}" aria-pressed="${k.vote===e.user}"${e.user===me?' disabled':''}>Votar · ${e.votes}</button></article>`;}).join('');
   return `<h4>${esc(k.prompt||'')}</h4><p class="club-day-note">Canta esto esta semana y vota la mejor.</p><label class="club-day-action plus-upload">${busy?'Subiendo…':own?'Cambiar mi audio':'Subir mi audio'}<input type="file" accept="audio/*" capture data-plus-file="karaoke" hidden></label>${rows}`;
  }
- const views={estado:status,recuerdos:memories,fechas:dates,bote:tabs,radio,juicio:court,reto:weekly,mentira:liar,liga:league,foto:photo,karaoke};
+ function chota(){
+  const story=state.story;if(!story)return '<p class="club-day-note">La historia se está preparando.</p>';
+  const {season,today,yesterday}=story,meter=(label,value)=>`<li><span>${label}</span><meter min="0" max="100" value="${value}" aria-label="${label}"></meter></li>`;
+  const change=(label,value)=>value?`${label} ${value>0?'+':''}${value}`:'';
+  const changes=yesterday?[change('Dinero',yesterday.money),change('Fama',yesterday.fame),change('Energía',yesterday.energy),change('Líos',yesterday.trouble)].filter(Boolean).join(' · '):'';
+  const past=yesterday?`<article class="club-day-award"><h4>Lo que pasó: ${esc(yesterday.title)}</h4><p class="club-day-note">Salió «${esc(yesterday.choice)}»${yesterday.votes?'':' porque nadie votó'}.</p><p>${esc(yesterday.result)}</p><p class="club-day-note">${esc(changes)}</p>${yesterday.twist?`<p class="club-day-note">Giro de ${esc(nameOf(yesterday.twist))}</p>`:''}</article>`:'';
+  const options=today.options.map(o=>`<li><button type="button" data-story-day="${esc(today.id)}" data-story-option="${o.i}" aria-pressed="${today.mine===o.i}">${esc(o.label)}${o.votes==null?'':`<b>${o.votes}</b>`}</button></li>`).join('');
+  const twist=today.twisted?'<p class="club-day-note">Alguien ha soltado un giro: hoy ganará la segunda opción.</p>':story.twist&&today.mine!=null?`<button type="button" data-story-twist="${esc(today.id)}">Soltar mi giro</button>`:'';
+  return `<h4>Temporada ${season.number} · Día ${season.day}</h4><ul class="plus-meters">${meter('Dinero',season.money)}${meter('Fama',season.fame)}${meter('Energía',season.energy)}${meter('Líos',season.trouble)}</ul>${past}<article class="club-day-prediction"><h4>${esc(today.title)}</h4><p>${esc(today.body)}</p><ul class="plus-days plus-story">${options}</ul>${twist}<p class="club-day-note">Racha: ${story.streak} · Mejor: ${story.best}. Mañana se sabrá qué pasa.</p></article>`;
+ }
+ // The latest season shows up in the sede as one line about how the Chota is doing.
+ function mood(season){
+  if(season.trouble>=70)return 'El Chota anda metido en líos.';
+  if(season.energy<=30)return 'El Chota está agotado.';
+  if(season.money>=70)return 'Al Chota le sobra el dinero.';
+  if(season.money<=30)return 'El Chota está sin un euro.';
+  if(season.fame>=70)return 'Al Chota le piden fotos por la calle.';
+  return 'El Chota sigue a lo suyo.';
+ }
+ function syncSede(){
+  const season=state?.story?.season;
+  document.querySelectorAll('[data-chota-story]').forEach(node=>{node.hidden=!season;if(season)node.textContent=`Temporada ${season.number} · ${mood(season)}`;});
+ }
+ const views={chota,estado:status,recuerdos:memories,fechas:dates,bote:tabs,radio,juicio:court,reto:weekly,mentira:liar,liga:league,foto:photo,karaoke};
  function view(id){return `${views[id]?.()||''}${notice?`<p class="club-day-note" role="status">${esc(notice)}</p>`:''}`;}
  async function refresh(){
   if(!config.db||!config.getUser?.())return;
-  const run=++epoch,{data,error}=await config.db.rpc('get_club_plus');
+  const run=++epoch,[{data,error},story]=await Promise.all([config.db.rpc('get_club_plus'),config.db.rpc('get_club_story')]);
   if(run!==epoch||error)return;
-  state=data;config.onChange?.();
+  state={...data,...story.data};syncSede();config.onChange?.();
  }
  async function call(name,args,done=''){
   if(busy)return;busy=true;notice='';
   const {data,error}=await config.db.rpc(name,args);
   busy=false;
   if(error)notice=['PGRST202','42883'].includes(error.code)?'Esta función se está preparando.':error.message||'No se ha podido guardar.';
-  else{state={...state,...data};notice=done;}
+  else{state={...state,...data};notice=done;syncSede();}
   config.onChange?.();
  }
  function click(event){
   const b=event.target.closest?.('#clubDay button');if(!b||b.disabled)return;
   const d=b.dataset;
+  if(d.storyOption)void call('vote_club_story',{p_day:d.storyDay,p_option:Number(d.storyOption)},'Voto guardado');
+  if(d.storyTwist)void call('use_club_story_twist',{p_day:d.storyTwist},'Giro soltado');
   if(d.plusDay)void call('toggle_date_vote',{p_poll:d.plusDay,p_day:d.dayValue});
   if(d.plusChoose)void call('choose_poll_date',{p_poll:d.plusChoose,p_day:d.dayValue},'Fecha elegida');
   if(d.plusSettle)void call('settle_club_tab',{p_tab:d.plusSettle},'Bote cerrado');

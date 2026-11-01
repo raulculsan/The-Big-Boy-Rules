@@ -43,6 +43,8 @@ const sources = [
   "chat-mentions.js",
   "pull-refresh.js",
   "club-plus.js",
+  "club-night.js",
+  "club-night.css",
   "tickets.js",
   "tickets.css",
   "chat-custom.css",
