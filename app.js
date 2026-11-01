@@ -8678,6 +8678,25 @@ const revealObserver = new IntersectionObserver(entries => entries.forEach(entry
 document.querySelectorAll(".reveal").forEach(element => revealObserver.observe(element));
 
 // Wallpaper preferences are personal and never enter the shared message backend.
+async function refreshCurrentPage() {
+  if (!backendReady || !currentAuthUser) return;
+  const active = document.querySelector(".app > .page-section.active")?.id;
+  const tasks = [loadRemoteProfiles(), loadGroupEvents(), loadSiteSettings(), loadNotifications(),
+    globalThis.BannerShop?.refresh(true), globalThis.DailyPacks?.refresh(true)];
+  if (active === "inicio") tasks.push(loadNews(true));
+  if (active === "hoy") tasks.push(globalThis.ClubDay?.refresh());
+  if (active === "chat") tasks.push(loadMessages(), loadPrivateMessages());
+  await Promise.allSettled(tasks);
+  if (active === "perfil" && currentUser) renderProfile(currentUser.id, false);
+}
+
+globalThis.PullRefresh?.init({
+  onRefresh: refreshCurrentPage,
+  // A conversation scrolls its own messages; dialogs and overlays keep their gestures.
+  canPull: () => Boolean(currentAuthUser) && !document.querySelector("dialog[open], .conversation-open")
+    && !document.body.classList.contains("chat-focus"),
+});
+
 globalThis.ChatMentions?.init({
   getSelf: () => currentUser, getPeer: () => getMember(activePrivateMemberId), getMembers: () => members, avatar: getAvatar,
 });

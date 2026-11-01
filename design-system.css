@@ -100,3 +100,13 @@ body.authenticated #duplicatesDialog .dup-stepper output { color: var(--ds-text)
 body.authenticated #duplicatesDialog .dup-bar { position: fixed; z-index: 3; inset: auto 16px calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; justify-content: space-between; gap: var(--ds-space-3); max-width: 560px; margin-inline: auto; padding: var(--ds-space-2) var(--ds-space-2) var(--ds-space-2) var(--ds-space-4); border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-pill); background: var(--ds-raised); color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
 body.authenticated #duplicatesDialog .dup-bar[hidden] { display: none; }
 body.authenticated #duplicatesDialog .dup-bar button { min-height: var(--ds-control); padding: 0 var(--ds-space-5); border: 0; border-radius: var(--ds-radius-pill); background: var(--ds-text); color: var(--ds-surface); font: inherit; font-weight: 600; }
+
+/* Pull to refresh. Sits under the header and never pushes the page. */
+.pull-refresh { position: fixed; z-index: 40; top: calc(var(--pwa-safe-top, env(safe-area-inset-top, 0px)) + 16px); left: 50%; display: none; place-items: center; width: 40px; height: 40px; margin-top: -40px; border: 1px solid var(--ds-line-strong); border-radius: 50%; background: var(--ds-raised); color: var(--ds-text-2); pointer-events: none; }
+.pull-refresh.is-visible { display: grid; }
+.pull-refresh.is-ready { color: var(--ds-text); }
+.pull-refresh svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pull-refresh.is-refreshing { color: var(--ds-text); }
+.pull-refresh.is-refreshing svg { animation: pull-refresh-spin .8s linear infinite; }
+@keyframes pull-refresh-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pull-refresh.is-refreshing svg { animation: none; } }

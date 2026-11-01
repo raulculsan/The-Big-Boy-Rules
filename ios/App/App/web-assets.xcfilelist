@@ -299,6 +299,7 @@ $(SRCROOT)/App/public/pending-actions.js
 $(SRCROOT)/App/public/plan-widget.js
 $(SRCROOT)/App/public/profile-account-sheet.css
 $(SRCROOT)/App/public/profile-account-sheet.js
+$(SRCROOT)/App/public/pull-refresh.js
 $(SRCROOT)/App/public/service-worker.js
 $(SRCROOT)/App/public/shop-catalog-media.js
 $(SRCROOT)/App/public/spotify-player.css

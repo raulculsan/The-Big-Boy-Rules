@@ -54,6 +54,7 @@ const allowedFiles = new Set([
   "club-day.css",
   "chat-custom.js",
   "chat-mentions.js",
+  "pull-refresh.js",
   "chat-custom.css",
   "club-social.css",
   "club-live.css",

@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v481";
+const CACHE_NAME = "big-boy-rules-v482";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -8,7 +8,7 @@ const APP_SHELL = [
   "./app-update.css?v=20261030-app-update-440",
   "./ui-motion.js?v=20261030-neutral-interactions-444",
   "./ui-motion.css?v=20261031-smooth-470",
-  "./design-system.css?v=20261101-duplicates-474",
+  "./design-system.css?v=20261101-pull-482",
   "./",
   "./index.html",
   "./native-auth.js?v=20261030-native-google-442",
@@ -70,6 +70,7 @@ const APP_SHELL = [
   "./chat.css?v=20261031-online-472",
   "./chat-themes.css?v=20261030-neutral-interactions-444",
   "./chat-themes.js?v=20261101-chat-custom-473",
+  "./pull-refresh.js?v=20261101-pull-482",
   "./chat-mentions.js?v=20261101-mentions-481",
   "./chat-custom.js?v=20261101-chat-custom-473",
   "./chat-custom.css?v=20261101-mentions-480",
@@ -90,7 +91,7 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261030-app-update-440",
   "./admin-console.css?v=20261030-neutral-interactions-444",
-  "./app.js?v=20261101-mentions-480",
+  "./app.js?v=20261101-pull-482",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261031-album-binder-455",

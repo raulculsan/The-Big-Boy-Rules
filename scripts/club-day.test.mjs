@@ -61,6 +61,15 @@ test('mentions come from the stored text and never open markup', async () => {
   assert.match(client, /Takes already-escaped text/);
 });
 
+test('pull to refresh ships everywhere and leaves conversations alone', async () => {
+  const [app, index, worker, build, live] = await Promise.all(['app.js', 'index.html', 'service-worker.js', 'scripts/build-web.mjs', 'scripts/live-server.mjs'].map(read));
+  assert.ok(index.includes('pull-refresh.js?v='));
+  assert.ok(worker.includes('./pull-refresh.js?v='));
+  assert.ok(build.includes('"pull-refresh.js"'));
+  assert.ok(live.includes('"pull-refresh.js"'));
+  assert.match(app, /dialog\[open\], \.conversation-open/);
+});
+
 test('club day never paints a warm highlight on selection', async () => {
   const css = await read('club-day.css');
   assert.doesNotMatch(css, /gold|yellow|--ds-accent/);
