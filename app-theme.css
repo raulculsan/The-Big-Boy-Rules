@@ -336,7 +336,11 @@ body.authenticated :is(.message-form input, .message-form textarea, .inbox-searc
 #bannerShopDialog#bannerShopDialog .chota-shop-item { display: flex; flex-direction: column; grid-column: auto; min-width: 0; overflow: hidden; border: 0; border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
 #bannerShopDialog#bannerShopDialog .chota-shop-item.is-equipped { box-shadow: inset 0 0 0 2px var(--ds-text-2); }
 #bannerShopDialog#bannerShopDialog .chota-shop-object { position: relative; display: grid; place-items: center; width: 100%; height: auto; min-height: 0; aspect-ratio: 1; border-radius: 0; background: var(--ds-raised); }
-#bannerShopDialog#bannerShopDialog .chota-shop-object > img { width: 70%; max-width: 70%; max-height: 70%; filter: drop-shadow(0 10px 8px #0006); }
+/* Art fills a fixed inset box: the intrinsic width/height attributes never size it. */
+#bannerShopDialog#bannerShopDialog .chota-shop-object > img,
+#bannerShopDialog#bannerShopDialog .chota-shop-object > .chota-remote-motion { position: absolute; top: 16%; left: 16%; display: block; width: 68%; height: 68%; max-width: none; max-height: none; object-fit: contain; filter: drop-shadow(0 10px 8px #0006); }
+#bannerShopDialog#bannerShopDialog .chota-shop-object > .chota-remote-motion img { display: block; width: 100%; height: 100%; max-width: none; max-height: none; object-fit: contain; }
+#bannerShopDialog#bannerShopDialog .chota-shop-warm-lights > img { left: 6%; width: 88%; }
 #bannerShopDialog#bannerShopDialog .chota-shop-style .chota-style-preview { position: absolute; inset: 0; top: auto; left: auto; width: 100%; height: 100%; aspect-ratio: auto; transform: none; }
 #bannerShopDialog#bannerShopDialog .chota-shop-style .chota-style-preview > img { object-position: center 62%; }
 #bannerShopDialog#bannerShopDialog .chota-shop-copy { display: flex; flex: 1; flex-direction: column; padding: 12px; }

@@ -305,17 +305,35 @@ const realtimeRefreshTimers = new Map();
 let initialLaunchCompleted = false;
 let profileLoadGeneration = 0;
 
+// On a cold start the room's sprites and masks are not in memory yet. Lifting the
+// launch screen before they decode shows El Chota and parts of the room blinking in.
+function roomMediaReady(limit = 1500) {
+  const room = document.querySelector("#clubhouseContent .clubhouse-room");
+  if (!room) return Promise.resolve();
+  const urls = new Set();
+  for (const node of [room, ...room.querySelectorAll("*")]) {
+    if (node instanceof HTMLImageElement && node.getAttribute("src")) urls.add(node.currentSrc || node.src);
+    for (const pseudo of [null, "::before", "::after"]) {
+      const style = getComputedStyle(node, pseudo);
+      for (const value of [style.backgroundImage, style.webkitMaskImage, style.maskImage]) {
+        for (const match of String(value || "").matchAll(/url\("?([^")]+)"?\)/g)) urls.add(match[1]);
+      }
+    }
+  }
+  const decode = url => { const image = new Image(); image.src = url; return image.decode().catch(() => {}); };
+  return Promise.race([Promise.allSettled([...urls].map(decode)), new Promise(resolve => setTimeout(resolve, limit))]);
+}
 function completeInitialLaunch() {
   if (initialLaunchCompleted) return;
   initialLaunchCompleted = true;
-  requestAnimationFrame(() => {
+  void roomMediaReady().then(() => requestAnimationFrame(() => {
     document.getElementById("pageLoader")?.classList.add("hidden");
     requestAnimationFrame(() => {
       globalThis.ClubHealth?.mark("shell-ready");
       document.documentElement.dataset.launchReady = "true";
       document.dispatchEvent(new Event("bb:launch-ready"));
     });
-  });
+  }));
 }
 function waitForStartupPaint() {
   if (document.hidden) return Promise.resolve();
@@ -4268,15 +4286,17 @@ function renderClubhouse(upcoming) {
   const plan = next ? `<button class="clubhouse-plan" type="button" data-calendar-date="${tigretonDayKey(next.date)}" aria-label="Ver plan: ${escapeHtml(next.event.title)}"><span class="clubhouse-note-label">Próximo plan</span><strong>${escapeHtml(next.event.title)}</strong><span class="clubhouse-plan-date">${escapeHtml(date)} · ${escapeHtml(schedule)}</span><span class="clubhouse-plan-countdown">${countdown}</span></button>` : `<div class="clubhouse-plan clubhouse-plan-empty"><span class="clubhouse-note-label">La agenda</span><strong>${homeEventsReady ? "El próximo plan está por llegar" : "Consultando la agenda…"}</strong>${homeEventsReady ? '<button type="button" data-go="calendario">Ver calendario</button>' : ""}</div>`;
   const liveIcon = next ? `<button type="button" class="clubhouse-live-icon" data-club-live-event="${escapeHtml(next.event.id)}" aria-label="Abrir plan en directo: ${escapeHtml(next.event.title)}" title="Plan en directo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.1 7.1a7 7 0 0 0 0 9.8m9.8-9.8a7 7 0 0 1 0 9.8M4 4a11.3 11.3 0 0 0 0 16M20 4a11.3 11.3 0 0 1 0 16"/></svg></button>` : "";
   const bunting = birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : "";
+  // An empty slot keeps the room in place when the first agenda arrives after launch.
+  const planSlot = plan || '<span class="clubhouse-plan-slot" hidden></span>';
   const existing = content.firstElementChild;
   // Agenda news only swaps the note. Rebuilding would blank the art, Chota and every prop.
-  if (existing?.querySelector(".clubhouse-plan")) {
+  if (existing?.querySelector(".clubhouse-plan, .clubhouse-plan-slot")) {
     existing.classList.toggle("is-birthday", birthday);
     existing.querySelectorAll(".clubhouse-live-icon,.clubhouse-bunting").forEach(node => node.remove());
-    const note = existing.querySelector(".clubhouse-plan");
+    const note = existing.querySelector(".clubhouse-plan, .clubhouse-plan-slot");
     note.insertAdjacentHTML("afterend", liveIcon);
     note.insertAdjacentHTML("beforebegin", bunting);
-    note.outerHTML = plan;
+    note.outerHTML = planSlot;
     globalThis.ChotaShop?.mountRoom(existing);
     globalThis.ChotaGames?.mount(content.querySelector("#chotaArcadeEntry"));
     globalThis.ClubLive?.mountRoom?.(content.querySelector(".clubhouse-memory"));
@@ -4294,7 +4314,7 @@ function renderClubhouse(upcoming) {
     <span class="clubhouse-light-switch" aria-hidden="true"><i></i></span>
     <div class="clubhouse-light-effects" aria-hidden="true"><div class="clubhouse-lamplight"></div><div class="clubhouse-dust"><i></i><i></i><i></i></div></div>
     ${bunting}
-    ${plan}
+    ${planSlot}
     ${liveIcon}
     <div id="chotaArcadeEntry"></div>
     <p class="chota-story-line" data-chota-story hidden></p>
