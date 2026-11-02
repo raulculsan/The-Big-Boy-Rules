@@ -254,6 +254,20 @@ body.achievement-challenges-open { overflow: hidden; }
 .achievement-personal-progress progress::-webkit-progress-value { background: var(--club-gold); }
 .achievement-personal-progress progress::-moz-progress-bar { background: var(--club-gold); }
 .achievement-detail .achievement-personal-progress { border: 1px solid var(--club-line); border-radius: 16px; padding: 18px; margin-top: 24px; }
+.achievement-ladder { margin-top: 24px; text-align: left; }
+.achievement-ladder-title { display: block; margin-bottom: 10px; color: var(--club-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .16em; }
+.achievement-ladder ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.achievement-ladder button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 8px 12px; border: 1px solid var(--club-line); border-radius: 14px; color: #f4f4f6; background: #111419; font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.achievement-ladder [aria-current="step"] button { border-color: #ffffff3d; background: #1a1d23; }
+.achievement-ladder [data-state="locked"] button { color: #9299a5; }
+.achievement-ladder [data-state="locked"] .achievement-ladder-icon { opacity: .35; filter: grayscale(1); }
+.achievement-ladder-icon { flex: 0 0 30px; height: 40px; }
+.achievement-ladder-copy { flex: 1; min-width: 0; }
+.achievement-ladder-copy strong { display: block; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.achievement-ladder-copy small { display: block; margin-top: 2px; color: var(--club-muted); font-size: 11px; line-height: 1.4; }
+.achievement-ladder-state { flex: 0 0 auto; color: var(--club-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
+.achievement-ladder [data-state="earned"] .achievement-ladder-state { color: #d6dae0; }
+@media (hover: hover) and (pointer: fine) { .achievement-ladder button:hover { background: #191b1f; } }
 .achievement-challenge:focus-visible { outline: 2px solid var(--interaction-strong); outline-offset: 3px; }
 @media (max-width: 380px) { .achievement-challenge { padding: 14px 12px; gap: 10px; } .achievement-challenge-art { flex-basis: 48px; height: 72px; } }
 .club-member, .club-event, #perfil .achievement-card { transition: background .15s ease, border-color .15s ease; }

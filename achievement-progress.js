@@ -1,7 +1,7 @@
 /* Shared objective vocabulary. Only server records determine earned progress. */
 (() => {
   const metrics = Object.freeze({
-    group_messages: Object.freeze({label:'Mensajes en el grupo', unit:'días', hint:'Solo suma el primer mensaje del día, entre todas las categorías del grupo. Los adjuntos cuentan; los privados no. Día según la hora de Madrid.'}),
+    group_messages: Object.freeze({label:'Mensajes en el grupo', unit:'mensajes', hint:'Cada mensaje en el grupo suma, con un máximo de 40 al día. Los adjuntos cuentan; los privados no.'}),
     group_active_days: Object.freeze({label:'Días en la app', unit:'días', hint:'Cuenta cada día que entras en la app, también con sesión guardada. No requiere escribir ni volver a identificarte. Conserva los días registrados para futuros objetivos. Fecha del servidor en Madrid.'}),
     profile_completed: Object.freeze({label:'Completar el perfil', unit:'perfil', hint:'Nombre, foto y biografía. Si el perfil ya está completo al crear el logro, se concede directamente.'}),
     daily_packs_earned: Object.freeze({label:'Sobres diarios conseguidos', unit:'sobres', hint:'Cuenta cada sobre diario acreditado por el servidor después de crear el objetivo. Actualizar el saldo o probar la animación no suma.'}),
@@ -10,7 +10,17 @@
     special_cards_explored: Object.freeze({label:'Cartas especiales exploradas', unit:'cartas', hint:'Explora cartas de edición Especial. Cada carta distinta suma una vez por objetivo; las legendarias tienen su propia categoría.'}),
     legendary_cards_explored: Object.freeze({label:'Cartas legendarias exploradas', unit:'cartas', hint:'Explora cartas de edición Legendaria. Reabrir o girar la misma carta no vuelve a sumar.'}),
     locations_explored: Object.freeze({label:'Ubicaciones exploradas', unit:'lugares', hint:'Abre cartas de ubicaciones, de cualquier rareza. Cada lugar suma una vez por objetivo. No requiere visitar el lugar físicamente.'}),
+    daily_streak_best: Object.freeze({label:'Mejor racha de sobres diarios', unit:'días', hint:'Tu racha más larga recogiendo el sobre diario, contada desde tu historial. Si la racha se rompe, el récord se conserva.'}),
+    packs_opened: Object.freeze({label:'Sobres abiertos', unit:'sobres', hint:'Cada sobre abierto suma una vez, desde tu historial. Los sobres guardados sin abrir no cuentan.'}),
+    duplicates_discarded: Object.freeze({label:'Repetidas descartadas', unit:'cartas', hint:'Cada copia repetida que cambias por monedas suma una, desde tu historial.'}),
   });
+  // Trophy ladders: one family per key, climbed step by step from bronze to platinum.
+  const tracks = Object.freeze({
+    'asistencia':'Asistencia', 'mensajes':'Mensajes', 'racha':'Racha diaria', 'los-nuestros':'Los Nuestros',
+    'coleccionista':'Coleccionista', 'leyendas':'Leyendas', 'full-art':'Full Art', 'vice-city':'Vice City',
+    'abresobres':'Abresobres', 'reciclador':'Reciclador',
+  });
+  const trackLabel = key => tracks[key] || key;
   function validTarget(metric, target) {
     const value = Number(target);
     return Object.hasOwn(metrics, metric) && Number.isInteger(value) && value >= 1 && value <= 100000
@@ -22,6 +32,10 @@
     const goal = new Intl.NumberFormat('es-ES').format(rule.target);
     const plural = Number(rule.target) !== 1;
     if (rule.metric === 'daily_packs_earned') return `Consigue ${goal} ${plural ? 'sobres diarios' : 'sobre diario'}`;
+    if (rule.metric === 'daily_streak_best') return `Recoge el sobre diario ${goal} ${plural ? 'días seguidos' : 'día'}`;
+    if (rule.metric === 'packs_opened') return `Abre ${goal} ${plural ? 'sobres' : 'sobre'}`;
+    if (rule.metric === 'duplicates_discarded') return `Descarta ${goal} ${plural ? 'cartas repetidas' : 'carta repetida'}`;
+    if (rule.metric === 'group_messages') return `Envía ${goal} ${plural ? 'mensajes' : 'mensaje'} en el grupo · máximo 40 al día`;
     if (rule.metric === 'cards_acquired') {
       const editions = plural ? {common:'comunes',special:'especiales',epic:'épicas',legendary:'legendarias',retro:'retro',full_art:'Full Art',vice_city:'Vice City',halloween:'Halloween'} : {common:'común',special:'especial',epic:'épica',legendary:'legendaria',retro:'retro',full_art:'Full Art',vice_city:'Vice City',halloween:'Halloween'};
       const kinds = {member:'miembros',object:'objetos',location:'ubicaciones'};
@@ -35,10 +49,7 @@
         : rule.metric === 'legendary_cards_explored' ? (plural ? ' legendarias' : ' legendaria') : '';
       return `Explora ${goal} ${plural ? 'cartas' : 'carta'}${edition}${plural ? ' distintas' : ''}`;
     }
-    const days = Number(rule.target) === 1 ? 'día' : 'días distintos';
-    return rule.metric === 'group_messages'
-      ? `Escribe en el grupo ${goal} ${days} · máximo 1 al día`
-      : `Entra en la app ${goal} ${days}`;
+    return `Entra en la app ${goal} ${plural ? 'días distintos' : 'día'}`;
   }
   function progress(rule, record) {
     if (!rule || !validTarget(rule.metric, rule.target)) return null;
@@ -51,10 +62,20 @@
     const earned = new Set(awards.filter(a=>a.userId === userId).map(a=>String(a.achievementId)));
     return definitions.filter(a=>a.rule && validTarget(a.rule.metric, a.rule.target) && !earned.has(String(a.id)));
   }
+  // Only the lowest unearned step of each ladder is a goal; higher steps wait their turn.
+  function nextPending(definitions, awards, userId) {
+    const open = pending(definitions, awards, userId), lowest = new Map();
+    for (const item of open) if (item.trackKey && !(lowest.get(item.trackKey)?.trackStep < item.trackStep)) lowest.set(item.trackKey, item);
+    return open.filter(item => !item.trackKey || lowest.get(item.trackKey) === item);
+  }
+  function ladder(definitions, achievement) {
+    if (!achievement?.trackKey) return [];
+    return definitions.filter(item => item.trackKey === achievement.trackKey).sort((a,b) => a.trackStep-b.trackStep);
+  }
   function orderedPending(definitions, awards, records, userId) {
     const values = new Map((records || []).map(item => [String(item.achievementId), item]));
     const tiers = {bronze:0,silver:1,gold:2,platinum:3};
-    return pending(definitions, awards, userId).slice().sort((left,right) => {
+    return nextPending(definitions, awards, userId).slice().sort((left,right) => {
       const a=progress(left.rule,values.get(String(left.id))), b=progress(right.rule,values.get(String(right.id)));
       return b.percent-a.percent || (a.target-a.value)-(b.target-b.value) || a.target-b.target
         || (tiers[left.tier] ?? 9)-(tiers[right.tier] ?? 9) || String(left.name).localeCompare(String(right.name),'es');
@@ -86,5 +107,5 @@
     }
     return Object.freeze({record, reset});
   }
-  globalThis.AchievementProgress = Object.freeze({metrics, validTarget, objective, progress, pending, orderedPending, createDailyVisitRecorder});
+  globalThis.AchievementProgress = Object.freeze({metrics, tracks, trackLabel, validTarget, objective, progress, pending, nextPending, ladder, orderedPending, createDailyVisitRecorder});
 })();

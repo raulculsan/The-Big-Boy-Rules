@@ -1,5 +1,28 @@
 # Logros automáticos
 
+## Escaleras de trofeos · noviembre 2026
+
+Migración `supabase/migrations/20261103090000_trophy_ladders.sql`. Cada familia de trofeos es una escalera (`achievements.track_key` + `track_step`) que sube de bronce a platino con metas que crecen a un ritmo constante:
+
+| Escalera | Actividad | Escalones |
+| --- | --- | --- |
+| Asistencia | Días en la app | 10 · 30 · 100 · 365 |
+| Mensajes | Mensajes en el grupo (máx. 40/día) | 5 · 25 · 80 · 365 |
+| Racha diaria | Mejor racha de sobre diario | 3 · 7 · 30 · 100 |
+| Los Nuestros | Cartas distintas de la colección | 1 · 5 · 10 · 25 · 50 |
+| Coleccionista | Cartas distintas, todas las colecciones | 50 · 70 · 85 · 100 |
+| Leyendas | Legendarias distintas | 1 · 3 · 6 · 10 |
+| Full Art | Full Art distintas | 1 · 3 · 6 · 10 |
+| Vice City | Vice City distintas | 1 · 4 · 8 · 13 |
+| Abresobres | Sobres abiertos | 25 · 100 · 300 · 1.000 |
+| Reciclador | Copias repetidas descartadas | 25 · 100 · 300 · 1.000 |
+
+- «Tus próximos logros» solo muestra el escalón más bajo pendiente de cada escalera; el detalle enseña la escalera completa (conseguido, siguiente, bloqueado).
+- El progreso se reconstruye desde el historial real (`backfill_progression_achievement`), así que los escalones nuevos no empiezan de cero. Las actividades nuevas (`daily_streak_best`, `packs_opened`, `duplicates_discarded`) se cuentan con triggers en `card_packs` y `member_coin_ledger`.
+- Si se suben varios escalones de golpe, la celebración muestra solo el más alto.
+- Se retiraron «Coleccionista · 250» y «· 500» (el catálogo tiene ~100 cartas). Al añadir cartas o colecciones, revisar las metas de platino.
+- Los trofeos sueltos («Perfil Completo», «Dale al dedo», «Illo un TFG») siguen como logros independientes.
+
 ## Cartas y sobres · actualización v156
 
 En Administración → Logros → Crear logro → Objetivo automático → Actividad aparecen cinco categorías nuevas:

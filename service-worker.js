@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v551";
+const CACHE_NAME = "big-boy-rules-v552";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -31,7 +31,7 @@ const APP_SHELL = [
   "./styles.css?v=20261102-theme-510",
   "./visual-system.css?v=20261102-theme-510",
   "./notifications.css?v=20261102-theme-532",
-  "./club.css?v=20261102-theme-510",
+  "./club.css?v=20261103-ladders-552",
   "./clubhouse.css?v=20261102-chota-life-544",
   "./chota-shop.js?v=20261102-room-physics-521",
   "./chota-shop.css?v=20261102-room-physics-521",
@@ -72,7 +72,7 @@ const APP_SHELL = [
   "./icons/mascot/chota-v2/chota-room-life-v1.webp",
   "./news.css?v=20261030-neutral-interactions-444",
   "./achievement-admin.css?v=20261102-theme-510",
-  "./achievement-progress.js?v=20261021-halloween-365",
+  "./achievement-progress.js?v=20261103-ladders-552",
   "./achievement-admin.js?v=20261010-244",
   "./chat.css?v=20261102-theme-536",
   "./chat-themes.css?v=20261030-neutral-interactions-444",
@@ -103,7 +103,7 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261102-theme-532",
   "./admin-console.css?v=20261102-theme-532",
-  "./app.js?v=20261102-member-guards-550",
+  "./app.js?v=20261103-ladders-552",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261102-pack-stage-549",
@@ -261,7 +261,7 @@ const APP_SHELL = [
   "./icons/cards/reverso-legendario-unificado-v1.jpg",
   "./icons/cards/sobre-los-nuestros-recortado-v2.png",
   "./trophy-motion.js?v=20260904-150",
-  "./trophy-unlock.js?v=20260903-138",
+  "./trophy-unlock.js?v=20261103-ladders-552",
   "./vendor/lottie-light.min.js?v=5.13.0",
   ...["bronze", "silver", "gold", "platinum"].flatMap(tier => [
     `./icons/trophies/${tier}.svg?v=20260903-132`,

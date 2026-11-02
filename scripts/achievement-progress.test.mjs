@@ -15,13 +15,29 @@ test('collection objectives describe exploration separately from earning packs',
   assert.equal(M.objective({metric:'legendary_cards_explored',target:2}),'Explora 2 cartas legendarias distintas');
   assert.equal(M.objective({metric:'locations_explored',target:1}),'Explora 1 ubicación');
   assert.equal(M.objective({metric:'daily_packs_earned',target:7}),'Consigue 7 sobres diarios');
-  assert.equal(M.validTarget('packs_opened',1),false,'preview is not a real opening');
+  // Openings are counted by the server when a real pack is opened, never from the preview.
+  assert.equal(M.objective({metric:'packs_opened',target:25}),'Abre 25 sobres');
+  assert.equal(M.objective({metric:'daily_streak_best',target:7}),'Recoge el sobre diario 7 días seguidos');
+  assert.equal(M.objective({metric:'duplicates_discarded',target:1}),'Descarta 1 carta repetida');
   assert.equal(M.validTarget('cards_owned',1),false,'catalog is not an inventory');
 });
 function extract(name,next) {
   const start=app.indexOf(`function ${name}(`), end=app.indexOf(`\n${next}`,start);
   assert.ok(start>=0&&end>start);return app.slice(start,end);
 }
+
+test('each ladder offers only its lowest unearned step, and the ladder lists every step in order',()=>{
+  const r={metric:'packs_opened',target:25};
+  const defs=[{id:1,tier:'bronze',trackKey:'abresobres',trackStep:1,rule:r},{id:2,tier:'silver',trackKey:'abresobres',trackStep:2,rule:{...r,target:100}},
+    {id:3,tier:'gold',trackKey:'abresobres',trackStep:3,rule:{...r,target:300}},{id:4,tier:'silver',rule:{metric:'profile_completed',target:1}}];
+  assert.deepEqual(M.nextPending(defs,[],'me').map(a=>a.id),[1,4]);
+  assert.deepEqual(M.nextPending(defs,[{userId:'me',achievementId:1}],'me').map(a=>a.id),[2,4]);
+  assert.deepEqual(M.nextPending(defs,[{userId:'other',achievementId:1}],'me').map(a=>a.id),[1,4]);
+  assert.deepEqual(M.orderedPending(defs,[{userId:'me',achievementId:1},{userId:'me',achievementId:2}],[],'me').map(a=>a.id).sort(),[3,4]);
+  assert.deepEqual(M.ladder(defs.slice().reverse(),defs[1]).map(a=>a.trackStep),[1,2,3]);
+  assert.equal(M.ladder(defs,defs[3]).length,0);
+  assert.equal(M.trackLabel('abresobres'),'Abresobres');
+});
 
 test('objectives accept only supported metrics and integer, bounded goals',()=>{
   for(const value of [1,10,100000]) assert.ok(M.validTarget('group_messages',value));
@@ -30,7 +46,7 @@ test('objectives accept only supported metrics and integer, bounded goals',()=>{
   assert.equal(M.validTarget('profile_completed',2),false);
   assert.ok(M.validTarget('profile_completed',1));
   assert.match(M.objective({metric:'group_active_days',target:5}),/5 días distintos/);
-  assert.match(M.objective({metric:'group_messages',target:1}),/1 día · máximo 1 al día/);
+  assert.match(M.objective({metric:'group_messages',target:1}),/Envía 1 mensaje en el grupo · máximo 40 al día/);
   assert.match(M.objective({metric:'group_active_days',target:5}),/Entra en la app/);
 });
 
@@ -206,7 +222,7 @@ test('catalog distinguishes automatic objectives and never offers manual assignm
     assert.equal(c.$('adminAchievementsList').querySelector('[data-manage-achievement="1"]'),null);
     assert.ok(c.$('adminAchievementsList').querySelector('[data-manage-achievement="2"]'));
     c.ui.openAssignments(1);assert.equal(c.state.page,'admin-logros');
-    assert.match(c.$('adminAchievementsList').textContent,/Escribe en el grupo 10 días distintos/);
+    assert.match(c.$('adminAchievementsList').textContent,/Envía 10 mensajes en el grupo/);
   } finally {c.dom.window.close();}
 });
 

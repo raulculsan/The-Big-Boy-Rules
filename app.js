@@ -1489,14 +1489,14 @@ function renderPendingAchievements(member) {
     ${achievementProgressStatus !== "ready" ? `<p class="achievement-private-note" role="status">${achievementProgressStatus === "loading" ? "Cargando tus objetivos…" : "No se ha podido actualizar tu progreso. Inténtalo de nuevo."}</p><button type="button" class="secondary-button" data-reload-achievements>Actualizar progreso</button>` : ""}
     <div class="achievement-challenge-list">${pending.length ? pending.map(achievement => `<button type="button" class="achievement-challenge tier-${escapeHtml(achievement.tier)}" data-open-achievement="${escapeHtml(achievement.id)}" aria-label="Ver objetivo: ${escapeHtml(achievement.name)}">
       <span class="achievement-challenge-art" aria-hidden="true">${achievementTrophyIcon(achievement.tier, achievement.icon)}</span>
-      <span class="achievement-challenge-copy"><small>${escapeHtml(achievementTier(achievement.tier).label)}</small><strong>${escapeHtml(achievement.name)}</strong>${renderPersonalAchievementProgress(achievement)}</span>
+      <span class="achievement-challenge-copy"><small>${escapeHtml(achievementLadderLabel(achievement))}</small><strong>${escapeHtml(achievement.name)}</strong>${renderPersonalAchievementProgress(achievement)}</span>
     </button>`).join("") : achievementProgressStatus === "ready" ? `<div class="achievement-challenges-complete"><strong>Todo conquistado</strong><span>Has conseguido todos los objetivos disponibles.</span></div>` : ""}</div>
   </section>`;
 }
 
 function renderAchievementChallengeTrigger(member) {
   if (!currentAuthUser || member.authId !== currentAuthUser.id || member.hidden || achievementProgressStatus === "unavailable") return "";
-  const count = AchievementProgress.pending(achievements, achievementAwards, currentAuthUser.id).length;
+  const count = AchievementProgress.nextPending(achievements, achievementAwards, currentAuthUser.id).length;
   return `<button type="button" class="achievement-challenges-trigger" data-open-achievement-challenges aria-label="Ver tus próximos logros${count ? `: ${count} pendientes` : ""}">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
     ${count ? `<span>${count > 99 ? "99+" : count}</span>` : ""}
@@ -1527,6 +1527,31 @@ function closeAchievementChallenges(restoreFocus = true) {
   if (restoreFocus && focus?.isConnected) focus.focus({preventScroll:true});
 }
 
+function achievementLadderLabel(achievement) {
+  const tier = achievementTier(achievement.tier).label;
+  if (!achievement.trackKey) return tier;
+  const steps = AchievementProgress.ladder(achievements, achievement).length;
+  return `${AchievementProgress.trackLabel(achievement.trackKey)} · ${tier} · ${achievement.trackStep}/${steps}`;
+}
+// The whole ladder, so a member sees where this trophy sits and what comes next.
+function renderAchievementLadder(achievement) {
+  const steps = AchievementProgress.ladder(achievements, achievement);
+  if (steps.length < 2) return "";
+  const userId = currentAuthUser?.id || currentUser?.authId;
+  const earned = new Set(achievementAwards.filter(award => award.userId === userId).map(award => String(award.achievementId)));
+  const next = steps.find(step => !earned.has(String(step.id)));
+  return `<div class="achievement-ladder"><span class="achievement-ladder-title">Escalera ${escapeHtml(AchievementProgress.trackLabel(achievement.trackKey))}</span>
+    <ol>${steps.map(step => {
+      const state = earned.has(String(step.id)) ? "earned" : step === next ? "next" : "locked";
+      const goal = step.rule ? AchievementProgress.objective(step.rule) : "";
+      return `<li data-state="${state}"${step.id === achievement.id ? ' aria-current="step"' : ""}><button type="button" class="tier-${escapeHtml(step.tier)}" data-open-achievement="${escapeHtml(step.id)}">
+        <span class="achievement-ladder-icon" aria-hidden="true">${achievementTrophyIcon(step.tier, step.icon)}</span>
+        <span class="achievement-ladder-copy"><strong>${escapeHtml(step.name)}</strong><small>${escapeHtml(goal)}</small></span>
+        <span class="achievement-ladder-state">${state === "earned" ? "Conseguido" : state === "next" ? "Siguiente" : "Bloqueado"}</span>
+      </button></li>`;
+    }).join("")}</ol></div>`;
+}
+
 function renderAchievementDetail() {
   if (!activeAchievementId) return;
   const achievement = achievements.find(item => String(item.id) === activeAchievementId);
@@ -1546,10 +1571,11 @@ function renderAchievementDetail() {
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 8V3m0 5h-5M20 8a8 8 0 1 0 0 8"/></svg><span>Repetir animación</span>
       </button>
     </div>
-    <span class="achievement-detail-tier">${escapeHtml(tier.label)} · ${earned ? "Conseguido" : "Logro del club"}</span>
+    <span class="achievement-detail-tier">${escapeHtml(achievement.trackKey ? achievementLadderLabel(achievement) : tier.label)} · ${earned ? "Conseguido" : achievement.trackKey ? "Pendiente" : "Logro del club"}</span>
     <h2 id="achievementDetailTitle">${escapeHtml(achievement.name)}</h2>
     <p id="achievementDetailDescription">${escapeHtml(achievement.description || "Un reconocimiento concedido por la administración del club.")}</p>
     ${renderPersonalAchievementProgress(achievement)}
+    ${renderAchievementLadder(achievement)}
     <div class="achievement-rarity"><strong>${total ? new Intl.NumberFormat("es-ES", {maximumFractionDigits: 1}).format(percent) + "%" : "—"}</strong><span>de los miembros del club</span>
       <progress max="100" value="${percent}" aria-label="Porcentaje de miembros con este logro"></progress>
       <small>${total ? `${owners} de ${total} miembros activos lo han conseguido` : "Aún no hay un censo de miembros disponible"}</small>
@@ -4917,7 +4943,7 @@ function loadAchievements() {
         await dailyParticipation.record();
         if (!isCurrent()) return;
         const [definitionsResult, awardsResult, rulesResult, progressResult, scopesResult] = await Promise.all([
-          db.from("achievements").select("id,name,description,tier,icon,created_by,created_at").is("retired_at", null).order("created_at", {ascending: false}),
+          db.from("achievements").select("id,name,description,tier,icon,created_by,created_at,track_key,track_step").is("retired_at", null).order("created_at", {ascending: false}),
           db.from("achievement_awards").select("id,achievement_id,user_id,awarded_by,awarded_at").order("awarded_at", {ascending: false}),
           db.from("achievement_rules").select("achievement_id,metric,target_count,created_at,collection_key,card_edition,card_kind"),
           db.from("achievement_progress").select("achievement_id,current_value,completed_at").eq("user_id", userId),
@@ -4932,6 +4958,7 @@ function loadAchievements() {
         achievements = (definitionsResult.data || []).map(item => ({
           id:item.id, name:item.name, description:item.description || "", tier:item.tier,
           icon:item.icon || "", createdBy:item.created_by, createdAt:item.created_at,
+          trackKey:item.track_key || null, trackStep:item.track_step || null,
           rule:rulesResult.error ? previousRules.get(String(item.id)) : rules.get(String(item.id)),
         }));
         const visibleAchievementIds = new Set(achievements.map(item=>String(item.id)));
@@ -7698,7 +7725,9 @@ document.addEventListener("click", event => {
   }
   const achievementTarget = event.target.closest("[data-open-achievement]");
   if (achievementTarget) {
-    const returnFocus = achievementTarget.closest("#achievementChallengesDialog") ? achievementChallengesReturnFocus : document.activeElement;
+    // Moving along a ladder inside the detail keeps the original return point.
+    const returnFocus = achievementTarget.closest("#achievementChallengesDialog") ? achievementChallengesReturnFocus
+      : achievementTarget.closest("#achievementDetail") ? achievementReturnFocus : document.activeElement;
     if (achievementTarget.closest("#achievementChallengesDialog")) closeAchievementChallenges(false);
     openAchievementDetail(achievementTarget.dataset.openAchievement, returnFocus);
   }

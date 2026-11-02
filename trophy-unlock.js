@@ -27,6 +27,13 @@
         const achievement = definitions.find(a => String(a.id) === String(award.achievementId));
         if (achievement) pending.push({...achievement, awardId:id});
       }
+      // Climbing several steps of one ladder at once celebrates only the highest.
+      const top = new Map();
+      for (const item of pending) if (item.trackKey && !(top.get(item.trackKey)?.trackStep > item.trackStep)) top.set(item.trackKey, item);
+      pending = pending.filter(item => {
+        if (!item.trackKey || top.get(item.trackKey) === item) return true;
+        seen.add(item.awardId); return false;
+      });
       initialized = true;
       persist();
     }

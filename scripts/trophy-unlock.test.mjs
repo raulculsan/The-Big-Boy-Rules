@@ -22,6 +22,14 @@ test('manual and automatic awards use the same detection; realtime repeats never
   assert.equal(q.size,3);assert.equal(q.take().tier,'silver');assert.equal(q.take().tier,'gold');assert.equal(q.take().tier,'platinum');
   q.observe('me',definitions,[award(4,3),award(3,2),award(2,1)]);assert.equal(q.size,0);
 });
+test('climbing several steps of one ladder at once celebrates only the highest step',()=>{
+  const ladder=['bronze','silver','gold'].map((tier,i)=>({id:10+i,tier,name:`Escalón ${i+1}`,trackKey:'racha',trackStep:i+1}));
+  const s=storage(),q=queue(s);q.observe('me',[...definitions,...ladder],[]);
+  q.observe('me',[...definitions,...ladder],[award(20,10),award(21,11),award(22,12),award(23,0)]);
+  assert.equal(q.size,2);const shown=[q.take(),q.take()].map(a=>a.name).sort();
+  assert.deepEqual(shown,['Escalón 3','Trofeo bronze']);
+  const next=queue(s);next.observe('me',[...definitions,...ladder],[award(20,10),award(21,11),award(22,12),award(23,0)]);assert.equal(next.size,0);
+});
 test('seen IDs persist across launches, with separate histories for each account',()=>{
   const s=storage(),q=queue(s);q.observe('me',definitions,[]);q.observe('me',definitions,[award(1)]);q.take();
   const next=queue(s);next.observe('me',definitions,[award(1),award(2,2)]);assert.equal(next.size,1);next.take();
