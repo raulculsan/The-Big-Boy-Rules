@@ -324,3 +324,32 @@ body.authenticated #sobres .packs-art-button:disabled:not([data-empty]) { opacit
 /* A caret already marks a text field: touch never draws a frame around it. */
 :root[data-input-modality="pointer"] :is(input, textarea, select):focus-visible { outline: none !important; }
 body.authenticated :is(.message-form input, .message-form textarea, .inbox-search input):is(:focus, :focus-visible) { outline: none !important; box-shadow: none !important; border-color: transparent !important; }
+
+/* El Chota shop: the same compact two-column store as the rest of the app. */
+#bannerShopDialog#bannerShopDialog .chota-shop-intro { margin: 0 0 16px; }
+#bannerShopDialog#bannerShopDialog .chota-shop-items { display: block; }
+#bannerShopDialog#bannerShopDialog .chota-shop-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; width: 100%; margin: 0 0 18px; padding: 2px; border-radius: 10px; background: var(--ds-surface); }
+#bannerShopDialog#bannerShopDialog .chota-shop-tabs button { min-width: 0; min-height: 34px; padding: 0 12px; border-radius: 8px; background: transparent; color: var(--ds-text-2); font-size: var(--ds-text-xs); font-weight: 600; }
+#bannerShopDialog#bannerShopDialog .chota-shop-tabs button[aria-selected="true"] { background: var(--ds-raised); color: var(--ds-text); }
+#bannerShopDialog#bannerShopDialog :is(.chota-style-grid, .chota-object-grid) { display: grid; grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); gap: 12px; margin: 0; }
+#bannerShopDialog#bannerShopDialog :is(.chota-style-grid, .chota-object-grid)[hidden] { display: none; }
+#bannerShopDialog#bannerShopDialog .chota-shop-item { display: flex; flex-direction: column; grid-column: auto; min-width: 0; overflow: hidden; border: 0; border-radius: var(--ds-radius-lg); background: var(--ds-surface); box-shadow: none; }
+#bannerShopDialog#bannerShopDialog .chota-shop-item.is-equipped { box-shadow: inset 0 0 0 2px var(--ds-text-2); }
+#bannerShopDialog#bannerShopDialog .chota-shop-object { position: relative; display: grid; place-items: center; width: 100%; height: auto; min-height: 0; aspect-ratio: 1; border-radius: 0; background: var(--ds-raised); }
+#bannerShopDialog#bannerShopDialog .chota-shop-object > img { width: 70%; max-width: 70%; max-height: 70%; filter: drop-shadow(0 10px 8px #0006); }
+#bannerShopDialog#bannerShopDialog .chota-shop-style .chota-style-preview { position: absolute; inset: 0; top: auto; left: auto; width: 100%; height: 100%; aspect-ratio: auto; transform: none; }
+#bannerShopDialog#bannerShopDialog .chota-shop-style .chota-style-preview > img { object-position: center 62%; }
+#bannerShopDialog#bannerShopDialog .chota-shop-copy { display: flex; flex: 1; flex-direction: column; padding: 12px; }
+#bannerShopDialog#bannerShopDialog .chota-shop-kind { margin: 0 0 3px; color: var(--ds-text-3); font-size: 11px; font-weight: 500; }
+#bannerShopDialog#bannerShopDialog .chota-shop-copy h4 { margin: 0 0 4px; color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; letter-spacing: -.01em; line-height: 1.25; }
+#bannerShopDialog#bannerShopDialog .chota-shop-copy p { display: -webkit-box; min-height: 0; margin: 0 0 12px; overflow: hidden; color: var(--ds-text-2); font-size: var(--ds-text-xs); line-height: 1.35; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+#bannerShopDialog#bannerShopDialog .chota-shop-purchase { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: auto; }
+#bannerShopDialog#bannerShopDialog .chota-shop-purchase > span { color: var(--ds-text-2); font-size: var(--ds-text-xs); }
+#bannerShopDialog#bannerShopDialog .chota-shop-purchase strong { margin-right: 3px; color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 700; letter-spacing: 0; }
+#bannerShopDialog#bannerShopDialog .chota-shop-purchase button { width: 100%; min-width: 0; min-height: 36px; padding: 0 12px; border: 0; border-radius: 18px; background: var(--ds-text); color: var(--bb2-canvas); font: 600 var(--ds-text-xs)/1 var(--ds-font); opacity: 1; }
+#bannerShopDialog#bannerShopDialog .chota-shop-purchase button:disabled,
+#bannerShopDialog#bannerShopDialog .chota-shop-item.is-owned .chota-shop-purchase button { background: var(--ds-raised); color: var(--ds-text-2); }
+#bannerShopDialog#bannerShopDialog .chota-shop-item.is-owned .chota-shop-purchase button:not(:disabled) { color: var(--ds-text); }
+#bannerShopDialog#bannerShopDialog .chota-shop-empty { padding: 32px 0; border: 0; color: var(--ds-text-2); }
+#bannerShopDialog#bannerShopDialog .chota-shop-empty button { min-height: 36px; border: 0; border-radius: 18px; background: var(--ds-raised); color: var(--ds-text); }
+#bannerShopDialog#bannerShopDialog .chota-shop-item.is-owned .chota-shop-purchase > span { display: none; }
