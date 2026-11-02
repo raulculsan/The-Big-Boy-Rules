@@ -494,3 +494,61 @@ body:not(.authenticated) :is(.noise, .aurora, .gold-grid, .cursor-glow) { displa
 .bb-login-form.bb-login-form > label.bb-field { display: flex; flex-direction: row; align-items: center; gap: 0; margin: 0; padding: 0; }
 .bb-login-form.bb-login-form > .login-submit { display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; }
 .bb-login-form.bb-login-form > [data-account-recover] { width: auto; min-height: 0; text-align: right; }
+
+/* Collection: a lit stage for the pack with El Chota, then the album and quick tiles. */
+#sobres#sobres .col-layout { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+#sobres#sobres .col-stage { position: relative; isolation: isolate; display: grid; justify-items: center; gap: 0; min-height: 0; padding: 16px 16px 18px; overflow: hidden; border: 0 !important; border-radius: 24px; background: radial-gradient(120% 70% at 50% 38%, hsl(32 70% 30% / .55), transparent 70%), var(--ds-surface) !important; box-shadow: none; }
+.col-stage-glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.col-stage-glow i { position: absolute; left: 50%; top: 40%; width: 280px; height: 280px; border-radius: 50%; translate: -50% -50%; background: radial-gradient(circle, hsl(38 95% 60% / .45), transparent 65%); filter: blur(10px); animation: col-glow 4s ease-in-out infinite alternate; }
+.col-stage-glow i:last-child { width: 420px; height: 160px; top: 82%; background: radial-gradient(ellipse, hsl(20 90% 50% / .25), transparent 70%); animation-delay: -2s; }
+@keyframes col-glow { to { opacity: .55; transform: scale(1.12); } }
+.col-stage-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+.col-edition { color: var(--ds-text-2); font-size: 13px; font-weight: 600; }
+.col-count { display: inline-flex; align-items: baseline; gap: 5px; padding: 6px 12px; border-radius: 16px; background: #ffffff17; }
+#sobres#sobres .col-count .packs-count-badge { position: static; display: inline; width: auto; height: auto; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--ds-text); font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.col-count small { color: var(--ds-text-2); font-size: 12px; font-weight: 600; }
+#sobres#sobres .col-stage .packs-art-button { position: relative; width: min(62%, 250px); margin: 10px auto 0; animation: col-pack-float 3.6s ease-in-out infinite; filter: drop-shadow(0 22px 26px #000b); }
+#sobres#sobres .col-stage .packs-art-button[data-empty] { filter: drop-shadow(0 22px 26px #000b) grayscale(.6) brightness(.7); animation: none; }
+@keyframes col-pack-float { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-8px) rotate(1.5deg); } }
+.col-chota { display: flex; align-items: flex-end; gap: 6px; width: 100%; margin-top: -8px; }
+.col-chota-sprite { flex: none; width: 76px; height: 76px; background: url("icons/mascot/chota-v2/chota-poses.webp") 0% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); }
+.col-chota[data-mood="happy"] .col-chota-sprite { background-position: 60% 66.667%; animation: col-chota-hop 2.4s ease-in-out infinite; transform-origin: 50% 92%; }
+.col-chota[data-mood="calm"] .col-chota-sprite { background-position: 40% 100%; }
+@keyframes col-chota-hop { 0%, 70%, 100% { transform: none; } 80% { transform: translateY(-8px); } 90% { transform: translateY(0) scale(1.04, .96); } }
+.col-chota-bubble { position: relative; flex: 1; margin: 0 0 16px; padding: 10px 13px; border-radius: 16px 16px 16px 5px; background: #ffffff17; color: var(--ds-text); font-size: 14px; line-height: 1.35; }
+.col-stage-actions { display: flex; gap: 10px; width: 100%; }
+.col-open { flex: 1; min-height: 52px; border: 0; border-radius: 16px; background: var(--ds-text); color: var(--bb2-canvas); font: 700 17px/1 var(--ds-font); box-shadow: 0 10px 28px hsl(38 90% 55% / .25); transition: transform .15s var(--ds-press), opacity .15s; }
+.col-open:active { transform: scale(.98); }
+.col-open:disabled { background: #ffffff1a; color: var(--ds-text-3); box-shadow: none; }
+#sobres#sobres .col-stage-actions .packs-info-trigger { position: static; display: grid; place-items: center; flex: none; width: 52px; height: 52px; border: 0; border-radius: 16px; background: #ffffff17; color: var(--ds-text); }
+#sobres#sobres .col-stage .packs-info-panel { position: static; width: 100%; margin-top: 10px; padding: 14px; border: 0; border-radius: 16px; background: #00000059; box-sizing: border-box; }
+#sobres#sobres .col-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#sobres#sobres .col-album { grid-column: 1 / -1; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 46%; align-items: center; gap: 8px; min-height: 0; padding: 18px; overflow: hidden; border: 0 !important; border-radius: 22px; background: linear-gradient(135deg, hsl(150 45% 22% / .55), transparent 70%), var(--ds-surface) !important; text-align: left; }
+.col-album-copy { display: grid; gap: 4px; min-width: 0; }
+.col-tile-label { color: var(--ds-text-2); font-size: 12px; font-weight: 600; }
+.col-album-copy strong { color: var(--ds-text); font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.col-album-copy small { color: var(--ds-text-2); font-size: 13px; font-weight: 600; }
+.col-progress { display: block; height: 6px; margin-top: 8px; overflow: hidden; border-radius: 3px; background: #ffffff1a; }
+.col-progress i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, hsl(150 60% 50%), hsl(170 70% 55%)); transition: width .6s var(--ds-press); }
+#sobres#sobres .col-album .bb2-album-pages { position: relative; height: 120px; margin: 0; }
+#sobres#sobres .col-album .bb2-album-card { width: 58px; }
+.col-tile { display: grid; justify-items: start; gap: 3px; min-height: 120px; padding: 16px; border: 0 !important; border-radius: 20px; background: var(--ds-surface) !important; color: var(--ds-text); font: inherit; text-align: left; box-shadow: none !important; }
+.col-tile:active, #sobres#sobres .col-album:active { transform: scale(.98); }
+.col-tile-icon { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 8px; border-radius: 13px; background: hsl(var(--col-hue) 70% 55% / .16); color: hsl(var(--col-hue) 85% 72%); }
+.col-tile-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.col-tile strong { font-size: var(--ds-text-md); font-weight: 700; }
+.col-tile small { color: var(--ds-text-2); font-size: 12px; line-height: 1.3; }
+.col-tile small [data-duplicates-count] { position: static; display: inline; min-width: 0; padding: 0; border-radius: 0; background: none; color: var(--ds-text); font-weight: 800; }
+@media (min-width: 900px) { #sobres#sobres .col-layout { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; } }
+@media (prefers-reduced-motion: reduce) { .col-stage-glow i, #sobres#sobres .col-stage .packs-art-button, .col-chota .col-chota-sprite { animation: none; } }
+#sobres#sobres .col-layout { grid-template-areas: none; }
+#sobres#sobres .col-layout > * { grid-area: auto; }
+#sobres#sobres .col-stage { display: flex; flex-direction: column; align-items: center; }
+#sobres#sobres .col-stage > * { grid-area: auto; }
+#sobres#sobres .col-count .packs-count-badge::before, #sobres#sobres .col-count .packs-count-badge::after { content: none; }
+#sobres#sobres .col-tiles { grid-template-areas: none; }
+#sobres#sobres .col-tile [data-duplicates-count]::before, #sobres#sobres .col-tile [data-duplicates-count]::after { content: none; }
+#sobres#sobres .col-count .packs-count-badge { min-width: 0; min-height: 0; }
+#sobres#sobres .col-album { height: auto; min-height: 150px; aspect-ratio: auto; }
+#sobres#sobres .col-album .bb2-album-pages { align-self: center; height: 118px; }
+#sobres#sobres .col-album .bb2-album-pages { min-height: 0; height: 128px; }

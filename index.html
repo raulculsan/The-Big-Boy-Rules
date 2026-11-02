@@ -74,7 +74,7 @@
   <link rel="stylesheet" href="app-update.css?v=20261030-app-update-440" />
   <link rel="stylesheet" href="ui-motion.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="design-system.css?v=20261102-theme-509" />
-  <link rel="stylesheet" href="app-theme.css?v=20261102-login-546" />
+  <link rel="stylesheet" href="app-theme.css?v=20261102-collection-548" />
 </head>
 <body>
 
@@ -216,28 +216,28 @@
       <div class="club-day" id="clubDay" hidden></div>
     </section>
 
-    <section class="page-section packs-page" id="sobres" aria-labelledby="packsTitle">
+    <section class="page-section packs-page col-page" id="sobres" aria-labelledby="packsTitle">
       <header class="packs-heading">
         <button class="packs-back" type="button" data-go="inicio" aria-label="Volver a Inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
         <div class="collection-overview-title"><span class="eyebrow">LOS NUESTROS · COLECCIÓN 01</span><h2 id="packsTitle" tabindex="-1">Colección</h2></div>
-        <button type="button" class="collection-catalog-trigger" data-go="catalogo" aria-label="Ver todas las cartas de la colección"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6 9-3 4 13-9 3zM15 5h5v16H10v-2"/><path d="m7 9 5-1M8 12l5-1"/></svg><span class="collection-control-label">Catálogo</span></button>
-        <button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span class="collection-control-label">Repetidas</span><span data-duplicates-count>0</span></button>
       </header>
-      <div class="packs-layout">
-        <div class="packs-display">
-          <div class="bb2-pack-copy"><span class="collection-section-label"><span aria-hidden="true">01</span> Sobres</span><h3>Los nuestros.</h3><span class="packs-display-edition">6 CARTAS POR SOBRE</span><span class="bb2-pack-action">Toca el sobre para abrir</span></div>
+      <div class="packs-layout col-layout">
+        <div class="packs-display col-stage">
+          <div class="col-stage-glow" aria-hidden="true"><i></i><i></i></div>
+          <div class="col-stage-top"><span class="col-edition">Los nuestros · 6 cartas por sobre</span><span class="col-count"><span id="packsCount" class="packs-count-badge" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span><small>sobres</small></span></div>
           <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-los-nuestros-recortado-v2.png" width="1024" height="1536" loading="lazy" decoding="async" alt=""></button>
-          <span id="packsCount" class="packs-count-badge" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span>
-          <button type="button" class="packs-info-trigger" id="packsInfoTrigger" aria-label="Información y saldo de sobres" aria-expanded="false" aria-controls="packsInfoPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button>
+          <div class="col-chota"><span class="col-chota-sprite" aria-hidden="true"></span><p class="col-chota-bubble" data-pack-chota>Contando tus sobres…</p></div>
+          <div class="col-stage-actions"><button type="button" class="col-open" data-pack-open disabled>Abrir sobre</button><button type="button" class="packs-info-trigger" id="packsInfoTrigger" aria-label="Información y saldo de sobres" aria-expanded="false" aria-controls="packsInfoPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button></div>
           <aside class="packs-info-panel" id="packsInfoPanel" hidden tabindex="0" aria-labelledby="packsInfoTitle"><strong id="packsInfoTitle">Información del sobre</strong><p><span>Sobres disponibles</span><b id="packsInfoBalance">—</b></p><p><span>Monedas</span><b id="packsInfoCoins">—</b></p><p class="pack-rarity-odds" id="packRarityOdds">Actualiza para consultar las probabilidades.</p></aside>
           <div id="ownedPackResult" class="owned-pack-result packs-screen-reader" aria-live="polite"></div>
         </div>
-        <div class="packs-information">
-          <button type="button" class="bb2-album-entry" data-card-album aria-label="Abrir mi álbum de cartas">
-            <span class="collection-section-label"><span aria-hidden="true">02</span> Tus cartas</span><strong>Mi álbum</strong>
+        <div class="packs-information col-tiles">
+          <button type="button" class="bb2-album-entry col-album" data-card-album aria-label="Abrir mi álbum de cartas">
+            <span class="col-album-copy"><span class="col-tile-label">Tus cartas</span><strong>Mi álbum</strong><small data-album-progress-label>Tu colección</small><span class="col-progress" aria-hidden="true"><i data-album-progress-bar></i></span></span>
             <span class="bb2-album-pages" aria-hidden="true"><span class="bb2-album-card"></span><span class="bb2-album-card"></span><span class="bb2-album-card"></span><span class="bb2-album-card"></span><span class="bb2-album-card"></span></span>
-            <span class="bb2-album-label">Abrir álbum</span>
           </button>
+          <button type="button" class="col-tile" data-go="catalogo" aria-label="Ver todas las cartas de la colección"><span class="col-tile-icon" style="--col-hue:210" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 6 9-3 4 13-9 3zM15 5h5v16H10v-2"/><path d="m7 9 5-1M8 12l5-1"/></svg></span><strong>Catálogo</strong><small>Todas las cartas</small></button>
+          <button type="button" class="col-tile" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><span class="col-tile-icon" style="--col-hue:330" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg></span><strong>Repetidas</strong><small><span data-duplicates-count>0</span> para cambiar por monedas</small></button>
         </div>
       </div>
 
@@ -948,7 +948,7 @@
   <script defer src="tab-navigation.js?v=20261026-dock-drag-411"></script>
   <script defer src="trophy-motion.js?v=20260904-150"></script>
   <script defer src="trophy-unlock.js?v=20260903-138"></script>
-  <script defer src="daily-packs.js?v=20261030-welcome-packs-441"></script>
+  <script defer src="daily-packs.js?v=20261102-collection-548"></script>
   <script defer src="collection-motion.js?v=20261102-theme-524"></script>
   <script defer src="card-thumbnails.js?v=20261023-jose-vice-city-388"></script>
   <script defer src="card-media.js?v=20261025-audit-404"></script>
@@ -956,11 +956,11 @@
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
   <script defer src="collection-social.js?v=20261022-pwa-shell-376"></script>
-  <script defer src="album.js?v=20261031-album-binder-455"></script>
+  <script defer src="album.js?v=20261102-collection-548"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="shop-catalog-media.js?v=20261030-audit-hardening-443"></script>
   <script defer src="pack-opening.js?v=20261031-pack-tear-452"></script>
-  <script defer src="banner-shop.js?v=20261102-club-day-542"></script>
+  <script defer src="banner-shop.js?v=20261102-collection-548"></script>
   <script defer src="chota-shop.js?v=20261102-room-physics-521"></script>
   <script defer src="coin-missions.js?v=20261101-motion-500"></script>
   <script defer src="club-day.js?v=20261102-club-day-542"></script>

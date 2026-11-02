@@ -64,6 +64,13 @@
       if (node) {node.textContent = count; node.setAttribute('aria-label', label); if (id === 'packsHomeBalance') node.style.fontSize = `${Math.min(9, 30 / Math.max(1, count.length))}px`;}
     }
     document.getElementById('packsTopButton')?.setAttribute('aria-label', `Abrir mis sobres de la colección Los nuestros. ${label}`);
+    // El Chota reads the balance out loud on the collection stage.
+    const chota=document.querySelector('[data-pack-chota]');
+    if(chota){
+      const known=count!=='—';
+      chota.textContent=!known?'Contando tus sobres…':available===0?'Sin sobres por ahora. Mañana te guardo otro.':available===1?'Te queda un sobre. ¿Lo abrimos?':`${count} sobres esperando. ¡Ábrelos ya!`;
+      chota.closest('.col-chota')?.setAttribute('data-mood',!known?'wait':available?'happy':'calm');
+    }
     globalThis.PlanWidget?.updatePacks?.(available);
   }
 

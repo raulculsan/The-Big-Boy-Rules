@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v546";
+const CACHE_NAME = "big-boy-rules-v548";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -15,7 +15,7 @@ const APP_SHELL = [
   "./ui-motion.js?v=20261101-motion-500",
   "./ui-motion.css?v=20261102-theme-510",
   "./design-system.css?v=20261102-theme-510",
-  "./app-theme.css?v=20261102-login-546",
+  "./app-theme.css?v=20261102-collection-548",
   "./",
   "./index.html",
   "./native-auth.js?v=20261030-native-google-442",
@@ -106,7 +106,7 @@ const APP_SHELL = [
   "./app.js?v=20261102-login-546",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
-  "./album.js?v=20261031-album-binder-455",
+  "./album.js?v=20261102-collection-548",
   "./album.css?v=20261102-theme-510",
   "./onboarding.js?v=20261016-improvements-319",
   "./onboarding.css?v=20261030-neutral-interactions-444",
@@ -114,7 +114,7 @@ const APP_SHELL = [
   "./admin-grants.css?v=20261102-theme-532",
   "./shop-catalog-media.js?v=20261030-audit-hardening-443",
   "./pack-opening.js?v=20261031-pack-tear-452",
-  "./banner-shop.js?v=20261102-club-day-542",
+  "./banner-shop.js?v=20261102-collection-548",
   "./banner-shop.css?v=20261102-theme-524",
   "./collection-social.js?v=20261022-pwa-shell-376",
   "./collection-social.css?v=20261030-neutral-interactions-444",
@@ -144,7 +144,7 @@ const APP_SHELL = [
   "./icons/banners/alberto-galicia-member-v1.png",
   "./icons/banners/alberto-galicia-member-bg-v1.webp",
   "./icons/banners/alberto-galicia-member-figures-v1.webp",
-  "./daily-packs.js?v=20261030-welcome-packs-441",
+  "./daily-packs.js?v=20261102-collection-548",
   "./packs.css?v=20261102-theme-510",
   "./card-thumbnails.js?v=20261023-jose-vice-city-388",
   "./card-media.js?v=20261025-audit-404",

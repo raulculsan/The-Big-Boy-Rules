@@ -30,6 +30,9 @@
     const holders = [...document.querySelectorAll('.bb2-album-card')], catalog = (globalThis.CardCollection?.catalog || []).filter(card => card.front);
     if (!holders.length || !catalog.length) return;
     const owned = ownedCards(), rank = card => coverRarity.indexOf(rarityOf(card));
+    const have = catalog.filter(card => owned.get(card.id) > 0).length;
+    document.querySelectorAll('[data-album-progress-label]').forEach(node => {node.textContent = `${have} de ${catalog.length} cartas`;});
+    document.querySelectorAll('[data-album-progress-bar]').forEach(node => {node.style.width = `${catalog.length ? Math.round(have / catalog.length * 100) : 0}%`;});
     const ranked = [...catalog].sort((a,b) => (owned.get(b.id) > 0) - (owned.get(a.id) > 0) || rank(a) - rank(b) || ((b.folder || 'miembros') === 'miembros') - ((a.folder || 'miembros') === 'miembros') || (a.id < b.id ? -1 : 1));
     const seen = new Set(), picks = [];
     for (const card of ranked) if (!seen.has(rarityOf(card)) && picks.length < holders.length) {seen.add(rarityOf(card)); picks.push(card);}
