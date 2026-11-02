@@ -1613,6 +1613,7 @@ function renderProfile(memberId, navigate = true) {
       ${member.nickname ? `<p class="club-profile-nickname">${escapeHtml(member.nickname)}</p>` : ""}
       ${member.bio ? `<p class="club-profile-bio">${escapeHtml(member.bio)}</p>` : ""}
       <div class="profile-tags">${(member.tags || []).map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
+      ${member.hidden ? "" : `<div class="profile-chota" data-mood="${isOwnProfile ? "cheer" : "wave"}"><i class="profile-chota-sprite" aria-hidden="true"></i><p>${isOwnProfile ? "¡Este eres tú! Así te ve todo el club." : `Este es ${escapeHtml(String(member.name).split(" ")[0])}. ¿Le escribes algo?`}</p></div>`}
       <div class="club-profile-bottom">
         <div class="profile-actions">
           ${!isOwnProfile ? `<button class="primary-button" data-private-member="${member.id}" type="button">Enviar mensaje</button>` : ""}
@@ -3001,7 +3002,21 @@ function renderPrivateContacts() {
     </button>`;
   }).join("");
   updateSurfaceMarkup(panel, `${groupContact}${privateContactsMarkup}`);
+  paintInboxChota([...unreadByMember.values()].reduce((sum, count) => sum + count, 0), contacts.filter(({member}) => memberIsOnline(member)).length);
   filterInboxContacts();
+}
+
+// El Chota sums up the inbox: unread first, then who is around.
+function paintInboxChota(unread, online) {
+  const node = document.querySelector(".inbox-chota");
+  if (!node) return;
+  const [mood, line] = unread ? ["cheer", `Tienes ${unread} ${unread === 1 ? "mensaje" : "mensajes"} sin leer. ¡No ${unread === 1 ? "lo dejes" : "los dejes"} en visto!`]
+    : online ? ["wave", `${online} del club ${online === 1 ? "está" : "están"} conectado${online === 1 ? "" : "s"} ahora mismo.`]
+    : ["calm", "Todo leído. Esto está muy tranquilo."];
+  node.hidden = false;
+  node.dataset.mood = mood;
+  const text = node.querySelector("[data-inbox-chota]");
+  if (text.textContent !== line) text.textContent = line;
 }
 
 function formatChatText(text) {

@@ -27,6 +27,9 @@ dialog[data-motion-managed][open] { animation:none !important; }
 dialog[data-motion-closing] { pointer-events:none; }
 dialog[data-motion-managed]::backdrop { animation:ui-backdrop-in var(--motion-feedback) ease-out both; }
 @keyframes ui-backdrop-in { from { background-color:#0000; } }
+/* The backdrop leaves with its dialog: an opaque one left behind flashes black before the page returns. */
+dialog[data-motion-closing]::backdrop { animation:ui-backdrop-out var(--motion-exit) ease-out both; }
+@keyframes ui-backdrop-out { to { opacity:0; } }
 .modal-backdrop { pointer-events:none;transition:opacity var(--motion-feedback) ease-out,visibility 0s linear var(--motion-feedback); }
 .modal-backdrop.open { pointer-events:auto;transition:opacity var(--motion-feedback) ease-out,visibility 0s; }
 .modal-backdrop > :is(.modal,.profile-editor-modal,.achievement-assignment-modal) { transform:translate3d(0,10px,0) scale(.99);transition:transform var(--motion-settle) var(--motion-ease); }

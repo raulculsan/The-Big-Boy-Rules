@@ -13,7 +13,7 @@
   let inventory = null, loading = false, failure = '', page = 0, slots = [], pages = [], refresh, navigate, opener, returnSection = 'sobres', renderedSlots = '';
   const dialog = document.createElement('section');
   dialog.id = 'album'; dialog.className = 'page-section card-album-page'; dialog.hidden = true; dialog.setAttribute('aria-labelledby','cardAlbumTitle');
-  dialog.innerHTML = `<div class="card-album"><header class="card-album-header"><div><span class="eyebrow"><span data-album-collection-name>LOS NUESTROS · COLECCIÓN 01</span></span><div class="card-album-title-row"><h2 id="cardAlbumTitle" tabindex="-1">Mi álbum</h2><p id="cardAlbumSummary" class="card-album-summary"></p></div></div><button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span data-duplicates-count>0</span></button><button type="button" class="packs-back" data-album-close aria-label="Volver de álbum">←</button></header><div id="cardAlbumStatus" role="status" aria-live="polite"><span data-album-status-message></span><button type="button" data-album-retry hidden>Reintentar</button></div><div class="card-album-tools"><label class="album-collection-select"><span>Colección</span><select data-album-collection aria-label="Colección"></select></label><label class="album-card-search"><span aria-hidden="true">⌕</span><input type="search" data-album-search placeholder="Buscar carta" aria-label="Buscar carta por nombre" autocomplete="off"></label><details class="album-filter-panel"><summary>Filtros<span data-album-filter-count></span></summary><div class="album-filter-fields"><label>Rareza<select data-album-filter="rarity"><option value="">Todas</option>${rarities.map(r => `<option value="${r.key}">${r.label}</option>`).join('')}</select></label><label>Tipo<select data-album-filter="kind"><option value="">Todos</option><option value="Miembro">Miembros</option><option value="Personaje">Personajes</option><option value="Ubicación">Ubicaciones</option><option value="Objeto">Objetos</option></select></label><label>Estado<select data-album-filter="ownership"><option value="">Todas las cartas</option><option value="missing">Me faltan</option><option value="owned">Conseguidas</option></select></label><button type="button" data-album-clear>Limpiar filtros</button></div></details></div><nav class="card-album-tabs" aria-label="Rarezas del álbum">${rarities.map(r => `<button type="button" data-album-rarity="${r.key}">${r.label}</button>`).join('')}</nav><div class="card-album-page-viewport"><section id="cardAlbumLeaf" class="card-album-leaf" aria-labelledby="cardAlbumPageTitle"><h3 id="cardAlbumPageTitle"></h3><div id="cardAlbumSlots" class="card-album-slots"></div></section></div><nav class="card-album-page-controls" aria-label="Páginas del álbum"><div class="card-album-compass-heading"><span>PÁGINAS</span><span id="cardAlbumPageCount" class="card-album-page-count" role="status" aria-live="polite"></span></div><div class="card-album-compass"><span class="card-album-compass-needle" aria-hidden="true"></span><div id="cardAlbumPageCompass" class="card-album-compass-track" aria-label="Seleccionar página"></div></div></nav></div>`;
+  dialog.innerHTML = `<div class="card-album"><header class="card-album-header"><div><span class="eyebrow"><span data-album-collection-name>LOS NUESTROS · COLECCIÓN 01</span></span><div class="card-album-title-row"><h2 id="cardAlbumTitle" tabindex="-1">Mi álbum</h2><p id="cardAlbumSummary" class="card-album-summary"></p></div></div><button type="button" class="duplicate-cards-trigger" data-duplicates-open aria-label="Gestionar cartas repetidas" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h13v17H7zM4 7H2v15h13v-2"/></svg><span data-duplicates-count>0</span></button><button type="button" class="packs-back" data-album-close aria-label="Volver de álbum">←</button></header><div class="album-chota" data-mood="wave"><i class="album-chota-sprite" aria-hidden="true"></i><div class="album-chota-copy"><p class="album-chota-line"></p><div class="album-chota-meter"><span data-album-rarity-label></span><span class="album-chota-bar"><i data-album-rarity-bar></i></span></div></div></div><div id="cardAlbumStatus" role="status" aria-live="polite"><span data-album-status-message></span><button type="button" data-album-retry hidden>Reintentar</button></div><div class="card-album-tools"><label class="album-collection-select"><span>Colección</span><select data-album-collection aria-label="Colección"></select></label><label class="album-card-search"><span aria-hidden="true">⌕</span><input type="search" data-album-search placeholder="Buscar carta" aria-label="Buscar carta por nombre" autocomplete="off"></label><details class="album-filter-panel"><summary>Filtros<span data-album-filter-count></span></summary><div class="album-filter-fields"><label>Rareza<select data-album-filter="rarity"><option value="">Todas</option>${rarities.map(r => `<option value="${r.key}">${r.label}</option>`).join('')}</select></label><label>Tipo<select data-album-filter="kind"><option value="">Todos</option><option value="Miembro">Miembros</option><option value="Personaje">Personajes</option><option value="Ubicación">Ubicaciones</option><option value="Objeto">Objetos</option></select></label><label>Estado<select data-album-filter="ownership"><option value="">Todas las cartas</option><option value="missing">Me faltan</option><option value="owned">Conseguidas</option></select></label><button type="button" data-album-clear>Limpiar filtros</button></div></details></div><nav class="card-album-tabs" aria-label="Rarezas del álbum">${rarities.map(r => `<button type="button" data-album-rarity="${r.key}"><i aria-hidden="true"></i>${r.label}<small data-album-rarity-count></small></button>`).join('')}</nav><div class="card-album-page-viewport"><section id="cardAlbumLeaf" class="card-album-leaf" aria-labelledby="cardAlbumPageTitle"><h3 id="cardAlbumPageTitle"></h3><div id="cardAlbumSlots" class="card-album-slots"></div></section></div><nav class="card-album-page-controls" aria-label="Páginas del álbum"><div class="card-album-compass-heading"><span>PÁGINAS</span><span id="cardAlbumPageCount" class="card-album-page-count" role="status" aria-live="polite"></span></div><div class="card-album-compass"><span class="card-album-compass-needle" aria-hidden="true"></span><div id="cardAlbumPageCompass" class="card-album-compass-track" aria-label="Seleccionar página"></div></div></nav></div>`;
   const main = document.querySelector('main.app') || document.body.appendChild(Object.assign(document.createElement('main'),{className:'app'}));
   main.append(dialog);
   const isOpen = () => dialog.classList.contains('active') && !dialog.hidden;
@@ -159,6 +159,13 @@
     dialog.setAttribute('aria-busy',String(loading));
     document.getElementById('cardAlbumPageTitle').textContent = visible.length ? `${rarity?.label || ''} · ${[...new Set(visible.map(slot => slot.kind.label))].join(' / ')}` : 'No hay cartas con estos filtros';
     document.getElementById('cardAlbumLeaf').dataset.rarity = rarity?.key;
+    if (rarity && dialog.dataset.rarity !== rarity.key) {
+      dialog.dataset.rarity = rarity.key;
+      // Keep the selected rarity in view when the page turns into another one.
+      const tabs = dialog.querySelector('.card-album-tabs'), tab = tabs.querySelector(`[data-album-rarity="${rarity.key}"]`);
+      if (tab && tabs.scrollWidth > tabs.clientWidth) tabs.scrollTo({left:tab.offsetLeft - (tabs.clientWidth - tab.offsetWidth) / 2,behavior:reducedMotion() ? 'instant' : 'smooth'});
+    }
+    paintAlbumChota(rarity,owned);
     const markup = pageMarkup(page,owned,offline);
     // Keep decoded image elements across loading/balance updates and reopening.
     if (markup !== renderedSlots) {document.getElementById('cardAlbumSlots').replaceChildren(pageNode(markup)); renderedSlots = markup;}
@@ -167,6 +174,31 @@
     renderCompass(totalPages);
     const available = new Set(slots.map(slot => slot.rarity.key));
     dialog.querySelectorAll('[data-album-rarity]').forEach(button => {button.setAttribute('aria-pressed',String(button.dataset.albumRarity === rarity?.key)); button.disabled = !available.has(button.dataset.albumRarity);});
+  }
+  // El Chota comments on the rarity on screen; the tabs show how far each one goes.
+  const rarityPlural = {common:'comunes',retro:'retro',special:'especiales',epic:'épicas',legendary:'legendarias',full_art:'Full Art',vice_city:'Vice City',halloween:'de Halloween'};
+  function paintAlbumChota(rarity, owned) {
+    const tally = new Map(rarities.map(r => [r.key,{have:0,total:0}]));
+    for (const slot of allSlots) if (slot.design) {const row = tally.get(slot.rarity.key); row.total++; if (owned.get(slot.design.id) > 0) row.have++;}
+    dialog.querySelectorAll('[data-album-rarity]').forEach(button => {
+      const row = tally.get(button.dataset.albumRarity), count = button.querySelector('[data-album-rarity-count]');
+      const text = inventory && row?.total ? `${row.have}/${row.total}` : '';
+      if (count.textContent !== text) count.textContent = text;
+      button.toggleAttribute('data-complete',!!inventory && !!row?.total && row.have === row.total);
+    });
+    const node = dialog.querySelector('.album-chota'), row = rarity && tally.get(rarity.key);
+    node.hidden = !inventory || !row?.total;
+    if (node.hidden) return;
+    const {have,total} = row, left = total - have, plural = rarityPlural[rarity.key] || rarity.label;
+    const [mood,line] = have === total ? ['cheer',`¡Tienes todas las ${plural}! Qué máquina.`]
+      : !have ? ['calm',`Aún no tienes ninguna ${rarity.label.toLowerCase()}. Ya caerá.`]
+      : left <= 2 ? ['cheer',`¡Solo te ${left === 1 ? 'falta 1' : `faltan ${left}`}! Ya casi las tienes todas.`]
+      : ['wave',`Te faltan ${left} ${plural}. ¡A por ellas!`];
+    node.dataset.mood = mood;
+    const text = node.querySelector('.album-chota-line');
+    if (text.textContent !== line) text.textContent = line;
+    node.querySelector('[data-album-rarity-label]').textContent = `${rarity.label} · ${have} de ${total}`;
+    node.querySelector('[data-album-rarity-bar]').style.width = `${Math.round(have / total * 100)}%`;
   }
   const compass = document.getElementById('cardAlbumPageCompass');
   let compassTimer = 0, compassDragging = false, compassQueued = null, compassMouse = null, compassSuppressClick = 0;

@@ -175,7 +175,7 @@
       detachRevealVfx?.();detachRevealVfx=null;
       detachRevealFoil?.();detachRevealFoil=null;
       revealDialog.dataset.cardIndex = String(reveal.index);
-      revealDialog.innerHTML = `<header class="pack-reveal-header"><span>Carta ${reveal.index + 1} de ${reveal.cards.length}</span><button type="button" class="pack-reveal-skip" data-reveal-skip>Ver todas</button><button type="button" data-reveal-close aria-label="Cerrar: todas las cartas ya están guardadas">✕</button></header><div class="pack-reveal-center"><div class="pack-reveal-stage"><button type="button" class="pack-reveal-card" data-reveal-flip aria-label="Girar carta" aria-pressed="false"><span class="pack-reveal-face pack-reveal-back"><img src="${escape(design?.back || 'icons/cards/reverso-comun-unificado-v1.jpg')}" width="948" height="1660" decoding="async" alt="Reverso de carta" draggable="false"></span><span class="pack-reveal-face pack-reveal-front" aria-hidden="true">${design ? `<img src="${escape(design.front)}" width="${escape(design.width || 948)}" height="${escape(design.height || 1660)}" decoding="async" alt="${escape(design.name)}" draggable="false">` : '<span>Carta guardada</span>'}</span></button></div></div><div class="pack-reveal-footer"><div class="pack-reveal-info" aria-live="polite"></div><div class="pack-reveal-actions"></div><p class="pack-reveal-status" role="status"></p></div>`;
+      revealDialog.innerHTML = `<header class="pack-reveal-header"><span class="pack-reveal-count">Carta ${reveal.index + 1} de ${reveal.cards.length}</span><span class="pack-reveal-steps" aria-hidden="true">${reveal.cards.map((_,step) => `<i${step < reveal.index ? ' data-done' : step === reveal.index ? ' data-current' : ''}></i>`).join('')}</span><button type="button" class="pack-reveal-skip" data-reveal-skip>Ver todas</button><button type="button" data-reveal-close aria-label="Cerrar: todas las cartas ya están guardadas">✕</button></header><div class="pack-reveal-center"><div class="pack-reveal-stage"><button type="button" class="pack-reveal-card" data-reveal-flip aria-label="Girar carta" aria-pressed="false"><span class="pack-reveal-face pack-reveal-back"><img src="${escape(design?.back || 'icons/cards/reverso-comun-unificado-v1.jpg')}" width="948" height="1660" decoding="async" alt="Reverso de carta" draggable="false"></span><span class="pack-reveal-face pack-reveal-front" aria-hidden="true">${design ? `<img src="${escape(design.front)}" width="${escape(design.width || 948)}" height="${escape(design.height || 1660)}" decoding="async" alt="${escape(design.name)}" draggable="false">` : '<span>Carta guardada</span>'}</span></button></div></div><div class="pack-reveal-footer"><div class="pack-reveal-info" aria-live="polite"></div>${chotaMarkup}<div class="pack-reveal-actions"></div><p class="pack-reveal-status" role="status"></p></div>`;
       if(design?.edition==='Full Art'||design?.edition==='Vice City'){
         const foil=document.createElement('span');foil.setAttribute('aria-hidden','true');
         revealDialog.querySelector('.pack-reveal-front').append(foil);
@@ -196,8 +196,32 @@
       turn.classList.add('is-flipped'); turn.setAttribute('aria-pressed','true'); turn.setAttribute('aria-label',`${design?.name || item.card_id}. Pulsa para ${reveal.index + 1 < reveal.cards.length ? 'ver la siguiente carta' : 'terminar el sobre'}${canDiscardReveal(reveal.index) ? '. Flecha arriba para descartarla' : ''}`);
     }
     const displayKind = item.kind === 'member' ? (characterCardIds.has(item.card_id) ? 'Personaje' : 'Miembro') : item.kind === 'object' ? 'Objeto' : item.kind === 'location' ? 'Ubicación' : '';
-    revealDialog.querySelector('.pack-reveal-info').innerHTML = reveal.flipped ? `<h3>${escape(design?.name || item.card_id)}</h3><p>${escape(displayKind)} · ${escape(rarityNames[item.edition] || item.edition)} · ${reveal.discarded.has(reveal.index) ? 'Repetida descartada' : Number(item.quantity) > 1 ? 'Repetida' : 'Nueva'}</p>` : '';
+    const status = reveal.discarded.has(reveal.index) ? 'Repetida descartada' : Number(item.quantity) > 1 ? 'Repetida' : 'Nueva';
+    revealDialog.querySelector('.pack-reveal-info').innerHTML = reveal.flipped ? `<span class="pack-reveal-rarity" data-rarity="${escape(item.edition)}">${escape(rarityNames[item.edition] || item.edition)}</span><h3>${escape(design?.name || item.card_id)}</h3><p>${escape([displayKind, status].filter(Boolean).join(' · '))}</p>` : '';
+    if (reveal.flipped) revealDialog.dataset.rarity = item.edition; else delete revealDialog.dataset.rarity;
+    paintRevealChota();
     revealDialog.querySelector('.pack-reveal-status').textContent = failure || notice;
+  }
+  // El Chota watches the draw from the corner and reacts to each card.
+  const chotaMarkup = '<div class="pack-chota" data-mood="wave"><i class="pack-chota-sprite" aria-hidden="true"></i><p class="pack-chota-line"></p></div>';
+  const chotaCheers = {common:'Una más pa\'l álbum.',retro:'Esto huele a clásico.',special:'Ojo, que es especial.',epic:'¡Épica! Esto ya es otra cosa.',legendary:'¿¡Legendaria!? Enmárcala.',full_art:'Full Art… qué barbaridad.',halloween:'Uuuh, de Halloween.',vice_city:'Vice City. Pura noche.'};
+  const chotaBig = new Set(['special','epic','legendary','full_art','halloween','vice_city']);
+  function chotaSays() {
+    if (reveal.phase === 'opening') return ['wave','¡Rájalo! Desliza por arriba del sobre.'];
+    const item = reveal.cards[reveal.index];
+    if (!reveal.flipped) return ['wait',reveal.index + 1 === reveal.cards.length ? 'La última… que sea buena.' : 'Venga, dale la vuelta.'];
+    if (reveal.discarded.has(reveal.index)) return ['calm','Hecho, monedas al bolsillo.'];
+    if (Number(item.quantity) > 1) return chotaBig.has(item.edition) ? ['cheer',`Repetida, pero ${(rarityNames[item.edition] || '').toLowerCase()}.`]
+      : ['calm',canDiscardReveal(reveal.index) ? 'Repetida. Desliza arriba y te la cambio por monedas.' : 'Repetida, pero bueno.'];
+    return [chotaBig.has(item.edition) ? 'cheer' : 'wave',chotaCheers[item.edition] || chotaCheers.common];
+  }
+  function paintRevealChota() {
+    const node = revealDialog.querySelector('.pack-chota');
+    if (!node || !reveal) return;
+    const [mood,line] = chotaSays();
+    node.dataset.mood = mood;
+    const text = node.querySelector('.pack-chota-line');
+    if (text.textContent !== line) text.textContent = line;
   }
   function canDiscardReveal(index) {
     const item = reveal?.cards[index];
@@ -237,7 +261,10 @@
     revealDialog.classList.add('is-pack-summary');
     if (!revealDialog.querySelector('.pack-summary-grid')) {
       reveal.order = summaryOrder(reveal.cards);
-      revealDialog.innerHTML = `<header class="pack-summary-header"><div><h2>Tu sobre</h2><p class="pack-summary-tally"></p></div><button type="button" class="pack-summary-close" data-reveal-close aria-label="Cerrar: tus cartas están guardadas">${closeGlyph}</button></header><div class="pack-summary-content"><div class="pack-summary-grid${reveal.cards.length === 6 ? ' is-featured' : ''}" role="group" aria-label="Cartas del sobre"></div></div><footer class="pack-summary-footer"><div class="pack-summary-actions"><p class="pack-summary-balance"></p><button type="button" class="packs-buy" data-reveal-save>Guardar todo</button></div><p class="pack-reveal-status" role="status" aria-live="polite"></p></footer><section class="pack-viewer" role="group" aria-label="Carta en grande" hidden><header class="pack-viewer-header"><span class="pack-viewer-count"></span><button type="button" class="pack-summary-close" data-viewer-close aria-label="Volver al sobre">${closeGlyph}</button></header><div class="pack-viewer-stage"><i class="pack-viewer-aura"></i><div class="collection-card-perspective pack-viewer-perspective"><div class="collection-card-tilt pack-viewer-tilt" tabindex="0" role="group" aria-label="Carta interactiva. Flechas para cambiar de carta"><div class="collection-card-stage"><img class="collection-card-face pack-viewer-image" width="948" height="1660" decoding="async" alt="" draggable="false"></div><div class="collection-card-foil" aria-hidden="true"></div></div></div></div><div class="pack-viewer-info" aria-live="polite"><h3></h3><p></p></div><button type="button" class="pack-viewer-discard" data-viewer-discard hidden></button><div class="pack-viewer-rail" role="group" aria-label="Cambiar de carta"></div></section>`;
+      const best = reveal.cards[reveal.order[0]].edition;
+      revealDialog.dataset.rarity = best;
+      revealDialog.dataset.mood = chotaBig.has(best) ? 'cheer' : 'wave';
+      revealDialog.innerHTML = `<header class="pack-summary-header"><div class="pack-summary-title"><i class="pack-chota-sprite" aria-hidden="true"></i><div><h2>Tu sobre</h2><p class="pack-summary-tally"></p></div></div><button type="button" class="pack-summary-close" data-reveal-close aria-label="Cerrar: tus cartas están guardadas">${closeGlyph}</button></header><div class="pack-summary-content"><div class="pack-summary-grid${reveal.cards.length === 6 ? ' is-featured' : ''}" role="group" aria-label="Cartas del sobre"></div></div><footer class="pack-summary-footer"><div class="pack-summary-actions"><p class="pack-summary-balance"></p><button type="button" class="packs-buy" data-reveal-save>Guardar todo</button></div><p class="pack-reveal-status" role="status" aria-live="polite"></p></footer><section class="pack-viewer" role="group" aria-label="Carta en grande" hidden><header class="pack-viewer-header"><span class="pack-viewer-count"></span><button type="button" class="pack-summary-close" data-viewer-close aria-label="Volver al sobre">${closeGlyph}</button></header><div class="pack-viewer-stage"><i class="pack-viewer-aura"></i><div class="collection-card-perspective pack-viewer-perspective"><div class="collection-card-tilt pack-viewer-tilt" tabindex="0" role="group" aria-label="Carta interactiva. Flechas para cambiar de carta"><div class="collection-card-stage"><img class="collection-card-face pack-viewer-image" width="948" height="1660" decoding="async" alt="" draggable="false"></div><div class="collection-card-foil" aria-hidden="true"></div></div></div></div><div class="pack-viewer-info" aria-live="polite"><h3></h3><p></p></div><button type="button" class="pack-viewer-discard" data-viewer-discard hidden></button><div class="pack-viewer-rail" role="group" aria-label="Cambiar de carta"></div></section>`;
       revealDialog.querySelector('.pack-summary-grid').innerHTML = reveal.order.map(index => {
         const item = reveal.cards[index];
         return `<div class="pack-summary-item" data-rarity="${escape(item.edition)}"><i class="pack-summary-aura"></i><button type="button" class="pack-summary-card" data-summary-card="${index}"><img src="${escape(summaryArt(item))}" width="948" height="1660" alt="" draggable="false" decoding="sync"><i class="pack-summary-sheen"></i></button><span class="pack-summary-label"></span></div>`;
@@ -468,6 +495,7 @@
     current.phase = 'idle';
     revealDialog.classList.remove('is-opening-pack');
     revealDialog.querySelector('.pack-reveal-center')?.classList.remove('is-arriving');
+    paintRevealChota();
   }
   function flipReveal() {
     if (!reveal || reveal.flipped || reveal.phase !== 'idle') return;
@@ -483,7 +511,7 @@
     if (!cards.length) return;
     reveal = {cards,index:0,flipped:false,discarded:new Set(),uncertain:new Set(),pending:new Set(),queue:[],earned:0,phase:'idle'};
     revealDialog.classList.remove('is-pack-summary');
-    delete revealDialog.dataset.cardIndex;
+    delete revealDialog.dataset.cardIndex; delete revealDialog.dataset.rarity; delete revealDialog.dataset.mood;
     if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(revealDialog);else revealDialog.showModal(); renderReveal();
     if (!revealReduced()) {
       // The draw is already saved: the tear is presentation and can be skipped at any point.
@@ -494,6 +522,7 @@
         back:escape(card(cards[0].card_id)?.back || 'icons/cards/reverso-comun-unificado-v1.jpg'),count:cards.length,
         edition:globalThis.PackOpening.bestEdition(cards),onDone:() => {revealOpening = null; finishRevealMotion(current);}});
       if (!revealOpening) finishRevealMotion(current);
+      paintRevealChota();
     }
   }
   revealDialog.addEventListener('click', event => {
@@ -1030,7 +1059,7 @@
     }
     const markup = state ? (rows.length ? rows.map(item => {
       const design = card(item.id);
-      return `<article class="dup-card" data-owned-card="${escape(item.id)}"><button type="button" class="dup-pick" data-dup-toggle="${escape(item.id)}">${design ? `<img data-card-original="${escape(design.front)}" src="${escape(globalThis.CardCollection.thumbnail(design))}" alt="" loading="lazy" decoding="async">` : ''}<span class="dup-count">×${item.extra}</span><span class="dup-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span></button><h4>${escape(design?.name || item.id)}</h4><p>${item.reward} ${item.reward === 1 ? 'moneda' : 'monedas'}</p>${item.extra > 1 ? `<div class="dup-stepper" hidden><button type="button" data-dup-step="-1" data-dup-card="${escape(item.id)}" aria-label="Una copia menos">−</button><output></output><button type="button" data-dup-step="1" data-dup-card="${escape(item.id)}" aria-label="Una copia más">+</button></div>` : ''}</article>`;
+      return `<article class="dup-card" data-owned-card="${escape(item.id)}" data-rarity="${escape(item.edition)}"><button type="button" class="dup-pick" data-dup-toggle="${escape(item.id)}">${design ? `<img data-card-original="${escape(design.front)}" src="${escape(globalThis.CardCollection.thumbnail(design))}" alt="" loading="lazy" decoding="async">` : ''}<span class="dup-count">×${item.extra}</span><span class="dup-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span></button><h4>${escape(design?.name || item.id)}</h4><p>${item.reward} ${item.reward === 1 ? 'moneda' : 'monedas'}</p>${item.extra > 1 ? `<div class="dup-stepper" hidden><button type="button" data-dup-step="-1" data-dup-card="${escape(item.id)}" aria-label="Una copia menos">−</button><output></output><button type="button" data-dup-step="1" data-dup-card="${escape(item.id)}" aria-label="Una copia más">+</button></div>` : ''}</article>`;
     }).join('') : '<p>No tienes cartas repetidas.</p>') : '<p>Tu inventario se mostrará al sincronizar la colección.</p>';
     // Loading and busy state only change controls, keeping decoded card images
     // and focus intact while an unchanged inventory is refreshed.
@@ -1039,6 +1068,14 @@
       inventory.dataset.signature = markup;
     }
     paintDiscardPicks();
+    // El Chota prices the pile before anything is chosen.
+    const chota = el('duplicatesChota');
+    if (chota) {
+      const copies = rows.reduce((sum, item) => sum + item.extra, 0), coins = rows.reduce((sum, item) => sum + item.extra * item.reward, 0);
+      chota.hidden = !state;
+      chota.dataset.mood = copies ? 'wave' : 'calm';
+      chota.querySelector('p').textContent = copies ? `Tienes ${copies} ${copies === 1 ? 'repetida' : 'repetidas'}. Si me ${copies === 1 ? 'la das' : 'las das'}, te saco ${coins} ${coins === 1 ? 'moneda' : 'monedas'}.` : 'Ni una repetida. Así me gusta.';
+    }
   }
   // Selection repaints in place, so decoded card images are never rebuilt.
   function paintDiscardPicks() {
@@ -1059,7 +1096,7 @@
     rows.forEach(item => editions.set(item.edition, [...(editions.get(item.edition) || []), item]));
     const chips = el('duplicatesEditions');
     if (chips) {
-      const markup = editions.size > 1 ? [...editions].map(([edition, items]) => `<button type="button" data-dup-edition="${escape(edition)}">${escape(card(items[0].id)?.edition || edition)}</button>`).join('') : '';
+      const markup = editions.size > 1 ? [...editions].map(([edition, items]) => `<button type="button" data-dup-edition="${escape(edition)}" data-rarity="${escape(edition)}"><i aria-hidden="true"></i>${escape(card(items[0].id)?.edition || edition)}</button>`).join('') : '';
       if (chips.dataset.signature !== markup) { chips.innerHTML = markup; chips.dataset.signature = markup; }
       chips.querySelectorAll('[data-dup-edition]').forEach(button => {
         button.disabled = blocked;

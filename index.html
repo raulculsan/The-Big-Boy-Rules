@@ -72,9 +72,9 @@
   <link rel="stylesheet" href="chota-games.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="club-experiences.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="app-update.css?v=20261030-app-update-440" />
-  <link rel="stylesheet" href="ui-motion.css?v=20261102-theme-510" />
+  <link rel="stylesheet" href="ui-motion.css?v=20261102-pack-stage-549" />
   <link rel="stylesheet" href="design-system.css?v=20261102-theme-509" />
-  <link rel="stylesheet" href="app-theme.css?v=20261102-collection-548" />
+  <link rel="stylesheet" href="app-theme.css?v=20261102-pack-stage-549" />
 </head>
 <body>
 
@@ -248,7 +248,8 @@
         <button class="packs-back" type="button" data-go="sobres" aria-label="Volver a sobres"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
         <div><span class="eyebrow">COLECCIÓN 01 · LOS NUESTROS</span><h2 id="collectionCatalogTitle" tabindex="-1">Cartas de la colección</h2></div>
       </header>
-      <p class="collection-catalog-note">Todas las cartas de Los nuestros, ordenadas por rareza y media.</p>
+      <div class="catalog-chota"><i class="catalog-chota-sprite" aria-hidden="true"></i><p data-catalog-chota>Todas las cartas de Los nuestros, ordenadas por rareza y media.</p></div>
+      <nav class="catalog-jumps" id="catalogJumps" aria-label="Ir a una rareza"></nav>
       <div class="collection-card-grid" id="collectionCardGrid"></div>
     </section>
 
@@ -257,6 +258,7 @@
         <aside class="panel chat-inbox">
           <div class="inbox-tools">
             <header class="bb2-inbox-heading"><span class="eyebrow">EL CLUB</span><h2>Chats</h2></header>
+            <div class="inbox-chota" data-mood="wave" hidden><i class="inbox-chota-sprite" aria-hidden="true"></i><p data-inbox-chota></p></div>
             <label class="inbox-search" for="inboxSearchInput">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
               <input id="inboxSearchInput" name="inboxSearchInput" type="search" placeholder="Buscar conversación…" aria-label="Buscar conversación o miembro" autocomplete="off">
@@ -906,6 +908,7 @@
 
   <dialog id="duplicatesDialog" class="banner-shop-dialog" aria-labelledby="duplicatesTitle">
     <header class="banner-shop-heading duplicates-heading"><div><span class="duplicates-kicker">LOS NUESTROS · COLECCIÓN</span><h2 id="duplicatesTitle" tabindex="-1">Cartas repetidas</h2></div><button type="button" data-duplicates-close aria-label="Cerrar repetidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+    <div class="dup-chota" id="duplicatesChota" data-mood="wave" hidden><i class="dup-chota-sprite" aria-hidden="true"></i><p></p></div>
     <div class="duplicates-toolbar"><p id="duplicatesStatus" role="status"></p><button type="button" class="packs-sync" id="discardAllDuplicates">Elegir todas</button></div>
     <div class="dup-editions" id="duplicatesEditions"></div>
     <div id="ownedCardInventory" class="owned-card-inventory"></div>
@@ -952,15 +955,15 @@
   <script defer src="collection-motion.js?v=20261102-theme-524"></script>
   <script defer src="card-thumbnails.js?v=20261023-jose-vice-city-388"></script>
   <script defer src="card-media.js?v=20261025-audit-404"></script>
-  <script defer src="card-collection.js?v=20261025-fluid-motion-407"></script>
+  <script defer src="card-collection.js?v=20261102-pack-stage-549"></script>
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261021-halloween-365"></script>
   <script defer src="collection-social.js?v=20261022-pwa-shell-376"></script>
-  <script defer src="album.js?v=20261102-collection-548"></script>
+  <script defer src="album.js?v=20261102-pack-stage-549"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="shop-catalog-media.js?v=20261030-audit-hardening-443"></script>
   <script defer src="pack-opening.js?v=20261031-pack-tear-452"></script>
-  <script defer src="banner-shop.js?v=20261102-collection-548"></script>
+  <script defer src="banner-shop.js?v=20261102-pack-stage-549"></script>
   <script defer src="chota-shop.js?v=20261102-room-physics-521"></script>
   <script defer src="coin-missions.js?v=20261101-motion-500"></script>
   <script defer src="club-day.js?v=20261102-club-day-542"></script>
@@ -982,7 +985,7 @@
   <script defer src="account-security.js?v=20261102-login-546"></script>
   <script defer src="account-requests.js?v=20261102-login-546"></script>
   <script defer src="chota-outdoor.js?v=20261030-outdoor-events-448"></script>
-  <script defer src="app.js?v=20261102-login-546"></script>
+  <script defer src="app.js?v=20261102-pack-stage-549"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;

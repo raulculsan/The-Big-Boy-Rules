@@ -683,13 +683,40 @@
   // Thumbnail lookup falls back safely for a not-yet-generated future design.
   const thumbnail = card => card?.thumbnail || globalThis.CardThumbnails?.[globalThis.CardMedia?.canonical(card?.front) || card?.front] || card?.front || '';
   let catalogRendered = false;
+  const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const rarityKeys = {'Común':'common','Retro':'retro','Especial':'special','Épica':'epic','Legendaria':'legendary','Full Art':'full_art','Vice City':'vice_city','Halloween':'halloween'};
+  const rarityTones = {common:'#a39d92',retro:'#d0804f',special:'#34c0d9',epic:'#bf5af2',legendary:'#ffae2a',full_art:'#64d2ff',vice_city:'#ff3b9a',halloween:'#ff6a1f'};
+  document.addEventListener('click', event => {
+    const jump = event.target.closest('[data-catalog-jump]');
+    if (!jump) return;
+    const target = document.getElementById(`catalogo-${jump.dataset.catalogJump}`);
+    target?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block:'start'});
+  });
   function renderCatalog() {
   if (catalogRendered) return;
   catalogRendered = true;
-  const fragment = document.createDocumentFragment();
-  for (const card of catalogOrder()) {
+  const fragment = document.createDocumentFragment(), ordered = catalogOrder();
+  const counts = new Map();
+  for (const card of ordered) counts.set(card.edition, (counts.get(card.edition) || 0) + 1);
+  // Each rarity opens with its own heading; the chips at the top jump to it.
+  const jumps = document.getElementById('catalogJumps');
+  if (jumps) jumps.innerHTML = [...counts].map(([edition, count]) => `<button type="button" data-catalog-jump="${rarityKeys[edition] || 'common'}" style="--rarity:${rarityTones[rarityKeys[edition]] || rarityTones.common}"><i aria-hidden="true"></i>${safe(edition)}<small>${count}</small></button>`).join('');
+  const line = document.querySelector('[data-catalog-chota]');
+  if (line) line.textContent = `Aquí están las ${ordered.length} cartas de Los nuestros. Toca una y te la enseño por las dos caras.`;
+  let section = '';
+  for (const card of ordered) {
+    const key = rarityKeys[card.edition] || 'common';
+    if (card.edition !== section) {
+      section = card.edition;
+      const heading = document.createElement('h3');
+      heading.className = 'catalog-rarity'; heading.id = `catalogo-${key}`;
+      heading.style.setProperty('--rarity', rarityTones[key] || rarityTones.common);
+      heading.innerHTML = `<i aria-hidden="true"></i>${safe(card.edition)}<small>${counts.get(card.edition)} ${counts.get(card.edition) === 1 ? 'carta' : 'cartas'}</small>`;
+      fragment.append(heading);
+    }
     const button = document.createElement('button');
     button.type = 'button'; button.className = 'collection-card-tile';
+    button.style.setProperty('--rarity', rarityTones[key] || rarityTones.common);
     button.setAttribute('aria-label', `Ver carta de ${accessibleDescription(card)}`);
     button.setAttribute('aria-haspopup', 'dialog');
     const img = document.createElement('img');
