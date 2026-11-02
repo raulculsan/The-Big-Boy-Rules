@@ -1753,7 +1753,7 @@ function renderMessages() {
         </div>`}
         ${renderChatQuote("group", message)}
         ${message.text ? `<p>${formatChatText(message.text)}</p>` : ""}${attachment}
-        <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>
+        <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>${message.editedAt ? '<span class="message-edited">editado</span>' : ""}
         </div>
         ${globalThis.ChatCustom?.chips("group", message.id) || ""}
       </div>
@@ -2676,7 +2676,7 @@ function renderMessageAttachment(message) {
     return `<span class="retired-content">Adjunto no disponible</span>`;
   }
   if (message.attachmentType === "text/news-link") {
-    return `<a class="message-news-link" href="${escapeHtml(attachmentUrl)}" target="_blank" rel="noopener noreferrer"><span>NOTICIA</span><strong>${escapeHtml(message.attachmentName || "Abrir noticia")}</strong><small>Leer en la fuente →</small></a>`;
+    return `<a class="message-news-link" href="${escapeHtml(attachmentUrl)}" target="_blank" rel="noopener noreferrer"><span>NOTICIA</span><strong>${escapeHtml(message.attachmentName || "Abrir noticia")}</strong><small>Leer en ${escapeHtml(new URL(attachmentUrl).hostname.replace(/^www\./, ""))} →</small></a>`;
   }
   const sharedMedia = getSharedMediaReference(message);
   if (sharedMedia) return `<span class="retired-content">Contenido compartido ya no disponible</span>`;
@@ -3099,7 +3099,7 @@ function renderPrivateConversation() {
         ${renderChatQuote("private", message)}
         ${message.body ? `<p>${formatChatText(message.body)}</p>` : ""}
         ${message.attachmentUrl ? renderMessageAttachment(message) : ""}
-        <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>
+        <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>${message.editedAt ? '<span class="message-edited">editado</span>' : ""}
         </div>
         ${globalThis.ChatCustom?.chips("private", message.id) || ""}
       </div>
@@ -5544,7 +5544,7 @@ async function loadMessages() {
   globalThis.ClubFeedback?.set(anchor, "loading", messages.length ? "Actualizando mensajes…" : "Cargando mensajes…");
   try {
     const {data, error} = await db.from("messages")
-      .select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at")
+      .select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at,edited_at")
       .order("created_at").limit(200);
     if (owner !== currentAuthUser?.id) return;
     if (error) throw error;
@@ -5595,7 +5595,7 @@ function mapMessage(item) {
     replyToId: item.reply_to_id,
     attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
-    createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp
+    createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp, editedAt: item.edited_at || null
   };
 }
 
@@ -6022,7 +6022,7 @@ function mapPrivateMessage(item) {
     replyToId: item.reply_to_id,
     body: item.body, attachmentRef: item.attachment_url, attachmentUrl: item.attachment_url, attachmentName: item.attachment_name,
     attachmentType: item.attachment_type, attachmentSize: item.attachment_size,
-    createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp
+    createdAt: item.created_at, createdTimestamp: chatDate(item.created_at).timestamp, editedAt: item.edited_at || null
   };
 }
 
@@ -6623,7 +6623,7 @@ async function sendMessage(text, file = null, attempt = {}) {
     user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: channelId, body: text, reply_to_id: attempt.replyToId || null,
     attachment_url: attachmentUrl, attachment_name: file?.name || null,
     attachment_type: file?.type || null, attachment_size: file?.size || null
-  }).select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
+  }).select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at,edited_at").single();
   if (error) throw error;
   dispatchPush("group_message", data.id);
   globalThis.DailyPacks?.activityCompleted?.('message');
@@ -6750,7 +6750,7 @@ async function sendPrivateMessage(text, file = null, attempt = {}) {
     sender_id: currentAuthUser.id, recipient_id: recipient.authId, body: text, reply_to_id: attempt.replyToId || null,
     attachment_url: attachmentUrl, attachment_name: file?.name || null,
     attachment_type: file?.type || null, attachment_size: file?.size || null
-  }).select("id,sender_id,recipient_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
+  }).select("id,sender_id,recipient_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at,edited_at").single();
   if (error) throw error;
   dispatchPush("private_message", data.id);
   const message = mapPrivateMessage(data);
@@ -6820,7 +6820,7 @@ async function shareMediaToChat(form) {
         user_id: currentAuthUser.id, legacy_id: currentUser.id, channel_id: channel.id, body,
         attachment_url: attachmentUrl, attachment_name: attachmentName,
         attachment_type: attachmentType, attachment_size: null
-      }).select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
+      }).select("id,user_id,legacy_id,channel_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at,edited_at").single();
       if (error) throw error;
       if (!messages.some(message => String(message.id) === String(data.id))) messages.push(mapMessage(data));
       globalThis.DailyPacks?.activityCompleted?.('message');
@@ -6834,7 +6834,7 @@ async function shareMediaToChat(form) {
         sender_id: currentAuthUser.id, recipient_id: member.authId, body,
         attachment_url: attachmentUrl, attachment_name: attachmentName,
         attachment_type: attachmentType, attachment_size: null
-      }).select("id,sender_id,recipient_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at").single();
+      }).select("id,sender_id,recipient_id,body,reply_to_id,attachment_url,attachment_name,attachment_type,attachment_size,created_at,edited_at").single();
       if (error) throw error;
       if (!privateMessages.some(message => String(message.id) === String(data.id))) privateMessages.push(mapPrivateMessage(data));
       closeShareMedia();
@@ -7350,6 +7350,7 @@ async function editGroupMessage(id) {
   const {error} = await db.from("messages").update({body: cleanBody}).eq("id", message.id).eq("user_id", currentAuthUser.id);
   if (error) return window.alert(error.message || "No se pudo editar el mensaje.");
   message.text = cleanBody;
+  message.editedAt = new Date().toISOString();
   refreshGroupMessageSurfaces();
 }
 
@@ -7376,6 +7377,7 @@ async function editPrivateMessage(id) {
     .eq("id", message.id).eq("sender_id", currentAuthUser.id);
   if (error) return window.alert(error.message || "No se pudo editar el mensaje.");
   message.body = cleanBody;
+  message.editedAt = new Date().toISOString();
   refreshPrivateMessageSurfaces();
 }
 

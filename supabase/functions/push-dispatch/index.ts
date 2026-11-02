@@ -204,6 +204,11 @@ export default {
       catch { return json({error: "La credencial de Apple no es válida.", configurationMissing: true}, 503); }
     }
     const claimEntity = kind === "test" ? `test:${Math.floor(Date.now() / 3600000)}` : dispatchEntity;
+    // One member cannot flood every phone: cap the alerts each actor sends per minute and hour.
+    const since = (ms: number) => admin.from("push_dispatch_claims").select("actor_id", {count: "exact", head: true}).eq("actor_id", user.id).gte("created_at", new Date(Date.now() - ms).toISOString());
+    const [{count: lastMinute, error: minuteError}, {count: lastHour, error: hourError}] = await Promise.all([since(60000), since(3600000)]);
+    if (minuteError || hourError) return json({error: "No se pudo registrar el aviso."}, 503);
+    if ((lastMinute || 0) >= 15 || (lastHour || 0) >= 120) return json({ok: true, throttled: true, delivered: 0});
     const {error: claimError} = await admin.from("push_dispatch_claims").insert({actor_id: user.id, kind, entity_id: claimEntity});
     if (claimError?.code === "23505") return json({ok: true, duplicate: true, delivered: 0});
     if (claimError) return json({error: "No se pudo registrar el aviso."}, 503);

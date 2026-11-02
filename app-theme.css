@@ -757,3 +757,6 @@ body.authenticated .chat-inbox .private-contact.has-unread .avatar { box-shadow:
 #perfil#perfil::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 150px; width: 900px; height: 900px; translate: -50% -50%; pointer-events: none; background: repeating-conic-gradient(from 0deg, #e0a64a10 0 6deg, transparent 6deg 18deg); -webkit-mask: radial-gradient(circle, #000 5%, transparent 40%); mask: radial-gradient(circle, #000 5%, transparent 40%); animation: pk-rays 60s linear infinite; }
 #perfil .profile-chota { max-width: 460px; margin: 14px auto 4px; }
 @media (prefers-reduced-motion: reduce) { #perfil#perfil::after, .inbox-chota-sprite, .profile-chota-sprite { animation: none; } }
+
+/* A changed message says so next to its time. */
+.message-edited { order: -1; color: currentColor; opacity: .6; font-size: 11px; font-style: italic; }
