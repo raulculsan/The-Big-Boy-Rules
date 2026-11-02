@@ -44,6 +44,7 @@ private final class ClubStartupMessageHandler: NSObject, WKScriptMessageHandler 
 final class KeyboardHostViewController: UIViewController {
     private let content = ClubBridgeViewController()
     private var bottomConstraint: NSLayoutConstraint?
+    private var restingConstraint: NSLayoutConstraint?
 
     override var childForStatusBarStyle: UIViewController? { content }
     override var childForStatusBarHidden: UIViewController? { content }
@@ -64,6 +65,7 @@ final class KeyboardHostViewController: UIViewController {
         content.view.translatesAutoresizingMaskIntoConstraints = false
         let bottom = content.view.bottomAnchor.constraint(equalTo: keyboard.topAnchor)
         bottomConstraint = bottom
+        restingConstraint = content.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         NSLayoutConstraint.activate([
             content.view.topAnchor.constraint(equalTo: view.topAnchor),
             content.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -71,6 +73,44 @@ final class KeyboardHostViewController: UIViewController {
             bottom
         ])
         content.didMove(toParent: self)
+    }
+
+    /// While a chat rides the keyboard the WebView keeps its full height, so the
+    /// web layer can translate its content in step with the keyboard. Resizing
+    /// afterwards is invisible: the raised content already sits above the new edge.
+    func holdFullHeight(_ hold: Bool) {
+        UIView.performWithoutAnimation {
+            restingConstraint?.constant = 0
+            if hold { bottomConstraint?.isActive = false; restingConstraint?.isActive = true }
+            else { restingConstraint?.isActive = false; bottomConstraint?.isActive = true }
+            view.layoutIfNeeded()
+        }
+    }
+
+    /// WebKit applies the new scroll offset a frame after the new size. A still of
+    /// the settled screen hides that frame; the keyboard itself is left uncovered.
+    func settleBehindStill() -> UIView? {
+        guard let screen = view.window?.screen else { holdFullHeight(false); return nil }
+        let keyboardTop = view.keyboardLayoutGuide.layoutFrame.minY
+        let still = UIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: keyboardTop))
+        still.clipsToBounds = true
+        still.isUserInteractionEnabled = false
+        still.accessibilityElementsHidden = true
+        still.addSubview(screen.snapshotView(afterScreenUpdates: false))
+        view.addSubview(still)
+        holdFullHeight(false)
+        return still
+    }
+
+    /// The guide starts growing the WebView as soon as the keyboard leaves. Freeze
+    /// the current edge so the page can prepare before its size changes.
+    func holdCurrentHeight() {
+        UIView.performWithoutAnimation {
+            restingConstraint?.constant = content.view.frame.maxY - view.bounds.height
+            bottomConstraint?.isActive = false
+            restingConstraint?.isActive = true
+            view.layoutIfNeeded()
+        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -133,7 +173,7 @@ final class ClubBridgeViewController: CAPBridgeViewController {
 final class ClubChatKeyboardPlugin: CAPPlugin, CAPBridgedPlugin {
     let identifier = "ClubChatKeyboardPlugin"
     let jsName = "ClubChatKeyboard"
-    let pluginMethods: [CAPPluginMethod] = ["prepare", "update", "settle", "finish"].map {
+    let pluginMethods: [CAPPluginMethod] = ["prepare", "update", "settle", "finish", "setLift", "expand"].map {
         CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise)
     }
     private var observers: [NSObjectProtocol] = []
@@ -144,9 +184,42 @@ final class ClubChatKeyboardPlugin: CAPPlugin, CAPBridgedPlugin {
     private var settleCall: CAPPluginCall?
     private var restoreCall: CAPPluginCall?
     private var restoreTimeout: DispatchWorkItem?
+    private var liftEnabled = false
+    private var keyboardShown = false
+    private var host: KeyboardHostViewController? { bridge?.viewController?.parent as? KeyboardHostViewController }
+
+    private func keyboardMotion(_ notification: Notification) -> (height: CGFloat, duration: Double) {
+        let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect ?? .zero
+        let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0
+        return (max(0, UIScreen.main.bounds.height - frame.minY), duration)
+    }
+
+    private func beginLift(_ notification: Notification, showing: Bool) {
+        guard liftEnabled, showing != keyboardShown else { return }
+        keyboardShown = showing
+        let motion = keyboardMotion(notification)
+        // Closing waits for expand(): the page must be listening before its size changes.
+        if showing { host?.holdFullHeight(true) } else { host?.holdCurrentHeight() }
+        notifyListeners("lift", data: ["height": motion.height, "duration": motion.duration * 1000, "showing": showing])
+    }
 
     override func load() {
         let center = NotificationCenter.default
+        observers.append(center.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] notification in
+            self?.beginLift(notification, showing: true)
+        })
+        observers.append(center.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { [weak self] notification in
+            self?.beginLift(notification, showing: false)
+        })
+        observers.append(center.addObserver(forName: UIResponder.keyboardDidShowNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self else { return }
+            guard self.liftEnabled && self.keyboardShown else { self.host?.holdFullHeight(false); return }
+            let still = self.host?.settleBehindStill()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { still?.removeFromSuperview() }
+        })
+        observers.append(center.addObserver(forName: UIResponder.keyboardDidHideNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.host?.holdFullHeight(false)
+        })
         observers.append(center.addObserver(forName: UIResponder.keyboardWillChangeFrameNotification, object: nil, queue: .main) { [weak self] notification in
             if let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect { self?.keyboardFrame = frame }
         })
@@ -156,6 +229,20 @@ final class ClubChatKeyboardPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     deinit { observers.forEach { NotificationCenter.default.removeObserver($0) } }
+
+    @objc func setLift(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [self] in
+            liftEnabled = call.getBool("enabled") == true
+            call.resolve()
+        }
+    }
+
+    @objc func expand(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [self] in
+            host?.holdFullHeight(true)
+            call.resolve()
+        }
+    }
 
     @objc func prepare(_ call: CAPPluginCall) {
         DispatchQueue.main.async { [self] in

@@ -143,9 +143,17 @@ body.native-keyboard-layout.authenticated:is(.chat-inbox-view, .chat-focus) .app
 body.native-keyboard-layout.authenticated.chat-focus .message-form {
   margin-bottom: max(8px, env(safe-area-inset-bottom, 0px));
 }
-body.native-keyboard-layout.authenticated.chat-focus.chat-keyboard-open .message-form {
+body.native-keyboard-layout.authenticated.chat-focus.chat-keyboard-open.chat-keyboard-settled .message-form {
   margin-bottom: 6px;
 }
+/* The transcript passes under the header while the wallpaper stays still behind it. */
+body.native-keyboard-layout.authenticated.chat-focus .chat-lift-fixed { position: relative; z-index: 3; background: var(--bb2-canvas); }
+body.native-keyboard-layout.authenticated.chat-focus .chat-lift-wallpaper { position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none; }
+body.native-keyboard-layout.authenticated.chat-focus .chat-lift-cover { position: absolute; top: 0; left: 0; right: 0; z-index: 2; background: var(--bb2-canvas); pointer-events: none; }
+body.native-keyboard-layout.authenticated.chat-focus .messages.chat-lift-list { position: relative; z-index: 1; background: transparent !important; }
+body.native-keyboard-layout.authenticated.chat-focus .chat-lift-list ~ .chat-reply-composer { position: relative; z-index: 1; }
+body.native-keyboard-layout.authenticated.chat-focus .chat-lift-list ~ .message-form { position: relative; z-index: 2; }
+.chat-reply-composer.chat-reply-waiting { display: none; }
 @media (prefers-reduced-motion: reduce) {
   body.authenticated.chat-focus .message-form :is(.composer-tool-button, .send-button) { transition: none; }
 }

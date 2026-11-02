@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v534";
+const CACHE_NAME = "big-boy-rules-v536";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -68,7 +68,7 @@ const APP_SHELL = [
   "./achievement-admin.css?v=20261102-theme-510",
   "./achievement-progress.js?v=20261021-halloween-365",
   "./achievement-admin.js?v=20261010-244",
-  "./chat.css?v=20261102-theme-534",
+  "./chat.css?v=20261102-theme-536",
   "./chat-themes.css?v=20261030-neutral-interactions-444",
   "./chat-themes.js?v=20261102-514",
   "./club-plus.js?v=20261102-night-507",
@@ -90,14 +90,14 @@ const APP_SHELL = [
   "./icons/chat-backgrounds/aurora.svg",
   "./icons/chat-backgrounds/vice-city.svg",
   "./icons/chat-backgrounds/orbita.svg",
-  "./chat-keyboard.js?v=20261028-chat-keyboard-slide-429",
+  "./chat-keyboard.js?v=20261102-theme-536",
   "./vendor/capacitor.js?v=8.5.0",
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",
   "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261102-theme-532",
   "./admin-console.css?v=20261102-theme-532",
-  "./app.js?v=20261102-theme-534",
+  "./app.js?v=20261102-theme-536",
   "./spotify-player.js?v=20261021-deferred-364",
   "./spotify-player.css?v=20261014-balanced",
   "./album.js?v=20261031-album-binder-455",

@@ -1792,7 +1792,11 @@ function selectChatReply(target) {
   if (!message || !input || input.disabled) return;
   chatReplies.set(chatReplyKey(target.kind), {id: message.id});
   cancelMessageHold(); closeMessageMenu(); renderChatReplyComposer(target.kind);
-  input.focus({preventScroll: true});
+  chatKeyboard?.awaitLift?.(input.closest("form")?.previousElementSibling);
+  // iOS stops painting from focus() until the keyboard starts to rise, about
+  // 200 ms. Let the bubble's return reach the screen first; a short timer keeps
+  // the gesture WebKit requires to open the keyboard, unlike a frame callback.
+  setTimeout(() => input.focus({preventScroll: true}), 48);
 }
 document.addEventListener("click", event => {
   const cancel = event.target.closest("[data-cancel-chat-reply]");

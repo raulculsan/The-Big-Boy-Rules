@@ -34,6 +34,12 @@ const ChatKeyboard = Object.freeze({
     const state = {
       nativeLayout,
       keyboardVisible: false,
+      // Called in the reply's own task: until the keyboard moves, the transcript keeps its place.
+      awaitLift(preview) {
+        if (!navigationBridge?.setLift || state.keyboardVisible || !preview || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        preview.classList.add('chat-reply-waiting');
+        setTimeout(() => preview.classList.remove('chat-reply-waiting'), 900);
+      },
       beginBackNavigation(composer) {
         if (!navigationBridge?.prepare || !state.keyboardVisible || backNavigation) return null;
         const navigation = {active: false, finished: false};
@@ -85,6 +91,98 @@ const ChatKeyboard = Object.freeze({
       }
     };
     const refresh = () => onViewportChange();
+    // WhatsApp-style rise: the transcript and composer travel with the keyboard
+    // under a fixed header. Native keeps the WebView full height until UIKit
+    // finishes, so the later resize lands exactly where the content already is.
+    const LIFT_EASING = 'cubic-bezier(.38,.7,.125,1)';
+    let lift = null, wallpaper = null, cover = null;
+    const conversation = () => document.querySelector('#privados.active.conversation-open .private-conversation, #chat.active.conversation-open .group-conversation');
+    const clearLift = () => { lift?.animations.forEach(animation => animation.cancel()); clearTimeout(lift?.timer); lift = null; };
+    // The wallpaper stays still at its resting size: only the transcript moves,
+    // and a shorter list can never rescale the image when the keyboard settles.
+    function holdWallpaper(panel, list) {
+      if (wallpaper?.isConnected) return;
+      const style = getComputedStyle(list);
+      wallpaper = document.createElement('div');
+      wallpaper.className = 'chat-lift-wallpaper';
+      wallpaper.setAttribute('aria-hidden', 'true');
+      Object.assign(wallpaper.style, {top:`${list.offsetTop}px`, height:`${list.offsetHeight}px`, backgroundColor:style.backgroundColor,
+        backgroundImage:style.backgroundImage, backgroundSize:style.backgroundSize, backgroundPosition:style.backgroundPosition, backgroundRepeat:style.backgroundRepeat});
+      // The raised transcript must not show through the gaps of the header rows.
+      cover = document.createElement('div');
+      cover.className = 'chat-lift-cover';
+      cover.setAttribute('aria-hidden', 'true');
+      cover.style.height = `${list.offsetTop}px`;
+      panel.prepend(wallpaper, cover);
+      list.classList.add('chat-lift-list');
+    }
+    function releaseWallpaper() {
+      wallpaper?.remove(); wallpaper = null;
+      cover?.remove(); cover = null;
+      document.querySelectorAll('.chat-lift-list').forEach(node => node.classList.remove('chat-lift-list'));
+      document.querySelectorAll('.chat-lift-fixed').forEach(node => node.classList.remove('chat-lift-fixed'));
+    }
+    function settleLift() {
+      if (!lift) return;
+      const {list, distance, showing, targets, duration} = lift;
+      document.body.classList.toggle('chat-keyboard-settled', showing);
+      if (showing) { clearLift(); if (list) list.scrollTop += distance; return; }
+      clearTimeout(lift.timer);
+      if (list) list.scrollTop -= distance;
+      lift.animations.forEach(animation => animation.cancel());
+      const animations = targets.map(node => node.animate([{transform:`translateY(${-distance}px)`},{transform:'none'}],{duration,easing:LIFT_EASING}));
+      lift.animations = animations;
+      const current = lift;
+      void Promise.all(animations.map(animation => animation.finished.catch(() => {}))).then(() => {
+        if (lift === current) { lift = null; releaseWallpaper(); }
+      });
+    }
+    function startLift({height, duration, showing}) {
+      const panel = conversation();
+      const list = panel?.querySelector('.messages');
+      if (!list || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (!showing) void navigationBridge.expand().catch(() => {});
+        clearLift(); releaseWallpaper();
+        panel?.querySelector('.chat-reply-waiting')?.classList.remove('chat-reply-waiting');
+        document.body.classList.toggle('chat-keyboard-settled', showing);
+        return;
+      }
+      const held = lift;
+      clearLift();
+      holdWallpaper(panel, list);
+      const form = panel.querySelector('.message-form');
+      const restingMargin = parseFloat(getComputedStyle(form).marginBottom) || 0;
+      const distance = showing ? height - restingMargin + 6 : Number(held?.distance || document.body.dataset.chatKeyboardLift || height);
+      document.body.dataset.chatKeyboardLift = distance;
+      const children = [...panel.children].filter(node => node !== wallpaper && node !== cover), first = children.indexOf(list);
+      const targets = children.slice(first);
+      children.slice(0, first).forEach(node => node.classList.add('chat-lift-fixed'));
+      lift = {targets, list, distance, showing, duration, startHeight: innerHeight, animations: []};
+      if (showing) {
+        // A waiting reply joins the layout now and unfolds from behind the composer.
+        const waiting = panel.querySelector('.chat-reply-waiting');
+        const before = list.clientHeight;
+        waiting?.classList.remove('chat-reply-waiting');
+        const extra = waiting ? before - list.clientHeight : 0;
+        if (extra) list.scrollTop += extra;
+        lift.animations = targets.map(node => {
+          const offset = node === list || node === waiting ? extra : 0;
+          const frames = [{transform:`translateY(${offset}px)`, ...(node === waiting ? {opacity:0} : {})}, {transform:`translateY(${-distance}px)`, ...(node === waiting ? {opacity:1} : {})}];
+          return node.animate(frames, {duration, easing:LIFT_EASING, fill:'forwards'});
+        });
+      }
+      // A missing native resize must never leave the chat raised.
+      lift.timer = setTimeout(settleLift, duration + 260);
+      if (!showing) void navigationBridge.expand().catch(() => {});
+      // WebKit can fire resize with the previous height and never repeat it.
+      const current = lift;
+      const watchHeight = () => {
+        if (lift !== current) return;
+        if (innerHeight !== current.startHeight) settleLift();
+        else requestAnimationFrame(watchHeight);
+      };
+      requestAnimationFrame(watchHeight);
+    }
     if (keyboard) {
       const setVisible = visible => {
         state.keyboardVisible = visible;
@@ -118,6 +216,16 @@ const ChatKeyboard = Object.freeze({
           void keyboard.setScroll({isDisabled: lockDocument, preventKeyboardDismiss: inChat}).catch(() => {});
         }
       };
+      if (navigationBridge?.setLift) {
+        void navigationBridge.addListener('lift', startLift);
+        let previousLift;
+        const syncLift = () => {
+          const enabled = document.body.classList.contains('chat-focus');
+          if (enabled !== previousLift) { previousLift = enabled; void navigationBridge.setLift({enabled}).catch(() => {}); }
+        };
+        new MutationObserver(syncLift).observe(document.body, {attributes:true, attributeFilter:['class']});
+        syncLift();
+      }
       if (nativeLayout) {
         new MutationObserver(syncContext).observe(document.body, {attributes:true, attributeFilter:['class']});
         syncContext();
