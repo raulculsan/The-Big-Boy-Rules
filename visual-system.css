@@ -220,20 +220,7 @@ body.authenticated .club-dashboard > .panel {
 .club-member strong { font-weight: 600; letter-spacing: -.025em; }
 .club-member small { margin-top: 5px; color: var(--bb2-muted); }
 
-/* Music keeps Spotify's identity within the shared surface language. */
-.club-spotify-player {
-  padding: 22px;
-  border-color: #83cf9b16;
-  border-radius: 18px;
-  background: var(--bb2-panel);
-  box-shadow: none;
-}
-.spotify-art { border-radius: 13px; box-shadow: 0 6px 18px #00000028; }
-.spotify-track strong { font-weight: 600; letter-spacing: -.025em; }
-.spotify-controls { gap: 28px; margin-top: 24px; }
-.spotify-controls button { border-color: #ffffff14; background: #ffffff06; }
-.spotify-controls .spotify-toggle { box-shadow: 0 5px 18px #00000024; }
-.spotify-queue { border-top-color: #ffffff12; }
+/* The music player's look is owned by spotify-player.css. */
 
 /* Inbox and conversation: presentation never changes the swipe geometry. */
 body.authenticated .chat-inbox { background: var(--bb2-canvas); }
@@ -350,8 +337,6 @@ body.authenticated :is(.collection-catalog-trigger,.card-album-trigger,.duplicat
   .home-members-section { margin-top: 30px; }
   .club-member { border-radius: 17px; }
   .club-member-identity { padding: 9px 14px 16px; }
-  .club-spotify-player { padding: 18px; }
-  .spotify-controls { gap: 26px; }
   .packs-heading { gap: 8px; }
   .packs-heading h2 { font-size: clamp(22px,5.5vw,30px); }
   .collection-card-grid { gap: 14px; }
@@ -754,12 +739,6 @@ body.authenticated #inicio .club-member-identity { padding: 9px 16px 17px; }
 body.authenticated #inicio .club-member strong { font-size: 16px; font-weight: 550; }
 body.authenticated #inicio .club-member small { font-size: 12px; color: var(--bb2-muted); }
 body.authenticated #inicio .club-dashboard > .spotify-panel { padding: 20px; border: 0; border-radius: 14px; background: var(--bb2-panel); }
-body.authenticated .club-spotify-player { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-body.authenticated .spotify-track strong { font-size: 17px; font-weight: 550; }
-body.authenticated .spotify-art { border-radius: 8px; box-shadow: none; }
-body.authenticated .spotify-controls button { background: transparent; border-color: transparent; box-shadow: none; }
-body.authenticated .spotify-controls .spotify-toggle { background: #1ed760; color: #07140b; box-shadow: none; }
-body.authenticated :is(.spotify-authorize,.spotify-account button,.spotify-queue>button) { border-radius: 10px; font-weight: 500; }
 
 /* Inbox: quiet separators and open rows, retaining every action and badge. */
 body.authenticated .chat-inbox .inbox-tools { padding-bottom: 18px; }
@@ -1136,19 +1115,7 @@ body.authenticated #inicio > #noticias { border: 0; border-top: 1px solid var(--
 body.authenticated #noticias .club-news-heading { padding: 22px 0; }
 body.authenticated #noticias .club-news-heading h3 { font-size: 23px; font-weight: 550; }
 body.authenticated #noticias .club-news-heading .news-collapse-button { color: var(--bb2-secondary); border: 0; background: transparent; border-radius: 8px; }
-body.authenticated #noticias .news-tabs { border: 0; border-radius: 0; padding: 0; gap: 18px; background: transparent; }
-body.authenticated #noticias .news-tab { padding-inline: 0; border-radius: 0; border-bottom: 2px solid transparent; color: var(--bb2-muted); font-weight: 500; }
-body.authenticated #noticias .news-tab.active { background: transparent; color: var(--bb2-ink); border-bottom-color: var(--bb2-ink); }
-body.authenticated #noticias .news-card { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-body.authenticated #noticias .news-media { border-radius: 10px; }
-body.authenticated #noticias .news-card-body { padding: 18px 0; }
-body.authenticated #noticias .news-card h3 a { color: var(--bb2-ink); font-weight: 550; }
-body.authenticated #noticias .news-card-meta > span { color: var(--bb2-muted); font-weight: 500; }
-body.authenticated #noticias .news-summary { color: var(--bb2-secondary); }
-body.authenticated #noticias .news-card-actions > a { color: var(--bb2-secondary); font-weight: 500; }
-body.authenticated #noticias .news-share-button,body.authenticated #noticias #refreshNewsButton { border: 0; background: transparent; color: var(--bb2-secondary); }
-body.authenticated #noticias .news-latest { padding-top: 18px; border-top: 1px solid var(--bb2-line); gap: 16px; }
-body.authenticated #noticias .news-latest .news-card-body { padding: 0; }
+/* Tabs, cards and the timeline are owned by news.css. */
 
 /* Short feedback only. Large blurred surfaces never run during a gesture. */
 @media (hover:hover) and (pointer:fine) {
@@ -1171,11 +1138,6 @@ body.authenticated #noticias .news-latest .news-card-body { padding: 0; }
   body.authenticated .banner-panorama img,body.authenticated .banner-panorama::after { animation: none; }
 }
 html[data-reduced-motion="true"] body.authenticated .banner-panorama img,html[data-reduced-motion="true"] body.authenticated .banner-panorama::after { animation: none; }
-body.authenticated .spotify-controls button { color: var(--bb2-ink); }
-body.authenticated .spotify-controls .spotify-toggle { color: #07140b; }
-body.authenticated :is(.spotify-track>span:last-child,.spotify-queue>p,.spotify-queue-heading>span,.spotify-queue li>div span,.spotify-queue-duration,.spotify-queue-number) { color: var(--bb2-muted); }
-body.authenticated :is(.spotify-track strong,.spotify-queue-heading strong,.spotify-queue li>div strong,.spotify-account button,.spotify-authorize,.spotify-queue>button) { color: var(--bb2-ink); }
-body.authenticated :is(.spotify-account button,.spotify-authorize,.spotify-queue>button) { border-color: var(--bb2-line-strong); background: var(--bb2-raised); }
 body.authenticated #bannerShopDialog .shop-item-kind { color: var(--bb2-muted); letter-spacing: .05em; font-weight: 500; }
 body.authenticated .top-actions svg { width: 20px; height: 20px; }
 body.authenticated .admin-settings-entry { border-radius: 12px; background: transparent; box-shadow: none; }
@@ -1229,11 +1191,9 @@ body.authenticated .app-tab { min-height: 48px; }
 body.authenticated .profile-tab-photo { box-shadow: none; }
 body.authenticated :is(.panel,.admin-member-card,.help-request-item,.admin-achievement-card,.admin-settings-entry,.profile-stats > div) { background: var(--bb2-panel); box-shadow: none; }
 body.authenticated :is(.primary-button,.send-button) { background: var(--bb2-gold); box-shadow: none; }
-body.authenticated .club-spotify-player { background: var(--bb2-panel); border-color: var(--bb2-line); box-shadow: none; }
 body.authenticated .spotify-panel .eyebrow { display: none; }
 body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
 #spotifyPlayer { min-height: 120px; }
-#spotifyPlayer:has(iframe) { min-height: 394px; }
 .club-section-disabled { display: none !important; }
 .feature-load-notice { position: fixed; z-index: 6000; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom,0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; width: min(90vw,560px); padding: 16px; border: 1px solid var(--bb2-line-strong); border-radius: 12px; color: var(--bb2-ink); background: var(--bb2-raised); box-shadow: 0 8px 24px #0004; font: 13px/1.5 var(--font-body,sans-serif); }
 .feature-load-notice button { flex-shrink: 0; min-height: 44px; padding: 0 10px; border: 0; color: var(--bb2-ink); background: transparent; font: inherit; cursor: pointer; }

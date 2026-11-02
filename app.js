@@ -7597,21 +7597,14 @@ function safeNewsUrl(value) {
   } catch { return ""; }
 }
 
-function newsArtwork(category) {
-  const artwork = {
-    deportes: '<circle cx="180" cy="95" r="59"/><path d="m180 67 27 20-10 31h-34l-10-31 27-20ZM137 55l11 21M224 55l-12 21M124 119l25-2M236 119l-25-2M165 151l4-25M196 151l-4-25"/>',
-    espana: '<path d="M100 156V85h34V56h32v100M188 156V33h35v123M245 156V96h28v60M87 157h199M142 69h12M142 88h12M200 51h12M200 71h12M200 91h12M200 111h12"/>',
-    mundo: '<circle cx="180" cy="95" r="62"/><ellipse cx="180" cy="95" rx="26" ry="62"/><path d="M118 95h124M128 62h104M128 128h104"/>'
-  };
-  return `<svg viewBox="0 0 360 190" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2">${artwork[category] || artwork.mundo}</g></svg>`;
-}
-
-// Keep genuine photos and editorial category artwork distinct, including failed image loads.
+// A publisher photo that fails to load leaves a text-only card, never an empty frame.
 document.addEventListener("error", event => {
   if (!(event.target instanceof HTMLImageElement) || !event.target.matches("[data-news-photo]")) return;
-  const media = event.target.closest(".news-media");
+  const card = event.target.closest(".news-card");
+  const thumb = event.target.closest(".news-thumb");
   event.target.remove();
-  media?.classList.remove("has-photo");
+  thumb?.remove();
+  card?.classList.remove("has-photo");
 }, true);
 
 function renderNews(items, feedTitle, refreshedAt = Date.now()) {
@@ -7625,7 +7618,9 @@ function renderNews(items, feedTitle, refreshedAt = Date.now()) {
   globalThis.ClubFeedback?.set(grid, "ready", "");
   grid.removeAttribute("aria-busy");
   const categoryName = {deportes: "Deportes", espana: "España", mundo: "Mundo"}[activeNewsCategory] || "Actualidad";
-  updateSurfaceMarkup(grid, sortedItems.map((item, index) => {
+  const canShare = !isSuperAdmin();
+  // Front page: one lead story, two highlights with thumbnails, then a timeline.
+  const cards = sortedItems.map((item, index) => {
     const source = item.source || "Medio de comunicación";
     const cleanTitle = item.title.endsWith(` - ${source}`) ? item.title.slice(0, -(source.length + 3)) : item.title;
     item.cleanTitle = cleanTitle;
@@ -7633,19 +7628,25 @@ function renderNews(items, feedTitle, refreshedAt = Date.now()) {
     const dateTime = publishedTimestamp ? new Date(publishedTimestamp).toISOString() : "";
     const image = safeNewsUrl(item.image);
     const summary = String(item.summary || "").replace(/<[^>]*>/g, "").trim();
-    const cardClass = index === 0 ? "news-lead" : index < 3 ? "news-support" : "news-latest";
-    const media = `<div class="news-media ${image ? "has-photo" : ""}">
-      <div class="news-artwork">${newsArtwork(activeNewsCategory)}<span>${escapeHtml(categoryName)} · Actualidad</span></div>
-      ${image ? `<img data-news-photo src="${escapeHtml(image)}" alt="Imagen publicada por ${escapeHtml(source)}" loading="${index === 0 ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">` : ""}
-      ${index === 0 ? `<span class="news-lead-label">En portada</span>` : ""}</div>`;
-    return `${index === 3 ? '<div class="news-latest-heading"><span>Última hora</span><i></i></div>' : ""}<article class="news-card ${cardClass}">
-      <a class="news-media-link" href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" aria-label="Leer: ${escapeHtml(cleanTitle)}">${media}</a>
-      <div class="news-card-body"><div class="news-card-meta"><span>${escapeHtml(source)}</span><time${dateTime ? ` datetime="${dateTime}"` : ""}>${escapeHtml(formatNewsDate(item.published))}</time></div>
-      <h3><a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanTitle)}</a></h3>
-      ${summary && index < 3 && summary !== cleanTitle ? `<p class="news-summary">${escapeHtml(summary)}</p>` : ""}
-      <div class="news-card-actions"><a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Leer noticia</a>${!isSuperAdmin() ? `<button class="media-share-button news-share-button" type="button" data-share-news="${index}" aria-label="Compartir: ${escapeHtml(cleanTitle)}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg></button>` : ""}</div></div>
+    const link = escapeHtml(item.link);
+    const photo = image ? `<img data-news-photo src="${escapeHtml(image)}" alt="" loading="${index === 0 ? "eager" : "lazy"}" decoding="async" referrerpolicy="no-referrer">` : "";
+    const share = canShare ? `<button class="media-share-button news-share-button" type="button" data-share-news="${index}" aria-label="Compartir: ${escapeHtml(cleanTitle)}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg></button>` : "";
+    const time = `<time${dateTime ? ` datetime="${dateTime}"` : ""}>${escapeHtml(index < 3 ? formatRelativeTime(publishedTimestamp || Date.now()) : newsClock(publishedTimestamp))}</time>`;
+    const headline = `<h3><a href="${link}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanTitle)}</a></h3>`;
+    if (index === 0) return `<article class="news-card news-lead${image ? " has-photo" : ""}">
+      ${image ? `<div class="news-media">${photo}</div>` : ""}
+      <div class="news-card-body"><div class="news-card-meta"><span class="news-chip">${escapeHtml(categoryName)}</span><span>${escapeHtml(source)}</span>${time}</div>
+      ${headline}${summary && summary !== cleanTitle ? `<p class="news-summary">${escapeHtml(summary)}</p>` : ""}
+      <div class="news-card-actions"><span class="news-read" aria-hidden="true">Leer noticia</span>${share}</div></div>
     </article>`;
-  }).join("") || '<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Actualiza para consultar las últimas noticias.</span></div>');
+    if (index < 3) return `<article class="news-card news-support${image ? " has-photo" : ""}">
+      <div class="news-card-body"><div class="news-card-meta"><span>${escapeHtml(source)}</span>${time}</div>${headline}</div>
+      ${image ? `<div class="news-thumb">${photo}</div>` : ""}${share}
+    </article>`;
+    return `<li class="news-card news-latest">${time}<div class="news-card-body"><span class="news-source">${escapeHtml(source)}</span>${headline}</div>${share}</li>`;
+  });
+  updateSurfaceMarkup(grid, cards.length ? `${cards.slice(0, 3).join("")}${cards.length > 3 ? `<section class="news-latest-block" aria-label="Última hora"><h4>Última hora</h4><ol class="news-latest-list">${cards.slice(3).join("")}</ol></section>` : ""}`
+    : '<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Actualiza para consultar las últimas noticias.</span></div>');
 }
 
 function newsTimestamp(value) {
@@ -7655,6 +7656,17 @@ function newsTimestamp(value) {
   const normalized = value.includes("T") ? value : value.replace(/^(\d{4}-\d{2}-\d{2})\s+/, "$1T");
   const fallbackTimestamp = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(normalized) ? normalized : `${normalized}Z`);
   return Number.isFinite(fallbackTimestamp) ? fallbackTimestamp : 0;
+}
+
+// Timeline column: the hour for today, "Ayer", or a short date.
+function newsClock(timestamp) {
+  if (!timestamp) return "—";
+  const date = new Date(timestamp), today = new Date();
+  const day = value => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+  const days = Math.round((day(today) - day(date)) / 86400000);
+  if (days === 0) return date.toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"});
+  if (days === 1) return "Ayer";
+  return date.toLocaleDateString("es-ES", {day: "numeric", month: "short"});
 }
 
 function formatNewsDate(value) {
