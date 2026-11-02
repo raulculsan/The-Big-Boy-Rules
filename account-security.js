@@ -69,7 +69,7 @@
   async function linkEmail(){
     const email=dialog.querySelector('[data-security-email-input]')?.value.trim();
     if(!email||!/^\S+@\S+\.\S+$/.test(email))throw new Error('Introduce un correo electrónico válido.');
-    const result=await client.functions.invoke('account-requests',{body:{action:'link-email',email}});
+    const result=await client.functions.invoke('account-requests',{body:{action:'link-email',email,origin:native()?'app':'web'}});
     if(result.error){let detail='';try{detail=(await result.error.context?.json())?.error||'';}catch{}throw new Error(detail||'No se pudo enviar el enlace. Espera unos minutos e inténtalo de nuevo.');}
     if(result.data?.error)throw new Error(result.data.error);
     emailPending = email.toLowerCase();

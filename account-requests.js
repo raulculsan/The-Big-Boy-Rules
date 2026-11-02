@@ -9,7 +9,9 @@
   const show=node=>{if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(node);else if(!node.open)node.showModal();};
   async function invoke(action,values={}) {
    if(!api.client)throw new Error('El servicio de acceso no está disponible.');
-   const {data,error}=await api.client.functions.invoke('account-requests',{body:{action,...values}});
+   // Mailed links return to where the request started: the app or the web.
+   const origin=['submit','submit-google','recover'].includes(action)?{origin:window.Capacitor?.isNativePlatform?.()?'app':'web'}:{};
+   const {data,error}=await api.client.functions.invoke('account-requests',{body:{action,...values,...origin}});
    if(error){let detail='';try{detail=(await error.context?.json())?.error||'';}catch{}throw new Error(detail||'No se pudo conectar con las solicitudes. Inténtalo más tarde.');}
    if(data?.error)throw new Error(data.error);return data;
   }
@@ -137,8 +139,15 @@
    const identityHash=location.hash.match(/^#account-(reset|email)=([0-9a-f-]{72})$/i);
    const requestHash=location.hash.match(/^#account-request=([0-9a-f-]{36})\.([0-9a-f-]{72})$/i);
    if(!identityHash&&!requestHash)return;
-   history.replaceState(null,'',location.pathname+location.search);
+   const params=new URLSearchParams(location.search),fromApp=params.get('open')==='app';params.delete('open');
+   history.replaceState(null,'',location.pathname+(params.size?`?${params}`:''));
    if(identityHash)showRecovery(identityHash[1],identityHash[2]);else showVerification(requestHash[1],requestHash[2]);
+   // Requested in the app: hand the link straight back to it. The page stays as a fallback.
+   if(fromApp&&!window.Capacitor?.isNativePlatform?.()){
+    const target=identityHash?`bigboyrules://account-security/${identityHash[1]}?token=${encodeURIComponent(identityHash[2])}`:`bigboyrules://account-request/verify?id=${encodeURIComponent(requestHash[1])}&token=${encodeURIComponent(requestHash[2])}`;
+    document.querySelectorAll('[data-open-native]').forEach(link=>{link.classList.add('is-primary');link.textContent='Abrir en la app';});
+    setTimeout(()=>{location.href=target;},250);
+   }
   }
   handleAccountHash();window.addEventListener('hashchange',handleAccountHash);
   const login=document.getElementById('loginForm');if(login&&!login.querySelector('[data-account-recover]')){const button=document.createElement('button');button.type='button';button.className='request-recovery-link';button.dataset.accountRecover='';button.textContent='¿Has olvidado tu contraseña?';login.append(button);}

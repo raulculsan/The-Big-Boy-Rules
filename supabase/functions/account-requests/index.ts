@@ -12,7 +12,13 @@ const mailKey=Deno.env.get("BREVO_API_KEY"), sender=Deno.env.get("BREVO_SENDER_E
 const smtpUser=Deno.env.get("ACCOUNT_REQUESTS_GMAIL_USER"),smtpPassword=Deno.env.get("ACCOUNT_REQUESTS_GMAIL_APP_PASSWORD");
 const adminEmail=Deno.env.get("ACCOUNT_REQUESTS_ADMIN_EMAIL");
 const configured=Boolean(((smtpUser && smtpPassword) || (mailKey && sender)) && adminEmail && /^https:\/\//.test(url));
-const verificationLink=(id:string,token:string)=>`${url}/functions/v1/account-requests?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`;
+// Links open the club page directly (no redirect through the API domain, which
+// filters treat as suspicious). The fragment never reaches a server, and
+// ?open=app sends the reader back to the app when the request started there.
+const appWeb='https://raulculsan.github.io/The-Big-Boy-Rules/';
+const originOf=(value:unknown)=>value==='app'?'app':'web';
+const appLink=(fragment:string,origin='web')=>`${appWeb}${origin==='app'?'?open=app':''}#${fragment}`;
+const verificationLink=(id:string,token:string,origin='web')=>appLink(`account-request=${encodeURIComponent(id)}.${encodeURIComponent(token)}`,origin);
 function passwordError(value:string,name:string,username:string) {
  if(value.length<8||value.length>128) return "La contraseña debe tener entre 8 y 128 caracteres.";
  if(!/[^\p{L}\p{N}\s\p{M}]/u.test(value)) return "Añade al menos un carácter especial a la contraseña.";
@@ -34,7 +40,7 @@ async function read(request:Request) {
  const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
  const result=JSON.parse(new TextDecoder().decode(bytes));
  if(!result||Array.isArray(result)||typeof result!=='object'||Object.values(result).some(v=>typeof v!=='string'))throw new Error('Petición no válida.');
- const fields:Record<string,string[]>={configuration:['action'],submit:['action','email','username','displayName','password','website'],verify:['action','id','token'],login:['action','username','password'],list:['action'],approve:['action','id'],reject:['action','id'],retry:['action','id'],'retry-admin':['action','id'],'resend-verification':['action','id'],recover:['action','email'],reset:['action','token','password'], 'link-email':['action','email'], 'confirm-email':['action','token'], 'submit-google':['action','username','displayName','password','website']};
+ const fields:Record<string,string[]>={configuration:['action'],submit:['action','email','username','displayName','password','website','origin'],verify:['action','id','token'],login:['action','username','password'],list:['action'],approve:['action','id'],reject:['action','id'],retry:['action','id'],'retry-admin':['action','id'],'resend-verification':['action','id'],recover:['action','email','origin'],reset:['action','token','password'], 'link-email':['action','email','origin'], 'confirm-email':['action','token'], 'submit-google':['action','username','displayName','password','website','origin']};
  if(!Object.hasOwn(fields,result.action)||Object.keys(result).some(k=>!fields[result.action].includes(k)))throw new Error('Petición no válida.');
  return result as Record<string,string>;
 }
@@ -45,40 +51,52 @@ async function mail(email:string,subject:string,text:string,key:string,html?:str
   const {default:nodemailer}=await import('npm:nodemailer@10.1.6');
   const transport=nodemailer.createTransport({host:'smtp.gmail.com',port:465,secure:true,auth:{user:smtpUser,pass:smtpPassword},connectionTimeout:10000,greetingTimeout:10000,socketTimeout:15000,logger:false,debug:false,disableFileAccess:true,disableUrlAccess:true});
   // Let Nodemailer generate Message-ID; the previous .local value was unsuitable for outgoing mail.
-  try{await transport.sendMail({from:{name:'Big Boy',address:smtpUser},to:email,subject,text,...(html?{html}:{})});}finally{transport.close();}
+  try{await transport.sendMail({from:{name:'The Big Boy Rules',address:smtpUser},replyTo:smtpUser,to:email,subject,text,...(html?{html}:{}),headers:{'X-Entity-Ref-ID':key,'Auto-Submitted':'auto-generated'}});}finally{transport.close();}
   return;
  }
- const response=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':mailKey!,'Content-Type':'application/json'},body:JSON.stringify({sender:{name:'Big Boy',email:sender},to:[{email}],subject,textContent:text,...(html?{htmlContent:html}:{}),headers:{'X-Account-Request':key}}),signal:AbortSignal.timeout(12000)});
+ const response=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':mailKey!,'Content-Type':'application/json'},body:JSON.stringify({sender:{name:'The Big Boy Rules',email:sender},replyTo:{email:sender},to:[{email}],subject,textContent:text,...(html?{htmlContent:html}:{}),headers:{'X-Entity-Ref-ID':key,'Auto-Submitted':'auto-generated'}}),signal:AbortSignal.timeout(12000)});
  if(!response.ok){await response.body?.cancel();throw new Error('No se pudo entregar el correo.');}
  await response.body?.cancel();
 }
 const mailEntities:Record<string,string>={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
 const escapeMail=(value:string)=>value.replace(/[&<>"']/g,char=>mailEntities[char]);
-async function sendVerification(email:string,name:string,username:string,id:string,token:string,key:string,resent=false) {
- const link=verificationLink(id,token),safeLink=escapeMail(link);
+// One readable layout for every message: greeting, short copy, one button and
+// the reason it was sent. A complete HTML part next to the text part helps filters.
+function mailLayout(o:{title:string,paragraphs:string[],button?:{label:string,link:string},foot:string}) {
+ const p=(t:string)=>`<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#2b2f33">${t}</p>`;
+ const button=o.button?`<table role="presentation" cellspacing="0" cellpadding="0" style="margin:26px 0"><tr><td style="border-radius:12px;background:#111214"><a href="${escapeMail(o.button.link)}" style="display:inline-block;padding:15px 26px;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:12px">${escapeMail(o.button.label)}</a></td></tr></table><p style="margin:0 0 14px;font-size:12px;line-height:1.6;color:#6b7176">Si el botón no funciona, copia este enlace en el navegador:<br><span style="word-break:break-all;color:#3c4247">${escapeMail(o.button.link)}</span></p>`:'';
+ return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeMail(o.title)}</title></head><body style="margin:0;padding:0;background:#f2f2f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:32px 16px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#ffffff;border-radius:20px"><tr><td style="padding:32px 30px"><p style="margin:0 0 22px;font-size:13px;font-weight:bold;color:#111214">The Big Boy Rules</p><h1 style="margin:0 0 18px;font-size:24px;line-height:1.25;color:#111214">${escapeMail(o.title)}</h1>${o.paragraphs.map(p).join('')}${button}<p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #e6e6e9;font-size:12px;line-height:1.6;color:#6b7176">${o.foot}</p></td></tr></table><p style="margin:16px 0 0;font-size:11px;color:#8b9095">Club privado The Big Boy Rules · Mensaje automático, no hace falta responder.</p></td></tr></table></body></html>`;
+}
+async function sendVerification(email:string,name:string,username:string,id:string,token:string,key:string,resent=false,origin='web') {
+ const link=verificationLink(id,token,origin);
  const notice=resent?'Si recibiste un correo anterior, utiliza este nuevo enlace.':'Si no has solicitado una cuenta, ignora este correo.';
- const plain=`Hola ${name},\n\nConfirma tu correo para enviar a administración la solicitud de @${username}:\n\n${link}\n\nPulsa el enlace y confirma tu correo. Puedes continuar en el navegador o elegir «Abrir en la app». Caduca en 48 horas. La cuenta solo se activará si administración la acepta. ${notice}`;
- const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f3f2ee;font-family:Arial,sans-serif;color:#202428"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:32px 16px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#fff;border-radius:20px"><tr><td style="padding:32px"><p style="margin:0 0 24px;font-size:12px;letter-spacing:2px;color:#806329">BIG BOY</p><h1 style="margin:0 0 20px;font-size:28px">Confirma tu correo</h1><p style="line-height:1.6">Hola ${escapeMail(name)},</p><p style="line-height:1.6">Verifica tu dirección para enviar la solicitud de <strong>@${escapeMail(username)}</strong> a administración.</p><p style="margin:28px 0"><a href="${safeLink}" style="display:inline-block;padding:16px 24px;border-radius:12px;background:#202428;color:#fff;text-decoration:none;font-weight:bold">Verificar correo</a></p><p style="font-size:13px;line-height:1.6;color:#626a70">El enlace muestra la confirmación del correo. Puedes completarla en el navegador o pulsar «Abrir en la app». Caduca en 48 horas. Tu cuenta se activará cuando administración acepte la solicitud.</p><p style="font-size:13px;line-height:1.6">También puedes pulsar este enlace:<br><a href="${safeLink}" style="color:#66501f;overflow-wrap:anywhere;word-break:break-all">Abrir enlace de verificación</a></p><p style="margin-top:28px;font-size:12px;line-height:1.6;color:#626a70">${escapeMail(notice)}</p></td></tr></table></td></tr></table></body></html>`;
- await mail(email,'Confirma tu solicitud de Big Boy',plain,key,html);
+ const plain=`Hola ${name},\n\nConfirma tu correo para enviar a administración la solicitud de @${username}:\n\n${link}\n\nEl enlace caduca en 48 horas. La cuenta solo se activará si administración la acepta. ${notice}\n\nThe Big Boy Rules`;
+ const html=mailLayout({title:'Confirma tu correo',paragraphs:[`Hola ${escapeMail(name)},`,`Verifica tu dirección para enviar la solicitud de <strong>@${escapeMail(username)}</strong> a administración.`],button:{label:'Verificar correo',link},foot:`El enlace caduca en 48 horas. Tu cuenta se activará cuando administración acepte la solicitud. ${escapeMail(notice)}`});
+ await mail(email,'Confirma tu solicitud en The Big Boy Rules',plain,key,html);
 }
 async function notifyAdmin(req:Record<string,any>) {
  if(!adminEmail)throw new Error('Falta el correo de administración.');
- await mail(adminEmail,'Nueva solicitud de acceso a Big Boy',`Hay una solicitud con correo verificado pendiente de revisión.\n\n${req.display_name} · @${req.username}\n\nAbre Big Boy > Administración > Solicitudes de cuenta para aceptarla o rechazarla.`,`account-request-${req.id}-admin`);
+ const plain=`Hay una solicitud con correo verificado pendiente de revisión.\n\n${req.display_name} · @${req.username}\n\nAbre The Big Boy Rules > Administración > Solicitudes de cuenta para aceptarla o rechazarla.`;
+ await mail(adminEmail,'Nueva solicitud de acceso en The Big Boy Rules',plain,`account-request-${req.id}-admin`,mailLayout({title:'Nueva solicitud de acceso',paragraphs:[`<strong>${escapeMail(String(req.display_name))}</strong> · @${escapeMail(String(req.username))} ha verificado su correo y espera tu respuesta.`],button:{label:'Revisar solicitudes',link:appWeb},foot:'Abre Administración > Solicitudes de cuenta para aceptarla o rechazarla.'}));
  const {error}=await client.from('account_requests').update({admin_email_status:'sent'}).eq('id',req.id);if(error)throw error;
 }
 async function outcome(req:Record<string,any>) {
- const approved=req.status==='approved';
- await mail(req.email,approved?'Tu cuenta de Big Boy está lista':'Respuesta a tu solicitud de Big Boy',approved?`Hola ${req.display_name},\n\nTu solicitud ha sido aceptada. Abre Big Boy e inicia sesión como @${req.username} con la contraseña que elegiste.`:`Hola ${req.display_name},\n\nLa administración ha rechazado tu solicitud de acceso a Big Boy. Si crees que se trata de un error, contacta con la administración del club.`,`account-request-${req.id}-${req.status}`);
+ const approved=req.status==='approved',name=String(req.display_name),username=String(req.username);
+ const plain=approved?`Hola ${name},\n\nTu solicitud ha sido aceptada. Abre The Big Boy Rules e inicia sesión como @${username} con la contraseña que elegiste.\n\n${appWeb}`:`Hola ${name},\n\nLa administración ha rechazado tu solicitud de acceso a The Big Boy Rules. Si crees que se trata de un error, contacta con la administración del club.`;
+ const html=approved?mailLayout({title:'Tu cuenta está lista',paragraphs:[`Hola ${escapeMail(name)},`,`Tu solicitud ha sido aceptada. Inicia sesión como <strong>@${escapeMail(username)}</strong> con la contraseña que elegiste.`],button:{label:'Entrar al club',link:appWeb},foot:'Recibes este correo porque solicitaste una cuenta en The Big Boy Rules.'}):mailLayout({title:'Respuesta a tu solicitud',paragraphs:[`Hola ${escapeMail(name)},`,'La administración ha rechazado tu solicitud de acceso. Si crees que se trata de un error, contacta con la administración del club.'],foot:'Recibes este correo porque solicitaste una cuenta en The Big Boy Rules.'});
+ await mail(req.email,approved?'Tu cuenta de The Big Boy Rules está lista':'Respuesta a tu solicitud en The Big Boy Rules',plain,`account-request-${req.id}-outcome`,html);
  const {error}=await client.from('account_requests').update({email_status:'sent',email_sent_at:new Date().toISOString()}).eq('id',req.id);if(error)throw error;
 }
 const identityAccepted={ok:true,message:'Si esa dirección corresponde a una cuenta activa, recibirás un enlace para restablecer la contraseña.'};
-const appWeb='https://raulculsan.github.io/The-Big-Boy-Rules/';
-async function identityToken(userId:string,email:string,kind:string){
+async function identityToken(userId:string,email:string,kind:string,origin='web'){
  await client.from('account_identity_tokens').delete().lt('expires_at',new Date(Date.now()-86400000).toISOString());
  const token=crypto.randomUUID()+crypto.randomUUID();
  const {error}=await client.from('account_identity_tokens').insert({token_hash:await digest(token),user_id:userId,email,kind,expires_at:new Date(Date.now()+30*60000).toISOString()});if(error)throw error;
- const link=`${url}/functions/v1/account-requests?flow=${kind}&token=${encodeURIComponent(token)}`;
- await mail(email,kind==='reset'?'Restablece tu contraseña de Big Boy':'Confirma tu correo de Big Boy',`Pulsa el enlace para ${kind==='reset'?'elegir una nueva contraseña':'vincular este correo a tu cuenta'}:\n\n${link}\n\nEl enlace abre una pantalla para completar la confirmación en el navegador o en la app. Caduca en 30 minutos. Si no lo has solicitado, ignora este correo.`,crypto.randomUUID(),`<p>Has solicitado ${kind==='reset'?'restablecer tu contraseña':'vincular tu correo'} en Big Boy.</p><p><a href="${escapeMail(link)}">${kind==='reset'?'Elegir nueva contraseña':'Confirmar correo'}</a></p><p>Completa el paso en el navegador o pulsa «Abrir en la app». El enlace caduca en 30 minutos. Si no lo has solicitado, ignora este correo.</p>`);
+ const link=appLink(`account-${kind}=${encodeURIComponent(token)}`,origin),reset=kind==='reset';
+ const where=origin==='app'?'Se abrirá la app de The Big Boy Rules para completarlo.':'Se abrirá la web de The Big Boy Rules para completarlo.';
+ const plain=`Has solicitado ${reset?'restablecer tu contraseña':'vincular este correo a tu cuenta'} en The Big Boy Rules.\n\n${link}\n\n${where} El enlace caduca en 30 minutos. Si no lo has solicitado, ignora este correo: tu cuenta sigue igual.\n\nThe Big Boy Rules`;
+ const html=mailLayout({title:reset?'Restablece tu contraseña':'Confirma tu correo',paragraphs:[`Has solicitado ${reset?'restablecer tu contraseña':'vincular este correo a tu cuenta'}.`,where],button:{label:reset?'Elegir nueva contraseña':'Confirmar correo',link},foot:'El enlace caduca en 30 minutos. Si no lo has solicitado, ignora este correo: tu cuenta sigue igual.'});
+ await mail(email,reset?'Restablece tu contraseña de The Big Boy Rules':'Confirma tu correo en The Big Boy Rules',plain,crypto.randomUUID(),html);
 }
 export default {async fetch(request:Request):Promise<Response>{
  if(request.method==='OPTIONS')return new Response('ok',{headers:cors});
@@ -89,7 +107,7 @@ export default {async fetch(request:Request):Promise<Response>{
    // The default Edge Functions domain serves HTML as plain text. Redirect
    // instead; the app handles the fragment and offers the native deep link.
    // GET must never consume a token: email security scanners follow links.
-   return new Response(null,{status:303,headers:{Location:`${appWeb}#account-${flow}=${encodeURIComponent(token)}`,'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
+   return new Response(null,{status:303,headers:{Location:appLink(`account-${flow}=${encodeURIComponent(token)}`,params.get('from')==='app'?'app':'web'),'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
   }
   if(!/^[0-9a-f-]{36}$/i.test(id)||!/^[0-9a-f-]{72}$/i.test(token))return json({error:'Enlace no válido.'},400);
   return new Response(null,{status:303,headers:{Location:`${appWeb}#account-request=${encodeURIComponent(id)}.${encodeURIComponent(token)}`,'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
@@ -105,7 +123,7 @@ export default {async fetch(request:Request):Promise<Response>{
   if(!/^\S+@\S+\.\S+$/.test(email)||email.length>254)return json(identityAccepted);
   if(!await limit(`recovery:${email}`,3,3600))return json(identityAccepted);
   const {data}=await client.rpc('account_recovery_user',{p_email:email});
-  if(data)EdgeRuntime.waitUntil(identityToken(data,email,'reset').catch(()=>{}));
+  if(data)EdgeRuntime.waitUntil(identityToken(data,email,'reset',originOf(body.origin)).catch(()=>{}));
   return json(identityAccepted);
  }
  if(action==='reset'||action==='confirm-email'){
@@ -141,7 +159,7 @@ export default {async fetch(request:Request):Promise<Response>{
   const email=(body.email||'').trim().toLowerCase();
   if(!/^\S+@\S+\.\S+$/.test(email)||email.length>254||email.endsWith('.local'))return json({error:'Introduce un correo personal válido.'},400);
   if(!await limit(`identity:${user.id}`,3,3600))return json({error:'Espera antes de solicitar otro enlace.'},429);
-  await identityToken(user.id,email,'email');return json({ok:true,message:'Te hemos enviado un enlace. Confirma el correo y pulsa Comprobar.'});
+  await identityToken(user.id,email,'email',originOf(body.origin));return json({ok:true,message:'Te hemos enviado un enlace. Confirma el correo y pulsa Comprobar.'});
  }
  if(action==='submit-google'){
   if(!configured)return json({error:'La recepción de solicitudes se está preparando.'},503);
@@ -212,7 +230,7 @@ export default {async fetch(request:Request):Promise<Response>{
   const {error:insertError}=await client.from('account_requests').insert({id,auth_user_id:data.user.id,username,display_name:name,email,verification_hash:await digest(token),verification_expires_at:new Date(Date.now()+48*3600000).toISOString()});
   if(insertError){await client.auth.admin.deleteUser(data.user.id);return json(accepted);}
   try{
-   await sendVerification(email,name,username,id,token,`account-request-${id}-verify`);
+   await sendVerification(email,name,username,id,token,`account-request-${id}-verify`,false,originOf(body.origin));
   }catch{
    // Do not leave an unverified, unreachable account occupying this email.
    await client.auth.admin.deleteUser(data.user.id);await client.from('account_requests').delete().eq('id',id);

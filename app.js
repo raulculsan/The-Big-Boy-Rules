@@ -3103,18 +3103,71 @@ function renderPrivateConversation() {
 function calendarEventMarkup(event, compact = false) {
   const date = new Date(event.startsAt);
   const birthday = event.eventType === "birthday";
+  if (compact) {
+    // Month rows jump to their day; editing lives in the selected-day card.
+    const day = new Date(calendarDate.getFullYear(), date.getMonth(), date.getDate());
+    const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+    const detail = [birthday ? "Todo el día" : conversationTimeFormatter.format(date), event.location].filter(Boolean).map(escapeHtml).join(" · ");
+    return `<button type="button" class="calendar-month-row ${birthday ? "birthday" : ""}" data-calendar-date="${key}"><time datetime="${key}"><strong>${day.getDate()}</strong><span>${calendarWeekdayFormatter.format(day).replace(".", "")}</span></time><span class="calendar-month-row-copy"><strong>${escapeHtml(event.title)}</strong><small>${detail}</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
+  }
   return `<article class="calendar-agenda-event ${birthday ? "birthday" : ""} ${compact ? "compact" : ""}">
     <time class="calendar-event-date" datetime="${escapeHtml(event.startsAt)}"><strong>${date.getDate()}</strong><span>${shortMonthFormatter.format(date)}</span></time>
     <div class="calendar-event-copy"><span class="calendar-event-type">${birthday ? "Cumpleaños · Todo el día" : conversationTimeFormatter.format(date)}</span><h4>${escapeHtml(event.title)}</h4>${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}${!compact && event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}${!compact && !birthday && event.endsAt ? `<p>Hasta ${conversationTimeFormatter.format(new Date(event.endsAt))}</p>` : ""}${canEditCalendarEvent(event) ? `<button type="button" class="calendar-edit-event" data-edit-calendar-event="${escapeHtml(event.id)}">Editar</button>` : ""}${!compact ? `<button type="button" class="club-live-event-link" data-club-live-event="${escapeHtml(event.id)}" data-occurrence="${escapeHtml(activeCalendarDay)}">Plan en directo</button>${globalThis.GroupInteractions?.attendanceMarkup(event, activeCalendarDay) || ""}` : ""}</div>
   </article>`;
 }
 
+const calendarWeekdayFormatter = new Intl.DateTimeFormat("es-ES", {weekday: "short"});
+// El Chota comments on the chosen day with a pose that matches it.
+const calendarChotaPoses = {birthday: "60% 66.667%", plans: "60% 0%", free: "40% 100%", past: "0% 0%"};
+function calendarChotaLine(events, date) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const past = date < today, seed = date.getDate();
+  const birthdays = events.filter(event => event.eventType === "birthday").map(event => String(event.title).replace(/^cumpleaños de\s+/i, ""));
+  const plans = events.filter(event => event.eventType !== "birthday");
+  if (birthdays.length) return {mood: "birthday", text: past ? `Ese día cumplió ${birthdays.join(" y ")}. Aún me quedan restos de tarta.` : [`¡Cumple ${birthdays.join(" y ")}! Yo pongo las velas.`, `Cumpleaños de ${birthdays.join(" y ")}. Ya estoy ensayando el cumpleaños feliz.`][seed % 2]};
+  if (plans.length) {
+    const first = plans[0], when = new Date(date); const start = new Date(first.startsAt); when.setHours(start.getHours(), start.getMinutes());
+    const cached = tigretonComments.get(tigretonContextKey(first, when))?.comment;
+    if (past) return {mood: "past", text: plans.length === 1 ? `Qué buen día aquel: «${first.title}».` : `${plans.length} planes ese día. No sé ni cómo llegué a casa.`};
+    if (cached) return {mood: "plans", text: cached, event: first, when};
+    return {mood: "plans", text: plans.length === 1 ? [`Me apunto a «${first.title}». ¿Te vienes?`, `«${first.title}». Lo tengo fichado.`][seed % 2] : `${plans.length} planes este día. Yo voy a todos, obvio.`, event: first, when};
+  }
+  return {mood: past ? "past" : "free", text: past ? "Ese día fue tranquilo. Ni me acuerdo." : ["Día libre. Me quedo en el sofá… ¿montamos algo?", "Nada en la agenda. Yo propongo pizza."][seed % 2]};
+}
+function calendarChotaMarkup(events, date) {
+  const line = calendarChotaLine(events, date);
+  const action = line.mood === "free" && canManageSite() ? `<button type="button" class="calendar-chota-action" data-calendar-new-plan="${escapeHtml(activeCalendarDay)}">Crear un plan</button>` : "";
+  return `<div class="calendar-chota" data-mood="${line.mood}"><button type="button" class="calendar-chota-sprite" data-calendar-chota aria-label="Preguntar a El Chota por este día"><span style="background-position:${calendarChotaPoses[line.mood]}"></span></button><div class="calendar-chota-bubble"><strong>El Chota</strong><p>${escapeHtml(line.text)}</p>${action}</div></div>`;
+}
+async function askCalendarChota(button) {
+  const date = new Date(`${activeCalendarDay}T12:00:00`);
+  const events = groupEvents.filter(event => eventOccursOn(event, date)).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
+  const line = calendarChotaLine(events, date), bubble = button.closest(".calendar-chota")?.querySelector("p");
+  button.closest(".calendar-chota")?.classList.remove("is-bouncing"); void button.offsetWidth; button.closest(".calendar-chota")?.classList.add("is-bouncing");
+  if (!line.event || !bubble || !currentAuthUser) return;
+  const day = activeCalendarDay;
+  bubble.textContent = "…";
+  const result = await loadTigretonComment(line.event, line.when, tigretonContextKey(line.event, line.when)).catch(() => null);
+  if (day === activeCalendarDay && bubble.isConnected) bubble.textContent = result?.comment || line.text;
+}
+document.addEventListener("click", event => {
+  const chota = event.target.closest("[data-calendar-chota]");
+  if (chota) void askCalendarChota(chota);
+  const create = event.target.closest("[data-calendar-new-plan]");
+  if (create) {
+    openEventEditor();
+    const start = document.getElementById("eventStartsAt");
+    if (start) start.value = toLocalDateTime(new Date(`${create.dataset.calendarNewPlan}T21:00:00`));
+  }
+});
+
 function renderCalendarSelectedDay() {
   const selectedDate = new Date(`${activeCalendarDay}T12:00:00`);
   const events = groupEvents.filter(event => eventOccursOn(event, selectedDate)).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
   document.getElementById("calendarSelectedTitle").textContent = selectedDate.toLocaleDateString("es-ES", {weekday: "long", day: "numeric", month: "long"});
-  document.getElementById("calendarDayCount").textContent = events.length ? `${events.length} ${events.length === 1 ? "plan" : "planes"}` : "Libre";
-  document.getElementById("calendarSelectedEvents").innerHTML = events.length ? events.map(event => calendarEventMarkup(event)).join("") : `<div class="calendar-empty-day"><span aria-hidden="true">◇</span><strong>Un día por escribir.</strong><p>No hay planes ni cumpleaños para esta fecha.</p></div>`;
+  const dayPlans = events.filter(event => event.eventType !== "birthday").length, dayBirthdays = events.length - dayPlans;
+  document.getElementById("calendarDayCount").textContent = [dayPlans ? `${dayPlans} ${dayPlans === 1 ? "plan" : "planes"}` : "", dayBirthdays ? "Cumpleaños" : ""].filter(Boolean).join(" · ") || "Libre";
+  document.getElementById("calendarSelectedEvents").innerHTML = calendarChotaMarkup(events, selectedDate) + events.map(event => calendarEventMarkup(event)).join("");
   void globalThis.GroupInteractions?.hydrateAttendance(document.getElementById("calendarSelectedEvents"));
   document.querySelectorAll("#calendarGrid [data-calendar-date]").forEach(cell => {
     const selected = cell.dataset.calendarDate === activeCalendarDay;
@@ -3154,12 +3207,13 @@ function renderCalendar() {
     const date = new Date(year, month, day);
     const events = eventsByDay.get(day) || [];
     const calendarKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    cells += `<button class="calendar-day ${dateKey(date) === todayKey ? "today" : ""} ${events.length ? "has-events" : ""}" type="button" data-calendar-date="${calendarKey}" ${dateKey(date) === todayKey ? 'aria-current="date"' : ""} aria-label="${day} de ${monthLabel}, ${events.length} eventos${events.length ? `: ${escapeHtml(events.map(event => event.title).join(", "))}` : ""}"><span class="calendar-day-number">${day}</span><span class="calendar-dots" aria-hidden="true">${events.slice(0, 3).map(event => `<i class="${event.eventType === "birthday" ? "birthday" : ""}"></i>`).join("")}</span></button>`;
+    cells += `<button class="calendar-day ${dateKey(date) === todayKey ? "today" : ""} ${events.length ? "has-events" : ""} ${events.some(event => event.eventType === "birthday") ? "has-birthday" : ""} ${date < new Date(today.getFullYear(), today.getMonth(), today.getDate()) ? "is-past" : ""}" type="button" data-calendar-date="${calendarKey}" ${dateKey(date) === todayKey ? 'aria-current="date"' : ""} aria-label="${day} de ${monthLabel}, ${events.length} eventos${events.length ? `: ${escapeHtml(events.map(event => event.title).join(", "))}` : ""}"><span class="calendar-day-number">${day}</span><span class="calendar-dots" aria-hidden="true">${events.slice(0, 3).map(event => `<i class="${event.eventType === "birthday" ? "birthday" : ""}"></i>`).join("")}</span></button>`;
   }
   cells += Array.from({length: (7 - ((firstWeekday + days) % 7)) % 7}, () => `<div class="calendar-day outside" aria-hidden="true"></div>`).join("");
   document.getElementById("calendarGrid").innerHTML = cells;
   const monthEvents = [...eventsByDay.entries()].sort(([a], [b]) => a - b).flatMap(([, events]) => events);
-  document.getElementById("calendarMonthCount").textContent = monthEvents.length;
+  const monthBirthdays = monthEvents.filter(event => event.eventType === "birthday").length, monthPlans = monthEvents.length - monthBirthdays;
+  document.getElementById("calendarMonthCount").textContent = [monthPlans ? `${monthPlans} ${monthPlans === 1 ? "plan" : "planes"}` : "", monthBirthdays ? `${monthBirthdays} ${monthBirthdays === 1 ? "cumpleaños" : "cumpleaños"}` : ""].filter(Boolean).join(" · ") || "Sin fechas";
   document.getElementById("calendarEventList").innerHTML = monthEvents.length ? monthEvents.map(event => calendarEventMarkup(event, true)).join("") : `<p class="calendar-month-empty">Todavía no hay fechas en la agenda.</p>`;
   renderCalendarSelectedDay();
 }
@@ -7981,6 +8035,9 @@ document.getElementById("loginForm").addEventListener("submit", async event => {
 document.getElementById("togglePassword").addEventListener("click", () => {
   const field = document.getElementById("loginPassword");
   field.type = field.type === "password" ? "text" : "password";
+  const toggle = document.getElementById("togglePassword");
+  toggle.setAttribute("aria-pressed", String(field.type === "text"));
+  toggle.setAttribute("aria-label", field.type === "text" ? "Ocultar contraseña" : "Mostrar contraseña");
 });
 document.getElementById("requiredPasswordChangeForm").addEventListener("submit", event => {
   event.preventDefault();

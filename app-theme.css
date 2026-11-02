@@ -357,3 +357,140 @@ body.authenticated :is(.message-form input, .message-form textarea, .inbox-searc
 #bannerShopDialog#bannerShopDialog .chota-shop-empty { padding: 32px 0; border: 0; color: var(--ds-text-2); }
 #bannerShopDialog#bannerShopDialog .chota-shop-empty button { min-height: 36px; border: 0; border-radius: 18px; background: var(--ds-raised); color: var(--ds-text); }
 #bannerShopDialog#bannerShopDialog .chota-shop-item.is-owned .chota-shop-purchase > span { display: none; }
+
+/* Calendar: round days, colored markers, El Chota on the chosen day and a compact month list. */
+#calendario#calendario { --cal-plan: hsl(210 90% 64%); --cal-birthday: hsl(330 85% 68%); }
+#calendario#calendario .calendar-month-panel, #calendario#calendario .calendar-agenda-panel { border: 0; border-radius: 20px; background: var(--ds-surface); box-shadow: none; }
+#calendario#calendario .calendar-month-panel { padding: 16px 12px 14px; }
+#calendario#calendario .calendar-navigation .icon-button { width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--ds-raised); }
+#calendario#calendario #calendarMonthTitle { font-size: var(--ds-text-lg); font-weight: 700; letter-spacing: -.01em; }
+#calendario#calendario #calendarMonthTitle::first-letter { text-transform: uppercase; }
+#calendario#calendario .calendar-grid { gap: 2px 0; }
+#calendario#calendario .calendar-weekday { color: var(--ds-text-3); font-size: 12px; font-weight: 600; }
+#calendario#calendario .calendar-day { display: grid; justify-items: center; align-content: start; gap: 3px; min-height: 52px; padding: 4px 0 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; -webkit-tap-highlight-color: transparent; }
+#calendario#calendario .calendar-day::before, #calendario#calendario .calendar-day::after { content: none; }
+#calendario#calendario .calendar-day > .calendar-day-number { display: grid; place-items: center; width: 36px; height: 36px; margin: 0; border-radius: 50%; background: transparent; color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 500; transition: background .18s, color .18s; }
+#calendario#calendario .calendar-day.is-past > .calendar-day-number { color: var(--ds-text-3); }
+#calendario#calendario .calendar-day.today > .calendar-day-number { background: transparent; color: var(--ds-text); font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--ds-text-2); }
+#calendario#calendario .calendar-day.selected { background: transparent; }
+#calendario#calendario .calendar-day.selected > .calendar-day-number { background: var(--ds-text); color: var(--bb2-canvas); font-weight: 700; box-shadow: none; }
+#calendario#calendario .calendar-day.has-birthday:not(.selected) > .calendar-day-number { background: hsl(330 85% 60% / .14); }
+#calendario#calendario .calendar-dots { display: flex; gap: 3px; height: 6px; }
+#calendario#calendario .calendar-dots i, #calendario#calendario .calendar-legend i { width: 6px; height: 6px; border-radius: 50%; background: var(--cal-plan); }
+#calendario#calendario .calendar-dots i.birthday, #calendario#calendario .calendar-legend i.birthday { background: var(--cal-birthday); }
+#calendario#calendario .calendar-legend { gap: 16px; margin-top: 8px; padding-top: 12px; border-top: .5px solid var(--ds-line); color: var(--ds-text-2); font-size: 12px; }
+#calendario#calendario .calendar-agenda-panel { padding: 18px 16px; }
+#calendario#calendario #calendarSelectedTitle { margin: 2px 0 14px; font-size: var(--ds-text-xl); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+#calendario#calendario #calendarSelectedTitle::first-letter { text-transform: uppercase; }
+#calendario#calendario .calendar-section-label { color: var(--ds-text-2); font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+#calendario#calendario .calendar-count { padding: 3px 10px; border-radius: 12px; background: var(--ds-raised); color: var(--ds-text-2); font-size: 12px; font-weight: 600; }
+#calendario#calendario .calendar-selected-events { display: grid; gap: 10px; }
+/* El Chota */
+.calendar-chota { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 4px; }
+.calendar-chota-sprite { flex: none; width: 84px; height: 84px; padding: 0; border: 0; background: transparent; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.calendar-chota-sprite > span { display: block; width: 100%; height: 100%; background: url("icons/mascot/chota-v2/chota-poses.webp") 0 0 / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0007); transform-origin: 50% 92%; }
+.calendar-chota.is-bouncing .calendar-chota-sprite > span { animation: calendar-chota-hop .55s cubic-bezier(.3, .7, .3, 1); }
+@keyframes calendar-chota-hop { 0%, 100% { transform: none; } 35% { transform: translateY(-14px) scale(1.04, .97); } 60% { transform: translateY(0) scale(1.06, .94); } 80% { transform: scale(.98, 1.02); } }
+.calendar-chota-bubble { position: relative; flex: 1; min-width: 0; margin-bottom: 18px; padding: 12px 14px; border-radius: 18px 18px 18px 6px; background: var(--ds-raised); }
+.calendar-chota-bubble::before { content: ""; position: absolute; left: -6px; bottom: 0; width: 12px; height: 12px; background: var(--ds-raised); clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.calendar-chota-bubble strong { display: block; margin-bottom: 2px; color: hsl(25 95% 66%); font-size: 12px; font-weight: 700; }
+.calendar-chota-bubble p { margin: 0; color: var(--ds-text); font-size: var(--ds-text-sm); line-height: 1.35; }
+.calendar-chota-action { margin-top: 10px; min-height: 34px; padding: 0 14px; border: 0; border-radius: 17px; background: var(--ds-text); color: var(--bb2-canvas); font: inherit; font-size: 13px; font-weight: 700; }
+.calendar-chota[data-mood="birthday"] .calendar-chota-bubble { background: linear-gradient(135deg, hsl(330 70% 45% / .35), hsl(280 60% 45% / .2)), var(--ds-raised); }
+.calendar-chota[data-mood="birthday"] .calendar-chota-bubble::before { background: hsl(330 40% 26%); }
+/* Selected-day cards */
+#calendario#calendario .calendar-selected-events .calendar-agenda-event { display: block; padding: 14px 14px 14px 18px; border: 0; border-radius: 16px; background: var(--ds-raised); box-shadow: inset 4px 0 0 var(--cal-plan); }
+#calendario#calendario .calendar-selected-events .calendar-agenda-event.birthday { box-shadow: inset 4px 0 0 var(--cal-birthday); }
+#calendario#calendario .calendar-selected-events .calendar-event-date { display: none; }
+#calendario#calendario .calendar-event-type { display: block; margin-bottom: 2px; color: var(--cal-plan); font-size: 13px; font-weight: 700; letter-spacing: 0; text-transform: none; }
+#calendario#calendario .birthday .calendar-event-type { color: var(--cal-birthday); }
+#calendario#calendario .calendar-agenda-event h4 { margin: 0 0 4px; font-size: var(--ds-text-md); font-weight: 700; }
+#calendario#calendario .calendar-agenda-event p { margin: 2px 0 0; color: var(--ds-text-2); font-size: var(--ds-text-sm); line-height: 1.35; }
+#calendario#calendario .calendar-agenda-event :is(.calendar-edit-event, .club-live-event-link) { display: inline-flex; align-items: center; min-height: 32px; margin: 12px 8px 0 0; padding: 0 12px; border: 0; border-radius: 16px; background: var(--ds-surface); color: var(--ds-text); font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; }
+#calendario#calendario .calendar-agenda-event .plan-attendance { margin-top: 12px; padding-top: 12px; border-top: .5px solid var(--ds-line); }
+/* Month list */
+#calendario#calendario .calendar-month-agenda { margin-top: 22px; padding-top: 0; border: 0; }
+#calendario#calendario #calendarEventList { display: grid; overflow: hidden; margin-top: 10px; border-radius: 16px; background: var(--ds-raised); }
+.calendar-month-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 12px; border: 0; background: transparent; color: var(--ds-text); font: inherit; text-align: left; -webkit-tap-highlight-color: transparent; }
+.calendar-month-row + .calendar-month-row { box-shadow: inset 0 .5px 0 var(--ds-line); }
+.calendar-month-row:active { background: var(--ds-surface); }
+.calendar-month-row time { display: grid; flex: none; place-items: center; align-content: center; width: 42px; height: 42px; border-radius: 12px; background: hsl(210 90% 60% / .16); color: var(--cal-plan, hsl(210 90% 64%)); line-height: 1; }
+.calendar-month-row.birthday time { background: hsl(330 85% 60% / .16); color: var(--cal-birthday, hsl(330 85% 68%)); }
+.calendar-month-row time strong { font-size: 17px; font-weight: 800; }
+.calendar-month-row time span { margin-top: 2px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.calendar-month-row-copy { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.calendar-month-row-copy strong { overflow: hidden; font-size: var(--ds-text-sm); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.calendar-month-row-copy small { overflow: hidden; color: var(--ds-text-2); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.calendar-month-row > svg { flex: none; width: 16px; height: 16px; fill: none; stroke: var(--ds-text-3); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#calendario#calendario .calendar-month-empty { margin: 0; padding: 16px; color: var(--ds-text-2); font-size: var(--ds-text-sm); }
+@media (prefers-reduced-motion: reduce) { .calendar-chota.is-bouncing .calendar-chota-sprite > span { animation: none; } }
+
+/* Sign in: El Chota greets the member over a soft glow; one clear form, no gold. */
+body:not(.authenticated) :is(.noise, .aurora, .gold-grid, .cursor-glow) { display: none; }
+.login-screen.bb-login { padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); background: #000; isolation: isolate; }
+.bb-login-glow { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.bb-login-glow i { position: absolute; width: 120vmax; height: 120vmax; border-radius: 50%; filter: blur(60px); opacity: .5; }
+.bb-login-glow i:first-child { top: -78vmax; left: -40vmax; background: radial-gradient(circle, hsl(22 95% 52% / .55), transparent 60%); animation: bb-login-drift 18s ease-in-out infinite alternate; }
+.bb-login-glow i:last-child { right: -60vmax; bottom: -90vmax; background: radial-gradient(circle, hsl(330 80% 50% / .35), transparent 60%); animation: bb-login-drift 22s ease-in-out infinite alternate-reverse; }
+@keyframes bb-login-drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
+.bb-login-shell { display: grid; gap: 28px; width: min(100%, 400px); }
+.bb-login-hero { display: grid; justify-items: center; text-align: center; }
+.bb-login-chota { width: 128px; height: 128px; margin-bottom: 6px; background: url("icons/mascot/chota-v2/chota-poses.webp") 60% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 14px 18px #000a); animation: bb-login-wave 3.2s ease-in-out infinite; transform-origin: 50% 92%; }
+@keyframes bb-login-wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.bb-login-badge { padding: 5px 12px; border-radius: 14px; background: #ffffff14; color: #ffffffb3; font-size: 12px; font-weight: 600; }
+.bb-login-hero h1 { margin: 14px 0 6px; color: #fff; font-family: var(--ds-font); font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1.05; }
+.bb-login-hero p { margin: 0; color: #ffffff99; font-size: 15px; }
+.bb-login-form.bb-login-form { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.bb-field { position: relative; display: flex; align-items: center; min-height: 56px; border-radius: 16px; background: #ffffff12; transition: background .18s, box-shadow .18s; }
+.bb-field:focus-within { background: #ffffff1c; box-shadow: inset 0 0 0 1.5px #ffffff59; }
+.bb-field-icon { flex: none; width: 20px; height: 20px; margin: 0 4px 0 16px; fill: none; stroke: #ffffff80; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bb-field input { flex: 1; min-width: 0; height: 56px; padding: 0 14px 0 10px; border: 0 !important; border-radius: 16px; background: transparent !important; color: #fff; font: 500 17px/1 var(--ds-font); box-shadow: none !important; outline: none !important; }
+.bb-field input::placeholder { color: #ffffff66; }
+.bb-field-action { display: grid; flex: none; place-items: center; width: 44px; height: 44px; margin-right: 6px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #ffffff80; }
+.bb-field-action svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bb-field-action[aria-pressed="true"] { color: #fff; }
+.bb-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.bb-login-form [data-account-recover] { order: 0; align-self: flex-end; margin: -2px 4px 0; padding: 4px 0; border: 0; background: transparent; color: #ffffffb3; font: 600 14px/1.3 var(--ds-font); }
+.bb-login-form .login-error:empty { display: none; }
+.bb-login-form .login-error { padding: 12px 14px; border-radius: 14px; background: hsl(4 80% 50% / .16); color: #ffb3ad; font-size: 14px; line-height: 1.4; }
+.bb-login-form .login-submit { min-height: 56px; margin-top: 4px; border: 0; border-radius: 16px; background: #fff; color: #000; font: 700 17px/1 var(--ds-font); box-shadow: 0 10px 30px #ffffff1f; transition: transform .15s var(--ds-press), opacity .15s; }
+.bb-login-form .login-submit:active { transform: scale(.98); }
+.bb-login-form .login-submit:disabled { opacity: .6; }
+.bb-login-divider { display: flex; align-items: center; gap: 12px; margin: 10px 0 2px; color: #ffffff73; font-size: 13px; }
+.bb-login-divider::before, .bb-login-divider::after { content: ""; flex: 1; height: .5px; background: #ffffff2e; }
+.bb-login-form .account-request-link { min-height: 52px; margin: 0; border: 0; border-radius: 16px; background: #ffffff14; color: #fff; font: 600 16px/1 var(--ds-font); }
+.bb-login-form .persistent-session-label { margin: 6px 0 0; color: #ffffff59; font-size: 12px; text-align: center; }
+.bb-login-form .offline-album-access { border-radius: 16px; }
+.bb-login-form > * { order: 1; }
+.bb-login-form > .bb-field, .bb-login-form > [data-account-recover] { order: 0; }
+@media (prefers-reduced-motion: reduce) { .bb-login-glow i, .bb-login-chota { animation: none; } }
+
+/* Request, recovery and verification sheets share the sign-in look. */
+.account-request-dialog.account-request-dialog { width: min(480px, calc(100vw - 24px)); padding: 20px 20px 24px; border: 0; border-radius: 28px; background: #141416; box-shadow: 0 30px 80px #000c; }
+.account-request-dialog::backdrop { background: #000000b3; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.account-request-dialog .request-dialog-head { flex-direction: row-reverse; }
+.account-request-dialog .request-dialog-head .eyebrow { display: none; }
+.account-request-dialog .request-dialog-head button { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #ffffff14; color: #ffffffcc; font-size: 22px; line-height: 1; }
+.account-request-dialog h2 { margin: 6px 0 8px; color: #fff; font-family: var(--ds-font); font-size: 28px; font-weight: 800; letter-spacing: -.025em; }
+.account-request-dialog h2::before { content: ""; display: block; width: 72px; height: 72px; margin: -8px 0 6px -6px; background: url("icons/mascot/chota-v2/chota-poses.webp") 0% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 8px 10px #0009); }
+.account-request-dialog .request-intro { margin: 0; color: #ffffff99; font-size: 15px; line-height: 1.45; }
+.account-request-dialog .request-identity-choice { display: grid; gap: 14px; margin-top: 20px; }
+.account-request-dialog [data-request-google] { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border: 0; border-radius: 16px; background: #fff; color: #111; font: 700 16px/1 var(--ds-font); }
+.account-request-dialog .request-identity-choice > span { display: flex; align-items: center; gap: 12px; color: #ffffff73; font-size: 13px; }
+.account-request-dialog .request-identity-choice > span::before, .account-request-dialog .request-identity-choice > span::after { content: ""; flex: 1; height: .5px; background: #ffffff2e; }
+.account-request-dialog .account-request-form { gap: 12px; margin-top: 16px; }
+.account-request-dialog .account-request-form label { gap: 6px; color: #ffffffb3; font-size: 13px; font-weight: 600; }
+.account-request-dialog .account-request-form input, .account-request-dialog .request-username { min-height: 52px; border: 0; border-radius: 14px; background: #ffffff12; color: #fff; font-size: 17px; }
+.account-request-dialog .account-request-form input { padding: 0 14px; }
+.account-request-dialog .account-request-form input:focus, .account-request-dialog .request-username:focus-within { background: #ffffff1c; box-shadow: inset 0 0 0 1.5px #ffffff59; }
+.account-request-dialog .request-username input { min-height: 52px; padding-left: 2px; background: transparent; box-shadow: none !important; }
+.account-request-dialog .request-username span { color: #ffffff80; font-weight: 600; }
+.account-request-dialog .request-password-hint, .account-request-dialog .request-footnote { margin: -4px 2px 0; color: #ffffff73; font-size: 12px; line-height: 1.45; }
+.account-request-dialog .login-submit { min-height: 54px; margin-top: 4px; border: 0; border-radius: 16px; background: #fff; color: #000; font: 700 17px/1 var(--ds-font); }
+.account-request-dialog .request-feedback { padding: 12px 14px; border-radius: 14px; background: #ffffff10; color: #fff; font-size: 14px; }
+.account-request-dialog .request-feedback.request-success { background: hsl(145 55% 40% / .2); color: #b8f0c9; }
+.account-request-dialog .request-recovery-link { display: flex; align-items: center; justify-content: center; min-height: 48px; margin-top: 14px; border-radius: 14px; background: #ffffff14; color: #fff; font-weight: 600; text-decoration: none; }
+.account-request-dialog .request-recovery-link.is-primary { background: #fff; color: #000; }
+.bb-login-form.bb-login-form > label.bb-field { display: flex; flex-direction: row; align-items: center; gap: 0; margin: 0; padding: 0; }
+.bb-login-form.bb-login-form > .login-submit { display: flex; align-items: center; justify-content: center; width: 100%; text-align: center; }
+.bb-login-form.bb-login-form > [data-account-recover] { width: auto; min-height: 0; text-align: right; }

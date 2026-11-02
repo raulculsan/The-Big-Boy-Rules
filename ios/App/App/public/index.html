@@ -74,61 +74,38 @@
   <link rel="stylesheet" href="app-update.css?v=20261030-app-update-440" />
   <link rel="stylesheet" href="ui-motion.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="design-system.css?v=20261102-theme-509" />
-  <link rel="stylesheet" href="app-theme.css?v=20261102-theme-540" />
+  <link rel="stylesheet" href="app-theme.css?v=20261102-login-546" />
 </head>
 <body>
 
-  <section class="login-screen" id="loginScreen">
-    <div class="login-background">
-      <span class="login-orbit orbit-one"></span>
-      <span class="login-orbit orbit-two"></span>
-      <span class="login-orbit orbit-three"></span>
-    </div>
-
-    <div class="login-shell">
-      <div class="login-brand-panel">
-        <div class="login-seal">
-          <span>THE BIG BOY</span>
-          <strong>BB</strong>
-          <small>RULES · PRIVATE CLUB</small>
-        </div>
-        <div class="login-brand-copy">
-          <span class="eyebrow">MEMBERS ONLY</span>
-          <h2>The Big Boy<br><em>Rules.</em></h2>
-          <p>Un espacio privado para los miembros de The Big Boy Rules.</p>
-        </div>
-      </div>
-
-      <div class="login-form-panel">
-        <form class="login-form" id="loginForm">
-          <span class="eyebrow">ACCESO PRIVADO</span>
-          <h1>Iniciar sesión</h1>
-          <p class="login-subtitle">Introduce tus credenciales para acceder al grupo.</p>
-
-          <label>
-            <span>Usuario</span>
-            <input id="loginUsername" name="username" autocomplete="username" placeholder="Ej. kike…" required>
-          </label>
-
-          <label>
-            <span>Contraseña</span>
-            <div class="password-field">
-              <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
-              <button type="button" id="togglePassword" aria-label="Mostrar contraseña">◉</button>
-            </div>
-          </label>
-
-          <div class="login-options">
-            <span class="persistent-session-label">✓ Sesión guardada en este dispositivo</span>
-          </div>
-
-          <div class="login-error" id="loginError" role="alert"></div>
-          <button class="login-submit" type="submit">Entrar al club</button>
-          <button type="button" class="account-request-link" data-request-account>Solicitar una cuenta</button>
-          <button type="button" id="offlineAlbumAccess" class="offline-album-access" hidden><strong>Ver álbum guardado</strong><small>Última colección de este dispositivo · Solo lectura</small></button>
-
-        </form>
-      </div>
+  <section class="login-screen bb-login" id="loginScreen">
+    <div class="bb-login-glow" aria-hidden="true"><i></i><i></i></div>
+    <div class="bb-login-shell">
+      <header class="bb-login-hero">
+        <span class="bb-login-chota" aria-hidden="true"></span>
+        <span class="bb-login-badge">Club privado</span>
+        <h1>The Big Boy Rules</h1>
+        <p>Entra con tu cuenta para volver al club.</p>
+      </header>
+      <form class="login-form bb-login-form" id="loginForm">
+        <label class="bb-field">
+          <span class="bb-visually-hidden">Usuario</span>
+          <svg class="bb-field-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          <input id="loginUsername" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Usuario" required>
+        </label>
+        <label class="bb-field">
+          <span class="bb-visually-hidden">Contraseña</span>
+          <svg class="bb-field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+          <button type="button" id="togglePassword" class="bb-field-action" aria-label="Mostrar contraseña"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </label>
+        <div class="login-error" id="loginError" role="alert"></div>
+        <button class="login-submit" type="submit">Entrar al club</button>
+        <div class="bb-login-divider" aria-hidden="true"><span>¿Aún no eres miembro?</span></div>
+        <button type="button" class="account-request-link" data-request-account>Solicitar una cuenta</button>
+        <button type="button" id="offlineAlbumAccess" class="offline-album-access" hidden><strong>Ver álbum guardado</strong><small>Última colección de este dispositivo · Solo lectura</small></button>
+        <p class="persistent-session-label">Tu sesión se queda guardada en este dispositivo.</p>
+      </form>
     </div>
   </section>
 
@@ -1002,10 +979,10 @@
   <script defer src="admin-console.js?v=20261102-theme-532"></script>
   <script defer src="native-auth.js?v=20261030-native-google-442"></script>
   <script defer src="profile-account-sheet.js?v=20261102-theme-532"></script>
-  <script defer src="account-security.js?v=20261030-account-screen-442"></script>
-  <script defer src="account-requests.js?v=20261030-native-google-442"></script>
+  <script defer src="account-security.js?v=20261102-login-546"></script>
+  <script defer src="account-requests.js?v=20261102-login-546"></script>
   <script defer src="chota-outdoor.js?v=20261030-outdoor-events-448"></script>
-  <script defer src="app.js?v=20261102-chota-life-544"></script>
+  <script defer src="app.js?v=20261102-login-546"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
