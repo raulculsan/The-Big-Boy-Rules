@@ -195,7 +195,9 @@ export default {async fetch(request:Request):Promise<Response>{
   const email=isEmail?identifier:target?.email||`${identifier}@bigboyrules.local`;
   const auth=createClient(url,publicKey,{auth:{persistSession:false,autoRefreshToken:false}});
   let {data,error}=await auth.auth.signInWithPassword({email,password:body.password});
-  if(error?.code==='email_not_confirmed'&&profile&&target&&!target.email_confirmed_at){
+  // Only the founding accounts predate verified contacts; any later unconfirmed
+  // user came from public sign-up and must never be confirmed here.
+  if(error?.code==='email_not_confirmed'&&profile&&target&&!target.email_confirmed_at&&Date.parse(target.created_at)<Date.parse('2026-07-30T00:00:00Z')){
    // Legacy approved users must reach the linking screen using their original
    // password. Auth confirmation here is NOT contact verification: the server
    // gate and recovery lookup exclude this marked address until its owner
