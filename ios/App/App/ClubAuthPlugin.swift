@@ -12,12 +12,19 @@ final class ClubAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPres
     private var session: ASWebAuthenticationSession?
     private var pending: CAPPluginCall?
 
+    /// Sign-in starts at Supabase; linking an identity gets Google's consent page, which must return to Supabase.
+    private static func authorizeURL(_ url: URL) -> Bool {
+        guard url.scheme == "https", url.user == nil, url.password == nil, url.port == nil || url.port == 443 else { return false }
+        if url.host == "nfvggpgeypkkqceivkaq.supabase.co" { return url.path.hasPrefix("/auth/v1/") }
+        let redirect = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "redirect_uri" }?.value
+        return url.host == "accounts.google.com" && url.path.hasPrefix("/o/oauth2/")
+            && redirect == "https://nfvggpgeypkkqceivkaq.supabase.co/auth/v1/callback"
+    }
+
     @objc func authenticate(_ call: CAPPluginCall) {
         DispatchQueue.main.async { [self] in
             guard self.pending == nil else { call.reject("Ya hay una vinculación abierta."); return }
-            guard let raw = call.getString("url"), let url = URL(string: raw),
-                  url.scheme == "https", url.host == "nfvggpgeypkkqceivkaq.supabase.co",
-                  url.path.hasPrefix("/auth/v1/") else {
+            guard let raw = call.getString("url"), let url = URL(string: raw), Self.authorizeURL(url) else {
                 call.reject("La dirección de vinculación no es válida."); return
             }
             self.pending = call

@@ -21,14 +21,18 @@ public class ClubAuthPlugin extends Plugin {
         return uri != null && "bigboyrules".equals(uri.getScheme()) && "auth".equals(uri.getHost())
             && "/callback".equals(uri.getPath()) && uri.getUserInfo() == null && uri.getPort() == -1;
     }
+    /** Sign-in starts at Supabase; linking an identity gets Google's consent page, which must return to Supabase. */
+    private static boolean authorizeUrl(Uri uri) {
+        if (!"https".equals(uri.getScheme()) || uri.getUserInfo() != null
+            || (uri.getPort() != -1 && uri.getPort() != 443) || uri.getPath() == null) return false;
+        if ("nfvggpgeypkkqceivkaq.supabase.co".equals(uri.getHost())) return uri.getPath().startsWith("/auth/v1/");
+        return "accounts.google.com".equals(uri.getHost()) && uri.getPath().startsWith("/o/oauth2/")
+            && "https://nfvggpgeypkkqceivkaq.supabase.co/auth/v1/callback".equals(uri.getQueryParameter("redirect_uri"));
+    }
     @Override public void load() { receive(getActivity().getIntent()); }
     @PluginMethod public void authenticate(PluginCall call) {
         Uri uri = Uri.parse(call.getString("url", ""));
-        if (!"https".equals(uri.getScheme()) || !"nfvggpgeypkkqceivkaq.supabase.co".equals(uri.getHost())
-            || uri.getUserInfo() != null || (uri.getPort() != -1 && uri.getPort() != 443)
-            || uri.getPath() == null || !uri.getPath().startsWith("/auth/v1/")) {
-            call.reject("La dirección de vinculación no es válida."); return;
-        }
+        if (!authorizeUrl(uri)) { call.reject("La dirección de vinculación no es válida."); return; }
         getActivity().runOnUiThread(() -> {
             if (pending != null) { call.reject("Ya hay una vinculación abierta."); return; }
             main.removeCallbacks(cancelled);

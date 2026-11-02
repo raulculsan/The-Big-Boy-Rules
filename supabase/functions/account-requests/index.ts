@@ -18,6 +18,8 @@ const configured=Boolean(((smtpUser && smtpPassword) || (mailKey && sender)) && 
 const appWeb='https://raulculsan.github.io/The-Big-Boy-Rules/';
 const originOf=(value:unknown)=>value==='app'?'app':'web';
 const appLink=(fragment:string,origin='web')=>`${appWeb}${origin==='app'?'?open=app':''}#${fragment}`;
+// The database owns the list of accepted providers; fail closed if it is unreachable.
+const permanentEmail=async(email:string)=>{const {data,error}=await client.rpc('contact_email_allowed',{p_email:email});return !error&&data===true;};
 const verificationLink=(id:string,token:string,origin='web')=>appLink(`account-request=${encodeURIComponent(id)}.${encodeURIComponent(token)}`,origin);
 function passwordError(value:string,name:string,username:string) {
  if(value.length<8||value.length>128) return "La contraseña debe tener entre 8 y 128 caracteres.";
@@ -131,6 +133,7 @@ export default {async fetch(request:Request):Promise<Response>{
   const kind=action==='reset'?'reset':'email';
   const {data:token}=await client.from('account_identity_tokens').select('*').eq('token_hash',await digest(body.token)).eq('kind',kind).is('used_at',null).gt('expires_at',new Date().toISOString()).maybeSingle();
   if(!token)return json({error:'Enlace no válido, utilizado o caducado.'},400);
+  if(!await permanentEmail(token.email))return json({error:'Este correo no se admite. Vincula tu correo personal de siempre.'},400);
   const {data:profile}=await client.from('profiles').select('username,display_name').eq('id',token.user_id).maybeSingle();
   if(!profile)return json({error:'La cuenta no está disponible.'},400);
   if(kind==='reset'){const policy=passwordError(body.password||'',profile.display_name,profile.username);if(policy)return json({error:policy},400);}
@@ -158,6 +161,7 @@ export default {async fetch(request:Request):Promise<Response>{
   if(factors?.factors?.some(f=>f.status==='verified')&&aal!=='aal2')return json({error:'Confirma primero el código de tu autenticador.'},403);
   const email=(body.email||'').trim().toLowerCase();
   if(!/^\S+@\S+\.\S+$/.test(email)||email.length>254||email.endsWith('.local'))return json({error:'Introduce un correo personal válido.'},400);
+  if(!await permanentEmail(email))return json({error:'Usa tu correo personal de siempre (Gmail, iCloud, Outlook, Yahoo, Proton…). No se admiten correos temporales.'},400);
   if(!await limit(`identity:${user.id}`,3,3600))return json({error:'Espera antes de solicitar otro enlace.'},429);
   await identityToken(user.id,email,'email',originOf(body.origin));return json({ok:true,message:'Te hemos enviado un enlace. Confirma el correo y pulsa Comprobar.'});
  }
