@@ -1029,8 +1029,16 @@ function prepareChatBackScene(panel, {entering = false} = {}) {
       if (activeChatMotionScene === scene) updateChatBackScene(scene, scene.offset);
     });
   }
+  // The tab bar belongs to the inbox: it appears only in the strip the chat has uncovered.
+  const tabBar = document.getElementById("floatingTabBar");
+  const tabBounds = tabBar?.getBoundingClientRect();
+  if (tabBounds?.width) Object.assign(scene, {tabBar, tabLeft: tabBounds.left, tabWidth: tabBounds.width});
   updateChatBackScene(scene, entering ? width : 0);
   return scene;
+}
+
+function chatBackTabClip(scene, offset) {
+  return `inset(-24px ${Math.max(0, scene.tabWidth + scene.tabLeft - offset)}px -24px -24px)`;
 }
 
 function updateChatBackScene(scene, offset, {syncKeyboard = true} = {}) {
@@ -1040,6 +1048,7 @@ function updateChatBackScene(scene, offset, {syncKeyboard = true} = {}) {
   if (scene.keyboardReady === false) return;
   scene.panel.style.setProperty("--chat-back-offset", `${clamped}px`);
   scene.preview.style.setProperty("--chat-back-list-offset", `${listOffset}px`);
+  if (scene.tabBar) scene.tabBar.style.clipPath = chatBackTabClip(scene, clamped);
   if (syncKeyboard) scene.keyboardNavigation?.update(clamped, scene.width);
 }
 
@@ -1056,6 +1065,7 @@ function cleanupChatBackScene(scene) {
   scene.panel?.classList.remove("chat-back-live-panel", "chat-back-button-exit");
   scene.panel?.style.removeProperty("--chat-back-offset");
   scene.preview?.style.removeProperty("--chat-back-list-offset");
+  scene.tabBar?.style.removeProperty("clip-path");
   if (scene.panelHeight) scene.panel.style.height = scene.panelHeight;
   else scene.panel?.style.removeProperty("height");
   if (scene.previewHeight) scene.preview.style.height = scene.previewHeight;
@@ -1085,7 +1095,11 @@ async function settleChatBackScene(scene, targetOffset) {
     scene.preview.animate([
       {transform: `translate3d(${from.listOffset}px,0,0)`},
       {transform: `translate3d(${to.listOffset}px,0,0)`}
-    ], options)
+    ], options),
+    ...(scene.tabBar ? [scene.tabBar.animate([
+      {clipPath: chatBackTabClip(scene, from.offset)},
+      {clipPath: chatBackTabClip(scene, to.offset)}
+    ], options)] : [])
   ];
   try {
     await Promise.all([...scene.animations.map(animation => animation.finished.catch(() => {})), keyboardSettled]);

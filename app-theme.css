@@ -317,3 +317,10 @@ body.authenticated #inicio .club-dashboard > :not(.clubhouse)::before, body.auth
 #profileEditor#profileEditor .profile-admin-action-grid .danger { color:#ff453a !important; }
 #profileEditor#profileEditor .form-feedback { margin:12px 0 0; font-size:13px; text-align:center; color:var(--row-muted); }
 #profileEditor#profileEditor .form-feedback:empty { display:none; }
+
+/* The pack stays solid while its balance loads; only an empty balance dims it. */
+body.authenticated #sobres .packs-art-button:disabled:not([data-empty]) { opacity: 1; }
+
+/* A caret already marks a text field: touch never draws a frame around it. */
+:root[data-input-modality="pointer"] :is(input, textarea, select):focus-visible { outline: none !important; }
+body.authenticated :is(.message-form input, .message-form textarea, .inbox-search input):is(:focus, :focus-visible) { outline: none !important; box-shadow: none !important; border-color: transparent !important; }

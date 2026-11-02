@@ -125,6 +125,9 @@
     -webkit-user-select: none;
   }
   body.chat-back-transition-active .chat-back-live-panel.chat-back-button-exit { pointer-events: none; }
+  /* The inbox owns the tab bar: it shows while a chat slides away and never rides the keyboard. */
+  body.authenticated.chat-focus.chat-back-transition-active:not(.chat-keyboard-open) .floating-tab-bar { display: flex !important; }
+  body.authenticated:is(.chat-inbox-view, .chat-focus):is(.chat-keyboard-open, :has(#inboxSearchInput:focus)) .floating-tab-bar { display: none !important; }
 }
 
 /* With UIKit's keyboard guide the WebView already ends above the keyboard.
@@ -154,7 +157,7 @@ body.native-keyboard-layout.authenticated.chat-focus.chat-keyboard-open .message
 .inbox-search svg { flex: 0 0 20px; width: 20px; height: 20px; fill: none; stroke: var(--club-muted); stroke-width: 1.65; stroke-linecap: round; }
 .inbox-search input { width: 100%; min-width: 0; height: 48px; padding: 0; border: 0; outline: 0; box-shadow: none; background: transparent; color: #f4f4f6; font: 400 16px/1.4 var(--font-body, Inter, sans-serif); }
 .inbox-search input::placeholder { color: var(--club-muted); }
-.inbox-search:focus-within { border-color: var(--interaction-strong); }
+:root[data-input-modality="keyboard"] .inbox-search:focus-within { border-color: var(--interaction-strong); }
 .inbox-filters { display: flex; align-items: center; gap: 24px; margin-top: 12px; }
 .inbox-filters button { position: relative; min-height: 44px; padding: 0 2px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--club-muted); font-size: 12px; font-weight: 500; }
 .inbox-filters button:last-child { margin-left: auto; color: #f4f4f6; }
@@ -318,7 +321,7 @@ body.authenticated .message-bubble:has(> .voice-note) .message-footer { margin-t
 body.authenticated .voice-note-toggle:focus-visible { outline: 2px solid #c6c6c6; outline-offset: 3px; }
 body.authenticated .voice-waveform-shell:has(.voice-note-seek:focus-visible) { outline: 2px solid #c6c6c6; outline-offset: 3px; border-radius: 4px; }
 body.authenticated :is(.private-conversation, .group-conversation) .message-form { border-color: #ffffff12; background: #1b1e25; box-shadow: inset 0 1px #ffffff04; }
-body.authenticated :is(.private-conversation, .group-conversation) .message-form:focus-within { border-color: #b2b2b250; }
+:root[data-input-modality="keyboard"] body.authenticated :is(.private-conversation, .group-conversation) .message-form:focus-within { border-color: #b2b2b250; }
 body.authenticated.chat-focus .message-form .composer-camera-button { background: transparent; color: #acb1bc; }
 body.authenticated.chat-focus .message-form .composer-send-button { background: #dfc48b; color: #221d14; box-shadow: none; }
 body.authenticated.chat-focus .message-form input { font-size: 16px; caret-color: #c6c6c6; }
