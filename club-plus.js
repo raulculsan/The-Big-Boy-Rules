@@ -188,5 +188,5 @@
  }
  function reset(){epoch++;state=null;notice='';busy=false;}
  function init(options){config=options;document.addEventListener('click',click);document.addEventListener('submit',submit);document.addEventListener('change',upload);}
- globalThis.ClubPlus={init,refresh,reset,view,ready:()=>Boolean(state),clearNotice(){notice='';},statusFor:id=>state?.statuses?.[id]||''};
+ globalThis.ClubPlus={init,refresh,reset,view,ready:()=>Boolean(state),clearNotice(){notice='';},statusFor:id=>state?.statuses?.[id]||'',snapshot:()=>state};
 })();

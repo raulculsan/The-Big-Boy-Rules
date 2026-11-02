@@ -25,23 +25,33 @@
   if(arcNode.dataset.markup!==markup){arcNode.innerHTML=markup;arcNode.dataset.markup=markup;}
   placeShowcase();
  }
+ const showcaseKey=owner=>`bb:card-showcase:v1:${user()}:${owner}`;
+ function savedShowcase(owner){try{const ids=JSON.parse(localStorage.getItem(showcaseKey(owner))||'null');return Array.isArray(ids)&&ids.every(id=>typeof id==='string')?ids:null;}catch{return null;}}
+ function saveShowcase(owner,ids){try{if(Array.isArray(ids))localStorage.setItem(showcaseKey(owner),JSON.stringify(ids));}catch{}}
  async function mountProfile(node,owner,own){
   if(!node||!owner||!user())return;
   lastProfile={node,owner,own};
   let section=node.querySelector('.profile-card-vitrine');
   if(!section){section=document.createElement('section');section.className='profile-card-vitrine';section.setAttribute('aria-label','Tu vitrina');(node.querySelector('.club-profile-identity')||node).after(section);}
   section.dataset.owner=owner;
-  if(!showcaseRequests.has(owner))showcaseRequests.set(owner,rpc('get_profile_card_showcase',{target_user_id:owner}).catch(e=>{showcaseRequests.delete(owner);throw e;}));
-  const version=epoch;
-  try{
-   const ids=await showcaseRequests.get(owner);if(version!==epoch||!section.isConnected||section.dataset.owner!==owner)return;
+  const paint=ids=>{
    const shown=ids.map(card).filter(Boolean);
    if(arcNode&&!arcNode.isConnected)arcNode=null;
    renderArc(shown);
    section.hidden=!own;
-   section.innerHTML=own?`<p>${shown.length?'Se muestran junto a tus datos.':'Elige hasta tres cartas para lucirlas en tu perfil.'}</p><button type="button" data-vitrine-edit>${shown.length?'Cambiar cartas':'Elegir cartas'}</button>`:'';
-   section.querySelector('[data-vitrine-edit]')?.addEventListener('click',()=>void editShowcase(owner,ids));
-  }catch(e){if(version===epoch&&section.isConnected){section.hidden=false;section.innerHTML=`<p role="status">${esc(friendly(e))}</p><button type="button" data-vitrine-retry>Volver a cargar</button>`;section.querySelector('[data-vitrine-retry]')?.addEventListener('click',()=>void mountProfile(node,owner,own));}}
+   const markup=own?`<p>${shown.length?'Se muestran junto a tus datos.':'Elige hasta tres cartas para lucirlas en tu perfil.'}</p><button type="button" data-vitrine-edit>${shown.length?'Cambiar cartas':'Elegir cartas'}</button>`:'';
+   if(section.dataset.markup!==markup){section.innerHTML=markup;section.dataset.markup=markup;}
+   const edit=section.querySelector('[data-vitrine-edit]');if(edit)edit.onclick=()=>void editShowcase(owner,ids);
+  };
+  // The last known cards paint with the profile; the RPC only corrects them.
+  const cached=savedShowcase(owner);
+  if(cached)paint(cached);else if(!showcaseRequests.has(owner))section.hidden=true;
+  if(!showcaseRequests.has(owner))showcaseRequests.set(owner,rpc('get_profile_card_showcase',{target_user_id:owner}).then(ids=>{saveShowcase(owner,ids);return ids;}).catch(e=>{showcaseRequests.delete(owner);throw e;}));
+  const version=epoch;
+  try{
+   const ids=await showcaseRequests.get(owner);if(version!==epoch||!section.isConnected||section.dataset.owner!==owner)return;
+   paint(ids);
+  }catch(e){if(cached)return;if(version===epoch&&section.isConnected){delete section.dataset.markup;section.hidden=false;section.innerHTML=`<p role="status">${esc(friendly(e))}</p><button type="button" data-vitrine-retry>Volver a cargar</button>`;section.querySelector('[data-vitrine-retry]')?.addEventListener('click',()=>void mountProfile(node,owner,own));}}
  }
  async function editShowcase(owner,ids){
   picker?.remove();const version=epoch;

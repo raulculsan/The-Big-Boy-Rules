@@ -4691,6 +4691,7 @@ function loadAchievements() {
           achievementProgress = (progressResult.data || []).map(item => ({achievementId:item.achievement_id, value:item.current_value, completedAt:item.completed_at}));
           achievementProgressUserId = userId;
           achievementProgressStatus = "ready";
+          rememberAchievementSnapshot(userId);
         }
       } while (request.pending && isCurrent());
     } catch (error) {
@@ -4710,6 +4711,26 @@ function loadAchievements() {
     }
   })();
   return request.promise;
+}
+
+// The profile paints the last known trophies at once; the network refresh replaces them.
+const achievementSnapshotKey = userId => `bb:achievements:v1:${config.supabaseUrl || "local"}:${userId}`;
+function rememberAchievementSnapshot(userId) {
+  try { localStorage.setItem(achievementSnapshotKey(userId), JSON.stringify({achievements, achievementAwards, achievementProgress, achievementCardScopes})); } catch {}
+}
+function restoreAchievementSnapshot(userId) {
+  if (achievementsLoaded) return;
+  try {
+    const saved = JSON.parse(localStorage.getItem(achievementSnapshotKey(userId)) || "null");
+    if (![saved?.achievements, saved?.achievementAwards, saved?.achievementProgress].every(Array.isArray)) return;
+    achievements = saved.achievements;
+    achievementAwards = saved.achievementAwards;
+    achievementProgress = saved.achievementProgress;
+    achievementCardScopes = saved.achievementCardScopes || null;
+    achievementProgressUserId = userId;
+    achievementProgressStatus = "ready";
+    achievementsLoaded = true;
+  } catch {}
 }
 
 async function deleteAchievement(id, name) {
@@ -4758,6 +4779,7 @@ function applyUserHeader(user) {
 
 async function hydrateAuthenticatedData(authUser) {
   const isCurrent = () => currentAuthUser?.id === authUser.id;
+  restoreAchievementSnapshot(authUser.id);
   // Only the visible Home's data and unread badges compete for the initial
   // connection. Other requests start independently once input/rendering is idle.
   const reportLoadFailure = (name, error) => console.warn(`[BigBoy startup] ${name} failed (${String(error?.code || error?.name || "unknown").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40)})`);
@@ -4784,7 +4806,8 @@ async function hydrateAuthenticatedData(authUser) {
     else { defer(loadChats); defer(loadPrivateMessages); }
     defer(loadNotificationPreferences);
     defer(connectRealtime);
-    defer(() => { if (!achievementsLoaded) return loadAchievements(); });
+    // A restored snapshot still needs its first network refresh.
+    defer(() => loadAchievements());
     const results = await Promise.allSettled(primary);
     if (!isCurrent()) return;
     globalThis.ClubHealth?.mark("home-ready");

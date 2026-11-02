@@ -28,6 +28,21 @@
     if (signature === memberBannerCacheSignature) return;
     try { localStorage.setItem(memberBannerCacheKey(owner), JSON.stringify({savedAt:Date.now(), banners})); memberBannerCacheSignature = signature; } catch {}
   }
+  // The own profile paints its last balance and banner at once; the shop RPC replaces them.
+  const profileSnapshotKey = owner => `bb:profile-wallet:v1:${options?.cacheNamespace || 'local'}:${owner}`;
+  function profileSnapshot(owner) {
+    try { const saved = JSON.parse(localStorage.getItem(profileSnapshotKey(owner)) || 'null'); return Number.isFinite(saved?.balance) ? saved : null; } catch { return null; }
+  }
+  function saveProfileSnapshot(owner) {
+    if (!state || !owner) return;
+    const banner = state.banners?.find(item => item.id === state.equipped_banner_id);
+    try { localStorage.setItem(profileSnapshotKey(owner), JSON.stringify({balance:Number(state.balance) || 0, banner:banner ? {id:banner.id, name:banner.name, art_key:banner.art_key, presentation:banner.presentation ?? null} : null})); } catch {}
+  }
+  const walletText = () => {
+    if (state) return Number(state.balance).toLocaleString('es-ES');
+    const saved = options?.session() ? profileSnapshot(options.session()) : null;
+    return saved ? Number(saved.balance).toLocaleString('es-ES') : '—';
+  };
   const visibleMemberTiles = new Set(), observedMemberTiles = new Set();
   const bannerVideos = new Set(), visibleBannerVideos = new WeakSet(), pendingBannerVideos = new WeakSet();
   const bannerMotionPreference = matchMedia('(prefers-reduced-motion: reduce)');
@@ -738,7 +753,7 @@
   function paintProfile() {
     if (!profileTarget?.node.isConnected) return;
     const {node, userId, own} = profileTarget;
-    const banner = own ? state?.banners?.find(item => item.id === state.equipped_banner_id) : memberBanners.get(userId);
+    const banner = own ? (state ? state.banners?.find(item => item.id === state.equipped_banner_id) : profileSnapshot(userId)?.banner) : memberBanners.get(userId);
     const identity = node.querySelector('.club-profile-identity');
     const avatar = identity?.querySelector('.club-profile-avatar');
     let hero = identity?.querySelector('.profile-banner-hero');
@@ -762,7 +777,7 @@
     }
     if (own) {
       const balance = node.querySelector('[data-wallet-balance]');
-      if (balance) balance.textContent = state ? Number(state.balance).toLocaleString('es-ES') : '—';
+      if (balance) balance.textContent = walletText();
       node.querySelector('[data-banner-shop]')?.setAttribute('aria-label', `Abrir tienda de banners. ${coins()}`);
       node.querySelector('[data-wallet]')?.setAttribute('aria-label', `Saldo: ${coins()}`);
     }
@@ -936,7 +951,7 @@
     const status = el('bannerShopStatus');
     if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); status.classList.toggle('is-passive', !failure && !!state); }
     if (el('bannerShopBalance')) el('bannerShopBalance').textContent = coins();
-    document.querySelectorAll('[data-wallet-balance]').forEach(node => {node.textContent = state ? Number(state.balance).toLocaleString('es-ES') : '—';});
+    document.querySelectorAll('[data-wallet-balance]').forEach(node => {node.textContent = walletText();});
     document.querySelectorAll('[data-wallet]').forEach(node => node.setAttribute('aria-label', `Saldo: ${coins()}`));
     if (el('ownedPackOpen')) el('ownedPackOpen').disabled = busy || loading || !state?.available_packs?.length || !online(); el('ownedPackOpen')?.toggleAttribute('data-empty', !busy && !loading && !!state && !state.available_packs?.length);
     if (el('packsStatusTitle')) el('packsStatusTitle').textContent = failure ? 'No se pudo actualizar' : busy || loading ? 'Sincronizando sobres' : !online() ? 'Sin conexión' : !state ? 'Consulta tus sobres' : state.available_packs?.length ? 'Sobres disponibles' : 'Sin sobres disponibles';
@@ -1072,7 +1087,7 @@
         await options?.synchronizePacks?.(forceDaily);
         if (token !== generation || user !== options.session()) return;
         const catalogRefresh = globalThis.CardCatalogSync?.refresh();
-        const data = await rpc('get_banner_shop_state'); if ((data.cards || []).some(item => !card(item.card_id))) await catalogRefresh; if (token === generation && user === options.session()) {state = {...data, banners:(data.banners || []).filter(banner => banner.id !== 'banner-de-prueba'), daily_banner_ids:Array.isArray(data.daily_banner_ids) ? data.daily_banner_ids.filter(id => id !== 'banner-de-prueba') : undefined, equipped_banner_id:data.equipped_banner_id === 'banner-de-prueba' ? null : data.equipped_banner_id}; scheduleShopReset(); saveInventory(user, data.cards); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
+        const data = await rpc('get_banner_shop_state'); if ((data.cards || []).some(item => !card(item.card_id))) await catalogRefresh; if (token === generation && user === options.session()) {state = {...data, banners:(data.banners || []).filter(banner => banner.id !== 'banner-de-prueba'), daily_banner_ids:Array.isArray(data.daily_banner_ids) ? data.daily_banner_ids.filter(id => id !== 'banner-de-prueba') : undefined, equipped_banner_id:data.equipped_banner_id === 'banner-de-prueba' ? null : data.equipped_banner_id}; scheduleShopReset(); saveInventory(user, data.cards); saveProfileSnapshot(user); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
       catch (error) { if (token === generation) {failure = errorMessage(error); render();} }
       finally {if (token === generation) {loading = false; request = null; render();}}
     })();
@@ -1152,6 +1167,7 @@
       if (equippingBanner && state) {
         const equipped = data.equipped_banner_id || null;
         state = {...state, equipped_banner_id:equipped, banners:state.banners.map(banner => ({...banner,equipped:banner.id === equipped}))};
+        saveProfileSnapshot(user);
         render();
       } else state = null;
       if (name === 'open_owned_card_pack') {
