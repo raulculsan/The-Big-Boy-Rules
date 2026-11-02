@@ -35,6 +35,14 @@
     const brushes = inRoom && kind === 'robot-vacuum' ? `<span class="chota-vacuum-brush" aria-hidden="true">${brush}</span><span class="chota-vacuum-brush chota-vacuum-brush--right" aria-hidden="true">${brush}</span>` : '';
     return `${brushes}<img${inRoom && kind === 'robot-vacuum' ? ' class="chota-vacuum-body"' : ''} src="${asset.src}" width="${asset.width}" height="${asset.height}" alt="" aria-hidden="true" decoding="async" loading="${inRoom ? 'eager' : 'lazy'}" draggable="false">`;
   };
+  function floorDepth(item) {
+    const p=remote(item);
+    if(p?.type==='decoration' && p.placement.y>=55) {
+      const feet=p.placement.y+p.placement.width*p.height/p.width*.9;
+      return feet>80?4:2;
+    }
+    return ['football','robot-vacuum'].includes(item.art_key)?4:item.art_key==='skateboard'?2:null;
+  }
   const known = new Set([...Object.keys(propArt),...Object.keys(roomStyles)]);
   function validState(data) {
     if (!data || !Array.isArray(data.items)) throw new Error('No se pudo leer la tienda del Chota.');
@@ -79,7 +87,7 @@
     if (layer.dataset.signature === signature) return;
     layer.dataset.signature = signature;
     // Seasonal art belongs to the room's own layer. Purchased decorations never replace it.
-    layer.innerHTML = owned.map(item => `<div class="chota-room-prop chota-room-${remote(item)?'remote':esc(item.art_key)}${remote(item)||propArt[item.art_key]?.decoration ? ' chota-room-prop--decoration' : ''}" data-chota-room-item="${esc(item.id)}" style="${globalThis.ShopCatalogMedia?.placement(remote(item)) || ''}">${art(item.art_key, true,item)}</div>`).join('');
+    layer.innerHTML = owned.map(item => `<div class="chota-room-prop chota-room-${remote(item)?'remote':esc(item.art_key)}${remote(item)||propArt[item.art_key]?.decoration ? ' chota-room-prop--decoration' : ''}" data-chota-room-item="${esc(item.id)}"${floorDepth(item)!==null?` data-chota-rest-z="${floorDepth(item)}"`: ''} style="${globalThis.ShopCatalogMedia?.placement(remote(item)) || ''};${floorDepth(item)!==null?`z-index:${floorDepth(item)};`: ''}">${art(item.art_key, true,item)}</div>`).join('');
   }
   function paintRooms() { for (const room of rooms) if (room.isConnected) paintRoom(room); paintMotion(); }
   function mountRoom(room) {

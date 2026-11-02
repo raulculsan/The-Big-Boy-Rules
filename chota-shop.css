@@ -1,6 +1,6 @@
 /* Props sit on the open floor; the vacuum route stays clear of furniture and El Chota. */
-.chota-room-props { position:absolute; inset:0; z-index:2; overflow:hidden; pointer-events:none; }
-.chota-room-prop { position:absolute; line-height:0; transform-origin:50% 90%; }
+.chota-room-props { position:absolute; inset:0; overflow:visible; pointer-events:none; }
+.chota-room-prop { position:absolute; z-index:2; line-height:0; transform-origin:50% 90%; }
 .chota-room-prop img { display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none; }
 /* Positions use the illustrated room's 1024px coordinates, including its furniture. */
 .chota-room-warm-lights { left:13%; top:.7%; width:67%; }
