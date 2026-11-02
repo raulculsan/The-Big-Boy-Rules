@@ -16,6 +16,12 @@ Migración `supabase/migrations/20261103090000_trophy_ladders.sql`. Cada familia
 | Vice City | Vice City distintas | 1 · 4 · 8 · 13 |
 | Abresobres | Sobres abiertos | 25 · 100 · 300 · 1.000 |
 | Reciclador | Copias repetidas descartadas | 25 · 100 · 300 · 1.000 |
+| Casa del Chota | Objetos distintos de la tienda del Chota | 1 · 3 · 6 · 11 |
+| Niveles del Chota | Niveles superados (3 juegos × 5) | 1 · 5 · 10 · 15 |
+| Partidas con el Chota | Partidas terminadas | 10 · 50 · 150 · 500 |
+| Reto del Chota | Retos semanales completados y cobrados | 1 · 4 · 12 · 26 |
+
+Las escaleras del Chota están en `supabase/migrations/20261103110000_chota_trophy_ladders.sql`. Si la tienda del Chota crece, revisar el platino de «Casa del Chota» (11 objetos).
 
 - «Tus próximos logros» solo muestra el escalón más bajo pendiente de cada escalera; el detalle enseña la escalera completa (conseguido, siguiente, bloqueado).
 - El progreso se reconstruye desde el historial real (`backfill_progression_achievement`), así que los escalones nuevos no empiezan de cero. Las actividades nuevas (`daily_streak_best`, `packs_opened`, `duplicates_discarded`) se cuentan con triggers en `card_packs` y `member_coin_ledger`.

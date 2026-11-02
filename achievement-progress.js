@@ -13,12 +13,17 @@
     daily_streak_best: Object.freeze({label:'Mejor racha de sobres diarios', unit:'días', hint:'Tu racha más larga recogiendo el sobre diario, contada desde tu historial. Si la racha se rompe, el récord se conserva.'}),
     packs_opened: Object.freeze({label:'Sobres abiertos', unit:'sobres', hint:'Cada sobre abierto suma una vez, desde tu historial. Los sobres guardados sin abrir no cuentan.'}),
     duplicates_discarded: Object.freeze({label:'Repetidas descartadas', unit:'cartas', hint:'Cada copia repetida que cambias por monedas suma una, desde tu historial.'}),
+    chota_items_owned: Object.freeze({label:'Objetos para el Chota', unit:'objetos', hint:'Cada objeto o estilo distinto comprado en la tienda del Chota suma una vez, desde tu historial.'}),
+    chota_levels_cleared: Object.freeze({label:'Niveles del Chota superados', unit:'niveles', hint:'Fútbol, skate y robot aspirador tienen 5 niveles cada uno. Cada nivel superado suma una vez.'}),
+    chota_games_played: Object.freeze({label:'Partidas con el Chota', unit:'partidas', hint:'Cada partida terminada en un juego del Chota suma una.'}),
+    chota_weekly_wins: Object.freeze({label:'Retos semanales del Chota', unit:'retos', hint:'Cada semana en la que completas el reto del Chota y cobras su premio suma uno.'}),
   });
   // Trophy ladders: one family per key, climbed step by step from bronze to platinum.
   const tracks = Object.freeze({
     'asistencia':'Asistencia', 'mensajes':'Mensajes', 'racha':'Racha diaria', 'los-nuestros':'Los Nuestros',
     'coleccionista':'Coleccionista', 'leyendas':'Leyendas', 'full-art':'Full Art', 'vice-city':'Vice City',
     'abresobres':'Abresobres', 'reciclador':'Reciclador',
+    'chota-casa':'Casa del Chota', 'chota-niveles':'Niveles del Chota', 'chota-partidas':'Partidas con el Chota', 'chota-reto':'Reto del Chota',
   });
   const trackLabel = key => tracks[key] || key;
   function validTarget(metric, target) {
@@ -35,6 +40,10 @@
     if (rule.metric === 'daily_streak_best') return `Recoge el sobre diario ${goal} ${plural ? 'días seguidos' : 'día'}`;
     if (rule.metric === 'packs_opened') return `Abre ${goal} ${plural ? 'sobres' : 'sobre'}`;
     if (rule.metric === 'duplicates_discarded') return `Descarta ${goal} ${plural ? 'cartas repetidas' : 'carta repetida'}`;
+    if (rule.metric === 'chota_items_owned') return `Compra ${goal} ${plural ? 'objetos distintos' : 'objeto'} en la tienda del Chota`;
+    if (rule.metric === 'chota_levels_cleared') return `Supera ${goal} ${plural ? 'niveles' : 'nivel'} en los juegos del Chota`;
+    if (rule.metric === 'chota_games_played') return `Juega ${goal} ${plural ? 'partidas' : 'partida'} con el Chota`;
+    if (rule.metric === 'chota_weekly_wins') return `Completa ${goal} ${plural ? 'retos semanales' : 'reto semanal'} del Chota`;
     if (rule.metric === 'group_messages') return `Envía ${goal} ${plural ? 'mensajes' : 'mensaje'} en el grupo · máximo 40 al día`;
     if (rule.metric === 'cards_acquired') {
       const editions = plural ? {common:'comunes',special:'especiales',epic:'épicas',legendary:'legendarias',retro:'retro',full_art:'Full Art',vice_city:'Vice City',halloween:'Halloween'} : {common:'común',special:'especial',epic:'épica',legendary:'legendaria',retro:'retro',full_art:'Full Art',vice_city:'Vice City',halloween:'Halloween'};

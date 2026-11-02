@@ -19,6 +19,11 @@ test('collection objectives describe exploration separately from earning packs',
   assert.equal(M.objective({metric:'packs_opened',target:25}),'Abre 25 sobres');
   assert.equal(M.objective({metric:'daily_streak_best',target:7}),'Recoge el sobre diario 7 días seguidos');
   assert.equal(M.objective({metric:'duplicates_discarded',target:1}),'Descarta 1 carta repetida');
+  assert.equal(M.objective({metric:'chota_items_owned',target:3}),'Compra 3 objetos distintos en la tienda del Chota');
+  assert.equal(M.objective({metric:'chota_levels_cleared',target:1}),'Supera 1 nivel en los juegos del Chota');
+  assert.equal(M.objective({metric:'chota_games_played',target:10}),'Juega 10 partidas con el Chota');
+  assert.equal(M.objective({metric:'chota_weekly_wins',target:1}),'Completa 1 reto semanal del Chota');
+  assert.equal(M.trackLabel('chota-casa'),'Casa del Chota');
   assert.equal(M.validTarget('cards_owned',1),false,'catalog is not an inventory');
 });
 function extract(name,next) {
