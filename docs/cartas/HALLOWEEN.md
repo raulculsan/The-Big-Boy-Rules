@@ -7,7 +7,7 @@ Rareza independiente `halloween`, publicada el 21 de octubre de 2026.
 - Reverso unificado: `icons/cards/reverso-halloween-v1.png`.
 - Tamaño: 948 × 1660 píxeles, sin márgenes adicionales ni deformación.
 - Probabilidad inicial: 1 % por hueco de miembro elegible. Los sobres conservan tres miembros, dos objetos y una ubicación; una carta ya obtenida en ese sobre queda excluida. Con un solo diseño Halloween no puede repetirse dentro del sobre.
-- Descarte de una repetida: 10 monedas.
+- Descarte de una repetida: 20 monedas.
 - Administración puede editar el porcentaje junto a las demás rarezas. Se resta un punto porcentual a Común para mantener el total en 100; Vice City conserva el 2 % configurado por administración.
 
 ## Diseño aprobado

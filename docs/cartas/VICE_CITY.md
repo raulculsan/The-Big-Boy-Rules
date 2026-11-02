@@ -8,7 +8,7 @@ Peso base **0,5 % por extracción individual**, inferior al 1 % Full Art. Distri
 
 Cada sobre sigue otorgando 6 cartas distintas: 3 miembros, 2 objetos y 1 ubicación. El sorteo renormaliza los pesos entre las rarezas disponibles de la categoría, excluyendo las agotadas en el mismo sobre. El 0,5 % es el peso base por extracción, no una garantía ni la probabilidad total de un sobre. Si falta catálogo de una categoría, falla sin consumir el sobre. Los premios ya abiertos y las copias existentes se conservan.
 
-Descartar cada copia repetida Vice City da **10 monedas**, conservando una copia. La misma recompensa se usa para el descarte individual y el conjunto. Las RPC siguen siendo la autoridad para inventarios y saldos.
+Descartar cada copia repetida Vice City da **20 monedas**, conservando una copia. La misma recompensa se usa para el descarte individual y el conjunto. Las RPC siguen siendo la autoridad para inventarios y saldos.
 
 ## Arte, reverso y foil
 

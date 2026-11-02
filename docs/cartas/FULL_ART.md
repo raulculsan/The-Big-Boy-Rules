@@ -19,7 +19,7 @@ Referencia principal: [José Enrique Fernández Cruz, Full Art, 93 PTS](miembros
 - Etiqueta visible: `Full Art`; clave del servidor: `full_art`.
 - Probabilidad base por extracción: **1 %**. Distribución actual: común 68,5 %, retro 12 %, especial 10 %, épica 6 %, legendaria 2 %, Full Art 1 %, Vice City 0,5 %; suma 100 %.
 - Cada sobre nuevo contiene seis cartas distintas: **3 miembros, 2 objetos y 1 ubicación**. Para cada carta se sortea la rareza entre las disponibles de su categoría, renormalizando los pesos cuando una rareza no tiene cartas disponibles o ya salió su última carta de esa categoría. El 1 % es un peso base, no una garantía por sobre. Si falta catálogo para cumplir alguna categoría, la apertura falla sin consumir el sobre. Los sobres ya abiertos conservan sus premios.
-- Descartar cada copia repetida Full Art da **8 monedas**, conservando una copia.
+- Descartar cada copia repetida Full Art da **16 monedas**, conservando una copia. El valor de cada rareza vive en `public.card_discard_reward`.
 - Álbum: sección propia Full Art con 20 huecos iniciales (10 miembros, 5 ubicaciones, 5 objetos), ampliable si el catálogo los supera.
 - Dar de alta cada nueva carta con ID propio en el catálogo del cliente y en `achievement_card_catalog`; no reemplazar otras ediciones de la misma persona salvo petición expresa.
 

@@ -47,7 +47,7 @@
     const count = known ? new Intl.NumberFormat('es-ES').format(data.available) : '—';
     if (status === 'ready') return {count, label:data.available===1?'sobre guardado':'sobres guardados',
       heading:data.welcome_credited_packs === 20 ? '20 sobres de bienvenida' : data.credited?`${data.credited_packs || 1} ${(data.credited_packs || 1) === 1 ? 'sobre recibido' : 'sobres recibidos'}`:'Saldo de sobres actualizado',
-      message:data.welcome_credited_packs === 20 ? 'Has recibido 20 sobres por tu primer acceso al club. Ya están guardados en tu cuenta.' : Number.isSafeInteger(data.streak_days) ? `Racha de ${data.streak_days} ${data.streak_days === 1 ? 'día' : 'días'} · ${data.daily_reward_packs} ${data.daily_reward_packs === 1 ? 'sobre diario' : 'sobres diarios'}.` : 'El siguiente sobre diario estará disponible mañana.', filled:true};
+      message:data.welcome_credited_packs === 20 ? 'Has recibido 20 sobres por tu primer acceso al club. Ya están guardados en tu cuenta.' : Number.isSafeInteger(data.streak_days) ? `Racha de ${data.streak_days} ${data.streak_days === 1 ? 'día' : 'días'} · ${data.daily_reward_packs} ${data.daily_reward_packs === 1 ? 'sobre diario' : 'sobres diarios'}${data.credited_coins > 0 ? ` y +${data.credited_coins} monedas` : ''}.` : 'El siguiente sobre diario estará disponible mañana.', filled:true};
     if (status === 'unavailable') return {count, label:'sobres guardados', heading:'Recarga diaria no configurada',
       message:'La recarga diaria no está activada en el servidor.', filled:false};
     if (status === 'error') return {count, label:known?'sobres · última sincronización':'sobres guardados',
@@ -82,6 +82,8 @@
       if (state.data !== renderedBalanceData) {
         renderedBalanceData = state.data;
         updateBalance(state.data?.available);
+        // The daily claim also pays coins; refresh the wallet when it did.
+        if (state.data?.credited_coins > 0) globalThis.ClubCoinMissions?.activity?.({coins:state.data.credited_coins});
       }
       const info=document.getElementById('packsInfoPanel');
       if(info) {
@@ -92,7 +94,7 @@
         welcome.hidden=state.data?.welcome_credited_packs!==20;
         welcome.textContent=welcome.hidden ? '' : 'Has recibido 20 sobres de bienvenida por tu primer acceso al club. Se conceden una sola vez por cuenta.';
         const streak=state.data?.streak_days, allowance=state.data?.daily_reward_packs;
-        rewards.textContent=(Number.isSafeInteger(streak) ? `Tu racha: ${streak} ${streak === 1 ? 'día' : 'días'} · ${allowance} ${allowance === 1 ? 'sobre hoy' : 'sobres hoy'}. ` : '')+'Racha: 1–2 días → 1 sobre; 3–6 → 2; 7–13 → 3; 14–29 → 4; 30 o más → 5. Trofeos: bronce 1 · plata 2 · oro 4 · platino 6 sobres.';
+        rewards.textContent=(Number.isSafeInteger(streak) ? `Tu racha: ${streak} ${streak === 1 ? 'día' : 'días'} · ${allowance} ${allowance === 1 ? 'sobre hoy' : 'sobres hoy'}. ` : '')+'Racha: 1–2 días → 2 sobres y 10 monedas; 3–6 → 3 y 15; 7–13 → 4 y 20; 14–29 → 5 y 25; 30 o más → 6 y 30. Trofeos: bronce 2 · plata 3 · oro 5 · platino 8 sobres.';
         let activities=info.querySelector('[data-pack-activities]');
         const enabled=state.data?.activity_reward_limit===3;
         if(enabled&&!activities){activities=document.createElement('p');activities.className='pack-rarity-odds';activities.dataset.packActivities='';info.append(activities);}

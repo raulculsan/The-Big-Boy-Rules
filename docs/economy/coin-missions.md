@@ -1,15 +1,20 @@
 # Monedas por participar
 
-Las seis vías comparten la cartera de la tienda. El cliente nunca decide el importe ni envía una cuenta destinataria.
+Todas las vías comparten la cartera de la tienda. El cliente nunca decide el importe ni envía una cuenta destinataria.
 
 | Actividad | Monedas | Límite |
 | --- | ---: | --- |
-| Superar un nivel nuevo | 5, 8, 10, 12 o 15 | Una vez por juego/nivel, niveles 1–5 |
-| Rutina de pelota o Roomba | 5 por juego | Una vez por juego y día de Madrid; hasta 10/día |
-| Tres objetivos semanales | 25 | Una vez por semana de Madrid |
-| Objetivo colectivo mensual | 30 | Una vez al mes por participante |
-| Foto de un plan al que asististe | 10 | Una vez por persona/plan/fecha; hasta 3 planes/día |
-| Completar página / rareza del álbum | 10 / 30 | Una vez por colección/rareza/página, o colección/rareza |
+| Entrar en el club (recarga diaria) | 10, 15, 20, 25 o 30 según la racha | Una vez por día de Madrid |
+| Superar un nivel nuevo | 10, 15, 20, 25 o 30 | Una vez por juego/nivel, niveles 1–5 |
+| Rutina de pelota o Roomba | 10 por juego | Una vez por juego y día de Madrid; hasta 20/día |
+| Tres objetivos semanales | 50 | Una vez por semana de Madrid |
+| Objetivo colectivo mensual | 60 | Una vez al mes por participante |
+| Foto de un plan al que asististe | 20 | Una vez por persona/plan/fecha; hasta 3 planes/día |
+| Completar página / rareza del álbum | 20 / 60 | Una vez por colección/rareza/página, o colección/rareza |
+
+Descartar repetidas paga por copia: común 2, retro y especial 4, épica 6, legendaria 10, Full Art 16, Vice City y Halloween 20 (`public.card_discard_reward`).
+
+La recarga diaria da 2 sobres con 1–2 días de racha, 3 con 3–6, 4 con 7–13, 5 con 14–29 y 6 a partir de 30. Los trofeos dan 2 (bronce), 3 (plata), 5 (oro) u 8 (platino) sobres.
 
 La misión semanal pide tres tipos de actividad: completar una partida validada, registrar una llegada a un plan y publicar una foto premiada. El reto colectivo reutiliza el progreso social mensual (dos planes con dos asistentes, cinco recuerdos y tres parejas de intercambio) y exige haber contribuido.
 
