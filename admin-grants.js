@@ -218,14 +218,14 @@
   // read each row and reapply themselves whenever its contents are replaced.
   let accountFilter = 'all';
   const folded = value => String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const rowMatches = (row, filter) => filter === 'online' ? !row.querySelector('.account-status.offline') : filter === 'admin' ? !!row.querySelector('.role-chip.admin') : true;
+  const rowMatches = (row, filter) => filter === 'online' ? row.dataset.online === 'true' : filter === 'admin' ? row.dataset.role === 'admin' : true;
   function filterAccounts() {
     const table = document.getElementById('adminUsersTable');
     if (!table) return;
-    const rows = [...table.querySelectorAll('.admin-member-card')], query = folded(document.getElementById('adminUsersSearch')?.value).replace(/^@/, '').trim();
+    const rows = [...table.querySelectorAll('[data-account-row]')], query = folded(document.getElementById('adminUsersSearch')?.value).replace(/^@/, '').trim();
     let shown = 0;
     rows.forEach(row => {
-      const visible = rowMatches(row, accountFilter) && folded(row.querySelector('.admin-member-copy')?.textContent).includes(query);
+      const visible = rowMatches(row, accountFilter) && folded(row.dataset.search).includes(query);
       row.hidden = !visible; if (visible) shown++;
     });
     document.querySelectorAll('[data-account-filter]').forEach(button => {

@@ -4860,13 +4860,19 @@ function renderAdminPanel() {
     <div class="admin-stat-card"><span>USUARIOS</span><strong>${visibleMembers.length}</strong><small>cuentas registradas</small></div>
     <div class="admin-stat-card"><span>ADMINISTRADORES</span><strong>${visibleMembers.filter(item => item.roleKey === "admin").length}</strong><small>visibles en el club</small></div>
     <div class="admin-stat-card"><span>EN LÍNEA</span><strong>${onlineUsers.length}</strong><small>presencia real ahora</small></div>`;
+  const onlineCount = visibleMembers.filter(user => onlineUsers.some(item => Number(item.legacy_id) === user.id)).length;
+  const accSummary = document.getElementById("accSummary");
+  if (accSummary) accSummary.innerHTML = [[visibleMembers.length, "miembros", "#5ac8fa"], [onlineCount, "en línea", "#30d158"], [visibleMembers.filter(item => item.roleKey === "admin").length, "admins", "#bf5af2"]]
+    .map(([value, label, tone]) => `<div class="acc-stat" style="--tone:${tone}"><strong>${value}</strong><span>${label}</span></div>`).join("");
+  // Rows carry their filter data as attributes, so styling never depends on legacy classes.
   table.innerHTML = visibleMembers.map(user => {
     const online = onlineUsers.some(item => Number(item.legacy_id) === user.id);
-    return `<button class="admin-member-card" type="button" data-edit-user="${user.id}" aria-label="Gestionar a ${escapeHtml(user.name)}">
-      <span class="admin-member-avatar">${getAvatar(user, "avatar small")}</span>
-      <span class="admin-member-copy"><strong>${escapeHtml(user.name)}</strong><small>@${escapeHtml(user.username)}</small></span>
-      <span class="role-chip ${user.roleKey}">${user.roleKey === "admin" ? "Administrador" : "Miembro"}</span>
-      <span class="account-status ${online ? "" : "offline"}"><i></i>${online ? "En línea" : "Desconectado"}</span>
+    const admin = user.roleKey === "admin";
+    return `<button class="acc-card" type="button" data-edit-user="${user.id}" data-account-row data-online="${online}" data-role="${admin ? "admin" : "member"}" data-search="${escapeHtml(`${user.name} ${user.username}`)}" aria-label="Gestionar a ${escapeHtml(user.name)}">
+      <span class="acc-avatar">${getAvatar(user, "avatar small")}<i class="acc-dot ${online ? "is-online" : ""}" aria-hidden="true"></i></span>
+      <span class="acc-copy"><strong>${escapeHtml(user.name)}</strong><small>@${escapeHtml(user.username)}</small></span>
+      <span class="acc-tags"><span class="acc-role ${admin ? "is-admin" : ""}">${admin ? "Admin" : "Miembro"}</span><small>${online ? "En línea" : "Desconectado"}</small></span>
+      <svg class="acc-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
     </button>`;
   }).join("");
   renderAdminAchievements();

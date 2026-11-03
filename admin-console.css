@@ -497,26 +497,3 @@ body.superadmin-console-session #administracion#administracion .request-admin-en
 #superAdminConsole .ctl-save-bar .ctl-primary { width:auto; min-height:46px; padding:0 18px; }
 @media (prefers-reduced-motion:reduce) { #superAdminConsole .ctl-odds-bar i { transition:none; } }
 
-/* Cuentas: member cards in a grid inside the console. */
-body.superadmin-console-session #admin-cuentas .admin-member-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr)); gap:10px; }
-body.superadmin-console-session #admin-cuentas .admin-member-card { display:grid; grid-template-columns:52px minmax(0,1fr) auto; grid-template-areas:"avatar copy role" "avatar status status"; align-items:center; gap:4px 12px; width:100%; min-height:84px; padding:14px; border:0; border-radius:20px; background:var(--bb2-panel); color:var(--bb2-ink); text-align:left; }
-body.superadmin-console-session #admin-cuentas .admin-member-avatar { grid-area:avatar; }
-body.superadmin-console-session #admin-cuentas .admin-member-avatar .avatar { width:52px; height:52px; }
-body.superadmin-console-session #admin-cuentas .admin-member-copy { grid-area:copy; display:grid; gap:2px; min-width:0; }
-body.superadmin-console-session #admin-cuentas .admin-member-copy strong { font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-body.superadmin-console-session #admin-cuentas .admin-member-copy small { color:var(--bb2-muted); font-size:12px; }
-body.superadmin-console-session #admin-cuentas .role-chip { grid-area:role; padding:4px 10px; border-radius:999px; background:var(--bb2-raised); color:var(--bb2-secondary); font-size:11px; font-weight:700; }
-body.superadmin-console-session #admin-cuentas .role-chip.admin { background:#bf5af226; color:#d79cff; }
-body.superadmin-console-session #admin-cuentas .account-status { grid-area:status; display:inline-flex; align-items:center; gap:6px; color:var(--bb2-muted); font-size:12px; }
-body.superadmin-console-session #admin-cuentas .account-status i { width:8px; height:8px; border-radius:50%; background:#30d158; box-shadow:0 0 0 3px #30d15826; }
-body.superadmin-console-session #admin-cuentas .account-status.offline i { background:var(--bb2-muted); box-shadow:none; }
-body.superadmin-console-session #admin-cuentas .admin-accounts-filters { display:flex; flex-wrap:wrap; gap:8px; }
-body.superadmin-console-session #admin-cuentas .admin-accounts-filters button { min-height:40px; padding:8px 14px; border:1px solid var(--bb2-line-strong); border-radius:999px; background:transparent; color:var(--bb2-secondary); font-weight:600; }
-body.superadmin-console-session #admin-cuentas .admin-accounts-filters button[aria-pressed="true"] { border-color:transparent; background:var(--bb2-ink); color:var(--bb2-canvas); }
-body.superadmin-console-session #admin-cuentas .admin-tool-disclosure { border:0; border-radius:20px; background:linear-gradient(120deg,#5ac8fa22,transparent 70%), var(--bb2-panel); }
-body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-users-panel { margin-top:14px; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
-body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-member-card { border:0 !important; border-radius:20px !important; background:var(--bb2-panel) !important; box-shadow:none !important; }
-body.superadmin-console-session #admin-cuentas#admin-cuentas .role-chip { border:0 !important; }
-body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-accounts-search { display:flex; align-items:center; gap:10px; width:100%; min-height:48px; margin:0 0 12px; padding:0 14px; border-radius:999px; background:var(--bb2-panel); }
-body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-accounts-search svg { width:20px; height:20px; flex:none; fill:none; stroke:var(--bb2-muted); stroke-width:1.8; }
-body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-accounts-search input { flex:1; min-width:0; min-height:46px; padding:0; border:0; background:transparent; color:var(--bb2-ink); font-size:16px; }
