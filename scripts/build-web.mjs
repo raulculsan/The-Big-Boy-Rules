@@ -78,6 +78,8 @@ const sources = [
   "collection-motion.js",
   "collection-social.js",
   "collection-social.css",
+  "card-economy.js",
+  "card-economy.css",
   "pending-actions.js",
   "pending-actions.css",
   "group-interactions.js",
