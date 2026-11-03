@@ -9,6 +9,7 @@
   let popupId = null, seen = new Set(), lastRefresh = 0, recovering = false, stateVersion = 0, seenOwner = null;
   let tradePage = 'desk', pickerOfferId = null, pickerCard = '', search = '';
   let draft = {peer:'',give:''}, createId = null, marksLoading = false;
+  let holders = {}, holdersLoading = false;
   const dialog = document.createElement('dialog'); dialog.className = 'collection-social-dialog'; dialog.setAttribute('aria-labelledby','collectionSocialTitle'); document.body.append(dialog);
   const tradeDialog = document.createElement('dialog'); tradeDialog.className = 'collection-social-dialog collection-trade-dialog'; tradeDialog.setAttribute('aria-labelledby','collectionTradeTitle'); document.body.append(tradeDialog);
   const requestDialog = document.createElement('dialog'); requestDialog.className = 'collection-social-dialog trade-request-dialog'; requestDialog.setAttribute('aria-labelledby','tradeRequestTitle'); document.body.append(requestDialog);
@@ -59,7 +60,21 @@
   }
   function cardTile(id,kind) {
     const card = design(id); if (!card) return '';
-    return `<article class="social-card" data-social-rarity="${esc(card.edition)}"><button type="button" class="social-card-art" data-social-view="${esc(id)}" aria-label="Ver ${esc(card.name)}">${cardImage(card)}</button><div><strong>${esc(card.name)}</strong><small>${esc(card.edition)}${card.score ? ` · ${esc(card.score)} PTS` : ''}</small></div><button type="button" class="social-remove" data-collection-mark="${kind}" data-mark-card="${esc(id)}" aria-label="Quitar ${esc(card.name)} de ${kind==='favorite'?'favoritas':'deseadas'}">${svg(kind)}</button></article>`;
+    return `<article class="social-card" data-social-rarity="${esc(card.edition)}"><button type="button" class="social-card-art" data-social-view="${esc(id)}" aria-label="Ver ${esc(card.name)}">${cardImage(card)}</button><div><strong>${esc(card.name)}</strong><small>${esc(card.edition)}${card.score ? ` · ${esc(card.score)} PTS` : ''}</small>${kind==='wanted'?holderList(id):''}</div><button type="button" class="social-remove" data-collection-mark="${kind}" data-mark-card="${esc(id)}" aria-label="Quitar ${esc(card.name)} de ${kind==='favorite'?'favoritas':'deseadas'}">${svg(kind)}</button></article>`;
+  }
+  // Who has a wanted card duplicated, so a trade can start with the right person.
+  function holderList(id) {
+    const list = holders[id];
+    if (!list) return holdersLoading ? '<p class="social-holders">Buscando quién la tiene…</p>' : '';
+    if (!list.length) return '<p class="social-holders">Nadie la tiene repetida todavía.</p>';
+    return `<p class="social-holders">La tiene${list.length===1?'':'n'} repetida:</p><div class="social-holder-actions">${list.slice(0,4).map(peer=>`<button type="button" data-wish-trade="${esc(peer.id)}" aria-label="Proponer un intercambio a ${esc(peer.name)}">${esc(peer.name)}</button>`).join('')}</div>`;
+  }
+  async function loadHolders() {
+    if (holdersLoading || !session()) return;
+    holdersLoading = true; render(); const token = epoch;
+    try { const data = await rpc('get_wanted_card_holders'); if (token === epoch) holders = data || {}; }
+    catch { /* The wishlist still works without the holder hint. */ }
+    finally { if (token === epoch) { holdersLoading = false; render(); } }
   }
   function cardImage(card,eager=false) {
     // Reuse the catalog/album recovery path when a cached thumbnail is missing.
@@ -176,12 +191,13 @@
     catch(error){if(token===epoch)failure=message(error);}
     finally{if(token===epoch){busy=false;render();}}
   }
-  function open(opener,section=tab) {if(section==='trades')return openTrades(opener);trigger=opener||document.activeElement;tab=['favorite','wanted'].includes(section)?section:'favorite';notice='';if(!dialog.open)dialog.showModal();render();dialog.querySelector('h2')?.focus({preventScroll:true});void refresh();}
+  function open(opener,section=tab) {if(section==='trades')return openTrades(opener);trigger=opener||document.activeElement;tab=['favorite','wanted'].includes(section)?section:'favorite';notice='';if(!dialog.open)dialog.showModal();render();dialog.querySelector('h2')?.focus({preventScroll:true});void refresh();if(tab==='wanted')void loadHolders();}
   function openTrades(opener){tradePage='desk';search='';pickerOfferId=null;trigger=opener||document.activeElement;notice='';if(!tradeDialog.open)tradeDialog.showModal();requestDialog.close();dialog.close();render();tradeDialog.querySelector('h2')?.focus({preventScroll:true});void refresh();}
   function handleClick(event){
     if(event.target.closest('[data-social-close]'))event.currentTarget.close();
     if(event.target.closest('[data-request-later]'))requestDialog.close();
-    const selected=event.target.closest('[data-social-tab]');if(selected){tab=selected.dataset.socialTab;failure='';notice='';render();}
+    const selected=event.target.closest('[data-social-tab]');if(selected){tab=selected.dataset.socialTab;failure='';notice='';render();if(tab==='wanted')void loadHolders();}
+    const wish=event.target.closest('[data-wish-trade]');if(wish){const peer=wish.dataset.wishTrade;openTrades(wish);draft={peer,give:''};createId=null;tradePage='cards';search='';render();tradeDialog.scrollTop=0;return;}
     if(event.target.closest('[data-social-retry]'))void refresh();
     const view=event.target.closest('[data-social-view]');if(view)globalThis.CardCollection?.open(view.dataset.socialView,view);
     if(event.target.closest('[data-trade-start]')){tradePage='members';search='';draft={peer:'',give:''};pickerOfferId=null;render();tradeDialog.scrollTop=0;}
@@ -216,5 +232,5 @@
   document.addEventListener('close',()=>setTimeout(checkIncoming,100),true);
   setInterval(()=>{if(session()&&!document.hidden&&!busy&&Date.now()-lastRefresh>30000)void recoverRequests();},30000);
   document.addEventListener('bb:card-catalog-updated', () => {if (dialog.open || tradeDialog.open) render();});
-  globalThis.CollectionSocial=Object.freeze({initialize(options){config=options;try{seen=new Set(JSON.parse(sessionStorage.getItem(seenKey())||'[]'));}catch{}mountTrigger();},configurePush(callback){pushDispatch=callback;},openTrades,async openTrade(id){openTrades();await refresh();const offer=tradeDialog.querySelector(`[data-trade-offer-id="${CSS.escape(String(id))}"]`);offer?.scrollIntoView({block:'center',behavior:'smooth'});},receiveNotification(){void recoverRequests();},update(cards){inventory=cards||[];state.marks=state.marks.filter(mark=>mark.kind!=='wanted'||!owned(mark.card_id));mountTrigger();if(dialog.open||tradeDialog.open)render();if(session()&&!loaded&&!loading&&Date.now()-lastRefresh>15000)void recoverRequests();},actions,marked,open,refresh,reset(){epoch++;inventory=[];state={marks:[],peers:[],trades:[]};loaded=false;loading=false;busy=false;marksLoading=false;pendingRequest=null;failure='';notice='';draft={peer:'',give:''};tradePage='desk';pickerOfferId=null;pickerCard='';search='';createId=null;lastRefresh=0;recovering=false;popupId=null;seenOwner=null;seen=new Set();dialog.close();tradeDialog.close();requestDialog.close();announce();mountTrigger();}});
+  globalThis.CollectionSocial=Object.freeze({initialize(options){config=options;try{seen=new Set(JSON.parse(sessionStorage.getItem(seenKey())||'[]'));}catch{}mountTrigger();},configurePush(callback){pushDispatch=callback;},openTrades,async openTrade(id){openTrades();await refresh();const offer=tradeDialog.querySelector(`[data-trade-offer-id="${CSS.escape(String(id))}"]`);offer?.scrollIntoView({block:'center',behavior:'smooth'});},receiveNotification(){void recoverRequests();},update(cards){inventory=cards||[];state.marks=state.marks.filter(mark=>mark.kind!=='wanted'||!owned(mark.card_id));mountTrigger();if(dialog.open||tradeDialog.open)render();if(session()&&!loaded&&!loading&&Date.now()-lastRefresh>15000)void recoverRequests();},actions,marked,open,refresh,reset(){epoch++;inventory=[];state={marks:[],peers:[],trades:[]};loaded=false;loading=false;busy=false;marksLoading=false;pendingRequest=null;failure='';notice='';draft={peer:'',give:''};tradePage='desk';pickerOfferId=null;pickerCard='';search='';createId=null;lastRefresh=0;recovering=false;popupId=null;seenOwner=null;seen=new Set();holders={};holdersLoading=false;dialog.close();tradeDialog.close();requestDialog.close();announce();mountTrigger();}});
 })();

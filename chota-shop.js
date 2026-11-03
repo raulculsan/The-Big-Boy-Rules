@@ -14,7 +14,8 @@
     'warm-lights': {src:'icons/clubhouse/props/warm-lights-v1.svg',width:700,height:112,decoration:true},
     'club-neon': {src:'icons/clubhouse/props/club-neon-v1.svg',width:220,height:80,decoration:true},
     'club-cushion': {src:'icons/clubhouse/props/club-cushion-v1.svg',width:120,height:110,decoration:true},
-    'vintage-radio': {src:'icons/clubhouse/props/vintage-radio-v1.svg',width:160,height:100,decoration:true}
+    'vintage-radio': {src:'icons/clubhouse/props/vintage-radio-v1.svg',width:160,height:100,decoration:true},
+    darts: {src:'icons/clubhouse/props/darts-board-v1.svg',width:128,height:140,decoration:true}
   });
   const roomStyles = Object.freeze({
     'room-midnight': {name:'Azul noche',wall:'#425d9a',floor:'#776077',rug:'#65539e'},

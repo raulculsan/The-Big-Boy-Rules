@@ -977,6 +977,7 @@
     if (state?.cards) lastInventory = state.cards;
     globalThis.CardAlbum?.update({cards:lastInventory, catalog:state?.card_catalog, loading:loading || busy, failure, savedAt:inventorySavedAt});
     globalThis.CollectionSocial?.update(lastInventory);
+    globalThis.CardEconomy?.update(lastInventory, state?.discard_rewards);
     const status = el('bannerShopStatus');
     if (status) { status.textContent = failure || (loading ? 'Actualizando colección…' : notice); status.classList.toggle('is-error', !!failure); status.classList.toggle('is-passive', !failure && !!state); }
     if (el('bannerShopBalance')) el('bannerShopBalance').textContent = coins();
@@ -1282,6 +1283,7 @@
   function initialize(config) {
     options = config;globalThis.ShopCatalogMedia?.configure(config.cacheNamespace);
     globalThis.CollectionSocial?.initialize({session:options.session,rpc:options.rpc,refreshInventory:() => refresh(true)});
+    globalThis.CardEconomy?.initialize({session:options.session,rpc:options.rpc,refreshInventory:() => refresh(true)});
     const duplicatesDialog = el('duplicatesDialog');
     if (duplicatesDialog?.parentElement !== document.body && duplicatesDialog) document.body.append(duplicatesDialog);
     duplicatesDialog?.addEventListener('close',() => {
@@ -1402,6 +1404,7 @@
     duplicatesOpener = null;
     globalThis.CardAlbum?.reset();
     globalThis.CollectionSocial?.reset();
+    globalThis.CardEconomy?.reset();
     revealDialog.close(); el('duplicatesDialog')?.close();
     el('bannerShopDialog')?.close(); if (el('ownedPackResult')) el('ownedPackResult').replaceChildren(); render();
   }

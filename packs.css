@@ -207,3 +207,14 @@ body.authenticated .topbar .top-actions{flex-shrink:0;gap:5px}
 
 /* Halloween: moonlight and ember particles; one-shot, transform/opacity only. */
 .reveal-haunted-moon{inset:5% 2%;border-radius:50%;background:radial-gradient(ellipse,#f3d6a244,transparent 65%);animation-name:reveal-bloom!important}.reveal-haunted-ring{inset:8px;border:2px solid #dca45c;border-radius:28px;box-shadow:0 0 20px #b86d3388,inset 0 0 15px #b86d3355;animation-name:reveal-wave!important}.reveal-haunted-ember{left:var(--x);top:var(--y);width:5px;height:9px;background:#ffc16a;border-radius:60% 10% 50% 10%;box-shadow:0 0 6px #f29844;animation-name:reveal-shard!important}
+
+/* Colección 02 teaser: visible from day one, locked until it is released. */
+#sobres#sobres .col-next { grid-column: 1 / -1; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 96px; align-items: center; gap: 14px; overflow: hidden; padding: 16px 16px 16px 18px; border-radius: 20px; background: linear-gradient(135deg, #1a2034, #0e111b); color: var(--ds-text); }
+#sobres#sobres .col-next::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle at 85% 40%, #8fa8ff2e, transparent 55%); pointer-events: none; }
+.col-next-copy { position: relative; z-index: 1; display: grid; justify-items: start; gap: 4px; min-width: 0; }
+.col-next-copy strong { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.col-next-copy small { color: var(--ds-text-2); font-size: 12px; line-height: 1.4; }
+.col-next-badge { margin-top: 6px; padding: 4px 10px; border-radius: 999px; background: #ffffff14; color: #c9d1dc; font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+.col-next-badge { display: inline-flex; align-items: center; gap: 6px; }
+.col-next-badge svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; }
+.col-next-art { position: relative; z-index: 1; width: 96px; height: auto; transform: rotate(6deg); filter: drop-shadow(0 10px 14px #0009); }

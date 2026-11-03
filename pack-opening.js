@@ -4,7 +4,7 @@
    and clip-path move; no player, canvas or layout loop. */
 (() => {
   'use strict';
-  const ART = `${globalThis.PACK_OPENING_ROOT || ""}icons/cards/sobre-los-nuestros-recortado-v2.png`;
+  const ART = `${globalThis.PACK_OPENING_ROOT || ""}icons/cards/sobre-coleccion-01-v3.png`;
   const FLARE = `${globalThis.PACK_OPENING_ROOT || ""}icons/cards/pack-seal-flare-v2.png`;
   const WIDTH = 1024, HEIGHT = 1536;
   // Pack edges and the tear line, in artwork pixels, just under the top crimp.

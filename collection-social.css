@@ -15,3 +15,4 @@
 .trade-page-header .trade-back:focus-visible{outline:2px solid #cacaca;outline-offset:3px;border-radius:6px}
 .trade-member-cta{justify-content:center;font-weight:650}
 .trade-start>.social-send{justify-content:center}
+.social-holders{margin:6px 0 0;color:var(--ds-text-3,#a1a1aa);font-size:11px;line-height:1.35}.social-holder-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.social-holder-actions button{min-height:36px;padding:6px 12px;border:1px solid var(--ds-line-strong,#ffffff38);border-radius:999px;background:transparent;color:var(--ds-text,#fff);font:inherit;font-size:12px;font-weight:600;-webkit-tap-highlight-color:transparent}

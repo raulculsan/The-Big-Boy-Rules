@@ -1,0 +1,134 @@
+<!doctype html>
+<!-- Source for the collection pack artwork. Render each variant to a 1024×1536
+     transparent PNG with headless Chrome (see artwork/packs/README.md). The
+     viewBox places the pack at x 128-894 with the crimp ending at y 178, the
+     geometry pack-opening.js and banner-shop.css tear along. -->
+<html lang="es"><head><meta charset="utf-8"><style>
+html,body{margin:0;background:transparent}
+svg{display:block;width:1024px;height:1536px}
+text{font-family:"Avenir Next Condensed","Avenir Next","Helvetica Neue",sans-serif}
+</style></head><body>
+<svg id="pack" viewBox="-96.4 -61.5 1219 1829" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="var(--m1)"/><stop offset=".35" stop-color="var(--m2)"/><stop offset=".55" stop-color="var(--m3)"/><stop offset=".8" stop-color="var(--m2)"/><stop offset="1" stop-color="var(--m4)"/>
+  </linearGradient>
+  <linearGradient id="metalV" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="var(--m3)"/><stop offset=".5" stop-color="var(--m4)"/><stop offset="1" stop-color="var(--m2)"/>
+  </linearGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="var(--b1)"/><stop offset=".55" stop-color="var(--b2)"/><stop offset="1" stop-color="var(--b3)"/>
+  </linearGradient>
+  <linearGradient id="curve" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset=".07" stop-color="#fff" stop-opacity=".10"/><stop offset=".16" stop-color="#000" stop-opacity="0"/>
+    <stop offset=".84" stop-color="#000" stop-opacity="0"/><stop offset=".93" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".6"/>
+  </linearGradient>
+  <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+    <stop offset=".18" stop-color="#fff" stop-opacity="0"/><stop offset=".26" stop-color="#fff" stop-opacity=".09"/><stop offset=".31" stop-color="#fff" stop-opacity="0"/>
+    <stop offset=".58" stop-color="#fff" stop-opacity="0"/><stop offset=".63" stop-color="#fff" stop-opacity=".05"/><stop offset=".66" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+  <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+    <stop offset="0" stop-color="var(--g1)" stop-opacity=".55"/><stop offset=".6" stop-color="var(--g1)" stop-opacity=".12"/><stop offset="1" stop-color="var(--g1)" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="medal" cx=".5" cy=".42" r=".6">
+    <stop offset="0" stop-color="var(--d1)"/><stop offset="1" stop-color="var(--d2)"/>
+  </radialGradient>
+  <pattern id="ridges" width="14" height="10" patternUnits="userSpaceOnUse">
+    <rect width="14" height="10" fill="url(#metalV)"/><rect width="5" height="10" fill="#000" opacity=".22"/><rect x="5" width="2" height="10" fill="#fff" opacity=".25"/>
+  </pattern>
+  <pattern id="monogram" width="120" height="120" patternUnits="userSpaceOnUse" patternTransform="rotate(-12)">
+    <text x="18" y="74" font-size="58" font-weight="700" fill="var(--m2)" opacity=".05">BB</text>
+  </pattern>
+  <clipPath id="bodyClip"><rect x="74" y="132" width="876" height="1372" rx="10"/></clipPath>
+  <clipPath id="medalClip"><circle cx="512" cy="810" r="292"/><rect x="180" y="810" width="664" height="390"/></clipPath>
+  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="18"/></filter>
+  <filter id="drop" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000" flood-opacity=".55"/></filter>
+</defs>
+
+<!-- Crimped seals -->
+<g filter="url(#drop)">
+  <path d="M56 54 h912 l-6 12 6 12 -6 12 6 12 -6 12 6 12 -6 12 6 12 v8 H56 v-8 l6 -12 -6 -12 6 -12 -6 -12 6 -12 -6 -12 6 -12 Z" fill="url(#ridges)"/>
+  <path transform="translate(0 100)" d="M56 1482 h912 l-6 -12 6 -12 -6 -12 6 -12 -6 -12 6 -12 -6 -12 6 -12 v-8 H56 v8 l6 12 -6 12 6 12 -6 12 6 12 -6 12 6 12 Z" fill="url(#ridges)"/>
+  <rect x="68" y="132" width="888" height="1372" rx="12" fill="url(#body)"/>
+</g>
+<rect x="56" y="126" width="912" height="10" fill="url(#metal)" opacity=".9"/>
+<rect x="56" y="1500" width="912" height="10" fill="url(#metal)" opacity=".9"/>
+
+<g clip-path="url(#bodyClip)">
+  <rect x="68" y="132" width="888" height="1372" fill="url(#monogram)"/>
+  <!-- Rays -->
+  <g transform="translate(512 810)" opacity="var(--rays)">
+    <g id="rays" fill="var(--g1)">
+      <path d="M-9 0 L0 -720 L9 0Z" opacity=".22"/><path d="M-9 0 L0 -720 L9 0Z" transform="rotate(15)" opacity=".12"/>
+    </g>
+    <use href="#rays" transform="rotate(30)"/><use href="#rays" transform="rotate(60)"/><use href="#rays" transform="rotate(90)"/>
+    <use href="#rays" transform="rotate(120)"/><use href="#rays" transform="rotate(150)"/><use href="#rays" transform="rotate(180)"/>
+    <use href="#rays" transform="rotate(210)"/><use href="#rays" transform="rotate(240)"/><use href="#rays" transform="rotate(270)"/>
+    <use href="#rays" transform="rotate(300)"/><use href="#rays" transform="rotate(330)"/>
+  </g>
+  <ellipse cx="512" cy="800" rx="420" ry="420" fill="url(#glow)"/>
+  <rect x="68" y="132" width="888" height="1372" fill="url(#sheen)"/>
+</g>
+
+<!-- Frame -->
+<rect x="104" y="166" width="816" height="1304" rx="8" fill="none" stroke="url(#metal)" stroke-width="3"/>
+<rect x="118" y="180" width="788" height="1276" rx="4" fill="none" stroke="url(#metal)" stroke-width="1.2" opacity=".55"/>
+<g fill="url(#metal)">
+  <path d="M104 214 v-48 h48 v6 h-42 v42Z"/><path d="M920 214 v-48 h-48 v6 h42 v42Z"/>
+  <path d="M104 1422 v48 h48 v-6 h-42 v-42Z"/><path d="M920 1422 v48 h-48 v-6 h42 v-42Z"/>
+</g>
+
+<!-- Title -->
+<text x="512" y="262" text-anchor="middle" font-size="34" font-weight="600" letter-spacing="14" fill="url(#metal)">COLECCIÓN <tspan id="number">01</tspan></text>
+<g transform="translate(512 300)"><rect x="-150" y="-1" width="300" height="2" fill="url(#metal)" opacity=".7"/><rect x="-7" y="-7" width="14" height="14" transform="rotate(45)" fill="url(#metal)"/></g>
+<text id="title" x="512" y="408" text-anchor="middle" font-size="112" font-weight="700" letter-spacing="6" fill="url(#metal)">LOS NUESTROS</text>
+
+<!-- Medallion and Chota -->
+<circle cx="512" cy="810" r="300" fill="url(#medal)" stroke="url(#metal)" stroke-width="6"/>
+<circle cx="512" cy="810" r="276" fill="none" stroke="url(#metal)" stroke-width="1.5" opacity=".6" stroke-dasharray="2 10"/>
+<g clip-path="url(#medalClip)">
+  <ellipse cx="512" cy="1092" rx="190" ry="26" fill="#000" opacity=".45" filter="url(#soft)"/>
+</g>
+<g id="mascotGroup" filter="url(#drop)">
+  <image id="mascot" href="../../icons/mascot/tigreton.png" x="232" y="516" width="560" height="590" style="image-rendering:pixelated"/>
+</g>
+
+<!-- Ribbon -->
+<g transform="translate(512 1192)">
+  <path d="M-330 -46 H330 L300 0 L330 46 H-330 L-300 0Z" fill="url(#metal)"/>
+  <path d="M-312 -36 H312 L288 0 L312 36 H-312 L-288 0Z" fill="none" stroke="var(--ink)" stroke-opacity=".35" stroke-width="2"/>
+  <text id="ribbon" y="14" text-anchor="middle" font-size="40" font-weight="700" letter-spacing="10" fill="var(--ink)">THE BIG BOY RULES</text>
+</g>
+
+<!-- Footer -->
+<text id="kicker" x="512" y="1320" text-anchor="middle" font-size="38" font-weight="600" letter-spacing="8" fill="url(#metal)">6 CARTAS POR SOBRE</text>
+<text id="motto" x="512" y="1374" text-anchor="middle" font-size="30" font-weight="500" letter-spacing="2" fill="var(--motto)">No es un grupo. Es historia.</text>
+
+<!-- Plastic curvature -->
+<rect x="68" y="132" width="888" height="1372" rx="12" fill="url(#curve)"/>
+</svg>
+<script>
+// ?variant=02 renders the locked Colección 02 teaser.
+const variant = new URLSearchParams(location.search).get('variant') || '01';
+const themes = {
+  '01': {m1:'#7a5418',m2:'#e7c27a',m3:'#fff3c9',m4:'#9b6c22',b1:'#16181d',b2:'#0c0d10',b3:'#121316',g1:'#f2c46a',d1:'#2a2418',d2:'#0e0d0b',ink:'#1a1306',motto:'#d8c79f',rays:1},
+  '02': {m1:'#4f5866',m2:'#c9d1dc',m3:'#ffffff',m4:'#6f7a89',b1:'#151a2a',b2:'#0b0e18',b3:'#121624',g1:'#8fa8ff',d1:'#1d2438',d2:'#0b0e18',ink:'#10141f',motto:'#aab6cc',rays:.8}
+};
+const svg = document.getElementById('pack');
+for (const [key, value] of Object.entries(themes[variant])) svg.style.setProperty('--' + key, value);
+document.getElementById('number').textContent = variant;
+if (variant === '02') {
+  document.getElementById('title').textContent = 'PRÓXIMAMENTE';
+  document.getElementById('kicker').textContent = 'NUEVOS MIEMBROS · NUEVAS CARTAS';
+  document.getElementById('motto').textContent = 'La historia continúa.';
+  // Chota as a silhouette: who will be in the next collection is a secret.
+  const mascot = document.getElementById('mascot');
+  mascot.style.filter = 'brightness(0)';
+  mascot.setAttribute('opacity', '.92');
+  const mark = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  Object.entries({x:512, y:782, 'text-anchor':'middle', 'font-size':150, 'font-weight':700, fill:'url(#metal)'}).forEach(([k, v]) => mark.setAttribute(k, v));
+  mark.textContent = '?';
+  document.getElementById('mascotGroup').after(mark);
+}
+</script>
+</body></html>

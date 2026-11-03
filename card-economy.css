@@ -1,0 +1,48 @@
+/* Fusion and market dialogs. They reuse the collection-social dialog shell;
+   these rules only add the card grid, counters, prices and the result. */
+.economy-dialog .economy-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.economy-dialog .economy-tabs button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--ds-line, #ffffff1f); border-radius: 999px; background: transparent; color: var(--ds-text-2, #ebebf5b3); font: inherit; font-size: 13px; font-weight: 600; -webkit-tap-highlight-color: transparent; }
+.economy-dialog .economy-tabs button[aria-pressed="true"] { border-color: var(--ds-line-strong, #ffffff38); background: var(--ds-raised, #2c2c2e); color: var(--ds-text, #fff); }
+.economy-dialog .economy-tabs b { color: var(--ds-text-3, #a1a1aa); font-size: 11px; font-weight: 700; }
+.economy-recipe { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: baseline; margin: 16px 0 12px; }
+.economy-recipe strong { font-size: 15px; }
+.economy-recipe span { color: var(--ds-text-2, #ebebf5b3); font-size: 12px; font-variant-numeric: tabular-nums; }
+.economy-recipe progress { grid-column: 1 / -1; width: 100%; height: 6px; appearance: none; border: 0; border-radius: 6px; overflow: hidden; background: var(--ds-raised, #2c2c2e); accent-color: #34c759; }
+.economy-recipe progress::-webkit-progress-bar { background: var(--ds-raised, #2c2c2e); }
+.economy-recipe progress::-webkit-progress-value { background: #34c759; }
+.economy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; margin: 12px 0 0; }
+.economy-card { display: grid; gap: 4px; align-content: start; min-width: 0; padding: 10px; border: 1px solid var(--ds-line, #ffffff1f); border-radius: 16px; background: var(--ds-surface, #1c1c1e); }
+.economy-card.is-picked { border-color: var(--ds-line-strong, #ffffff38); background: var(--ds-raised, #2c2c2e); }
+.economy-card-art { display: block; width: 100%; padding: 0; border: 0; background: none; aspect-ratio: 948 / 1660; overflow: hidden; border-radius: 10px; -webkit-tap-highlight-color: transparent; }
+.economy-card-art img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.economy-card strong { margin-top: 4px; font-size: 12px; line-height: 1.25; overflow-wrap: anywhere; }
+.economy-card small { color: var(--ds-text-3, #a1a1aa); font-size: 11px; line-height: 1.3; }
+.economy-card > button:not(.economy-card-art) { min-height: 40px; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--ds-line-strong, #ffffff38); border-radius: 999px; background: transparent; color: var(--ds-text, #fff); font: inherit; font-size: 12px; font-weight: 600; }
+.economy-card > .social-primary { border: 0; }
+.economy-price { margin-top: 2px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.economy-stepper { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; margin-top: 6px; }
+.economy-stepper button { width: 40px; height: 40px; border: 1px solid var(--ds-line-strong, #ffffff38); border-radius: 50%; background: transparent; color: var(--ds-text, #fff); font-size: 20px; line-height: 1; -webkit-tap-highlight-color: transparent; }
+.economy-stepper button:disabled { opacity: .3; }
+.economy-stepper output { text-align: center; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.economy-dock { position: sticky; bottom: 0; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin: 16px -4px 0; padding: 12px 4px 4px; background: linear-gradient(transparent, var(--ds-surface, #1c1c1e) 30%); }
+.economy-dock button { min-height: 46px; padding: 10px 18px; border: 1px solid var(--ds-line-strong, #ffffff38); border-radius: 999px; background: transparent; color: var(--ds-text, #fff); font: inherit; font-size: 14px; font-weight: 600; }
+.economy-dock .social-primary { border: 0; }
+.economy-dock button:disabled { opacity: .4; }
+.economy-result { display: grid; justify-items: center; gap: 8px; padding: 24px 0 8px; text-align: center; animation: economy-reveal .5s cubic-bezier(.2, 1.2, .35, 1) both; }
+.economy-result .social-card-art { width: min(220px, 60vw); padding: 0; border: 0; background: none; }
+.economy-result .social-card-art img { width: 100%; height: auto; border-radius: 14px; box-shadow: 0 18px 40px #0008; }
+.economy-result strong { font-size: 18px; }
+.economy-result small { color: var(--ds-text-2, #ebebf5b3); }
+.economy-sell { display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: start; margin-top: 16px; }
+.economy-sell strong { display: block; font-size: 16px; }
+.economy-sell small { color: var(--ds-text-3, #a1a1aa); }
+.economy-sell .social-field { display: grid; gap: 6px; margin-top: 12px; font-size: 12px; color: var(--ds-text-2, #ebebf5b3); }
+.economy-sell input { min-height: 46px; padding: 10px 12px; border: 1px solid var(--ds-line-strong, #ffffff38); border-radius: 12px; background: var(--ds-raised, #2c2c2e); color: var(--ds-text, #fff); font: inherit; font-size: 16px; }
+.economy-history { margin: 12px 0 0; padding: 0; list-style: none; }
+.economy-history li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--ds-line, #ffffff1f); }
+.economy-history li span { color: var(--ds-text-2, #ebebf5b3); font-size: 12px; }
+.economy-history li time { grid-row: 1 / span 2; grid-column: 2; align-self: center; color: var(--ds-text-3, #a1a1aa); font-size: 11px; }
+.economy-dialog :is(button, input):focus-visible { outline: 2px solid var(--interaction-strong, #ffffff80); outline-offset: 2px; }
+@keyframes economy-reveal { from { opacity: 0; transform: scale(.85) translateY(12px); } }
+@media (max-width: 420px) { .economy-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .economy-sell { grid-template-columns: 96px 1fr; } }
+@media (prefers-reduced-motion: reduce) { .economy-result { animation: none; } }

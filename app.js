@@ -5671,7 +5671,7 @@ async function loadChatChannels({refreshMessages = true} = {}) {
 const notificationPreferenceCategories = [
   {key:"chats",title:"Chats",detail:"Mensajes privados y de grupo",symbol:"↗"},
   {key:"agenda",title:"Agenda",detail:"Nuevos planes y cumpleaños",symbol:"◷"},
-  {key:"collection",title:"Sobres y colección",detail:"Sobres diarios y regalos del club",symbol:"◇"},
+  {key:"collection",title:"Sobres y colección",detail:"Sobres, intercambios, mercado y regalos del club",symbol:"◇"},
   {key:"news",title:"Noticias",detail:"Avisos al abrir o actualizar las noticias · sin push",symbol:"≋"},
   {key:"activity",title:"Actividad",detail:"Me gusta, respuestas y publicaciones",symbol:"♡"}
 ];
@@ -5722,7 +5722,9 @@ function notificationPresentation(item,actor) {
     pack_granted:{title:"Sobres recibidos",kind:"Tu colección",system:true,symbol:"◇"},
     news_update:{title:"Noticias del club",kind:"Actualidad · dentro de la app",system:true,symbol:"≋"},
     trade_offer:{title:"Propuesta de intercambio",kind:`Colección · ${who}`,system:true,symbol:"⇄"},
-    trade_resolved:{title:"Intercambio actualizado",kind:"Tu colección",system:true,symbol:"⇄"}
+    trade_resolved:{title:"Intercambio actualizado",kind:"Tu colección",system:true,symbol:"⇄"},
+    card_wanted:{title:"Buscan tu repetida",kind:`Colección · ${who}`,system:true,symbol:"♡"},
+    card_sold:{title:"Carta vendida",kind:`Mercado · ${who}`,system:true,symbol:"◎"}
   };return values[item.type] || {title:"Actividad del club",kind:"Nuevo aviso",system:true,symbol:"◇"};
 }
 document.getElementById("notificationPreferenceOptions")?.addEventListener("change",event=>{const input=event.target.closest("[data-notification-preference]");if(input)void saveNotificationPreference(input.dataset.notificationPreference,input.checked);});
@@ -5927,8 +5929,9 @@ async function openNotification(id) {
     const actor = getMemberByAuthId(item.actorId);
     if (actor) openPrivateConversation(actor.id);
   } else if (item.type === "event_created") goTo("calendario");
-  else if (["pack_granted","trade_offer","trade_resolved"].includes(item.type)) {
-    if(item.type.startsWith("trade_")) globalThis.CollectionSocial?.openTrades();
+  else if (["pack_granted","trade_offer","trade_resolved","card_wanted","card_sold"].includes(item.type)) {
+    if(item.type==="card_sold") {goTo("sobres");globalThis.CardEconomy?.openMarket();}
+    else if(item.type.startsWith("trade_")||item.type==="card_wanted") globalThis.CollectionSocial?.openTrades();
     else goTo("sobres");
   } else if (item.type === "account_request" && canManageSite()) {goTo("administracion");document.querySelector("[data-open-account-requests]")?.click();}
   else if (item.type === "group_poll" || item.type === "group_mention") void openGroupConversation(item.targetId);
@@ -8783,6 +8786,7 @@ globalThis.DailyPacks?.initialize({
   session: () => backendReady && currentAuthUser?.id,
   visible: () => !document.hidden,
   rpc: signal => db.rpc("claim_daily_card_pack").abortSignal(signal),
+  buyShield: price => db.rpc("buy_streak_shield", {expected_price: price}),
 });
 globalThis.TrophyUnlock?.initialize({
   canShow: () => !!currentAuthUser && document.body.classList.contains("authenticated") && !activeAudioRecording,

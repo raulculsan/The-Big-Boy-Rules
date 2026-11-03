@@ -85,7 +85,7 @@
   if(button.dataset.coinMore){expanded.has(button.dataset.coinMore)?expanded.delete(button.dataset.coinMore):expanded.add(button.dataset.coinMore);render(host);return;}
   const action=button.dataset.coinAction;if(!action)return;
   host.closest('dialog')?.querySelector('[data-missions-close]')?.click();
-  if(['football','skateboard','robot-vacuum'].includes(action))void globalThis.ChotaGames?.openGame?.(action);
+  if(['football','skateboard','robot-vacuum','darts'].includes(action))void globalThis.ChotaGames?.openGame?.(action);
   else if(action==='album')globalThis.CardAlbum?.open();
   else if(action==='calendar')config.navigate?.('calendario');
  });

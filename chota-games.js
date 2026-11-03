@@ -4,13 +4,14 @@
   const games = {
     football: {name:'Toques en la sede',item:'Pelota',art:'football-v2.png',unit:'toques',help:'Mantén el balón en el aire con toques. Supera el objetivo antes de que acaben los 30 segundos para desbloquear el siguiente nivel. Cada nivel tiene más velocidad y viento.'},
     skateboard: {name:'Salta con El Chota',item:'Skate',art:'skateboard-v2.png',unit:'saltos',help:'Toca la pista para saltar las cajas. Completa el recorrido sin chocar para abrir el siguiente nivel. Cada recorrido es más rápido y tiene más obstáculos.'},
-    'robot-vacuum': {name:'La última miga',item:'Roomba',art:'robot-vacuum-v2.png',unit:'migas',help:'Arrastra la roomba para limpiar todas las migas. Cada nivel abre una habitación distinta y más grande; la cámara te sigue. Tienes 3 vidas y cada golpe de polvo quita una. El tercer golpe termina la partida.'}
+    'robot-vacuum': {name:'La última miga',item:'Roomba',art:'robot-vacuum-v2.png',unit:'migas',help:'Arrastra la roomba para limpiar todas las migas. Cada nivel abre una habitación distinta y más grande; la cámara te sigue. Tienes 3 vidas y cada golpe de polvo quita una. El tercer golpe termina la partida.'},
+    darts: {name:'Dardos en el corcho',item:'Diana',art:'darts-board-v1.svg',unit:'puntos',help:'La mira se mueve sola: toca cuando esté sobre la diana para lanzar. El centro vale 3, el anillo interior 2 y el exterior 1. Consigue los puntos del nivel antes de que acaben los 30 segundos. Cada nivel la mira va más rápido y la diana es más pequeña; en los últimos, la diana también se mueve.'}
   };
   const maxLevel=5;
   const levelRules=(id,level)=>({
-    goal:id==='football'?[10,14,18,22,26][level-1]:id==='skateboard'?[8,10,12,14,16][level-1]:30,
+    goal:id==='football'?[10,14,18,22,26][level-1]:id==='skateboard'?[8,10,12,14,16][level-1]:id==='darts'?[12,18,24,30,36][level-1]:30,
     duration:id==='robot-vacuum'?[30,40,50,60,75][level-1]:30,
-    name:id==='robot-vacuum'?['El rincón','El salón','El pasillo','El taller','La gran sede'][level-1]:id==='skateboard'?['Primeras cajas','En marcha','A toda pista','Sin frenos','El gran recorrido'][level-1]:['Primeros toques','Más ritmo','Viento cruzado','Alta velocidad','Control total'][level-1]
+    name:id==='robot-vacuum'?['El rincón','El salón','El pasillo','El taller','La gran sede'][level-1]:id==='darts'?['Calentando el brazo','Puntería','Pulso firme','Diana viajera','Rey del corcho'][level-1]:id==='skateboard'?['Primeras cajas','En marcha','A toda pista','Sin frenos','El gran recorrido'][level-1]:['Primeros toques','Más ritmo','Viento cruzado','Alta velocidad','Control total'][level-1]
   });
   let levelProgress={},progressOwner=null;
   const progressKey=()=>`bb:chota-levels:v1:${user()}`;
@@ -109,7 +110,7 @@
   function levels(id,message=''){
     stop();serial++;readProgress();if(!dialog)return;
     const cleared=Number(levelProgress[id])||0;
-    body().innerHTML=`<section class="chota-level-select"><div class="chota-level-heading"><img src="icons/clubhouse/props/${games[id].art}" alt=""><div><h2 tabindex="-1">${games[id].name}</h2><p>${cleared===maxLevel?'Todos los niveles superados':`${cleared} de ${maxLevel} superados`}</p></div></div>${message?`<p role="status" class="chota-level-error">${esc(message)}</p>`:''}<div class="chota-level-list">${Array.from({length:maxLevel},(_,index)=>{const level=index+1,rules=levelRules(id,level),locked=level>unlocked(id);return `<button type="button" data-level-start="${level}" ${locked?'disabled':''}><span class="chota-level-number">${level}</span><span><strong>${rules.name}</strong><small>${id==='robot-vacuum'?`30 migas · ${rules.duration} s`:id==='football'?`${rules.goal} toques · 30 s`:`${rules.goal} cajas · 30 s`}</small></span><b>${locked?'Bloqueado':level<=cleared?'Superado':'Jugar'}</b></button>`;}).join('')}</div><button type="button" class="chota-arcade-secondary" data-menu>Volver a juegos</button></section>`;
+    body().innerHTML=`<section class="chota-level-select"><div class="chota-level-heading"><img src="icons/clubhouse/props/${games[id].art}" alt=""><div><h2 tabindex="-1">${games[id].name}</h2><p>${cleared===maxLevel?'Todos los niveles superados':`${cleared} de ${maxLevel} superados`}</p></div></div>${message?`<p role="status" class="chota-level-error">${esc(message)}</p>`:''}<div class="chota-level-list">${Array.from({length:maxLevel},(_,index)=>{const level=index+1,rules=levelRules(id,level),locked=level>unlocked(id);return `<button type="button" data-level-start="${level}" ${locked?'disabled':''}><span class="chota-level-number">${level}</span><span><strong>${rules.name}</strong><small>${id==='robot-vacuum'?`30 migas · ${rules.duration} s`:id==='football'?`${rules.goal} toques · 30 s`:id==='darts'?`${rules.goal} puntos · 30 s`:`${rules.goal} cajas · 30 s`}</small></span><b>${locked?'Bloqueado':level<=cleared?'Superado':'Jugar'}</b></button>`;}).join('')}</div><button type="button" class="chota-arcade-secondary" data-menu>Volver a juegos</button></section>`;
     body().querySelectorAll('[data-level-start]').forEach(button=>button.addEventListener('click',()=>start(id,Number(button.dataset.levelStart))));
     body().querySelector('[data-menu]').addEventListener('click',menu);body().querySelector('h2').focus({preventScroll:true});
   }
@@ -122,11 +123,11 @@
     catch{if(dialog&&token===serial&&actor===user())levels(id,'No se pudo preparar la partida. Comprueba la conexión y vuelve a intentarlo.');return;}
     if(!dialog||token!==serial||actor!==user())return;
     const rules=levelRules(id,level),world=roomFor(level);
-    body().innerHTML=`<div class="chota-arcade-score"><div><span>${games[id].unit}</span><strong data-score>0 / ${rules.goal}</strong></div><h2>${games[id].name}</h2><div><span>Tiempo</span><strong data-clock>${rules.duration}</strong></div></div><div class="chota-arcade-round-status"><div class="chota-arcade-level"><strong>Nivel ${level} · ${rules.name}</strong><progress data-level-progress value="0" max="${rules.goal}" aria-label="Objetivo del nivel"></progress><span data-level-next>${id==='football'?`Consigue ${rules.goal} toques en ${rules.duration} segundos`:id==='skateboard'?`Supera ${rules.goal} cajas sin chocar`:'Limpia las 30 migas del mapa'}</span></div>${id==='robot-vacuum'?'<div class="chota-arcade-lives" data-lives role="img" aria-label="3 vidas restantes">'+Array.from({length:3},()=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20S3 14.7 3 8.7A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 9 3.7C21 14.7 12 20 12 20Z"/></svg>').join('')+'</div>':''}</div><div class="chota-arcade-stage" role="application" aria-label="${esc(games[id].help)}" tabindex="0"><canvas aria-label="Zona de juego"></canvas><span class="chota-arcade-hint">${id==='football'?'Toca el balón':id==='skateboard'?'Toca para saltar':'Arrastra para limpiar'}</span></div><button type="button" class="chota-arcade-secondary" data-abandon>Terminar partida</button>`;
+    body().innerHTML=`<div class="chota-arcade-score"><div><span>${games[id].unit}</span><strong data-score>0 / ${rules.goal}</strong></div><h2>${games[id].name}</h2><div><span>Tiempo</span><strong data-clock>${rules.duration}</strong></div></div><div class="chota-arcade-round-status"><div class="chota-arcade-level"><strong>Nivel ${level} · ${rules.name}</strong><progress data-level-progress value="0" max="${rules.goal}" aria-label="Objetivo del nivel"></progress><span data-level-next>${id==='football'?`Consigue ${rules.goal} toques en ${rules.duration} segundos`:id==='darts'?`Suma ${rules.goal} puntos en ${rules.duration} segundos`:id==='skateboard'?`Supera ${rules.goal} cajas sin chocar`:'Limpia las 30 migas del mapa'}</span></div>${id==='robot-vacuum'?'<div class="chota-arcade-lives" data-lives role="img" aria-label="3 vidas restantes">'+Array.from({length:3},()=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20S3 14.7 3 8.7A5.2 5.2 0 0 1 12 5a5.2 5.2 0 0 1 9 3.7C21 14.7 12 20 12 20Z"/></svg>').join('')+'</div>':''}</div><div class="chota-arcade-stage" role="application" aria-label="${esc(games[id].help)}" tabindex="0"><canvas aria-label="Zona de juego"></canvas><span class="chota-arcade-hint">${id==='football'?'Toca el balón':id==='darts'?'Toca para lanzar':id==='skateboard'?'Toca para saltar':'Arrastra para limpiar'}</span></div><button type="button" class="chota-arcade-secondary" data-abandon>Terminar partida</button>`;
     const stage=body().querySelector('.chota-arcade-stage'), canvas=stage.querySelector('canvas'),ctx=canvas.getContext('2d');
     if(!ctx){levels(id,'Este dispositivo no pudo abrir el juego.');return;}
     const dpr=Math.min(devicePixelRatio||1,2);canvas.width=600*dpr;canvas.height=450*dpr;ctx.scale(dpr,dpr);ctx.imageSmoothingEnabled=false;
-    const r=round={id,token,actor,score:0,level,rules,world,time:0,last:0,completed:false,endReason:'',lastHit:-1,misses:0,ball:{x:300,y:140,vy:0,vx:85+(level-1)*28},jump:0,vy:0,skateAir:0,skateLanding:0,x:world.width/2,y:world.height-65,target:{x:world.width/2,y:world.height-65},camera:{x:Math.max(0,world.width/2-300),y:Math.max(0,world.height-450)},lives:3,invulnerable:.9,stunned:0,hazards:Array.from({length:1+Math.floor((level-1)/2)},(_,index)=>({phase:-1.55+index*2.75,x:82,y:185,age:0})),furniture:world.furniture,obstacles:[],spawn:.5,cleared:0,drag:null,crumbs:[],serverSession:Promise.resolve(sessionId)};
+    const r=round={id,token,actor,score:0,aim:{x:300,y:210},board:{x:300,y:215,r:118-(level-1)*12},darts:[],pops:[],lastThrow:-1,level,rules,world,time:0,last:0,completed:false,endReason:'',lastHit:-1,misses:0,ball:{x:300,y:140,vy:0,vx:85+(level-1)*28},jump:0,vy:0,skateAir:0,skateLanding:0,x:world.width/2,y:world.height-65,target:{x:world.width/2,y:world.height-65},camera:{x:Math.max(0,world.width/2-300),y:Math.max(0,world.height-450)},lives:3,invulnerable:.9,stunned:0,hazards:Array.from({length:1+Math.floor((level-1)/2)},(_,index)=>({phase:-1.55+index*2.75,x:82,y:185,age:0})),furniture:world.furniture,obstacles:[],spawn:.5,cleared:0,drag:null,crumbs:[],serverSession:Promise.resolve(sessionId)};
     if(id==='robot-vacuum'){
       // Deterministic cells spread the objective over the whole room. Furniture
       // has a clear margin so crumbs cannot spawn under an obstacle.
@@ -144,6 +145,7 @@
       e.preventDefault();const p=e.type==='keydown'?{x:r.ball.x,y:r.ball.y}:point(e);
       if(id==='football'&&r.time-r.lastHit>.26&&Math.hypot(p.x-r.ball.x,p.y-r.ball.y)<46-(level-1)*2){r.lastHit=r.time;r.ball.vy=-380-(level-1)*28;r.ball.vx=Math.max(-270,Math.min(270,r.ball.vx*.45+(r.ball.x-p.x)*6+(Math.random()-.5)*(65+(level-1)*16)));r.score++;}
       else if(id==='skateboard'&&r.jump===0){r.vy=500;r.jump=1;r.skateAir=0;r.skateLanding=0;}
+      else if(id==='darts')throwDart(r);
       else if(id==='robot-vacuum'){r.drag=e.pointerId;r.pointer={x:e.clientX,y:e.clientY};stage.setPointerCapture?.(e.pointerId);clampTarget(p);}
     }
     stage.addEventListener('pointerdown',act);stage.addEventListener('keydown',act);
@@ -181,6 +183,14 @@
       r.spawn-=dt;if(r.spawn<=0){r.obstacles.push({x:660,passed:false});r.spawn=1.35-difficulty*.12+Math.random()*.4;}
       for(const o of r.obstacles){o.x-=(220+difficulty*32)*dt;if(!o.passed&&o.x<110){o.passed=true;r.score++;}if(o.x<184&&o.x>112&&r.jump<43){r.completed=true;r.endReason='collision';finish(r);return;}}
       r.obstacles=r.obstacles.filter(o=>o.x>-50);
+    }
+    if(r.id==='darts'){
+      // The reticle drifts on two slow waves; later levels speed it up and move the board.
+      const speed=1+difficulty*.28,b=r.board;
+      b.x=r.level>=4?300+Math.sin(r.time*(.7+difficulty*.12))*(r.level===5?150:110):300;
+      r.aim.x=b.x+Math.sin(r.time*1.9*speed)*125+Math.sin(r.time*.7*speed+1)*35;
+      r.aim.y=b.y+Math.sin(r.time*1.3*speed+.8)*95;
+      for(const pop of r.pops)pop.age+=dt;r.pops=r.pops.filter(pop=>pop.age<.9);
     }
     if(r.id==='robot-vacuum'){
       r.stunned=Math.max(0,r.stunned-dt);
@@ -227,6 +237,7 @@
       drawSkater(ctx,r);
       for(const o of r.obstacles){ctx.fillStyle='#bb8648';ctx.fillRect(o.x,344,45,43);ctx.strokeStyle='#6c4828';ctx.lineWidth=4;ctx.strokeRect(o.x+3,347,39,37);ctx.beginPath();ctx.moveTo(o.x+5,349);ctx.lineTo(o.x+40,381);ctx.stroke();}
     }
+    if(r.id==='darts')drawDarts(ctx,r,pet);
     if(r.id==='robot-vacuum'){
       for(const o of r.furniture){ctx.fillStyle='#141b27';ctx.fillRect(o.x-5,o.y+7,o.w+10,o.h+5);ctx.fillStyle='#765137';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.strokeStyle='#c58d52';ctx.lineWidth=3;ctx.strokeRect(o.x+4,o.y+4,o.w-8,o.h-8);}
       for(const c of r.crumbs)if(c.active){ctx.fillStyle='#e4bd6b';ctx.fillRect(c.x,c.y,6,5);ctx.fillRect(c.x+9,c.y+5,4,4);}
@@ -245,6 +256,30 @@
       ctx.fillStyle='#e9c77e';for(const c of r.crumbs)if(c.active)ctx.fillRect(mx+c.x*scale-1,my+c.y*scale-1,2,2);
       ctx.strokeStyle='#cbd5e366';ctx.strokeRect(mx+r.camera.x*scale,my+r.camera.y*scale,600*scale,450*scale);ctx.fillStyle='#8ee2d4';ctx.beginPath();ctx.arc(mx+r.x*scale,my+r.y*scale,3,0,Math.PI*2);ctx.fill();ctx.restore();
     }
+  }
+  // A throw scores where the reticle is at that instant: 3 bull, 2 inner ring, 1 outer ring.
+  function throwDart(r){
+    if(r.time-r.lastThrow<.55)return;r.lastThrow=r.time;
+    const b=r.board,distance=Math.hypot(r.aim.x-b.x,r.aim.y-b.y);
+    const points=distance<b.r*.2?3:distance<b.r*.6?2:distance<b.r?1:0;
+    r.score+=points;if(!points)r.misses++;
+    r.darts.push({dx:r.aim.x-b.x,dy:r.aim.y-b.y,hit:points>0,x:r.aim.x,y:r.aim.y});if(r.darts.length>12)r.darts.shift();
+    r.pops.push({x:r.aim.x,y:r.aim.y,points,age:0});
+  }
+  function drawDarts(ctx,r,pet){
+    const b=r.board;
+    pet(18,300,140,140);
+    ctx.save();ctx.fillStyle='#0008';ctx.beginPath();ctx.arc(b.x+6,b.y+8,b.r+10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#2b2119';ctx.beginPath();ctx.arc(b.x,b.y,b.r+8,0,Math.PI*2);ctx.fill();
+    for(let i=0;i<20;i++){ctx.fillStyle=i%2?'#14110f':'#e8d9b0';ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.arc(b.x,b.y,b.r,i*Math.PI/10-Math.PI/2-Math.PI/20,(i+1)*Math.PI/10-Math.PI/2-Math.PI/20);ctx.closePath();ctx.fill();}
+    for(const [radius,width] of [[b.r*.97,b.r*.08],[b.r*.6,b.r*.07]])for(let i=0;i<20;i++){ctx.strokeStyle=i%2?'#2f8a4a':'#c7372f';ctx.lineWidth=width;ctx.beginPath();ctx.arc(b.x,b.y,radius,i*Math.PI/10-Math.PI/2-Math.PI/20,(i+1)*Math.PI/10-Math.PI/2-Math.PI/20);ctx.stroke();}
+    ctx.fillStyle='#2f8a4a';ctx.beginPath();ctx.arc(b.x,b.y,b.r*.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#c7372f';ctx.beginPath();ctx.arc(b.x,b.y,b.r*.1,0,Math.PI*2);ctx.fill();
+    for(const d of r.darts){const x=d.hit?b.x+d.dx:d.x,y=d.hit?b.y+d.dy:d.y;ctx.strokeStyle='#d8d1c2';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+14,y-14);ctx.stroke();ctx.fillStyle='#f2c14e';ctx.fillRect(x+12,y-19,7,7);}
+    ctx.strokeStyle='#ffffffd9';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(r.aim.x,r.aim.y,13,0,Math.PI*2);ctx.moveTo(r.aim.x-22,r.aim.y);ctx.lineTo(r.aim.x-6,r.aim.y);ctx.moveTo(r.aim.x+6,r.aim.y);ctx.lineTo(r.aim.x+22,r.aim.y);ctx.moveTo(r.aim.x,r.aim.y-22);ctx.lineTo(r.aim.x,r.aim.y-6);ctx.moveTo(r.aim.x,r.aim.y+6);ctx.lineTo(r.aim.x,r.aim.y+22);ctx.stroke();
+    ctx.font='bold 22px system-ui';ctx.textAlign='center';
+    for(const pop of r.pops){ctx.globalAlpha=1-pop.age/.9;ctx.fillStyle=pop.points?'#ffe28a':'#ff9a8a';ctx.fillText(pop.points?`+${pop.points}`:'Fuera',pop.x,pop.y-26-pop.age*40);}
+    ctx.globalAlpha=1;ctx.textAlign='start';ctx.font='16px system-ui';ctx.fillStyle='#fff2d9';ctx.fillText(`Fallos: ${r.misses}`,22,35);
+    ctx.restore();
   }
   function drawSkater(ctx,r){
     const airborne=r.jump>0;

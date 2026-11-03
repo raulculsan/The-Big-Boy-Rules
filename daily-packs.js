@@ -47,7 +47,7 @@
     const count = known ? new Intl.NumberFormat('es-ES').format(data.available) : '—';
     if (status === 'ready') return {count, label:data.available===1?'sobre guardado':'sobres guardados',
       heading:data.welcome_credited_packs === 20 ? '20 sobres de bienvenida' : data.credited?`${data.credited_packs || 1} ${(data.credited_packs || 1) === 1 ? 'sobre recibido' : 'sobres recibidos'}`:'Saldo de sobres actualizado',
-      message:data.welcome_credited_packs === 20 ? 'Has recibido 20 sobres por tu primer acceso al club. Ya están guardados en tu cuenta.' : Number.isSafeInteger(data.streak_days) ? `Racha de ${data.streak_days} ${data.streak_days === 1 ? 'día' : 'días'} · ${data.daily_reward_packs} ${data.daily_reward_packs === 1 ? 'sobre diario' : 'sobres diarios'}${data.credited_coins > 0 ? ` y +${data.credited_coins} monedas` : ''}.` : 'El siguiente sobre diario estará disponible mañana.', filled:true};
+      message:data.welcome_credited_packs === 20 ? 'Has recibido 20 sobres por tu primer acceso al club. Ya están guardados en tu cuenta.' : Number.isSafeInteger(data.streak_days) ? `Racha de ${data.streak_days} ${data.streak_days === 1 ? 'día' : 'días'} · ${data.daily_reward_packs} ${data.daily_reward_packs === 1 ? 'sobre diario' : 'sobres diarios'}${data.credited_coins > 0 ? ` y +${data.credited_coins} monedas` : ''}.${data.streak_shields_used > 0 ? ` ${data.streak_shields_used === 1 ? 'Un protector ha salvado' : 'Dos protectores han salvado'} tu racha.` : ''}` : 'El siguiente sobre diario estará disponible mañana.', filled:true};
     if (status === 'unavailable') return {count, label:'sobres guardados', heading:'Recarga diaria no configurada',
       message:'La recarga diaria no está activada en el servidor.', filled:false};
     if (status === 'error') return {count, label:known?'sobres · última sincronización':'sobres guardados',
@@ -74,7 +74,13 @@
     globalThis.PlanWidget?.updatePacks?.(available);
   }
 
-  let ui;
+  let ui, buyingShield = false, shieldNotice = '';
+  // Streak protectors: bought here, spent automatically by the daily claim.
+  function shieldMarkup(data) {
+    const max = data.streak_shield_limit || 2, price = data.streak_shield_price || 80, held = data.streak_shields;
+    const label = held >= max ? 'Tienes el máximo' : buyingShield ? 'Comprando…' : `Comprar por ${price} monedas`;
+    return `<p><span>Protectores de racha</span><b>${held}/${max}</b></p><p class="pack-rarity-odds">Si un día no entras, un protector salva tu racha. Se usan solos al volver; si faltan más días que protectores, la racha empieza de nuevo y los conservas.</p><button type="button" class="packs-sync" data-buy-shield data-price="${price}" ${held >= max || buyingShield ? 'disabled' : ''}>${label}</button><p class="pack-rarity-odds" role="status">${shieldNotice}</p>`;
+  }
   function initialize(options) {
     if (ui) return;
     let renderedBalanceData;
@@ -95,6 +101,10 @@
         welcome.textContent=welcome.hidden ? '' : 'Has recibido 20 sobres de bienvenida por tu primer acceso al club. Se conceden una sola vez por cuenta.';
         const streak=state.data?.streak_days, allowance=state.data?.daily_reward_packs;
         rewards.textContent=(Number.isSafeInteger(streak) ? `Tu racha: ${streak} ${streak === 1 ? 'día' : 'días'} · ${allowance} ${allowance === 1 ? 'sobre hoy' : 'sobres hoy'}. ` : '')+'Racha: 1–2 días → 2 sobres y 10 monedas; 3–6 → 3 y 15; 7–13 → 4 y 20; 14–29 → 5 y 25; 30 o más → 6 y 30. Trofeos: bronce 2 · plata 3 · oro 5 · platino 8 sobres.';
+        let shields=info.querySelector('[data-pack-shields]');
+        if(!shields){shields=document.createElement('div');shields.className='pack-shields';shields.dataset.packShields='';info.append(shields);}
+        shields.hidden=!Number.isSafeInteger(state.data?.streak_shields);
+        if(!shields.hidden){const markup=shieldMarkup(state.data);if(shields.innerHTML!==markup)shields.innerHTML=markup;}
         let activities=info.querySelector('[data-pack-activities]');
         const enabled=state.data?.activity_reward_limit===3;
         if(enabled&&!activities){activities=document.createElement('p');activities.className='pack-rarity-odds';activities.dataset.packActivities='';info.append(activities);}
@@ -109,6 +119,21 @@
     };
     ui=createStore({...options,onChange:render});
     render(ui.snapshot());
+    document.addEventListener('click', async event => {
+      const button = event.target.closest('[data-buy-shield]');
+      if (!button || buyingShield || !options.buyShield) return;
+      buyingShield = true; shieldNotice = ''; render(ui.snapshot());
+      try {
+        const {data, error} = await options.buyShield(Number(button.dataset.price));
+        if (error) throw error;
+        shieldNotice = `Protector comprado. Tienes ${data.shields}.`;
+        globalThis.ClubCoinMissions?.activity?.({refreshWallet:true});
+        void globalThis.BannerShop?.refresh?.(true);
+        await ui.refresh(true);
+      } catch (error) {
+        shieldNotice = error?.message || 'No se pudo comprar. Vuelve a intentarlo.';
+      } finally { buyingShield = false; render(ui.snapshot()); }
+    });
   }
   function activityCompleted(kind) {
     const data=ui?.snapshot().data;
