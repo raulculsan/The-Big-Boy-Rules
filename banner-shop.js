@@ -182,11 +182,8 @@
         detachRevealFoil=globalThis.CollectionMotion?.attachFullArtFoil(revealDialog.querySelector('.pack-reveal-stage'),foil,design.edition);
       }
       revealDialog.querySelector('[data-reveal-flip]').focus({preventScroll:true});
-      const next = card(reveal.cards[reveal.index + 1]?.card_id);
-      [next?.front, next?.back].filter(Boolean).forEach(src => {
-        const image = new Image(); image.decoding = 'async'; image.src = src;
-        void image.decode?.().catch(() => {});
-      });
+      // Decode the art before the turn so the flip never waits on a 1–4 MB image.
+      void revealDialog.querySelector('.pack-reveal-front img')?.decode?.().catch(() => {});
     }
     const turn = revealDialog.querySelector('[data-reveal-flip]');
     if (reveal.flipped && !turn.classList.contains('is-flipped')) {
@@ -197,12 +194,19 @@
     }
     const displayKind = item.kind === 'member' ? (characterCardIds.has(item.card_id) ? 'Personaje' : 'Miembro') : item.kind === 'object' ? 'Objeto' : item.kind === 'location' ? 'Ubicación' : '';
     const status = reveal.discarded.has(reveal.index) ? 'Repetida descartada' : Number(item.quantity) > 1 ? 'Repetida' : 'Nueva';
-    revealDialog.querySelector('.pack-reveal-info').innerHTML = reveal.flipped ? `<span class="pack-reveal-rarity" data-rarity="${escape(item.edition)}">${escape(rarityNames[item.edition] || item.edition)}</span><h3>${escape(design?.name || item.card_id)}</h3><p>${escape([displayKind, status].filter(Boolean).join(' · '))}</p>` : '';
+    // Wallet refreshes re-render several times per discard; rewriting the same
+    // text replays its rise animation and reads as a flicker. Write only on
+    // change, and hold the text still while a discarded card turns to dust.
+    const info = revealDialog.querySelector('.pack-reveal-info');
+    const infoHtml = reveal.flipped ? `<span class="pack-reveal-rarity" data-rarity="${escape(item.edition)}">${escape(rarityNames[item.edition] || item.edition)}</span><h3>${escape(design?.name || item.card_id)}</h3><p>${escape([displayKind, status].filter(Boolean).join(' · '))}</p>` : '';
+    const frozen = reveal.flipped && info.childElementCount && (reveal.discarding || reveal.discarded.has(reveal.index));
+    if (!frozen && revealInfoHtml.get(info) !== infoHtml) {info.innerHTML = infoHtml; revealInfoHtml.set(info,infoHtml);}
     if (reveal.flipped) revealDialog.dataset.rarity = item.edition; else delete revealDialog.dataset.rarity;
     paintRevealChota();
     revealDialog.querySelector('.pack-reveal-status').textContent = failure || notice;
   }
   // El Chota watches the draw from the corner and reacts to each card.
+  const revealInfoHtml = new WeakMap();
   const chotaMarkup = '<div class="pack-chota" data-mood="wave"><i class="pack-chota-sprite" aria-hidden="true"></i><p class="pack-chota-line"></p></div>';
   const chotaCheers = {common:'Una más pa\'l álbum.',retro:'Esto huele a clásico.',special:'Ojo, que es especial.',epic:'¡Épica! Esto ya es otra cosa.',legendary:'¿¡Legendaria!? Enmárcala.',full_art:'Full Art… qué barbaridad.',halloween:'Uuuh, de Halloween.',vice_city:'Vice City. Pura noche.'};
   const chotaBig = new Set(['special','epic','legendary','full_art','halloween','vice_city']);
@@ -256,6 +260,9 @@
   const summaryStatus = index => reveal.discarded.has(index) || reveal.pending.has(index) ? 'Descartada' : reveal.uncertain.has(index) ? 'Revisar' : Number(reveal.cards[index].quantity) > 1 ? 'Repetida' : 'Nueva';
   const summaryKind = item => item.kind === 'member' ? (characterCardIds.has(item.card_id) ? 'Personaje' : 'Miembro') : item.kind === 'object' ? 'Objeto' : item.kind === 'location' ? 'Ubicación' : '';
   const summaryArt = item => {const design = card(item.card_id); return design?.front || design?.back || 'icons/cards/reverso-comun-unificado-v1.jpg';};
+  // Grid tiles and the rail are small: a 360 px thumbnail decodes in a fraction
+  // of the full art (PNG fronts reach 4 MB), so the summary deals without stalling.
+  const summaryThumb = item => {const design = card(item.card_id); return (design?.front && globalThis.CardThumbnails?.[globalThis.CardMedia?.canonical(design.front) || design.front]) || summaryArt(item);};
   function renderRevealSummary() {
     if (!reveal?.summary || !revealDialog.open) return;
     revealDialog.classList.add('is-pack-summary');
@@ -265,11 +272,11 @@
       revealDialog.dataset.rarity = best;
       revealDialog.dataset.mood = chotaBig.has(best) ? 'cheer' : 'wave';
       revealDialog.innerHTML = `<header class="pack-summary-header"><div class="pack-summary-title"><i class="pack-chota-sprite" aria-hidden="true"></i><div><h2>Tu sobre</h2><p class="pack-summary-tally"></p></div></div><button type="button" class="pack-summary-close" data-reveal-close aria-label="Cerrar: tus cartas están guardadas">${closeGlyph}</button></header><div class="pack-summary-content"><div class="pack-summary-grid${reveal.cards.length === 6 ? ' is-featured' : ''}" role="group" aria-label="Cartas del sobre"></div></div><footer class="pack-summary-footer"><div class="pack-summary-actions"><p class="pack-summary-balance"></p><button type="button" class="packs-buy" data-reveal-save>Guardar todo</button></div><p class="pack-reveal-status" role="status" aria-live="polite"></p></footer><section class="pack-viewer" role="group" aria-label="Carta en grande" hidden><header class="pack-viewer-header"><span class="pack-viewer-count"></span><button type="button" class="pack-summary-close" data-viewer-close aria-label="Volver al sobre">${closeGlyph}</button></header><div class="pack-viewer-stage"><i class="pack-viewer-aura"></i><div class="collection-card-perspective pack-viewer-perspective"><div class="collection-card-tilt pack-viewer-tilt" tabindex="0" role="group" aria-label="Carta interactiva. Flechas para cambiar de carta"><div class="collection-card-stage"><img class="collection-card-face pack-viewer-image" width="948" height="1660" decoding="async" alt="" draggable="false"></div><div class="collection-card-foil" aria-hidden="true"></div></div></div></div><div class="pack-viewer-info" aria-live="polite"><h3></h3><p></p></div><button type="button" class="pack-viewer-discard" data-viewer-discard hidden></button><div class="pack-viewer-rail" role="group" aria-label="Cambiar de carta"></div></section>`;
-      revealDialog.querySelector('.pack-summary-grid').innerHTML = reveal.order.map(index => {
-        const item = reveal.cards[index];
-        return `<div class="pack-summary-item" data-rarity="${escape(item.edition)}"><i class="pack-summary-aura"></i><button type="button" class="pack-summary-card" data-summary-card="${index}"><img src="${escape(summaryArt(item))}" width="948" height="1660" alt="" draggable="false" decoding="sync"><i class="pack-summary-sheen"></i></button><span class="pack-summary-label"></span></div>`;
+      revealDialog.querySelector('.pack-summary-grid').innerHTML = reveal.order.map((index,position) => {
+        const item = reveal.cards[index], art = position === 0 && reveal.cards.length === 6 ? summaryArt(item) : summaryThumb(item);
+        return `<div class="pack-summary-item" data-rarity="${escape(item.edition)}"><i class="pack-summary-aura"></i><button type="button" class="pack-summary-card" data-summary-card="${index}"><img src="${escape(art)}" width="948" height="1660" alt="" draggable="false" decoding="async"><i class="pack-summary-sheen"></i></button><span class="pack-summary-label"></span></div>`;
       }).join('');
-      revealDialog.querySelector('.pack-viewer-rail').innerHTML = reveal.order.map((index,position) => `<button type="button" data-viewer-go="${position}" data-rarity="${escape(reveal.cards[index].edition)}" aria-label="Carta ${position + 1}"><img src="${escape(summaryArt(reveal.cards[index]))}" alt="" draggable="false" decoding="async"></button>`).join('');
+      revealDialog.querySelector('.pack-viewer-rail').innerHTML = reveal.order.map((index,position) => `<button type="button" data-viewer-go="${position}" data-rarity="${escape(reveal.cards[index].edition)}" aria-label="Carta ${position + 1}"><img src="${escape(summaryThumb(reveal.cards[index]))}" alt="" draggable="false" decoding="async"></button>`).join('');
     }
     reveal.cards.forEach((item,index) => {
       const button = revealDialog.querySelector(`[data-summary-card="${index}"]`), status = summaryStatus(index);
@@ -507,8 +514,16 @@
     clearTimeout(revealTimer);
     revealTimer = setTimeout(() => finishRevealMotion(current),revealReduced() ? 0 : motionTimings.flip);
   }
+  // The whole pack downloads and decodes while the pack is torn, off the main
+  // thread, instead of one card ahead; references are kept so the cache holds.
+  let revealPreload = [];
+  function preloadReveal(cards) {
+    const sources = new Set(cards.flatMap(item => {const design = card(item.card_id); return [design?.front, design?.back, design && summaryThumb(item)];}).filter(Boolean));
+    revealPreload = [...sources].map(src => {const image = new Image(); image.decoding = 'async'; image.src = src; void image.decode?.().catch(() => {}); return image;});
+  }
   function startReveal(cards) {
     if (!cards.length) return;
+    preloadReveal(cards);
     reveal = {cards,index:0,flipped:false,discarded:new Set(),uncertain:new Set(),pending:new Set(),queue:[],earned:0,phase:'idle'};
     revealDialog.classList.remove('is-pack-summary');
     delete revealDialog.dataset.cardIndex; delete revealDialog.dataset.rarity; delete revealDialog.dataset.mood;
@@ -544,13 +559,26 @@
   });
   // Swiping a revealed duplicate up exchanges it and moves on. The card only
   // returns if the server refused, since a lost reply is surfaced as a failure.
+  const settleRevealStage = stage => {stage.classList.remove('is-dragging'); stage.style.removeProperty('transform'); stage.style.removeProperty('opacity');};
+  // The card snaps into dust from the pose the finger left it in, while the
+  // exchange runs; the next card only arrives once the last mote is gone.
   async function discardRevealCard(stage) {
     const current = reveal, index = current?.index;
-    if (!current?.flipped || current.phase !== 'idle' || current.advancing || current.discarding || busy || loading || !online() || !canDiscardReveal(index)) return false;
+    if (!current?.flipped || current.phase !== 'idle' || current.advancing || current.discarding || busy || loading || !online() || !canDiscardReveal(index)) {settleRevealStage(stage); return false;}
+    detachRevealVfx?.(); detachRevealVfx = null;
+    const ash = globalThis.CollectionMotion?.dissolveCard(stage.querySelector('.pack-reveal-card'),stage.querySelector('.pack-reveal-front img'),revealDialog) || Promise.resolve();
+    settleRevealStage(stage);
     stage.classList.add('is-discarding');
     await mutate('discard_duplicate_card', {target_card_id:current.cards[index].card_id,copies:1}, '', index);
+    current.discarding = true;
+    await ash;
+    current.discarding = false;
     if (reveal === current && current.discarded.has(index) && revealDialog.open) advanceReveal(stage);
-    else stage.classList.remove('is-discarding');
+    else {
+      stage.classList.remove('is-discarding');
+      if (!revealReduced()) stage.animate([{opacity:0,transform:'scale(.94)'},{opacity:1,transform:'none'}],{duration:280,easing:'cubic-bezier(.16,1,.3,1)'});
+      if (reveal === current) renderReveal();
+    }
     return true;
   }
   function activateReveal() {
@@ -607,7 +635,7 @@
       swipe.dy = dy;
       swipe.stage.classList.add('is-dragging');
       swipe.stage.style.transform = `translateY(${Math.min(0,dy) * .6}px) scale(${Math.max(.9,1 + Math.min(0,dy) / 1400)})`;
-      swipe.stage.style.opacity = String(Math.max(.35,1 + Math.min(0,dy) / 320));
+      swipe.stage.style.opacity = String(Math.max(.82,1 + Math.min(0,dy) / 900));
       return;
     }
     // A swipe on the back reveals it in place; only a revealed card follows
@@ -630,18 +658,17 @@
       gesture.tap = !gesture.horizontal && !gesture.up && Math.hypot(gesture.dx,dy) <= 12;
       if (gesture.up) gesture.dy = dy;
     }
-    gesture.stage.classList.remove('is-dragging');
-    gesture.stage.style.removeProperty('transform');
-    gesture.stage.style.removeProperty('opacity');
     // Any completed pointer sequence owns its follow-up click, including a
     // canceled/vertical gesture. Keyboard activation still reaches click.
     suppressRevealClickUntil = Date.now() + 500;
     if (gesture.stage.hasPointerCapture(event.pointerId)) gesture.stage.releasePointerCapture(event.pointerId);
+    // A released discard keeps its lifted pose: the dust starts right there.
+    if (event.type === 'pointerup' && reveal?.index === gesture.index && gesture.up && gesture.dy < -Math.min(70,gesture.stage.clientHeight * .16)) {void discardRevealCard(gesture.stage); return;}
+    settleRevealStage(gesture.stage);
     if (event.type !== 'pointerup' || !reveal || reveal.index !== gesture.index) return;
     // Capturing on the stage retargets the up/click; handle a stationary tap
     // here as well so tap-to-reveal remains available.
     if (gesture.tap) {activateReveal(); return;}
-    if (gesture.up && gesture.dy < -Math.min(70,gesture.stage.clientHeight * .16)) {void discardRevealCard(gesture.stage); return;}
     if (!gesture.horizontal || gesture.dx >= -Math.min(70,gesture.stage.clientWidth * .25)) return;
     if (gesture.flipped) {
       reveal.releaseX = Math.max(-28,Math.min(0,gesture.dx) * .2);
@@ -667,7 +694,7 @@
       else flipReveal();
     }
   });
-  revealDialog.addEventListener('close', () => {const syncAfterClose = reveal?.dirty && !reveal.draining;stopRevealOpening();detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;detachViewerMotion?.();detachViewerMotion=null;packViewer=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); el('ownedPackOpen')?.focus({preventScroll:true});if (syncAfterClose) void refresh();});
+  revealDialog.addEventListener('close', () => {revealPreload = [];const syncAfterClose = reveal?.dirty && !reveal.draining;stopRevealOpening();detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;detachViewerMotion?.();detachViewerMotion=null;packViewer=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); el('ownedPackOpen')?.focus({preventScroll:true});if (syncAfterClose) void refresh();});
   const el = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);
@@ -1135,8 +1162,9 @@
   async function animateDiscard(name, cardId, earned, copies, inReveal) {
     const host = inReveal ? revealDialog : el('duplicatesDialog');
     if (!host?.open || !copies) return;
+    // Inside a pack the card already turns to dust; only the coins fly.
     const sourceImages = inReveal
-      ? [...revealDialog.querySelectorAll('.pack-reveal-front img')]
+      ? []
       : [...host.querySelectorAll('[data-owned-card]')].filter(node => name === 'discard_selected_duplicates' ? cardId.includes(node.dataset.ownedCard) : node.dataset.ownedCard === cardId).map(node => node.querySelector('img')).filter(Boolean);
     const layer = document.createElement('div'); layer.className = 'card-discard-effect';
     const hostRect = host.getBoundingClientRect();

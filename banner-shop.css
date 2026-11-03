@@ -276,7 +276,7 @@
 @keyframes pack-tear-float{0%,100%{transform:translateY(0) rotateZ(-.5deg)}50%{transform:translateY(-6px) rotateZ(.5deg)}}
 @keyframes pack-tear-sheen{0%,100%{background-position:calc(70% + var(--sheen-x,0%)) 0}50%{background-position:calc(30% + var(--sheen-x,0%)) 0}}
 @keyframes pack-tear-guide{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
-.pack-reveal-stage.is-discarding{animation:none;transform:translateY(-44%) scale(.86);opacity:0;transition:transform .24s cubic-bezier(.3,.7,.3,1),opacity .24s ease-out}
+.pack-reveal-stage.is-discarding{animation:none;transition:none;visibility:hidden}
 .pack-reveal-center.is-arriving{animation:pack-next-arrive 220ms cubic-bezier(.22,1,.36,1) both}
 .is-opening-pack .pack-reveal-info,.is-opening-pack .pack-reveal-actions{visibility:hidden}
 @keyframes pack-next-arrive{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
