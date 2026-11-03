@@ -62,7 +62,14 @@
     cards: '<rect x="3" y="7" width="12" height="15" rx="2"/><path d="M8 7V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M6 12h6m-6 4h4"/>',
     help: '<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3h.01"/>',
     eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
-    logout: '<path d="M10 3H4v18h6m5-14 5 5-5 5M8 12h12"/>'
+    logout: '<path d="M10 3H4v18h6m5-14 5 5-5 5M8 12h12"/>',
+    gift: '<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 13h18M12 8S10 3 7 4s0 4 5 4Zm0 0s2-5 5-4 0 4-5 4Z"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M14.8 8.5h-4a2 2 0 0 0 0 4h2.4a2 2 0 0 1 0 4H9M12 6v12"/>',
+    pack: '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M5 6h14M5 18h14M9 12h6"/>',
+    market: '<path d="M4 9h16l-1.5-5h-13zM5 9v11h14V9M9 20v-6h6v6"/>',
+    megaphone: '<path d="M3 10v4h4l8 5V5L7 10H3Zm15-2a5 5 0 0 1 0 8"/>',
+    refresh: '<path d="M20 7v5h-5M4 17v-5h5M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 18 17"/>',
+    fire: '<path d="M12 3c2 3 5 4.5 5 9a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.5 1 2.5 2 3 0-3 .5-5.5 1-7.5Z"/>'
   })[name] || ''}</svg>`;
   function createConsole(api) {
     const mount = document.getElementById('superAdminConsole');
@@ -71,7 +78,33 @@
     mount.innerHTML = `
       <header class="control-bar"><button type="button" data-control-back aria-label="Volver a administración" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><h2 data-control-title>Administración</h2></header>
       <div data-control-panel="overview">
-        <section class="control-stats" aria-label="Resumen del club"><div><strong data-control-stat="members">—</strong><span>Cuentas</span></div><div><strong data-control-stat="online">—</strong><span>En línea</span></div><div><strong data-control-stat="events">—</strong><span>Planes</span></div><div><strong data-control-stat="admins">—</strong><span>Equipo</span></div></section>
+        <section class="ctl-hero" aria-label="Pulso del club">
+          <div class="ctl-hero-top"><div><span class="ctl-kicker" data-ctl-date></span><h3>Hola, <b data-control-username></b></h3><p data-ctl-headline>Cargando el pulso del club…</p></div><button type="button" class="ctl-icon-button" data-ctl-refresh aria-label="Actualizar el panel">${icon('refresh')}</button></div>
+          <div class="ctl-kpis">
+            <div class="ctl-kpi" style="--tone:#5ac8fa">${icon('people')}<strong data-ctl="active_today">—</strong><span>activos hoy</span><small data-ctl-sub="members">de — miembros</small></div>
+            <div class="ctl-kpi" style="--tone:#ff9f0a">${icon('pack')}<strong data-ctl="packs_opened_week">—</strong><span>sobres abiertos</span><small>últimos 7 días</small></div>
+            <div class="ctl-kpi" style="--tone:#30d158">${icon('coin')}<strong data-ctl="coins_circulating">—</strong><span>monedas en el club</span><small data-ctl-sub="coins">—</small></div>
+            <div class="ctl-kpi" style="--tone:#bf5af2">${icon('trophy')}<strong data-ctl="trophies_week">—</strong><span>trofeos ganados</span><small>últimos 7 días</small></div>
+          </div>
+          <figure class="ctl-chart"><figcaption><span>Miembros activos</span><small data-ctl-sub="week">14 días</small></figcaption><div class="ctl-bars" data-ctl-bars role="img" aria-label="Miembros activos cada día"></div></figure>
+        </section>
+        <div class="ctl-alerts" data-ctl-alerts></div>
+        <section class="ctl-section"><h3>Acciones rápidas</h3><div class="ctl-quick">${[
+          ['tab','gift','gift','Regalar al club','Sobres o monedas para todos','#ff375f'],
+          ['tab','design','megaphone','Aviso del club','Mensaje destacado en Inicio','#ff9f0a'],
+          ['tab','requests','people','Solicitudes','Nuevos accesos','#5ac8fa'],
+          ['route','admin-cuentas','people','Cuentas','Perfiles y recursos','#64d2ff'],
+          ['tab','economy','cards','Tienda y sobres','Precios y rarezas','#30d158'],
+          ['tab','market','market','Mercado','Cartas a la venta','#ffd60a'],
+          ['route','admin-logros','trophy','Logros','Trofeos y escaleras','#bf5af2'],
+          ['route','calendario','calendar','Agenda','Planes y cumpleaños','#ff6961']
+        ].map(([kind,target,symbol,title,detail,tone]) => `<button type="button" class="ctl-tile" style="--tone:${tone}" data-control-${kind}="${target}"><span class="ctl-tile-icon">${icon(symbol)}</span><strong>${title}</strong><small>${detail}</small></button>`).join('')}</div></section>
+        <div class="ctl-split">
+          <section class="ctl-card"><header><h3>Economía · 7 días</h3>${icon('coin')}</header><dl class="ctl-ledger" data-ctl-economy><div><dt>Cargando…</dt><dd></dd></div></dl></section>
+          <section class="ctl-card"><header><h3>Podio</h3><div class="ctl-segment" role="group" aria-label="Clasificación">${[['top_collectors','Cartas'],['top_coins','Monedas'],['top_streaks','Racha']].map(([key,label],i) => `<button type="button" data-ctl-podium="${key}" aria-pressed="${i===0}">${label}</button>`).join('')}</div></header><ol class="ctl-podium" data-ctl-podium-list></ol></section>
+        </div>
+        <section class="ctl-card ctl-feed"><header><h3>Actividad reciente</h3>${icon('fire')}</header><ul data-ctl-feed><li class="ctl-empty">Cargando…</li></ul></section>
+        <h3 class="ctl-tools-heading">Todas las herramientas</h3>
         ${[
           ['Personas', [
             ['tab', 'requests', 'people', 'Solicitudes de cuenta', 'Decide quién entra al club', '<small data-request-count hidden></small>'],
@@ -97,6 +130,23 @@
       <section data-control-panel="requests" class="request-admin-section" hidden aria-label="Solicitudes de cuenta">
         <div class="request-section-heading"><div><p>Revisa quién quiere entrar y decide cuándo activar su cuenta.</p></div><button type="button" data-request-refresh>Actualizar</button></div>
         <div data-request-review><p class="request-intro">Las solicitudes aparecen al enviarse. Para aceptar una cuenta, su correo debe estar verificado.</p><p class="request-feedback" role="status" aria-live="polite"></p><div class="request-review-list"></div></div>
+      </section>
+      <section data-control-panel="gift" class="ctl-gift" hidden aria-label="Regalar al club">
+        <form class="ctl-card ctl-gift-form" data-ctl-gift-form>
+          <p class="ctl-lead">Un regalo para todos los miembros a la vez. Cada uno recibe un aviso; los sobres se suman a su saldo.</p>
+          <fieldset><legend>Sobres por miembro</legend><div class="ctl-chips">${[0,1,2,3,5,10].map(n => `<label><input type="radio" name="packs" value="${n}" ${n===1?'checked':''}><span>${n}</span></label>`).join('')}</div></fieldset>
+          <fieldset><legend>Monedas por miembro</legend><div class="ctl-chips">${[0,10,25,50,100,250].map(n => `<label><input type="radio" name="coins" value="${n}" ${n===0?'checked':''}><span>${n}</span></label>`).join('')}</div></fieldset>
+          <label class="ctl-field">Nota para el aviso (opcional)<input name="note" maxlength="120" placeholder="Por ejemplo: ¡Por el aniversario del club!" autocomplete="off"></label>
+          <p class="ctl-gift-summary" data-ctl-gift-summary></p>
+          <button type="submit" class="ctl-primary" data-ctl-gift-submit>Preparar regalo</button>
+          <p class="ctl-feedback" data-ctl-gift-feedback role="status" aria-live="polite"></p>
+        </form>
+        <section class="ctl-card"><header><h3>Últimos regalos</h3>${icon('gift')}</header><ul class="ctl-list" data-ctl-gifts><li class="ctl-empty">Todavía no hay regalos.</li></ul></section>
+      </section>
+      <section data-control-panel="market" class="ctl-market" hidden aria-label="Mercado">
+        <section class="ctl-card"><header><h3>Cartas a la venta</h3><button type="button" class="ctl-icon-button" data-ctl-market-reload aria-label="Actualizar mercado">${icon('refresh')}</button></header>
+          <p class="ctl-lead">Retirar una carta la devuelve al álbum de quien la vendía y le avisa.</p>
+          <ul class="ctl-list" data-ctl-market><li class="ctl-empty">Cargando…</li></ul><p class="ctl-feedback" data-ctl-market-feedback role="status" aria-live="polite"></p></section>
       </section>
       <section data-control-panel="economy" class="control-economy" hidden aria-label="Tienda y sobres">
         <div class="control-design-intro"><div><p>Precios en monedas y probabilidades de cada rareza para todos los usuarios.</p></div><button type="button" data-economy-reload>Actualizar datos</button></div>
@@ -205,8 +255,117 @@
     }
     economyReload.addEventListener('click', loadEconomy);
 
-    const TAB_TITLES = {overview:'Administración', requests:'Solicitudes', economy:'Tienda y sobres', updates:'Actualizaciones', design:'Personalización'};
+    const TAB_TITLES = {overview:'Administración', requests:'Solicitudes', economy:'Tienda y sobres', updates:'Actualizaciones', design:'Personalización', gift:'Regalar al club', market:'Mercado'};
+    // Club pulse ------------------------------------------------------------
+    const number = value => new Intl.NumberFormat('es-ES').format(Number(value) || 0);
+    let dashboard = null, dashboardAt = 0, dashboardRequest = 0, podium = 'top_collectors', giftId = null, giftArmed = false, giftBusy = false;
+    const $ = selector => mount.querySelector(selector);
+    function relative(at) {
+      const minutes = Math.max(0, Math.round((Date.now() - Date.parse(at)) / 60000));
+      return minutes < 1 ? 'ahora' : minutes < 60 ? `hace ${minutes} min` : minutes < 1440 ? `hace ${Math.round(minutes / 60)} h` : `hace ${Math.round(minutes / 1440)} d`;
+    }
+    function drawPodium() {
+      const rows = dashboard?.[podium] || [], unit = {top_collectors:'cartas', top_coins:'monedas', top_streaks:'días'}[podium];
+      $('[data-ctl-podium-list]').innerHTML = rows.map((row, index) => `<li><span class="ctl-rank" data-rank="${index + 1}">${index + 1}</span><span class="ctl-avatar">${row.avatar_url ? `<img src="${safe(row.avatar_url)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : safe(String(row.name || '?').charAt(0))}</span><strong>${safe(row.name)}</strong><b>${number(row.value)} <small>${unit}</small></b></li>`).join('') || '<li class="ctl-empty">Sin datos todavía.</li>';
+      mount.querySelectorAll('[data-ctl-podium]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.ctlPodium === podium)));
+    }
+    function drawDashboard() {
+      const d = dashboard; if (!d) return;
+      mount.querySelectorAll('[data-ctl]').forEach(node => { node.textContent = number(d[node.dataset.ctl]); });
+      $('[data-ctl-sub="members"]').textContent = `de ${number(d.members)} miembros · ${number(d.active_week)} esta semana`;
+      $('[data-ctl-sub="coins"]').textContent = `+${number(d.coins_earned_week)} · −${number(d.coins_spent_week)} esta semana`;
+      $('[data-ctl-headline]').textContent = d.active_today ? `${number(d.active_today)} ${d.active_today === 1 ? 'miembro ha entrado' : 'miembros han entrado'} hoy y hay ${number(d.packs_waiting)} sobres esperando a abrirse.` : `Nadie ha entrado todavía hoy. Hay ${number(d.packs_waiting)} sobres esperando a abrirse.`;
+      const visits = d.visits || [], peak = Math.max(1, ...visits.map(v => v.count));
+      $('[data-ctl-bars]').innerHTML = visits.map(v => { const day = new Date(`${v.day}T12:00:00`); return `<span style="--h:${Math.round(v.count / peak * 100)}%" title="${day.toLocaleDateString('es-ES', {weekday:'short', day:'numeric'})}: ${v.count}"><i></i><small>${day.toLocaleDateString('es-ES', {weekday:'narrow'})}</small></span>`; }).join('');
+      $('[data-ctl-sub="week"]').textContent = `${number(d.active_week)} distintos en 7 días`;
+      const alerts = [
+        d.pending_requests ? ['tab', 'requests', 'people', `${d.pending_requests} ${d.pending_requests === 1 ? 'solicitud de cuenta espera' : 'solicitudes de cuenta esperan'} tu revisión`, '#5ac8fa'] : null,
+        d.open_tickets ? ['route', 'ayuda', 'help', `${d.open_tickets} ${d.open_tickets === 1 ? 'mensaje de ayuda abierto' : 'mensajes de ayuda abiertos'}`, '#ff9f0a'] : null,
+        d.market_open ? ['tab', 'market', 'market', `${d.market_open} ${d.market_open === 1 ? 'carta a la venta' : 'cartas a la venta'} en el mercado`, '#ffd60a'] : null,
+      ].filter(Boolean);
+      $('[data-ctl-alerts]').innerHTML = alerts.length ? alerts.map(([kind, target, symbol, text, tone]) => `<button type="button" class="ctl-alert" style="--tone:${tone}" data-control-${kind}="${target}">${icon(symbol)}<span>${safe(text)}</span><i aria-hidden="true"></i></button>`).join('') : `<p class="ctl-calm">${icon('eye')}<span>Todo al día: sin solicitudes ni mensajes pendientes.</span></p>`;
+      $('[data-ctl-economy]').innerHTML = [
+        ['Monedas ganadas', `+${number(d.coins_earned_week)}`], ['Monedas gastadas', `−${number(d.coins_spent_week)}`],
+        ['Sobres por abrir', number(d.packs_waiting)], ['Ventas en el mercado', `${number(d.market_sales_week)} · ${number(d.market_volume_week)} monedas`],
+        ['Intercambios', number(d.trades_week)], ['Fusiones', number(d.fusions_week)],
+      ].map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join('');
+      drawPodium();
+      const kinds = {trophy:['trophy','#bf5af2'], sale:['market','#ffd60a'], fusion:['fire','#ff9f0a'], pull:['cards','#ff375f']};
+      const editions = {legendary:'legendaria', full_art:'Full Art', vice_city:'Vice City', halloween:'Halloween'};
+      $('[data-ctl-feed]').innerHTML = (d.recent || []).slice(0, 12).map(item => {
+        const [symbol, tone] = kinds[item.kind] || kinds.trophy;
+        const text = item.kind === 'trophy' ? `ha ganado «${safe(item.what)}»` : item.kind === 'sale' ? `ha comprado «${safe(item.what)}» por ${number(item.price)} monedas` : item.kind === 'fusion' ? `ha fusionado repetidas y le ha salido «${safe(item.what)}»` : `ha sacado «${safe(item.what)}» (${editions[item.edition] || safe(item.edition)})`;
+        return `<li style="--tone:${tone}"><span class="ctl-feed-icon">${icon(symbol)}</span><p><strong>${safe(item.who)}</strong> ${text}</p><time>${relative(item.at)}</time></li>`;
+      }).join('') || '<li class="ctl-empty">Todavía no hay actividad.</li>';
+    }
+    async function loadDashboard(force = false) {
+      if (!api.allowed() || (!force && Date.now() - dashboardAt < 30000)) return;
+      const actor = api.owner(), request = ++dashboardRequest; dashboardAt = Date.now();
+      $('[data-ctl-refresh]').classList.add('is-spinning');
+      try {
+        const data = await economyRPC('admin_club_dashboard');
+        if (api.owner() !== actor || request !== dashboardRequest) return;
+        dashboard = data; drawDashboard();
+      } catch (error) {
+        if (api.owner() === actor && request === dashboardRequest) { dashboardAt = 0; $('[data-ctl-headline]').textContent = ['PGRST202','42883'].includes(error.code) ? 'Falta activar el panel en el servidor.' : 'No se pudo cargar el pulso del club. Pulsa actualizar.'; }
+      } finally { if (request === dashboardRequest) $('[data-ctl-refresh]').classList.remove('is-spinning'); }
+    }
+    // Club gift -------------------------------------------------------------
+    const giftForm = $('[data-ctl-gift-form]');
+    function giftValues() { const data = new FormData(giftForm); return {packs:Number(data.get('packs')) || 0, coins:Number(data.get('coins')) || 0, note:String(data.get('note') || '').trim()}; }
+    function drawGift() {
+      const {packs, coins} = giftValues(), people = dashboard?.members ?? api.stats().members;
+      const parts = [packs ? `${packs} ${packs === 1 ? 'sobre' : 'sobres'}` : '', coins ? `${coins} monedas` : ''].filter(Boolean).join(' y ');
+      $('[data-ctl-gift-summary]').textContent = parts ? `Cada uno de los ${number(people)} miembros recibirá ${parts}. En total: ${number(packs * people)} sobres y ${number(coins * people)} monedas.` : 'Elige al menos sobres o monedas.';
+      const submit = $('[data-ctl-gift-submit]');
+      submit.disabled = giftBusy || !parts;
+      submit.textContent = giftBusy ? 'Enviando…' : giftArmed ? 'Confirmar y enviar a todos' : 'Preparar regalo';
+      submit.classList.toggle('is-armed', giftArmed);
+    }
+    async function loadGifts() {
+      try {
+        const rows = await economyRPC('admin_recent_club_gifts');
+        $('[data-ctl-gifts]').innerHTML = rows.map(g => `<li><span>${[g.packs ? `${g.packs} ${g.packs === 1 ? 'sobre' : 'sobres'}` : '', g.coins ? `${g.coins} monedas` : ''].filter(Boolean).join(' + ')}${g.note ? ` · ${safe(g.note)}` : ''}</span><small>${number(g.recipients)} miembros · ${relative(g.created_at)}</small></li>`).join('') || '<li class="ctl-empty">Todavía no hay regalos.</li>';
+      } catch { /* The list is informative; sending still works. */ }
+    }
+    giftForm.addEventListener('change', () => { giftArmed = false; giftId = null; drawGift(); });
+    giftForm.addEventListener('input', () => { giftArmed = false; drawGift(); });
+    giftForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (giftBusy || !api.allowed()) return;
+      // Two steps: the first press shows the total, the second sends it.
+      if (!giftArmed) { giftArmed = true; giftId = crypto.randomUUID(); drawGift(); return; }
+      const {packs, coins, note} = giftValues(), feedbackNode = $('[data-ctl-gift-feedback]');
+      giftBusy = true; drawGift(); feedbackNode.textContent = 'Enviando el regalo…';
+      try {
+        const result = await economyRPC('admin_gift_club', {gift_id:giftId, gift_packs:packs, gift_coins:coins, gift_note:note || null});
+        feedbackNode.textContent = `Regalo enviado a ${number(result.recipients)} miembros.`;
+        giftForm.reset(); giftArmed = false; giftId = null;
+        void loadGifts(); void loadDashboard(true);
+      } catch (error) { feedbackNode.textContent = error.message || 'No se pudo enviar. Vuelve a intentarlo: el regalo no se duplica.'; }
+      finally { giftBusy = false; drawGift(); }
+    });
+    // Market moderation -----------------------------------------------------
+    async function loadMarket() {
+      const list = $('[data-ctl-market]');
+      try {
+        const rows = await economyRPC('admin_market_listings');
+        list.innerHTML = rows.map(row => `<li><span><strong>${safe(row.card_name)}</strong><small>${safe(row.seller_name)} · ${number(row.price)} monedas · ${relative(row.created_at)}</small></span><button type="button" data-ctl-withdraw="${safe(row.id)}">Retirar</button></li>`).join('') || '<li class="ctl-empty">No hay cartas a la venta.</li>';
+      } catch (error) { list.innerHTML = `<li class="ctl-empty">${safe(error.message || 'No se pudo cargar el mercado.')}</li>`; }
+    }
+    $('[data-ctl-market]').addEventListener('click', async event => {
+      const button = event.target.closest('[data-ctl-withdraw]'); if (!button) return;
+      button.disabled = true; const feedbackNode = $('[data-ctl-market-feedback]');
+      try { await economyRPC('admin_withdraw_market_listing', {target_listing_id:Number(button.dataset.ctlWithdraw)}); feedbackNode.textContent = 'Carta retirada y devuelta a su dueño.'; await loadMarket(); }
+      catch (error) { button.disabled = false; feedbackNode.textContent = error.message || 'No se pudo retirar.'; }
+    });
+    $('[data-ctl-market-reload]').addEventListener('click', loadMarket);
+    $('[data-ctl-refresh]').addEventListener('click', () => loadDashboard(true));
+    mount.querySelectorAll('[data-ctl-podium]').forEach(button => button.addEventListener('click', () => { podium = button.dataset.ctlPodium; drawPodium(); }));
     function view(tab) {
+      if (tab === 'overview') loadDashboard();
+      if (tab === 'gift') { giftArmed = false; drawGift(); loadGifts(); }
+      if (tab === 'market') loadMarket();
       if (tab === 'updates') releaseAdmin?.load();
       if (tab === 'economy') loadEconomy();
       if (tab === 'requests') document.dispatchEvent(new Event('club-account-requests-open'));
@@ -301,11 +460,13 @@
         document.body.classList.toggle('superadmin-console-session', allowed);
         const shellLabel = document.querySelector('.topbar-title .eyebrow');
         if (shellLabel) shellLabel.textContent = allowed ? 'CONSOLA DE ADMINISTRACIÓN' : 'COMUNIDAD PRIVADA';
-        if (!allowed) { ++economyRequest; economy = null; economyOwner = null; economyBusy = false; economyContent.replaceChildren(); economyFeedback.textContent = ''; economyReload.disabled = false; owner = null; dirty = false; busy = false; ready = false; saved = normalize(); draft = {...saved}; fill(draft); view('overview'); return; }
+        if (!allowed) { ++dashboardRequest; dashboard = null; dashboardAt = 0; giftArmed = false; giftId = null; ++economyRequest; economy = null; economyOwner = null; economyBusy = false; economyContent.replaceChildren(); economyFeedback.textContent = ''; economyReload.disabled = false; owner = null; dirty = false; busy = false; ready = false; saved = normalize(); draft = {...saved}; fill(draft); view('overview'); return; }
         const nextOwner = api.owner();
         if (owner !== nextOwner) { owner = nextOwner; dirty = false; busy = false; ready = false; view('overview'); }
         updateStats();
-        mount.querySelector('[data-control-username]').textContent = api.username();
+        mount.querySelectorAll('[data-control-username]').forEach(node => { node.textContent = api.username(); });
+        $('[data-ctl-date]').textContent = new Date().toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
+        void loadDashboard();
         const value = normalize(api.settings()?.[SETTING_KEY]);
         saved = value;
         ready = Boolean(api.ready());
