@@ -446,3 +446,77 @@ body.superadmin-console-session #administracion#administracion .request-admin-en
   #superAdminConsole .ctl-split { grid-template-columns:1fr 1fr; }
 }
 @media (prefers-reduced-motion:reduce) { #superAdminConsole .ctl-icon-button.is-spinning svg { animation:none; } #superAdminConsole .ctl-tile { transition:none; } }
+
+/* Hero actions, crown menu and sign-out. */
+#superAdminConsole .ctl-hero-actions { display:flex; gap:8px; }
+#superAdminConsole .ctl-tile { position:relative; }
+#superAdminConsole .ctl-badge { position:absolute; top:12px; right:12px; min-width:22px; padding:3px 8px; border-radius:999px; background:var(--tone); color:#06121d; font-size:11px; font-weight:800; text-align:center; }
+#superAdminConsole .ctl-logout { display:inline-flex !important; align-items:center; gap:8px; min-height:44px !important; padding:10px 16px !important; border:1px solid var(--bb2-line-strong) !important; border-radius:999px !important; color:#ff6961 !important; font-size:13px !important; font-weight:700; }
+#superAdminConsole .ctl-logout svg { width:17px !important; height:17px !important; }
+.ctl-crown-menu { position:fixed; z-index:200; display:grid; gap:2px; width:min(280px, calc(100vw - 24px)); padding:8px; border:1px solid var(--bb2-line-strong); border-radius:18px; background:var(--bb2-panel); color:var(--bb2-ink); box-shadow:0 18px 48px #0009; font-family:var(--ds-font); animation:ctl-menu-in .16s ease-out; }
+.ctl-crown-menu[hidden] { display:none; }
+.ctl-crown-menu:focus { outline:none; }
+.ctl-crown-who { display:flex; align-items:center; gap:10px; margin:0 0 4px; padding:10px 12px; border-bottom:1px solid var(--bb2-line); color:var(--bb2-secondary); font-size:13px; }
+.ctl-crown-menu svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.ctl-crown-menu button { display:flex; align-items:center; gap:12px; width:100%; min-height:46px; padding:10px 12px; border:0; border-radius:12px; background:transparent; color:inherit; font:inherit; font-size:15px; font-weight:600; text-align:left; -webkit-tap-highlight-color:transparent; }
+.ctl-crown-menu button:focus-visible { outline:2px solid var(--interaction-strong); outline-offset:-2px; }
+@media (hover:hover) and (pointer:fine) { .ctl-crown-menu button:hover { background:var(--bb2-raised); } }
+.ctl-crown-menu button.is-danger { color:#ff6961; }
+@keyframes ctl-menu-in { from { opacity:0; transform:translateY(-6px) scale(.98); } }
+@media (prefers-reduced-motion:reduce) { .ctl-crown-menu { animation:none; } }
+
+/* Tienda y sobres. */
+#superAdminConsole .ctl-economy { display:grid; gap:12px; }
+#superAdminConsole .ctl-count { margin-left:6px; padding:2px 8px; border-radius:999px; background:var(--bb2-raised); color:var(--bb2-secondary); font-size:12px; font-weight:700; vertical-align:2px; }
+#superAdminConsole .ctl-odds-bar { display:flex; height:16px; overflow:hidden; margin:4px 0 14px; border-radius:999px; background:var(--bb2-raised); }
+#superAdminConsole .ctl-odds-bar i { flex:0 0 0; flex-basis:0; min-width:0; background:var(--tone); transition:flex-grow .25s ease; }
+#superAdminConsole .ctl-odds-bar i + i { box-shadow:-1px 0 0 var(--bb2-panel); }
+#superAdminConsole .ctl-odds-list { display:grid; gap:0; }
+#superAdminConsole .ctl-odds-row { display:grid; grid-template-columns:12px minmax(0,1fr) auto; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--bb2-line); }
+#superAdminConsole .ctl-odds-row > i { width:12px; height:12px; border-radius:4px; background:var(--tone); }
+#superAdminConsole .ctl-odds-row strong { display:block; font-size:14px; }
+#superAdminConsole .ctl-odds-row small { color:var(--bb2-muted); font-size:12px; }
+#superAdminConsole .ctl-number { display:inline-flex; align-items:center; gap:6px; padding:0 12px; border:1px solid var(--bb2-line-strong); border-radius:12px; background:var(--bb2-raised); }
+#superAdminConsole .ctl-number svg { width:16px; height:16px; color:#30d158; }
+#superAdminConsole .ctl-number input { width:76px; min-height:42px; padding:0; border:0 !important; background:transparent !important; color:var(--bb2-ink); font-size:16px; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+#superAdminConsole .ctl-number b { color:var(--bb2-muted); font-weight:600; }
+#superAdminConsole .ctl-odds-total { margin:12px 0 4px; font-size:13px; font-weight:700; color:#30d158; }
+#superAdminConsole .ctl-odds-total.is-invalid { color:#ff6961; }
+#superAdminConsole .ctl-note { margin:6px 0 0; color:var(--bb2-muted); font-size:12px; line-height:1.45; }
+#superAdminConsole .ctl-price-list { display:grid; }
+#superAdminConsole .ctl-price-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--bb2-line); }
+#superAdminConsole .ctl-price-row:last-child { border-bottom:0; }
+#superAdminConsole .ctl-price-name { display:grid; gap:4px; min-width:0; }
+#superAdminConsole .ctl-price-name strong { font-size:14px; overflow-wrap:anywhere; }
+#superAdminConsole .ctl-price-name small { color:var(--bb2-muted); font-size:12px; }
+#superAdminConsole .ctl-pill { display:inline-block; margin-right:6px; padding:2px 8px; border-radius:999px; background:var(--bb2-raised); color:var(--bb2-muted); font-size:11px; font-weight:700; }
+#superAdminConsole .ctl-pill.is-on { background:#30d15826; color:#30d158; }
+#superAdminConsole .ctl-save-bar { position:sticky; bottom:calc(92px + env(safe-area-inset-bottom,0px)); z-index:3; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid var(--bb2-line-strong); border-radius:20px; background:var(--bb2-panel); box-shadow:0 12px 30px #0007; }
+#superAdminConsole .ctl-save-bar div { display:grid; gap:2px; font-size:13px; }
+#superAdminConsole .ctl-save-bar small { color:var(--bb2-muted); font-size:11px; }
+#superAdminConsole .ctl-save-bar .ctl-primary { width:auto; min-height:46px; padding:0 18px; }
+@media (prefers-reduced-motion:reduce) { #superAdminConsole .ctl-odds-bar i { transition:none; } }
+
+/* Cuentas: member cards in a grid inside the console. */
+body.superadmin-console-session #admin-cuentas .admin-member-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr)); gap:10px; }
+body.superadmin-console-session #admin-cuentas .admin-member-card { display:grid; grid-template-columns:52px minmax(0,1fr) auto; grid-template-areas:"avatar copy role" "avatar status status"; align-items:center; gap:4px 12px; width:100%; min-height:84px; padding:14px; border:0; border-radius:20px; background:var(--bb2-panel); color:var(--bb2-ink); text-align:left; }
+body.superadmin-console-session #admin-cuentas .admin-member-avatar { grid-area:avatar; }
+body.superadmin-console-session #admin-cuentas .admin-member-avatar .avatar { width:52px; height:52px; }
+body.superadmin-console-session #admin-cuentas .admin-member-copy { grid-area:copy; display:grid; gap:2px; min-width:0; }
+body.superadmin-console-session #admin-cuentas .admin-member-copy strong { font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+body.superadmin-console-session #admin-cuentas .admin-member-copy small { color:var(--bb2-muted); font-size:12px; }
+body.superadmin-console-session #admin-cuentas .role-chip { grid-area:role; padding:4px 10px; border-radius:999px; background:var(--bb2-raised); color:var(--bb2-secondary); font-size:11px; font-weight:700; }
+body.superadmin-console-session #admin-cuentas .role-chip.admin { background:#bf5af226; color:#d79cff; }
+body.superadmin-console-session #admin-cuentas .account-status { grid-area:status; display:inline-flex; align-items:center; gap:6px; color:var(--bb2-muted); font-size:12px; }
+body.superadmin-console-session #admin-cuentas .account-status i { width:8px; height:8px; border-radius:50%; background:#30d158; box-shadow:0 0 0 3px #30d15826; }
+body.superadmin-console-session #admin-cuentas .account-status.offline i { background:var(--bb2-muted); box-shadow:none; }
+body.superadmin-console-session #admin-cuentas .admin-accounts-filters { display:flex; flex-wrap:wrap; gap:8px; }
+body.superadmin-console-session #admin-cuentas .admin-accounts-filters button { min-height:40px; padding:8px 14px; border:1px solid var(--bb2-line-strong); border-radius:999px; background:transparent; color:var(--bb2-secondary); font-weight:600; }
+body.superadmin-console-session #admin-cuentas .admin-accounts-filters button[aria-pressed="true"] { border-color:transparent; background:var(--bb2-ink); color:var(--bb2-canvas); }
+body.superadmin-console-session #admin-cuentas .admin-tool-disclosure { border:0; border-radius:20px; background:linear-gradient(120deg,#5ac8fa22,transparent 70%), var(--bb2-panel); }
+body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-users-panel { margin-top:14px; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-member-card { border:0 !important; border-radius:20px !important; background:var(--bb2-panel) !important; box-shadow:none !important; }
+body.superadmin-console-session #admin-cuentas#admin-cuentas .role-chip { border:0 !important; }
+body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-accounts-search { display:flex; align-items:center; gap:10px; width:100%; min-height:48px; margin:0 0 12px; padding:0 14px; border-radius:999px; background:var(--bb2-panel); }
+body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-accounts-search svg { width:20px; height:20px; flex:none; fill:none; stroke:var(--bb2-muted); stroke-width:1.8; }
+body.superadmin-console-session #admin-cuentas#admin-cuentas .admin-accounts-search input { flex:1; min-width:0; min-height:46px; padding:0; border:0; background:transparent; color:var(--bb2-ink); font-size:16px; }

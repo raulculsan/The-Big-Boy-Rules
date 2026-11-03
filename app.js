@@ -8492,7 +8492,11 @@ document.getElementById("messageCameraAttachment").addEventListener("change", ev
 function closeGlobalSearch() {
   document.getElementById("globalSearchInput")?.blur();
 }
-document.getElementById("adminPanelButton")?.addEventListener("click", () => goTo("administracion"));
+document.getElementById("adminPanelButton")?.addEventListener("click", event => {
+  // The administration account gets its menu (panel, club view, security, sign out); other admins go to the panel.
+  if (isSuperAdmin()) adminConsole?.toggleMenu?.(event.currentTarget);
+  else goTo("administracion");
+});
 const performSearchDebounced = debounce(value => performSearch(value));
 document.getElementById("globalSearchInput").addEventListener("input", event => performSearchDebounced(event.target.value));
 document.addEventListener("keydown", event => {

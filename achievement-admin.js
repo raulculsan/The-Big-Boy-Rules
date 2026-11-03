@@ -147,19 +147,36 @@
       const members = eligible(options.members()), memberIds = new Set(members.map(m=>m.authId));
       const definitions = options.achievements(), awards = options.awards();
       const recognized = new Set(awards.filter(a=>memberIds.has(a.userId)).map(a=>a.userId));
-      $('achievementLibraryStats').innerHTML = `<span><strong>${definitions.length}</strong> ${definitions.length === 1 ? 'logro creado' : 'logros creados'}</span><span><strong>${recognized.size}</strong> ${recognized.size === 1 ? 'miembro reconocido' : 'miembros reconocidos'}</span>`;
+      const memberAwards = awards.filter(a=>memberIds.has(a.userId));
       const query = normalize($('achievementLibrarySearch').value.trim()), rank = $('achievementLibraryTier').value;
-      const filtered = definitions.filter(a=>(rank==='all'||a.tier===rank)&&normalize(a.name+' '+a.description).includes(query));
-      list.innerHTML = filtered.map(a=>{
+      const filtered = definitions.filter(a=>(rank==='all'||a.tier===rank)&&normalize(a.name+' '+a.description+' '+(a.trackKey?AchievementProgress.trackLabel(a.trackKey):'')).includes(query));
+      const ladders = new Map(), singles = [];
+      for (const a of filtered) { if (a.trackKey) { if (!ladders.has(a.trackKey)) ladders.set(a.trackKey, []); ladders.get(a.trackKey).push(a); } else singles.push(a); }
+      const ladderCount = new Set(definitions.filter(a=>a.trackKey).map(a=>a.trackKey)).size;
+      $('achievementLibraryStats').innerHTML = [[definitions.length,'logros','logro'],[ladderCount,'escaleras','escalera'],[memberAwards.length,'trofeos concedidos','trofeo concedido'],[recognized.size,'miembros con trofeos','miembro con trofeos']]
+        .map(([n,plural,single])=>`<span><strong>${n}</strong> ${n===1?single:plural}</span>`).join('');
+      const remove = a => `<button class="achievement-delete" type="button" data-delete-achievement="${esc(a.id)}" data-delete-achievement-name="${esc(a.name)}" aria-label="Eliminar ${esc(a.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5"/></svg></button>`;
+      const card = a => {
         const ids=currentAwards(a.id), recipients=members.filter(m=>ids.has(m.authId));
         const tier=ranks.includes(a.tier)?a.tier:'bronze';
         return `<article class="achievement-library-card tier-${tier}">
           <div class="achievement-library-art" aria-hidden="true">${options.trophy(tier,a.icon)}</div>
           <div class="achievement-library-copy"><small>${esc(options.tier(tier).label)} · ${a.rule ? 'Automático' : 'Manual'}</small><h3>${esc(a.name)}</h3><p>${esc(a.description || 'Un reconocimiento del club.')}</p>${a.rule ? `<p class="achievement-library-objective">${esc(AchievementProgress.objective(a.rule))}</p>` : ''}</div>
           <div class="achievement-library-recipients"><span class="achievement-avatar-stack" aria-hidden="true">${recipients.slice(0,3).map(m=>options.avatar(m,'avatar tiny')).join('')}</span><span>${recipients.length ? `${recipients.length} ${recipients.length===1?'miembro':'miembros'}` : 'Todavía sin asignar'}</span></div>
-          <div class="achievement-library-actions">${a.rule ? '<span class="achievement-automatic-label">Concesión automática</span>' : `<button class="secondary-button" type="button" data-manage-achievement="${esc(a.id)}" aria-label="Asignar ${esc(a.name)}">Gestionar asignación</button>`}<button class="achievement-delete" type="button" data-delete-achievement="${esc(a.id)}" data-delete-achievement-name="${esc(a.name)}" aria-label="Eliminar ${esc(a.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5"/></svg></button></div>
+          <div class="achievement-library-actions">${a.rule ? '<span class="achievement-automatic-label">Concesión automática</span>' : `<button class="secondary-button" type="button" data-manage-achievement="${esc(a.id)}" aria-label="Asignar ${esc(a.name)}">Gestionar asignación</button>`}${remove(a)}</div>
         </article>`;
-      }).join('') || `<div class="achievement-library-empty"><strong>${definitions.length?'No hay coincidencias':'El primer reconocimiento empieza aquí'}</strong><p>${definitions.length?'Prueba con otro nombre o rango.':'Crea un logro para celebrar algo especial de los miembros del club.'}</p></div>`;
+      };
+      // A ladder reads as one family: every step, its goal and how many members reached it.
+      const ladder = (key, steps) => {
+        steps.sort((a,b)=>a.trackStep-b.trackStep);
+        const owners = steps.reduce((sum,a)=>sum+members.filter(m=>currentAwards(a.id).has(m.authId)).length,0);
+        return `<article class="achievement-ladder-card"><header><div><small>Escalera · ${steps.length} ${steps.length===1?'escalón':'escalones'}</small><h3>${esc(AchievementProgress.trackLabel(key))}</h3></div><span>${owners} ${owners===1?'trofeo':'trofeos'}</span></header>
+          <ol>${steps.map(a=>{const tier=ranks.includes(a.tier)?a.tier:'bronze', count=members.filter(m=>currentAwards(a.id).has(m.authId)).length, share=members.length?Math.round(count/members.length*100):0;
+            return `<li class="tier-${tier}"><span class="achievement-ladder-icon" aria-hidden="true">${options.trophy(tier,a.icon)}</span><span class="achievement-ladder-copy"><strong>${esc(a.name)}</strong><small>${esc(a.rule?AchievementProgress.objective(a.rule):options.tier(tier).label)}</small><span class="achievement-ladder-meter" style="--share:${share}%" aria-label="${count} de ${members.length} miembros"><i></i></span></span><b>${count}</b>${remove(a)}</li>`;}).join('')}</ol></article>`;
+      };
+      list.innerHTML = (ladders.size ? `<h3 class="achievement-library-group">Escaleras <span>${ladders.size}</span></h3><div class="achievement-ladder-grid">${[...ladders].sort((a,b)=>AchievementProgress.trackLabel(a[0]).localeCompare(AchievementProgress.trackLabel(b[0]),'es')).map(([key,steps])=>ladder(key,steps)).join('')}</div>` : '')
+        + (singles.length ? `<h3 class="achievement-library-group">Logros sueltos <span>${singles.length}</span></h3>${singles.map(card).join('')}` : '')
+        || `<div class="achievement-library-empty"><strong>${definitions.length?'No hay coincidencias':'El primer reconocimiento empieza aquí'}</strong><p>${definitions.length?'Prueba con otro nombre o rango.':'Crea un logro para celebrar algo especial de los miembros del club.'}</p></div>`;
       // Presence and award updates never erase names, descriptions, filters or draft recipients.
       if (!creating) renderPicker('achievementCreatePicker','achievementMembers');
       if (assignmentId && !assigning) renderPicker('achievementAssignPicker','achievementAssignmentMembers');

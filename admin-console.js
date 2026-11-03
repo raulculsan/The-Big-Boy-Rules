@@ -79,7 +79,7 @@
       <header class="control-bar"><button type="button" data-control-back aria-label="Volver a administración" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><h2 data-control-title>Administración</h2></header>
       <div data-control-panel="overview">
         <section class="ctl-hero" aria-label="Pulso del club">
-          <div class="ctl-hero-top"><div><span class="ctl-kicker" data-ctl-date></span><h3>Hola, <b data-control-username></b></h3><p data-ctl-headline>Cargando el pulso del club…</p></div><button type="button" class="ctl-icon-button" data-ctl-refresh aria-label="Actualizar el panel">${icon('refresh')}</button></div>
+          <div class="ctl-hero-top"><div><span class="ctl-kicker" data-ctl-date></span><h3>Hola, <b data-control-username></b></h3><p data-ctl-headline>Cargando el pulso del club…</p></div><div class="ctl-hero-actions"><button type="button" class="ctl-icon-button" data-ctl-refresh aria-label="Actualizar el panel">${icon('refresh')}</button><button type="button" class="ctl-icon-button" data-control-action="logout" aria-label="Cerrar sesión" title="Cerrar sesión">${icon('logout')}</button></div></div>
           <div class="ctl-kpis">
             <div class="ctl-kpi" style="--tone:#5ac8fa">${icon('people')}<strong data-ctl="active_today">—</strong><span>activos hoy</span><small data-ctl-sub="members">de — miembros</small></div>
             <div class="ctl-kpi" style="--tone:#ff9f0a">${icon('pack')}<strong data-ctl="packs_opened_week">—</strong><span>sobres abiertos</span><small>últimos 7 días</small></div>
@@ -91,14 +91,14 @@
         <div class="ctl-alerts" data-ctl-alerts></div>
         <section class="ctl-section"><h3>Acciones rápidas</h3><div class="ctl-quick">${[
           ['tab','gift','gift','Regalar al club','Sobres o monedas para todos','#ff375f'],
-          ['tab','design','megaphone','Aviso del club','Mensaje destacado en Inicio','#ff9f0a'],
-          ['tab','requests','people','Solicitudes','Nuevos accesos','#5ac8fa'],
-          ['route','admin-cuentas','people','Cuentas','Perfiles y recursos','#64d2ff'],
+          ['tab','requests','people','Solicitudes','Nuevos accesos al club','#5ac8fa','<small class="ctl-badge" data-request-count hidden></small>'],
+          ['route','admin-cuentas','people','Cuentas','Perfiles, sobres y monedas','#64d2ff'],
           ['tab','economy','cards','Tienda y sobres','Precios y rarezas','#30d158'],
           ['tab','market','market','Mercado','Cartas a la venta','#ffd60a'],
           ['route','admin-logros','trophy','Logros','Trofeos y escaleras','#bf5af2'],
-          ['route','calendario','calendar','Agenda','Planes y cumpleaños','#ff6961']
-        ].map(([kind,target,symbol,title,detail,tone]) => `<button type="button" class="ctl-tile" style="--tone:${tone}" data-control-${kind}="${target}"><span class="ctl-tile-icon">${icon(symbol)}</span><strong>${title}</strong><small>${detail}</small></button>`).join('')}</div></section>
+          ['tab','design','paint','Personalizar','Nombre, colores y aviso','#ff9f0a','<span class="ctl-badge" data-control-unsaved hidden>Sin publicar</span>'],
+          ['tab','updates','panel','Actualizaciones','Versión de Android','#8e8e93']
+        ].map(([kind,target,symbol,title,detail,tone,extra='']) => `<button type="button" class="ctl-tile" style="--tone:${tone}" data-control-${kind}="${target}"><span class="ctl-tile-icon">${icon(symbol)}</span>${extra}<strong>${title}</strong><small>${detail}</small></button>`).join('')}</div></section>
         <div class="ctl-split">
           <section class="ctl-card"><header><h3>Economía · 7 días</h3>${icon('coin')}</header><dl class="ctl-ledger" data-ctl-economy><div><dt>Cargando…</dt><dd></dd></div></dl></section>
           <section class="ctl-card"><header><h3>Podio</h3><div class="ctl-segment" role="group" aria-label="Clasificación">${[['top_collectors','Cartas'],['top_coins','Monedas'],['top_streaks','Racha']].map(([key,label],i) => `<button type="button" data-ctl-podium="${key}" aria-pressed="${i===0}">${label}</button>`).join('')}</div></header><ol class="ctl-podium" data-ctl-podium-list></ol></section>
@@ -106,26 +106,16 @@
         <section class="ctl-card ctl-feed"><header><h3>Actividad reciente</h3>${icon('fire')}</header><ul data-ctl-feed><li class="ctl-empty">Cargando…</li></ul></section>
         <h3 class="ctl-tools-heading">Todas las herramientas</h3>
         ${[
-          ['Personas', [
-            ['tab', 'requests', 'people', 'Solicitudes de cuenta', 'Decide quién entra al club', '<small data-request-count hidden></small>'],
-            ['route', 'admin-cuentas', 'people', 'Cuentas y perfiles', 'Usuarios, contraseñas, sobres y regalos'],
-            ['route', 'ayuda', 'help', 'Ayuda y solicitudes', 'Mensajes de los miembros']
-          ]],
           ['Club', [
+            ['route', 'ayuda', 'help', 'Ayuda y solicitudes', 'Mensajes de los miembros'],
             ['route', 'calendario', 'calendar', 'Agenda', 'Cumpleaños, eventos y asistencia'],
             ['route', 'chat', 'chat', 'Conversaciones', 'Secciones, encuestas y mensajes automáticos'],
-            ['route', 'admin-logros', 'trophy', 'Logros y progreso', 'Objetivos y reconocimientos'],
-            ['route', 'catalogo', 'cards', 'Colección', 'Cartas, rarezas y puntuaciones']
-          ]],
-          ['Ajustes', [
-            ['tab', 'economy', 'cards', 'Tienda y sobres', 'Precios y probabilidades de cada rareza'],
-            ['tab', 'design', 'paint', 'Personalización', 'Nombre, colores y pantalla de inicio', '<span class="control-unsaved" data-control-unsaved hidden>Sin publicar</span>'],
-            ['tab', 'updates', 'panel', 'Actualizaciones', 'APK y versión mínima de Android'],
+            ['route', 'catalogo', 'cards', 'Colección', 'Cartas, rarezas y puntuaciones'],
             ['route', 'admin-diagnostico', 'pulse', 'Rendimiento y diagnóstico', 'Estado de este dispositivo']
           ]]
         ].map(([heading, rows]) => `<section class="control-group"><h3>${heading}</h3>${rows.map(([kind, target, symbol, title, detail, extra = '']) => `<button type="button" class="control-row" data-control-${kind}="${target}">${icon(symbol)}<span><strong>${title}</strong><small>${detail}</small></span>${extra}<i aria-hidden="true"></i></button>`).join('')}</section>`).join('')}
         <section class="control-group" data-control-security><h3>Tu cuenta</h3><button type="button" class="control-row" data-control-action="preview">${icon('eye')}<span><strong>Ver el club</strong><small>Como lo ven los miembros</small></span><i aria-hidden="true"></i></button></section>
-        <footer class="control-session"><span>Sesión de <b data-control-username></b></span><button type="button" data-control-action="logout">Cerrar sesión</button></footer>
+        <footer class="control-session"><span>Sesión de <b data-control-username></b></span><button type="button" class="ctl-logout" data-control-action="logout">${icon('logout')}Cerrar sesión</button></footer>
       </div>
       <section data-control-panel="requests" class="request-admin-section" hidden aria-label="Solicitudes de cuenta">
         <div class="request-section-heading"><div><p>Revisa quién quiere entrar y decide cuándo activar su cuenta.</p></div><button type="button" data-request-refresh>Actualizar</button></div>
@@ -184,7 +174,7 @@
     const form = mount.querySelector('#clubPresentationForm'), fields = form.elements;
     const dock = document.createElement('nav');
     dock.id = 'superAdminDock'; dock.className = 'control-dock'; dock.hidden = true; dock.setAttribute('aria-label', 'Navegación de administración');
-    dock.innerHTML = [['panel', 'administracion', 'Panel'], ['people', 'admin-cuentas', 'Cuentas'], ['calendar', 'calendario', 'Agenda'], ['eye', 'inicio', 'Ver club']].map(([symbol, route, label]) => `<button type="button" data-control-route="${route}">${icon(symbol)}<span>${label}</span></button>`).join('');
+    dock.innerHTML = [['panel', 'administracion', 'Panel'], ['people', 'admin-cuentas', 'Cuentas'], ['trophy', 'admin-logros', 'Logros'], ['eye', 'inicio', 'Ver club']].map(([symbol, route, label]) => `<button type="button" data-control-route="${route}">${icon(symbol)}<span>${label}</span></button>`).join('');
     document.body.append(dock);
     const feedback = mount.querySelector('[data-control-feedback]');
     const economyContent = mount.querySelector('[data-economy-content]');
@@ -199,10 +189,25 @@
       if (result.error) throw result.error;
       return result.data;
     }
+    // Rarity tones match the pack-opening colours, so the chart reads like the packs.
+    const rarityTones = {common:'#a1a1aa',retro:'#c9b08a',special:'#8fc7ff',epic:'#c79bff',legendary:'#ffd76e',full_art:'#9ff2e6',vice_city:'#ff6fc4',halloween:'#ff9a4a'};
     function drawEconomy() {
       if (!economy) return;
-      const products = (rows, kind) => rows.map(item => `<label class="control-price-row"><span><strong>${safe(item.name)}</strong><small>${item.active ? 'En tienda' : 'Fuera de catálogo'}${item.minimum_price ? ` · mínimo ${safe(item.minimum_price)} monedas` : ''}</small></span><span class="control-price-input"><input type="number" inputmode="numeric" min="${item.minimum_price || 0}" max="1000000" step="1" required aria-label="Precio de ${safe(item.name)}" data-price-kind="${kind}" data-price-id="${safe(item.id)}" value="${safe(item.price)}"><small>monedas</small></span></label>`).join('') || '<p>Aún no hay artículos.</p>';
-      economyContent.innerHTML = `<form class="control-economy-form"><section class="control-editor-section"><header><i>${icon('cards')}</i><div><h4>Probabilidades de los sobres</h4><p>6 cartas: 3 miembros o personajes, 2 objetos y 1 ubicación. No se repiten cartas dentro del sobre.</p></div></header><div class="control-odds-grid">${Object.entries(rarityLabels).map(([key, label]) => `<label>${label}<span><input type="number" inputmode="decimal" min="0" max="100" step="0.01" required data-rarity="${key}" aria-label="Porcentaje ${label}" value="${safe(economy.probabilities[key])}"><b>%</b></span></label>`).join('')}</div><p class="control-odds-total" data-economy-total></p><p class="control-field-note">Porcentajes base por carta. En cada categoría se reparten entre las rarezas disponibles; si una rareza se agota, se ajustan proporcionalmente. Halloween se aplica a cada hueco de miembro elegible, sin repetirse dentro del sobre. Puedes poner 0 para desactivarla.</p></section><section class="control-editor-section"><header><i>${icon('paint')}</i><div><h4>Banners de perfil</h4><p>Precio de cada diseño en monedas.</p></div></header>${products(economy.banners, 'banner')}</section><section class="control-editor-section"><header><i>${icon('trophy')}</i><div><h4>Vales del club</h4><p>Precio para desbloquear cada premio.</p></div></header>${products(economy.vouchers, 'voucher')}</section>${Array.isArray(economy.chota_items) ? `<section class="control-editor-section"><header><i>${icon('paint')}</i><div><h4>Objetos del Chota</h4><p>Precio de los objetos para su habitación.</p></div></header>${products(economy.chota_items, 'chota')}</section>` : ''}<footer class="control-publish-bar"><div><strong>Publicar para todo el club</strong><small>Los sobres ya abiertos conservan sus cartas.</small></div><button type="submit" data-economy-save>Guardar precios y porcentajes</button></footer></form>`;
+      const products = (rows, kind) => rows.map(item => `<label class="ctl-price-row"><span class="ctl-price-name"><strong>${safe(item.name)}</strong><small><span class="ctl-pill ${item.active ? 'is-on' : ''}">${item.active ? 'En tienda' : 'Fuera de catálogo'}</span>${item.minimum_price ? ` mínimo ${safe(item.minimum_price)}` : ''}</small></span><span class="ctl-number">${icon('coin')}<input type="number" inputmode="numeric" min="${item.minimum_price || 0}" max="1000000" step="1" required aria-label="Precio de ${safe(item.name)}" data-price-kind="${kind}" data-price-id="${safe(item.id)}" value="${safe(item.price)}"></span></label>`).join('') || '<p class="ctl-empty">Aún no hay artículos.</p>';
+      const block = (title, symbol, rows, kind, lead) => `<section class="ctl-card"><header><h3>${title} <span class="ctl-count">${rows.length}</span></h3>${icon(symbol)}</header><p class="ctl-lead">${lead}</p><div class="ctl-price-list">${products(rows, kind)}</div></section>`;
+      economyContent.innerHTML = `<form class="control-economy-form ctl-economy">
+        <section class="ctl-card ctl-odds"><header><h3>Probabilidades de los sobres</h3>${icon('pack')}</header>
+          <p class="ctl-lead">6 cartas por sobre: 3 miembros o personajes, 2 objetos y 1 ubicación, sin repetir carta dentro del sobre.</p>
+          <div class="ctl-odds-bar" data-odds-bar aria-hidden="true">${Object.keys(rarityLabels).map(key => `<i data-odds-segment="${key}" style="--tone:${rarityTones[key]}"></i>`).join('')}</div>
+          <div class="ctl-odds-list">${Object.entries(rarityLabels).map(([key, label]) => `<label class="ctl-odds-row" style="--tone:${rarityTones[key]}"><i aria-hidden="true"></i><span><strong>${label}</strong><small data-odds-hint="${key}"></small></span><span class="ctl-number"><input type="number" inputmode="decimal" min="0" max="100" step="0.01" required data-rarity="${key}" aria-label="Porcentaje ${label}" value="${safe(economy.probabilities[key])}"><b>%</b></span></label>`).join('')}</div>
+          <p class="control-odds-total ctl-odds-total" data-economy-total></p>
+          <p class="ctl-note">Porcentajes base por carta. Si una rareza se agota en una categoría, el resto se ajusta en proporción. Halloween se aplica a cada hueco de miembro. Pon 0 para desactivar una rareza.</p>
+        </section>
+        ${block('Banners de perfil', 'paint', economy.banners, 'banner', 'Precio de cada diseño para el perfil.')}
+        ${block('Vales del club', 'trophy', economy.vouchers, 'voucher', 'Precio para desbloquear cada premio.')}
+        ${Array.isArray(economy.chota_items) ? block('Objetos del Chota', 'gift', economy.chota_items, 'chota', 'Precio de los objetos de su habitación. Algunos desbloquean juegos.') : ''}
+        <footer class="ctl-save-bar"><div><strong>Publicar para todo el club</strong><small>Los sobres ya abiertos conservan sus cartas.</small></div><button type="submit" class="ctl-primary" data-economy-save>Guardar cambios</button></footer>
+      </form>`;
       economyContent.querySelector('form').addEventListener('input', updateEconomyTotal);
       economyContent.querySelector('form').addEventListener('submit', saveEconomy);
       updateEconomyTotal();
@@ -211,6 +216,11 @@
       const inputs = [...economyContent.querySelectorAll('[data-rarity]')];
       const total = inputs.reduce((sum, input) => sum + Math.round(Number(input.value) * 100), 0);
       const valid = total === 10000 && inputs.every(input => input.value !== '' && input.validity.valid);
+      for (const input of inputs) {
+        const share = Math.max(0, Number(input.value) || 0);
+        economyContent.querySelector(`[data-odds-segment="${input.dataset.rarity}"]`).style.flexGrow = String(share);
+        economyContent.querySelector(`[data-odds-hint="${input.dataset.rarity}"]`).textContent = share > 0 ? `≈ 1 de cada ${new Intl.NumberFormat('es-ES', {maximumFractionDigits: share >= 10 ? 1 : 0}).format(100 / share)} cartas` : 'Desactivada';
+      }
       const label = economyContent.querySelector('[data-economy-total]');
       label.textContent = `Total: ${(total / 100).toLocaleString('es-ES', {maximumFractionDigits:2})}%${valid ? ' · Listo para guardar' : ' · Debe sumar 100%'}`;
       label.classList.toggle('is-invalid', !valid);
@@ -404,7 +414,8 @@
       const stats = api.stats();
       for (const [key, value] of Object.entries(stats)) { const node = mount.querySelector(`[data-control-stat="${key}"]`); if (node && node.textContent !== String(value)) node.textContent = String(value); }
     }
-    function syncNavigation(id) { dock.querySelectorAll('[data-control-route]').forEach(node => { const active = node.dataset.controlRoute === id || (node.dataset.controlRoute === 'administracion' && ['admin-configuracion', 'admin-logros', 'admin-diagnostico'].includes(id)); node.classList.toggle('active', active); if (active) node.setAttribute('aria-current', 'page'); else node.removeAttribute('aria-current'); }); }
+    const sectionsOf = {administracion:['admin-configuracion','admin-diagnostico'], 'admin-logros':['crear-logro','asignar-logro'], 'admin-cuentas':['editar-usuario']};
+    function syncNavigation(id) { menu.hidden = true; dock.querySelectorAll('[data-control-route]').forEach(node => { const active = node.dataset.controlRoute === id || (sectionsOf[node.dataset.controlRoute] || []).includes(id); node.classList.toggle('active', active); if (active) node.setAttribute('aria-current', 'page'); else node.removeAttribute('aria-current'); }); }
     async function publish(event) {
       event.preventDefault();
       if (busy || !ready || !api.allowed() || !form.reportValidity()) return;
@@ -448,14 +459,49 @@
       }
     });
     dock.addEventListener('click', event => { const button = event.target.closest('[data-control-route]'); if (button) route(button.dataset.controlRoute); });
+    // The crown opens the console menu, so session actions are one tap away anywhere.
+    const menu = document.createElement('div');
+    menu.className = 'ctl-crown-menu'; menu.hidden = true; menu.tabIndex = -1; menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', 'Menú de administración');
+    menu.innerHTML = `<p class="ctl-crown-who">${icon('people')}<span>Sesión de <b data-control-username></b></span></p>${[
+      ['route','administracion','panel','Panel de administración'], ['route','inicio','eye','Ver el club como miembro'],
+      ['security','','help','Seguridad de la cuenta'], ['logout','','logout','Cerrar sesión']
+    ].map(([kind,target,symbol,label]) => `<button type="button" role="menuitem" data-crown="${kind}" data-target="${target}" ${kind === 'logout' ? 'class="is-danger"' : ''}>${icon(symbol)}<span>${label}</span></button>`).join('')}`;
+    document.body.append(menu);
+    let menuAnchor = null;
+    function closeMenu(restore = false) { if (menu.hidden) return; menu.hidden = true; menuAnchor?.setAttribute('aria-expanded', 'false'); if (restore) menuAnchor?.focus({preventScroll:true}); }
+    function toggleMenu(anchor) {
+      if (!api.allowed()) return;
+      if (!menu.hidden) { closeMenu(true); return; }
+      menuAnchor = anchor; anchor?.setAttribute('aria-expanded', 'true');
+      const box = anchor?.getBoundingClientRect();
+      menu.style.top = `${Math.round((box?.bottom ?? 60) + 8)}px`;
+      menu.style.right = `${Math.max(12, Math.round(innerWidth - (box?.right ?? innerWidth - 12)))}px`;
+      menu.hidden = false; menu.focus({preventScroll:true});
+    }
+    menu.addEventListener('click', event => {
+      const button = event.target.closest('[data-crown]'); if (!button) return;
+      closeMenu();
+      if (button.dataset.crown === 'route') route(button.dataset.target);
+      if (button.dataset.crown === 'security') document.getElementById('adminSecurityButton')?.click();
+      if (button.dataset.crown === 'logout') api.logout();
+    });
+    document.addEventListener('pointerdown', event => { if (!menu.hidden && !menu.contains(event.target) && !menuAnchor?.contains(event.target)) closeMenu(); }, true);
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(true); });
     return {
       apply,
+      toggleMenu,
       didNavigate: syncNavigation,
       refreshStats: updateStats,
       sync() {
         const allowed = Boolean(api.allowed());
         releaseAdmin?.sync();
         mount.hidden = !allowed; dock.hidden = !allowed;
+        if (!allowed) closeMenu();
+        const crown = document.getElementById('adminPanelButton');
+        if (allowed) { crown?.setAttribute('aria-haspopup', 'menu'); crown?.setAttribute('aria-expanded', String(!menu.hidden)); crown?.setAttribute('aria-label', 'Menú de administración'); }
+        else { crown?.removeAttribute('aria-haspopup'); crown?.removeAttribute('aria-expanded'); crown?.setAttribute('aria-label', 'Abrir administración'); }
+        // Inside the console, admin pages return to the console, not the old settings page.
+        document.querySelectorAll('#admin-cuentas .achievement-back, #admin-logros .achievement-back, #admin-diagnostico .achievement-back').forEach(node => { node.dataset.go = allowed ? 'administracion' : 'admin-configuracion'; node.setAttribute('aria-label', allowed ? 'Volver al panel' : 'Volver a configuración'); });
         document.getElementById('standardAdminPanel').hidden = allowed;
         document.body.classList.toggle('superadmin-console-session', allowed);
         const shellLabel = document.querySelector('.topbar-title .eyebrow');
@@ -464,7 +510,7 @@
         const nextOwner = api.owner();
         if (owner !== nextOwner) { owner = nextOwner; dirty = false; busy = false; ready = false; view('overview'); }
         updateStats();
-        mount.querySelectorAll('[data-control-username]').forEach(node => { node.textContent = api.username(); });
+        [mount, menu].forEach(root => root.querySelectorAll('[data-control-username]').forEach(node => { node.textContent = api.username(); }));
         $('[data-ctl-date]').textContent = new Date().toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
         void loadDashboard();
         const value = normalize(api.settings()?.[SETTING_KEY]);
@@ -487,6 +533,7 @@
       apply,
       sync() { if (api.allowed()) (instance ||= createConsole(api)).sync(); else instance?.sync(); },
       didNavigate(id) { instance?.didNavigate?.(id); },
+      toggleMenu(anchor) { instance?.toggleMenu?.(anchor); },
       refreshStats() { instance?.refreshStats?.(); },
     };
   }

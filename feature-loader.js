@@ -5,7 +5,7 @@
   const registry = {
     chat: {styles:[], scripts:['chat-themes.js?v=20261101-chat-custom-473']},
     collection: {styles:['album.css?v=20261102-theme-510']},
-    admin: {styles:['admin-grants.css?v=20261102-theme-532','admin-console.css?v=20261103-admin-556'], scripts:['achievement-admin.js?v=20261010-244','admin-grants.js?v=20261102-theme-530']},
+    admin: {styles:['admin-grants.css?v=20261102-theme-532','admin-console.css?v=20261103-admin-557'], scripts:['achievement-admin.js?v=20261103-admin-557','admin-grants.js?v=20261102-theme-530']},
     spotify: {styles:['spotify-player.css?v=20261103-news-music-554'], scripts:['spotify-player.js?v=20261103-news-music-554']}
   };
   const loaded = new Set(), pending = new Map(), assets = new Map(), initializers = new Map();
