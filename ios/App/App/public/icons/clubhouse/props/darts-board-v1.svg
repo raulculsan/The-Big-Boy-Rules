@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="140" viewBox="0 0 128 140" fill="none" shape-rendering="crispEdges">
+<path d="M60 4h8v6h-8z" fill="#2a2420"/><path d="M62 2h4v4h-4z" fill="#c9a35a"/>
+<path d="M20 120h88l8 10H12z" fill="#0b0d10" opacity=".45"/>
+<circle cx="64" cy="70" r="58" fill="#1d1712"/>
+<circle cx="64" cy="70" r="54" fill="#2b2119" stroke="#5d4630" stroke-width="3"/>
+<g id="ring">
+  <path d="M64 70 64 22A48 48 0 0 1 80.4 24.9Z" fill="#e8d9b0"/><path d="M64 70 80.4 24.9A48 48 0 0 1 94.9 33.2Z" fill="#14110f"/>
+  <path d="M64 70 94.9 33.2A48 48 0 0 1 105.6 46Z" fill="#e8d9b0"/><path d="M64 70 105.6 46A48 48 0 0 1 111.3 61.7Z" fill="#14110f"/>
+  <path d="M64 70 111.3 61.7A48 48 0 0 1 111.3 78.3Z" fill="#e8d9b0"/><path d="M64 70 111.3 78.3A48 48 0 0 1 105.6 94Z" fill="#14110f"/>
+  <path d="M64 70 105.6 94A48 48 0 0 1 94.9 106.8Z" fill="#e8d9b0"/><path d="M64 70 94.9 106.8A48 48 0 0 1 80.4 115.1Z" fill="#14110f"/>
+  <path d="M64 70 80.4 115.1A48 48 0 0 1 64 118Z" fill="#e8d9b0"/><path d="M64 70 64 118A48 48 0 0 1 47.6 115.1Z" fill="#14110f"/>
+  <path d="M64 70 47.6 115.1A48 48 0 0 1 33.1 106.8Z" fill="#e8d9b0"/><path d="M64 70 33.1 106.8A48 48 0 0 1 22.4 94Z" fill="#14110f"/>
+  <path d="M64 70 22.4 94A48 48 0 0 1 16.7 78.3Z" fill="#e8d9b0"/><path d="M64 70 16.7 78.3A48 48 0 0 1 16.7 61.7Z" fill="#14110f"/>
+  <path d="M64 70 16.7 61.7A48 48 0 0 1 22.4 46Z" fill="#e8d9b0"/><path d="M64 70 22.4 46A48 48 0 0 1 33.1 33.2Z" fill="#14110f"/>
+  <path d="M64 70 33.1 33.2A48 48 0 0 1 47.6 24.9Z" fill="#e8d9b0"/><path d="M64 70 47.6 24.9A48 48 0 0 1 64 22Z" fill="#14110f"/>
+</g>
+<circle cx="64" cy="70" r="46" stroke="#c7372f" stroke-width="5" stroke-dasharray="7.2 7.2"/>
+<circle cx="64" cy="70" r="46" stroke="#2f8a4a" stroke-width="5" stroke-dasharray="7.2 7.2" stroke-dashoffset="7.2"/>
+<circle cx="64" cy="70" r="28" stroke="#c7372f" stroke-width="4" stroke-dasharray="4.4 4.4"/>
+<circle cx="64" cy="70" r="28" stroke="#2f8a4a" stroke-width="4" stroke-dasharray="4.4 4.4" stroke-dashoffset="4.4"/>
+<circle cx="64" cy="70" r="9" fill="#2f8a4a"/><circle cx="64" cy="70" r="4.5" fill="#c7372f"/>
+<circle cx="64" cy="70" r="48" stroke="#b9a273" stroke-width="1" opacity=".55"/>
+<g>
+  <path d="M77 58 98 37" stroke="#d8d1c2" stroke-width="3"/><path d="m96 35 9-5-3 10z" fill="#e0473c"/><path d="m100 37 7 2-6 5z" fill="#f2c14e"/>
+  <path d="M55 82 36 99" stroke="#d8d1c2" stroke-width="3"/><path d="m34 97-9 6 3-10z" fill="#3c8ee0"/><path d="m31 101-7-1 5-6z" fill="#f2c14e"/>
+</g>
+</svg>
