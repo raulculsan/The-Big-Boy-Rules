@@ -1010,9 +1010,11 @@
     if (el('bannerShopBalance')) el('bannerShopBalance').textContent = coins();
     document.querySelectorAll('[data-wallet-balance]').forEach(node => {node.textContent = walletText();});
     document.querySelectorAll('[data-wallet]').forEach(node => node.setAttribute('aria-label', `Saldo: ${coins()}`));
-    if (el('ownedPackOpen')) el('ownedPackOpen').disabled = busy || loading || !state?.available_packs?.length || !online(); el('ownedPackOpen')?.toggleAttribute('data-empty', !busy && !loading && !!state && !state.available_packs?.length);
-    if (el('packsStatusTitle')) el('packsStatusTitle').textContent = failure ? 'No se pudo actualizar' : busy || loading ? 'Sincronizando sobres' : !online() ? 'Sin conexión' : !state ? 'Consulta tus sobres' : state.available_packs?.length ? 'Sobres disponibles' : 'Sin sobres disponibles';
-    if (el('packsStatusMessage')) el('packsStatusMessage').textContent = failure || (busy || loading ? 'Consultando tu colección y tu saldo…' : !online() ? 'Conéctate a internet para abrir sobres.' : state?.available_packs?.length ? 'Pulsa un sobre para abrirlo.' : state ? 'Vuelve mañana para recibir tu sobre diario.' : 'Pulsa Actualizar saldo para consultar tu cuenta.');
+    // A background refresh keeps the known packs usable; only a first load with
+    // no snapshot, an action in flight or an empty wallet disables the button.
+    if (el('ownedPackOpen')) el('ownedPackOpen').disabled = busy || !state?.available_packs?.length || !online(); el('ownedPackOpen')?.toggleAttribute('data-empty', !busy && !loading && !!state && !state.available_packs?.length);
+    if (el('packsStatusTitle')) el('packsStatusTitle').textContent = failure ? 'No se pudo actualizar' : busy || (loading && !state) ? 'Sincronizando sobres' : !online() ? 'Sin conexión' : !state ? 'Consulta tus sobres' : state.available_packs?.length ? 'Sobres disponibles' : 'Sin sobres disponibles';
+    if (el('packsStatusMessage')) el('packsStatusMessage').textContent = failure || (busy || (loading && !state) ? 'Consultando tu colección y tu saldo…' : !online() ? 'Conéctate a internet para abrir sobres.' : state?.available_packs?.length ? 'Pulsa un sobre para abrirlo.' : state ? 'Vuelve mañana para recibir tu sobre diario.' : 'Pulsa Actualizar saldo para consultar tu cuenta.');
     if (el('packsSyncButton')) {el('packsSyncButton').disabled = busy || loading || !online(); el('packsSyncButton').textContent = loading || busy ? 'Actualizando…' : failure ? 'Reintentar' : 'Actualizar saldo';}
     el('ownedPackOpen')?.setAttribute('aria-busy',String(busy));
     document.querySelectorAll('[data-pack-open]').forEach(button => {button.disabled = !!el('ownedPackOpen')?.disabled;});
@@ -1402,7 +1404,7 @@
     });
     el('packsInfoTrigger')?.addEventListener('click', () => {const trigger=el('packsInfoTrigger'), panel=el('packsInfoPanel'), open=trigger.getAttribute('aria-expanded')==='true';panel.hidden=open;trigger.setAttribute('aria-expanded',String(!open));});
     el('bannerUnequip').addEventListener('click', () => void mutate('equip_profile_banner', {target_banner_id:null}, 'Banner retirado de tu perfil.'));
-    el('ownedPackOpen').addEventListener('click', () => void mutate('open_owned_card_pack', {}, ''));
+    el('ownedPackOpen').addEventListener('click', async () => {if (loading && request) await request.catch(() => {}); void mutate('open_owned_card_pack', {}, '');});
     document.addEventListener('click', event => {if (event.target.closest('[data-pack-open]')) el('ownedPackOpen')?.click();});
     window.addEventListener('online', () => {
       if (options.session()) void refresh();
