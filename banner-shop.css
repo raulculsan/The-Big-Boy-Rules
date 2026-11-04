@@ -453,3 +453,13 @@ body.authenticated #bannerShopDialog #bannerShopStatus.is-passive{position:absol
 .banner-remote>video{opacity:0;pointer-events:none}
 .banner-remote>video.is-ready{opacity:1}
 .banner-remote>img[hidden]{display:none}
+
+/* Light pack opening for modest phones (data-motion-quality set in ui-motion.js):
+   same choreography, without the layers that repaint large areas every frame. */
+:root[data-motion-quality=low] :is(.pack-tear-art,.pack-tear-card,.pack-tear-edge polyline,.reveal-warm-glint){filter:none}
+:root[data-motion-quality=low] .pack-tear-inside{opacity:.18}
+:root[data-motion-quality=low] :is(.pack-tear-sheen,.pack-tear-rays,.pack-tear-sparks,.pack-summary-aura,.pack-viewer-aura){display:none}
+:root[data-motion-quality=low] .pack-tear-float{animation:pack-tear-enter 420ms cubic-bezier(.2,1.2,.35,1) both}
+:root[data-motion-quality=low] .pack-rarity-vfx i[style*="--i"]{display:none}
+:root[data-motion-quality=low] .pack-reveal-dialog.pack-reveal-dialog .pack-reveal-face{box-shadow:0 18px 30px -14px #000}
+:root[data-motion-quality=low] .pack-reveal-dialog.pack-reveal-dialog::after{animation:none}

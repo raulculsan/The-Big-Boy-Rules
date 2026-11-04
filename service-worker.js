@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v560";
+const CACHE_NAME = "big-boy-rules-v561";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -12,8 +12,8 @@ const APP_SHELL = [
   "./icons/clubhouse/chota-depth-seat-back.svg",
   "./app-update.js?v=20261030-app-update-440",
   "./app-update.css?v=20261030-app-update-440",
-  "./ui-motion.js?v=20261101-motion-500",
-  "./ui-motion.css?v=20261102-pack-stage-549",
+  "./ui-motion.js?v=20261104-lite-motion-561",
+  "./ui-motion.css?v=20261104-lite-motion-561",
   "./design-system.css?v=20261102-theme-510",
   "./app-theme.css?v=20261102-member-guards-550",
   "./",
@@ -114,8 +114,8 @@ const APP_SHELL = [
   "./admin-grants.css?v=20261103-accounts-558",
   "./shop-catalog-media.js?v=20261030-audit-hardening-443",
   "./pack-opening.js?v=20261103-economy-555",
-  "./banner-shop.js?v=20261104-pack-button-560",
-  "./banner-shop.css?v=20261103-pack-perf-559",
+  "./banner-shop.js?v=20261104-lite-motion-561",
+  "./banner-shop.css?v=20261104-lite-motion-561",
   "./collection-social.js?v=20261103-economy-555",
   "./collection-social.css?v=20261103-economy-555",
   "./card-economy.css?v=20261103-economy-555",
@@ -175,7 +175,7 @@ const APP_SHELL = [
   "./icons/cards/justificante-medico-comun-v1.jpg",
   "./icons/cards/jeringuilla-comun-v1.jpg",
   "./icons/cards/alberto-velasco-full-art-84-v2.jpg",
-  "./collection-motion.js?v=20261102-theme-524",
+  "./collection-motion.js?v=20261104-lite-motion-561",
   "./icons/cards/card-touch.json?v=20260905-153",
   "./icons/cards/card-touch-epic.json?v=20261007-168",
   "./icons/cards/card-touch-special.json?v=20261012-272",

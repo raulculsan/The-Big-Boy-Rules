@@ -100,6 +100,9 @@
   const glassSelections = new WeakMap();
   const lowPower = Number(navigator.deviceMemory || 8) <= 4;
   document.documentElement.dataset.glassQuality = lowPower ? 'low' : 'full';
+  // Modest phones (≤4 GB or ≤4 cores) skip the GPU-heavy layers of pack opening:
+  // filters and blends on moving art, masked ray fields, glows and particle swarms.
+  document.documentElement.dataset.motionQuality = lowPower || Number(navigator.hardwareConcurrency || 8) <= 4 ? 'low' : 'full';
   let glassTouch = null, glassFrame = 0;
   function resetGlass() {
     if(glassFrame)cancelAnimationFrame(glassFrame);

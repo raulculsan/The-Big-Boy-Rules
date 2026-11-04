@@ -208,7 +208,7 @@
     canvas.style.cssText=`left:${rect.left-hostRect.left-pad.left}px;top:${rect.top-hostRect.top-pad.top}px;width:${width+pad.left+pad.right}px;height:${height+pad.top+pad.bottom}px`;
     host.append(canvas);
     const context=canvas.getContext('2d');context.scale(dpr,dpr);
-    const size=Math.max(3,Math.sqrt(width*height/2000)),columns=Math.ceil(width/size),rows=Math.ceil(height/size),total=columns*rows;
+    const size=Math.max(3,Math.sqrt(width*height/(document.documentElement.dataset.motionQuality==='low'?600:2000))),columns=Math.ceil(width/size),rows=Math.ceil(height/size),total=columns*rows;
     const motes=new Array(total);
     for(let i=0;i<total;i++){
       const column=i%columns,row=Math.floor(i/columns),u=column/columns,v=row/rows,noise=Math.random();
