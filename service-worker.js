@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v561";
+const CACHE_NAME = "big-boy-rules-v562";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -36,7 +36,7 @@ const APP_SHELL = [
   "./chota-shop.js?v=20261103-economy-555",
   "./chota-shop.css?v=20261103-economy-555",
   "./coin-missions.js?v=20261103-economy-555",
-  "./club-day.js?v=20261102-club-day-542",
+  "./club-day.js?v=20261104-duel-thumbs-562",
   "./club-day.css?v=20261102-club-day-542",
   "./coin-missions.css?v=20261102-theme-519",
   "./club-social.js?v=20261102-club-day-542",

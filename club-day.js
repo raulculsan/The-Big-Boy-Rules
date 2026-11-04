@@ -90,7 +90,7 @@
  function cardPicker(attr){
   const cards=extras.cards;
   if(!cards.length)return '<p class="club-day-note">Necesitas una carta con puntuación para jugar.</p>';
-  return `<div class="club-day-cards">${cards.map(c=>`<button type="button" ${attr}="${esc(c.id)}"><img src="${esc(c.thumb)}" alt="" loading="lazy"><span>${esc(c.name)}</span><b>${c.score}</b></button>`).join('')}</div>`;
+  return `<div class="club-day-cards">${cards.map(c=>`<button type="button" ${attr}="${esc(c.id)}"><img src="${esc(c.thumb)}" alt="" decoding="async"><span>${esc(c.name)}</span><b>${c.score}</b></button>`).join('')}</div>`;
  }
  function duelRow(d){
   const rival=esc(nameOf(d.opponent));
