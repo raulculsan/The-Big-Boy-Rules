@@ -43,6 +43,7 @@
   }
 
   function play({stage, back, count = 6, edition = 'common', onDone = () => {}}) {
+    globalThis.MotionQuality?.watch();
     const line = tearLine();
     const body = polygon([...line, [WIDTH, TEAR_Y], [WIDTH, HEIGHT], [0, HEIGHT], [0, TEAR_Y]]);
     const deck = Array.from({length: Math.min(count, 6)}, (_, index) =>

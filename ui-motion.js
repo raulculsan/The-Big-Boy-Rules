@@ -102,7 +102,36 @@
   document.documentElement.dataset.glassQuality = lowPower ? 'low' : 'full';
   // Modest phones (≤4 GB or ≤4 cores) skip the GPU-heavy layers of pack opening:
   // filters and blends on moving art, masked ray fields, glows and particle swarms.
-  document.documentElement.dataset.motionQuality = lowPower || Number(navigator.hardwareConcurrency || 8) <= 4 ? 'low' : 'full';
+  // RAM and core counts miss phones with a weak GPU or WebView, so pack opening
+  // also measures its own frames and remembers a stuttering device for 14 days.
+  const motionKey = 'bb-motion-quality', motionMemory = 14 * 864e5;
+  let measuredLow = false;
+  try { measuredLow = Date.now() - Number(localStorage.getItem(motionKey)) < motionMemory; } catch {}
+  document.documentElement.dataset.motionQuality = measuredLow || lowPower || Number(navigator.hardwareConcurrency || 8) <= 4 ? 'low' : 'full';
+  let motionWatch = 0;
+  function watchMotion(duration = 1400) {
+    const root = document.documentElement;
+    if (root.dataset.motionQuality === 'low' || motionWatch || document.hidden) return;
+    const gaps = [];
+    let last = 0;
+    const end = performance.now() + duration;
+    const frame = now => {
+      if (document.hidden) { motionWatch = 0; return; }
+      if (last) gaps.push(now - last);
+      last = now;
+      if (now < end) { motionWatch = requestAnimationFrame(frame); return; }
+      motionWatch = 0;
+      if (gaps.length < 8) return;
+      const sorted = [...gaps].sort((a, b) => a - b), median = sorted[sorted.length >> 1];
+      const janky = gaps.filter(gap => gap > 34).length / gaps.length;
+      if (median > 24 || janky > .25) {
+        root.dataset.motionQuality = 'low';
+        try { localStorage.setItem(motionKey, String(Date.now())); } catch {}
+      }
+    };
+    motionWatch = requestAnimationFrame(frame);
+  }
+  globalThis.MotionQuality = Object.freeze({watch: watchMotion});
   let glassTouch = null, glassFrame = 0;
   function resetGlass() {
     if(glassFrame)cancelAnimationFrame(glassFrame);

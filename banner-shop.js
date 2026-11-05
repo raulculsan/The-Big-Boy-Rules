@@ -524,6 +524,7 @@
   function startReveal(cards) {
     if (!cards.length) return;
     preloadReveal(cards);
+    globalThis.MotionQuality?.watch();
     reveal = {cards,index:0,flipped:false,discarded:new Set(),uncertain:new Set(),pending:new Set(),queue:[],earned:0,phase:'idle'};
     revealDialog.classList.remove('is-pack-summary');
     delete revealDialog.dataset.cardIndex; delete revealDialog.dataset.rarity; delete revealDialog.dataset.mood;

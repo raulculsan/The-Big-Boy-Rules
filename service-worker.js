@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v562";
+const CACHE_NAME = "big-boy-rules-v563";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -12,7 +12,7 @@ const APP_SHELL = [
   "./icons/clubhouse/chota-depth-seat-back.svg",
   "./app-update.js?v=20261030-app-update-440",
   "./app-update.css?v=20261030-app-update-440",
-  "./ui-motion.js?v=20261104-lite-motion-561",
+  "./ui-motion.js?v=20261105-adaptive-motion-563",
   "./ui-motion.css?v=20261104-lite-motion-561",
   "./design-system.css?v=20261102-theme-510",
   "./app-theme.css?v=20261102-member-guards-550",
@@ -113,8 +113,8 @@ const APP_SHELL = [
   "./admin-grants.js?v=20261103-accounts-558",
   "./admin-grants.css?v=20261103-accounts-558",
   "./shop-catalog-media.js?v=20261030-audit-hardening-443",
-  "./pack-opening.js?v=20261103-economy-555",
-  "./banner-shop.js?v=20261104-lite-motion-561",
+  "./pack-opening.js?v=20261105-adaptive-motion-563",
+  "./banner-shop.js?v=20261105-adaptive-motion-563",
   "./banner-shop.css?v=20261104-lite-motion-561",
   "./collection-social.js?v=20261103-economy-555",
   "./collection-social.css?v=20261103-economy-555",
