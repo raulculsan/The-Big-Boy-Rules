@@ -4534,6 +4534,21 @@ function clubhouseDaylight(now = new Date()) {
     saturation:.55 + (1-sunHeight) * .8
   }};
 }
+const clubhouseDateFormatter = new Intl.DateTimeFormat("es-ES", {weekday: "long", day: "numeric", month: "long"});
+// Today's date sits in the sede's bottom-left corner; the 30 s room sync rolls it over at midnight.
+function syncClubhouseDate(room, now) {
+  let stamp = room.querySelector(".clubhouse-date");
+  if (!stamp) {
+    stamp = document.createElement("time");
+    stamp.className = "clubhouse-date";
+    room.append(stamp);
+  }
+  const key = tigretonDayKey(now);
+  if (stamp.dateTime === key) return;
+  const label = clubhouseDateFormatter.format(now);
+  stamp.dateTime = key;
+  stamp.textContent = label.charAt(0).toLocaleUpperCase("es-ES") + label.slice(1);
+}
 function syncClubhouseDaylight(now = new Date()) {
   const {weights, moment, sunlight} = clubhouseDaylight(now);
   const season = clubhouseSeason(now);
@@ -4546,6 +4561,7 @@ function syncClubhouseDaylight(now = new Date()) {
     room.style.setProperty("--club-sun-reach", sunlight.reach.toFixed(4));
     room.style.setProperty("--club-sun-saturation", sunlight.saturation.toFixed(4));
     if (currentUser) globalThis.ClubOutdoor?.mount(room);
+    if (room.classList.contains("clubhouse-room")) syncClubhouseDate(room, now);
   });
   globalThis.ClubOutdoor?.sync();
   const time = document.getElementById("clubhouseTime");
