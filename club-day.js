@@ -254,6 +254,8 @@
   const d=b.dataset;
   if('dayHome' in d){tab=null;notice='';render();return scrollTo({top:0});}
   if(d.dayTab==='mapa')return document.querySelector('[data-club-memory-map]')?.click();
+  // The Chota's decision is played in the sede, with his scene and lines.
+  if(d.dayTab==='chota'&&globalThis.ChotaDecision)return void globalThis.ChotaDecision.open(b);
   if(d.dayTab){tab=d.dayTab;notice='';globalThis.ClubPlus?.clearNotice();duelRival=null;duelAnswer=null;render();return scrollTo({top:0});}
   if(d.dayDuelRival){duelRival=d.dayDuelRival;return render();}
   if(d.dayDuelOpen){duelAnswer=d.dayDuelOpen;return render();}

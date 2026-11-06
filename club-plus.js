@@ -117,6 +117,7 @@
  function syncSede(){
   const season=state?.story?.season;
   document.querySelectorAll('[data-chota-story]').forEach(node=>{node.hidden=!season;if(season)node.textContent=`Temporada ${season.number} · ${mood(season)}`;});
+  document.dispatchEvent(new CustomEvent('club-story',{detail:state?.story||null}));
  }
  const views={chota,estado:status,recuerdos:memories,fechas:dates,bote:tabs,radio,juicio:court,reto:weekly,mentira:liar,liga:league,foto:photo,karaoke};
  function view(id){return `${views[id]?.()||''}${notice?`<p class="club-day-note" role="status">${esc(notice)}</p>`:''}`;}
@@ -127,12 +128,13 @@
   state={...data,...story.data};syncSede();config.onChange?.();
  }
  async function call(name,args,done=''){
-  if(busy)return;busy=true;notice='';
+  if(busy)return false;busy=true;notice='';
   const {data,error}=await config.db.rpc(name,args);
   busy=false;
   if(error)notice=['PGRST202','42883'].includes(error.code)?'Esta función se está preparando.':error.message||'No se ha podido guardar.';
   else{state={...state,...data};notice=done;syncSede();}
   config.onChange?.();
+  return !error;
  }
  function click(event){
   const b=event.target.closest?.('#clubDay button');if(!b||b.disabled)return;
@@ -188,5 +190,8 @@
  }
  function reset(){epoch++;state=null;notice='';busy=false;}
  function init(options){config=options;document.addEventListener('click',click);document.addEventListener('submit',submit);document.addEventListener('change',upload);}
- globalThis.ClubPlus={init,refresh,reset,view,ready:()=>Boolean(state),clearNotice(){notice='';},statusFor:id=>state?.statuses?.[id]||'',snapshot:()=>state};
+ globalThis.ClubPlus={init,refresh,reset,view,ready:()=>Boolean(state),clearNotice(){notice='';},statusFor:id=>state?.statuses?.[id]||'',snapshot:()=>state,lastNotice:()=>notice,
+  // The sede's decision scene votes through the same checked RPCs as Hoy en el club.
+  storyVote:(day,option)=>call('vote_club_story',{p_day:day,p_option:option},'Voto guardado'),
+  storyTwist:day=>call('use_club_story_twist',{p_day:day},'Giro soltado')};
 })();
