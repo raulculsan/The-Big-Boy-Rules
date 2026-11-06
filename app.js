@@ -4303,7 +4303,7 @@ function openChotaViewer(trigger) {
   if (!viewer.children.length) viewer.innerHTML = `<header class="chota-viewer-heading"><div><small>LA SEDE DEL CLUB</small><h2 id="chotaViewerTitle">El Chota</h2></div><button type="button" data-chota-close aria-label="Cerrar">×</button></header>
     <p class="chota-viewer-plan">${escapeHtml(next.event.title)}</p>
     <div class="chota-viewer-room-scene">
-    <img class="chota-viewer-room-art" src="icons/clubhouse/club-room-v2.webp" width="1024" height="1024" alt="" aria-hidden="true" decoding="async">
+    <img class="chota-viewer-room-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="" aria-hidden="true" decoding="async">
     ${clubhouseSkyMarkup()}
     ${clubhouseDaylightMarkup()}
     ${clubhouseSeasonalMarkup()}
@@ -4640,7 +4640,7 @@ function renderClubhouse(upcoming) {
   clubhouseObserver?.disconnect();
   globalThis.ClubOutdoor?.unmount(existing);
   content.innerHTML = `<div class="clubhouse-room${birthday ? " is-birthday" : ""}" data-time="${moment}">
-    <img class="clubhouse-art" src="icons/clubhouse/club-room-v2.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="sync" fetchpriority="high">
+    <img class="clubhouse-art" src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="La sede de Big Boy, una habitación con un tablón, una foto y una alfombra donde está El Chota" decoding="sync" fetchpriority="high">
     ${clubhouseSkyMarkup()}
     ${clubhouseDaylightMarkup()}
     ${clubhouseSeasonalMarkup()}

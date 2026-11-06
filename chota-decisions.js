@@ -472,8 +472,8 @@
     const context = canvas.getContext('2d');
     context.imageSmoothingEnabled = false;
     context.drawImage(drawn.image, 0, 0);
-    // The corner object: at most 11% of the room wide and 13% tall.
-    holder.style.width = `${Math.min(11, 13 * drawn.w / drawn.h).toFixed(2)}%`;
+    // A small object at the back: at most 7.5% of the room wide and 9.5% tall.
+    holder.style.width = `${Math.min(7.5, 9.5 * drawn.w / drawn.h).toFixed(2)}%`;
     holder.classList.remove('is-arriving'); void holder.offsetWidth; holder.classList.add('is-arriving');
   }
   function syncRoom(data = story) {

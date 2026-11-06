@@ -106,7 +106,7 @@ html[data-reduced-motion="true"] :is(.chota-room-robot-vacuum,.chota-vacuum-brus
 .chota-room-style { position:absolute;inset:0;z-index:0;pointer-events:none;mix-blend-mode:color;opacity:.94; }
 .chota-room-style > span { position:absolute;inset:0;display:block;-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat; }
 .chota-style-wall { background:var(--room-wall);-webkit-mask-image:url("icons/clubhouse/styles/wall-mask.svg");mask-image:url("icons/clubhouse/styles/wall-mask.svg"); }
-.chota-style-floor { background:var(--room-floor);-webkit-mask-image:url("icons/clubhouse/styles/floor-mask-v2.svg");mask-image:url("icons/clubhouse/styles/floor-mask-v2.svg"); }
+.chota-style-floor { background:var(--room-floor);-webkit-mask-image:url("icons/clubhouse/styles/floor-mask.svg");mask-image:url("icons/clubhouse/styles/floor-mask.svg"); }
 .chota-style-rug { background:var(--room-rug);-webkit-mask-image:url("icons/clubhouse/styles/rug-mask.svg");mask-image:url("icons/clubhouse/styles/rug-mask.svg"); }
 [data-room-style="original"] > .chota-room-style { display:none; }
 [data-room-style="room-midnight"] { --room-wall:#425d9a;--room-floor:#776077;--room-rug:#65539e; }

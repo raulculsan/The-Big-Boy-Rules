@@ -26,7 +26,7 @@
   const themeFor = item => remote(item)?.type==='room_style' ? remote(item) : roomStyles[item?.art_key];
   const isStyle = item => !!themeFor(item);
   const styleSurfaces = '<span class="chota-style-wall"></span><span class="chota-style-floor"></span><span class="chota-style-rug"></span>';
-  const stylePreview = (kind,item) => `<div class="chota-style-preview" data-room-style="${remote(item)?.type==='room_style'?'remote':esc(kind)}" style="${globalThis.ShopCatalogMedia?.styleVariables(remote(item)) || ''}"><img src="icons/clubhouse/club-room-v2.webp" width="1024" height="1024" alt="" loading="lazy" decoding="async"><div class="chota-room-style">${styleSurfaces}</div></div>`;
+  const stylePreview = (kind,item) => `<div class="chota-style-preview" data-room-style="${remote(item)?.type==='room_style'?'remote':esc(kind)}" style="${globalThis.ShopCatalogMedia?.styleVariables(remote(item)) || ''}"><img src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="" loading="lazy" decoding="async"><div class="chota-room-style">${styleSurfaces}</div></div>`;
   const art = (kind, inRoom = false, item) => {
     if (isStyle(item) || roomStyles[kind] || kind === 'original') return stylePreview(kind,item);
     if (remote(item)?.type==='decoration') return globalThis.ShopCatalogMedia.decoration(item,inRoom);
