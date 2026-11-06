@@ -50,7 +50,8 @@
   };
 
   const props = {
-    boat: () => l(146, 0, 146, 34, K, 2) + l(146, 34, 120, 44, K) + l(146, 34, 168, 44, K)
+    rope: () => l(146, 0, 146, 34, K, 2),
+    boat: () => l(146, 34, 120, 44, K) + l(146, 34, 168, 44, K)
       + p('112,46 178,46 168,64 122,64', '#f3ead8') + r(116, 52, 58, 3, '#3a5f9e') + b(130, 36, 26, 10, '#f3ead8') + r(134, 39, 5, 4, '#6f93d1') + r(146, 39, 5, 4, '#6f93d1'),
     glasses: () => b(112, 54, 10, 16, '#f6d77a') + r(116, 70, 2, 16, '#e9e4d6') + b(110, 86, 14, 2, '#e9e4d6')
       + b(136, 50, 10, 16, '#f6d77a') + r(140, 66, 2, 20, '#e9e4d6') + b(134, 86, 14, 2, '#e9e4d6')
@@ -97,8 +98,8 @@
     money: () => p('110,90 106,70 116,56 130,54 136,48 124,46 132,40 148,46 140,54 152,58 160,72 154,90', '#d9b36a') + r(126, 60, 14, 2, '#8a5a32')
       + c(132, 72, 7, '#f2c14e') + c(150, 82, 5, '#f2c14e') + b(170, 40, 10, 14, '#f08fb0') + l(174, 54, 172, 82, '#f08fb0', 2) + l(176, 54, 178, 82, '#f08fb0', 2)
       + `<polyline points="172,40 168,28 174,22" fill="none" stroke="#f08fb0" stroke-width="3"/>` + b(174, 21, 6, 3, '#2b2f38'),
-    dog: () => b(146, 26, 40, 70, '#7a4a2a') + r(150, 30, 32, 28, '#8a5a32') + r(150, 62, 32, 30, '#8a5a32') + b(176, 60, 4, 4, '#f2c14e')
-      + b(112, 66, 30, 28, '#c79a5b') + b(108, 44, 30, 24, '#c79a5b') + b(104, 44, 6, 14, '#7a4a2a') + b(134, 44, 6, 14, '#7a4a2a')
+    door: () => b(146, 26, 40, 70, '#7a4a2a') + r(150, 30, 32, 28, '#8a5a32') + r(150, 62, 32, 30, '#8a5a32') + b(176, 60, 4, 4, '#f2c14e'),
+    dog: () => b(112, 66, 30, 28, '#c79a5b') + b(108, 44, 30, 24, '#c79a5b') + b(104, 44, 6, 14, '#7a4a2a') + b(134, 44, 6, 14, '#7a4a2a')
       + b(111, 52, 10, 6, '#1a1d23') + b(125, 52, 10, 6, '#1a1d23') + r(121, 54, 4, 2, K) + r(113, 53, 3, 2, '#f3ead8') + r(127, 53, 3, 2, '#f3ead8')
       + b(119, 62, 8, 4, '#2b2f38') + p('118,70 122,74 126,70', '#d9b36a', 'none'),
     mic: () => b(134, 26, 18, 26, '#9aa3ad') + rows(136, 30, 14, 4, 5, '#6c7480') + b(140, 52, 6, 6, '#5d6670') + b(142, 58, 2, 30, '#5d6670') + b(128, 88, 30, 4, '#3d424c')
@@ -112,8 +113,8 @@
       + [[112, 36], [170, 30], [176, 78], [108, 80]].map(([x, y]) => r(x, y, 2, 6, '#fff3b0') + r(x - 2, y + 2, 6, 2, '#fff3b0')).join(''),
     bigman: () => b(116, 44, 60, 52, '#2b2f38') + b(130, 18, 32, 28, '#c79a5b') + r(130, 16, 32, 6, '#2b2f38') + b(134, 28, 10, 5, K) + b(148, 28, 10, 5, K)
       + r(144, 30, 4, 1, K) + b(120, 56, 52, 10, '#3d424c') + b(158, 54, 10, 6, '#f2c14e') + r(140, 40, 12, 2, '#8a5a32'),
-    rowboat: () => p('104,66 182,66 172,80 114,80', '#8a5a32') + r(108, 66, 70, 3, '#a8703f') + l(120, 60, 100, 86, '#c99a2e', 3) + l(166, 60, 188, 86, '#c99a2e', 3)
-      + r(0, 80, 192, 2, '#7fb4e2') + b(60, 70, 8, 6, '#f2c14e') + b(66, 66, 5, 5, '#f2c14e') + r(71, 68, 3, 2, '#f2a33a'),
+    water: () => r(0, 80, 192, 2, '#7fb4e2') + b(60, 70, 8, 6, '#f2c14e') + b(66, 66, 5, 5, '#f2c14e') + r(71, 68, 3, 2, '#f2a33a'),
+    rowboat: () => p('104,66 182,66 172,80 114,80', '#8a5a32') + r(108, 66, 70, 3, '#a8703f') + l(120, 60, 100, 86, '#c99a2e', 3) + l(166, 60, 188, 86, '#c99a2e', 3),
     storage: () => b(106, 30, 80, 66, '#9aa3ad') + rows(108, 34, 76, 6, 10, '#7f8893', 2) + b(140, 84, 12, 10, '#c99a2e') + r(143, 80, 6, 5, 'none', ` stroke="${K}" stroke-width="2"`)
       + b(108, 16, 34, 8, '#8a5a32') + p('112,24 108,40 116,40', '#8a5a32') + b(96, 22, 14, 14, '#6b4226'),
     camera: () => b(116, 40, 44, 26, '#2b2f38') + c(166, 52, 10, '#3d424c') + c(166, 52, 5, '#6f93d1') + b(122, 34, 16, 6, '#3d424c') + c(124, 47, 3, '#e5654a', 'none')
@@ -124,13 +125,45 @@
       + b(88, 74, 18, 20, '#3a5f9e') + r(94, 70, 6, 4, 'none', ` stroke="${K}" stroke-width="2"`) + r(88, 82, 18, 2, '#1f3866'),
     receipt: () => b(100, 64, 86, 6, '#8a5a32') + b(104, 70, 4, 26, '#6b4226') + b(178, 70, 4, 26, '#6b4226') + c(118, 60, 8, '#f3ead8') + c(140, 60, 8, '#f3ead8')
       + b(158, 56, 14, 106, '#f3ead8').replace(/height="10[68]"/g, 'height="40"') + rows(160, 60, 10, 4, 9, '#b9ad94', 1) + p('158,96 161,92 164,96 167,92 170,96', '#f3ead8', 'none'),
-    broom: () => r(0, 0, 192, 12, '#3b2a20') + `<polyline points="40,14 50,20 60,14 70,20" fill="none" stroke="#f3ead8" stroke-width="2"/>` + `<polyline points="120,14 130,20 140,14 150,20" fill="none" stroke="#f3ead8" stroke-width="2"/>`
-      + [[80, 18], [96, 24], [110, 16], [160, 22]].map(([x, y]) => r(x, y, 2, 2, '#c9b79a')).join('')
-      + l(150, 20, 126, 80, '#a8703f', 4) + p('112,78 140,78 146,96 106,96', '#e0b54a') + cols(112, 82, 14, 5, 7, '#b8862f'),
+    ceiling: () => r(0, 0, 192, 12, '#3b2a20') + `<polyline points="40,14 50,20 60,14 70,20" fill="none" stroke="#f3ead8" stroke-width="2"/>` + `<polyline points="120,14 130,20 140,14 150,20" fill="none" stroke="#f3ead8" stroke-width="2"/>`
+      + [[80, 18], [96, 24], [110, 16], [160, 22]].map(([x, y]) => r(x, y, 2, 2, '#c9b79a')).join(''),
+    broom: () => l(150, 20, 126, 80, '#a8703f', 4) + p('112,78 140,78 146,96 106,96', '#e0b54a') + cols(112, 82, 14, 5, 7, '#b8862f'),
+  };
+
+  const propFx = {
+    boat: [['sparkle', 132, 40]],
+    glasses: [['bubbles', 117, 52], ['bubbles', 141, 48]],
+    wallet: [['sparkle', 137, 54]],
+    towtruck: [['blink', 107, 50, '#f2a33a']],
+    pot: [['steam', 139, 46]],
+    guitar: [['notes', 130, 22], ['notes', 168, 60]],
+    coin: [['sparkle', 132, 48], ['sparkle', 176, 26]],
+    cake: [['flame', 127, 42], ['flame', 136, 42], ['flame', 145, 42]],
+    cat: [['question', 158, 34]],
+    bed: [['zzz', 150, 40]],
+    dumbbell: [['sweat', 146, 34]],
+    letter: [['alert', 176, 36]],
+    ticket: [['sparkle', 140, 58]],
+    moto: [['sparkle', 146, 66]],
+    piano: [['notes', 140, 28]],
+    fine: [['blink', 185, 34, '#e5654a']],
+    money: [['sparkle', 132, 70], ['sparkle', 150, 80]],
+    dog: [['anger', 140, 40]],
+    mic: [['notes', 143, 22]],
+    trophy: [['sparkle', 122, 38]],
+    watch: [['sparkle', 142, 50], ['sparkle', 168, 40]],
+    bigman: [['anger', 166, 16]],
+    rowboat: [['ripple', 142, 80]],
+    storage: [['question', 146, 20]],
+    camera: [['blink', 124, 47, '#e5654a'], ['sparkle', 176, 20]],
+    taxi: [['blink', 150, 42, '#8cc06a']],
+    receipt: [['sparkle', 165, 70]],
+    broom: [['dust', 130, 14], ['dust', 60, 14]],
+    hut: [['sparkle', 162, 52]],
   };
 
   const scenes = {
-    barco: {title: 'La botadura', place: 'calle', props: ['boat'], intro: 'El vecino quiere sacar un barco por la ventana de un quinto. Y me mira a mí, como si yo fuera la grúa.', react: ['¡Al agua! Bueno, a la calle primero.', 'Llamo al ayuntamiento. Que pongan ellos la grúa.']},
+    barco: {title: 'La botadura', place: 'calle', props: ['rope', 'boat'], intro: 'El vecino quiere sacar un barco por la ventana de un quinto. Y me mira a mí, como si yo fuera la grúa.', react: ['¡Al agua! Bueno, a la calle primero.', 'Llamo al ayuntamiento. Que pongan ellos la grúa.']},
     boda: {title: 'Testigo de boda', place: 'fiesta', props: ['glasses'], intro: 'Me han hecho testigo esta mañana. Llevo dos copas y ni una frase.', react: ['Improviso. Lo que salga del corazón… y de la copa.', 'Algo de internet. Que alguien escriba por mí.', 'Brindo y me siento. Corto y elegante.']},
     cartera: {title: 'La cartera de la Castellana', place: 'calle', props: ['wallet'], intro: 'Ochocientos euros y la foto de un perro con gafas. El perro me está mirando.', react: ['La devuelvo. El perro merece justicia.', 'Me la quedo… aunque el perro ya conoce mi cara.']},
     chiringuito: {title: 'Inspección en el chiringuito', place: 'playa', props: ['hut'], intro: 'Inspección en el chiringuito. La nevera solo tiene camisas. Ni una cerveza.', react: ['Esto es una tienda, señor. De camisas frías.', '¡Por la playa! Corre, corre.']},
@@ -148,18 +181,18 @@
     mudanza: {title: 'Ayudar en una mudanza', place: 'calle', props: ['piano'], intro: 'Me piden ayuda en una mudanza. Cuarto sin ascensor. Con piano.', react: ['Voy. Para eso están los colegas.', 'Uy, la espalda… justo hoy.']},
     multa: {title: 'La multa misteriosa', place: 'calle', props: ['fine'], intro: 'Multa de una ciudad en la que nunca he estado. Y sale mi cara en la foto.', react: ['La pago y no pregunto.', 'Recurro. Ese tigre no soy yo.', 'La ignoro. Las multas también se cansan.']},
     'negocio-vice': {title: 'Un negocio en Vice City', place: 'playa', props: ['money'], intro: 'Un tipo con camisa de flamencos me ofrece un chiringuito. Pide dos mil euros y no tiene apellidos.', react: ['Invierto. ¡Me veo de jefe en la playa!', 'Primero el contrato. Con apellidos, por favor.', 'Lo rechazo con estilo. Gafas puestas y media vuelta.']},
-    'perro-gafas': {title: 'El perro de las gafas', place: 'sede', props: ['dog'], intro: 'El perro de las gafas está en la puerta. Y no viene a jugar.', react: ['Perdón, perro. Te lo debía.', 'Te adopto. Ahora somos familia.', 'Cierro la puerta despacito…']},
+    'perro-gafas': {title: 'El perro de las gafas', place: 'sede', props: ['door', 'dog'], intro: 'El perro de las gafas está en la puerta. Y no viene a jugar.', react: ['Perdón, perro. Te lo debía.', 'Te adopto. Ahora somos familia.', 'Cierro la puerta despacito…']},
     podcast: {title: 'Un podcast propio', place: 'sede', props: ['mic'], intro: 'Tengo micrófono y ninguna idea. Todo el mundo tiene podcast menos yo.', react: ['Hablo de mí. Tema infinito.', 'Entrevisto al portero. Ese hombre ha visto cosas.', 'Lo dejo antes de empezar. Ahorro tiempo.']},
     premio: {title: 'Premio al vecino del año', place: 'calle', props: ['trophy'], intro: 'Me han nominado a vecino del año. Mi rival es un buzón.', react: ['Hago campaña. ¡Vota Chota!', 'Me retiro. El buzón se lo merece.']},
     reloj: {title: 'Reloj sin factura', place: 'metro', props: ['watch'], intro: 'Un señor del metro me vende un reloj de oro por cincuenta euros. Marca una hora distinta cada vez.', react: ['Lo compro. Llegaré tarde, pero con estilo.', 'Regateo. Por veinte me llevo dos.', 'Aviso a seguridad. Esto huele raro.']},
     'reloj-dueno': {title: 'El dueño del reloj', place: 'sede', props: ['bigman'], intro: 'Un hombre muy grande pregunta por un reloj de oro. Dice que es de su familia.', react: ['Se lo devuelvo. Muy amablemente. Muy rápido.', '¿Reloj? ¿Qué reloj? Yo no uso reloj.']},
-    retiro: {title: 'Remo en El Retiro', place: 'lago', props: ['rowboat'], intro: 'Carrera de barcas en El Retiro. Mi rival tiene ochenta años y nunca ha perdido.', react: ['¡Remo a muerte!', 'Un poquito de trampa no hace daño.', 'Le dejo ganar. Respeto a los mayores.']},
+    retiro: {title: 'Remo en El Retiro', place: 'lago', props: ['water', 'rowboat'], intro: 'Carrera de barcas en El Retiro. Mi rival tiene ochenta años y nunca ha perdido.', react: ['¡Remo a muerte!', 'Un poquito de trampa no hace daño.', 'Le dejo ganar. Respeto a los mayores.']},
     siesta: {title: 'Vacaciones forzosas', place: 'sede', props: ['bed'], intro: 'El médico dice que tengo los niveles de alguien que ha visto cosas. Toca descansar.', react: ['Hago caso. Sofá, manta y siesta.', '¿Descansar? Esta noche salimos.']},
     subasta: {title: 'Subasta en Argüelles', place: 'calle', props: ['storage'], intro: 'Subastan un trastero en Argüelles y he levantado la mano sin querer.', react: ['Pujo en serio. ¡Ese trastero es mío!', 'Me rasco la oreja, disimulando…', '¡Me voy corriendo!']},
     talento: {title: 'Casting en televisión', place: 'escenario', props: ['camera'], intro: 'Buscan talentos raros en la tele. Yo me duermo en cinco segundos donde sea.', react: ['Me presento. Cinco, cuatro, tres… zzz.', 'Mando a otro. Mi talento es delegar.']},
     taxi: {title: 'Una maleta en el taxi', place: 'calle', props: ['taxi'], intro: 'Alguien se ha dejado una maleta en el taxi. Pesa y hace un ruido suave.', react: ['La abro. La curiosidad mató al gato, no al tigre.', 'A objetos perdidos, como un ciudadano ejemplar.', 'Me la quedo sin abrir. Hay misterios que no se tocan.']},
     'ultima-cena': {title: 'La cena del balance', place: 'fiesta', props: ['receipt'], intro: 'Fin de mes y cena de balance. La cuenta es más larga que la carta.', react: ['Pago todo. Hoy invito yo. Creo.', 'A partes iguales. Matemáticas justas.', 'Voy al baño… y ya si eso vuelvo.']},
-    vecino: {title: 'El vecino de arriba', place: 'sede', props: ['broom'], intro: 'El vecino de arriba hace ruido cada noche a las tres. Construye algo. Algo grande.', react: ['Subo a hablar. Con educación y en pijama.', 'Le dejo una nota. Pasivo-agresiva, como manda la tradición.', 'Escoba al techo. Toc, toc.']},
+    vecino: {title: 'El vecino de arriba', place: 'sede', props: ['ceiling', 'broom'], intro: 'El vecino de arriba hace ruido cada noche a las tres. Construye algo. Algo grande.', react: ['Subo a hablar. Con educación y en pijama.', 'Le dejo una nota. Pasivo-agresiva, como manda la tradición.', 'Escoba al techo. Toc, toc.']},
   };
   const byTitle = new Map(Object.entries(scenes).map(([key, scene]) => [scene.title, key]));
   function keyFor(entry) {
@@ -171,5 +204,9 @@
     const scene = scenes[key] || {place: 'sede', props: ['letter']};
     return `<svg xmlns="http://www.w3.org/2000/svg" width="192" height="120" viewBox="0 0 192 120" shape-rendering="crispEdges">${places[scene.place]()}${scene.props.map(name => props[name]()).join('')}</svg>`;
   }
-  globalThis.ChotaScenes = Object.freeze({scenes, keyFor, svg});
+  // The day's object alone, for the sede's floor; the caller crops it to its bounds.
+  function mainProp(key) { const scene = scenes[key] || {props: ['letter']}; return scene.props[scene.props.length - 1]; }
+  function propSvg(name) { return props[name] ? props[name]() : ''; }
+  function fx(key) { const scene = scenes[key] || {props: ['letter']}; return scene.props.flatMap(name => propFx[name] || []); }
+  globalThis.ChotaScenes = Object.freeze({scenes, keyFor, svg, place: key => (scenes[key] || {place: 'sede'}).place, mainProp, propSvg, fx});
 })();

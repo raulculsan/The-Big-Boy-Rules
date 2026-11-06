@@ -4337,6 +4337,8 @@ function showChotaAgendaComment(trigger) {
   const next = chotaRoomContext();
   const bubble = trigger.closest(".clubhouse-room, .club-event-with-tigreton")?.querySelector(".tigreton-bubble");
   if (!next || !bubble) return;
+  // A tap takes over the bubble from a line another feature asked him to say.
+  if (bubble.dataset.roomLine) { clearTimeout(chotaRoomLineTimer); delete bubble.dataset.roomLine; }
   if (trigger.getAttribute("aria-expanded") === "true") {
     delete trigger.dataset.commentRequest;
     bubble.hidden = true;
@@ -4357,6 +4359,30 @@ function showChotaAgendaComment(trigger) {
     tigretonMotion?.speak(result.comment);
   });
 }
+// Other features (the daily decision) can have the sede's Chota say a short
+// line in his own bubble. A plan comment the member opened always wins.
+let chotaRoomLineTimer = 0;
+function chotaRoomSay(text, gesture = "nod") {
+  const line = String(text || "").trim();
+  if (!line || isChotaSleeping() || tigretonMotion?.isWaking() || document.getElementById("chotaViewer")?.open) return false;
+  const room = document.querySelector("#clubhouseContent .clubhouse-room");
+  const bubble = room?.querySelector(".clubhouse-bubble");
+  const trigger = room?.querySelector("[data-chota-open]");
+  if (!bubble || trigger?.getAttribute("aria-expanded") === "true") return false;
+  clearTimeout(chotaRoomLineTimer);
+  bubble.dataset.roomLine = "true";
+  showChotaCommentResult(bubble, line);
+  bubble.hidden = false;
+  queueChotaBubblePosition();
+  tigretonMotion?.speak(line, gesture);
+  chotaRoomLineTimer = setTimeout(() => {
+    if (!bubble.dataset.roomLine) return;
+    delete bubble.dataset.roomLine;
+    bubble.hidden = true;
+  }, Math.min(9000, 3200 + line.length * 45));
+  return true;
+}
+globalThis.ChotaRoom = Object.freeze({say: chotaRoomSay, play: gesture => tigretonMotion?.play(gesture), sleeping: () => isChotaSleeping()});
 function chotaActionComment(action, event, date) {
   const title = String(event.title || "el próximo plan");
   const days = tigretonDaysUntil(date);
