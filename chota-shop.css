@@ -7,8 +7,9 @@
 .chota-room-club-neon { left:29%; top:45.5%; width:20%; }
 .chota-room-club-cushion { left:9.6%; top:53%; width:8.5%; }
 .chota-room-vintage-radio { left:64.5%; top:46%; width:6%; }
-/* The dartboard hangs on the cork board, clear of the neon below it. */
-.chota-room-darts { left:41%; top:22.5%; width:9%; }
+/* The dartboard hangs on the bare wall under the cork board, left of the neon,
+   so it never covers the plan note pinned to the board. */
+.chota-room-darts { left:21%; top:44.6%; width:7.6%; }
 :is(.clubhouse-room,.chota-viewer-room-scene).is-sleeping .chota-room-prop--decoration { filter:brightness(.32) saturate(.35); }
 .chota-room-prop--decoration img { image-rendering:pixelated; }
 .chota-room-football { left:20%; top:79%; width:7%; }
