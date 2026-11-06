@@ -9,7 +9,7 @@
 .clubhouse-room { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; isolation: isolate; border-radius: 18px; background: #171b20; contain: layout paint; }
 .clubhouse-art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; transition: filter 3s ease-in-out; }
 .clubhouse-sky { position:absolute; left:83.984375%; top:0; width:13.4765625%; height:39.0625%; z-index:0; pointer-events:none; -webkit-mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; mask:url("icons/clubhouse/window-sky-mask.svg") 0 0 / 100% 100%; }
-.clubhouse-sky > i { position:absolute; inset:0; display:block; background:url("icons/clubhouse/club-room-v1.webp") 97.06546275% 0 / 742.0289855% 256% no-repeat; transition:opacity 30s linear; }
+.clubhouse-sky > i { position:absolute; inset:0; display:block; background:url("icons/clubhouse/club-room-v2.webp") 97.06546275% 0 / 742.0289855% 256% no-repeat; transition:opacity 30s linear; }
 .clubhouse-sky-dawn { opacity:var(--club-sky-dawn,0); filter:sepia(1) saturate(1.45) hue-rotate(325deg) brightness(1.05); }
 .clubhouse-sky-day { opacity:var(--club-sky-day,0); filter:sepia(1) saturate(1.45) hue-rotate(155deg) brightness(1.15); }
 .clubhouse-sky-evening { opacity:var(--club-sky-evening,0); }
@@ -102,7 +102,7 @@
 .clubhouse :is(button, a):focus-visible { outline: 2px solid #cecece; outline-offset: 3px; }
 /* The expanded mascot stays inside the same room; its full square scene is never cropped. */
 .chota-viewer { isolation: isolate; gap: 12px; background: #15191e; }
-.chota-viewer::before { content: ""; position: fixed; inset: -28px; z-index: 0; background: url("icons/clubhouse/club-room-v1.webp") center / cover no-repeat; filter: blur(20px) brightness(.3); pointer-events: none; }
+.chota-viewer::before { content: ""; position: fixed; inset: -28px; z-index: 0; background: url("icons/clubhouse/club-room-v2.webp") center / cover no-repeat; filter: blur(20px) brightness(.3); pointer-events: none; }
 .chota-viewer > * { position: relative; z-index: 1; }
 .chota-viewer-heading { text-shadow: 0 2px 8px #0009; }
 .chota-viewer-heading button { background: #171b20e8; border-color: #f0d6a138; }
