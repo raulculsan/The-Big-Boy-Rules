@@ -160,3 +160,6 @@
 #hoy:has(.club-day:not(.is-hub):not([hidden])) > .packs-heading { display: none; }
 .club-day:not(.is-hub) .cd-detail-head { padding-top: 4px; }
 .club-day:not(.is-hub) .cd-detail-head strong { font-size: var(--ds-text-xl); letter-spacing: -.02em; line-height: 1.1; }
+/* A row whose activity is resting (the Chota at night) stays visible but can't be opened. */
+.cd-row:disabled, .cd-tile:disabled { opacity: .55; cursor: default; }
+.cd-row:disabled :is(.cd-check, .cd-dot), .cd-tile:disabled .cd-dot { display: none; }

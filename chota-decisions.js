@@ -390,6 +390,8 @@
   }
 
   async function open(from = null) {
+    // The Chota's decisions rest with him at night, whichever button asks.
+    if (globalThis.ChotaRoom?.sleeping?.()) return;
     if (!dialog) build();
     if (dialog.open) return;
     trigger = from;
@@ -508,8 +510,11 @@
   }
   // While the Chota sleeps the letter and the object can't be opened.
   const sleepWatched = new WeakSet();
+  let lastAsleep = null;
   function syncSleep(room) {
     const asleep = room.classList.contains('is-sleeping');
+    // Hoy en el club repaints its Chota row when he falls asleep or wakes up.
+    if (asleep !== lastAsleep) { lastAsleep = asleep; globalThis.ClubDay?.paintEntry?.(); }
     room.querySelectorAll('.chota-decision-letter, .chota-decision-prop').forEach(button => {
       button.disabled = asleep;
       if (asleep) button.setAttribute('aria-label', 'Decisión del día: el Chota está durmiendo');
