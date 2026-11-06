@@ -491,6 +491,7 @@
       const waiting = pending(data);
       button.classList.toggle('is-pending', waiting);
       button.setAttribute('aria-label', `${waiting ? 'Decisión del día pendiente' : 'Decisión del día'}: ${data.today.title}`);
+      watchSleep(room);
       const pet = room.querySelector('.clubhouse-pet');
       let mark = room.querySelector('.chota-decision-mark');
       if (waiting && pet && !mark) {
@@ -500,9 +501,29 @@
         mark.textContent = '!';
         pet.append(mark);
       } else if (!waiting) mark?.remove();
-      void placeProp(room, data);
+      void placeProp(room, data).then(() => syncSleep(room));
+      syncSleep(room);
     });
     scheduleRoomTalk();
+  }
+  // While the Chota sleeps the letter and the object can't be opened.
+  const sleepWatched = new WeakSet();
+  function syncSleep(room) {
+    const asleep = room.classList.contains('is-sleeping');
+    room.querySelectorAll('.chota-decision-letter, .chota-decision-prop').forEach(button => {
+      button.disabled = asleep;
+      if (asleep) button.setAttribute('aria-label', 'Decisión del día: el Chota está durmiendo');
+    });
+    if (!asleep && story?.today) {
+      const letterButton = room.querySelector('.chota-decision-letter');
+      letterButton?.setAttribute('aria-label', `${pending() ? 'Decisión del día pendiente' : 'Decisión del día'}: ${story.today.title}`);
+      room.querySelector('.chota-decision-prop')?.setAttribute('aria-label', `Objeto del día: ${story.today.title}`);
+    }
+  }
+  function watchSleep(room) {
+    if (sleepWatched.has(room)) return;
+    sleepWatched.add(room);
+    new MutationObserver(() => syncSleep(room)).observe(room, {attributes: true, attributeFilter: ['class']});
   }
   // Now and then a mood icon pops over his head; the first time the sede is seen
   // today he tells yesterday's outcome and asks for help with the new dilemma.
@@ -551,7 +572,7 @@
   });
   document.addEventListener('click', event => {
     const opener = event.target.closest?.('[data-chota-decision]');
-    if (!opener) return;
+    if (!opener || opener.disabled || opener.closest('.clubhouse-room.is-sleeping')) return;
     event.preventDefault();
     // The letter flips open before the scene appears.
     if (opener.classList.contains('chota-decision-letter') && !reduced.matches) { opener.classList.add('is-opening'); setTimeout(() => { opener.classList.remove('is-opening'); void open(opener); }, 220); }

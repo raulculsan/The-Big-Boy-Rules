@@ -1,7 +1,7 @@
 /* The Chota's daily decision: a letter in the sede and a full scene sheet. */
 .clubhouse-room .chota-story-line { display: none; }
 .clubhouse-room .chota-decision-letter {
-  position: absolute; z-index: 5; left: 22.5%; top: 62.5%; width: 12.5%; min-width: 44px; min-height: 44px;
+  position: absolute; z-index: 5; left: 2.5%; top: 2.5%; width: 12%; min-width: 44px; min-height: 44px;
   display: grid; justify-items: center; gap: 2px; padding: 0; border: 0; background: transparent; color: #f3ead8;
   font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
@@ -11,6 +11,9 @@
   font-size: clamp(8px, 1.9vw, 11px); font-weight: 700; line-height: 1.2; white-space: nowrap;
 }
 .chota-decision-letter.is-pending svg { animation: chota-letter-wiggle 2.6s ease-in-out infinite; }
+:is(.chota-decision-letter, .chota-decision-prop):disabled { cursor: default; }
+.chota-decision-letter:disabled { filter: brightness(.6) saturate(.6); }
+.chota-decision-letter:disabled svg { animation: none; }
 .chota-decision-letter.is-opening svg { animation: chota-letter-open 220ms ease-in both; }
 @keyframes chota-letter-open { to { transform: rotate(0) scale(1.35) translateY(-8px); opacity: .2; } }
 /* The day's object is on show on the stump table in the bottom-left corner,
