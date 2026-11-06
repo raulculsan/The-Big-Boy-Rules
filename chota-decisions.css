@@ -13,9 +13,9 @@
 .chota-decision-letter.is-pending svg { animation: chota-letter-wiggle 2.6s ease-in-out infinite; }
 .chota-decision-letter.is-opening svg { animation: chota-letter-open 220ms ease-in both; }
 @keyframes chota-letter-open { to { transform: rotate(0) scale(1.35) translateY(-8px); opacity: .2; } }
-/* The day's object stands on the floor to the Chota's right, at the scene's scale. */
+/* The day's object waits out of the way, on the floor by the bean bag. */
 .clubhouse-room .chota-decision-prop {
-  position: absolute; z-index: 2; left: 72%; bottom: 21%; min-width: 34px; padding: 0; border: 0; background: transparent;
+  position: absolute; z-index: 2; left: 85%; bottom: 26%; min-width: 30px; padding: 0; border: 0; background: transparent;
   transform: translateX(-50%); transform-origin: 50% 100%; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
 .chota-decision-prop canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; filter: drop-shadow(2px 3px 0 #0006); }
