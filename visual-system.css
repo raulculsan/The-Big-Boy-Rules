@@ -1246,19 +1246,19 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
 /* iPhone: one translucent navigation material floats over the scrolling page.
    The four existing destinations keep their touch targets and transform selector. */
 @media (max-width: 760px) {
-  body.authenticated.native-ios {
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) {
     --ios-dock-bottom: max(10px, var(--tab-safe-bottom, 0px));
     --ios-dock-clearance: calc(82px + var(--ios-dock-bottom));
   }
-  body.authenticated.native-ios:not(.chat-focus):not(.achievement-management-open):not(.superadmin-console-session) .app {
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated):not(.chat-focus):not(.achievement-management-open):not(.superadmin-console-session) .app {
     padding-bottom: 0;
   }
-  body.authenticated.native-ios:not(.chat-focus):not(.achievement-management-open):not(.superadmin-console-session) .app > .page-section {
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated):not(.chat-focus):not(.achievement-management-open):not(.superadmin-console-session) .app > .page-section {
     padding-bottom: var(--ios-dock-clearance);
     scroll-padding-bottom: var(--ios-dock-clearance);
   }
-  body.authenticated.native-ios .floating-tab-bar,
-  body.authenticated.native-ios.mobile-header-hidden:not(.chat-focus) .floating-tab-bar {
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar,
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated).mobile-header-hidden:not(.chat-focus) .floating-tab-bar {
     --tab-shell-padding: 6px;
     --tab-slide-duration: 360ms;
     --tab-slide-ease: cubic-bezier(.2, .85, .2, 1.08);
@@ -1281,8 +1281,11 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
     transform: none;
     transition: opacity 160ms ease;
   }
-  body.authenticated.native-ios .floating-tab-bar::before { content: none; }
-  body.authenticated.native-ios .floating-tab-bar::after {
+  /* The installed iPhone PWA keeps its dock inside the measured window shell. */
+  html[data-pwa-viewport="ios"] body.authenticated .floating-tab-bar,
+  html[data-pwa-viewport="ios"] body.authenticated.mobile-header-hidden:not(.chat-focus) .floating-tab-bar { position: absolute; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar::before { content: none; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar::after {
     content: "";
     position: absolute;
     z-index: 0;
@@ -1291,7 +1294,7 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
     background: linear-gradient(145deg, rgba(255,255,255,.13), transparent 34%, transparent 68%, rgba(255,255,255,.045));
     pointer-events: none;
   }
-  body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator {
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .tab-selection-indicator {
     z-index: 1;
     inset: var(--tab-shell-padding) auto var(--tab-shell-padding) var(--tab-shell-padding);
     width: calc((100% - (var(--tab-shell-padding) * 2)) / var(--tab-count, 4));
@@ -1301,8 +1304,8 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
     box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 2px 5px rgba(0,0,0,.08);
     transition: transform var(--tab-slide-duration) var(--tab-slide-ease);
   }
-  body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator::after { display: none; }
-  body.authenticated.native-ios .floating-tab-bar .app-tab {
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .tab-selection-indicator::after { display: none; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .app-tab {
     z-index: 2;
     height: 52px;
     min-height: 52px;
@@ -1315,17 +1318,17 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
     transition: color 180ms ease;
     -webkit-tap-highlight-color: transparent;
   }
-  body.authenticated.native-ios .floating-tab-bar .app-tab.active { color: #fff; }
-  body.authenticated.native-ios .floating-tab-bar .app-tab svg {
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .app-tab.active { color: #fff; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .app-tab svg {
     width: 25px;
     height: 25px;
     stroke-width: 1.8;
     transform: none;
     transition: transform 220ms cubic-bezier(.2,.8,.2,1);
   }
-  body.authenticated.native-ios .floating-tab-bar .app-tab:active svg,
-  body.authenticated.native-ios .floating-tab-bar .app-tab:active .profile-tab-photo { transform: scale(.9); }
-  body.authenticated.native-ios .floating-tab-bar .profile-tab-photo {
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .app-tab:active svg,
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .app-tab:active .profile-tab-photo { transform: scale(.9); }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .profile-tab-photo {
     flex-basis: 33px;
     width: 33px;
     height: 33px;
@@ -1334,17 +1337,17 @@ body.authenticated .spotify-panel .panel-heading { margin-bottom: 12px; }
     box-shadow: 0 1px 3px rgba(0,0,0,.18);
     transition: transform 220ms cubic-bezier(.2,.8,.2,1);
   }
-  body.authenticated.native-ios .floating-tab-bar .tab-alert { border-color: #303136; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .tab-alert { border-color: #303136; }
 }
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
-  body.authenticated.native-ios .floating-tab-bar,
-  body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator,
-  body.authenticated.native-ios .floating-tab-bar .app-tab,
-  body.authenticated.native-ios .floating-tab-bar .app-tab svg,
-  body.authenticated.native-ios .floating-tab-bar .profile-tab-photo { transition: none; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar,
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .tab-selection-indicator,
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .app-tab,
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .app-tab svg,
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .profile-tab-photo { transition: none; }
 }
 @media (max-width: 760px) and (prefers-reduced-transparency: reduce), (max-width: 760px) and (prefers-contrast: more) {
-  body.authenticated.native-ios .floating-tab-bar { background: #252629; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  body.authenticated.native-ios .floating-tab-bar .app-tab { color: #d8d9dc; }
-  body.authenticated.native-ios .floating-tab-bar .app-tab.active { color: #fff; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar { background: #252629; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .app-tab { color: #d8d9dc; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .app-tab.active { color: #fff; }
 }

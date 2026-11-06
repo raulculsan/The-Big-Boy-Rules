@@ -78,7 +78,7 @@ test('PWA glass covers the system inset without moving the dock icons',()=>{
 });
 test('glass shell resets the retired moving pseudo-selector',()=>{
   const css=read('ui-motion.css');
-  const shell=css.match(/body\.authenticated \.floating-tab-bar::before,\s*body\.authenticated\.native-ios \.floating-tab-bar::before\s*\{([^}]+)\}/)[1];
+  const shell=css.match(/body\.authenticated \.floating-tab-bar::before,\s*:is\(body\.authenticated\.native-ios,html\[data-pwa-viewport="ios"\] body\.authenticated\) \.floating-tab-bar::before\s*\{([^}]+)\}/)[1];
   assert.match(shell,/width:auto;/,'the shell must span the whole dock, not the old one-tab width');
   assert.match(shell,/transform:none;/,'the shell must not follow the tab selection offset');
   assert.match(shell,/transition:none;/,'the shell must not animate like the old selector');
@@ -86,7 +86,7 @@ test('glass shell resets the retired moving pseudo-selector',()=>{
 });
 test('glass lens highlight fills its capsule without the retired gold dash',()=>{
   const css=read('ui-motion.css');
-  const highlight=css.match(/body\.authenticated \.floating-tab-bar \.tab-selection-indicator::after,\s*body\.authenticated\.native-ios \.floating-tab-bar \.tab-selection-indicator::after\s*\{([^}]+)\}/)[1];
+  const highlight=css.match(/body\.authenticated \.floating-tab-bar \.tab-selection-indicator::after,\s*:is\(body\.authenticated\.native-ios,html\[data-pwa-viewport="ios"\] body\.authenticated\) \.floating-tab-bar \.tab-selection-indicator::after\s*\{([^}]+)\}/)[1];
   assert.match(highlight,/width:auto;height:auto;transform:none;box-shadow:none;/,
     'old 18×2px highlight must not appear at the top-left of the lens');
 });

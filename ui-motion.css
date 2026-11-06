@@ -15,12 +15,12 @@
   --bb-ease:var(--motion-ease);
 }
 body.authenticated .floating-tab-bar,
-body.authenticated.native-ios .floating-tab-bar {
+:is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar {
   --tab-slide-duration:300ms;
   --tab-slide-ease:var(--motion-ease);
 }
 body.authenticated .floating-tab-bar .tab-selection-indicator,
-body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator { transition:transform 300ms var(--motion-ease); }
+:is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .tab-selection-indicator { transition:transform 300ms var(--motion-ease); }
 /* The navigation surface owns one fade; descendants never enter separately. */
 .page-section.active > * { animation:none !important; }
 dialog[data-motion-managed][open] { animation:none !important; }
@@ -53,7 +53,7 @@ body.authenticated :is(.primary-button,.secondary-button,.icon-button,.back-butt
   dialog[data-motion-managed]::backdrop { animation:none; }
   body.authenticated :is(.primary-button,.secondary-button,.icon-button,.back-button,.close-modal,.calendar-nav-button,.packs-sync,.shop-navigation button,.club-passport-tabs button,.plan-attendance-options button):active { scale:1; }
   body.authenticated .floating-tab-bar .tab-selection-indicator,
-  body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator { transition:none; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .tab-selection-indicator { transition:none; }
   .login-submit:active { scale:1; }
   .modal-backdrop,.modal-backdrop > :is(.modal,.profile-editor-modal,.achievement-assignment-modal) { transition:none;transform:none; }
 }
@@ -73,7 +73,7 @@ html[data-reduced-motion="true"] .modal-backdrop > :is(.modal,.profile-editor-mo
 }
 html[data-glass-quality="low"] { --glass-blur:14px; }
 body.authenticated .floating-tab-bar,
-body.authenticated.native-ios .floating-tab-bar {
+:is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar {
   background:transparent;
   border-color:transparent;
   box-shadow:none;
@@ -83,7 +83,7 @@ body.authenticated.native-ios .floating-tab-bar {
   overflow:visible;
 }
 body.authenticated .floating-tab-bar::before,
-body.authenticated.native-ios .floating-tab-bar::before {
+:is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar::before {
   content:"";
   position:absolute;
   z-index:0;
@@ -102,7 +102,7 @@ body.authenticated.native-ios .floating-tab-bar::before {
   pointer-events:none;
 }
 body.authenticated .floating-tab-bar::after,
-body.authenticated.native-ios .floating-tab-bar::after {
+:is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar::after {
   content:"";
   position:absolute;
   z-index:1;
@@ -116,7 +116,7 @@ body.authenticated.native-ios .floating-tab-bar::after {
 body.authenticated .floating-tab-bar[data-glass-touch]::after { opacity:1; }
 body.authenticated .floating-tab-bar .app-tab { z-index:3;background:transparent; }
 body.authenticated .floating-tab-bar .tab-selection-indicator,
-body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator {
+:is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .tab-selection-indicator {
   z-index:2;
   border:1px solid #ffffff2c;
   background:linear-gradient(155deg,#ffffff25,#ffffff0c 48%,#ffffff16);
@@ -126,25 +126,25 @@ body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator {
   transform-origin:center;
 }
 body.authenticated .floating-tab-bar .tab-selection-indicator::after,
-body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator::after {
+:is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .tab-selection-indicator::after {
   content:"";display:block;position:absolute;inset:1px;border-radius:inherit;
   width:auto;height:auto;transform:none;box-shadow:none;
   background:linear-gradient(135deg,#ffffff22,transparent 35%,transparent 68%,#ffffff10);
   pointer-events:none;
 }
 body.authenticated .floating-tab-bar[data-glass-dragging] .tab-selection-indicator,
-body.authenticated.native-ios .floating-tab-bar[data-glass-dragging] .tab-selection-indicator {
+:is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar[data-glass-dragging] .tab-selection-indicator {
   transition:none;scale:1.1 .94;
 }
 /* Keep icon geometry above the system inset, but carry the material through
    the whole bar so an installed PWA never gains a separate dark bottom strip. */
 @media(max-width:760px) {
-  body.authenticated:not(.native-ios) .floating-tab-bar::before,
-  body.authenticated:not(.native-ios) .floating-tab-bar::after {
+  html:not([data-pwa-viewport="ios"]) body.authenticated:not(.native-ios) .floating-tab-bar::before,
+  html:not([data-pwa-viewport="ios"]) body.authenticated:not(.native-ios) .floating-tab-bar::after {
     inset:0 8px 0;
     border-radius:28px;
   }
-  body.authenticated:not(.native-ios) .floating-tab-bar .tab-selection-indicator { border-radius:24px; }
+  html:not([data-pwa-viewport="ios"]) body.authenticated:not(.native-ios) .floating-tab-bar .tab-selection-indicator { border-radius:24px; }
 }
 body.authenticated :is(.top-actions>.icon-button,.top-actions .notifications-wrap>.icon-button,.back-button,.calendar-nav-button) {
   position:relative;
@@ -182,27 +182,27 @@ body.authenticated #notificationsDropdown .notifications-toolbar { background:tr
 body.authenticated #notificationsDropdown .notifications-list { background:#10121524; }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
   body.authenticated .floating-tab-bar::before,
-  body.authenticated.native-ios .floating-tab-bar::before,
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar::before,
   body.authenticated :is(.message-context-menu,.inbox-context-menu,.profile-quick-menu,#notificationsDropdown) { background:#25272b; }
 }
 @media(prefers-reduced-transparency:reduce),(prefers-contrast:more) {
   body.authenticated .floating-tab-bar::before,
-  body.authenticated.native-ios .floating-tab-bar::before,
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar::before,
   body.authenticated :is(.top-actions>.icon-button,.top-actions .notifications-wrap>.icon-button,.back-button,.calendar-nav-button,.message-context-menu,.inbox-context-menu,.profile-quick-menu,#notificationsDropdown) {
     background:#25272b;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;
   }
   body.authenticated .floating-tab-bar::after,
-  body.authenticated.native-ios .floating-tab-bar::after { display:none; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar::after { display:none; }
   body.authenticated .floating-tab-bar .tab-selection-indicator,
-  body.authenticated.native-ios .floating-tab-bar .tab-selection-indicator { background:#484b50;-webkit-backdrop-filter:none;backdrop-filter:none; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar .tab-selection-indicator { background:#484b50;-webkit-backdrop-filter:none;backdrop-filter:none; }
 }
 @media(prefers-reduced-motion:reduce) {
   body.authenticated .floating-tab-bar::after,
-  body.authenticated.native-ios .floating-tab-bar::after { transition:none; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar::after { transition:none; }
 }
 html[data-reduced-motion="true"] body.authenticated .floating-tab-bar::after { transition:none; }
 @media(prefers-reduced-motion:reduce) {
   body.authenticated .floating-tab-bar[data-glass-dragging] .tab-selection-indicator,
-  body.authenticated.native-ios .floating-tab-bar[data-glass-dragging] .tab-selection-indicator { scale:1; }
+  :is(body.authenticated.native-ios,html[data-pwa-viewport="ios"] body.authenticated) .floating-tab-bar[data-glass-dragging] .tab-selection-indicator { scale:1; }
 }
 html[data-reduced-motion="true"] body.authenticated .floating-tab-bar[data-glass-dragging] .tab-selection-indicator { scale:1; }
