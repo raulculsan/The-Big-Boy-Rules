@@ -1,7 +1,7 @@
 /* The Chota's daily decision: a letter in the sede and a full scene sheet. */
 .clubhouse-room .chota-story-line { display: none; }
 .clubhouse-room .chota-decision-letter {
-  position: absolute; z-index: 5; left: 20%; top: 67%; width: 12.5%; min-width: 44px; min-height: 44px;
+  position: absolute; z-index: 5; left: 22.5%; top: 62.5%; width: 12.5%; min-width: 44px; min-height: 44px;
   display: grid; justify-items: center; gap: 2px; padding: 0; border: 0; background: transparent; color: #f3ead8;
   font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
@@ -13,9 +13,10 @@
 .chota-decision-letter.is-pending svg { animation: chota-letter-wiggle 2.6s ease-in-out infinite; }
 .chota-decision-letter.is-opening svg { animation: chota-letter-open 220ms ease-in both; }
 @keyframes chota-letter-open { to { transform: rotate(0) scale(1.35) translateY(-8px); opacity: .2; } }
-/* The day's object waits out of the way, on the floor by the bean bag. */
+/* The day's object waits at the back, on the floor in front of the low
+   cabinet: clear of the rug, the letter and the shop's skateboard and ball. */
 .clubhouse-room .chota-decision-prop {
-  position: absolute; z-index: 2; left: 85%; bottom: 26%; min-width: 30px; padding: 0; border: 0; background: transparent;
+  position: absolute; z-index: 2; left: 73%; bottom: 38%; min-width: 26px; padding: 0; border: 0; background: transparent;
   transform: translateX(-50%); transform-origin: 50% 100%; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
 .chota-decision-prop canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; filter: drop-shadow(2px 3px 0 #0006); }
