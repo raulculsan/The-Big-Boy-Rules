@@ -231,3 +231,16 @@ body.chota-decision-open { overflow: hidden; }
 /* Modest phones keep the scene and the Chota, without the heavier layers. */
 :root[data-motion-quality=low] :is(.chd-fx--flicker, .chd-fx--blinds, .chd-fx--window, .chd-fx--glow, .chd-fx--beam, .chd-fx--motes, .chd-fx--train) { display: none; }
 :root[data-motion-quality=low] .chd-chota { animation: none; }
+
+/* The Chota's money jar, on the floor behind the bottom-right plant. The zone is
+   the room's 820–1000 × 780–960 px; its mask is the plant's leaves, which stay in front. */
+.clubhouse-room .chota-jar-zone {
+  position: absolute; z-index: 2; left: 80.08%; top: 76.17%; width: 17.58%; height: 17.58%; pointer-events: none;
+  -webkit-mask: url("icons/clubhouse/props/jar-plant-mask.png") 0 0 / 100% 100% no-repeat; mask: url("icons/clubhouse/props/jar-plant-mask.png") 0 0 / 100% 100% no-repeat;
+}
+.chota-jar { position: absolute; left: 4%; top: 24%; width: 42%; aspect-ratio: 14 / 18; display: block; transform-origin: 50% 100%; }
+.chota-jar svg { display: block; width: 100%; height: 100%; image-rendering: pixelated; filter: drop-shadow(2px 2px 0 #0005); }
+.chota-jar::after { content: ""; position: absolute; z-index: -1; left: 4%; right: -6%; bottom: -5%; height: 12%; border-radius: 50%; background: #0006; }
+.chota-jar.is-clinking { animation: chota-jar-clink 520ms cubic-bezier(.3,1.6,.5,1); }
+@keyframes chota-jar-clink { 30% { transform: scale(1.08, .92); } 60% { transform: scale(.96, 1.05) translateY(-4%); } }
+.clubhouse-room.is-sleeping .chota-jar-zone { filter: brightness(.55) saturate(.5); }

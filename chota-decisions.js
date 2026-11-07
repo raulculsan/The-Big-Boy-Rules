@@ -481,6 +481,7 @@
   function syncRoom(data = story) {
     document.querySelectorAll('.clubhouse-room').forEach(room => {
       let button = room.querySelector('.chota-decision-letter');
+      placeJar(room, data?.season);
       if (!data?.today) { button?.remove(); room.querySelectorAll('.chota-decision-mark,.chota-decision-prop,.chota-mood').forEach(node => node.remove()); return; }
       if (!button) {
         button = document.createElement('button');
@@ -508,6 +509,58 @@
     });
     scheduleRoomTalk();
   }
+  // His money jar sits on the floor behind the bottom-right plant and fills with
+  // coins, then notes, as his money (0–100) grows. Drawn on a 14×18 pixel grid.
+  function jarSvg(money) {
+    const value = Math.max(0, Math.min(100, Number(money) || 0));
+    // Glass silhouette: a narrow neck, round shoulders and a rounded base.
+    const inside = (x, y) => (y >= 3 && y <= 4 && x >= 4 && x <= 9) || (y === 5 && x >= 3 && x <= 10) || (y >= 6 && y <= 15 && x >= 2 && x <= 11) || (y === 16 && x >= 3 && x <= 10);
+    const level = Math.round(value / 100 * 13), top = 17 - level, cells = [];
+    const notes = [['#c9e6b4', '#7fbf6a', '#3f7a3a'], ['#f6d2a6', '#e0954a', '#a8622a']];
+    const px = (x, y, fill, w = 1, h = 1, alpha = 1) => cells.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"${alpha < 1 ? ` fill-opacity="${alpha}"` : ''}/>`);
+    for (let y = 2; y <= 17; y++) for (let x = 1; x <= 12; x++) {
+      if (inside(x, y)) {
+        if (y >= top) {
+          // Stacked banknotes: green notes five pixels wide, a dark line under each
+          // layer, a lighter middle on each note and now and then an orange one.
+          const layer = Math.floor((16 - y) / 2), shift = (layer * 3) % 5, note = Math.floor((x + shift) / 5);
+          const [light, mid, dark] = notes[(layer * 7 + note * 3) % 5 === 0 ? 1 : 0];
+          const under = (16 - y) % 2 === 0, gap = (x + shift) % 5 === 0;
+          px(x, y, under ? dark : gap ? dark : (x + shift) % 5 === 2 ? light : mid);
+        } else px(x, y, x === 11 ? '#8fbcd9' : '#cfe6ff', 1, 1, x === 11 ? .55 : .22);
+      } else if ([[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => inside(x + dx, y + dy))) px(x, y, '#1a1410');
+    }
+    // An empty jar has a moth; a full one spills notes over the rim.
+    if (value <= 10) { px(5, 13, '#9aa3ad'); px(6, 12, '#c9ced4', 2); px(8, 13, '#9aa3ad'); }
+    if (value >= 90) {
+      // Too many notes: they stick out of the open neck in a little fan.
+      px(3, 0, '#3f7a3a', 3, 1); px(3, 1, '#7fbf6a', 3, 2); px(4, 1, '#c9e6b4');
+      px(6, 0, '#3f7a3a', 2, 1); px(6, 1, '#9ad081', 2, 2);
+      px(8, 0, '#a8622a', 3, 1); px(8, 1, '#e0954a', 3, 2); px(9, 1, '#f6d2a6');
+    }
+    else { px(3, 0, '#1a1410', 8); px(3, 1, '#8a5a32', 8); px(4, 1, '#a8703f', 6); }
+    // Shine on the glass, shorter as it fills.
+    for (let y = 6; y < Math.min(13, top); y++) px(3, y, '#ffffff', 1, 1, .85);
+    return `<svg viewBox="0 0 14 18" shape-rendering="crispEdges" aria-hidden="true"><g opacity=".98">${cells.join('')}</g></svg>`;
+  }
+  function placeJar(room, season) {
+    let zone = room.querySelector('.chota-jar-zone');
+    if (!season) { zone?.remove(); return; }
+    if (!zone) {
+      zone = document.createElement('div');
+      zone.className = 'chota-jar-zone';
+      zone.innerHTML = '<span class="chota-jar" role="img"></span>';
+      room.append(zone);
+    }
+    const jar = zone.querySelector('.chota-jar'), money = Math.max(0, Math.min(100, Number(season.money) || 0));
+    if (jar.dataset.money === String(money)) return;
+    const before = jar.dataset.money;
+    jar.dataset.money = String(money);
+    jar.innerHTML = jarSvg(money);
+    jar.setAttribute('aria-label', `Bote del Chota: ${money} de 100 de dinero`);
+    if (before != null && !reduced.matches) { jar.classList.remove('is-clinking'); void jar.offsetWidth; jar.classList.add('is-clinking'); }
+  }
+
   // While the Chota sleeps the letter and the object can't be opened.
   const sleepWatched = new WeakSet();
   let lastAsleep = null;

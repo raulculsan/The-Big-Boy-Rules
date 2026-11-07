@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v574";
+const CACHE_NAME = "big-boy-rules-v575";
 const APP_SHELL = [
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -38,7 +38,7 @@ const APP_SHELL = [
   "./coin-missions.js?v=20261103-economy-555",
   "./club-day.js?v=20261107-chota-asleep-574",
   "./club-day.css?v=20261107-chota-asleep-574",
-  "./chota-decisions.css?v=20261107-letter-top-573",
+  "./chota-decisions.css?v=20261107-money-jar-575",
   "./coin-missions.css?v=20261102-theme-519",
   "./club-social.js?v=20261102-club-day-542",
   "./club-social.css?v=20261102-theme-510",
@@ -80,7 +80,7 @@ const APP_SHELL = [
   "./chat-themes.js?v=20261102-514",
   "./club-plus.js?v=20261106-chota-decisions-565",
   "./chota-scenes.js?v=20261106-chota-alive-568",
-  "./chota-decisions.js?v=20261107-chota-asleep-574",
+  "./chota-decisions.js?v=20261107-money-jar-575",
   "./club-night.js?v=20261102-night-507",
   "./club-night.css?v=20261102-night-507",
   "./tickets.js?v=20261101-tickets-483",
@@ -267,6 +267,7 @@ const APP_SHELL = [
   "./icons/cards/sobre-coleccion-01-v3.png",
   "./icons/cards/sobre-coleccion-02-proximamente-v1.png",
   "./icons/clubhouse/props/darts-board-v1.svg",
+  "./icons/clubhouse/props/jar-plant-mask.png",
   "./trophy-motion.js?v=20260904-150",
   "./trophy-unlock.js?v=20261103-ladders-552",
   "./vendor/lottie-light.min.js?v=5.13.0",
