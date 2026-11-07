@@ -17,9 +17,9 @@
   const market = {tab:'buy', data:null, loading:false, busy:false, notice:'', selling:'', price:0};
 
   const forgeDialog = document.createElement('dialog');
-  forgeDialog.className = 'collection-social-dialog economy-dialog'; forgeDialog.setAttribute('aria-labelledby','forgeTitle');
+  forgeDialog.className = 'economy-dialog'; forgeDialog.setAttribute('aria-labelledby','forgeTitle');
   const marketDialog = document.createElement('dialog');
-  marketDialog.className = 'collection-social-dialog economy-dialog'; marketDialog.setAttribute('aria-labelledby','marketTitle');
+  marketDialog.className = 'economy-dialog'; marketDialog.setAttribute('aria-labelledby','marketTitle');
   document.body.append(forgeDialog, marketDialog);
 
   const design = id => globalThis.CardCollection?.catalog.find(card => card.id === id);
@@ -41,8 +41,14 @@
     if (!card) return '<div class="social-trade-placeholder">?</div>';
     return `<img data-card-original="${esc(card.front)}" src="${esc(globalThis.CardCollection.thumbnail(card))}" alt="${esc(card.name)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async" width="${Number(card.width) || 948}" height="${Number(card.height) || 1660}">`;
   }
-  const header = (id, kicker, title) => `<header class="social-header"><div><span class="eyebrow">${kicker}</span><h2 id="${id}" tabindex="-1">${title}</h2></div><button type="button" class="social-close" data-economy-close aria-label="Cerrar">✕</button></header>`;
-  const status = text => `<div class="social-feedback" role="status" aria-live="polite" ${text ? '' : 'hidden'}>${esc(text)}</div>`;
+  // Same look as Repetidas: a big heading, the Chota with a line, pill chips,
+  // a light card grid and a floating bar for the main action.
+  const header = (id, kicker, title) => `<header class="eco-head"><div><span class="eco-kicker">${kicker}</span><h2 id="${id}" tabindex="-1">${title}</h2></div><button type="button" class="eco-close" data-economy-close aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>`;
+  const status = text => `<p class="eco-status" role="status" aria-live="polite" ${text ? '' : 'hidden'}>${esc(text)}</p>`;
+  const chota = (line, mood = 'wave') => `<div class="dup-chota eco-chota" data-mood="${mood}"><i class="dup-chota-sprite" aria-hidden="true"></i><p>${esc(line)}</p></div>`;
+  const rarityTone = {common:'#a39d92', retro:'#d0804f', special:'#34c0d9', epic:'#bf5af2', legendary:'#ffae2a', full_art:'#f5d06b', vice_city:'#ff5fb4', halloween:'#ff8a2b'};
+  const tone = card => rarityTone[card?.rarity] || rarityTone.common;
+  const chip = (attr, value, label, pressed, count, color) => `<button type="button" ${attr}="${value}" aria-pressed="${pressed}">${color ? `<i style="--rarity:${color}"></i>` : ''}<span>${esc(label)}</span>${count == null ? '' : `<b>${esc(count)}</b>`}</button>`;
 
   // Fusion ------------------------------------------------------------------
   const tier = () => tiers.find(item => item.key === forge.tier) || tiers[0];
@@ -51,21 +57,32 @@
     return inventory.filter(item => spare(item) > 0 && tier().editions.includes(editionOf(item)) && design(item.card_id))
       .sort((a, b) => spare(b) - spare(a) || (design(a.card_id).score || 0) - (design(b.card_id).score || 0));
   }
+  const tierTone = {common:rarityTone.common, special:rarityTone.special, epic:rarityTone.epic, legendary:rarityTone.legendary};
+  function forgeLine(t, cards, total) {
+    if (forge.busy) return ['calm', 'Fusionando… no mires, que es secreto.'];
+    if (forge.result) return ['cheer', forge.result.is_new ? '¡Sale nueva para tu álbum! Así da gusto.' : '¡Hecho! Mira lo que ha salido del horno.'];
+    if (forge.notice) return ['calm', forge.notice];
+    const available = cards.reduce((sum, item) => sum + spare(item), 0);
+    if (available < t.needs) return ['calm', available ? `Tienes ${available} de ${t.needs}. Abre más sobres y vuelve, que aquí te espero.` : `No tienes ${t.label.toLowerCase()} repetidas. Abre sobres y vuelve.`];
+    if (total === t.needs) return ['cheer', '¡Listo! Pulsa fusionar y que salten chispas.'];
+    if (total) return ['wave', `Llevas ${total} de ${t.needs}. ¡Dale, que ya casi!`];
+    return ['wave', `Dame ${t.needs} ${t.label.toLowerCase()} repetidas y te saco una ${t.gives}. Yo pongo el martillo.`];
+  }
   function renderForge() {
     if (!forgeDialog.open) return;
     const t = tier(), cards = forgeCards(), total = picked();
     const result = forge.result ? design(forge.result.card_id) : null;
+    const [mood, line] = forgeLine(t, cards, total);
     forgeDialog.innerHTML = `${header('forgeTitle','LOS NUESTROS · REPETIDAS','Fusionar')}
-      <p class="social-intro">Junta repetidas de una rareza y consigue una carta de la siguiente. Si te falta alguna de esa rareza, sale una que no tienes. Siempre conservas una copia de cada carta.</p>
-      <nav class="social-tabs economy-tabs" aria-label="Rareza para fusionar">${tiers.map(item => `<button type="button" data-forge-tier="${item.key}" aria-pressed="${item.key === t.key}"><span>${item.label}</span><b>${item.needs}→1</b></button>`).join('')}</nav>
-      ${status(forge.notice)}
-      ${result ? `<section class="economy-result"><span class="eyebrow">${forge.result.is_new ? 'NUEVA EN TU ÁLBUM' : 'HAS CONSEGUIDO'}</span><button type="button" class="social-card-art" data-economy-view="${esc(result.id)}" aria-label="Ver ${esc(result.name)}">${art(result, true)}</button><strong>${esc(result.name)}</strong><small>${esc(result.edition)}</small><button type="button" class="social-primary" data-forge-again>Seguir fusionando</button></section>` : `
-      <div class="economy-recipe"><strong>${t.needs} ${t.label.toLowerCase()} → 1 ${t.gives}</strong><span>${total}/${t.needs} elegidas</span><progress max="${t.needs}" value="${Math.min(total, t.needs)}"></progress></div>
-      <div class="economy-grid">${cards.map(item => {
+      ${chota(line, mood)}
+      <nav class="eco-chips" aria-label="Rareza para fusionar">${tiers.map(item => chip('data-forge-tier', item.key, item.label, item.key === t.key, `${item.needs}→1`, tierTone[item.key])).join('')}</nav>
+      ${result ? `<section class="economy-result"><span class="eco-kicker">${forge.result.is_new ? 'NUEVA EN TU ÁLBUM' : 'HAS CONSEGUIDO'}</span><button type="button" class="social-card-art" data-economy-view="${esc(result.id)}" aria-label="Ver ${esc(result.name)}">${art(result, true)}</button><strong>${esc(result.name)}</strong><small style="color:${tone(result)}">${esc(result.edition)}</small><button type="button" class="eco-primary" data-forge-again>Seguir fusionando</button></section>` : `
+      <div class="eco-toolbar"><p class="eco-recipe"><strong>${t.needs} ${t.label.toLowerCase()} → 1 ${t.gives}</strong><span>Siempre conservas una copia de cada carta. Si te falta alguna de la siguiente rareza, sale una que no tienes.</span></p><button type="button" class="eco-primary" data-forge-auto ${cards.length ? '' : 'disabled'}>Elegir solas</button></div>
+      <div class="eco-grid">${cards.map(item => {
         const card = design(item.card_id), count = forge.picks.get(item.card_id) || 0;
-        return `<article class="economy-card ${count ? 'is-picked' : ''}"><div class="economy-card-art">${art(card)}</div><strong>${esc(card.name)}</strong><small>${esc(card.edition)} · ${spare(item)} repetida${spare(item) === 1 ? '' : 's'}</small><div class="economy-stepper"><button type="button" data-forge-step="-1" data-card="${esc(item.card_id)}" aria-label="Quitar una copia de ${esc(card.name)}" ${count ? '' : 'disabled'}>−</button><output aria-live="polite">${count}</output><button type="button" data-forge-step="1" data-card="${esc(item.card_id)}" aria-label="Añadir una copia de ${esc(card.name)}" ${count >= spare(item) || total >= t.needs ? 'disabled' : ''}>+</button></div></article>`;
-      }).join('') || `<p class="social-empty">No tienes ${t.label.toLowerCase()} repetidas.</p>`}</div>
-      <div class="economy-dock"><button type="button" data-forge-auto ${cards.length ? '' : 'disabled'}>Elegir automáticamente</button><button type="button" class="social-primary" data-forge-go ${total === t.needs && !forge.busy ? '' : 'disabled'}>${forge.busy ? 'Fusionando…' : `Fusionar ${t.needs} cartas`}</button></div>`}`;
+        return `<article class="eco-card${count ? ' is-picked' : ''}" style="--rarity:${tone(card)}"><div class="eco-art">${art(card)}<span class="eco-count">×${spare(item)}</span>${count ? `<span class="eco-check" aria-hidden="true">${count}</span>` : ''}</div><h4>${esc(card.name)}</h4><p>${esc(card.edition)}</p><div class="eco-stepper"><button type="button" data-forge-step="-1" data-card="${esc(item.card_id)}" aria-label="Quitar una copia de ${esc(card.name)}" ${count ? '' : 'disabled'}>−</button><output aria-live="polite">${count}</output><button type="button" data-forge-step="1" data-card="${esc(item.card_id)}" aria-label="Añadir una copia de ${esc(card.name)}" ${count >= spare(item) || total >= t.needs ? 'disabled' : ''}>+</button></div></article>`;
+      }).join('') || `<p class="eco-empty">No tienes ${t.label.toLowerCase()} repetidas.</p>`}</div>
+      <div class="eco-bar"><span><span><b>${total}/${t.needs}</b> elegidas</span><i class="eco-progress" style="--done:${Math.min(1, total / t.needs)}"></i></span><button type="button" data-forge-go ${total === t.needs && !forge.busy ? '' : 'disabled'}>${forge.busy ? 'Fusionando…' : 'Fusionar'}</button></div>`}`;
   }
   function autoPick() {
     const t = tier(); forge.picks.clear(); let left = t.needs;
@@ -96,37 +113,52 @@
   function listingTile(listing, owned) {
     const card = design(listing.card_id); if (!card) return '';
     const action = owned
-      ? `<button type="button" data-market-cancel="${esc(listing.id)}" ${market.busy ? 'disabled' : ''}>Retirar</button>`
-      : `<button type="button" class="social-primary" data-market-buy="${esc(listing.id)}" data-price="${esc(listing.price)}" ${market.busy ? 'disabled' : ''}>Comprar · ${number(listing.price)}</button>`;
-    return `<article class="economy-card"><button type="button" class="economy-card-art" data-economy-view="${esc(card.id)}" aria-label="Ver ${esc(card.name)}">${art(card)}</button><strong>${esc(card.name)}</strong><small>${esc(card.edition)}${owned ? '' : ` · ${esc(listing.seller_name)}`}</small><span class="economy-price">${number(listing.price)} monedas</span>${action}</article>`;
+      ? `<button type="button" class="eco-quiet" data-market-cancel="${esc(listing.id)}" ${market.busy ? 'disabled' : ''}>Retirar</button>`
+      : `<button type="button" class="eco-buy" data-market-buy="${esc(listing.id)}" data-price="${esc(listing.price)}" ${market.busy ? 'disabled' : ''}>Comprar · ${number(listing.price)}</button>`;
+    return `<article class="eco-card" style="--rarity:${tone(card)}"><button type="button" class="eco-art" data-economy-view="${esc(card.id)}" aria-label="Ver ${esc(card.name)}">${art(card)}<span class="eco-count eco-price">${number(listing.price)}</span></button><h4>${esc(card.name)}</h4><p>${esc(card.edition)}${owned ? '' : ` · ${esc(listing.seller_name)}`}</p>${action}</article>`;
   }
   function sellPanel() {
     const card = design(market.selling);
     if (card) {
       const min = minimum(card.id);
-      return `<section class="economy-sell"><div class="economy-card-art">${art(card, true)}</div><div><strong>${esc(card.name)}</strong><small>${esc(card.edition)}</small>
-        <label class="social-field"><span>Precio en monedas (mínimo ${min}, lo que da al descartarla)</span><input type="number" inputmode="numeric" min="${min}" max="1000" step="1" value="${market.price || min * 3}" data-market-price></label>
-        <p class="social-help">La copia queda reservada mientras esté a la venta. Puedes retirarla cuando quieras y vuelve a tu álbum.</p>
-        <div class="economy-dock"><button type="button" data-market-sell-cancel>Cancelar</button><button type="button" class="social-primary" data-market-publish ${market.busy ? 'disabled' : ''}>Poner a la venta</button></div></div></section>`;
+      return `<section class="eco-sell"><div class="eco-art">${art(card, true)}</div><div><h4>${esc(card.name)}</h4><p style="color:${tone(card)}">${esc(card.edition)}</p>
+        <label class="eco-field"><span>Precio en monedas (mínimo ${min}, lo que da al descartarla)</span><input type="number" inputmode="numeric" min="${min}" max="1000" step="1" value="${market.price || min * 3}" data-market-price></label>
+        <p class="eco-help">La copia queda reservada mientras esté a la venta. Puedes retirarla cuando quieras y vuelve a tu álbum.</p></div></section>
+        <div class="eco-bar"><button type="button" class="eco-bar-quiet" data-market-sell-cancel>Cancelar</button><button type="button" data-market-publish ${market.busy ? 'disabled' : ''}>Poner a la venta</button></div>`;
     }
     const mine = (market.data?.listings || []).filter(item => item.mine);
     const duplicates = inventory.filter(item => spare(item) > 0 && design(item.card_id)).sort((a, b) => (design(b.card_id).score || 0) - (design(a.card_id).score || 0));
-    return `${mine.length ? `<div class="social-section-title"><span>A LA VENTA · ${mine.length}/8</span><h3>Tus cartas en el mercado</h3></div><div class="economy-grid">${mine.map(item => listingTile(item, true)).join('')}</div>` : ''}
-      <div class="social-section-title"><span>TUS REPETIDAS</span><h3>¿Qué quieres vender?</h3></div>
-      <div class="economy-grid">${duplicates.map(item => { const c = design(item.card_id); return `<article class="economy-card"><div class="economy-card-art">${art(c)}</div><strong>${esc(c.name)}</strong><small>${esc(c.edition)} · ${spare(item)} repetida${spare(item) === 1 ? '' : 's'}</small><button type="button" data-market-sell="${esc(item.card_id)}" ${mine.length >= 8 ? 'disabled' : ''}>Vender</button></article>`; }).join('') || '<p class="social-empty">No tienes repetidas para vender.</p>'}</div>`;
+    return `${mine.length ? `<h3 class="eco-section">A la venta · ${mine.length}/8</h3><div class="eco-grid">${mine.map(item => listingTile(item, true)).join('')}</div>` : ''}
+      <h3 class="eco-section">Tus repetidas</h3>
+      <div class="eco-grid">${duplicates.map(item => { const c = design(item.card_id); return `<article class="eco-card" style="--rarity:${tone(c)}"><div class="eco-art">${art(c)}<span class="eco-count">×${spare(item)}</span></div><h4>${esc(c.name)}</h4><p>${esc(c.edition)}</p><button type="button" class="eco-quiet" data-market-sell="${esc(item.card_id)}" ${mine.length >= 8 ? 'disabled' : ''}>Vender</button></article>`; }).join('') || '<p class="eco-empty">No tienes repetidas para vender.</p>'}</div>`;
+  }
+  function marketLine(listings, mine) {
+    if (market.busy) return ['calm', 'Un momento, que estoy contando monedas…'];
+    if (market.notice) return [/vendid|hecha|venta\.|retirada/i.test(market.notice) ? 'cheer' : 'calm', market.notice];
+    if (market.loading && !market.data) return ['wave', 'Abriendo el mercado, que aquí se madruga.'];
+    if (market.tab === 'sell') {
+      const card = design(market.selling);
+      if (card) { const min = minimum(card.id); return ['wave', `Mínimo ${min} monedas. Yo pediría ${min * 3}, pero tú mandas.`]; }
+      return ['wave', mine ? `Tienes ${mine} a la venta. Paciencia, que ya picará alguien.` : '¿Vendes alguna repetida? Pon buen precio, que aquí se regatea.'];
+    }
+    if (market.tab === 'history') return ['calm', 'Aquí queda todo lo que has comprado y vendido. Yo no olvido nada.'];
+    const balance = market.data ? number(market.data.balance) : '—';
+    return listings ? ['wave', `Hay ${listings} ${listings === 1 ? 'carta' : 'cartas'} a la venta y tienes ${balance} monedas. Gástalas con cabeza.`] : ['calm', 'Hoy el mercado está vacío. Vuelve luego, que esto se mueve.'];
   }
   function renderMarket() {
     if (!marketDialog.open) return;
     const scroll = marketDialog.scrollTop;
     const listings = (market.data?.listings || []).filter(item => !item.mine);
+    const mine = (market.data?.listings || []).filter(item => item.mine).length;
     const history = market.data?.history || [];
+    const [mood, line] = marketLine(listings.length, mine);
     marketDialog.innerHTML = `${header('marketTitle','LOS NUESTROS · ENTRE MIEMBROS','Mercado')}
-      <p class="social-intro">Compra repetidas de otros miembros con monedas o vende las tuyas. Saldo: <strong>${market.data ? number(market.data.balance) : '—'} monedas</strong>.</p>
-      <nav class="social-tabs economy-tabs" aria-label="Mercado">${[['buy','Comprar',listings.length],['sell','Vender',(market.data?.listings || []).filter(item => item.mine).length],['history','Historial',history.length]].map(([key, label, count]) => `<button type="button" data-market-tab="${key}" aria-pressed="${market.tab === key}"><span>${label}</span><b>${count}</b></button>`).join('')}</nav>
-      ${status(market.notice || (market.loading ? 'Cargando el mercado…' : ''))}
-      ${market.tab === 'buy' ? `<div class="economy-grid">${listings.map(item => listingTile(item, false)).join('') || `<p class="social-empty">${market.loading ? '' : 'No hay cartas a la venta ahora mismo.'}</p>`}</div>` : ''}
+      ${chota(line, mood)}
+      <div class="eco-toolbar"><p class="eco-wallet">Saldo <strong>${market.data ? number(market.data.balance) : '—'} monedas</strong></p></div>
+      <nav class="eco-chips" aria-label="Mercado">${[['buy','Comprar',listings.length],['sell','Vender',mine],['history','Historial',history.length]].map(([key, label, count]) => chip('data-market-tab', key, label, market.tab === key, count)).join('')}</nav>
+      ${market.tab === 'buy' ? `<div class="eco-grid">${listings.map(item => listingTile(item, false)).join('') || `<p class="eco-empty">${market.loading ? 'Cargando…' : 'No hay cartas a la venta ahora mismo.'}</p>`}</div>` : ''}
       ${market.tab === 'sell' ? sellPanel() : ''}
-      ${market.tab === 'history' ? `<ol class="economy-history">${history.map(item => { const c = design(item.card_id); return `<li><strong>${esc(c?.name || item.card_id)}</strong><span>${item.status === 'cancelled' ? 'Retirada' : item.role === 'seller' ? `Vendida por ${number(item.price)}` : `Comprada por ${number(item.price)}`}</span><time>${esc(new Date(item.closed_at).toLocaleDateString('es-ES', {day:'numeric', month:'short'}))}</time></li>`; }).join('') || '<p class="social-empty">Todavía no has comprado ni vendido.</p>'}</ol>` : ''}`;
+      ${market.tab === 'history' ? `<ol class="eco-history">${history.map(item => { const c = design(item.card_id); return `<li><strong>${esc(c?.name || item.card_id)}</strong><span>${item.status === 'cancelled' ? 'Retirada' : item.role === 'seller' ? `Vendida por ${number(item.price)}` : `Comprada por ${number(item.price)}`}</span><time>${esc(new Date(item.closed_at).toLocaleDateString('es-ES', {day:'numeric', month:'short'}))}</time></li>`; }).join('') || '<p class="eco-empty">Todavía no has comprado ni vendido.</p>'}</ol>` : ''}`;
     marketDialog.scrollTop = scroll;
   }
   async function marketAction(name, args, success) {
