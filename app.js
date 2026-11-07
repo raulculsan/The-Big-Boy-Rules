@@ -5222,6 +5222,8 @@ async function applyUserInterface(user, authUser = null, {restoring = false} = {
   document.body.classList.remove("session-restoring");
   runWhenIdle(() => { if (currentAuthUser?.id === authUser?.id && currentUser === user) globalThis.ClubOnboarding?.ready({userId:authUser?.id || `local:${user.id}`, navigate:goTo}); });
   if (backendReady && authUser) {
+    // The sede's Chota decorations appear at once from the last saved story.
+    globalThis.ClubPlus?.prime?.();
     void hydrateAuthenticatedData(authUser);
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.BannerShop?.refresh(); });
     runWhenIdle(() => { if (currentAuthUser?.id === authUser.id) void globalThis.ClubDay?.refresh(); });

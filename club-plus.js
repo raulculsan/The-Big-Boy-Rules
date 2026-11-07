@@ -114,6 +114,15 @@
   if(season.fame>=70)return 'Al Chota le piden fotos por la calle.';
   return 'El Chota sigue a lo suyo.';
  }
+ // The last story is kept per member so the sede can show the letter, the jar
+ // and the day's object at once on the next launch, before the RPC answers.
+ const storyKey=id=>`bb-club-story-v1:${id}`;
+ function saveStory(){const id=config.getUser?.()?.id;if(!id||!state?.story)return;try{localStorage.setItem(storyKey(id),JSON.stringify(state.story));}catch{}}
+ function prime(){
+  const id=config.getUser?.()?.id;if(!id||state)return;
+  let story=null;try{story=JSON.parse(localStorage.getItem(storyKey(id))||'null');}catch{}
+  if(story)document.dispatchEvent(new CustomEvent('club-story',{detail:story}));
+ }
  function syncSede(){
   const season=state?.story?.season;
   document.querySelectorAll('[data-chota-story]').forEach(node=>{node.hidden=!season;if(season)node.textContent=`Temporada ${season.number} · ${mood(season)}`;});
@@ -125,14 +134,14 @@
   if(!config.db||!config.getUser?.())return;
   const run=++epoch,[{data,error},story]=await Promise.all([config.db.rpc('get_club_plus'),config.db.rpc('get_club_story')]);
   if(run!==epoch||error)return;
-  state={...data,...story.data};syncSede();config.onChange?.();
+  state={...data,...story.data};saveStory();syncSede();config.onChange?.();
  }
  async function call(name,args,done=''){
   if(busy)return false;busy=true;notice='';
   const {data,error}=await config.db.rpc(name,args);
   busy=false;
   if(error)notice=['PGRST202','42883'].includes(error.code)?'Esta función se está preparando.':error.message||'No se ha podido guardar.';
-  else{state={...state,...data};notice=done;syncSede();}
+  else{state={...state,...data};notice=done;saveStory();syncSede();}
   config.onChange?.();
   return !error;
  }
@@ -188,9 +197,9 @@
    await call(kind==='photo'?'post_day_photo':'post_karaoke',{p_url:url},kind==='photo'?'Foto subida':'Audio subido');
   }catch(error){busy=false;notice=error?.message||'No se ha podido subir.';config.onChange?.();}
  }
- function reset(){epoch++;state=null;notice='';busy=false;}
+ function reset(){epoch++;state=null;notice='';busy=false;document.dispatchEvent(new CustomEvent('club-story',{detail:null}));}
  function init(options){config=options;document.addEventListener('click',click);document.addEventListener('submit',submit);document.addEventListener('change',upload);}
- globalThis.ClubPlus={init,refresh,reset,view,ready:()=>Boolean(state),clearNotice(){notice='';},statusFor:id=>state?.statuses?.[id]||'',snapshot:()=>state,lastNotice:()=>notice,
+ globalThis.ClubPlus={init,refresh,reset,view,ready:()=>Boolean(state),clearNotice(){notice='';},statusFor:id=>state?.statuses?.[id]||'',snapshot:()=>state,lastNotice:()=>notice,prime,
   // The sede's decision scene votes through the same checked RPCs as Hoy en el club.
   storyVote:(day,option)=>call('vote_club_story',{p_day:day,p_option:option},'Voto guardado'),
   storyTwist:day=>call('use_club_story_twist',{p_day:day},'Giro soltado')};

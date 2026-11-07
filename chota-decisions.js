@@ -39,7 +39,7 @@
   let story = null, dialog = null, showing = 'today', trigger = null, voting = false, notice = '', clock = 0, nudgeTimer = 0, lastVoteLabel = '';
   const art = new Map();
 
-  function snapshot() { return globalThis.ClubPlus?.snapshot?.()?.story || null; }
+  function snapshot() { return globalThis.ClubPlus?.snapshot?.()?.story || story || null; }
   function pending(data = story) { return Boolean(data?.today && data.today.mine == null); }
   const pct = (value, total) => `${(value / total * 100).toFixed(2)}%`;
   const pick = list => list[Math.floor(Math.random() * list.length)];
@@ -396,7 +396,9 @@
     if (dialog.open) return;
     trigger = from;
     showing = 'today'; notice = ''; lastVoteLabel = '';
-    if (!snapshot()) await globalThis.ClubPlus?.refresh?.();
+    // The saved story only paints the sede; votes always need today's real one.
+    if (!globalThis.ClubPlus?.snapshot?.()) await globalThis.ClubPlus?.refresh?.();
+    story = globalThis.ClubPlus?.snapshot?.()?.story || story;
     document.body.classList.add('chota-decision-open');
     dialog.showModal();
     actor.stop();
@@ -459,6 +461,8 @@
     const drawn = await propCanvas(name);
     if (!drawn || !room.isConnected) return;
     holder = room.querySelector('.chota-decision-prop');
+    // It drops in only when the day's object changes, not on every launch.
+    const changed = Boolean(holder?.dataset.prop);
     if (!holder) {
       holder = document.createElement('button');
       holder.type = 'button';
@@ -476,7 +480,7 @@
     context.drawImage(drawn.image, 0, 0);
     // A small object on the stump: at most 6.4% of the room wide and 8% tall.
     holder.style.width = `${Math.min(6.4, 8 * drawn.w / drawn.h).toFixed(2)}%`;
-    holder.classList.remove('is-arriving'); void holder.offsetWidth; holder.classList.add('is-arriving');
+    if (changed) { holder.classList.remove('is-arriving'); void holder.offsetWidth; holder.classList.add('is-arriving'); }
   }
   function syncRoom(data = story) {
     document.querySelectorAll('.clubhouse-room').forEach(room => {
