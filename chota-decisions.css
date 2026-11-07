@@ -18,7 +18,7 @@
 @keyframes chota-letter-open { to { transform: rotate(0) scale(1.35) translateY(-8px); opacity: .2; } }
 /* The day's object is on show on the stump table in the bottom-left corner,
    beside the lamp, clear of the rug, the Chota and the shop's props. */
-.clubhouse-room .chota-decision-prop {
+:is(.clubhouse-room, .chota-viewer-room-scene) .chota-decision-prop {
   position: absolute; z-index: 2; left: 12.6%; bottom: 22.6%; min-width: 24px; padding: 0; border: 0; background: transparent;
   transform: translateX(-50%); transform-origin: 50% 100%; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
@@ -234,7 +234,7 @@ body.chota-decision-open { overflow: hidden; }
 
 /* The Chota's money jar, on the floor behind the bottom-right plant. The zone is
    the room's 820–1000 × 780–960 px; its mask is the plant's leaves, which stay in front. */
-.clubhouse-room .chota-jar-zone {
+:is(.clubhouse-room, .chota-viewer-room-scene) .chota-jar-zone {
   position: absolute; z-index: 2; left: 80.08%; top: 76.17%; width: 17.58%; height: 17.58%; pointer-events: none;
   -webkit-mask: url("icons/clubhouse/props/jar-plant-mask.png") 0 0 / 100% 100% no-repeat; mask: url("icons/clubhouse/props/jar-plant-mask.png") 0 0 / 100% 100% no-repeat;
 }
@@ -243,4 +243,6 @@ body.chota-decision-open { overflow: hidden; }
 .chota-jar::after { content: ""; position: absolute; z-index: -1; left: 4%; right: -6%; bottom: -5%; height: 12%; border-radius: 50%; background: #0006; }
 .chota-jar.is-clinking { animation: chota-jar-clink 520ms cubic-bezier(.3,1.6,.5,1); }
 @keyframes chota-jar-clink { 30% { transform: scale(1.08, .92); } 60% { transform: scale(.96, 1.05) translateY(-4%); } }
-.clubhouse-room.is-sleeping .chota-jar-zone { filter: brightness(.55) saturate(.5); }
+:is(.clubhouse-room, .chota-viewer-room-scene).is-sleeping .chota-jar-zone { filter: brightness(.55) saturate(.5); }
+.chota-viewer-room-scene .chota-decision-prop { pointer-events: none; }
+.chota-viewer-room-scene.is-sleeping .chota-decision-prop { filter: brightness(.55) saturate(.5); }

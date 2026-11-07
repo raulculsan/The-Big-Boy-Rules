@@ -507,6 +507,7 @@
       void placeProp(room, data).then(() => syncSleep(room));
       syncSleep(room);
     });
+    syncViewer(data);
     scheduleRoomTalk();
   }
   // His money jar sits on the floor behind the bottom-right plant and fills with
@@ -560,6 +561,29 @@
     jar.setAttribute('aria-label', `Bote del Chota: ${money} de 100 de dinero`);
     if (before != null && !reduced.matches) { jar.classList.remove('is-clinking'); void jar.offsetWidth; jar.classList.add('is-clinking'); }
   }
+
+  // The enlarged room (the Chota viewer) shows the same jar and day's object,
+  // as decoration only: it is built once and opened as a dialog.
+  function syncViewer(data = story) {
+    document.querySelectorAll('.chota-viewer-room-scene').forEach(scene => {
+      placeJar(scene, data?.season);
+      if (!data?.today) { scene.querySelector('.chota-decision-prop')?.remove(); return; }
+      void placeProp(scene, data).then(() => {
+        const prop = scene.querySelector('.chota-decision-prop');
+        if (!prop) return;
+        prop.tabIndex = -1;
+        prop.setAttribute('aria-hidden', 'true');
+        delete prop.dataset.chotaDecision;
+      });
+    });
+  }
+  new MutationObserver(records => {
+    for (const record of records) for (const node of record.addedNodes) {
+      if (node.id !== 'chotaViewer') continue;
+      new MutationObserver(() => { if (node.open) syncViewer(story || snapshot()); }).observe(node, {attributes: true, attributeFilter: ['open']});
+      if (node.open) syncViewer(story || snapshot());
+    }
+  }).observe(document.body, {childList: true});
 
   // While the Chota sleeps the letter and the object can't be opened.
   const sleepWatched = new WeakSet();
