@@ -1,48 +1,100 @@
-/* Fusion and market dialogs. They reuse the collection-social dialog shell;
-   these rules only add the card grid, counters, prices and the result. */
-.economy-dialog .economy-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
-.economy-dialog .economy-tabs button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--ds-line, #ffffff1f); border-radius: 999px; background: transparent; color: var(--ds-text-2, #ebebf5b3); font: inherit; font-size: 13px; font-weight: 600; -webkit-tap-highlight-color: transparent; }
-.economy-dialog .economy-tabs button[aria-pressed="true"] { border-color: var(--ds-line-strong, #ffffff38); background: var(--ds-raised, #2c2c2e); color: var(--ds-text, #fff); }
-.economy-dialog .economy-tabs b { color: var(--ds-text-3, #a1a1aa); font-size: 11px; font-weight: 700; }
-.economy-recipe { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: baseline; margin: 16px 0 12px; }
-.economy-recipe strong { font-size: 15px; }
-.economy-recipe span { color: var(--ds-text-2, #ebebf5b3); font-size: 12px; font-variant-numeric: tabular-nums; }
-.economy-recipe progress { grid-column: 1 / -1; width: 100%; height: 6px; appearance: none; border: 0; border-radius: 6px; overflow: hidden; background: var(--ds-raised, #2c2c2e); accent-color: #34c759; }
-.economy-recipe progress::-webkit-progress-bar { background: var(--ds-raised, #2c2c2e); }
-.economy-recipe progress::-webkit-progress-value { background: #34c759; }
-.economy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; margin: 12px 0 0; }
-.economy-card { display: grid; gap: 4px; align-content: start; min-width: 0; padding: 10px; border: 1px solid var(--ds-line, #ffffff1f); border-radius: 16px; background: var(--ds-surface, #1c1c1e); }
-.economy-card.is-picked { border-color: var(--ds-line-strong, #ffffff38); background: var(--ds-raised, #2c2c2e); }
-.economy-card-art { display: block; width: 100%; padding: 0; border: 0; background: none; aspect-ratio: 948 / 1660; overflow: hidden; border-radius: 10px; -webkit-tap-highlight-color: transparent; }
-.economy-card-art img { width: 100%; height: 100%; display: block; object-fit: cover; }
-.economy-card strong { margin-top: 4px; font-size: 12px; line-height: 1.25; overflow-wrap: anywhere; }
-.economy-card small { color: var(--ds-text-3, #a1a1aa); font-size: 11px; line-height: 1.3; }
-.economy-card > button:not(.economy-card-art) { min-height: 40px; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--ds-line-strong, #ffffff38); border-radius: 999px; background: transparent; color: var(--ds-text, #fff); font: inherit; font-size: 12px; font-weight: 600; }
-.economy-card > .social-primary { border: 0; }
-.economy-price { margin-top: 2px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.economy-stepper { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; margin-top: 6px; }
-.economy-stepper button { width: 40px; height: 40px; border: 1px solid var(--ds-line-strong, #ffffff38); border-radius: 50%; background: transparent; color: var(--ds-text, #fff); font-size: 20px; line-height: 1; -webkit-tap-highlight-color: transparent; }
-.economy-stepper button:disabled { opacity: .3; }
-.economy-stepper output { text-align: center; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.economy-dock { position: sticky; bottom: 0; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin: 16px -4px 0; padding: 12px 4px 4px; background: linear-gradient(transparent, var(--ds-surface, #1c1c1e) 30%); }
-.economy-dock button { min-height: 46px; padding: 10px 18px; border: 1px solid var(--ds-line-strong, #ffffff38); border-radius: 999px; background: transparent; color: var(--ds-text, #fff); font: inherit; font-size: 14px; font-weight: 600; }
-.economy-dock .social-primary { border: 0; }
-.economy-dock button:disabled { opacity: .4; }
-.economy-result { display: grid; justify-items: center; gap: 8px; padding: 24px 0 8px; text-align: center; animation: economy-reveal .5s cubic-bezier(.2, 1.2, .35, 1) both; }
-.economy-result .social-card-art { width: min(220px, 60vw); padding: 0; border: 0; background: none; }
-.economy-result .social-card-art img { width: 100%; height: auto; border-radius: 14px; box-shadow: 0 18px 40px #0008; }
+/* Fusion and market share the look of Repetidas: a full-screen sheet with a
+   golden glow, a big heading, the Chota with his line, pill chips, a light card
+   grid and a floating bar for the main action. */
+.economy-dialog.economy-dialog {
+  --eco-safe-top: var(--pwa-safe-top, env(safe-area-inset-top, 0px));
+  --eco-safe-bottom: var(--pwa-safe-bottom, env(safe-area-inset-bottom, 0px));
+  position: fixed; inset: 0; box-sizing: border-box; width: 100%; height: 100dvh; max-width: none; max-height: none; margin: 0;
+  padding: 0 0 calc(110px + var(--eco-safe-bottom)); border: 0; border-radius: 0; overflow: auto; overscroll-behavior: contain;
+  isolation: isolate; background: radial-gradient(80% 40% at 50% 12%, #e0a64a33, transparent 72%), #07070a; color: #fff; font-family: var(--ds-font, inherit);
+}
+.economy-dialog.economy-dialog::backdrop { background: #07070a; }
+.economy-dialog > * { box-sizing: border-box; width: calc(100% - 40px); max-width: 1180px; margin-inline: auto; }
+.eco-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: calc(16px + var(--eco-safe-top)) 0 10px; background: linear-gradient(#07070a 70%, #07070a00); }
+.eco-head .eco-kicker { display: none; }
+.eco-kicker { display: block; margin-bottom: 6px; color: #ffffff80; font-size: 10px; font-weight: 600; letter-spacing: .1em; }
+.eco-head h2 { margin: 0; font: 800 28px/1.08 var(--ds-font, inherit); letter-spacing: -.03em; outline: none; }
+.eco-close { flex: none; display: grid; place-items: center; width: 40px; height: 40px; padding: 10px; border: 0; border-radius: 50%; background: #ffffff1c; color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.eco-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.eco-chota { margin-top: 4px; }
+.dup-chota[data-mood="cheer"] .dup-chota-sprite { background-position: 60% 66.667%; }
+.eco-chota p { animation: eco-line .28s cubic-bezier(.2, 1.3, .4, 1); }
+@keyframes eco-line { from { opacity: 0; transform: translateY(4px) scale(.97); } }
+.eco-status { margin: 8px auto 0; color: #ffffffa6; font-size: 13px; font-weight: 600; }
+.eco-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; }
+.eco-recipe { display: grid; gap: 4px; min-width: 0; margin: 0; }
+.eco-recipe strong { font-size: 15px; font-weight: 800; }
+.eco-recipe span { color: #ffffff8c; font-size: 12px; line-height: 1.45; }
+.eco-wallet { margin: 0; color: #ffffffa6; font-size: 13px; font-weight: 600; }
+.eco-wallet strong { color: #fff; }
+.eco-primary { flex: none; min-height: 38px; padding: 0 16px; border: 0; border-radius: 19px; background: #fff; color: #000; font: 800 13px/1 var(--ds-font, inherit); cursor: pointer; }
+.eco-primary:disabled { background: #ffffff1a; color: #ffffff66; cursor: default; }
+.eco-chips { display: flex; gap: 8px; margin-top: 14px; overflow-x: auto; scrollbar-width: none; }
+.eco-chips::-webkit-scrollbar { display: none; }
+.eco-chips button { flex: none; display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 14px; border: 0; border-radius: 19px; background: #ffffff14; color: #ffffffd9; font: 700 14px/1 var(--ds-font, inherit); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.eco-chips button > i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--rarity, #a39d92); }
+.eco-chips button b { color: inherit; opacity: .55; font-size: 12px; }
+.eco-chips button[aria-pressed="true"] { background: #fff; color: #000; }
+.eco-chips button:active, .eco-primary:active, .eco-bar button:active { transform: scale(.96); }
+.eco-section { margin: 22px auto 0; color: #ffffffa6; font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+.eco-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 16px 12px; margin-top: 16px; }
+.eco-card { display: grid; align-content: start; gap: 2px; min-width: 0; }
+.eco-art { position: relative; display: block; width: 100%; padding: 0; border: 2px solid transparent; border-radius: 12px; background: transparent; box-shadow: 0 14px 24px -12px #000, 0 0 30px -12px var(--rarity, transparent); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.eco-art img { display: block; width: 100%; height: auto; aspect-ratio: 948 / 1660; object-fit: cover; border-radius: 10px; }
+.eco-card.is-picked .eco-art { border-color: #fff; }
+.eco-card.is-picked .eco-art img { opacity: .78; }
+.eco-count { position: absolute; right: 6px; bottom: 6px; padding: 2px 7px; border-radius: 999px; background: #000000c7; color: #fff; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.eco-price { display: inline-flex; align-items: center; gap: 4px; }
+.eco-price::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #f2c14e; box-shadow: inset -1px -1px 0 #c99a2e; }
+.eco-check { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; min-width: 24px; height: 24px; border-radius: 12px; background: #fff; color: #000; font-size: 12px; font-weight: 800; }
+.eco-card h4 { margin: 4px 0 0; overflow: hidden; color: #fff; font: 700 13px/1.25 var(--ds-font, inherit); text-overflow: ellipsis; white-space: nowrap; }
+.eco-card p { margin: 0; color: color-mix(in srgb, var(--rarity, #a39d92) 55%, #fff); font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eco-stepper { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; margin-top: 6px; border-radius: 17px; background: #ffffff14; }
+.eco-stepper button { width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: #fff; font-size: 18px; line-height: 1; cursor: pointer; }
+.eco-stepper button:disabled { opacity: .3; cursor: default; }
+.eco-stepper output { text-align: center; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.eco-card > button:not(.eco-art) { min-height: 34px; margin-top: 6px; padding: 0 10px; border: 0; border-radius: 17px; font: 700 12px/1 var(--ds-font, inherit); cursor: pointer; }
+.eco-buy { background: #fff; color: #000; }
+.eco-quiet { background: #ffffff14; color: #ffffffd9; }
+.eco-card > button:disabled { background: #ffffff0f; color: #ffffff55; cursor: default; }
+.eco-empty { grid-column: 1 / -1; margin: 0; padding: 22px; border-radius: 16px; background: #ffffff0d; color: #ffffffa6; font-size: 14px; line-height: 1.5; }
+/* The floating action bar, as in Repetidas. */
+.eco-bar {
+  position: fixed; z-index: 3; inset: auto 16px calc(16px + var(--eco-safe-bottom)); display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: auto; max-width: 560px; margin-inline: auto; padding: 8px 8px 8px 18px; border-radius: 20px; background: #1c1c20f2; color: #fff;
+  box-shadow: 0 18px 40px -10px #000, 0 0 40px -16px #e0a64a; font-size: 14px; font-weight: 600;
+}
+.eco-bar > span { display: grid; gap: 6px; min-width: 0; }
+.eco-bar b { font-variant-numeric: tabular-nums; }
+.eco-progress { display: block; width: 120px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #fff calc(var(--done) * 100%), #ffffff26 0); }
+.eco-bar button { min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px; background: #fff; color: #000; font: 800 14px/1 var(--ds-font, inherit); cursor: pointer; }
+.eco-bar button:disabled { background: #ffffff1a; color: #ffffff66; cursor: default; }
+.eco-bar .eco-bar-quiet { background: transparent; color: #ffffffcc; }
+/* Selling one card. */
+.eco-sell { display: grid; grid-template-columns: 116px 1fr; gap: 16px; align-items: start; margin-top: 18px; }
+.eco-sell .eco-art { cursor: default; }
+.eco-sell h4 { margin: 0; font: 800 17px/1.2 var(--ds-font, inherit); }
+.eco-sell p { margin: 4px 0 0; font-size: 13px; font-weight: 700; }
+.eco-field { display: grid; gap: 6px; margin-top: 14px; color: #ffffffa6; font-size: 12px; }
+.eco-field input { min-height: 46px; padding: 10px 14px; border: 0; border-radius: 14px; background: #ffffff14; color: #fff; font: 700 16px/1 var(--ds-font, inherit); }
+.eco-help { margin: 10px 0 0; color: #ffffff80; font-size: 12px; line-height: 1.45; }
+/* History. */
+.eco-history { margin: 16px auto 0; padding: 0; list-style: none; }
+.eco-history li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 14px 16px; border-radius: 14px; background: #ffffff0d; }
+.eco-history li + li { margin-top: 8px; }
+.eco-history li span { color: #ffffffa6; font-size: 12px; }
+.eco-history li time { grid-row: 1 / span 2; grid-column: 2; align-self: center; color: #ffffff80; font-size: 11px; }
+/* A fusion result. */
+.economy-result { display: grid; justify-items: center; gap: 8px; margin-top: 20px; padding: 18px 0 8px; text-align: center; animation: economy-reveal .5s cubic-bezier(.2, 1.2, .35, 1) both; }
+.economy-result .social-card-art { width: min(220px, 60vw); padding: 0; border: 0; background: none; cursor: pointer; }
+.economy-result .social-card-art img { width: 100%; height: auto; border-radius: 14px; box-shadow: 0 18px 40px #0008, 0 0 50px -10px #e0a64a; }
 .economy-result strong { font-size: 18px; }
-.economy-result small { color: var(--ds-text-2, #ebebf5b3); }
-.economy-sell { display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: start; margin-top: 16px; }
-.economy-sell strong { display: block; font-size: 16px; }
-.economy-sell small { color: var(--ds-text-3, #a1a1aa); }
-.economy-sell .social-field { display: grid; gap: 6px; margin-top: 12px; font-size: 12px; color: var(--ds-text-2, #ebebf5b3); }
-.economy-sell input { min-height: 46px; padding: 10px 12px; border: 1px solid var(--ds-line-strong, #ffffff38); border-radius: 12px; background: var(--ds-raised, #2c2c2e); color: var(--ds-text, #fff); font: inherit; font-size: 16px; }
-.economy-history { margin: 12px 0 0; padding: 0; list-style: none; }
-.economy-history li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--ds-line, #ffffff1f); }
-.economy-history li span { color: var(--ds-text-2, #ebebf5b3); font-size: 12px; }
-.economy-history li time { grid-row: 1 / span 2; grid-column: 2; align-self: center; color: var(--ds-text-3, #a1a1aa); font-size: 11px; }
-.economy-dialog :is(button, input):focus-visible { outline: 2px solid var(--interaction-strong, #ffffff80); outline-offset: 2px; }
+.economy-result small { font-weight: 700; }
+.economy-result .eco-primary { margin-top: 6px; }
+.economy-dialog :is(button, input):focus { outline: none; }
+.economy-dialog :is(button, input):focus-visible { outline: 2px solid #ffffffb3; outline-offset: 2px; }
+.economy-dialog :is(.eco-head, .eco-chota, .eco-chips, .eco-grid, .eco-bar) { -webkit-user-select: none; user-select: none; }
 @keyframes economy-reveal { from { opacity: 0; transform: scale(.85) translateY(12px); } }
-@media (max-width: 420px) { .economy-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .economy-sell { grid-template-columns: 96px 1fr; } }
-@media (prefers-reduced-motion: reduce) { .economy-result { animation: none; } }
+@media (min-width: 700px) { .eco-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px 16px; } }
+@media (max-width: 420px) { .eco-sell { grid-template-columns: 96px 1fr; } .eco-progress { width: 90px; } }
+@media (prefers-reduced-motion: reduce) { .economy-result, .eco-chota p { animation: none; } }
