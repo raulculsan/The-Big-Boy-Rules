@@ -453,51 +453,126 @@
     })());
     return propCache.get(name);
   }
-  async function placeProp(room, data) {
-    const name = data?.today ? scenes.mainProp(scenes.keyFor(data.today)) : '';
-    let holder = room.querySelector('.chota-decision-prop');
-    if (!name) { holder?.remove(); return; }
-    if (holder?.dataset.prop === name) return;
-    const drawn = await propCanvas(name);
-    if (!drawn || !room.isConnected) return;
-    holder = room.querySelector('.chota-decision-prop');
-    // It drops in only when the day's object changes, not on every launch.
-    const changed = Boolean(holder?.dataset.prop);
-    if (!holder) {
-      holder = document.createElement('button');
-      holder.type = 'button';
-      holder.className = 'chota-decision-prop';
-      holder.dataset.chotaDecision = '';
-      holder.innerHTML = '<canvas></canvas>';
-      room.append(holder);
-    }
-    holder.dataset.prop = name;
-    holder.setAttribute('aria-label', `Objeto del día: ${data.today.title}`);
-    const canvas = holder.querySelector('canvas');
+  async function drawProp(canvas, name) {
+    const drawn = name ? await propCanvas(name) : null;
+    if (!drawn || !canvas.isConnected) return;
     canvas.width = drawn.w; canvas.height = drawn.h;
     const context = canvas.getContext('2d');
     context.imageSmoothingEnabled = false;
+    context.clearRect(0, 0, drawn.w, drawn.h);
     context.drawImage(drawn.image, 0, 0);
-    // A small object on the stump: at most 6.4% of the room wide and 8% tall.
-    holder.style.width = `${Math.min(6.4, 8 * drawn.w / drawn.h).toFixed(2)}%`;
-    if (changed) { holder.classList.remove('is-arriving'); void holder.offsetWidth; holder.classList.add('is-arriving'); }
   }
+
+  // The day's dilemma hangs from the ceiling beam in the top-left corner: a small
+  // wooden sign with the day's object and its state, swinging while you have
+  // not voted yet.
+  function placeSign(room, data) {
+    let sign = room.querySelector('.chota-decision-sign');
+    if (!data?.today) { sign?.remove(); return; }
+    if (!sign) {
+      sign = document.createElement('button');
+      sign.type = 'button';
+      sign.className = 'chota-decision-sign';
+      sign.dataset.chotaDecision = '';
+      sign.innerHTML = '<i class="cds-rope cds-rope--left"></i><i class="cds-rope cds-rope--right"></i><span class="cds-board"><small>Dilema del día</small><canvas class="cds-thumb"></canvas></span><b class="cds-status"></b>';
+      room.append(sign);
+    }
+    const key = scenes.keyFor(data.today), name = scenes.mainProp(key), waiting = pending(data);
+    if (sign.dataset.prop !== name) { sign.dataset.prop = name; void drawProp(sign.querySelector('.cds-thumb'), name); }
+    sign.classList.toggle('is-pending', waiting);
+    sign.querySelector('.cds-status').textContent = waiting ? '¡Vota!' : 'Votado';
+    sign.setAttribute('aria-label', `${waiting ? 'Dilema del día pendiente' : 'Dilema del día'}: ${data.today.title}`);
+  }
+
+  // The drawer: the chest on the low cabinet keeps every day's object with what
+  // happened. The club's story has no history endpoint, so each device collects
+  // the days it sees, from today's and yesterday's chapters.
+  const DRAWER_KEY = 'bb-chota-drawer-v1', DRAWER_SEEN = 'bb-chota-drawer-seen-v1';
+  const store = {
+    read(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; } },
+    write(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} },
+  };
+  function remember(data) {
+    const season = data?.season;
+    if (!season?.number || !data.today) return;
+    const list = store.read(DRAWER_KEY, []);
+    const put = entry => {
+      const index = list.findIndex(item => item.id === entry.id);
+      if (index < 0) list.push(entry); else list[index] = {...list[index], ...entry};
+    };
+    put({id: `${season.number}-${season.day}`, season: season.number, day: season.day, title: data.today.title, key: scenes.keyFor(data.today)});
+    const y = data.yesterday;
+    if (y && season.day > 1) put({id: `${season.number}-${season.day - 1}`, season: season.number, day: season.day - 1, title: y.title, key: scenes.keyFor(y), choice: y.choice, result: y.result, good: good(y), deltas: {money: y.money, fame: y.fame, energy: y.energy, trouble: y.trouble}});
+    list.sort((p, q) => q.season - p.season || q.day - p.day);
+    store.write(DRAWER_KEY, list.slice(0, 120));
+  }
+  const kept = () => store.read(DRAWER_KEY, []).filter(item => item.choice);
+  function placeDrawer(room) {
+    let drawer = room.querySelector('.chota-drawer');
+    if (!drawer) {
+      drawer = document.createElement('button');
+      drawer.type = 'button';
+      drawer.className = 'chota-drawer';
+      drawer.dataset.chotaDrawer = '';
+      drawer.innerHTML = '<i class="chota-drawer-glint"></i><b class="chota-drawer-badge"></b>';
+      room.append(drawer);
+    }
+    const count = kept().length, fresh = Math.max(0, count - (Number(store.read(DRAWER_SEEN, 0)) || 0));
+    drawer.classList.toggle('has-new', fresh > 0);
+    drawer.querySelector('.chota-drawer-badge').textContent = fresh ? `+${fresh}` : '';
+    drawer.setAttribute('aria-label', `El cajón del Chota: ${count} ${count === 1 ? 'objeto guardado' : 'objetos guardados'}${fresh ? `, ${fresh} nuevo${fresh === 1 ? '' : 's'}` : ''}`);
+  }
+
+  // How the Chota is doing shows in the room: papers everywhere when he is in
+  // trouble, a blanket on the bean bag when he is worn out, a gold star on the
+  // photo and press flashes at the window when he is famous.
+  const decorArt = {
+    papers: '<svg viewBox="0 0 44 14" shape-rendering="crispEdges"><polygon points="2,9 13,6 15,12 4,14" fill="#efe6d0" stroke="#1a1410" stroke-width=".8"/><polygon points="12,4 24,3 24,10 12,11" fill="#f6f0df" stroke="#1a1410" stroke-width=".8"/><rect x="14" y="5" width="7" height="1" fill="#b9ad94"/><rect x="14" y="7" width="8" height="1" fill="#b9ad94"/><polygon points="26,6 38,8 36,13 25,11" fill="#e2d7bc" stroke="#1a1410" stroke-width=".8"/><polygon points="26,6 31,10 38,8" fill="#d2c4a2" stroke="#1a1410" stroke-width=".6"/><rect x="30" y="9" width="2" height="2" fill="#b8332a"/><polygon points="36,2 43,4 41,8 35,6" fill="#f3ead8" stroke="#1a1410" stroke-width=".8"/><rect x="37" y="4" width="3" height="1" fill="#e5654a"/></svg>',
+    blanket: '<svg viewBox="0 0 32 14" shape-rendering="crispEdges"><polygon points="1,3 30,1 31,9 27,12 3,13 0,8" fill="#3a5f9e" stroke="#1a1410" stroke-width=".8"/><rect x="4" y="3" width="2" height="9" fill="#e8c9a0"/><rect x="12" y="2" width="2" height="10" fill="#e8c9a0"/><rect x="20" y="2" width="2" height="10" fill="#e8c9a0"/><rect x="27" y="2" width="2" height="9" fill="#e8c9a0"/><rect x="3" y="12" width="1" height="2" fill="#e8c9a0"/><rect x="7" y="12" width="1" height="2" fill="#e8c9a0"/><rect x="11" y="12" width="1" height="2" fill="#e8c9a0"/><rect x="15" y="12" width="1" height="2" fill="#e8c9a0"/><rect x="19" y="12" width="1" height="2" fill="#e8c9a0"/><rect x="23" y="12" width="1" height="2" fill="#e8c9a0"/></svg>',
+    star: '<svg viewBox="0 0 12 12" shape-rendering="crispEdges"><polygon points="6,0 7.6,4 12,4.4 8.6,7.2 9.8,11.8 6,9.2 2.2,11.8 3.4,7.2 0,4.4 4.4,4" fill="#f2c14e" stroke="#1a1410" stroke-width=".8"/><rect x="5" y="3" width="1" height="2" fill="#fff3b0"/></svg>',
+  };
+  function placeDecor(room, season) {
+    let layer = room.querySelector(':scope > .chota-statdecor');
+    if (!season) { layer?.remove(); return; }
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'chota-statdecor';
+      layer.setAttribute('aria-hidden', 'true');
+      layer.innerHTML = Object.entries(decorArt).map(([kind, svg]) => `<span class="chota-decor chota-decor--${kind}">${svg}</span>`).join('');
+      room.append(layer);
+    }
+    layer.classList.toggle('show-papers', season.trouble >= 60);
+    layer.classList.toggle('show-blanket', season.energy <= 35);
+    layer.classList.toggle('show-star', season.fame >= 65);
+    room.classList.toggle('chota-is-famous', season.fame >= 65);
+  }
+  let pressTimer = 0;
+  function pressFlash() {
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(pressFlash, 25000 + Math.random() * 30000);
+    if (reduced.matches || document.hidden) return;
+    document.querySelectorAll('.clubhouse-room.chota-is-famous.is-in-view, dialog[open] .chota-viewer-room-scene.chota-is-famous').forEach(room => {
+      const sky = room.querySelector('.clubhouse-sky');
+      if (!sky) return;
+      const flash = document.createElement('i');
+      flash.className = 'chota-press-flash';
+      flash.style.setProperty('--x', `${20 + Math.random() * 60}%`);
+      flash.style.setProperty('--y', `${55 + Math.random() * 35}%`);
+      sky.append(flash);
+      flash.addEventListener('animationend', () => flash.remove(), {once: true});
+    });
+  }
+
   function syncRoom(data = story) {
+    if (data) remember(data);
     document.querySelectorAll('.clubhouse-room').forEach(room => {
-      let button = room.querySelector('.chota-decision-letter');
       placeJar(room, data?.season);
-      if (!data?.today) { button?.remove(); room.querySelectorAll('.chota-decision-mark,.chota-decision-prop,.chota-mood').forEach(node => node.remove()); return; }
-      if (!button) {
-        button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'chota-decision-letter';
-        button.dataset.chotaDecision = '';
-        button.innerHTML = `${letter}<span>Decisión del día</span>`;
-        room.append(button);
-      }
+      placeDecor(room, data?.season);
+      placeDrawer(room);
+      room.querySelectorAll('.chota-decision-letter, .chota-decision-prop').forEach(node => node.remove());
+      placeSign(room, data);
+      if (!data?.today) { room.querySelectorAll('.chota-decision-mark,.chota-mood').forEach(node => node.remove()); return; }
       const waiting = pending(data);
-      button.classList.toggle('is-pending', waiting);
-      button.setAttribute('aria-label', `${waiting ? 'Decisión del día pendiente' : 'Decisión del día'}: ${data.today.title}`);
       watchSleep(room);
       const pet = room.querySelector('.clubhouse-pet');
       let mark = room.querySelector('.chota-decision-mark');
@@ -508,7 +583,6 @@
         mark.textContent = '!';
         pet.append(mark);
       } else if (!waiting) mark?.remove();
-      void placeProp(room, data).then(() => syncSleep(room));
       syncSleep(room);
     });
     syncViewer(data);
@@ -571,14 +645,8 @@
   function syncViewer(data = story) {
     document.querySelectorAll('.chota-viewer-room-scene').forEach(scene => {
       placeJar(scene, data?.season);
-      if (!data?.today) { scene.querySelector('.chota-decision-prop')?.remove(); return; }
-      void placeProp(scene, data).then(() => {
-        const prop = scene.querySelector('.chota-decision-prop');
-        if (!prop) return;
-        prop.tabIndex = -1;
-        prop.setAttribute('aria-hidden', 'true');
-        delete prop.dataset.chotaDecision;
-      });
+      placeDecor(scene, data?.season);
+      scene.querySelector('.chota-decision-prop')?.remove();
     });
   }
   new MutationObserver(records => {
@@ -596,14 +664,12 @@
     const asleep = room.classList.contains('is-sleeping');
     // Hoy en el club repaints its Chota row when he falls asleep or wakes up.
     if (asleep !== lastAsleep) { lastAsleep = asleep; globalThis.ClubDay?.paintEntry?.(); }
-    room.querySelectorAll('.chota-decision-letter, .chota-decision-prop').forEach(button => {
-      button.disabled = asleep;
-      if (asleep) button.setAttribute('aria-label', 'Decisión del día: el Chota está durmiendo');
-    });
-    if (!asleep && story?.today) {
-      const letterButton = room.querySelector('.chota-decision-letter');
-      letterButton?.setAttribute('aria-label', `${pending() ? 'Decisión del día pendiente' : 'Decisión del día'}: ${story.today.title}`);
-      room.querySelector('.chota-decision-prop')?.setAttribute('aria-label', `Objeto del día: ${story.today.title}`);
+    const sign = room.querySelector('.chota-decision-sign');
+    if (sign) {
+      sign.disabled = asleep;
+      sign.classList.toggle('is-asleep', asleep);
+      if (asleep) { sign.setAttribute('aria-label', 'Dilema del día: el Chota está durmiendo'); sign.querySelector('.cds-status').textContent = 'Zzz'; }
+      else if (story?.today) placeSign(room, story);
     }
   }
   function watchSleep(room) {
@@ -646,10 +712,72 @@
       talkTimer = setTimeout(roomTalk, 9000);
       return;
     }
+    // A new object in the drawer gets a mention once.
+    const fresh = kept().length - (Number(store.read(DRAWER_SEEN, 0)) || 0), newest = kept()[0];
+    if (fresh > 0 && newest && !session.get(`bb-chota-drawer-told-${newest.id}`)) {
+      if (globalThis.ChotaRoom?.say(`He guardado «${newest.title}» en el cajón del mueble. Tócalo y lo ves.`, 'nod')) session.set(`bb-chota-drawer-told-${newest.id}`);
+      talkTimer = setTimeout(roomTalk, 9000);
+      return;
+    }
     if (pending() && !session.get(hookKey)) {
-      if (globalThis.ChotaRoom?.say(`Tengo un dilema: «${today.title}». Mira la carta de la alfombra.`, 'nod')) session.set(hookKey);
+      if (globalThis.ChotaRoom?.say(`Tengo un dilema: «${today.title}». Mira el cartel de arriba.`, 'nod')) session.set(hookKey);
     }
   }
+
+  // The drawer's own sheet, in the Repetidas look: the Chota shows what he kept.
+  let drawerDialog = null;
+  function drawerLine(list, today) {
+    const fresh = Math.max(0, list.length - (Number(store.read(DRAWER_SEEN, 0)) || 0));
+    if (fresh && list[0]) return ['cheer', `¡Ha entrado «${list[0].title}» en el cajón! Salió «${list[0].choice}».`];
+    if (!list.length) return ['wave', today ? `Aquí guardaré los objetos de cada día. El primero será el de «${today.title}».` : 'Aquí guardaré los objetos de cada día.'];
+    return ['wave', `${list.length} ${list.length === 1 ? 'objeto guardado' : 'objetos guardados'} y ni uno tirado por la habitación. Soy un tigre ordenado.`];
+  }
+  function deltaChips(deltas = {}) {
+    return [['money', 'Dinero'], ['fame', 'Fama'], ['energy', 'Energía'], ['trouble', 'Líos']].filter(([key]) => Number(deltas[key])).map(([key, label]) => {
+      const value = Number(deltas[key]), better = key === 'trouble' ? value < 0 : value > 0;
+      return `<span class="cdr-delta ${better ? 'is-better' : 'is-worse'}">${label} ${value > 0 ? '+' : ''}${value}</span>`;
+    }).join('');
+  }
+  function renderDrawer() {
+    if (!drawerDialog?.open) return;
+    const list = kept(), today = story?.today, [mood, line] = drawerLine(list, today);
+    const todayCard = today ? `<article class="eco-card cdr-card is-today"><button type="button" class="eco-art cdr-art" data-cdr-today aria-label="Abrir el dilema de hoy: ${esc(today.title)}"><canvas data-cdr-prop="${esc(scenes.mainProp(scenes.keyFor(today)))}"></canvas><span class="eco-count">Hoy</span></button><h4>${esc(today.title)}</h4><p>${pending() ? 'Aún no has votado' : 'Se decide esta noche'}</p></article>` : '';
+    drawerDialog.innerHTML = `<header class="eco-head"><div><h2 id="chotaDrawerTitle" tabindex="-1">El cajón del Chota</h2></div><button type="button" class="eco-close" data-cdr-close aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+      <div class="dup-chota eco-chota" data-mood="${mood}"><i class="dup-chota-sprite" aria-hidden="true"></i><p>${esc(line)}</p></div>
+      <div class="eco-grid cdr-grid">${todayCard}${list.map(item => `<article class="eco-card cdr-card ${item.good ? 'is-good' : 'is-bad'}"><div class="eco-art cdr-art"><canvas data-cdr-prop="${esc(scenes.mainProp(item.key))}"></canvas><span class="eco-count">Día ${item.day}</span></div><h4>${esc(item.title)}</h4><p>Salió «${esc(item.choice)}»</p><p class="cdr-result">${esc(item.result || '')}</p><div class="cdr-deltas">${deltaChips(item.deltas)}</div></article>`).join('')}</div>
+      ${!list.length && !today ? '<p class="eco-empty">El cajón está vacío por ahora.</p>' : ''}`;
+    drawerDialog.querySelectorAll('canvas[data-cdr-prop]').forEach(canvas => void drawProp(canvas, canvas.dataset.cdrProp));
+  }
+  function openDrawer(from) {
+    if (!drawerDialog) {
+      drawerDialog = document.createElement('dialog');
+      drawerDialog.id = 'chotaDrawer';
+      drawerDialog.className = 'economy-dialog chota-drawer-dialog';
+      drawerDialog.setAttribute('aria-labelledby', 'chotaDrawerTitle');
+      document.body.append(drawerDialog);
+      drawerDialog.addEventListener('click', event => {
+        if (event.target.closest('[data-cdr-close]')) drawerDialog.close();
+        if (event.target.closest('[data-cdr-today]')) { drawerDialog.close(); void open(from); }
+      });
+      drawerDialog.addEventListener('close', () => {
+        // What was on screen counts as seen; the chest stops glowing.
+        store.write(DRAWER_SEEN, kept().length);
+        document.querySelectorAll('.clubhouse-room').forEach(placeDrawer);
+        if (drawerDialog._from?.isConnected) drawerDialog._from.focus({preventScroll: true});
+      });
+    }
+    drawerDialog._from = from;
+    drawerDialog.showModal();
+    renderDrawer();
+    drawerDialog.querySelector('h2')?.focus({preventScroll: true});
+  }
+  document.addEventListener('click', event => {
+    const chest = event.target.closest?.('[data-chota-drawer]');
+    if (!chest) return;
+    event.preventDefault();
+    if (!reduced.matches) { chest.classList.remove('is-opening'); void chest.offsetWidth; chest.classList.add('is-opening'); }
+    setTimeout(() => openDrawer(chest), reduced.matches ? 0 : 200);
+  });
 
   document.addEventListener('club-story', event => {
     story = event.detail || null;
@@ -660,14 +788,15 @@
     const opener = event.target.closest?.('[data-chota-decision]');
     if (!opener || opener.disabled || opener.closest('.clubhouse-room.is-sleeping')) return;
     event.preventDefault();
-    // The letter flips open before the scene appears.
-    if (opener.classList.contains('chota-decision-letter') && !reduced.matches) { opener.classList.add('is-opening'); setTimeout(() => { opener.classList.remove('is-opening'); void open(opener); }, 220); }
+    // The sign gives a little tug before the scene appears.
+    if (opener.classList.contains('chota-decision-sign') && !reduced.matches) { opener.classList.add('is-pulled'); setTimeout(() => { opener.classList.remove('is-pulled'); void open(opener); }, 240); }
     else void open(opener);
   });
   // The room is rebuilt when the agenda or decorations change; put everything back.
   const roomRoot = document.getElementById('clubhouseContent');
-  if (roomRoot) new MutationObserver(() => { if (story && !roomRoot.querySelector('.chota-decision-letter')) syncRoom(story); }).observe(roomRoot, {childList: true});
+  if (roomRoot) new MutationObserver(() => { if (story && !roomRoot.querySelector('.chota-decision-sign')) syncRoom(story); }).observe(roomRoot, {childList: true});
+  pressTimer = setTimeout(pressFlash, 12000);
   moodTimer = setTimeout(showMood, 9000);
 
-  globalThis.ChotaDecision = Object.freeze({open, sync: () => syncRoom(snapshot())});
+  globalThis.ChotaDecision = Object.freeze({open, openDrawer, sync: () => syncRoom(snapshot())});
 })();
