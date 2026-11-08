@@ -285,6 +285,7 @@ $(SRCROOT)/App/public/icons/clubhouse/chota-depth-seat-front.svg
 $(SRCROOT)/App/public/icons/clubhouse/chota-room-occlusion.svg
 $(SRCROOT)/App/public/icons/clubhouse/chota-sofa-occlusion.svg
 $(SRCROOT)/App/public/icons/clubhouse/chota-wardrobe-cabinet-v1.webp
+$(SRCROOT)/App/public/icons/clubhouse/chota-wardrobe-integrated-v2.webp
 $(SRCROOT)/App/public/icons/clubhouse/club-room-v1.webp
 $(SRCROOT)/App/public/icons/clubhouse/decor-christmas-v1.svg
 $(SRCROOT)/App/public/icons/clubhouse/decor-halloween-v1.svg
@@ -425,4 +426,3 @@ $(SRCROOT)/App/public/vendor/lottie-LICENSE.md
 $(SRCROOT)/App/public/vendor/lottie-light.min.js
 $(SRCROOT)/App/public/vendor/supabase.js
 $(SRCROOT)/App/public/visual-system.css
-$(SRCROOT)/App/public/icons/clubhouse/chota-wardrobe-integrated-v2.webp
