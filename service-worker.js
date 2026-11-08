@@ -1,5 +1,5 @@
-const CACHE_NAME = "big-boy-rules-v584";
-const APP_SHELL = ["./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
+const CACHE_NAME = "big-boy-rules-v585";
+const APP_SHELL = ["./icons/shop/club-store-v1/manifest.json?v=20261108-club-store-583","./club-store.css?v=20261108-club-store-583","./club-store.js?v=20261108-club-store-583","./icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg","./icons/mascot/chota-v2/wardrobe/idle-body-mask.svg","./chota-wardrobe.css?v=20261108-chota-wardrobe-582","./chota-wardrobe.js?v=20261108-club-store-583","./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
   "./icons/clubhouse/chota-room-occlusion.svg",
@@ -33,7 +33,7 @@ const APP_SHELL = ["./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/masc
   "./notifications.css?v=20261102-theme-532",
   "./club.css?v=20261103-ladders-552",
   "./clubhouse.css?v=20261108-chota-life-v2-581",
-  "./chota-shop.js?v=20261103-economy-555",
+  "./chota-shop.js?v=20261108-club-store-583",
   "./chota-shop.css?v=20261106-darts-wall-566",
   "./coin-missions.js?v=20261103-economy-555",
   "./club-day.js?v=20261107-chota-asleep-574",
@@ -108,7 +108,7 @@ const APP_SHELL = ["./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/masc
   "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261103-admin-557",
   "./admin-console.css?v=20261103-accounts-558",
-  "./app.js?v=20261108-chota-life-v2-581",
+  "./app.js?v=20261108-club-store-583",
   "./spotify-player.js?v=20261103-news-music-554",
   "./spotify-player.css?v=20261103-news-music-554",
   "./album.js?v=20261102-pack-stage-549",
@@ -338,7 +338,7 @@ const mediaPath = request => {
   const url = new URL(request.url || request, scopeUrl);
   if (url.origin !== scopeUrl.origin || !url.pathname.startsWith(scopeUrl.pathname)) return false;
   const path = url.pathname.slice(scopeUrl.pathname.length);
-  return /^icons\/(?:cards|banners|trophies|chat-backgrounds|mascot|clubhouse)\/[^?]+\.(?:png|webp|jpg|jpeg|svg|json)$/i.test(path);
+  return /^icons\/(?:cards|banners|trophies|chat-backgrounds|mascot|clubhouse|shop)\/[^?]+\.(?:png|webp|jpg|jpeg|svg|json)$/i.test(path);
 };
 let shellUrls;
 let mediaWrite = Promise.resolve();

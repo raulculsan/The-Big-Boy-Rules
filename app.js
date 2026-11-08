@@ -3529,6 +3529,7 @@ function chotaLifeTracks(action, direction=1) {
 }
 function createTigretonMotion(pet, reactToPlan, event, date) {
   const character = pet.querySelector(".tigreton-character");
+  globalThis.ChotaWardrobe?.mount(character);
   const shadow = pet.querySelector(".tigreton-shadow");
   const sleepMark = pet.querySelector(".tigreton-sleep-mark");
   const spark = pet.querySelector(".tigreton-spark");
@@ -3565,11 +3566,13 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   function setFrame(frame) {
     character.classList.remove("is-directional", "is-contextual", "is-room-pose");
     character.style.backgroundPosition = `${(frame % 6) * 20}% ${Math.floor(frame / 6) * (100 / 3)}%`;
+    globalThis.ChotaWardrobe?.frame(character,"base",frame);
   }
   function setDirectionalFrame(frame) {
     character.classList.remove("is-idling", "is-speaking", "is-contextual", "is-room-pose");
     character.classList.add("is-directional");
     character.style.backgroundPosition = `${(frame % 5) * 25}% ${Math.floor(frame / 5) * (100 / 3)}%`;
+    globalThis.ChotaWardrobe?.frame(character,"directional",frame);
   }
   function stop() {
     const wakeDone = wakingComplete;
@@ -3709,6 +3712,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
         if (index >= frames.length) { idle(); return; }
         const [column, hold] = frames[index++];
         character.style.backgroundPosition = `${column * (100 / 3)}% ${row * (100 / 3)}%`;
+        globalThis.ChotaWardrobe?.frame(character,"contextual",row*4+column);
         frameTimer = setTimeout(advancePersonal, hold);
       }
       advancePersonal();
@@ -3766,6 +3770,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     character.classList.remove("is-directional", "is-idling", "is-speaking", "is-contextual");
     character.classList.add("is-room-pose");
     character.style.backgroundPosition = `${frame * (100 / 3)}% 0`;
+    globalThis.ChotaWardrobe?.frame(character,"room",frame);
     character.style.transform = "";
   }
   function roomGeometry(room, size) {
@@ -3983,6 +3988,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       const punctuation = /[.,;:!?]$/.test(word) && beat % 3 === 2;
       const mouth = punctuation ? 0 : mouths[beat++ % mouths.length];
       character.style.backgroundPosition = `${mouth * 50}% 0`;
+      globalThis.ChotaWardrobe?.frame(character,"talk",mouth);
       frameTimer = setTimeout(advanceSpeech, punctuation ? 220 : 95 + (beat % 3) * 25);
     }
     advanceSpeech();
@@ -8759,6 +8765,8 @@ globalThis.ChotaShop?.initialize({
   rpc: (name, args) => db.rpc(name, args),
   refreshWallet: () => globalThis.BannerShop?.refresh(),
 });
+
+globalThis.ClubStore?.initialize();
 
 globalThis.ChotaGames?.initialize({
   session: () => backendReady && currentAuthUser?.id,

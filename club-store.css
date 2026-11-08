@@ -1,0 +1,70 @@
+/* The shop is an illustrated place; its catalogs retain the app's dark controls. */
+body.authenticated #bannerShopDialog.club-store{inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#111419;color:#f5f6f7;overflow:hidden;display:none;flex-direction:column}
+body.authenticated #bannerShopDialog.club-store[open]{display:flex}
+#bannerShopDialog.club-store .shop-topbar{position:relative;flex:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:12px;min-height:76px;padding:calc(12px + env(safe-area-inset-top)) 20px 12px;background:#15191f;border-bottom:1px solid #ffffff14}
+#bannerShopDialog.club-store .shop-brand{min-width:0;gap:10px}
+#bannerShopDialog.club-store .shop-brand-copy{min-width:0;flex:1}
+#bannerShopDialog.club-store .shop-brand-mark{width:34px;height:34px;border-radius:8px;border:1px solid #ffffff3b;color:#f5f6f7;background:transparent;font:700 14px/1 system-ui;box-shadow:none}
+#bannerShopDialog.club-store .shop-brand-copy h2{margin:0;font:600 22px/1.2 system-ui;letter-spacing:-.025em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bannerShopDialog.club-store .shop-wallet{color:#c4cbd3;padding:0;background:none;border:0;text-align:right}
+#bannerShopDialog.club-store .shop-wallet>span{font-size:11px;color:#aeb7c2}
+#bannerShopDialog.club-store .shop-wallet strong{display:flex;align-items:center;gap:5px;color:#f5f6f7;font-size:16px;white-space:nowrap}
+#bannerShopDialog.club-store .shop-wallet svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6}
+#bannerShopDialog.club-store #bannerShopBalance{color:inherit;font-size:inherit;font-variant-numeric:tabular-nums}
+#bannerShopDialog.club-store #bannerShopClose{display:grid;place-items:center;width:44px;height:44px;min-width:44px;padding:10px;border:0;border-radius:10px;background:transparent;color:#f5f6f7}
+#bannerShopDialog.club-store #bannerShopClose svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8}
+#bannerShopDialog.club-store #clubStoreBack{min-height:44px;padding:8px 10px;border:0;border-radius:8px;background:#272d35;color:#edf0f3;font:500 14px/1.3 system-ui;white-space:nowrap}
+#bannerShopDialog.club-store #clubStoreBack[hidden]{display:none}
+#bannerShopDialog.club-store[data-store-view="scene"] .shop-topbar{grid-template-columns:minmax(0,1fr) auto auto}
+#bannerShopDialog.club-store .shop-navigation{display:none}
+#bannerShopDialog.club-store .shop-content{flex:1;min-height:0;overflow:auto;padding:24px max(20px,calc((100vw - 1080px)/2)) calc(28px + env(safe-area-inset-bottom));overscroll-behavior:contain;background:#111419}
+#bannerShopDialog.club-store .shop-content[hidden],#bannerShopDialog.club-store [role="tabpanel"][hidden]{display:none}
+#bannerShopDialog.club-store .shop-department-label,#bannerShopDialog.club-store .shop-kicker{display:none}
+#bannerShopDialog.club-store .shop-section-heading,#bannerShopDialog.club-store .chota-shop-intro{margin:0 0 24px;padding:0;border:0}
+#bannerShopDialog.club-store .shop-section-heading h3,#bannerShopDialog.club-store .chota-shop-intro h3{color:#f5f6f7;font:600 25px/1.2 system-ui;letter-spacing:-.025em;margin:0 0 8px}
+#bannerShopDialog.club-store .shop-section-heading p,#bannerShopDialog.club-store .chota-shop-intro p{color:#aeb7c2;font-size:15px;line-height:1.5;margin:0}
+#bannerShopDialog.club-store :is(button,select):focus-visible{outline:2px solid #dce1e7;outline-offset:3px}
+#bannerShopDialog.club-store :is(button,img){-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-drag:none}
+#bannerShopDialog.club-store button{touch-action:manipulation}
+#clubStoreScene{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:#141c28;padding:0 0 calc(16px + env(safe-area-inset-bottom));overscroll-behavior:contain}
+#clubStoreScene[hidden]{display:none}
+.club-store-stage{position:relative;isolation:isolate;flex:none;aspect-ratio:4/5;width:min(100%,calc((100dvh - 144px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * .8));min-width:min(100%,300px);overflow:hidden;contain:paint;background:#1b293e}
+.club-store-layer{position:absolute;display:block;pointer-events:none;object-fit:fill;image-rendering:pixelated;user-select:none;transition:filter 120ms ease-out}
+.club-store-layer.is-pressed{filter:brightness(.88)}
+.club-store-stage.is-ready .club-store-layer{animation:store-layer-arrive 360ms both cubic-bezier(.16,1,.3,1);animation-delay:var(--store-layer-delay,0ms)}
+@keyframes store-layer-arrive{from{opacity:.65;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.club-store-furniture{position:absolute;z-index:20;min-width:44px;min-height:44px;padding:0;border:0;border-radius:6px;background:transparent;color:white;cursor:pointer}
+#bannerShopDialog.club-store .club-store-furniture:active{transform:none;background:transparent;box-shadow:none}
+.club-store-label{position:absolute;transform:translate(-50%,-50%);display:block;width:max-content;max-width:95%;padding:0;border-radius:0;background:transparent;color:#fff8e5;font:650 clamp(11px,1.5vw,13px)/1.2 system-ui;letter-spacing:0;text-shadow:0 1px 1px #24160d;pointer-events:none;box-shadow:none}
+.club-store-instruction{margin:8px 16px 0;color:#c5cedb;font-size:14px;line-height:1.5;text-align:center}
+#clubStoreSceneStatus{min-height:21px;margin:6px 16px 0;color:#c5cedb;font-size:14px;text-align:center}
+#clubStoreSceneStatus:empty{display:none}
+#clubStoreSceneStatus button{min-height:44px;padding:8px 12px;background:#303b49;color:#fff;border:0;border-radius:8px;font:inherit}
+#bannerShopDialog.club-store .chota-clothing-category{margin-top:28px}
+#bannerShopDialog.club-store .chota-clothing-category>h4{margin:0 0 16px;color:#edf0f3;font-size:19px;font-weight:600}
+#bannerShopDialog.club-store .chota-clothing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:28px 24px}
+#bannerShopDialog.club-store .chota-clothing-item{display:block;min-width:0;background:transparent;border:0;border-radius:0}
+.chota-clothing-art{display:grid;place-items:center;aspect-ratio:1.1;background:#1b2027;border-radius:14px;overflow:hidden}
+.chota-clothing-preview{display:block;position:relative;width:100%;height:100%;aspect-ratio:1;image-rendering:pixelated}
+.chota-clothing-base,.chota-clothing-coat{position:absolute;inset:0;background-image:url('icons/mascot/chota-v2/chota-poses.webp');background-size:600% 400%;background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated}
+.chota-clothing-coat{background-image:none}
+.chota-clothing-unavailable{color:#acb6c2;font-size:14px}
+#bannerShopDialog.club-store .chota-clothing-item .chota-shop-copy{padding-top:16px}
+#bannerShopDialog.club-store .chota-clothing-item .chota-shop-copy h4{margin:0 0 8px;color:#f5f6f7;font-size:20px;line-height:1.3}
+#bannerShopDialog.club-store .chota-clothing-item .chota-shop-copy p{min-height:44px;margin:0;color:#aeb7c2;font-size:14px;line-height:1.5}
+#bannerShopDialog.club-store .chota-shop-purchase{margin-top:16px;gap:10px}
+#bannerShopDialog.club-store .chota-shop-purchase strong{color:#f5f6f7;font-size:20px;letter-spacing:0}
+#bannerShopDialog.club-store .chota-shop-purchase button{min-height:44px;border:0;border-radius:9px;background:#e5e9ed;color:#13171b;font:600 14px/1.2 system-ui;padding:10px 16px}
+#bannerShopDialog.club-store .chota-shop-purchase button:disabled{opacity:.45}
+#bannerShopDialog.club-store .chota-shop-item.is-equipped .chota-shop-purchase button{background:#343b44;color:#f1f3f6}
+#clothingShopStatus{color:#c6cdd6;font-size:15px;line-height:1.5;margin:0 0 16px}
+#clothingShopStatus:empty{display:none}
+#clothingShopStatus.is-error{color:#f1ada5}
+@media(max-width:600px){#bannerShopDialog.club-store .shop-topbar{gap:8px;padding-inline:12px}#bannerShopDialog.club-store .shop-brand-mark{display:none}#bannerShopDialog.club-store .shop-brand-copy h2{font-size:19px}#bannerShopDialog.club-store .shop-wallet strong{font-size:13px}#bannerShopDialog.club-store #clubStoreBack{font-size:13px;padding-inline:8px}#bannerShopDialog.club-store .shop-content{padding:20px 16px calc(28px + env(safe-area-inset-bottom))}#bannerShopDialog.club-store .chota-clothing-grid{grid-template-columns:minmax(0,1fr);gap:28px}#bannerShopDialog.club-store .chota-clothing-item{display:grid;grid-template-columns:minmax(120px,42%) minmax(0,1fr);gap:16px}#bannerShopDialog.club-store .chota-clothing-art{aspect-ratio:1;align-self:start}#bannerShopDialog.club-store .chota-clothing-item .chota-shop-copy{padding:0}#bannerShopDialog.club-store .chota-clothing-item .chota-shop-copy p{min-height:0}#bannerShopDialog.club-store .chota-shop-purchase{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.club-store-stage.is-ready .club-store-layer{animation:none}.club-store-layer{transition:none}}
+html[data-reduced-motion="true"] .club-store-stage.is-ready .club-store-layer{animation:none}
+
+#bannerShopDialog.club-store #bannerShopTitle:focus{outline:none}
+#bannerShopDialog.club-store{font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif}
+#bannerShopDialog.club-store .shop-wallet,#bannerShopDialog.club-store .shop-wallet :is(span,strong){font-family:inherit}
+.club-store-stage.has-poster-fallback{background-size:100% 100%;background-repeat:no-repeat}.club-store-stage.has-poster-fallback .club-store-layer{visibility:hidden}

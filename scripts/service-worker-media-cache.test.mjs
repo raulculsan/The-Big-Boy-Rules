@@ -49,3 +49,9 @@ test('concurrent stale artwork requests share one background refresh',async()=>{
   assert.deepEqual(await Promise.all(responses.map(response=>response.text())),Array(12).fill('cached art'));
   assert.equal(h.fetched.length,1,'one download/cache write for simultaneous views of the same stale artwork');
 });
+test('layered shop images cache lazily and return offline-ready without another download',async()=>{
+ const h=setup(),request={method:'GET',url:origin+'icons/shop/club-store-v1/pendant-lamps-v1.png',destination:'image'};
+ assert.equal(h.fetched.length,0);assert.equal(await(await h.dispatch('fetch',request)).text(),'public art');assert.equal(h.fetched.length,1);
+ assert.equal(await(await h.dispatch('fetch',request)).text(),'public art');assert.equal(h.fetched.length,1);
+ const media=await h.caches.open('big-boy-rules-public-media-v1');assert.ok(await media.match(request));
+});

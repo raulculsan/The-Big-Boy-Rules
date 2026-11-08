@@ -2,6 +2,7 @@
 (() => {
   let options, owner = null, state = null, request = null, generation = 0, loading = false, buying = null, equipping = null, failure = '', notice = '', fetchedAt = 0;
   let roomTab = 'ambientes';
+  let stateTrusted=false,outfitSignature='';
   const rooms = new Set();
   const visibleRooms = new Set();
   const motion = () => globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)');
@@ -28,6 +29,7 @@
   const styleSurfaces = '<span class="chota-style-wall"></span><span class="chota-style-floor"></span><span class="chota-style-rug"></span>';
   const stylePreview = (kind,item) => `<div class="chota-style-preview" data-room-style="${remote(item)?.type==='room_style'?'remote':esc(kind)}" style="${globalThis.ShopCatalogMedia?.styleVariables(remote(item)) || ''}"><img src="icons/clubhouse/club-room-v1.webp" width="1024" height="1024" alt="" loading="lazy" decoding="async"><div class="chota-room-style">${styleSurfaces}</div></div>`;
   const art = (kind, inRoom = false, item) => {
+    if(isClothing(item))return inRoom?'':clothingArt(item);
     if (isStyle(item) || roomStyles[kind] || kind === 'original') return stylePreview(kind,item);
     if (remote(item)?.type==='decoration') return globalThis.ShopCatalogMedia.decoration(item,inRoom);
     const asset = inRoom && kind === 'skateboard' ? {src:'icons/clubhouse/props/skateboard-leaning-v3.png',width:1024,height:1536} : propArt[kind];
@@ -45,16 +47,53 @@
     return ['football','robot-vacuum'].includes(item.art_key)?4:item.art_key==='skateboard'?2:null;
   }
   const known = new Set([...Object.keys(propArt),...Object.keys(roomStyles)]);
+  const clothingSlots=Object.freeze({outerwear:'Abrigos',topwear:'Parte de arriba',bottomwear:'Pantalones',footwear:'Calzado',headwear:'Cabeza',accessories:'Accesorios'});
+  const isClothing=item=>item?.item_kind==='clothing' && Object.hasOwn(clothingSlots,item.slot);
+  const clothingDescriptor=item=>globalThis.ChotaWardrobe?.describe?.(item) || null;
+  function clothingArt(item){
+    const descriptor=clothingDescriptor(item);
+    if(!descriptor)return '<span class="chota-clothing-unavailable">Vista pendiente</span>';
+    return `<span class="chota-clothing-preview"><span class="chota-clothing-base"></span><span class="chota-clothing-coat" style="background-image:url('${esc(descriptor.atlases.base)}')"></span></span>`;
+  }
+  function paintWardrobe(){
+    if(!globalThis.ChotaWardrobe?.applyOwned)return;
+    const item=stateTrusted?state?.items.find(item=>item.id===state.outerwear && item.owned && clothingDescriptor(item)):null;
+    const signature=JSON.stringify([owner,stateTrusted,item?.id || null,item?.garment || null]);
+    if(signature===outfitSignature)return;outfitSignature=signature;const token=generation;
+    void globalThis.ChotaWardrobe.applyOwned(item || null).catch(error=>{if(token===generation&&signature===outfitSignature){outfitSignature='';failure=error.message || 'No se pudo cargar la prenda.';void globalThis.ChotaWardrobe.applyOwned(null);render();}});
+  }
+  function renderClothing(){
+    const container=document.getElementById('clothingShopItems');if(!container)return;
+    const status=document.getElementById('clothingShopStatus');if(status){status.textContent=failure || notice || (loading&&!state?'Cargando el armario…':'');status.classList.toggle('is-error',!!failure);}
+    if(!state){container.innerHTML=`<div class="chota-shop-empty"><strong>${failure?'No se pudo abrir el armario':'Cargando la ropa del Chota'}</strong><p>${failure?'Vuelve a intentarlo para ver tus prendas y el saldo real.':'Las prendas se consultan con el club.'}</p><button type="button" data-chota-retry ${loading?'disabled':''}>Actualizar</button></div>`;delete container.dataset.catalogue;return;}
+    const items=state.items.filter(item=>isClothing(item)&&(item.active||item.owned));
+    const signature=JSON.stringify(items.map(item=>[item.id,item.name,item.description,item.garment,item.slot]));
+    if(container.dataset.catalogue!==signature){
+      const groups=new Map();for(const item of items){if(!groups.has(item.slot))groups.set(item.slot,[]);groups.get(item.slot).push(item);}
+      container.innerHTML=`<button type="button" class="shop-text-button" data-chota-clothing-equip="original">Quitar abrigo</button>`+[...groups].map(([slot,rows])=>`<section class="chota-clothing-category" aria-label="${esc(clothingSlots[slot])}"><h4>${esc(clothingSlots[slot])}</h4><div class="chota-clothing-grid">${rows.map(item=>`<article class="chota-shop-item chota-clothing-item" data-clothing-item="${esc(item.id)}"><div class="chota-clothing-art" aria-hidden="true">${clothingArt(item)}</div><div class="chota-shop-copy"><h4>${esc(item.name)}</h4><p>${esc(item.description)}</p><div class="chota-shop-purchase"><span></span><button type="button"></button></div></div></article>`).join('')}</div></section>`).join('');
+      if(!items.length)container.insertAdjacentHTML('beforeend','<p class="chota-shop-empty">Todavía no hay prendas disponibles.</p>');container.dataset.catalogue=signature;
+    }
+    const busy=!!buying||!!equipping||loading||!owner||navigator.onLine===false;
+    const remove=container.querySelector('[data-chota-clothing-equip="original"]');if(remove)remove.disabled=busy||!state.outerwear;
+    for(const article of container.querySelectorAll('[data-clothing-item]')){
+      const item=items.find(item=>item.id===article.dataset.clothingItem),button=article.querySelector('button'),selected=state.outerwear===item.id,compatible=!!clothingDescriptor(item);
+      article.classList.toggle('is-owned',item.owned);article.classList.toggle('is-equipped',selected);
+      const price=article.querySelector('.chota-shop-purchase > span');price.innerHTML=item.owned?(selected?'En uso':'En tu armario'):`<strong>${esc(item.price)}</strong> monedas`;
+      button.toggleAttribute('data-chota-buy',!item.owned);button.toggleAttribute('data-chota-clothing-equip',item.owned);button.setAttribute(item.owned?'data-chota-clothing-equip':'data-chota-buy',item.id);
+      button.disabled=busy||selected||!compatible||(!item.owned&&state.balance<item.price);button.textContent=!compatible?'Necesita otra versión':buying===item.id?'Comprando…':equipping===item.id?'Aplicando…':selected?'En uso':item.owned?'Usar':'Comprar';if(item.owned)button.setAttribute('aria-pressed',String(selected));else button.removeAttribute('aria-pressed');
+    }
+  }
   function validState(data) {
     if (!data || !Array.isArray(data.items)) throw new Error('No se pudo leer la tienda del Chota.');
-    const items=data.items.filter(item => item && typeof item.id === 'string' && (known.has(item.art_key)||remote(item))).map(item => ({presentation:remote(item),id:item.id,name:String(item.name || ''),description:String(item.description || ''),price:Math.max(0,Number(item.price)||0),art_key:item.art_key,owned:item.owned===true,active:item.active!==false}));
+    const items=data.items.filter(item => item && typeof item.id === 'string' && (known.has(item.art_key)||remote(item)||isClothing(item))).map(item => ({presentation:remote(item),id:item.id,name:String(item.name || ''),description:String(item.description || ''),price:Math.max(0,Number(item.price)||0),art_key:item.art_key,owned:item.owned===true,active:item.active!==false,item_kind:item.item_kind,slot:item.slot,wardrobe_key:item.wardrobe_key,rig_version:item.rig_version,garment:item.garment}));
     const equipped=items.find(item=>item.id===data.room_style && item.owned && isStyle(item));
-    return {balance:Number(data.balance) || 0,items,room_style:equipped?.id || null};
+    const clothing=items.find(item=>item.id===data.outerwear&&item.owned&&isClothing(item));
+    return {balance:Number(data.balance) || 0,items,room_style:equipped?.id || null,outerwear:clothing?.id || null};
   }
   function changeOwner() {
     const current = options?.session() || null;
     if (owner === current) return;
-    generation++; owner = current; state = null; request = null; loading = false; buying = null; equipping = null; failure = ''; notice = ''; fetchedAt = 0; roomTab = 'ambientes';
+    generation++; stateTrusted=false;outfitSignature='';owner = current; state = null; request = null; loading = false; buying = null; equipping = null; failure = ''; notice = ''; fetchedAt = 0; roomTab = 'ambientes';
     if (owner) try { const cached = JSON.parse(localStorage.getItem(key(owner)) || 'null'); if (cached?.owner === owner && Array.isArray(cached.items)) state = validState(cached); } catch {}
     paintRooms(); render();
   }
@@ -83,14 +122,14 @@
     if (!surfaces) { surfaces=document.createElement('div');surfaces.className='chota-room-style';surfaces.setAttribute('aria-hidden','true');surfaces.innerHTML=styleSurfaces;room.append(surfaces); }
     let layer = room.querySelector(':scope > .chota-room-props');
     if (!layer) { layer = document.createElement('div'); layer.className = 'chota-room-props'; layer.setAttribute('aria-hidden','true'); room.append(layer); }
-    const owned = (state?.items || []).filter(item => item.owned && !isStyle(item));
+    const owned = (state?.items || []).filter(item => item.owned && !isStyle(item) && !isClothing(item));
     const signature = JSON.stringify(owned.map(item => [item.id,item.art_key,item.presentation]));
     if (layer.dataset.signature === signature) return;
     layer.dataset.signature = signature;
     // Seasonal art belongs to the room's own layer. Purchased decorations never replace it.
     layer.innerHTML = owned.map(item => `<div class="chota-room-prop chota-room-${remote(item)?'remote':esc(item.art_key)}${remote(item)||propArt[item.art_key]?.decoration ? ' chota-room-prop--decoration' : ''}" data-chota-room-item="${esc(item.id)}"${floorDepth(item)!==null?` data-chota-rest-z="${floorDepth(item)}"`: ''} style="${globalThis.ShopCatalogMedia?.placement(remote(item)) || ''};${floorDepth(item)!==null?`z-index:${floorDepth(item)};`: ''}">${art(item.art_key, true,item)}</div>`).join('');
   }
-  function paintRooms() { for (const room of rooms) if (room.isConnected) paintRoom(room); paintMotion(); }
+  function paintRooms() { paintWardrobe();for (const room of rooms) if (room.isConnected) paintRoom(room); paintMotion(); }
   function mountRoom(room) {
     if (!room) return;
     changeOwner();
@@ -118,13 +157,14 @@
     for (const panel of container?.querySelectorAll('[data-chota-panel]') || []) panel.hidden=panel.dataset.chotaPanel!==roomTab;
   }
   function render() {
+    renderClothing();
     const container = document.getElementById('chotaShopItems');
     if (!container) return;
     const status = document.getElementById('chotaShopStatus');
     if (status) { status.textContent = failure || notice || (loading && !state ? 'Cargando su habitación…' : ''); status.classList.toggle('is-error',!!failure); status.classList.toggle('is-notice',!failure && !!notice); }
     const count = document.querySelector('[data-shop-chota-count]');
-    if (count) count.textContent = state ? String(state.items.filter(item => item.owned).length) : '—';
-    const items = (state?.items || []).filter(item => item.active || item.owned);
+    if (count) count.textContent = state ? String(state.items.filter(item => item.owned && !isClothing(item)).length) : '—';
+    const items = (state?.items || []).filter(item => !isClothing(item) && (item.active || item.owned));
     const busy=!!buying || !!equipping || loading || !owner || navigator.onLine===false;
     const card=item=>{
       const theme=isStyle(item) || item.art_key==='original';
@@ -180,7 +220,7 @@
       try {
         const result=validState(await rpc('get_chota_shop_state'));
         if (token!==generation || actor!==options.session()) return;
-        state=result; fetchedAt=Date.now(); remember(); paintRooms(); return state;
+        state=result;stateTrusted=true; fetchedAt=Date.now(); remember(); paintRooms(); return state;
       } catch(error) { if(token===generation) failure=['PGRST202','42883'].includes(error?.code)?'La tienda del Chota está pendiente de activar.':error.message || 'No se pudieron cargar sus objetos.'; }
       finally { if(token===generation) {loading=false;request=null;render();} }
     })();
@@ -194,7 +234,7 @@
     try {
       const data=await rpc('buy_chota_item',{target_item_id:id,expected_price:item.price});
       if(token!==generation || actor!==options.session()) return;
-      state=validState(data); fetchedAt=Date.now();notice=isStyle(item)?`${item.name} aplicado.`:`${item.name} ya está en su habitación.`;remember();paintRooms();
+      state=validState(data);stateTrusted=true; fetchedAt=Date.now();notice=isClothing(item)?`${item.name} puesto.`:isStyle(item)?`${item.name} aplicado.`:`${item.name} ya está en su habitación.`;remember();paintRooms();
       const balance=document.getElementById('bannerShopBalance'); if(balance)balance.textContent=`${state.balance.toLocaleString('es-ES')} monedas`;
       document.dispatchEvent(new CustomEvent('bb:chota-items-updated',{detail:{itemId:id}}));
       void Promise.resolve(options.refreshWallet?.()).catch(()=>{});
@@ -209,21 +249,29 @@
     try {
       const data=await rpc('equip_chota_room_style',{target_item_id:item?.id || null});
       if(token!==generation || actor!==options.session())return;
-      state=validState(data);fetchedAt=Date.now();remember();paintRooms();notice=item?`${item.name} aplicado.`:'La sede vuelve a su estilo original.';
+      state=validState(data);stateTrusted=true;fetchedAt=Date.now();remember();paintRooms();notice=item?`${item.name} aplicado.`:'La sede vuelve a su estilo original.';
     } catch(error) {if(token===generation)failure=error.message || 'No se pudo aplicar el estilo.';}
     finally {if(token===generation){equipping=null;render();}}
   }
+  async function equipClothing(id){
+    changeOwner();const item=id==='original'?null:state?.items.find(item=>item.id===id&&item.owned&&clothingDescriptor(item));
+    if(!owner||!state||(id!=='original'&&!item)||buying||equipping||loading||navigator.onLine===false)return;
+    const actor=owner,token=generation;equipping=id;failure='';notice='';render();
+    try{const data=await rpc('equip_chota_outerwear',{target_item_id:item?.id||null});if(token!==generation||actor!==options.session())return;state=validState(data);stateTrusted=true;fetchedAt=Date.now();remember();paintRooms();notice=item?`${item.name} puesto.`:'El Chota vuelve a su ropa original.';}
+    catch(error){if(token===generation)failure=error.message||'No se pudo cambiar la prenda.';}finally{if(token===generation){equipping=null;render();}}
+  }
   function initialize(config) {
-    options=config;globalThis.ShopCatalogMedia?.configure(config.cacheNamespace);
+    options=config;globalThis.ShopCatalogMedia?.configure(config.cacheNamespace);globalThis.ChotaWardrobe?.configure?.(config.cacheNamespace);
     document.addEventListener('click',event=>{
       const tab=event.target.closest('#chotaShopItems [data-chota-tab]');
       if(tab){selectRoomTab(tab.dataset.chotaTab);return;}
+      const clothingButton=event.target.closest('[data-chota-clothing-equip]');if(clothingButton){void equipClothing(clothingButton.dataset.chotaClothingEquip);return;}
       const styleButton=event.target.closest('[data-chota-equip]');
       if(styleButton){void equip(styleButton.dataset.chotaEquip);return;}
       const button=event.target.closest('[data-chota-buy]');
       if(button){void buy(button.dataset.chotaBuy);return;}
       if(event.target.closest('[data-chota-retry]'))void refresh(true);
-      if(event.target.closest('[data-shop-tab="chota"], [data-banner-shop]'))void refresh(true);
+      if(event.target.closest('[data-shop-tab="chota"], [data-shop-tab="clothing"], [data-banner-shop]'))void refresh(true);
     });
     document.addEventListener('keydown',event=>{
       const tab=event.target.closest('#chotaShopItems [data-chota-tab]');
@@ -238,6 +286,6 @@
     window.addEventListener('offline',render);
     render();
   }
-  function reset() {generation++;owner=null;state=null;request=null;loading=false;buying=null;equipping=null;fetchedAt=0;failure='';notice='';roomTab='ambientes';paintRooms();render();}
-  globalThis.ChotaShop=Object.freeze({initialize,mountRoom,unmountRoom,refresh,reset});
+  function reset() {generation++;stateTrusted=false;outfitSignature='';owner=null;state=null;request=null;loading=false;buying=null;equipping=null;fetchedAt=0;failure='';notice='';roomTab='ambientes';paintRooms();render();}
+  globalThis.ChotaShop=Object.freeze({initialize,mountRoom,unmountRoom,refresh,reset,selectRoomTab});
 })();

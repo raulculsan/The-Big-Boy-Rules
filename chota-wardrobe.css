@@ -1,0 +1,10 @@
+/* Garment-only atlases share the original sprite's cell and pivots. */
+.chota-wardrobe-layer{display:none;position:absolute;inset:0;pointer-events:none;image-rendering:pixelated;background-repeat:no-repeat}
+.has-chota-outfit>.chota-wardrobe-main{display:block}
+.has-chota-outfit.is-idling>.chota-wardrobe-main{display:none}
+.has-chota-outfit.is-idling :is(.chota-wardrobe-idle-body,.chota-wardrobe-idle-head,.chota-wardrobe-idle-paw){display:block;background-image:var(--chota-coat-base);background-size:600% 400%;background-position:0 0}
+.chota-wardrobe-idle-body{-webkit-mask:url('icons/mascot/chota-v2/wardrobe/idle-body-mask.svg') 0 0/100% 100%;mask:url('icons/mascot/chota-v2/wardrobe/idle-body-mask.svg') 0 0/100% 100%}
+.chota-wardrobe-idle-paw{clip-path:polygon(34.375% 64.0625%,50.78125% 64.0625%,50.78125% 82%,34.375% 82%)}
+.has-chota-outfit.is-sleep-breathing>.chota-wardrobe-main{-webkit-mask:url('icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg') 0 0/100% 100%;mask:url('icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg') 0 0/100% 100%}
+.has-chota-outfit.is-sleep-breathing .chota-wardrobe-sleep-chest{display:block;background-image:var(--chota-coat-base);background-size:600% 400%;background-position:80% 100%}
+.has-chota-outfit.is-sleep-breathing .chota-sleep-chest{z-index:2}
