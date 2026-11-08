@@ -154,9 +154,10 @@ html[data-reduced-motion="true"] :is(.clubhouse-sky > i,.clubhouse-sky-stars,.cl
 
 /* Quiet standing pose: separate head and torso preserve the feet's floor contact.
    These layers use cell zero of the existing sheet; commanded poses use the sheet normally. */
-.chota-idle-body, .chota-idle-feet, .chota-idle-head, .chota-idle-tail, .chota-idle-ear { display:none; position:absolute; inset:0; background:url("icons/mascot/chota-v2/chota-idle-core-v1.webp") 0 0 / 100% 100% no-repeat; image-rendering:pixelated; pointer-events:none; }
+.chota-idle-paw, .chota-idle-body, .chota-idle-feet, .chota-idle-head, .chota-idle-tail, .chota-idle-ear { display:none; position:absolute; inset:0; background:url("icons/mascot/chota-v2/chota-idle-core-v2.svg") 0 0 / 100% 100% no-repeat; image-rendering:pixelated; pointer-events:none; }
 .tigreton-character.is-idling { background-image:none; }
-.tigreton-character.is-idling :is(.chota-idle-body,.chota-idle-feet,.chota-idle-head,.chota-idle-tail,.chota-idle-ear) { display:block; }
+.tigreton-character.is-idling :is(.chota-idle-paw,.chota-idle-body,.chota-idle-feet,.chota-idle-head,.chota-idle-tail,.chota-idle-ear) { display:block; }
+.chota-idle-paw { background-image:url("icons/mascot/chota-v2/chota-idle-paw-v2.svg"); transform-origin:40.6% 65%; }
 .chota-idle-tail { background-image:url("icons/mascot/chota-v2/chota-idle-tail-v1.webp"); transform-origin:36% 72%; }
 .chota-idle-ear--left { background-image:url("icons/mascot/chota-v2/chota-idle-ear-left-v1.webp"); transform-origin:45% 25%; }
 .chota-idle-ear--right { background-image:url("icons/mascot/chota-v2/chota-idle-ear-right-v1.webp"); transform-origin:74% 30%; }
