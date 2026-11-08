@@ -80,19 +80,45 @@
     }
     return {sky, layer};
   }
+  const rainStill = () => reduced.matches || document.documentElement.dataset.reducedMotion === 'true';
+  // Shared by the sede and the shop. Deterministic, bounded particles; no per-frame JS.
+  function rainMarkup(kind, wind = 0, config = {}) {
+    if (!['drizzle', 'rain', 'storm'].includes(kind)) return '';
+    const quiet = config.lowMotion ?? low(), still = config.reducedMotion ?? rainStill();
+    const speed = Math.max(0, Math.min(60, Number(wind) || 0)), bucket = Math.round(speed / 3);
+    let seed = 173 + bucket * 131 + kind.length * 19;
+    const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+    const between = (a, b) => a + (b - a) * random(), value = (a, b) => between(a, b).toFixed(3);
+    const counts = still ? [0, 0, 0] : quiet ? (kind === 'drizzle' ? [5, 4, 1] : kind === 'storm' ? [9, 6, 2] : [7, 5, 2]) : kind === 'drizzle' ? [7, 5, 2] : kind === 'storm' ? [22, 16, 8] : [16, 12, 5];
+    const depths = [
+      {name: 'far', duration: [1.05, 1.65], length: [3, 6], alpha: [.12, .22], width: [.45, .7]},
+      {name: 'middle', duration: [.70, 1.08], length: [5, 10], alpha: [.19, .33], width: [.55, .9]},
+      {name: 'near', duration: [.48, .76], length: [9, 15], alpha: [.24, .42], width: [.75, 1.1]},
+    ];
+    const parts = [`<span class="club-rain-field" data-rain-kind="${kind}" data-rain-still="${still}" style="--rain-lean:${(1 + Math.min(36, speed) * .22).toFixed(2)}deg;--rain-drift:${(2 + Math.min(36, speed) * .62).toFixed(2)}px">`];
+    for (let layer = 0; layer < depths.length; layer++) {
+      const depth = depths[layer]; parts.push(`<span class="club-rain-depth" data-depth="${depth.name}">`);
+      for (let i = 0; i < counts[layer]; i++) {
+        const duration = between(...depth.duration) * (kind === 'drizzle' ? 1.3 : 1);
+        parts.push(`<i class="club-rain-streak" style="--rain-x:${value(-12, 112)}%;--rain-duration:${duration.toFixed(3)}s;--rain-phase:${(-random() * duration).toFixed(3)}s;--rain-length:${value(...depth.length)}px;--rain-alpha:${value(...depth.alpha)};--rain-width:${value(...depth.width)}px"></i>`);
+      }
+      parts.push('</span>');
+    }
+    const beads = quiet ? 3 : kind === 'drizzle' ? 4 : kind === 'storm' ? 6 : 5;
+    for (let i = 0; i < beads; i++) parts.push(`<i class="club-rain-bead" style="--glass-x:${value(5, 94)}%;--glass-y:${value(7, 88)}%;--glass-width:${value(1.2, 2.2)}px;--glass-height:${value(1.8, 3.8)}px;--glass-alpha:${value(.16, .30)}"></i>`);
+    const runs = still || quiet ? 0 : kind === 'drizzle' ? 1 : kind === 'storm' ? 3 : 2;
+    for (let i = 0; i < runs; i++) parts.push(`<i class="club-rain-glass-run" style="--glass-x:${value(9, 90)}%;--glass-y:${value(2, 45)}%;--glass-duration:${value(10, 19)}s;--glass-phase:${value(-19, 0)}s;--glass-fall:${value(30, 62)}px;--glass-tail:${value(8, 17)}px"></i>`);
+    parts.push('</span>'); return parts.join('');
+  }
+
   function skyMarkup(kind, isNight, wind) {
     const parts = [];
-    const lean = Math.round(Math.min(30, wind) * .8);
     if (kind === 'clouds' || kind === 'overcast') {
       for (let i = 0; i < (kind === 'overcast' ? 4 : 2); i++) parts.push(`<i class="club-life-cloud" style="--y:${8 + i * 17}%;--d:${70 + i * 23}s;--o:${-i * 29}s;--s:${.8 + (i % 2) * .5}"></i>`);
       if (kind === 'overcast') parts.push('<i class="club-life-tint club-life-tint--grey"></i>');
     }
     if (kind === 'fog') parts.push('<i class="club-life-tint club-life-tint--fog"></i><i class="club-life-mist"></i><i class="club-life-mist club-life-mist--2"></i>');
-    if (kind === 'rain' || kind === 'drizzle' || kind === 'storm') {
-      parts.push(`<i class="club-life-tint club-life-tint--rain"></i><i class="club-life-rain${kind === 'drizzle' ? ' is-light' : ''}" style="--lean:${lean}deg"></i>`);
-      const drops = low() ? 3 : kind === 'drizzle' ? 4 : 8;
-      for (let i = 0; i < drops; i++) parts.push(`<i class="club-life-drop" style="--x:${rand(4, 94).toFixed(1)}%;--y:${rand(2, 40).toFixed(1)}%;--d:${rand(2.4, 5).toFixed(2)}s;--o:${(-rand(0, 5)).toFixed(2)}s"></i>`);
-    }
+    if (kind === 'rain' || kind === 'drizzle' || kind === 'storm') parts.push('<i class="club-life-tint club-life-tint--rain"></i>', rainMarkup(kind, wind));
     if (kind === 'snow') parts.push('<i class="club-life-tint club-life-tint--grey"></i><i class="club-life-snow"></i><i class="club-life-snow club-life-snow--far"></i>');
     // The city behind the glass keeps living at night: windows go on and off.
     if (isNight) for (let i = 0; i < (low() ? 6 : 12); i++) parts.push(`<i class="club-life-window" data-window style="--x:${rand(12, 90).toFixed(1)}%;--y:${rand(77, 95).toFixed(1)}%"></i>`);
@@ -101,8 +127,9 @@
   function sync(room) {
     const {sky, layer} = ensure(room);
     const isNight = night(room), kind = weather.kind;
-    const key = `${kind}|${isNight}|${low()}|${reduced.matches}`;
+    const key = `${kind}|${isNight}|${low()}|${rainStill()}|${Math.round(weather.wind / 3)}`;
     if (sky && sky.dataset.key !== key) { sky.dataset.key = key; sky.innerHTML = skyMarkup(kind, isNight, weather.wind); }
+    if (sky) sky.dataset.rainRunning = String(Boolean(live(room) && !rainStill()));
     room.dataset.weather = kind;
     layer.classList.toggle('is-night', isNight);
     layer.classList.toggle('is-lights-off', asleep(room));
@@ -186,9 +213,11 @@
     syncAll();
     void refreshWeather();
   }, 15000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { syncAll(); void refreshWeather(); } });
+  document.addEventListener('visibilitychange', () => { syncAll(); if (!document.hidden) void refreshWeather(); });
   addEventListener('online', () => void refreshWeather());
 
+  reduced.addEventListener?.('change', () => { syncAll(); globalThis.StoreSky?.sync?.(); });
+  new MutationObserver(() => { syncAll(); globalThis.StoreSky?.sync?.(); }).observe(document.documentElement, {attributes: true, attributeFilter: ['data-reduced-motion', 'data-motion-quality']});
   readCache();
   later(() => { syncAll(); rooms().forEach(room => { watched.add(room); attributeWatch.observe(room, {attributes: true, attributeFilter: ['data-time', 'class']}); }); void refreshWeather(); }, 600);
   later(cityFlicker, 4000);
@@ -197,5 +226,5 @@
   later(phone, 60000);
   later(weatherTalk, 25000);
 
-  globalThis.ClubLife = Object.freeze({weather: () => ({...weather}), sync: syncAll, setWeather(kind) { weather = {...weather, kind}; syncAll(); }});
+  globalThis.ClubLife = Object.freeze({rainMarkup, weather: () => ({...weather}), sync: syncAll, setWeather(kind) { weather = {...weather, kind}; syncAll(); }});
 })();

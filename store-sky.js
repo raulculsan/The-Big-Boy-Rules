@@ -6,7 +6,7 @@
   // The window's glass inside the 1024 × 1280 store illustration.
   const RECT = [551, 159, 99, 244], W = 1024, H = 1280;
   const ASSET = 'icons/shop/club-store-v1/';
-  const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.reducedMotion === 'true';
   const low = () => document.documentElement.dataset.motionQuality === 'low';
   const rand = (min, max) => min + Math.random() * (max - min);
   const dialog = () => document.getElementById('bannerShopDialog');
@@ -35,12 +35,7 @@
       + `<span class="sw-weather" aria-hidden="true">${precipitation(kind, wind)}</span><i class="sw-flash" aria-hidden="true"></i><i class="sw-glare" aria-hidden="true"></i>`;
   }
   function precipitation(kind, wind) {
-    const lean = Math.round(Math.min(30, wind) * 0.8);
-    if (kind === 'rain' || kind === 'storm' || kind === 'drizzle') {
-      let drops = '';
-      for (let i = 0; i < (low() ? 3 : kind === 'drizzle' ? 4 : 7); i++) drops += `<i class="club-life-drop" style="--x:${rand(4, 94).toFixed(1)}%;--y:${rand(2, 60).toFixed(1)}%;--d:${rand(2.4, 5).toFixed(2)}s;--o:${(-rand(0, 5)).toFixed(2)}s"></i>`;
-      return `<i class="club-life-rain${kind === 'drizzle' ? ' is-light' : ''}" style="--lean:${lean}deg"></i>${drops}`;
-    }
+    if (kind === 'rain' || kind === 'storm' || kind === 'drizzle') return globalThis.ClubLife?.rainMarkup?.(kind, wind) || '';
     if (kind === 'snow') return '<i class="club-life-snow"></i><i class="club-life-snow club-life-snow--far"></i>';
     if (kind === 'fog') return '<i class="club-life-tint club-life-tint--fog"></i><i class="club-life-mist"></i><i class="club-life-mist club-life-mist--2"></i>';
     return '';
@@ -48,13 +43,14 @@
 
   function sync() {
     if (!node?.isConnected) return;
+    updateRainMotion();
     const sun = weights(), sky = weather();
     const stage = node.parentElement;
     for (const name of ['dawn', 'day', 'evening', 'night']) stage.style.setProperty(`--sw-${name}`, (sun[name] || 0).toFixed(3));
     node.dataset.time = sun.moment;
     node.dataset.weather = sky.kind;
     if (node.offsetWidth) node.style.setProperty('--sw-w', `${node.offsetWidth}px`);
-    const next = `${sky.kind}|${low()}|${still()}`;
+    const next = `${sky.kind}|${low()}|${still()}|${Math.round((sky.wind || 0) / 3)}`;
     if (next !== key) { key = next; node.innerHTML = markup(sky.kind, sun.moment, sky.wind || 0); }
   }
 
@@ -83,11 +79,17 @@
     const flash = node.querySelector('.sw-flash');
     flash?.classList.remove('is-on'); void flash?.offsetWidth; flash?.classList.add('is-on');
   }
-  const visible = () => node?.isConnected && !document.hidden && dialog()?.open && !document.getElementById('clubStoreScene')?.hidden;
+  let windowInView = true;
+  const visible = () => node?.isConnected && windowInView && !document.hidden && dialog()?.open && !document.getElementById('clubStoreScene')?.hidden;
+  function updateRainMotion() { if (node) node.dataset.rainRunning = String(Boolean(visible() && !still())); }
+  const rainObserver = typeof IntersectionObserver === 'function' ? new IntersectionObserver(entries => { for (const entry of entries) if (entry.target === node) { windowInView = entry.isIntersecting; updateRainMotion(); } }, {threshold: .01}) : null;
+
 
   function mount(stage) {
     if (!stage) return;
+    const previousWindow = node;
     node = stage.querySelector(':scope > .store-window');
+    if (previousWindow && previousWindow !== node) rainObserver?.unobserve(previousWindow);
     if (!node) {
       node = document.createElement('div');
       node.className = 'store-window';
@@ -97,13 +99,18 @@
     }
     let ambient = stage.querySelector(':scope > .store-ambient');
     if (!ambient) { ambient = document.createElement('div'); ambient.className = 'store-ambient'; ambient.setAttribute('aria-hidden', 'true'); stage.append(ambient); }
+    rainObserver?.observe(node);
     key = '';
     sync();
     if (!birdTimer) { birdTimer = setTimeout(birds, 2500); flashTimer = setTimeout(storm, 4000); }
   }
+  const rainHostWatch = new MutationObserver(updateRainMotion);
+  if (dialog()) rainHostWatch.observe(dialog(), {attributes: true, attributeFilter: ['open']});
+  const scene = document.getElementById('clubStoreScene');
+  if (scene) rainHostWatch.observe(scene, {attributes: true, attributeFilter: ['hidden']});
   // The sky moves on slowly while the store is open; weather is re-read each time.
   setInterval(() => { if (visible() && ++tick) sync(); }, 20000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+  document.addEventListener('visibilitychange', () => { updateRainMotion(); if (!document.hidden) sync(); });
   // Reopening the store shows the sky of this moment, not the last visit's.
   document.addEventListener('click', event => { if (event.target.closest?.('[data-banner-shop], #clubStoreBack')) setTimeout(sync, 0); });
   globalThis.StoreSky = Object.freeze({mount, sync, birds});

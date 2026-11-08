@@ -4,7 +4,7 @@
 .club-life-sky > i { position: absolute; display: block; }
 .club-life-tint { inset: 0; }
 .club-life-tint--grey { background: #59606b; opacity: .38; mix-blend-mode: multiply; }
-.club-life-tint--rain { background: linear-gradient(#2b3240, #4a5363); opacity: .45; mix-blend-mode: multiply; }
+.club-life-tint--rain { background: linear-gradient(#2b3240, #4a5363); opacity: .28; mix-blend-mode: multiply; }
 .club-life-tint--fog { background: #c9ced6; opacity: .55; }
 .club-life-mist { left: -60%; top: 40%; width: 220%; height: 30%; background: linear-gradient(90deg, transparent, #e3e7ecaa 30%, #e3e7ec66 60%, transparent); filter: blur(4px); animation: club-life-mist 40s linear infinite; }
 .club-life-mist--2 { top: 66%; height: 24%; animation-duration: 58s; animation-direction: reverse; opacity: .7; }
@@ -16,13 +16,23 @@
 .club-life-cloud::before { left: 16%; width: 38%; }
 .club-life-cloud::after { left: 44%; width: 30%; height: 70%; }
 :is(.clubhouse-room, .chota-viewer-room-scene):is([data-time="night"], [data-time="evening"]) .club-life-cloud { background: #6d7486; opacity: .6; }
-.club-life-rain {
-  inset: -20% -40%; transform: rotate(var(--lean, 0deg));
-  background: repeating-linear-gradient(100deg, transparent 0 9px, #cfe0f2aa 9px 10px, transparent 10px 23px), repeating-linear-gradient(96deg, transparent 0 14px, #cfe0f266 14px 15px, transparent 15px 31px);
-  background-size: 100% 60px, 100% 90px; animation: club-life-rain .55s linear infinite;
-}
-.club-life-rain.is-light { opacity: .45; animation-duration: .9s; }
-.club-life-drop { left: var(--x); top: var(--y); width: 3px; height: 4px; border-radius: 40% 40% 50% 50%; background: #e6f2ffcc; box-shadow: 0 1px 0 #2b324080; animation: club-life-drop var(--d) ease-in var(--o) infinite; }
+/* Shared rain v2: immutable streak shapes, three optical depths and glass droplets.
+   Only transform/opacity animate. The existing pane masks remain the clipping authority. */
+.club-rain-field{position:absolute;inset:0;display:block;overflow:hidden;pointer-events:none;contain:layout paint}
+.club-rain-depth{position:absolute;inset:0;display:block;overflow:hidden}
+.club-rain-streak{position:absolute;display:block;left:var(--rain-x);top:-18px;width:var(--rain-width);height:calc(100% + 36px);opacity:var(--rain-alpha);animation:club-rain-fall var(--rain-duration) linear var(--rain-phase) infinite;animation-play-state:paused}
+.club-rain-streak::before{content:"";position:absolute;left:0;top:0;width:100%;height:var(--rain-length);border-radius:50%;background:linear-gradient(to bottom,transparent,#b2c9d8 76%,#d5e4ee);transform:rotate(calc(-1 * var(--rain-lean)));transform-origin:50% 100%}
+.club-rain-depth[data-depth=far]{opacity:.8}.club-rain-depth[data-depth=near]{opacity:.9}
+.club-rain-bead{position:absolute;display:block;left:var(--glass-x);top:var(--glass-y);width:var(--glass-width);height:var(--glass-height);border-radius:48% 48% 55% 55%;opacity:var(--glass-alpha);background:radial-gradient(ellipse at 30% 23%,#ecf4f9 0 13%,#a3b7c755 22% 50%,#33465588 77%,transparent 90%);box-shadow:inset -.4px -.4px .5px #d2e1eb66}
+.club-rain-glass-run{position:absolute;display:block;left:var(--glass-x);top:var(--glass-y);width:1.7px;height:3.2px;border-radius:45% 45% 55% 55%;background:#c7dbe69c;opacity:0;animation:club-rain-on-glass var(--glass-duration) cubic-bezier(.45,0,.75,.42) var(--glass-phase) infinite;animation-play-state:paused}
+.club-rain-glass-run::before{content:"";position:absolute;bottom:50%;left:.55px;width:.55px;height:var(--glass-tail);background:linear-gradient(transparent,#c1d7e344);border-radius:50%}
+:is(.club-life-sky,.store-window)[data-rain-running=true] :is(.club-rain-streak,.club-rain-glass-run){animation-play-state:running}
+@keyframes club-rain-fall{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--rain-drift),100%,0)}}
+@keyframes club-rain-on-glass{0%,16%{transform:translate3d(0,0,0);opacity:0}22%{opacity:.22}34%{transform:translate3d(.2px,3px,0);opacity:.29}76%{opacity:.27}100%{transform:translate3d(1px,var(--glass-fall),0);opacity:0}}
+:root[data-motion-quality=low] .club-rain-depth[data-depth=far] .club-rain-streak:nth-child(n+8),:root[data-motion-quality=low] .club-rain-depth[data-depth=middle] .club-rain-streak:nth-child(n+6),:root[data-motion-quality=low] .club-rain-depth[data-depth=near] .club-rain-streak:nth-child(n+3),:root[data-motion-quality=low] .club-rain-glass-run{display:none}
+:root[data-reduced-motion=true] :is(.club-rain-streak,.club-rain-glass-run){display:none!important;animation:none!important}
+@media(prefers-reduced-motion:reduce){.club-rain-streak,.club-rain-glass-run{display:none!important}.club-rain-field *{animation:none!important}}
+
 .club-life-snow {
   inset: -30% 0 0; background-image: radial-gradient(#fff 1.2px, transparent 1.6px), radial-gradient(#fff 1px, transparent 1.4px);
   background-size: 22px 22px, 15px 15px; background-position: 0 0, 7px 9px; animation: club-life-snow 7s linear infinite;
@@ -34,8 +44,6 @@
 .club-life-sky.is-lit::after { content: ""; position: absolute; inset: 0; background: #f2f4ff; animation: club-life-lightning .9s steps(1) both; }
 @keyframes club-life-mist { from { translate: 0 0; } to { translate: 45% 0; } }
 @keyframes club-life-drift { from { translate: -110% 0; } to { translate: 260% 0; } }
-@keyframes club-life-rain { to { background-position: -14px 60px, -10px 90px; } }
-@keyframes club-life-drop { 0% { translate: 0 0; opacity: 0; } 10% { opacity: 1; } 70% { translate: 0 18px; } 100% { translate: 0 60px; opacity: 0; } }
 @keyframes club-life-snow { to { background-position: 10px 66px, -6px 45px; } }
 @keyframes club-life-star { 0% { opacity: 0; transform: translateX(-30%) scaleX(.2); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateX(80%) scaleX(1); } }
 @keyframes club-life-lightning { 0% { opacity: .9; } 12% { opacity: 0; } 22% { opacity: .7; } 34%, 100% { opacity: 0; } }
@@ -74,7 +82,6 @@
 
 /* Modest phones keep the weather, without the heavier moving layers. */
 :root[data-motion-quality=low] :is(.club-life-mist, .club-life-snow--far, .club-life-moths) { display: none; }
-:root[data-motion-quality=low] .club-life-rain { animation-duration: 1.1s; }
 @media (prefers-reduced-motion: reduce) {
   .club-life-sky *, .club-life * { animation: none !important; }
   .club-life-moths, .club-life-star, .club-life-sky.is-lit::after { display: none; }
