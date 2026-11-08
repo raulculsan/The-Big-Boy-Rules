@@ -38,6 +38,8 @@ const sources = [
   "club-store.css",
   "store-rooms.js",
   "store-rooms.css",
+  "store-sky.js",
+  "store-sky.css",
   "chota-shop.css",
   "club-live.js",
   "club-social.js",

@@ -4615,6 +4615,8 @@ function clubhouseDaylight(now = new Date()) {
     saturation:.55 + (1-sunHeight) * .8
   }};
 }
+// The store window follows the same sun as the sede.
+globalThis.ClubDaylight = clubhouseDaylight;
 const clubhouseDateFormatter = new Intl.DateTimeFormat("es-ES", {weekday: "long", day: "numeric", month: "long"});
 // Today's date sits in the sede's bottom-left corner; the 30 s room sync rolls it over at midnight.
 function syncClubhouseDate(room, now) {

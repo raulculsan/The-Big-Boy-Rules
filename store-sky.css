@@ -1,0 +1,65 @@
+/* The store window: a live sky behind the painted skyline, masked to the glass. */
+.store-window{position:absolute;z-index:1;overflow:hidden;pointer-events:none;-webkit-mask:url('icons/shop/club-store-v1/window-glass-mask-v1.png') 0 0/100% 100% no-repeat;mask:url('icons/shop/club-store-v1/window-glass-mask-v1.png') 0 0/100% 100% no-repeat}
+.club-store-stage{--sw-dawn:0;--sw-day:0;--sw-evening:1;--sw-night:0}
+.club-store-stage.has-poster-fallback .store-window{display:none}
+.store-window>*,.sw-sky>i,.sw-city>img,.sw-weather>i{position:absolute;inset:0;display:block}
+.sw-sky>i,.sw-city>img,.sw-stars,.sw-sun,.sw-moon{transition:opacity 20s linear}
+/* Four skies cross-fade with the sede's own sun weights. */
+.sw-sky-dawn{opacity:var(--sw-dawn);background:linear-gradient(#41508f 0%,#a674a6 34%,#f29e88 64%,#ffd49a 100%)}
+.sw-sky-day{opacity:var(--sw-day);background:linear-gradient(#4f98de 0%,#78b8ec 45%,#b9def6 100%)}
+.sw-sky-evening{opacity:var(--sw-evening);background:linear-gradient(#4a4196 0%,#8a63b6 30%,#d9789e 60%,#ffa766 100%)}
+.sw-sky-night{opacity:var(--sw-night);background:linear-gradient(#070d24 0%,#121d45 55%,#24305e 100%)}
+.sw-grey{background:linear-gradient(#5b6270,#7b818c);opacity:calc(.62 - var(--sw-night) * .4);mix-blend-mode:multiply}
+.store-window[data-weather="overcast"] .sw-grey{opacity:calc(.5 - var(--sw-night) * .3)}
+.store-window[data-weather="fog"] .sw-grey{opacity:.3}
+.sw-stars{opacity:var(--sw-night);background:radial-gradient(circle 1px at 18% 9%,#fff 60%,transparent),radial-gradient(circle 1px at 62% 5%,#dfe8ff 60%,transparent),radial-gradient(circle .8px at 84% 19%,#fff6dc 60%,transparent),radial-gradient(circle 1px at 38% 27%,#fff 60%,transparent),radial-gradient(circle .8px at 74% 36%,#dfe8ff 60%,transparent),radial-gradient(circle .8px at 10% 41%,#fff 60%,transparent),radial-gradient(circle 1px at 52% 46%,#fff6dc 60%,transparent);animation:sw-twinkle 4s ease-in-out infinite}
+.store-window:not([data-weather="clear"]):not([data-weather="clouds"]) .sw-stars{display:none}
+@keyframes sw-twinkle{50%{filter:brightness(.55)}}
+.sw-sun{inset:auto;left:62%;top:8%;width:30%;aspect-ratio:1;border-radius:50%;opacity:calc(var(--sw-day) * .95 + var(--sw-dawn) * .6);background:radial-gradient(circle,#fffbe6 0 30%,#fff2b866 42%,transparent 70%)}
+.store-window[data-time="dawn"] .sw-sun{top:34%;left:8%;background:radial-gradient(circle,#fff0c8 0 30%,#ffc98a77 42%,transparent 70%)}
+.sw-moon{inset:auto;left:18%;top:7%;width:20%;aspect-ratio:1;border-radius:50%;opacity:var(--sw-night);background:#f4efd8;box-shadow:0 0 6px #f4efd866,inset -3px -2px 0 #cfc8ab}
+.store-window:not([data-weather="clear"]):not([data-weather="clouds"]) :is(.sw-sun,.sw-moon){display:none}
+/* Clouds drift past behind the buildings. */
+.sw-clouds{position:absolute;inset:0;overflow:hidden}
+.sw-cloud{position:absolute;left:0;top:var(--y);width:58%;height:7%;border-radius:4px;background:#f6f3f4;opacity:.92;scale:var(--s);animation:sw-drift var(--d) linear var(--o) infinite}
+.sw-cloud::before,.sw-cloud::after{content:"";position:absolute;bottom:55%;height:110%;border-radius:4px;background:inherit}
+.sw-cloud::before{left:14%;width:40%}
+.sw-cloud::after{left:46%;width:30%;height:80%}
+.sw-cloud.is-big{width:74%;height:9%}
+.store-window[data-time="dawn"] .sw-cloud{background:#ffd3c4}
+.store-window[data-time="evening"] .sw-cloud{background:#f6b2b8;opacity:.85}
+.store-window[data-time="night"] .sw-cloud{background:#3b466e;opacity:.85}
+.store-window:is([data-weather="overcast"],[data-weather="rain"],[data-weather="storm"],[data-weather="drizzle"],[data-weather="snow"]) .sw-cloud{background:#9aa1ad}
+.store-window[data-time="night"]:is([data-weather="overcast"],[data-weather="rain"],[data-weather="storm"],[data-weather="drizzle"],[data-weather="snow"]) .sw-cloud{background:#2d3449}
+@keyframes sw-drift{from{translate:-120% 0}to{translate:230% 0}}
+/* Birds: two-pixel wings that flap while the flock crosses. */
+.sw-birds{position:absolute;inset:0}
+.sw-flock{position:absolute;left:0;top:var(--y);width:0;height:0;animation:sw-fly var(--t) linear forwards}
+.sw-flock.is-left{animation-name:sw-fly-left}
+.sw-flock i{position:absolute;left:var(--bx);top:var(--by);width:6px;height:3px;animation:sw-flap var(--f) steps(2) infinite}
+.sw-flock i::before,.sw-flock i::after{content:"";position:absolute;top:0;width:3px;height:1.5px;background:#1d2236}
+.sw-flock i::before{left:0;transform-origin:100% 100%;rotate:24deg}
+.sw-flock i::after{right:0;transform-origin:0 100%;rotate:-24deg}
+.store-window[data-time="evening"] .sw-flock i::before,.store-window[data-time="evening"] .sw-flock i::after{background:#2a1f3c}
+@keyframes sw-flap{50%{transform:scaleY(-1) translateY(-1px)}}
+@keyframes sw-fly{from{transform:translate(-30px,0)}to{transform:translate(calc(var(--sw-w,60px) + 60px),var(--rise))}}
+@keyframes sw-fly-left{from{transform:translate(calc(var(--sw-w,60px) + 30px),0) scaleX(-1)}to{transform:translate(-60px,var(--rise)) scaleX(-1)}}
+/* The painted skyline, re-lit for each part of the day. */
+.sw-city>img{width:100%;height:100%;image-rendering:pixelated;user-select:none}
+.sw-city-dawn{opacity:var(--sw-dawn);filter:sepia(.25) saturate(1.05) brightness(1.02)}
+.sw-city-day{opacity:var(--sw-day);filter:saturate(.7) brightness(1.18) hue-rotate(-12deg)}
+.sw-city-evening{opacity:var(--sw-evening)}
+.sw-city-night{opacity:var(--sw-night);filter:brightness(.62) saturate(1.15) contrast(1.12)}
+/* Precipitation in front of everything, reusing the sede's weather pieces. */
+.sw-weather{position:absolute;inset:0;overflow:hidden}
+.sw-flash{background:#eef1ff;opacity:0;mix-blend-mode:screen}
+.sw-flash.is-on{animation:club-life-lightning .9s steps(1) both}
+.sw-glare{background:linear-gradient(115deg,transparent 30%,#ffffff1c 42%,transparent 54%)}
+@media(prefers-reduced-motion:reduce){.store-window *{animation:none!important}.sw-birds{display:none}}
+:root[data-motion-quality=low] .store-window :is(.club-life-mist,.club-life-snow--far){display:none}
+/* The store's own light follows the hour: cool at night, warm at sunset. */
+.store-ambient{position:absolute;inset:0;z-index:11;pointer-events:none}
+.store-ambient::before,.store-ambient::after{content:"";position:absolute;inset:0;transition:opacity 20s linear}
+.store-ambient::before{background:radial-gradient(70% 55% at 58% 22%,transparent 0 30%,#1b2550 100%);mix-blend-mode:multiply;opacity:calc(var(--sw-night) * .55)}
+.store-ambient::after{background:radial-gradient(55% 45% at 61% 24%,#ffb27a,transparent 75%);mix-blend-mode:soft-light;opacity:calc(var(--sw-evening) * .45 + var(--sw-dawn) * .3 + var(--sw-day) * .2)}
+.club-store-stage.has-poster-fallback .store-ambient{display:none}
