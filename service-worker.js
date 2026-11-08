@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v587";
+const CACHE_NAME = "big-boy-rules-v588";
 const APP_SHELL = ["./icons/shop/club-store-v1/manifest.json?v=20261108-club-store-583","./club-store.css?v=20261108-store-rooms-586","./club-store.js?v=20261108-store-sky-587","./store-sky.js?v=20261108-store-sky-587","./store-sky.css?v=20261108-store-sky-587","./store-rooms.css?v=20261108-store-rooms-586","./store-rooms.js?v=20261108-store-rooms-586","./icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg","./icons/mascot/chota-v2/wardrobe/idle-body-mask.svg","./chota-wardrobe.css?v=20261108-chota-wardrobe-582","./chota-wardrobe.js?v=20261108-club-store-583","./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -33,12 +33,12 @@ const APP_SHELL = ["./icons/shop/club-store-v1/manifest.json?v=20261108-club-sto
   "./notifications.css?v=20261102-theme-532",
   "./club.css?v=20261103-ladders-552",
   "./clubhouse.css?v=20261108-chota-life-v2-581",
-  "./chota-shop.js?v=20261108-store-rooms-586",
-  "./chota-shop.css?v=20261106-darts-wall-566",
+  "./chota-shop.js?v=20261108-chota-inventory-587",
+  "./chota-shop.css?v=20261108-chota-inventory-587",
   "./coin-missions.js?v=20261103-economy-555",
   "./club-day.js?v=20261107-chota-asleep-574",
   "./club-day.css?v=20261107-chota-asleep-574",
-  "./chota-decisions.css?v=20261108-final-vote-582",
+  "./chota-decisions.css?v=20261108-wardrobe-sign-588",
   "./club-life.css?v=20261107-sede-life-577",
   "./coin-missions.css?v=20261102-theme-519",
   "./club-social.js?v=20261102-club-day-542",

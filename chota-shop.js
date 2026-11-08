@@ -107,6 +107,42 @@
       else{primary.textContent='Así va ahora';primary.disabled=true;}
     }
   }
+  let inventoryDialog=null, inventoryTrigger=null;
+  function closeInventory(){
+    if(inventoryDialog?.open)inventoryDialog.close();
+  }
+  function ensureInventory(){
+    if(inventoryDialog)return inventoryDialog;
+    const dialog=document.createElement('dialog');dialog.id='chotaInventoryDialog';dialog.className='chota-inventory';dialog.setAttribute('aria-labelledby','chotaInventoryTitle');
+    dialog.innerHTML='<header class="chota-inventory-header"><div><h2 id="chotaInventoryTitle">El armario del Chota</h2></div><button type="button" data-chota-inventory-close aria-label="Cerrar armario"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="chota-inventory-body"><p class="chota-inventory-status" role="status" aria-live="polite"></p><div class="chota-inventory-list"></div></div>';
+    dialog.addEventListener('close',()=>{const trigger=inventoryTrigger;inventoryTrigger=null;if(trigger?.isConnected)trigger.focus({preventScroll:true});});
+    document.body.append(dialog);inventoryDialog=dialog;return dialog;
+  }
+  function renderInventory(){
+    if(!inventoryDialog?.open)return;
+    const list=inventoryDialog.querySelector('.chota-inventory-list'),status=inventoryDialog.querySelector('.chota-inventory-status');
+    status.textContent=failure || (loading?'Consultando tu inventario…':notice);
+    status.classList.toggle('is-error',!!failure);
+    if(!stateTrusted){list.innerHTML=`<div class="chota-inventory-empty"><h3>${failure?'No se pudo abrir tu armario':'Preparando tu ropa'}</h3><p>${failure?'Tus prendas siguen guardadas. Vuelve a intentarlo.':'Comprobando las prendas de tu inventario.'}</p>${failure?'<button type="button" data-chota-retry>Reintentar</button>':''}</div>`;delete list.dataset.catalogue;return;}
+    const items=state.items.filter(item=>item.owned&&isClothing(item)&&clothingDescriptor(item));
+    const signature=JSON.stringify(items.map(item=>[item.id,item.name,item.garment]));
+    if(list.dataset.catalogue!==signature){
+      list.innerHTML=items.length?`<div class="chota-inventory-original"><span>Su ropa de siempre</span><button type="button" data-chota-clothing-equip="original">Quitar abrigo</button></div><div class="chota-inventory-grid">${items.map(item=>`<article class="chota-inventory-piece" data-inventory-item="${esc(item.id)}"><div class="chota-inventory-art" aria-hidden="true">${clothingArt(item)}</div><h3>${esc(item.name)}</h3><button type="button" data-chota-clothing-equip="${esc(item.id)}">Ponérselo</button></article>`).join('')}</div>`:'<div class="chota-inventory-empty"><h3>Aún no tiene prendas guardadas</h3><p>La ropa que consigas en la tienda aparecerá aquí.</p></div>';
+      list.dataset.catalogue=signature;
+    }
+    const busy=!!buying||!!equipping||loading||!owner||navigator.onLine===false;
+    for(const button of list.querySelectorAll('[data-chota-clothing-equip]')){
+      const id=button.dataset.chotaClothingEquip,original=id==='original',worn=original?!state.outerwear:state.outerwear===id;
+      button.textContent=equipping===id?(original?'Quitándoselo…':'Poniéndoselo…'):original?(worn?'Sin abrigo':'Quitar abrigo'):worn?'Puesto':'Ponérselo';
+      button.disabled=busy||worn;button.setAttribute('aria-pressed',String(worn));
+    }
+  }
+  function openInventory(trigger){
+    changeOwner();if(!owner)return;
+    inventoryTrigger=trigger || document.activeElement;notice='';failure='';
+    const dialog=ensureInventory();if(!dialog.open)dialog.showModal();renderInventory();
+    void refresh(true);
+  }
   function validState(data) {
     if (!data || !Array.isArray(data.items)) throw new Error('No se pudo leer la tienda del Chota.');
     const items=data.items.filter(item => item && typeof item.id === 'string' && (known.has(item.art_key)||remote(item)||isClothing(item))).map(item => ({presentation:remote(item),id:item.id,name:String(item.name || ''),description:String(item.description || ''),price:Math.max(0,Number(item.price)||0),art_key:item.art_key,owned:item.owned===true,active:item.active!==false,item_kind:item.item_kind,slot:item.slot,wardrobe_key:item.wardrobe_key,rig_version:item.rig_version,garment:item.garment}));
@@ -117,7 +153,7 @@
   function changeOwner() {
     const current = options?.session() || null;
     if (owner === current) return;
-    generation++; stateTrusted=false;outfitSignature='';owner = current; state = null; request = null; loading = false; buying = null; equipping = null; failure = ''; notice = ''; fetchedAt = 0; roomTab = 'ambientes';
+    closeInventory();generation++; stateTrusted=false;outfitSignature='';owner = current; state = null; request = null; loading = false; buying = null; equipping = null; failure = ''; notice = ''; fetchedAt = 0; roomTab = 'ambientes';
     if (owner) try { const cached = JSON.parse(localStorage.getItem(key(owner)) || 'null'); if (cached?.owner === owner && Array.isArray(cached.items)) state = validState(cached); } catch {}
     paintRooms(); render();
   }
@@ -158,6 +194,10 @@
     if (!room) return;
     changeOwner();
     if (!rooms.has(room)) { rooms.add(room); observer?.observe(room); if (!observer) visibleRooms.add(room); }
+    if(!room.querySelector(':scope > .chota-room-wardrobe-layer')){
+      const cabinet=document.createElement('button');cabinet.type='button';cabinet.className='chota-room-wardrobe';cabinet.dataset.chotaInventory='';cabinet.setAttribute('aria-label','Abrir el armario del Chota');
+      cabinet.innerHTML='<img src="icons/clubhouse/chota-wardrobe-cabinet-v1.webp" width="254" height="768" alt="" draggable="false" decoding="async"><span>Armario</span>';const layer=document.createElement('div');layer.className='chota-room-wardrobe-layer';layer.append(cabinet);room.append(layer);
+    }
     paintRoom(room); paintMotion();
     if (owner && !fetchedAt && !request) {
       const actor = owner;
@@ -181,6 +221,7 @@
     for (const panel of container?.querySelectorAll('[data-chota-panel]') || []) panel.hidden=panel.dataset.chotaPanel!==roomTab;
   }
   function render() {
+    renderInventory();
     renderClothing();
     const container = document.getElementById('chotaShopItems');
     if (!container) return;
@@ -287,6 +328,8 @@
   function initialize(config) {
     options=config;globalThis.ShopCatalogMedia?.configure(config.cacheNamespace);globalThis.ChotaWardrobe?.configure?.(config.cacheNamespace);
     document.addEventListener('click',event=>{
+      const cabinet=event.target.closest('[data-chota-inventory]');if(cabinet){openInventory(cabinet);return;}
+      if(event.target.closest('[data-chota-inventory-close]')){closeInventory();return;}
       const tab=event.target.closest('#chotaShopItems [data-chota-tab]');
       if(tab){selectRoomTab(tab.dataset.chotaTab);return;}
       const tryOn=event.target.closest('[data-clothing-try]');if(tryOn){if(fittingId!==tryOn.dataset.clothingTry){fittingId=tryOn.dataset.clothingTry;renderClothing();globalThis.StoreRooms?.showOff(document.querySelector('[data-chota-fitting]'));}return;}
@@ -311,6 +354,6 @@
     window.addEventListener('offline',render);
     render();
   }
-  function reset() {generation++;stateTrusted=false;outfitSignature='';owner=null;state=null;request=null;loading=false;buying=null;equipping=null;fetchedAt=0;failure='';notice='';roomTab='ambientes';paintRooms();render();}
-  globalThis.ChotaShop=Object.freeze({initialize,mountRoom,unmountRoom,refresh,reset,selectRoomTab});
+  function reset() {closeInventory();generation++;stateTrusted=false;outfitSignature='';owner=null;state=null;request=null;loading=false;buying=null;equipping=null;fetchedAt=0;failure='';notice='';roomTab='ambientes';paintRooms();render();}
+  globalThis.ChotaShop=Object.freeze({initialize,mountRoom,unmountRoom,refresh,reset,selectRoomTab,openInventory});
 })();
