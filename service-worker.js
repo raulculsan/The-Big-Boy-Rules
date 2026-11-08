@@ -1,4 +1,4 @@
-const CACHE_NAME = "big-boy-rules-v582";
+const CACHE_NAME = "big-boy-rules-v583";
 const APP_SHELL = ["./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
@@ -101,7 +101,7 @@ const APP_SHELL = ["./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/masc
   "./icons/chat-backgrounds/aurora.svg",
   "./icons/chat-backgrounds/vice-city.svg",
   "./icons/chat-backgrounds/orbita.svg",
-  "./chat-keyboard.js?v=20261102-theme-536",
+  "./chat-keyboard.js?v=20261108-reply-583",
   "./vendor/capacitor.js?v=8.5.0",
   "./chat-motion.js?v=20260902-128",
   "./club-model.js?v=20260902-126",

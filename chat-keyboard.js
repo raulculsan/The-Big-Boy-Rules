@@ -231,14 +231,13 @@ const ChatKeyboard = Object.freeze({
         syncContext();
       }
     }
-    document.querySelectorAll('.message-form').forEach(form => {
-      // Tapping Send/tools must not blur the editor before their actual click action.
-      form.addEventListener('pointerdown', event => {
-        if (event.target.closest('button') && document.activeElement === form.querySelector('input[type="text"]')) {
-          event.preventDefault();
-        }
-      });
-    });
+    // Tapping Send, the tools or the reply's ×, must not blur the editor: that
+    // would close the keyboard mid-reply and strand the composer above it.
+    document.addEventListener('pointerdown', event => {
+      const button = event.target.closest?.('.message-form button, [data-cancel-chat-reply]');
+      const focused = document.activeElement;
+      if (button && focused?.matches?.('.message-form input[type="text"]')) event.preventDefault();
+    }, true);
     document.querySelectorAll('#messages, #privateMessages').forEach(list => {
       let height = list.clientHeight;
       let followEnd = true;
