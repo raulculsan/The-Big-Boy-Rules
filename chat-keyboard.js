@@ -124,18 +124,35 @@ const ChatKeyboard = Object.freeze({
     }
     function settleLift() {
       if (!lift) return;
-      const {list, distance, showing, targets, duration} = lift;
+      const {list, distance, listLift, showing, targets, duration} = lift;
       document.body.classList.toggle('chat-keyboard-settled', showing);
-      if (showing) { clearLift(); if (list) list.scrollTop += distance; return; }
+      if (showing) { clearLift(); if (list) list.scrollTop += listLift; return; }
       clearTimeout(lift.timer);
-      if (list) list.scrollTop -= distance;
+      // A short conversation cannot scroll: its messages stay where they are,
+      // so only the composer travels back down.
+      let moved = 0;
+      if (list) { const top = list.scrollTop; list.scrollTop -= distance; moved = top - list.scrollTop; }
       lift.animations.forEach(animation => animation.cancel());
-      const animations = targets.map(node => node.animate([{transform:`translateY(${-distance}px)`},{transform:'none'}],{duration,easing:LIFT_EASING}));
+      const animations = targets.map(node => {
+        const from = node === list ? moved : distance;
+        return node.animate([{transform:`translateY(${-from}px)`},{transform:'none'}],{duration,easing:LIFT_EASING});
+      });
       lift.animations = animations;
       const current = lift;
       void Promise.all(animations.map(animation => animation.finished.catch(() => {}))).then(() => {
         if (lift === current) { lift = null; releaseWallpaper(); }
       });
+    }
+    // How tall the transcript really is: a list that does not overflow reports
+    // its own height as scrollHeight, so measure down to its last message.
+    function contentHeight(list) {
+      if (list.scrollHeight > list.clientHeight + 1) return list.scrollHeight;
+      const top = list.getBoundingClientRect().top;
+      for (let node = list.lastElementChild; node; node = node.previousElementSibling) {
+        const box = node.getBoundingClientRect();
+        if (box.height) return box.bottom - top + list.scrollTop + (parseFloat(getComputedStyle(list).paddingBottom) || 0);
+      }
+      return 0;
     }
     function startLift({height, duration, showing}) {
       const panel = conversation();
@@ -157,17 +174,25 @@ const ChatKeyboard = Object.freeze({
       const children = [...panel.children].filter(node => node !== wallpaper && node !== cover), first = children.indexOf(list);
       const targets = children.slice(first);
       children.slice(0, first).forEach(node => node.classList.add('chat-lift-fixed'));
-      lift = {targets, list, distance, showing, duration, startHeight: innerHeight, animations: []};
+      lift = {targets, list, distance, listLift: distance, showing, duration, startHeight: innerHeight, animations: []};
       if (showing) {
         // A waiting reply joins the layout now and unfolds from behind the composer.
         const waiting = panel.querySelector('.chat-reply-waiting');
-        const before = list.clientHeight;
+        const before = list.clientHeight, top = list.scrollTop;
         waiting?.classList.remove('chat-reply-waiting');
         const extra = waiting ? before - list.clientHeight : 0;
         if (extra) list.scrollTop += extra;
+        // The scroll can only hold what the transcript really has to give: a
+        // short conversation moves less, or not at all, instead of rising with
+        // the keyboard and dropping back when the WebView settles.
+        const scrolled = list.scrollTop - top;
+        const room = Math.max(0, contentHeight(list) - (list.clientHeight - distance)) - list.scrollTop;
+        const listLift = Math.max(0, Math.min(distance, room));
+        lift.listLift = listLift;
         lift.animations = targets.map(node => {
-          const offset = node === list || node === waiting ? extra : 0;
-          const frames = [{transform:`translateY(${offset}px)`, ...(node === waiting ? {opacity:0} : {})}, {transform:`translateY(${-distance}px)`, ...(node === waiting ? {opacity:1} : {})}];
+          const offset = node === list ? scrolled : node === waiting ? extra : 0;
+          const end = node === list ? listLift : distance;
+          const frames = [{transform:`translateY(${offset}px)`, ...(node === waiting ? {opacity:0} : {})}, {transform:`translateY(${-end}px)`, ...(node === waiting ? {opacity:1} : {})}];
           return node.animate(frames, {duration, easing:LIFT_EASING, fill:'forwards'});
         });
       }
