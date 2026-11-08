@@ -145,3 +145,25 @@ body.authenticated #bannerShopDialog .chota-shop-style.is-equipped .chota-shop-p
 @keyframes chota-decor-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.chota-room-remote .chota-remote-motion{animation:none}}
 html[data-reduced-motion="true"] .chota-room-remote .chota-remote-motion{animation:none}
+/* Built into the left-wall carpentry. The transparent full-room artwork already
+   carries the room perspective and the sofa occlusion; the hit target is separate. */
+.chota-room-wardrobe-layer{position:absolute;inset:0;z-index:2;pointer-events:none}
+.chota-room-wardrobe-art{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;-webkit-user-drag:none;transition:filter 3s ease-in-out}
+.chota-room-wardrobe{position:absolute;pointer-events:auto;left:1.5%;top:32%;width:11%;height:18%;min-width:44px;min-height:44px;padding:0;border:0;border-radius:0;background:transparent;color:#f4ead8;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
+.chota-room-wardrobe:focus{outline:none}.chota-room-wardrobe:focus-visible{outline:2px solid #fff;outline-offset:-2px}
+:is(.clubhouse-room,.chota-viewer-room-scene).is-sleeping .chota-room-wardrobe-art{filter:brightness(.35) saturate(.4)}
+#chotaInventoryDialog{box-sizing:border-box;position:fixed;inset:0;margin:0;width:100%;max-width:none;height:100%;height:100dvh;max-height:none;padding:0;border:0;border-radius:0;background:#111517;color:#f3f1ec;overflow:hidden;font-family:Inter,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent}
+#chotaInventoryDialog[open]{display:flex;flex-direction:column;animation:chota-armario-enter .28s cubic-bezier(.16,1,.3,1)}
+#chotaInventoryDialog::backdrop{background:#080b0dc9}
+.chota-inventory-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;padding:calc(20px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) 20px max(20px,env(safe-area-inset-left,0px));border-bottom:1px solid #303638}
+.chota-inventory-header h2{margin:0;font-size:clamp(22px,5vw,32px);font-weight:600;letter-spacing:-.035em;line-height:1.2}.chota-inventory-header p{margin:7px 0 0;color:#b9bfc1;font-size:14px}
+#chotaInventoryDialog button{min-height:44px;padding:10px 18px;border:0;border-radius:8px;background:#e9eae7;color:#1b2022;font:600 14px/1.25 Inter,sans-serif;cursor:pointer;touch-action:manipulation}
+#chotaInventoryDialog button:focus{outline:none}#chotaInventoryDialog button:focus-visible{outline:2px solid #cfd7db;outline-offset:3px}#chotaInventoryDialog button:active{filter:brightness(.85)}#chotaInventoryDialog button:disabled{opacity:.5;cursor:default}
+#chotaInventoryDialog [data-chota-inventory-close]{display:grid;place-items:center;flex:0 0 44px;width:44px;padding:11px;background:transparent;color:inherit}#chotaInventoryDialog [data-chota-inventory-close] svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.chota-inventory-body{flex:1;overflow:auto;overscroll-behavior:contain;padding:20px 20px calc(32px + env(safe-area-inset-bottom,0px));scrollbar-color:#6a7478 #111517}
+.chota-inventory-list{max-width:940px;margin:0 auto}.chota-inventory-status{max-width:940px;margin:0 auto 14px;min-height:20px;color:#b9bfc1;font-size:14px}.chota-inventory-status.is-error{color:#f0b49f}
+.chota-inventory-original{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #303638}.chota-inventory-original span{font-size:15px;color:#d2d7d9}
+.chota-inventory-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:28px 18px}.chota-inventory-piece{min-width:0}.chota-inventory-art{display:grid;place-items:center;aspect-ratio:1;background:#20272b;border-radius:12px;overflow:hidden}.chota-inventory-piece h3{font-size:15px;font-weight:500;margin:13px 0 10px;line-height:1.35}.chota-inventory-piece button{width:100%}.chota-inventory-piece button[aria-pressed=true]{background:#30393e!important;color:#edf0f1!important;opacity:1!important}
+.chota-inventory-empty{padding:clamp(28px,9vh,90px) 0;max-width:440px;margin:auto}.chota-inventory-empty h3{margin:0 0 12px;font-size:24px;letter-spacing:-.03em;font-weight:500}.chota-inventory-empty p{color:#b9bfc1;font-size:15px;line-height:1.6}.chota-inventory-empty button{margin-top:16px}
+@keyframes chota-armario-enter{from{transform:translateY(24px);opacity:.7}to{transform:translateY(0);opacity:1}}
+@media(prefers-reduced-motion:reduce){#chotaInventoryDialog[open]{animation:none}.chota-room-wardrobe-art{transition:none}}
