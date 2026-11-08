@@ -1,0 +1,145 @@
+/* Inside the club store: department entrances, the fitting room and the checkout sheet. */
+
+/* Shorter top bar inside a department: the back control is a chevron. */
+#bannerShopDialog.club-store #clubStoreBack{display:grid;place-items:center;width:44px;min-width:44px;padding:0;font-size:0;background:#ffffff14}
+#bannerShopDialog.club-store #clubStoreBack[hidden]{display:none}
+#bannerShopDialog.club-store #clubStoreBack::before{content:"";width:11px;height:11px;margin-left:4px;border:solid #f1f3f6;border-width:0 0 2.5px 2.5px;transform:rotate(45deg)}
+
+/* ── Department entrance ───────────────────────────────────────────── */
+.store-hall{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) minmax(112px,42%);align-items:end;gap:8px;min-height:168px;margin:0 0 22px;padding:18px 0 0 18px;overflow:hidden;border-radius:18px;
+  background:radial-gradient(120% 90% at 82% 18%,#f3b45a40,transparent 60%),repeating-linear-gradient(90deg,#00000014 0 2px,transparent 2px 46px),linear-gradient(#2b1d17,#3a261b 62%,#5a3824 62.4%,#4a2d1d);box-shadow:inset 0 0 0 1px #ffffff10}
+.store-hall[hidden]{display:none}
+.store-hall::after{content:"";position:absolute;inset:auto 0 0;height:32%;z-index:-1;background:repeating-linear-gradient(90deg,#00000022 0 1px,transparent 1px 38px),linear-gradient(#6a4229,#4b2e1e)}
+.store-hall-copy{align-self:center;padding-bottom:18px}
+.store-hall h3{margin:0 0 10px;color:#fff6e6;font:700 26px/1.1 system-ui;letter-spacing:-.025em;text-shadow:0 2px 0 #00000055}
+.store-hall-line{position:relative;display:flex;align-items:flex-start;gap:8px;margin:0;color:#f1e3cf;font-size:13.5px;line-height:1.4}
+.store-hall-chota{flex:none;width:34px;height:34px;margin-top:-4px;background:url('icons/mascot/chota-v2/chota-poses.webp') 0 0/600% 400% no-repeat;image-rendering:pixelated}
+.store-hall-art{display:block;width:100%;max-height:176px;object-fit:contain;object-position:bottom right;image-rendering:pixelated;filter:drop-shadow(0 10px 14px #0007);pointer-events:none}
+.store-hall[data-hall="vouchers"] .store-hall-art{max-height:132px}
+/* The entrance names the department, so the section repeats only what it adds. */
+#bannerShopDialog.club-store[data-store-view="banners"] #shopBannersPanel .shop-section-heading h3,
+#bannerShopDialog.club-store[data-store-view="vouchers"] #shopVouchersPanel>.shop-section-heading,
+#bannerShopDialog.club-store[data-store-view="accessories"] #shopChotaPanel>.chota-shop-intro,
+#bannerShopDialog.club-store[data-store-view="clothing"] #shopClothingPanel>.shop-section-heading{display:none}
+#bannerShopDialog.club-store[data-store-view="banners"] #shopBannersPanel .shop-section-heading{margin-bottom:16px}
+
+/* ── The Chota as a model (shared by the fitting room and the checkout) ── */
+.fitting-chota{position:absolute;display:block;aspect-ratio:1;--fx:0%;--fy:0%}
+.fitting-chota>span{position:absolute;inset:0;background-repeat:no-repeat;background-size:600% 400%;background-position:var(--fx) var(--fy);image-rendering:pixelated}
+.fitting-chota-body{background-image:url('icons/mascot/chota-v2/chota-poses.webp')}
+
+/* ── Fitting room ──────────────────────────────────────────────────── */
+.fitting{display:grid;gap:18px}
+.fitting-room{position:relative;isolation:isolate;height:clamp(300px,58vw,380px);overflow:hidden;border-radius:20px;background:#2a2234}
+.fitting-room>span{position:absolute;display:block;pointer-events:none}
+/* Wallpaper with a slim damask stripe and a dado rail. */
+.fitting-wall{inset:0 0 26%;background:repeating-linear-gradient(90deg,#3a2f47 0 22px,#352a42 22px 24px,#3a2f47 24px 46px,#43364f 46px 48px),#3a2f47}
+.fitting-wall::after{content:"";position:absolute;inset:auto 0 0;height:18%;background:linear-gradient(#5b3a2a 0 4px,#4a2f22 4px,#3d271c);box-shadow:0 -1px 0 #ffffff14}
+.fitting-floor{inset:auto 0 0;height:26.5%;background:repeating-linear-gradient(90deg,#00000026 0 2px,transparent 2px 64px),repeating-linear-gradient(0deg,#0000001a 0 1px,transparent 1px 18px),linear-gradient(#8a5a36,#6b4428)}
+/* Tall mirror behind the model, with a moving glint. */
+.fitting-mirror{left:50%;top:8%;width:46%;height:70%;translate:-50% 0;border-radius:999px 999px 14px 14px;border:7px solid #a8784a;box-shadow:inset 0 0 0 3px #6b4628,0 8px 0 #00000033;background:linear-gradient(160deg,#8fa3b8,#56677c 55%,#465566);overflow:hidden}
+.fitting-mirror i{position:absolute;inset:-20% auto -20% -40%;width:28%;background:linear-gradient(90deg,transparent,#ffffff55,transparent);transform:skewX(-18deg);animation:fitting-glint 6s ease-in-out infinite}
+@keyframes fitting-glint{0%,62%{translate:0 0}100%{translate:520% 0}}
+.fitting-spot{left:50%;top:-10%;width:78%;height:96%;translate:-50% 0;background:radial-gradient(50% 60% at 50% 0,#ffe7b866,transparent 72%);mix-blend-mode:screen;z-index:3}
+.fitting-rug{left:50%;bottom:6%;width:62%;height:13%;translate:-50% 0;border-radius:50%;background:radial-gradient(closest-side,#8c2f3e 0 60%,#6d2230 61% 74%,#c99a5b 75% 79%,#6d2230 80%);box-shadow:0 2px 0 #0003}
+.fitting-stool{right:9%;bottom:16%;width:15%;height:14%;border-radius:6px 6px 2px 2px;background:linear-gradient(#b0473f 0 32%,#7a2f2b 32% 40%,transparent 40%),linear-gradient(90deg,transparent 10%,#5a3624 10% 18%,transparent 18% 82%,#5a3624 82% 90%,transparent 90%)}
+/* Velvet curtains on brass rings frame the booth. */
+.fitting-curtain{top:0;bottom:0;width:20%;z-index:4;background:repeating-linear-gradient(90deg,#1f5257 0 9px,#2a6b70 9px 15px,#174246 15px 22px),#1f5257;box-shadow:inset 0 -10px 0 #0e2e31}
+.fitting-curtain::before{content:"";position:absolute;inset:0 0 auto;height:10px;background:repeating-linear-gradient(90deg,#d9a85a 0 8px,transparent 8px 22px),linear-gradient(#5b3a2a,#3d271c)}
+.fitting-curtain--left{left:0;border-radius:0 0 40% 0;clip-path:polygon(0 0,100% 0,70% 100%,0 100%)}
+.fitting-curtain--right{right:0;border-radius:0 0 0 40%;clip-path:polygon(0 0,100% 0,100% 100%,30% 100%)}
+.fitting-shadow{left:50%;bottom:9%;width:28%;height:5%;translate:-50% 0;border-radius:50%;background:#0000005c;z-index:5;filter:blur(1px)}
+.fitting-room .fitting-chota{left:50%;bottom:7%;height:76%;translate:-50% 0;z-index:6;filter:drop-shadow(0 3px 0 #00000040)}
+.fitting-sign{top:16px;left:50%;translate:-50% 0;z-index:7;padding:4px 10px;border-radius:4px;background:#2b1d17;border:1px solid #a8784a;color:#f6e3c4;font:700 11px/1.2 system-ui;letter-spacing:.08em;text-transform:uppercase}
+
+/* The rail: one hanger per coat, scrolls sideways on a phone. */
+.fitting-rail{position:relative;display:flex;gap:10px;margin:0 -2px;padding:18px 2px 6px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;background:linear-gradient(#cfd5dc,#7e8792) 0 9px/100% 4px no-repeat local}
+.fitting-rail::-webkit-scrollbar{display:none}
+.fitting-rail-bar{display:none}
+.fitting-hanger{position:relative;flex:none;display:grid;justify-items:center;gap:6px;width:74px;padding:14px 6px 8px;border:0;border-radius:14px;background:#1d2229;color:#d9dee4;cursor:pointer;scroll-snap-align:start;-webkit-tap-highlight-color:transparent;transition:background .15s ease,transform .15s ease}
+.fitting-hanger:active{transform:scale(.96)}
+.fitting-hanger[aria-checked="true"]{background:#2d343d;box-shadow:inset 0 0 0 2px #f1f3f6}
+.fitting-hanger-hook{position:absolute;top:-10px;left:50%;width:14px;height:16px;translate:-50% 0;border:2px solid #aab2bc;border-bottom:0;border-radius:8px 8px 0 0}
+.fitting-hanger-hook::after{content:"";position:absolute;left:-12px;right:-12px;bottom:-4px;height:3px;border-radius:2px;background:#aab2bc}
+.fitting-hanger-coat{--cell:142px;display:block;width:60px;height:60px;border-radius:8px;background:var(--coat) calc(var(--cell) * -.324) calc(var(--cell) * -.39)/calc(var(--cell) * 6) calc(var(--cell) * 4) no-repeat;image-rendering:pixelated}
+.fitting-hanger.is-bare .fitting-hanger-coat{background:url('icons/mascot/chota-v2/chota-poses.webp') calc(var(--cell) * -.324) calc(var(--cell) * -.39)/calc(var(--cell) * 6) calc(var(--cell) * 4) no-repeat;opacity:.55;filter:grayscale(.6)}
+.fitting-hanger-mark{min-height:16px;font:700 12px/1.3 system-ui;font-variant-numeric:tabular-nums;color:#aeb7c2}
+.fitting-hanger:not(.is-owned):not(.is-bare) .fitting-hanger-mark::before{content:"";display:inline-block;width:9px;height:9px;margin-right:4px;border-radius:50%;background:#f2c14e;box-shadow:inset -1px -1px 0 #c99a2e;vertical-align:-1px}
+.fitting-hanger.is-worn .fitting-hanger-mark{color:#f1f3f6}
+
+.fitting-info{display:grid;gap:6px}
+.fitting-state{color:#aeb7c2;font:600 13px/1.3 system-ui}
+#bannerShopDialog.club-store .fitting-name{margin:0;color:#f5f6f7;font:700 23px/1.2 system-ui;letter-spacing:-.02em}
+.fitting-desc{margin:0;color:#aeb7c2;font-size:14.5px;line-height:1.5}
+.fitting-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.fitting-actions button{flex:1 1 160px;min-height:50px;padding:0 20px;border:0;border-radius:14px;font:700 15px/1 system-ui;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fitting-actions button[hidden]{display:none}
+.fitting-primary{background:#f1f3f6;color:#111419}
+.fitting-primary:disabled{background:#262c34;color:#aeb7c2;cursor:default}
+.fitting-secondary{background:#ffffff14;color:#f1f3f6}
+.fitting-secondary:disabled{opacity:.5}
+.fitting-actions button:not(:disabled):active{transform:scale(.97)}
+.fitting-hanger:focus-visible,.fitting-actions button:focus-visible{outline:2px solid #dce1e7;outline-offset:3px}
+
+/* ── Checkout sheet ────────────────────────────────────────────────── */
+.store-checkout{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.store-checkout[hidden]{display:none}
+.checkout-scrim{position:absolute;inset:0;background:#05070acc;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.checkout-sheet{position:relative;width:min(100%,520px);max-height:calc(100dvh - 24px - env(safe-area-inset-top));overflow:auto;overscroll-behavior:contain;padding:10px 20px calc(20px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#171b21;color:#f5f6f7;box-shadow:0 -20px 50px #0009}
+@media(min-width:600px){.store-checkout{align-items:center}.checkout-sheet{border-radius:24px;padding-bottom:22px}}
+.checkout-grabber{display:block;width:40px;height:5px;margin:0 auto 12px;border-radius:3px;background:#ffffff2e}
+.checkout-preview{position:relative;display:grid;place-items:center;min-height:200px;border-radius:18px;overflow:hidden;background:radial-gradient(70% 80% at 50% 30%,#2f3743,#1b2027)}
+.checkout-model{position:relative;width:100%;height:230px;background:radial-gradient(60% 50% at 50% 40%,#ffe7b833,transparent 70%),linear-gradient(#3a2f47 0 74%,#7a4f30 74%)}
+.checkout-model .fitting-chota{left:50%;bottom:8%;height:84%;translate:-50% 0;z-index:2}
+.checkout-floor{position:absolute;left:50%;bottom:9%;width:36%;height:7%;translate:-50% 0;border-radius:50%;background:#0006}
+.checkout-glow{position:absolute;inset:0;background:radial-gradient(40% 50% at 50% 45%,#fff4,transparent 70%);opacity:0;transition:opacity .4s ease}
+.store-checkout[data-state="done"] .checkout-glow{opacity:1}
+.checkout-art{width:100%;display:grid;place-items:center;padding:16px}
+.checkout-art :is(img,video){display:block;max-width:100%;max-height:240px;height:auto;border-radius:12px;object-fit:contain}
+.checkout-art--banner{padding:12px}
+.checkout-art--banner :is(img,video){width:100%;max-height:none;aspect-ratio:auto}
+.checkout-art--object :is(img){max-height:170px;filter:drop-shadow(0 12px 16px #0008)}
+.checkout-art--style{padding:0}
+.checkout-art--style .chota-style-preview{width:100%}
+.checkout-art--voucher{padding:22px}
+.checkout-art--voucher{display:grid;justify-items:center;gap:4px;color:#f5f6f7;font:800 14px/1.2 system-ui;letter-spacing:.08em}
+.checkout-art--voucher .reward-voucher-mark{font-size:40px}
+.checkout-body{display:grid;gap:6px;padding-top:16px}
+.checkout-kind{color:#aeb7c2;font:700 12px/1.3 system-ui;letter-spacing:.06em;text-transform:uppercase}
+.store-checkout[data-state="done"] .checkout-kind{color:#f5f6f7;font-size:15px;letter-spacing:0;text-transform:none}
+.checkout-body h3{margin:0;font:700 23px/1.2 system-ui;letter-spacing:-.02em}
+.checkout-desc{margin:0;color:#aeb7c2;font-size:14px;line-height:1.5}
+.checkout-receipt{display:grid;gap:0;margin:12px 0 0;padding:4px 14px;border-radius:14px;background:#ffffff0b}
+.checkout-receipt>div{display:flex;justify-content:space-between;align-items:center;min-height:40px;font-size:14.5px}
+.checkout-receipt>div+div{border-top:1px solid #ffffff12}
+.checkout-receipt dt{color:#aeb7c2}
+.checkout-receipt dd{margin:0;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-variant-numeric:tabular-nums}
+.checkout-receipt .is-total dt{color:#f5f6f7;font-weight:600}
+.checkout-receipt .is-total dd{font-size:17px}
+.checkout-receipt .is-short dd{color:#f1ada5;font-size:14.5px}
+.store-checkout[data-state="done"] .checkout-receipt>div:not(:nth-child(2)){display:none}
+.checkout-coin{width:12px;height:12px;border-radius:50%;background:#f2c14e;box-shadow:inset -1.5px -1.5px 0 #c99a2e}
+.checkout-note{min-height:20px;margin:8px 0 0;color:#aeb7c2;font-size:13.5px;line-height:1.45}
+.checkout-note.is-error{color:#f1ada5}
+.store-checkout[data-state="done"] .checkout-note{color:#f5f6f7;font-size:15px}
+.checkout-actions{display:flex;gap:10px;margin-top:12px}
+.checkout-actions button{flex:1;min-height:52px;padding:0 18px;border:0;border-radius:15px;font:700 15px/1 system-ui;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.checkout-actions button[hidden]{display:none}
+.checkout-cancel{flex:0 1 38%;background:#ffffff14;color:#f1f3f6}
+.checkout-confirm{background:#f1f3f6;color:#111419}
+.checkout-confirm:disabled{background:#262c34;color:#8d96a1;cursor:default}
+.store-checkout[data-state="buying"] .checkout-confirm{background:#d3d8de}
+.checkout-actions button:not(:disabled):active{transform:scale(.97)}
+.checkout-actions button:focus{outline:none}
+.checkout-actions button:focus-visible{outline:2px solid #dce1e7;outline-offset:3px}
+.store-checkout :is(.checkout-sheet,.checkout-preview){-webkit-user-select:none;user-select:none}
+/* Purchase celebration. */
+.checkout-burst{position:absolute;left:50%;top:45%;width:0;height:0;pointer-events:none;z-index:3}
+.checkout-burst i{position:absolute;width:7px;height:7px;border-radius:2px;background:#f2c14e;opacity:0;animation:checkout-burst .9s cubic-bezier(.2,.8,.3,1) var(--d) forwards}
+.checkout-burst i:nth-child(3n){background:#ffffff;width:5px;height:5px}
+.checkout-burst i:nth-child(3n+1){background:#8fd1ff}
+@keyframes checkout-burst{0%{opacity:1;transform:translate(0,0) scale(.6)}70%{opacity:1}100%{opacity:0;transform:translate(var(--dx),calc(var(--dy) + 30px)) scale(1) rotate(160deg)}}
+
+@media(max-width:600px){.store-hall{min-height:150px;padding:16px 0 0 16px}.store-hall h3{font-size:23px}.store-hall-art{max-height:150px}}
+@media(prefers-reduced-motion:reduce){.fitting-mirror i,.checkout-burst{display:none}.fitting-hanger,.fitting-actions button,.checkout-actions button{transition:none}}
+:root[data-motion-quality=low] .fitting-mirror i{animation:none;display:none}

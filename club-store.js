@@ -1,6 +1,6 @@
 /* The illustrated shop routes furniture to the existing server-backed departments. */
 (() => {
-  const departments=Object.freeze({banners:{tab:'banners',title:'Banners'},vouchers:{tab:'vouchers',title:'Vales'},accessories:{tab:'chota',title:'Accesorios del Chota'},clothing:{tab:'clothing',title:'Ropa del Chota'}});
+  const departments=Object.freeze({banners:{tab:'banners',title:'Banners'},vouchers:{tab:'vouchers',title:'Vales'},accessories:{tab:'chota',title:'Objetos'},clothing:{tab:'clothing',title:'Ropa'}});
   let manifest=null,pending=null,section=null,routing=false,lastFurniture=null,initialized=false;
   const dialog=()=>document.getElementById('bannerShopDialog');
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

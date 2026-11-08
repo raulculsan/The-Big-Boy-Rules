@@ -36,6 +36,8 @@ const sources = [
   "chota-shop.js",
   "club-store.js",
   "club-store.css",
+  "store-rooms.js",
+  "store-rooms.css",
   "chota-shop.css",
   "club-live.js",
   "club-social.js",

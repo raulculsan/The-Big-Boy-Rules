@@ -1,5 +1,5 @@
-const CACHE_NAME = "big-boy-rules-v585";
-const APP_SHELL = ["./icons/shop/club-store-v1/manifest.json?v=20261108-club-store-583","./club-store.css?v=20261108-club-store-583","./club-store.js?v=20261108-club-store-583","./icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg","./icons/mascot/chota-v2/wardrobe/idle-body-mask.svg","./chota-wardrobe.css?v=20261108-chota-wardrobe-582","./chota-wardrobe.js?v=20261108-club-store-583","./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
+const CACHE_NAME = "big-boy-rules-v586";
+const APP_SHELL = ["./icons/shop/club-store-v1/manifest.json?v=20261108-club-store-583","./club-store.css?v=20261108-store-rooms-586","./club-store.js?v=20261108-store-rooms-586","./store-rooms.css?v=20261108-store-rooms-586","./store-rooms.js?v=20261108-store-rooms-586","./icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg","./icons/mascot/chota-v2/wardrobe/idle-body-mask.svg","./chota-wardrobe.css?v=20261108-chota-wardrobe-582","./chota-wardrobe.js?v=20261108-club-store-583","./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
   "./icons/clubhouse/chota-room-occlusion.svg",
@@ -33,7 +33,7 @@ const APP_SHELL = ["./icons/shop/club-store-v1/manifest.json?v=20261108-club-sto
   "./notifications.css?v=20261102-theme-532",
   "./club.css?v=20261103-ladders-552",
   "./clubhouse.css?v=20261108-chota-life-v2-581",
-  "./chota-shop.js?v=20261108-club-store-583",
+  "./chota-shop.js?v=20261108-store-rooms-586",
   "./chota-shop.css?v=20261106-darts-wall-566",
   "./coin-missions.js?v=20261103-economy-555",
   "./club-day.js?v=20261107-chota-asleep-574",
