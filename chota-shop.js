@@ -78,6 +78,20 @@
     bottomwear:{tab:'Pantalones',none:'Sus vaqueros',noneDesc:'Los vaqueros de siempre, con sus zapatillas.',worn:'Los lleva puestos',stored:'En su armario',put:'Ponérselos',putting:'Poniéndoselos…',remove:'Quitárselos',removing:'Quitándoselos…',bare:'Volver a sus vaqueros',trying:'Probando sus vaqueros',now:'Así va ahora',thumb:'--hc:154px;--hx:-.316;--hy:-.608'},
   });
   const removing=slot=>slot==='outerwear'?'original':'original-'+slot;
+  // Trousers live folded on a three-shelf cabinet (Codex's display): nine stacks of up to
+  // four models, id order, bottom to top. Positions follow its 1024 × 1024 layout.
+  const SHELF={src:'icons/shop/pants-display-v1/cabinet-v1.webp',garment:200,rise:.3,shelves:[{y:351,top:150},{y:586,top:389},{y:813,top:617}],centers:[230,512,794]};
+  const foldedArt=item=>{const key=item?.garment?.type==='builtin'&&/^carhartt-(marron|azul-oscuro)-v1$/.test(item.garment.key)?item.garment.key.replace(/-v1$/,''):null;return key?{src:`icons/shop/pants-display-v1/${key}-flat-v1.webp`,width:384,height:128}:null;};
+  function shelfPlan(items){
+    const models=items.filter(foldedArt).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0).slice(0,36),stacks=[];
+    for(let slot=0;slot<9;slot++){
+      const rows=models.slice(slot*4,slot*4+4);if(!rows.length)break;
+      const shelf=SHELF.shelves[Math.floor(slot/3)],center=SHELF.centers[slot%3];let bottom=shelf.y;
+      const layers=rows.map((item,index)=>{const art=foldedArt(item),height=SHELF.garment*art.height/art.width,top=bottom-height;bottom-=height*SHELF.rise;return {item,art,left:center-SHELF.garment/2,top,width:SHELF.garment,height,z:10+Math.floor(slot/3)*10+index};});
+      stacks.push({slot,ids:rows.map(item=>item.id),layers});
+    }
+    return stacks;
+  }
   function renderClothing(){
     const container=document.getElementById('clothingShopItems');if(!container)return;
     const status=document.getElementById('clothingShopStatus');if(status){status.textContent=failure || notice || (loading&&!state?'Cargando el armario…':'');status.classList.toggle('is-error',!!failure);}
@@ -92,8 +106,11 @@
     if(container.dataset.catalogue!==signature){
       const tabs=slots.length>1?`<div class="fitting-tabs" role="tablist" aria-label="Tipo de prenda">${slots.map(slot=>`<button type="button" role="tab" data-fitting-slot="${slot}" aria-selected="${slot===fittingSlot}">${fitCopy[slot].tab}</button>`).join('')}</div>`:'';
       const hangers=[{id:'original',name:copy.none},...items].map(item=>`<button type="button" class="fitting-hanger${item.id==='original'?' is-bare':''}" role="radio" data-clothing-try="${esc(item.id)}" aria-label="${esc(item.name)}" style="${copy.thumb}"><span class="fitting-hanger-hook" aria-hidden="true"></span><span class="fitting-hanger-coat" aria-hidden="true"${item.id==='original'?'':` style="--coat:url('${esc(coatAtlas(item))}')"`}></span><span class="fitting-hanger-mark"></span></button>`).join('');
+      const pct=value=>`${(value/10.24).toFixed(3)}%`;
+      const shelf=fittingSlot==='bottomwear'?shelfPlan(items):[];
+      const picker=shelf.length?`<div class="pants-shelf" aria-hidden="true"><img class="pants-shelf-cabinet" src="${SHELF.src}" alt="" width="1024" height="1024" draggable="false" decoding="async">${shelf.map(stack=>`<button type="button" class="pants-shelf-stack" tabindex="-1" data-shelf-stack="${esc(stack.ids.join(','))}" style="left:${pct(stack.layers[0].left)};top:${pct(stack.layers.at(-1).top)};width:${pct(SHELF.garment)};height:${pct(stack.layers[0].top+stack.layers[0].height-stack.layers.at(-1).top)}"></button>${stack.layers.map(layer=>`<img class="pants-shelf-fold" data-shelf-item="${esc(layer.item.id)}" src="${esc(layer.art.src)}" alt="" draggable="false" decoding="async" style="left:${pct(layer.left)};top:${pct(layer.top)};width:${pct(layer.width)};height:${pct(layer.height)};z-index:${layer.z}">`).join('')}`).join('')}</div><div class="fitting-rail fitting-chips" role="radiogroup" aria-label="${copy.tab} del Chota">${[{id:'original',name:copy.none},...items].map(item=>`<button type="button" class="fitting-chip${item.id==='original'?' is-bare':''}" role="radio" data-clothing-try="${esc(item.id)}" aria-label="${esc(item.name)}"><span class="fitting-chip-name">${esc(item.id==='original'?copy.none:item.wardrobe_key==='azul-oscuro'?'Azul oscuro':item.wardrobe_key==='marron'?'Marrón':item.name)}</span><span class="fitting-hanger-mark"></span></button>`).join('')}</div>`:'';
       const room=container.querySelector('.fitting-room');
-      container.innerHTML=`<div class="fitting">${room?'':'<div class="fitting-room" aria-hidden="true"><span class="fitting-wall"></span><span class="fitting-spot"></span><span class="fitting-mirror"><i></i></span><span class="fitting-stool"></span><span class="fitting-floor"></span><span class="fitting-rug"></span><span class="fitting-curtain fitting-curtain--left"></span><span class="fitting-curtain fitting-curtain--right"></span><span class="fitting-shadow"></span><span class="fitting-chota" data-chota-fitting><span class="fitting-chota-body"></span><span class="fitting-chota-pants"></span><span class="fitting-chota-coat"></span></span><span class="fitting-sign">Probador</span></div>'}${tabs}<div class="fitting-rail" role="radiogroup" aria-label="${copy.tab} del Chota">${hangers}</div><div class="fitting-info"><span class="fitting-state"></span><h4 class="fitting-name"></h4><p class="fitting-desc"></p><div class="fitting-actions"><button type="button" class="fitting-primary"></button><button type="button" class="fitting-secondary"></button></div></div></div>${all.length?'':'<p class="chota-shop-empty">Todavía no hay prendas disponibles.</p>'}`;
+      container.innerHTML=`<div class="fitting">${room?'':'<div class="fitting-room" aria-hidden="true"><span class="fitting-wall"></span><span class="fitting-spot"></span><span class="fitting-mirror"><i></i></span><span class="fitting-stool"></span><span class="fitting-floor"></span><span class="fitting-rug"></span><span class="fitting-curtain fitting-curtain--left"></span><span class="fitting-curtain fitting-curtain--right"></span><span class="fitting-shadow"></span><span class="fitting-chota" data-chota-fitting><span class="fitting-chota-body"></span><span class="fitting-chota-pants"></span><span class="fitting-chota-coat"></span></span><span class="fitting-sign">Probador</span></div>'}${tabs}${picker||`<div class="fitting-rail" role="radiogroup" aria-label="${copy.tab} del Chota">${hangers}</div>`}<div class="fitting-info"><span class="fitting-state"></span><h4 class="fitting-name"></h4><p class="fitting-desc"></p><div class="fitting-actions"><button type="button" class="fitting-primary"></button><button type="button" class="fitting-secondary"></button></div></div></div>${all.length?'':'<p class="chota-shop-empty">Todavía no hay prendas disponibles.</p>'}`;
       // The model keeps animating across tab changes.
       if(room)container.querySelector('.fitting').prepend(room);
       container.dataset.catalogue=signature;
@@ -105,6 +122,7 @@
       hanger.setAttribute('aria-checked',String(checked));hanger.tabIndex=checked?0:-1;hanger.classList.toggle('is-worn',worn);hanger.classList.toggle('is-owned',!!item?.owned);
       hanger.querySelector('.fitting-hanger-mark').textContent=worn?'Puesto':!item?'':item.owned?'Tuyo':String(item.price);
     }
+    for(const fold of container.querySelectorAll('[data-shelf-item]'))fold.classList.toggle('is-picked',fold.dataset.shelfItem===fitting.bottomwear);
     // The model wears both choices at once, whichever tab is open.
     const show=(selector,slot)=>{const node=container.querySelector(selector);if(!node)return;const item=fitting[slot]==='original'?null:bySlot[slot].find(item=>item.id===fitting[slot]);const url=item?coatAtlas(item):'';if(node.dataset.coat!==url){node.dataset.coat=url;node.style.backgroundImage=url?`url("${url}")`:'none';}};
     show('.fitting-chota-coat','outerwear');show('.fitting-chota-pants','bottomwear');
@@ -355,6 +373,7 @@
       const tab=event.target.closest('#chotaShopItems [data-chota-tab]');
       if(tab){selectRoomTab(tab.dataset.chotaTab);return;}
       const tryOn=event.target.closest('[data-clothing-try]');if(tryOn){if(fitting[fittingSlot]!==tryOn.dataset.clothingTry){fitting[fittingSlot]=tryOn.dataset.clothingTry;renderClothing();globalThis.StoreRooms?.showOff(document.querySelector('[data-chota-fitting]'));}return;}
+      const stack=event.target.closest('[data-shelf-stack]');if(stack){const ids=stack.dataset.shelfStack.split(','),at=ids.indexOf(fitting.bottomwear),next=at<0?ids.at(-1):ids[(at-1+ids.length)%ids.length];if(next&&next!==fitting.bottomwear){fitting.bottomwear=next;renderClothing();globalThis.StoreRooms?.showOff(document.querySelector('[data-chota-fitting]'));}return;}
       const fitSlot=event.target.closest('[data-fitting-slot]');if(fitSlot){if(fittingSlot!==fitSlot.dataset.fittingSlot){fittingSlot=fitSlot.dataset.fittingSlot;renderClothing();}return;}
       const clothingButton=event.target.closest('[data-chota-clothing-equip]');if(clothingButton){void equipClothing(clothingButton.dataset.chotaClothingEquip,clothingButton.dataset.chotaClothingSlot);return;}
       const styleButton=event.target.closest('[data-chota-equip]');
