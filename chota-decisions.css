@@ -249,7 +249,7 @@ body.chota-decision-open { overflow: hidden; }
 
 /* The dilemma sign hangs from the beam in the top-left corner. */
 .clubhouse-room .chota-decision-sign {
-  position: absolute; z-index: 5; left: 17.6%; top: -2%; width: 17%; aspect-ratio: .72; padding: 0; border: 0; background: none;
+  position: absolute; z-index: 5; left: 2.6%; top: 0; width: 17%; aspect-ratio: .72; padding: 0; border: 0; background: none;
   transform-origin: 50% 0; animation: cds-sway 7s ease-in-out infinite; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
 .chota-decision-sign.is-pending { animation-duration: 2.6s; animation-name: cds-swing; }

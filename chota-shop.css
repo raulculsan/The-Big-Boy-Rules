@@ -168,3 +168,5 @@ html[data-reduced-motion="true"] .chota-room-remote .chota-remote-motion{animati
 .chota-inventory-empty{padding:clamp(28px,9vh,90px) 0;max-width:440px;margin:auto}.chota-inventory-empty h3{margin:0 0 12px;font-size:24px;letter-spacing:-.03em;font-weight:500}.chota-inventory-empty p{color:#b9bfc1;font-size:15px;line-height:1.6}.chota-inventory-empty button{margin-top:16px}
 @keyframes chota-armario-enter{from{transform:translateY(24px);opacity:.7}to{transform:translateY(0);opacity:1}}
 @media(prefers-reduced-motion:reduce){#chotaInventoryDialog[open]{animation:none}.chota-room-wardrobe{transition:none}}
+/* Hidden until the cabinet is redrawn to fit the room; the inventory code stays in place. */
+.chota-room-wardrobe-layer{display:none}
