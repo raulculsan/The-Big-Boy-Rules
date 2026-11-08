@@ -425,3 +425,4 @@ $(SRCROOT)/App/public/vendor/lottie-LICENSE.md
 $(SRCROOT)/App/public/vendor/lottie-light.min.js
 $(SRCROOT)/App/public/vendor/supabase.js
 $(SRCROOT)/App/public/visual-system.css
+$(SRCROOT)/App/public/icons/clubhouse/chota-wardrobe-integrated-v2.webp

@@ -13,3 +13,13 @@ export function inventoryPatch(base,dest,source){
  const exportNode=b.find(x=>x.type==='ExpressionStatement'&&dest.slice(x.start,x.end).includes('globalThis.ChotaShop'));if(!exportNode)throw Error('Missing export');let object;walk(exportNode,x=>{if(x.type==='ObjectExpression')object=x;});insert(object.end-1,',openInventory');
  for(const p of patches.sort((a,b)=>b.s-a.s))dest=dest.slice(0,p.s)+p.text+dest.slice(p.e);ast(dest);return dest;
 }
+
+// Refresh only the authored cabinet block; preserve per-platform catalogue renderers.
+export function refreshInventoryCabinet(dest,source){
+ const outer=text=>parse(text,{ecmaVersion:'latest'}).body[0].expression.callee.body.body;
+ const mount=text=>outer(text).find(node=>node.type==='FunctionDeclaration'&&node.id.name==='mountRoom');
+ const old=mount(dest),next=mount(source),block=(text,node)=>node.body.body.find(part=>part.type==='IfStatement'&&text.slice(part.start,part.end).includes('chotaInventory'));
+ const previous=block(dest,old),replacement=block(source,next);if(!previous||!replacement)throw Error('Missing isolated wardrobe furniture block');
+ let text=source.slice(replacement.start,replacement.end);if(next.params[0].name!==old.params[0].name){const edits=[];const visit=(node,parent)=>{if(!node||typeof node!=='object')return;if(node.type==='Identifier'&&node.name===next.params[0].name&&!(parent?.type==='MemberExpression'&&parent.property===node&&!parent.computed))edits.push({start:node.start,end:node.end});for(const value of Object.values(node))if(Array.isArray(value))value.forEach(child=>visit(child,node));else if(value&&typeof value==='object'&&value.type)visit(value,node);};visit(parse(text,{ecmaVersion:'latest'}));for(const edit of edits.sort((a,b)=>b.start-a.start))text=text.slice(0,edit.start)+old.params[0].name+text.slice(edit.end);}
+ return dest.slice(0,previous.start)+text+dest.slice(previous.end);
+}

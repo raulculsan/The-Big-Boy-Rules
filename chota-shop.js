@@ -196,7 +196,8 @@
     if (!rooms.has(room)) { rooms.add(room); observer?.observe(room); if (!observer) visibleRooms.add(room); }
     if(!room.querySelector(':scope > .chota-room-wardrobe-layer')){
       const cabinet=document.createElement('button');cabinet.type='button';cabinet.className='chota-room-wardrobe';cabinet.dataset.chotaInventory='';cabinet.setAttribute('aria-label','Abrir el armario del Chota');
-      cabinet.innerHTML='<img src="icons/clubhouse/chota-wardrobe-cabinet-v1.webp" width="254" height="768" alt="" draggable="false" decoding="async"><span>Armario</span>';const layer=document.createElement('div');layer.className='chota-room-wardrobe-layer';layer.append(cabinet);room.append(layer);
+      const layer=document.createElement('div');layer.className='chota-room-wardrobe-layer';
+      layer.innerHTML='<img class="chota-room-wardrobe-art" src="icons/clubhouse/chota-wardrobe-integrated-v2.webp" width="1024" height="1024" alt="" draggable="false" decoding="async">';layer.append(cabinet);room.append(layer);
     }
     paintRoom(room); paintMotion();
     if (owner && !fetchedAt && !request) {
