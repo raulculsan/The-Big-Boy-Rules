@@ -326,3 +326,41 @@ body.chota-decision-open { overflow: hidden; }
   .clubhouse-room .chota-decision-sign, .chota-drawer.has-new .chota-drawer-glint, .chota-drawer.has-new .chota-drawer-badge, .chota-statdecor.show-star .chota-decor--star svg { animation: none; }
   .chota-drawer.has-new .chota-drawer-glint { opacity: .8; }
 }
+
+/* Simpler dilemma flow: read, pick, confirm; then a final, locked choice. */
+.chd-meters.chd-meters { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.chd-meters .chd-meter { grid-template-columns: 1fr; justify-items: center; gap: 2px; padding: 7px 4px 6px; border-radius: 12px; background: var(--cd-card); text-align: center; }
+.chd-meters .chd-meter span { font-size: 11px; }
+.chd-meters .chd-meter i { width: 100%; height: 4px; border: 0; }
+.chd-meters .chd-meter strong { order: -1; font-size: 17px; font-weight: 800; }
+.chd-meters .chd-meter em { font-size: 11px; }
+.chd-situation { margin: 0; color: var(--cd-muted); font-size: 14px; line-height: 1.5; }
+.chd-dialog .chd-ask { margin: 6px 0 0; font-size: 17px; font-weight: 800; }
+.chd-confirm {
+  position: sticky; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 4; display: grid; gap: 10px; margin-top: 4px; padding: 14px;
+  border: 1px solid #e9e4d6; border-radius: 16px; background: #1d2027f5; box-shadow: 0 16px 36px -12px #000; animation: chd-pop 220ms cubic-bezier(.2,1.3,.4,1);
+}
+.chd-confirm p { margin: 0; font-size: 14px; line-height: 1.4; }
+.chd-confirm div { display: flex; justify-content: flex-end; gap: 8px; }
+.chd-primary { min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px; background: #fff; color: #000; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
+.chd-primary:disabled { background: #ffffff1a; color: #ffffff66; cursor: progress; }
+.chd-confirm .chd-secondary { min-height: 44px; }
+.chd-mine { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #fffaf0; color: #1f1b16; }
+.chd-mine svg { flex: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chd-mine small { display: block; color: #6b6253; font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.chd-mine strong { display: block; font-size: 17px; line-height: 1.25; }
+.chd-mine.is-past { background: var(--cd-card); color: var(--cd-text); }
+.chd-mine.is-past small { color: var(--cd-muted); }
+.chd-results { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.chd-result { position: relative; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; overflow: hidden; isolation: isolate; padding: 11px 14px; border: 1px solid var(--cd-line); border-radius: 14px; background: var(--cd-card); }
+.chd-result.is-mine { border-color: #e9e4d6; }
+.chd-result > div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; font-size: 15px; font-weight: 700; }
+.chd-result em { padding: 1px 7px; border-radius: 999px; background: #ffffff1a; color: var(--cd-text); font-size: 11px; font-style: normal; font-weight: 700; }
+.chd-result em.is-lead { background: #8cc06a33; color: #b8e09f; }
+.chd-result strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+.chd-result small { grid-column: 1 / -1; color: var(--cd-muted); font-size: 12px; }
+.chd-result i { position: absolute; z-index: -1; inset: 0 auto 0 0; width: var(--share); background: #ffffff12; animation: chd-fill 700ms cubic-bezier(.2,.8,.2,1) both; }
+.chd-twist { justify-self: start; }
+.chd-verdict { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--cd-card); color: var(--cd-muted); font-size: 14px; font-weight: 700; }
+.chd-verdict.is-hit { background: #8cc06a26; color: #b8e09f; }
+@media (prefers-reduced-motion: reduce) { .chd-confirm, .chd-result i { animation: none; } }

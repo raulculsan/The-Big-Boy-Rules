@@ -36,7 +36,7 @@
       .map(([x, y, c], i) => ['bulb', x + 1, y + 2, c, i]).concat([['confetti', 96, 0]]),
   };
   const particles = {steam: 3, zzz: 3, notes: 2, bubbles: 3, motes: 4, dust: 3, confetti: 10, ripple: 2, sweat: 2, flame: 1};
-  let story = null, dialog = null, showing = 'today', trigger = null, voting = false, notice = '', clock = 0, nudgeTimer = 0, lastVoteLabel = '';
+  let story = null, dialog = null, showing = 'today', trigger = null, voting = false, notice = '', clock = 0, nudgeTimer = 0, lastVoteLabel = '', choice = null;
   const art = new Map();
 
   function snapshot() { return globalThis.ClubPlus?.snapshot?.()?.story || story || null; }
@@ -247,26 +247,47 @@
     const minutes = Math.max(1, Math.round((next - now) / 60000));
     return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
   }
+  // Your vote on each chapter, kept on this device to tell you later whether
+  // the club went your way.
+  const MY_VOTES = 'bb-chota-my-votes-v1';
+  const myVotes = () => { try { return JSON.parse(localStorage.getItem(MY_VOTES) || '{}'); } catch { return {}; } };
+  function saveMyVote(title, label) { try { const all = myVotes(); all[title] = label; localStorage.setItem(MY_VOTES, JSON.stringify(all)); } catch {} }
+  const lock = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+  // One simple flow: read, pick, confirm. Once confirmed the choice is final.
   function todayCard(today) {
     const voted = today.mine != null;
-    const total = voted ? today.options.reduce((sum, o) => sum + (Number(o.votes) || 0), 0) : 0;
-    const options = today.options.map((o, index) => {
-      const share = voted && total ? Math.round((Number(o.votes) || 0) / total * 100) : 0;
-      return `<li><button type="button" class="chd-option" data-cd-vote="${o.i}" aria-pressed="${today.mine === o.i}"${voting ? ' disabled' : ''}>
-        <span class="chd-option-key" aria-hidden="true">${'ABC'[index] || index + 1}</span><span class="chd-option-label">${esc(o.label)}</span>
-        ${voted ? `<span class="chd-option-votes">${Number(o.votes) || 0}</span><i class="chd-option-bar" style="--share:${share}%" aria-hidden="true"></i>` : ''}
-        ${today.mine === o.i ? '<span class="chd-option-mine">Tu voto</span>' : ''}</button></li>`;
+    if (!voted) {
+      const picked = today.options.find(o => o.i === choice);
+      return `<p class="chd-situation">${esc(today.body)}</p>
+        <h3 class="chd-ask">¿Qué hace el Chota?</h3>
+        <ul class="chd-options">${today.options.map((o, index) => `<li><button type="button" class="chd-option" data-cd-pick="${o.i}" aria-pressed="${choice === o.i}"${voting ? ' disabled' : ''}><span class="chd-option-key" aria-hidden="true">${'ABC'[index] || index + 1}</span><span class="chd-option-label">${esc(o.label)}</span></button></li>`).join('')}</ul>
+        ${picked ? `<div class="chd-confirm" role="group" aria-label="Confirmar tu decisión"><p>Vas a elegir <strong>«${esc(picked.label)}»</strong>. No podrás cambiarla.</p><div><button type="button" class="chd-secondary" data-cd-cancel>Volver</button><button type="button" class="chd-primary" data-cd-confirm${voting ? ' disabled' : ''}>${voting ? 'Guardando…' : 'Elegir'}</button></div></div>`
+          : '<p class="chd-note">Piénsalo bien: tu decisión es final.</p>'}`;
+    }
+    const total = today.options.reduce((sum, o) => sum + (Number(o.votes) || 0), 0);
+    const top = Math.max(...today.options.map(o => Number(o.votes) || 0));
+    const mine = today.options.find(o => o.i === today.mine);
+    const results = today.options.map(o => {
+      const votes = Number(o.votes) || 0, share = total ? Math.round(votes / total * 100) : 0;
+      const leads = today.twisted ? o.i === 1 : votes === top && votes > 0;
+      return `<li class="chd-result${o.i === today.mine ? ' is-mine' : ''}"><div><span>${esc(o.label)}</span>${o.i === today.mine ? '<em>Tu voto</em>' : ''}${leads ? `<em class="is-lead">${today.twisted ? 'Ganará por el giro' : 'Va ganando'}</em>` : ''}</div><strong>${share}%</strong><i style="--share:${share}%"></i><small>${votes} ${votes === 1 ? 'voto' : 'votos'}</small></li>`;
     }).join('');
     const twist = today.twisted ? '<p class="chd-note">Alguien ha soltado un giro: hoy ganará la segunda opción.</p>'
-      : story.twist && voted ? '<button type="button" class="chd-secondary" data-cd-twist>Soltar mi giro</button>' : '';
-    return `<p class="chd-body">${esc(today.body)}</p>
-      <p class="chd-ask">${voted ? 'Puedes cambiar tu voto hasta medianoche.' : '¿Qué debería hacer el Chota?'}</p>
-      <ul class="chd-options">${options}</ul>${twist}
+      : story.twist ? '<button type="button" class="chd-secondary chd-twist" data-cd-twist>Soltar mi giro</button>' : '';
+    return `<div class="chd-mine">${lock}<div><small>Tu decisión · final</small><strong>«${esc(mine?.label || '')}»</strong></div></div>
+      <h3 class="chd-ask">Así va la votación</h3>
+      <ul class="chd-results">${results}</ul>
+      <p class="chd-note">${total} ${total === 1 ? 'miembro ha votado' : 'miembros han votado'}.</p>
+      ${twist}
       <p class="chd-countdown" aria-live="off">Se sabrá qué pasa en <strong>${untilTomorrow()}</strong></p>`;
   }
   function yesterdayCard(y) {
-    return `<p class="chd-body">${esc(y.result)}</p>
-      <p class="chd-note">Ganó «${esc(y.choice)}»${y.votes ? '' : ' porque nadie votó'}.${y.twist ? ' Hubo un giro.' : ''}</p>`;
+    const mine = myVotes()[y.title];
+    const verdict = !mine ? '' : mine === y.choice ? `<p class="chd-verdict is-hit">Votaste «${esc(mine)}» y salió. ¡Acertaste!</p>` : `<p class="chd-verdict">Votaste «${esc(mine)}», pero salió otra cosa.</p>`;
+    return `<p class="chd-situation">${esc(y.result)}</p>
+      <div class="chd-mine is-past">${lock}<div><small>Ganó</small><strong>«${esc(y.choice)}»</strong></div></div>
+      ${verdict}
+      <p class="chd-note">${y.votes ? `${y.votes} ${y.votes === 1 ? 'voto' : 'votos'}` : 'Nadie votó y lo decidió el Chota'}.${y.twist ? ' Hubo un giro.' : ''}</p>`;
   }
 
   function render(fresh = false) {
@@ -302,7 +323,7 @@
       actor.say(outcomeLine(yesterday), good(yesterday) ? 'cheer' : 'sit');
       replay(yesterday);
     } else if (today.mine != null) {
-      actor.say(`Ya has votado «${today.options.find(o => o.i === today.mine)?.label || ''}». Esta noche sabremos qué pasa.`, 'wave');
+      actor.say(`Elegiste «${today.options.find(o => o.i === today.mine)?.label || ''}». Ya no hay vuelta atrás: esta noche sabremos qué pasa.`, 'wave');
     } else {
       actor.say(scene?.intro || today.body, 'greet', () => {
         actor.think(true);
@@ -335,15 +356,18 @@
       if (event.target === dialog || event.target.closest('[data-cd-close]')) { dialog.close(); return; }
       const show = event.target.closest('[data-cd-show]');
       if (show && show.dataset.cdShow !== showing) { showing = show.dataset.cdShow; notice = ''; render(true); return; }
-      const vote = event.target.closest('[data-cd-vote]');
-      if (vote && !vote.disabled) void castVote(Number(vote.dataset.cdVote));
+      const option = event.target.closest('[data-cd-pick]');
+      if (option && !option.disabled) pickOption(Number(option.dataset.cdPick));
+      if (event.target.closest('[data-cd-cancel]')) { choice = null; actor.moveTo(0); render(); }
+      const confirm = event.target.closest('[data-cd-confirm]');
+      if (confirm && !confirm.disabled && choice != null) void castVote(choice);
       if (event.target.closest('[data-cd-twist]')) void twist();
       if (event.target.closest('.chd-actor')) { actor.say(pick(quips), 'jump'); }
       else if (event.target.closest('.chd-scene')) actor.play('jump');
     });
     // Pressing an option, he takes a step towards the day's object.
     const lean = event => {
-      if (!event.target.closest?.('[data-cd-vote]') || voting || showing !== 'today') return;
+      if (!event.target.closest?.('[data-cd-pick]') || voting || showing !== 'today') return;
       actor.moveTo(event.type === 'pointercancel' ? 0 : 10);
     };
     dialog.addEventListener('pointerdown', lean);
@@ -359,10 +383,20 @@
     });
   }
 
+  // Picking only previews; he asks if you are sure before the vote is cast.
+  function pickOption(option) {
+    const today = story?.today;
+    if (!today || today.mine != null || voting) return;
+    choice = option;
+    const label = today.options.find(o => o.i === option)?.label || '';
+    actor.say(`¿«${label}»? Piénsalo, que luego no hay vuelta atrás.`, 'wave');
+    render();
+    dialog.querySelector('[data-cd-confirm]')?.focus({preventScroll: true});
+  }
   async function castVote(option) {
     const today = story?.today;
-    if (!today || voting) return;
-    const first = today.mine == null, same = today.mine === option;
+    if (!today || voting || today.mine != null) return;
+    const first = true, same = false;
     const label = today.options.find(o => o.i === option)?.label || '';
     voting = true; notice = ''; render();
     clearTimeout(nudgeTimer);
@@ -374,7 +408,8 @@
     });
     const ok = same || await globalThis.ClubPlus?.storyVote?.(today.id, option);
     voting = false;
-    if (ok && !same) { lastVoteLabel = label; if (first) reward('+2 monedas'); }
+    if (ok && !same) { lastVoteLabel = label; saveMyVote(today.title, label); if (first) reward('+2 monedas'); }
+    choice = null;
     notice = ok ? '' : globalThis.ClubPlus?.lastNotice?.() || 'No se ha podido guardar el voto.';
     render();
   }
@@ -395,7 +430,7 @@
     if (!dialog) build();
     if (dialog.open) return;
     trigger = from;
-    showing = 'today'; notice = ''; lastVoteLabel = '';
+    showing = 'today'; notice = ''; lastVoteLabel = ''; choice = null;
     // The saved story only paints the sede; votes always need today's real one.
     if (!globalThis.ClubPlus?.snapshot?.()) await globalThis.ClubPlus?.refresh?.();
     story = globalThis.ClubPlus?.snapshot?.()?.story || story;
