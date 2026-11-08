@@ -3414,6 +3414,14 @@ function chotaRoomTransform(point, home, size) {
 // Ambient gestures animate the existing separated rig, never the room/feet.
 function chotaLifeCatalog() {
   return {
+    "ear-flick-left":{family:"ears",cooldown:70000,familyCooldown:20000,duration:1550},
+    "ear-flick-right":{family:"ears",cooldown:75000,familyCooldown:20000,duration:1700},
+    "ear-scan":{family:"ears",cooldown:130000,familyCooldown:24000,duration:3400},
+    "tail-sway":{family:"tail",cooldown:90000,familyCooldown:22000,duration:3700},
+    "deep-breath":{family:"posture",cooldown:180000,familyCooldown:38000,duration:5200},
+    "shake-off":{family:"reflex",cooldown:240000,familyCooldown:120000,duration:2300},
+    "soft-blink":{family:"face",cooldown:95000,familyCooldown:23000,duration:2700},
+    "paw-relax":{family:"selfcare",cooldown:150000,familyCooldown:34000,duration:3200},
     listen:{family:"orient",cooldown:95000,familyCooldown:26000,duration:3100},
     balance:{family:"posture",cooldown:125000,familyCooldown:38000,duration:3600},
     "check-tail":{family:"selfcare",cooldown:135000,familyCooldown:34000,duration:3400},
@@ -3431,13 +3439,53 @@ function chotaChooseLifeAction({now,moment,lastAction,times,families,lastTouchAt
     (action!=="drowsy" || ["evening","night"].includes(moment)) &&
     now-(times.get(action)??-Infinity)>=info.cooldown && now-(families.get(info.family)??-Infinity)>=info.familyCooldown).map(([action])=>action);
   if(outdoor && choices.includes("listen")) return "listen";
-  return choices[Math.min(choices.length-1,Math.floor(random*choices.length))] || null;
+  // Randomize among the three most rested eligible gestures: variety without a fixed cycle.
+  const ages=choices.map(action=>times.get(action)??-Infinity).sort((a,b)=>a-b);
+  const cutoff=ages[Math.min(2,ages.length-1)];
+  const rested=choices.filter(action=>(times.get(action)??-Infinity)<=cutoff);
+  return rested[Math.min(rested.length-1,Math.floor(random*rested.length))] || null;
 }
 function chotaLifeTracks(action, direction=1) {
   const t=(x=0,y=0,r=0)=>`translate(${x}%,${y}%) rotate(${r}deg)`;
   const track=points=>points.map(([offset,transform])=>({offset,transform,easing:"ease-in-out"}));
   const blink=points=>points.map(([offset,opacity])=>({offset,opacity,easing:"ease-in-out"}));
   const d=direction;
+  // Local articulation: none of these tracks moves the actor or contact shoes.
+  if(action==="ear-flick-left" || action==="ear-flick-right") {
+    const left=action==="ear-flick-left", sign=left?-1:1;
+    return {[left?"leftEar":"rightEar"]:track([[0,t()],[.16,t()],[.24,t(0,0,8*sign)],[.36,t(0,0,-3*sign)],[.5,t(0,0,3*sign)],[.7,t()],[1,t()]]),
+      tail:track([[0,t()],[.6,t(0,0,-1.2)],[1,t()]])};
+  }
+  if(action==="ear-scan") return {
+    leftEar:track([[0,t()],[.15,t(0,0,-8)],[.34,t(0,0,-8)],[.55,t(0,0,2)],[.8,t()],[1,t()]]),
+    rightEar:track([[0,t()],[.3,t()],[.45,t(0,0,8)],[.69,t(0,0,5)],[.88,t(0,0,-1)],[1,t()]]),
+    head:track([[0,t()],[.39,t()],[.58,t(.3,-.15,.7)],[.8,t(.3,-.15,.7)],[1,t()]]),
+    tail:track([[0,t()],[.65,t(0,0,-2)],[1,t()]])};
+  if(action==="tail-sway") return {
+    tail:track([[0,t()],[.17,t(0,0,-4.5)],[.33,t(0,0,-2)],[.48,t(0,0,-5.5)],[.65,t(0,0,-3)],[.84,t(0,0,-1)],[1,t()]]),
+    leftEar:track([[0,t()],[.55,t()],[.69,t(0,0,-2)],[1,t()]])};
+  if(action==="deep-breath") return {
+    body:track([[0,"scale(1)"],[.35,"scale(1.006,1.014)"],[.46,"scale(1.006,1.014)"],[.82,"scale(1)"],[1,"scale(1)"]]),
+    head:track([[0,t()],[.35,t(0,-.35,-.45)],[.46,t(0,-.35,-.45)],[.82,t(0,.15,.3)],[1,t()]]),
+    leftEar:track([[0,t()],[.6,t(0,0,2.4)],[1,t()]]),
+    rightEar:track([[0,t()],[.65,t(0,0,-2)],[1,t()]]),
+    lids:blink([[0,0],[.21,0],[.33,1],[.52,1],[.69,0],[1,0]])};
+  if(action==="shake-off") return {
+    head:track([[0,t()],[.14,t(0,.15,.6)],[.28,t(-.3,0,-2.2)],[.38,t(.3,0,2)],[.48,t(-.2,0,-1.3)],[.59,t(.15,0,.7)],[.74,t()],[1,t()]]),
+    leftEar:track([[0,t()],[.27,t(0,0,5)],[.39,t(0,0,-6)],[.5,t(0,0,4)],[.64,t(0,0,-2)],[.82,t()],[1,t()]]),
+    rightEar:track([[0,t()],[.31,t(0,0,6)],[.43,t(0,0,-5)],[.54,t(0,0,3)],[.68,t(0,0,-1)],[.86,t()],[1,t()]]),
+    tail:track([[0,t()],[.4,t(0,0,-4)],[.64,t(0,0,2)],[1,t()]]),
+    lids:blink([[0,0],[.18,0],[.27,1],[.62,1],[.78,0],[1,0]])};
+  if(action==="soft-blink") return {
+    lids:blink([[0,0],[.15,0],[.25,1],[.42,1],[.55,0],[.66,0],[.72,1],[.8,0],[1,0]]),
+    head:track([[0,t()],[.36,t(0,.25,.45)],[.61,t(0,.25,.45)],[1,t()]]),
+    leftEar:track([[0,t()],[.4,t(0,0,2)],[1,t()]]),
+    rightEar:track([[0,t()],[.47,t(0,0,-1.5)],[1,t()]])};
+  if(action==="paw-relax") return {
+    paw:track([[0,t()],[.22,t(0,0,-3)],[.4,t(0,0,2.2)],[.58,t(0,0,-1.7)],[.78,t(0,0,.7)],[1,t()]]),
+    head:track([[0,t()],[.25,t(.1,.45,.8)],[.5,t(.1,.45,.8)],[1,t()]]),
+    tail:track([[0,t()],[.55,t(0,0,-2)],[1,t()]]),
+    rightEar:track([[0,t()],[.4,t(0,0,2)],[1,t()]])};
   if(action==="listen") return {
     leftEar:track([[0,t()],[.12,t(0,0,-9*d)],[.32,t(0,0,-6*d)],[.7,t(0,0,-3*d)],[1,t()]]),
     rightEar:track([[0,t()],[.18,t(0,0,7*d)],[.34,t(0,0,4*d)],[.73,t(0,0,2*d)],[1,t()]]),
@@ -3495,6 +3543,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   const idleHead = character.querySelector(".chota-idle-head");
   const idleBody = character.querySelector(".chota-idle-body");
   const idleTail = character.querySelector(".chota-idle-tail");
+  const idlePaw = character.querySelector(".chota-idle-paw");
   const idleEars = [...character.querySelectorAll(".chota-idle-ear")];
   const eyelids = character.querySelector(".chota-idle-eyelids");
   const sleepChest = character.querySelector(".chota-sleep-chest");
@@ -3595,9 +3644,9 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     if(lifeChoice && now-lastLifeAt>60000) return {action:lifeChoice,target:lifeChoice==="listen"?outdoor:null};
     const plan = room.querySelector(".clubhouse-plan:not(.clubhouse-plan-empty)");
     // Longer actions have destinations and generous pauses; a visible comment wins.
-    if (now - lastRoomVisitAt > 42000 && now - lastTouchAt > 20000 && !room.querySelector('[aria-expanded="true"][data-chota-open]')) {
-      const destinations = ["window", "sofa", ...(plan ? ["board"] : [])].filter(kind => now - (roomVisitTimes.get(kind) ?? -Infinity) > (kind === "sofa" ? 240000 : kind === "board" ? 210000 : 180000));
-      if (destinations.length) return {action:`visit-${destinations[Math.floor(Math.random() * destinations.length)]}`};
+    if (now - lastRoomVisitAt > 105000 && now - lastTouchAt > 20000 && !room.querySelector('[aria-expanded="true"][data-chota-open]')) {
+      const destinations = ["window", "sofa", ...(plan ? ["board"] : [])].filter(kind => now - (roomVisitTimes.get(kind) ?? -Infinity) > (kind === "sofa" ? 420000 : kind === "board" ? 300000 : 270000));
+      if (destinations.length && Math.random() < .28) return {action:`visit-${destinations[Math.floor(Math.random() * destinations.length)]}`};
     }
     const days = date instanceof Date && Number.isFinite(date.getTime()) ? tigretonDaysUntil(date) : Infinity;
     if (plan && event?.id !== "clubhouse-idle" && days >= 0 && days <= 2 && canAttend("plan", now, 95000)) {
@@ -3679,7 +3728,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     lifeAction={action,direction,started:now-elapsed};
     lastLifeAt=now-elapsed;lastAmbientAction=action;attentionTimes.set(action,now-elapsed);familyTimes.set(info.family,now-elapsed);
     pet.classList.add("is-awake");character.classList.add("is-idling");pet.dataset.attention=action;
-    const targets={head:idleHead,body:idleBody,tail:idleTail,leftEar:idleEars[0],rightEar:idleEars[1],lids:eyelids};
+    const targets={head:idleHead,body:idleBody,tail:idleTail,paw:idlePaw,leftEar:idleEars[0],rightEar:idleEars[1],lids:eyelids};
     for(const [key,frames] of Object.entries(chotaLifeTracks(action,direction))) {
       const animation=animateIdle(targets[key],frames,{duration:info.duration,fill:"both",easing:"linear"});
       if(animation && elapsed) animation.currentTime=elapsed;
@@ -4200,7 +4249,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
 }
 function tigretonSpriteMarkup(interactive = false) {
   const tag = interactive ? "button" : "span";
-  return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"><span class="chota-idle-tail"></span><span class="chota-idle-body"></span><span class="chota-idle-feet"></span><span class="chota-idle-head"><span class="chota-idle-ear chota-idle-ear--left"></span><span class="chota-idle-ear chota-idle-ear--right"></span><svg class="chota-idle-eyelids" viewBox="0 0 256 256" aria-hidden="true"><path fill="#fa7906" d="M117 84Q126 81 136 93L141 99 138 105Q126 108 119 99Z M164 98Q174 94 182 100L184 105 180 113Q172 116 164 108Z"/><path fill="none" stroke="#27170f" stroke-width="1.7" stroke-linecap="round" d="M119 96q11 10 20 3m26 5q8 7 17 1"/></svg></span><span class="chota-sleep-base"></span><span class="chota-sleep-tail"></span><span class="chota-sleep-chest"></span><span class="chota-sleep-head"></span><span class="chota-sleep-foreground"></span></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
+  return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"><span class="chota-idle-tail"></span><span class="chota-idle-body"><span class="chota-idle-paw"></span></span><span class="chota-idle-feet"></span><span class="chota-idle-head"><span class="chota-idle-ear chota-idle-ear--left"></span><span class="chota-idle-ear chota-idle-ear--right"></span><svg class="chota-idle-eyelids" viewBox="0 0 256 256" aria-hidden="true"><path fill="#fa7906" d="M117 84Q126 81 136 93L141 99 138 105Q126 108 119 99Z M164 98Q174 94 182 100L184 105 180 113Q172 116 164 108Z"/><path fill="none" stroke="#27170f" stroke-width="1.7" stroke-linecap="round" d="M119 96q11 10 20 3m26 5q8 7 17 1"/></svg></span><span class="chota-sleep-base"></span><span class="chota-sleep-tail"></span><span class="chota-sleep-chest"></span><span class="chota-sleep-head"></span><span class="chota-sleep-foreground"></span></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
 }
 let chotaViewerMotion = null;
 let chotaViewerMotionKey = "";

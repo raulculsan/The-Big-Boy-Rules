@@ -1,5 +1,5 @@
-const CACHE_NAME = "big-boy-rules-v580";
-const APP_SHELL = [
+const CACHE_NAME = "big-boy-rules-v581";
+const APP_SHELL = ["./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
   "./icons/clubhouse/chota-room-occlusion.svg",
@@ -32,7 +32,7 @@ const APP_SHELL = [
   "./visual-system.css?v=20261106-pwa-dock-564",
   "./notifications.css?v=20261102-theme-532",
   "./club.css?v=20261103-ladders-552",
-  "./clubhouse.css?v=20261106-sede-date-567",
+  "./clubhouse.css?v=20261108-chota-life-v2-581",
   "./chota-shop.js?v=20261103-economy-555",
   "./chota-shop.css?v=20261106-darts-wall-566",
   "./coin-missions.js?v=20261103-economy-555",
@@ -108,7 +108,7 @@ const APP_SHELL = [
   "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261103-admin-557",
   "./admin-console.css?v=20261103-accounts-558",
-  "./app.js?v=20261107-instant-sede-578",
+  "./app.js?v=20261108-chota-life-v2-581",
   "./spotify-player.js?v=20261103-news-music-554",
   "./spotify-player.css?v=20261103-news-music-554",
   "./album.js?v=20261102-pack-stage-549",

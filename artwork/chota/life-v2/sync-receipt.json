@@ -1,0 +1,278 @@
+{
+  "release": 581,
+  "query": "20261108-chota-life-v2-581",
+  "mode": "applied",
+  "packagedAt": "2026-11-08T09:53:15.868Z",
+  "validation": "All five existing functions equivalent to HEAD baseline or current source after deterministic local alpha-renaming and production compression; replacements equivalent to current source; unrelated byte ranges untouched.",
+  "checks": [
+    {
+      "file": "www/app.js",
+      "function": "chotaLifeCatalog",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "www/app.js",
+      "function": "chotaChooseLifeAction",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "www/app.js",
+      "function": "chotaLifeTracks",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "www/app.js",
+      "function": "createTigretonMotion",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "www/app.js",
+      "function": "tigretonSpriteMarkup",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "ios/App/App/public/app.js",
+      "function": "chotaLifeCatalog",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "ios/App/App/public/app.js",
+      "function": "chotaChooseLifeAction",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "ios/App/App/public/app.js",
+      "function": "chotaLifeTracks",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "ios/App/App/public/app.js",
+      "function": "createTigretonMotion",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "ios/App/App/public/app.js",
+      "function": "tigretonSpriteMarkup",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "android/app/src/main/assets/public/app.js",
+      "function": "chotaLifeCatalog",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "android/app/src/main/assets/public/app.js",
+      "function": "chotaChooseLifeAction",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "android/app/src/main/assets/public/app.js",
+      "function": "chotaLifeTracks",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "android/app/src/main/assets/public/app.js",
+      "function": "createTigretonMotion",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    },
+    {
+      "file": "android/app/src/main/assets/public/app.js",
+      "function": "tigretonSpriteMarkup",
+      "baselineEquivalent": true,
+      "alreadyCurrent": false
+    }
+  ],
+  "files": [
+    {
+      "file": "www/app.js",
+      "kind": "five-function AST replacement; other bytes preserved",
+      "before": "371448a64cd1d00444b20307d597b51b2de12b1231943553c5757251e495c30e",
+      "after": "06f0719964fd40942b20ca3b821999091f7428768ca9b880eef6552eb211bcdc",
+      "beforeBytes": 498209,
+      "afterBytes": 501884
+    },
+    {
+      "file": "www/clubhouse.css",
+      "kind": "two CSS rules replaced; isolated paw rule added",
+      "before": "fc8f9a9e74cbe2530f6affa5e19f4ec2b294fbffe4d2a9e7ded951f47c5af3ca",
+      "after": "fb72f19f2cf4bcd76596a188e5f8ba116a183eadffe13aabd91de58593899460",
+      "beforeBytes": 23531,
+      "afterBytes": 23680
+    },
+    {
+      "file": "www/icons/mascot/chota-v2/chota-idle-core-v2.svg",
+      "kind": "new raster-layer wrapper asset",
+      "before": null,
+      "after": "1335484af65a70bd1b5d1182fa95d173a2c435a795d6ca83df9d80630a78bcea",
+      "beforeBytes": 0,
+      "afterBytes": 89718
+    },
+    {
+      "file": "www/icons/mascot/chota-v2/chota-idle-paw-v2.svg",
+      "kind": "new raster-layer wrapper asset",
+      "before": null,
+      "after": "d8307d8d66b26e5f2d3af326b5c5a5f97bfe09470f7773eb7f597e8394eca779",
+      "beforeBytes": 0,
+      "afterBytes": 3677
+    },
+    {
+      "file": "ios/App/App/public/app.js",
+      "kind": "five-function AST replacement; other bytes preserved",
+      "before": "860388477fe1eb4a1b3761d265f54d869122831964c63e418271e472ef4da3e4",
+      "after": "215c78f3de54475f10bbcd6e196d3b9c2ca1f9a319f603c3944db9df75e083b1",
+      "beforeBytes": 371494,
+      "afterBytes": 374576
+    },
+    {
+      "file": "ios/App/App/public/clubhouse.css",
+      "kind": "two CSS rules replaced; isolated paw rule added",
+      "before": "a9a655ddfbbc8991821dda09f8cb755bccefcbdf0e648fc40dec3aa2084ebc63",
+      "after": "3dc22572801f8d93b53c659f3878a84930c7a80bcf3eed0f8fcafb3fc96f186c",
+      "beforeBytes": 24063,
+      "afterBytes": 24212
+    },
+    {
+      "file": "ios/App/App/public/icons/mascot/chota-v2/chota-idle-core-v2.svg",
+      "kind": "new raster-layer wrapper asset",
+      "before": null,
+      "after": "1335484af65a70bd1b5d1182fa95d173a2c435a795d6ca83df9d80630a78bcea",
+      "beforeBytes": 0,
+      "afterBytes": 89718
+    },
+    {
+      "file": "ios/App/App/public/icons/mascot/chota-v2/chota-idle-paw-v2.svg",
+      "kind": "new raster-layer wrapper asset",
+      "before": null,
+      "after": "d8307d8d66b26e5f2d3af326b5c5a5f97bfe09470f7773eb7f597e8394eca779",
+      "beforeBytes": 0,
+      "afterBytes": 3677
+    },
+    {
+      "file": "android/app/src/main/assets/public/app.js",
+      "kind": "five-function AST replacement; other bytes preserved",
+      "before": "9f2bbbf3b2e2c0df6c9e0bff2b0eb7e4c90816ef526a4b83ade3133138d3b929",
+      "after": "7faf8724460ff7baddb5e41e46ee8287cbdb541e795fd8a09e0f243658910186",
+      "beforeBytes": 362040,
+      "afterBytes": 365122
+    },
+    {
+      "file": "android/app/src/main/assets/public/clubhouse.css",
+      "kind": "two CSS rules replaced; isolated paw rule added",
+      "before": "fc8f9a9e74cbe2530f6affa5e19f4ec2b294fbffe4d2a9e7ded951f47c5af3ca",
+      "after": "fb72f19f2cf4bcd76596a188e5f8ba116a183eadffe13aabd91de58593899460",
+      "beforeBytes": 23531,
+      "afterBytes": 23680
+    },
+    {
+      "file": "android/app/src/main/assets/public/icons/mascot/chota-v2/chota-idle-core-v2.svg",
+      "kind": "new raster-layer wrapper asset",
+      "before": null,
+      "after": "1335484af65a70bd1b5d1182fa95d173a2c435a795d6ca83df9d80630a78bcea",
+      "beforeBytes": 0,
+      "afterBytes": 89718
+    },
+    {
+      "file": "android/app/src/main/assets/public/icons/mascot/chota-v2/chota-idle-paw-v2.svg",
+      "kind": "new raster-layer wrapper asset",
+      "before": null,
+      "after": "d8307d8d66b26e5f2d3af326b5c5a5f97bfe09470f7773eb7f597e8394eca779",
+      "beforeBytes": 0,
+      "afterBytes": 3677
+    },
+    {
+      "file": "index.html",
+      "kind": "two asset cache keys only",
+      "before": "0a6e4194c87d8eb82e254ff23e6c7436e5b4d331fa1ccd0e9b1fa0e8397774dd",
+      "after": "2f4643313f12104fd7bbe06e64ca5a5ee84456ba5842195e19370d56a9c05041",
+      "beforeBytes": 100987,
+      "afterBytes": 100992
+    },
+    {
+      "file": "service-worker.js",
+      "kind": "cache namespace, two URL keys and two new assets only",
+      "before": "60c0bda8f3527dbf54dd664929e4f68a7ba05a2c9e6f47a9367cf865bad61534",
+      "after": "ca45d0aa500373ce0d9b6fee88b674bcea4ff13b47932e74699f71f48c4da6ac",
+      "beforeBytes": 26407,
+      "afterBytes": 26509
+    },
+    {
+      "file": "www/index.html",
+      "kind": "two asset cache keys only",
+      "before": "92d6040dbc73be1d083815d457439bd11f2a0036f09a9e3fa4e8a502b39f6a15",
+      "after": "eacd83dc2d1ea45d2a42f1779275f0bd134b4a43b4b5ed801547fdad2c4e8d64",
+      "beforeBytes": 98078,
+      "afterBytes": 98084
+    },
+    {
+      "file": "www/service-worker.js",
+      "kind": "cache namespace, two URL keys and two new assets only",
+      "before": "30dcb53945c16b282eee9d6c853ff04598e8d0fa475974e99c588c81e7fd4f91",
+      "after": "7dc42f87a72ad4cb61a5621e22c84c83cee4966c3fca2cf2050db31464ddc6a9",
+      "beforeBytes": 25887,
+      "afterBytes": 25990
+    },
+    {
+      "file": "ios/App/App/public/index.html",
+      "kind": "two asset cache keys only",
+      "before": "0a6e4194c87d8eb82e254ff23e6c7436e5b4d331fa1ccd0e9b1fa0e8397774dd",
+      "after": "2f4643313f12104fd7bbe06e64ca5a5ee84456ba5842195e19370d56a9c05041",
+      "beforeBytes": 100987,
+      "afterBytes": 100992
+    },
+    {
+      "file": "ios/App/App/public/service-worker.js",
+      "kind": "cache namespace, two URL keys and two new assets only",
+      "before": "152898e65140d896503fda47cb39c76ca8a672a30f2ee2d4092034d7505a9f96",
+      "after": "9276eee462f2f40bc083a6f1cb4e9027b905ea4f52127c13818daf7735f570b0",
+      "beforeBytes": 19848,
+      "afterBytes": 19950
+    },
+    {
+      "file": "android/app/src/main/assets/public/index.html",
+      "kind": "two asset cache keys only",
+      "before": "92d6040dbc73be1d083815d457439bd11f2a0036f09a9e3fa4e8a502b39f6a15",
+      "after": "eacd83dc2d1ea45d2a42f1779275f0bd134b4a43b4b5ed801547fdad2c4e8d64",
+      "beforeBytes": 98078,
+      "afterBytes": 98084
+    },
+    {
+      "file": "android/app/src/main/assets/public/service-worker.js",
+      "kind": "cache namespace, two URL keys and two new assets only",
+      "before": "a88e4a3dee470a0f24787af677459369bfc23e3ffcee233279363025f21046a7",
+      "after": "39fd06fa53b8ed6c9d90e9fd9acde04cb4634da30c5ab4f2dcb14cbc2162b067",
+      "beforeBytes": 19358,
+      "afterBytes": 19461
+    },
+    {
+      "file": "ios/App/App/web-assets.xcfilelist",
+      "kind": "append the two new SVGs to existing iOS build input/output manifest",
+      "before": "06faa307e015ae871f732874928371b88dd18f3bd7fe1b34eec630f91b041fad",
+      "after": "0c93d91b5eaabcc13b1e4cb466dee350d1a9e40569f1078641e2ac6ef4d143fa",
+      "beforeBytes": 22449,
+      "afterBytes": 22582
+    },
+    {
+      "file": "ios/App/App/web-assets-output.xcfilelist",
+      "kind": "append the two new SVGs to existing iOS build input/output manifest",
+      "before": "9eea5d6879559aa7bc8338a120905ca1b6632a48cbdbb2698d34c4e286dd808a",
+      "after": "211b483f59dc663bec55ba12e6763e86ea2fc2532bebc718d7b7a7818c1c97b0",
+      "beforeBytes": 39656,
+      "afterBytes": 39873
+    }
+  ],
+  "backup": "/tmp/chota-life-v2-sync-1794131595878"
+}

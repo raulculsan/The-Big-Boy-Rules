@@ -25,11 +25,12 @@ function harness({size=400,busy=false,seed=9371}={}) {
  const api=w.createTigretonMotion(pet,false,busy?{id:'plan'}:null,busy?new Date():null);
  return {w,api,room,pet,row,animations,timers,frames,advance(ms){now+=ms;const due=[...timers].filter(([,t])=>t.due<=now);for(const [key,t]of due)if(timers.delete(key))t.callback();const callbacks=[...frames.values()];frames.clear();callbacks.forEach(fn=>fn(now))},sleep(value){sleeping=value;api.refresh()},hidden(value){hidden=value;w.document.dispatchEvent(new w.Event('visibilitychange'))},reduced(value){w.tigretonReducedMotion.matches=value;motionChanged()},close(){api.destroy();dom.window.close()}};
 }
-test('six new rig actions keep floor/shoes stationary and have bounded, recoverable tracks',()=>{
+test('fourteen rig actions keep floor/shoes stationary and have bounded, recoverable tracks',()=>{
  const h=harness();try{
- const actions=Object.keys(h.w.chotaLifeCatalog());assert.equal(actions.length,6);
+ const actions=Object.keys(h.w.chotaLifeCatalog());assert.equal(actions.length,14);
  for(const action of actions){h.api.play(action);assert.equal(h.pet.dataset.attention,action);assert.equal(h.row.style.transform,'');assert.equal(h.pet.style.transform,'');
- const tracks=h.animations.filter(a=>!a.cancelled);assert.ok(tracks.length>=4);
+ const tracks=h.animations.filter(a=>!a.cancelled);assert.ok(tracks.length>=2);
+ if(action==='paw-relax')assert.ok(tracks.some(a=>a.node.classList.contains('chota-idle-paw')),'the actual isolated hand receives the articulation');
  assert.ok(tracks.every(a=>a.node!==h.row && !a.node.classList.contains('chota-idle-feet')));
  for(const track of tracks){assert.equal(track.options.iterations,undefined);assert.equal(track.keyframes[0].offset,0);assert.equal(track.keyframes.at(-1).offset,1);const property=track.keyframes[0].transform!==undefined?'transform':'opacity';assert.equal(track.keyframes[0][property],track.keyframes.at(-1)[property]);}
  }
