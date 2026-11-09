@@ -60,3 +60,7 @@ html[data-chota-modular="true"] .chd-wear{display:none}
 html[data-chota-modular="true"] .tigreton-character.is-mirrored{--chota-outfit-base:var(--chota-flip-base);--chota-outfit-talk:var(--chota-flip-talk);--chota-outfit-directional:var(--chota-flip-directional);--chota-outfit-contextual:var(--chota-flip-contextual);--chota-outfit-room:var(--chota-flip-room);--chota-neutral-base:var(--chota-flip-base);--chota-neutral-talk:var(--chota-flip-talk);--chota-neutral-directional:var(--chota-flip-directional);--chota-neutral-contextual:var(--chota-flip-contextual);--chota-neutral-room:var(--chota-flip-room)}
 html[data-chota-modular="true"] .chd-chota.is-facing-left{background-image:var(--chota-flip-base)}
 html[data-chota-modular="true"] .chd-chota.is-facing-left.is-talking{background-image:var(--chota-flip-talk)}
+
+/* While the saved outfit is restored on launch (at most 2.5 s), the Chota is
+   hidden instead of showing the old baked clothes. */
+html[data-chota-pending="true"] :is(.tigreton-character,.chd-chota,.calendar-chota-sprite>span,.col-chota-sprite,.pack-chota-sprite,.album-chota-sprite,.catalog-chota-sprite,.dup-chota-sprite,.inbox-chota-sprite,.profile-chota-sprite,.store-hall-chota){visibility:hidden}

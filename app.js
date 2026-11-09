@@ -5407,6 +5407,8 @@ async function logoutCurrentUser() {
   clearPendingChatFile("group");
   clearPendingChatFile("private");
   if (db) await db.auth.signOut();
+  // The Chota's saved outfit belongs to this member; forget it on sign-out.
+  globalThis.ChotaAppearance?.reset();
   localStorage.removeItem(AUTH_STORAGE_KEY);
   localStorage.removeItem(AUTH_PROFILE_CACHE_KEY);
   localStorage.removeItem(MEMBER_CACHE_KEY);

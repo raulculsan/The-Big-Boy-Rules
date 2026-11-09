@@ -255,8 +255,9 @@
   }
   function changeOwner() {
     const current = options?.session() || null;
+    globalThis.ChotaAppearance?.claim?.(current);
     if (owner === current) return;
-    closeInventory();if(state?.wardrobe_version===1||globalThis.ChotaAppearance?.enabled?.())void globalThis.ChotaWardrobe?.applyOutfit?.(null);modularSignature='';generation++; stateTrusted=false;outfitSignature='';pantsSignature='';shirtSignature='';owner = current; state = null; request = null; loading = false; buying = null; equipping = null; failure = ''; notice = ''; fetchedAt = 0; roomTab = 'ambientes';
+    closeInventory();if(owner&&(state?.wardrobe_version===1||globalThis.ChotaAppearance?.enabled?.()))void globalThis.ChotaWardrobe?.applyOutfit?.(null);modularSignature='';generation++; stateTrusted=false;outfitSignature='';pantsSignature='';shirtSignature='';owner = current; state = null; request = null; loading = false; buying = null; equipping = null; failure = ''; notice = ''; fetchedAt = 0; roomTab = 'ambientes';
     if (owner) try { const cached = JSON.parse(localStorage.getItem(key(owner)) || 'null'); if (cached?.owner === owner && Array.isArray(cached.items)) state = validState(cached); } catch {}
     paintRooms(); render();
   }
@@ -461,6 +462,6 @@
     window.addEventListener('offline',render);
     render();
   }
-  function reset() {closeInventory();modularSignature='';void globalThis.ChotaWardrobe?.applyOutfit?.(null);generation++;stateTrusted=false;outfitSignature='';pantsSignature='';shirtSignature='';owner=null;state=null;request=null;loading=false;buying=null;equipping=null;fetchedAt=0;failure='';notice='';roomTab='ambientes';paintRooms();render();}
+  function reset() {closeInventory();modularSignature='';if(owner)void globalThis.ChotaWardrobe?.applyOutfit?.(null);generation++;stateTrusted=false;outfitSignature='';pantsSignature='';shirtSignature='';owner=null;state=null;request=null;loading=false;buying=null;equipping=null;fetchedAt=0;failure='';notice='';roomTab='ambientes';paintRooms();render();}
   globalThis.ChotaShop=Object.freeze({initialize,mountRoom,unmountRoom,refresh,reset,selectRoomTab,openInventory});
 })();
