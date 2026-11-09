@@ -8,6 +8,7 @@ Aprobado por el usuario el 2026-11-09, tras la v5 «a medida» (`artwork/chota/w
 - **67 poses completas en las 5 hojas**, con celdas de 256 px: `base` 6×4, `directional` 5×4, `contextual` 4×4, `room` 4×1 y `talk` 3×1. Ninguna celda vacía ni medio dibujada.
 - **Una sola dueña por píxel.** Cada píxel opaco del sprite original pertenece a la anatomía o a una única prenda. La comprobación `sourceMismatch` de `assets.mjs` tiene que dar 0.
 - **Las patas son anatomía.** La piel cálida que haya dentro de los círculos de mano (`hands` en `artwork/chota/wardrobe-rig-v1/poses.json`, radio + 6 px) nunca forma parte de una prenda, aunque toque la camiseta o el pantalón. Si no se respeta, la pata sale del color de la prenda; pasó en 10 poses de la v5.
+- **Logos y estampados van pegados a su tela.** Se anclan a la parte de la prenda que los lleva en cada pose (el parche Carhartt, a la cadera visible del pantalón bajo la camiseta; el logo Supreme, al pecho), nunca a una posición fija del torso. Si la pierna o el brazo se mueven, el logo se mueve con ellos y no puede acabar en la entrepierna, en la otra pierna ni fuera de la tela.
 - **Orden de capas:** zonas sin ropa → anatomía → pantalón → zapatillas → camiseta → abrigo → primer plano (cabeza y manos). La cabeza y las patas siempre quedan por encima de la ropa.
 - **Los abrigos tienen que seguir al brazo.** Con los brazos en alto (base 2–4, 14 y 15) la manga sube con el brazo; no puede quedarse colgando. Los plumíferos TNF actuales aún no lo cumplen, así que cualquier abrigo nuevo debe hacerlo bien desde el principio.
 
@@ -33,7 +34,7 @@ Aprobado por el usuario el 2026-11-09, tras la v5 «a medida» (`artwork/chota/w
 Que las pruebas automáticas de cobertura o de alfa pasen no basta; el usuario rechazó la v4 aunque las pasaba. Antes de publicar hay que:
 
 1. Regenerar con `node artwork/chota/wardrobe-tailored-v5/source-topology/assets.mjs` y comprobar `sourceMismatch: 0`.
-2. Mirar las 67 poses ampliadas con muestreo nearest-neighbour para cada prenda nueva: puesta, sin ella y con abrigo. Fijarse en cuello, mangas, puños, cintura, entrepierna, bajos sobre las zapatillas y **las patas**.
+2. Mirar las 67 poses ampliadas con muestreo nearest-neighbour para cada prenda nueva: puesta, sin ella y con abrigo. Fijarse en cuello, mangas, puños, cintura, entrepierna, bajos sobre las zapatillas, **las patas** y que **cada logo siga a su tela** pose a pose (andando, saltando, sentado, dormido y de espaldas).
 3. Comprobar que ninguna pose deja píxeles de piel cálida dentro de las manos con etiqueta de prenda (debe dar 0).
 4. Probar en `artwork/chota/modular-body-v1/integration.html` a 390×844: sede, dilema (andar, hablar, tocar para saltar y cambiar de ropa con el diálogo abierto), probador, armario y un minijuego, sin errores de consola.
 5. Ejecutar las pruebas `scripts/chota-*.test.mjs`.

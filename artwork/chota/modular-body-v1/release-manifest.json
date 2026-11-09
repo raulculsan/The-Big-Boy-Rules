@@ -1,7 +1,7 @@
 {
   "version": 2,
   "rigVersion": 5,
-  "prepared": "2026-11-09T20:28:06.766Z",
+  "prepared": "2026-11-09T20:53:08.732Z",
   "published": false,
   "platforms": [
     "web/PWA",
@@ -225,7 +225,7 @@
     {
       "file": "chota-appearance.js",
       "bytes": 6681,
-      "sha256": "13c8181d4e2e2ae61be438c56cfe2488f7452f61f2e9dd22b7d94eec8133a534"
+      "sha256": "49f978ac4755f12ccc4eb9861941963799a69b8a1aad8c6f44cedf1bf9b77f45"
     },
     {
       "file": "chota-compositor-worker.js",
@@ -255,12 +255,12 @@
     {
       "file": "index.html",
       "bytes": 102529,
-      "sha256": "c7675888313681bbd325ef8bb0c73bd153ccddc37e78b016aafd1c2de2d1d817"
+      "sha256": "8596e396486c3811e8caeedc4c3b8dedf637840482cdef787200ab1dd2f8f336"
     },
     {
       "file": "service-worker.js",
       "bytes": 27434,
-      "sha256": "7947f92e9912acb455e7b2de436be01f5275808b41c57b7661a21cdab61a6f4a"
+      "sha256": "e115473b629fe1b5e23577dc97dee4cb0cc66513ab5f0aeccd1b7e84a1566cd0"
     },
     {
       "file": "scripts/build-web.mjs",
@@ -334,13 +334,13 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-base.webp",
-      "bytes": 93414,
-      "sha256": "daa4c7bf4a0d7be279426f072b1b5f420f7b267f14648a4a516cddcc9d6f7c1f"
+      "bytes": 93708,
+      "sha256": "622da0ff892d17008f41db775a6ac435efa1075cf7181cb3b9c692b675ac194f"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-base.webp",
-      "bytes": 85348,
-      "sha256": "92505c7326207f0d866b8bfcb899296b0a69b3f2a971d3b007f4a25490caf285"
+      "bytes": 85624,
+      "sha256": "cb00f840ecad05e5fb81b85809a0a3c4308451b1e44f7eb3ac78c28451e4737f"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-base.webp",
@@ -414,13 +414,13 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-directional.webp",
-      "bytes": 42722,
-      "sha256": "ba7fc62e1e7aa10a6014d2e053ae23f5e63b5db873a9776b0cb085df89608dc5"
+      "bytes": 44304,
+      "sha256": "ca87b709449158859b0df300f9f60fb648a14d29d1634833eeffed9b803e4e93"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-directional.webp",
-      "bytes": 37756,
-      "sha256": "1deb6b7a77294da0d5a44ef2b279e411fcc02435997657cede2cc1e8a3ec691b"
+      "bytes": 39754,
+      "sha256": "2c59210d4aabedd2c14203465aa32be28948b292222c73ab6017103819789743"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-directional.webp",
@@ -494,13 +494,13 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-contextual.webp",
-      "bytes": 15816,
-      "sha256": "ccab3ced524fe8f497ee5d48c7084de8122e11b779b38a825c43b86ed825a3df"
+      "bytes": 15934,
+      "sha256": "18379c59115ad8c0feb03bce51650a124382cc88ce867afb97e1dad45b4b136b"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-contextual.webp",
-      "bytes": 16104,
-      "sha256": "5ebcacd63af3d8f0dc86a4ac243314a8602f858f1e60487f5102e7185a0064bd"
+      "bytes": 16186,
+      "sha256": "810d3dd85e100c29da58d200f6e27371bd16fdfa29d0bd3289bb8cbe1c9574e9"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-contextual.webp",
@@ -574,13 +574,13 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-room.webp",
-      "bytes": 11230,
-      "sha256": "49ab5f1330d2544c6c73bb2b8abcbae032547a24b080eeaf279c8efac7a8dee3"
+      "bytes": 11276,
+      "sha256": "54ed8eb266829f8c026ca36f041e72056a3d2b5906f42b986e6c9507c737ddcd"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-room.webp",
-      "bytes": 10142,
-      "sha256": "4cb66eb41e6ff5603796e950fc771c417cd362994249eb328684504e714db360"
+      "bytes": 10186,
+      "sha256": "352a8efcba3ee817e0752aa37df033349f802ef3b6531da8dab1f0cde6b7962a"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-room.webp",
@@ -654,13 +654,13 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-talk.webp",
-      "bytes": 6900,
-      "sha256": "ecae2d2b77aac6c06b5e76b43b2a834960acf3e76d6c6b170842a55b8ed3d282"
+      "bytes": 6330,
+      "sha256": "241b19066b6e21a401a24b707acf104334901787bb1357acac716522a6c86a6f"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-talk.webp",
-      "bytes": 5996,
-      "sha256": "db153056ea2f64714b5554ce8ef300fe946c9a51f468e2113dfe3cc7d2589bcd"
+      "bytes": 5964,
+      "sha256": "e3d2bf3ca674fef460d4003c17b915edc3227a83e784e5a9709e4fc2e96142b3"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-talk.webp",
@@ -670,7 +670,7 @@
     {
       "file": "icons/mascot/chota-v2/tailored-v5/manifest-v1.json",
       "bytes": 27357,
-      "sha256": "16528b2421d5c3077d0295677170b33cbf5aaceddd0e2bacb41dca95d3b7ec7b"
+      "sha256": "6bebb2e4dae7164866e44bd70c711f2d59cc338c38c8e2d9f770acb7a435f8a7"
     },
     {
       "file": "icons/mascot/chota-v2/neutral/idle-core-mask-v1.png",

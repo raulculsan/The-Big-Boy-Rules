@@ -27,5 +27,18 @@ export async function render(source,tee,jeans,p,topKey='carhartt-crudo',bottomKe
  if(topKey.startsWith('carhartt-')&&!p.back){const px=w*.16,py=h*.29,pw=w*.145,ph=h*.235,cloth=topKey==='carhartt-oliva'?['#5a6747','#35442e']:['#e4d2b5','#ae9878'];const decal=await sharp(Buffer.from(`<svg width="256" height="256"><g transform="translate(${cx} ${cy}) rotate(${angle})"><path d="M${px} ${py}h${pw}v${ph*.86}q-${pw/2} ${ph*.3}-${pw} 0Z" fill="${cloth[0]}" stroke="${cloth[1]}" stroke-width=".7"/><path d="M${px+.8} ${py+1.2}h${pw-1.6}" fill="none" stroke="${cloth[1]}" stroke-width=".5"/><rect x="${px+pw*.39}" y="${py+ph*.3}" width="${pw*.48}" height="${ph*.45}" fill="#d18a28"/><path d="M${px+pw*.79} ${py+ph*.36}q-${pw*.39}-.5-${pw*.39} ${ph*.15}q0 ${ph*.18} ${pw*.39} ${ph*.12}v-${ph*.12}q-${pw*.19} .3-${pw*.19}-.2q0-.5 ${pw*.19}-.4Z" fill="#fff0d3"/></g></svg>`)).ensureAlpha().raw().toBuffer();
   for(let k=0;k<result.length;k+=4)if(tee[k+3]&&decal[k+3]){const a=decal[k+3]/255;for(let ch=0;ch<3;ch++)result[k+ch]=Math.round(result[k+ch]*(1-a)+decal[k+ch]*a);}
  }
- if(bottomKey.startsWith('carhartt-')){const x=w*.27,y=h*1.16,size=Math.max(4,w*.085),mark=await sharp(Buffer.from(`<svg width="256" height="256"><g transform="translate(${cx} ${cy}) rotate(${angle})"><rect x="${x}" y="${y}" width="${size}" height="${size*1.1}" rx=".4" fill="#dfcfb5" stroke="#746448" stroke-width=".55"/><path d="M${x+size*.76} ${y+size*.23}q-${size*.6}-.3-${size*.6} ${size*.35}q0 ${size*.5} ${size*.6} ${size*.3}v-${size*.24}q-${size*.29} .15-${size*.29}-.1q0-.2 ${size*.29}-.1Z" fill="#bf852d"/></g></svg>`)).ensureAlpha().raw().toBuffer();for(let k=0;k<result.length;k+=4)if(jeans[k+3]&&mark[k+3]){const a=mark[k+3]/255;for(let ch=0;ch<3;ch++)result[k+ch]=Math.round(result[k+ch]*(1-a)+mark[k+ch]*a);}}
+ if(bottomKey.startsWith('carhartt-')){const size=Math.max(4,w*.085),[ax,ay]=logoAnchor(jeans,tee,size),x=0,y=0,mark=await sharp(Buffer.from(`<svg width="256" height="256"><g transform="translate(${ax} ${ay}) rotate(${angle})"><rect x="${x}" y="${y}" width="${size}" height="${size*1.1}" rx=".4" fill="#dfcfb5" stroke="#746448" stroke-width=".55"/><path d="M${x+size*.76} ${y+size*.23}q-${size*.6}-.3-${size*.6} ${size*.35}q0 ${size*.5} ${size*.6} ${size*.3}v-${size*.24}q-${size*.29} .15-${size*.29}-.1q0-.2 ${size*.29}-.1Z" fill="#bf852d"/></g></svg>`)).ensureAlpha().raw().toBuffer();for(let k=0;k<result.length;k+=4)if(jeans[k+3]&&mark[k+3]){const a=mark[k+3]/255;for(let ch=0;ch<3;ch++)result[k+ch]=Math.round(result[k+ch]*(1-a)+mark[k+ch]*a);}}
  return result;}
+
+// Claude 2026-11-09: the Carhartt patch was placed from the torso box, so it
+// stayed still while the legs moved and landed on the crotch or the other leg.
+// It now sits on the wearer's visible hip, just below the shirt hem, at the
+// viewer-right end of the pelvis run — a point that moves with the trousers.
+function logoAnchor(jeans,tee,size){
+ const visible=k=>jeans[k*4+3]>=128&&!(tee[k*4+3]>=128),runs=[];let widest=0;
+ for(let y=0;y<256;y++){let best=null,start=-1;for(let x=0;x<=256;x++){const on=x<256&&visible(y*256+x);if(on&&start<0)start=x;if(!on&&start>=0){if(!best||x-start>best[1]-best[0])best=[start,x];start=-1;}}runs[y]=best;if(best)widest=Math.max(widest,best[1]-best[0]);}
+ let row=-1;for(let y=0;y<256;y++)if(runs[y]&&runs[y][1]-runs[y][0]>=widest*.6){row=y;break;}
+ if(row<0)return[128,170];
+ const y=Math.min(250-size*1.1,row+2),r=runs[Math.round(y)]||runs[row];
+ return[Math.max(r[0],r[1]-size-Math.max(3,(r[1]-r[0])*.18)),y];
+}
