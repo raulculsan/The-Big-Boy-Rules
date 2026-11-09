@@ -12,7 +12,7 @@
     return Object.keys(grids).every(sheet=>typeof paths[sheet]==='string'&&/^icons\/mascot\/chota-v2\/(neutral|wardrobe-originals)\/[a-z0-9-]+\.webp$/.test(paths[sheet]));
   }
   async function decode(paths){
-    await Promise.all(Object.entries(grids).map(async([sheet,[cols,rows]])=>{const image=new Image();image.src=paths[sheet];await image.decode();if(image.naturalWidth!==cols*256||image.naturalHeight!==rows*256)throw new Error('El cuerpo del Chota no coincide con sus animaciones.');}));
+    await Promise.all(Object.entries(grids).map(async([sheet,[cols,rows]])=>{const image=new Image();image.src=paths[sheet];await image.decode().catch(error=>{throw new Error(`No se pudo decodificar ${image.src}: ${error.message}`);});if(image.naturalWidth!==cols*256||image.naturalHeight!==rows*256)throw new Error('El cuerpo del Chota no coincide con sus animaciones.');}));
   }
   function prepare(){
     if(preparing)return preparing;
@@ -69,7 +69,7 @@
     return new Promise((resolve,reject)=>{
       pending={sequence:token,signature,resolve,reject};
       const originals={bottomwear:'original-jeans',footwear:'original-jordan-chicago',topwear:'original-stussy'};
-      const allOriginal=layers.length===3&&new Set(layers.map(layer=>layer.slot)).size===3&&layers.every(layer=>originals[layer.slot]&&Object.keys(grids).every(sheet=>layer.atlases[sheet]===`icons/mascot/chota-v2/wardrobe-originals/${originals[layer.slot]}-${sheet}-v1.webp`));
+      const allOriginal=layers.length===3&&new Set(layers.map(layer=>layer.slot)).size===3&&layers.every(layer=>originals[layer.slot]&&Object.keys(grids).every(sheet=>layer.atlases[sheet]===`icons/mascot/chota-v2/wardrobe-originals/${originals[layer.slot]}-${sheet}-${layer.slot==='footwear'?'v1':'v2'}.webp`));
       const compositionBase=allOriginal?contract.defaults:contract.neutral,compositionLayers=allOriginal?[]:layers;
       try{ensureWorker().postMessage({sequence:token,base:Object.fromEntries(Object.entries(compositionBase).map(([sheet,url])=>[sheet,absolute(url)])),layers:compositionLayers.map(layer=>({slot:layer.slot,atlases:Object.fromEntries(Object.entries(layer.atlases).map(([sheet,url])=>[sheet,absolute(url)]))}))});}
       catch(error){pending=null;reject(error);}

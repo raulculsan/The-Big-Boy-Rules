@@ -110,12 +110,22 @@
   const actor = {
     timer: 0, talkTimer: 0, typing: 0, token: 0, x: 0, sheet: 'base', index: 0,
     node() { return dialog?.querySelector('.chd-chota'); },
-    frame(index) {
+    pose(sheet, index) {
       const node = this.node();
       if (!node) return;
-      this.sheet='base';this.index=index;node.classList.remove('is-talking');
-      node.style.backgroundPosition = `${(index % 6) * 20}% ${Math.floor(index / 6) * (100 / 3)}%`;
-      this.dress('base', node.style.backgroundPosition);
+      const cols = sheet === 'talk' ? 3 : 6, rows = sheet === 'talk' ? 1 : 4;
+      this.sheet = sheet; this.index = index;
+      node.classList.toggle('is-talking', sheet === 'talk');
+      node.dataset.sheet = sheet; node.dataset.frame = String(index);
+      node.style.backgroundSize = `${cols * 100}% ${rows * 100}%`;
+      node.style.backgroundPosition = `${index % cols * 100 / (cols - 1)}% ${rows === 1 ? 0 : Math.floor(index / cols) * 100 / (rows - 1)}%`;
+      this.dress(sheet, node.style.backgroundPosition);
+    },
+    frame(index) {
+      // A gesture can interrupt speech; no queued mouth tick may select a talk
+      // garment on the base body afterwards.
+      clearInterval(this.talkTimer); this.talkTimer = 0;
+      this.pose('base', index);
     },
     // He wears the clothes he has on in the sede: one layer per garment over the same cell.
     wear() {
@@ -142,13 +152,15 @@
     },
     stop() { clearInterval(this.timer); clearInterval(this.talkTimer); clearTimeout(this.typing); this.timer = this.talkTimer = this.typing = 0; this.token++; },
     play(name, done) {
-      clearInterval(this.timer);
+      this.stop();
+      const token = this.token;
       const frames = sequences[name] || sequences.greet;
       if (reduced.matches) { this.frame(0); done?.(); return; }
       let index = 0;
       this.frame(frames[0]);
       this.node()?.classList.toggle('is-airborne', name === 'jump' || name === 'cheer');
       this.timer = setInterval(() => {
+        if (token !== this.token) return;
         index++;
         if (index >= frames.length) { clearInterval(this.timer); this.timer = 0; this.node()?.classList.remove('is-airborne'); done?.(); return; }
         this.frame(frames[index]);
@@ -183,8 +195,8 @@
       const bubble = dialog?.querySelector('.chd-bubble');
       const node = this.node();
       if (!bubble || !node) return;
-      const token = ++this.token;
-      clearInterval(this.talkTimer); clearTimeout(this.typing);
+      this.stop();
+      const token = this.token;
       this.think(false);
       const line = bubble.querySelector('.chd-line');
       bubble.querySelector('.chd-ghost').textContent = text;
@@ -195,11 +207,9 @@
       const finish = () => { if (token !== this.token) return; this.frame(0); if (gesture) this.play(gesture, after); else after?.(); };
       if (reduced.matches) { line.textContent = text; finish(); return; }
       line.textContent = '';
-      clearInterval(this.timer);
-      this.sheet='talk';this.index=0;node.classList.add('is-talking');node.style.backgroundPosition='0% 0%';
-      this.dress('talk', '0% 0%');
+      this.pose('talk', 0);
       let mouth = 0, shown = 0;
-      this.talkTimer = setInterval(() => { this.index=[0,1,2,1][mouth++%4];node.style.backgroundPosition = `${this.index * 50}% 0`; this.dress('talk', node.style.backgroundPosition); }, 110);
+      this.talkTimer = setInterval(() => { if (token === this.token) this.pose('talk', [0,1,2,1][mouth++%4]); }, 110);
       const step = () => {
         if (token !== this.token) return;
         shown = Math.min(text.length, shown + 2);

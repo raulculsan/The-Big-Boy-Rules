@@ -1,5 +1,12 @@
 # Chota modular — prepared, not published
 
+Update601: clothing cuts and the dilemma race are repaired; see
+`../wardrobe-fidelity-v4/CLAUDE_HANDOFF.md`. Current verification is23 focused
+passing tests plus fresh-origin legacy/modular browser checks. The original
+18-test preparation record below is historical; v3 clothing alpha is superseded
+by v4, and extracted original shirt/jeans byv2.
+
+
 The 67-pose neutral body is complete and locally approved in
 `icons/mascot/chota-v2/neutral/manifest-v1.json`. The application enables it only
 when the server returns `wardrobe_version: 1`. No migration, deployment, app

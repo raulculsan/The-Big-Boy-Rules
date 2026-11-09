@@ -7,23 +7,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "base",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-base-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-base-v2.webp",
       "cell": 256,
       "cols": 6,
       "rows": 4,
       "count": 24,
-      "bytes": 91680
+      "bytes": 108168
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "base",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-base-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-base-v2.webp",
       "cell": 256,
       "cols": 6,
       "rows": 4,
       "count": 24,
-      "bytes": 124438
+      "bytes": 122010
     },
     {
       "slot": "footwear",
@@ -40,23 +40,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "directional",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-directional-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-directional-v2.webp",
       "cell": 256,
       "cols": 5,
       "rows": 4,
       "count": 20,
-      "bytes": 30440
+      "bytes": 31986
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "directional",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-directional-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-directional-v2.webp",
       "cell": 256,
       "cols": 5,
       "rows": 4,
       "count": 20,
-      "bytes": 44046
+      "bytes": 42660
     },
     {
       "slot": "footwear",
@@ -73,23 +73,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "contextual",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-contextual-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-contextual-v2.webp",
       "cell": 256,
       "cols": 4,
       "rows": 4,
       "count": 16,
-      "bytes": 13232
+      "bytes": 15916
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "contextual",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-contextual-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-contextual-v2.webp",
       "cell": 256,
       "cols": 4,
       "rows": 4,
       "count": 16,
-      "bytes": 18180
+      "bytes": 16770
     },
     {
       "slot": "footwear",
@@ -106,23 +106,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "room",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-room-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-room-v2.webp",
       "cell": 256,
       "cols": 4,
       "rows": 1,
       "count": 4,
-      "bytes": 5550
+      "bytes": 6884
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "room",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-room-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-room-v2.webp",
       "cell": 256,
       "cols": 4,
       "rows": 1,
       "count": 4,
-      "bytes": 11234
+      "bytes": 10708
     },
     {
       "slot": "footwear",
@@ -139,23 +139,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "talk",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-talk-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-talk-v2.webp",
       "cell": 256,
       "cols": 3,
       "rows": 1,
       "count": 3,
-      "bytes": 9658
+      "bytes": 9920
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "talk",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-talk-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-talk-v2.webp",
       "cell": 256,
       "cols": 3,
       "rows": 1,
       "count": 3,
-      "bytes": 9186
+      "bytes": 8460
     },
     {
       "slot": "footwear",
@@ -203,8 +203,8 @@
       "sheet": "base",
       "frame": 0,
       "pixels": {
-        "topwear": 2726,
-        "bottomwear": 2487,
+        "topwear": 2882,
+        "bottomwear": 2398,
         "footwear": 2918
       }
     },
@@ -212,8 +212,8 @@
       "sheet": "base",
       "frame": 1,
       "pixels": {
-        "topwear": 2251,
-        "bottomwear": 2723,
+        "topwear": 2460,
+        "bottomwear": 2660,
         "footwear": 3232
       }
     },
@@ -221,8 +221,8 @@
       "sheet": "base",
       "frame": 2,
       "pixels": {
-        "topwear": 2980,
-        "bottomwear": 2769,
+        "topwear": 3235,
+        "bottomwear": 2680,
         "footwear": 3055
       }
     },
@@ -230,8 +230,8 @@
       "sheet": "base",
       "frame": 3,
       "pixels": {
-        "topwear": 2868,
-        "bottomwear": 2769,
+        "topwear": 3259,
+        "bottomwear": 2641,
         "footwear": 2978
       }
     },
@@ -239,8 +239,8 @@
       "sheet": "base",
       "frame": 4,
       "pixels": {
-        "topwear": 2824,
-        "bottomwear": 2758,
+        "topwear": 3170,
+        "bottomwear": 2684,
         "footwear": 3194
       }
     },
@@ -248,8 +248,8 @@
       "sheet": "base",
       "frame": 5,
       "pixels": {
-        "topwear": 2080,
-        "bottomwear": 2720,
+        "topwear": 2413,
+        "bottomwear": 2621,
         "footwear": 3013
       }
     },
@@ -257,8 +257,8 @@
       "sheet": "base",
       "frame": 6,
       "pixels": {
-        "topwear": 2267,
-        "bottomwear": 3399,
+        "topwear": 2481,
+        "bottomwear": 3406,
         "footwear": 3566
       }
     },
@@ -266,8 +266,8 @@
       "sheet": "base",
       "frame": 7,
       "pixels": {
-        "topwear": 1632,
-        "bottomwear": 2728,
+        "topwear": 1973,
+        "bottomwear": 2726,
         "footwear": 2916
       }
     },
@@ -275,8 +275,8 @@
       "sheet": "base",
       "frame": 8,
       "pixels": {
-        "topwear": 2154,
-        "bottomwear": 3445,
+        "topwear": 2401,
+        "bottomwear": 3451,
         "footwear": 3633
       }
     },
@@ -284,8 +284,8 @@
       "sheet": "base",
       "frame": 9,
       "pixels": {
-        "topwear": 1243,
-        "bottomwear": 2795,
+        "topwear": 1626,
+        "bottomwear": 2794,
         "footwear": 2653
       }
     },
@@ -293,8 +293,8 @@
       "sheet": "base",
       "frame": 10,
       "pixels": {
-        "topwear": 2032,
-        "bottomwear": 3370,
+        "topwear": 2479,
+        "bottomwear": 3372,
         "footwear": 3281
       }
     },
@@ -302,8 +302,8 @@
       "sheet": "base",
       "frame": 11,
       "pixels": {
-        "topwear": 2287,
-        "bottomwear": 3626,
+        "topwear": 2788,
+        "bottomwear": 3617,
         "footwear": 3615
       }
     },
@@ -311,8 +311,8 @@
       "sheet": "base",
       "frame": 12,
       "pixels": {
-        "topwear": 1741,
-        "bottomwear": 2735,
+        "topwear": 2518,
+        "bottomwear": 2601,
         "footwear": 3300
       }
     },
@@ -320,8 +320,8 @@
       "sheet": "base",
       "frame": 13,
       "pixels": {
-        "topwear": 1302,
-        "bottomwear": 1882,
+        "topwear": 1886,
+        "bottomwear": 1847,
         "footwear": 3107
       }
     },
@@ -329,8 +329,8 @@
       "sheet": "base",
       "frame": 14,
       "pixels": {
-        "topwear": 2324,
-        "bottomwear": 3333,
+        "topwear": 3227,
+        "bottomwear": 3288,
         "footwear": 2925
       }
     },
@@ -338,8 +338,8 @@
       "sheet": "base",
       "frame": 15,
       "pixels": {
-        "topwear": 2550,
-        "bottomwear": 3584,
+        "topwear": 3509,
+        "bottomwear": 3553,
         "footwear": 3095
       }
     },
@@ -347,8 +347,8 @@
       "sheet": "base",
       "frame": 16,
       "pixels": {
-        "topwear": 1877,
-        "bottomwear": 2796,
+        "topwear": 2429,
+        "bottomwear": 2712,
         "footwear": 3482
       }
     },
@@ -356,8 +356,8 @@
       "sheet": "base",
       "frame": 17,
       "pixels": {
-        "topwear": 2433,
-        "bottomwear": 2605,
+        "topwear": 2805,
+        "bottomwear": 2564,
         "footwear": 3069
       }
     },
@@ -365,8 +365,8 @@
       "sheet": "base",
       "frame": 18,
       "pixels": {
-        "topwear": 2568,
-        "bottomwear": 2809,
+        "topwear": 2840,
+        "bottomwear": 2800,
         "footwear": 3141
       }
     },
@@ -374,8 +374,8 @@
       "sheet": "base",
       "frame": 19,
       "pixels": {
-        "topwear": 1590,
-        "bottomwear": 1801,
+        "topwear": 1976,
+        "bottomwear": 1786,
         "footwear": 3036
       }
     },
@@ -383,7 +383,7 @@
       "sheet": "base",
       "frame": 20,
       "pixels": {
-        "topwear": 2139,
+        "topwear": 2382,
         "bottomwear": 1828,
         "footwear": 2653
       }
@@ -392,8 +392,8 @@
       "sheet": "base",
       "frame": 21,
       "pixels": {
-        "topwear": 1873,
-        "bottomwear": 2062,
+        "topwear": 2211,
+        "bottomwear": 2234,
         "footwear": 1405
       }
     },
@@ -401,8 +401,8 @@
       "sheet": "base",
       "frame": 22,
       "pixels": {
-        "topwear": 1321,
-        "bottomwear": 2318,
+        "topwear": 1473,
+        "bottomwear": 2306,
         "footwear": 1654
       }
     },
@@ -410,7 +410,7 @@
       "sheet": "base",
       "frame": 23,
       "pixels": {
-        "topwear": 1159,
+        "topwear": 1165,
         "bottomwear": 2001,
         "footwear": 1284
       }
@@ -419,8 +419,8 @@
       "sheet": "directional",
       "frame": 0,
       "pixels": {
-        "topwear": 3212,
-        "bottomwear": 2490,
+        "topwear": 3472,
+        "bottomwear": 2465,
         "footwear": 2739
       }
     },
@@ -428,8 +428,8 @@
       "sheet": "directional",
       "frame": 1,
       "pixels": {
-        "topwear": 3098,
-        "bottomwear": 2410,
+        "topwear": 3410,
+        "bottomwear": 2391,
         "footwear": 2499
       }
     },
@@ -437,8 +437,8 @@
       "sheet": "directional",
       "frame": 2,
       "pixels": {
-        "topwear": 3036,
-        "bottomwear": 2447,
+        "topwear": 3404,
+        "bottomwear": 2405,
         "footwear": 2482
       }
     },
@@ -446,8 +446,8 @@
       "sheet": "directional",
       "frame": 3,
       "pixels": {
-        "topwear": 3122,
-        "bottomwear": 2533,
+        "topwear": 3434,
+        "bottomwear": 2503,
         "footwear": 2416
       }
     },
@@ -455,8 +455,8 @@
       "sheet": "directional",
       "frame": 4,
       "pixels": {
-        "topwear": 3231,
-        "bottomwear": 2505,
+        "topwear": 3491,
+        "bottomwear": 2462,
         "footwear": 2536
       }
     },
@@ -464,8 +464,8 @@
       "sheet": "directional",
       "frame": 5,
       "pixels": {
-        "topwear": 3220,
-        "bottomwear": 2437,
+        "topwear": 3535,
+        "bottomwear": 2438,
         "footwear": 2413
       }
     },
@@ -473,8 +473,8 @@
       "sheet": "directional",
       "frame": 6,
       "pixels": {
-        "topwear": 3182,
-        "bottomwear": 2502,
+        "topwear": 3567,
+        "bottomwear": 2485,
         "footwear": 2559
       }
     },
@@ -482,8 +482,8 @@
       "sheet": "directional",
       "frame": 7,
       "pixels": {
-        "topwear": 3218,
-        "bottomwear": 2528,
+        "topwear": 3532,
+        "bottomwear": 2510,
         "footwear": 2647
       }
     },
@@ -491,8 +491,8 @@
       "sheet": "directional",
       "frame": 8,
       "pixels": {
-        "topwear": 2740,
-        "bottomwear": 2343,
+        "topwear": 2910,
+        "bottomwear": 2279,
         "footwear": 2728
       }
     },
@@ -500,8 +500,8 @@
       "sheet": "directional",
       "frame": 9,
       "pixels": {
-        "topwear": 2602,
-        "bottomwear": 2319,
+        "topwear": 2818,
+        "bottomwear": 2321,
         "footwear": 3086
       }
     },
@@ -509,8 +509,8 @@
       "sheet": "directional",
       "frame": 10,
       "pixels": {
-        "topwear": 2576,
-        "bottomwear": 2326,
+        "topwear": 2852,
+        "bottomwear": 2324,
         "footwear": 3139
       }
     },
@@ -518,8 +518,8 @@
       "sheet": "directional",
       "frame": 11,
       "pixels": {
-        "topwear": 2632,
-        "bottomwear": 2490,
+        "topwear": 2848,
+        "bottomwear": 2466,
         "footwear": 3219
       }
     },
@@ -527,8 +527,8 @@
       "sheet": "directional",
       "frame": 12,
       "pixels": {
-        "topwear": 2768,
-        "bottomwear": 2491,
+        "topwear": 2938,
+        "bottomwear": 2473,
         "footwear": 3081
       }
     },
@@ -536,8 +536,8 @@
       "sheet": "directional",
       "frame": 13,
       "pixels": {
-        "topwear": 2735,
-        "bottomwear": 2389,
+        "topwear": 2923,
+        "bottomwear": 2403,
         "footwear": 3262
       }
     },
@@ -545,8 +545,8 @@
       "sheet": "directional",
       "frame": 14,
       "pixels": {
-        "topwear": 2690,
-        "bottomwear": 2347,
+        "topwear": 2929,
+        "bottomwear": 2348,
         "footwear": 3067
       }
     },
@@ -554,8 +554,8 @@
       "sheet": "directional",
       "frame": 15,
       "pixels": {
-        "topwear": 2698,
-        "bottomwear": 2367,
+        "topwear": 2886,
+        "bottomwear": 2366,
         "footwear": 3110
       }
     },
@@ -563,8 +563,8 @@
       "sheet": "directional",
       "frame": 16,
       "pixels": {
-        "topwear": 3177,
-        "bottomwear": 2596,
+        "topwear": 3489,
+        "bottomwear": 2548,
         "footwear": 2438
       }
     },
@@ -572,8 +572,8 @@
       "sheet": "directional",
       "frame": 17,
       "pixels": {
-        "topwear": 3939,
-        "bottomwear": 2682,
+        "topwear": 4074,
+        "bottomwear": 2642,
         "footwear": 2252
       }
     },
@@ -581,8 +581,8 @@
       "sheet": "directional",
       "frame": 18,
       "pixels": {
-        "topwear": 3942,
-        "bottomwear": 2652,
+        "topwear": 4095,
+        "bottomwear": 2600,
         "footwear": 2262
       }
     },
@@ -590,8 +590,8 @@
       "sheet": "directional",
       "frame": 19,
       "pixels": {
-        "topwear": 2663,
-        "bottomwear": 2548,
+        "topwear": 2875,
+        "bottomwear": 2508,
         "footwear": 2805
       }
     },
@@ -599,8 +599,8 @@
       "sheet": "contextual",
       "frame": 0,
       "pixels": {
-        "topwear": 2694,
-        "bottomwear": 2562,
+        "topwear": 2862,
+        "bottomwear": 2443,
         "footwear": 2719
       }
     },
@@ -608,8 +608,8 @@
       "sheet": "contextual",
       "frame": 1,
       "pixels": {
-        "topwear": 2185,
-        "bottomwear": 2733,
+        "topwear": 2389,
+        "bottomwear": 2681,
         "footwear": 2934
       }
     },
@@ -617,8 +617,8 @@
       "sheet": "contextual",
       "frame": 2,
       "pixels": {
-        "topwear": 2344,
-        "bottomwear": 2681,
+        "topwear": 2455,
+        "bottomwear": 2676,
         "footwear": 2977
       }
     },
@@ -626,8 +626,8 @@
       "sheet": "contextual",
       "frame": 3,
       "pixels": {
-        "topwear": 2344,
-        "bottomwear": 2681,
+        "topwear": 2455,
+        "bottomwear": 2676,
         "footwear": 2977
       }
     },
@@ -635,8 +635,8 @@
       "sheet": "contextual",
       "frame": 4,
       "pixels": {
-        "topwear": 2694,
-        "bottomwear": 2562,
+        "topwear": 2862,
+        "bottomwear": 2443,
         "footwear": 2719
       }
     },
@@ -644,8 +644,8 @@
       "sheet": "contextual",
       "frame": 5,
       "pixels": {
-        "topwear": 2883,
-        "bottomwear": 2839,
+        "topwear": 3167,
+        "bottomwear": 2675,
         "footwear": 2931
       }
     },
@@ -653,8 +653,8 @@
       "sheet": "contextual",
       "frame": 6,
       "pixels": {
-        "topwear": 2512,
-        "bottomwear": 2806,
+        "topwear": 3224,
+        "bottomwear": 2775,
         "footwear": 3025
       }
     },
@@ -662,8 +662,8 @@
       "sheet": "contextual",
       "frame": 7,
       "pixels": {
-        "topwear": 2512,
-        "bottomwear": 2806,
+        "topwear": 3224,
+        "bottomwear": 2775,
         "footwear": 3025
       }
     },
@@ -671,8 +671,8 @@
       "sheet": "contextual",
       "frame": 8,
       "pixels": {
-        "topwear": 2694,
-        "bottomwear": 2562,
+        "topwear": 2862,
+        "bottomwear": 2443,
         "footwear": 2719
       }
     },
@@ -680,8 +680,8 @@
       "sheet": "contextual",
       "frame": 9,
       "pixels": {
-        "topwear": 2883,
-        "bottomwear": 2839,
+        "topwear": 3167,
+        "bottomwear": 2675,
         "footwear": 2931
       }
     },
@@ -689,8 +689,8 @@
       "sheet": "contextual",
       "frame": 10,
       "pixels": {
-        "topwear": 2356,
-        "bottomwear": 2734,
+        "topwear": 3428,
+        "bottomwear": 2725,
         "footwear": 2929
       }
     },
@@ -698,8 +698,8 @@
       "sheet": "contextual",
       "frame": 11,
       "pixels": {
-        "topwear": 2356,
-        "bottomwear": 2734,
+        "topwear": 3428,
+        "bottomwear": 2725,
         "footwear": 2929
       }
     },
@@ -707,8 +707,8 @@
       "sheet": "contextual",
       "frame": 12,
       "pixels": {
-        "topwear": 2694,
-        "bottomwear": 2562,
+        "topwear": 2862,
+        "bottomwear": 2443,
         "footwear": 2719
       }
     },
@@ -716,8 +716,8 @@
       "sheet": "contextual",
       "frame": 13,
       "pixels": {
-        "topwear": 2694,
-        "bottomwear": 2562,
+        "topwear": 2862,
+        "bottomwear": 2443,
         "footwear": 2719
       }
     },
@@ -725,8 +725,8 @@
       "sheet": "contextual",
       "frame": 14,
       "pixels": {
-        "topwear": 2073,
-        "bottomwear": 2871,
+        "topwear": 2708,
+        "bottomwear": 2855,
         "footwear": 2917
       }
     },
@@ -734,8 +734,8 @@
       "sheet": "contextual",
       "frame": 15,
       "pixels": {
-        "topwear": 2073,
-        "bottomwear": 2871,
+        "topwear": 2708,
+        "bottomwear": 2855,
         "footwear": 2917
       }
     },
@@ -743,8 +743,8 @@
       "sheet": "room",
       "frame": 0,
       "pixels": {
-        "topwear": 2131,
-        "bottomwear": 2886,
+        "topwear": 2440,
+        "bottomwear": 2795,
         "footwear": 2618
       }
     },
@@ -752,8 +752,8 @@
       "sheet": "room",
       "frame": 1,
       "pixels": {
-        "topwear": 1823,
-        "bottomwear": 3230,
+        "topwear": 2023,
+        "bottomwear": 3193,
         "footwear": 2412
       }
     },
@@ -761,8 +761,8 @@
       "sheet": "room",
       "frame": 2,
       "pixels": {
-        "topwear": 1950,
-        "bottomwear": 3734,
+        "topwear": 2482,
+        "bottomwear": 3618,
         "footwear": 2665
       }
     },
@@ -770,8 +770,8 @@
       "sheet": "room",
       "frame": 3,
       "pixels": {
-        "topwear": 916,
-        "bottomwear": 2905,
+        "topwear": 1860,
+        "bottomwear": 2878,
         "footwear": 2629
       }
     },
@@ -779,8 +779,8 @@
       "sheet": "talk",
       "frame": 0,
       "pixels": {
-        "topwear": 2726,
-        "bottomwear": 2487,
+        "topwear": 2882,
+        "bottomwear": 2398,
         "footwear": 2918
       }
     },
@@ -788,8 +788,8 @@
       "sheet": "talk",
       "frame": 1,
       "pixels": {
-        "topwear": 2800,
-        "bottomwear": 2487,
+        "topwear": 2958,
+        "bottomwear": 2398,
         "footwear": 2918
       }
     },
@@ -797,10 +797,11 @@
       "sheet": "talk",
       "frame": 2,
       "pixels": {
-        "topwear": 2836,
-        "bottomwear": 2495,
+        "topwear": 2971,
+        "bottomwear": 2406,
         "footwear": 2919
       }
     }
-  ]
+  ],
+  "repairVersion": 2
 }

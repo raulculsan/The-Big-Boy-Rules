@@ -22,6 +22,7 @@ test('modular code stays inactive and network-free until an explicitly approved 
 test('all four clothing slots commit with a matching five-sheet composition; frame changes create no worker jobs',async()=>{const h=setup();try{
  const character=h.w.document.querySelector('.tigreton-character');h.w.ChotaWardrobe.frame(character,'talk',2);
  const promise=h.w.ChotaWardrobe.applyOutfit(originalItems());await flush();assert.equal(h.jobs.length,1);assert.equal(h.w.ChotaWardrobe.outfit().length,0,'no half-equipped outfit before composition');
+ assert.ok(Object.values(h.jobs[0].value.base).every(url=>url.includes('/wardrobe-originals/default-composed-')),'repaired v2 original shirt/jeans still use the exact default cache');assert.equal(h.jobs[0].value.layers.length,0);
  await h.finish(0);await promise;assert.equal(h.w.ChotaAppearance.enabled(),true);assert.equal(h.w.ChotaWardrobe.outfit().length,3);assert.equal(h.w.ChotaWardrobe.shoes(),'chota-original-jordan-chicago-v1');
  for(const[sheet,[cols,rows]]of Object.entries(grids))for(let frame=0;frame<({base:24,directional:20,contextual:16,room:4,talk:3}[sheet]);frame++)h.w.ChotaWardrobe.frame(character,sheet,frame);
  assert.equal(h.jobs.length,1,'composition only on an outfit change');assert.match(character.querySelector('.chota-wardrobe-shoes-main').dataset.shoesFrame,/talk:2$/);

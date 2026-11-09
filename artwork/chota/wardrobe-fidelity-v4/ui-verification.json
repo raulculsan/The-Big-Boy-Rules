@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-11-09T14:05:10.555Z",
+  "published": false,
+  "environment": "Local IAB at 127.0.0.1:8786, actual production modules, simulated inventory/RPC, no live account changes",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "tests": {
+    "passed": 23,
+    "failed": 0,
+    "command": "node --test scripts/chota-cloth-repair.test.mjs scripts/chota-dilemma-animation.test.mjs scripts/chota-appearance.test.mjs scripts/chota-original-assets.test.mjs scripts/chota-neutral-assets.test.mjs scripts/chota-wardrobe.test.mjs scripts/chota-clothing-client.test.mjs"
+  },
+  "coverage": {
+    "garments": 8,
+    "posesEach": 67,
+    "garmentCells": 536,
+    "originalGarmentCells": 134,
+    "independentSourceClothCoverage": true,
+    "queuedSpeechAndWalkInterleavings": true
+  },
+  "visualChecks": [
+    "eight garments, six key poses, legacy and modular contact sheets",
+    "all67 Stussy blue and brown trousers review sheets; raised-arm source neckline rechecked after additional fix",
+    "actual legacy dilemma: Supreme black/brown trousers, repeated character taps, body/garment DOM sheet/size/position alignment",
+    "actual modular dilemma: Stussy blue/brown trousers, repeated character taps, clean visible outfit",
+    "fresh-origin load avoids previous draft HTTP/media caches; final garment URLs v4 and originals v2"
+  ],
+  "consoleErrors": [],
+  "consoleWarnings": [],
+  "limitations": [
+    "No new physical iPhone/Android build executed",
+    "Claude must reconcile/publish matching clients and all50 versioned assets",
+    "Legacy rendering corrections need no SQL; full modular activation retains the separately reviewed migration requirement"
+  ]
+}

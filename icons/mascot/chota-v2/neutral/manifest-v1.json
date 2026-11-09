@@ -22,23 +22,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "base",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-base-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-base-v2.webp",
       "cell": 256,
       "cols": 6,
       "rows": 4,
       "count": 24,
-      "bytes": 91680
+      "bytes": 108168
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "base",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-base-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-base-v2.webp",
       "cell": 256,
       "cols": 6,
       "rows": 4,
       "count": 24,
-      "bytes": 124438
+      "bytes": 122010
     },
     {
       "slot": "footwear",
@@ -55,23 +55,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "directional",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-directional-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-directional-v2.webp",
       "cell": 256,
       "cols": 5,
       "rows": 4,
       "count": 20,
-      "bytes": 30440
+      "bytes": 31986
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "directional",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-directional-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-directional-v2.webp",
       "cell": 256,
       "cols": 5,
       "rows": 4,
       "count": 20,
-      "bytes": 44046
+      "bytes": 42660
     },
     {
       "slot": "footwear",
@@ -88,23 +88,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "contextual",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-contextual-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-contextual-v2.webp",
       "cell": 256,
       "cols": 4,
       "rows": 4,
       "count": 16,
-      "bytes": 13232
+      "bytes": 15916
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "contextual",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-contextual-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-contextual-v2.webp",
       "cell": 256,
       "cols": 4,
       "rows": 4,
       "count": 16,
-      "bytes": 18180
+      "bytes": 16770
     },
     {
       "slot": "footwear",
@@ -121,23 +121,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "room",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-room-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-room-v2.webp",
       "cell": 256,
       "cols": 4,
       "rows": 1,
       "count": 4,
-      "bytes": 5550
+      "bytes": 6884
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "room",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-room-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-room-v2.webp",
       "cell": 256,
       "cols": 4,
       "rows": 1,
       "count": 4,
-      "bytes": 11234
+      "bytes": 10708
     },
     {
       "slot": "footwear",
@@ -154,23 +154,23 @@
       "slot": "topwear",
       "key": "original-stussy",
       "sheet": "talk",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-talk-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-talk-v2.webp",
       "cell": 256,
       "cols": 3,
       "rows": 1,
       "count": 3,
-      "bytes": 9658
+      "bytes": 9920
     },
     {
       "slot": "bottomwear",
       "key": "original-jeans",
       "sheet": "talk",
-      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-talk-v1.webp",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-talk-v2.webp",
       "cell": 256,
       "cols": 3,
       "rows": 1,
       "count": 3,
-      "bytes": 9186
+      "bytes": 8460
     },
     {
       "slot": "footwear",

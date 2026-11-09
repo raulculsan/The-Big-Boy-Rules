@@ -1,5 +1,10 @@
 # Publish the modular Chota wardrobe
 
+**Updated clothing fix:** use `../wardrobe-fidelity-v4/CLAUDE_HANDOFF.md` first.
+The final release inventory now uses v4 shirts/pants and v2 original shirt/jeans,
+plus unchanged coats/shoes. Earlier v3 garment alpha is superseded.
+
+
 Codex prepared this locally; Claude owns publishing. This replaces the clothing
 baked into the Chota body with independent inventory slots and fixes outfits in
 the daily dilemma and other appearances. Do not publish the old diagnostic art.
@@ -20,7 +25,7 @@ Reconcile the 18 source files in the manifest with the current Docker branches.
 In particular load `chota-appearance.js` before `chota-wardrobe.js`/`app.js`,
 include `chota-compositor-worker.js`, and carry the JS/CSS changes for dilemma,
 games, wardrobe/shop/fitting and CSS cameos. `scripts/build-web.mjs` now includes
-both new modules. Source index/service worker use the `chota-modular-600` marker.
+both new modules. Changed scripts now use `cloth-repair-601`; source cache is v601.
 Choose a newer coordinated cache version if another release has advanced it.
 
 No native/web platform trees were overwritten during this final task: they

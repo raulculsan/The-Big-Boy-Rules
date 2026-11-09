@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "prepared": "2026-11-09T13:17:26.826Z",
+  "prepared": "2026-11-09T14:06:34.466Z",
   "published": false,
   "platforms": [
     "web/PWA",
@@ -38,20 +38,20 @@
     "icons/mascot/chota-v2/wardrobe-originals/default-composed-contextual-v1.webp",
     "icons/mascot/chota-v2/wardrobe-originals/default-composed-room-v1.webp",
     "icons/mascot/chota-v2/wardrobe-originals/default-composed-talk-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-base-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-base-v1.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-base-v2.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-base-v2.webp",
     "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-base-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-directional-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-directional-v1.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-directional-v2.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-directional-v2.webp",
     "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-directional-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-contextual-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-contextual-v1.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-contextual-v2.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-contextual-v2.webp",
     "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-contextual-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-room-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-room-v1.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-room-v2.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-room-v2.webp",
     "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-room-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-talk-v1.webp",
-    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-talk-v1.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-stussy-talk-v2.webp",
+    "icons/mascot/chota-v2/wardrobe-originals/original-jeans-talk-v2.webp",
     "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-talk-v1.webp",
     "icons/mascot/chota-v2/neutral/manifest-v1.json",
     "icons/mascot/chota-v2/neutral/idle-core-mask-v1.png",
@@ -90,46 +90,46 @@
     "icons/mascot/chota-v2/wardrobe/tnf-morado-contextual-v3.webp",
     "icons/mascot/chota-v2/wardrobe/tnf-morado-room-v3.webp",
     "icons/mascot/chota-v2/wardrobe/tnf-morado-talk-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-base-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-directional-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-contextual-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-room-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-talk-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-base-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-directional-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-contextual-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-room-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-talk-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-base-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-directional-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-contextual-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-room-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-talk-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-base-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-directional-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-contextual-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-room-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-talk-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-base-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-directional-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-contextual-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-room-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-talk-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-base-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-directional-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-contextual-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-room-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-talk-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-base-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-directional-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-contextual-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-room-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-talk-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-base-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-directional-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-contextual-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-room-v3.webp",
-    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-talk-v3.webp"
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-base-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-directional-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-contextual-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-room-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-talk-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-base-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-directional-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-contextual-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-room-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-talk-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-base-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-directional-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-contextual-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-room-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-talk-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-base-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-directional-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-contextual-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-room-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-talk-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-base-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-directional-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-contextual-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-room-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-talk-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-base-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-directional-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-contextual-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-room-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-talk-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-base-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-directional-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-contextual-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-room-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-talk-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-base-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-directional-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-contextual-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-room-v4.webp",
+    "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-talk-v4.webp"
   ],
   "migration": "supabase/migrations/20261109180000_chota_modular_originals.sql",
   "releaseOrder": [
@@ -175,8 +175,8 @@
     },
     {
       "file": "chota-wardrobe.js",
-      "bytes": 17393,
-      "sha256": "3719f59ee0cd3e366a2ee4c1291a2b69ab1f8599b042367d1cd23f94305a15e0"
+      "bytes": 17691,
+      "sha256": "7059bd6347f173a3eeba3fa012eebb5480ca53eaa638ac10f17adc8b7aeaca77"
     },
     {
       "file": "chota-wardrobe.css",
@@ -185,8 +185,8 @@
     },
     {
       "file": "chota-appearance.js",
-      "bytes": 6487,
-      "sha256": "f4a8301a381894d155af154226f7b6c84d24518e0539ff4084cebd80307f728b"
+      "bytes": 6611,
+      "sha256": "56b31e241bd78c4a83b39f036cb8a6289ef86325bf11b833c5f3df187c420519"
     },
     {
       "file": "chota-compositor-worker.js",
@@ -195,13 +195,13 @@
     },
     {
       "file": "chota-decisions.js",
-      "bytes": 53195,
-      "sha256": "6d1a21bd6b50dceef68ece6b80eae642dd8f5aa918c6e80a39e3375505f3acf0"
+      "bytes": 53518,
+      "sha256": "c86200fd8ba74ca116acdd31b216892d0215e3e4f9eafb73abe797612c4a31f9"
     },
     {
       "file": "chota-decisions.css",
-      "bytes": 35600,
-      "sha256": "6790757baec4d545ec73fd04f90b5a22aad5f0ef5b5fc81e7a632b5753162479"
+      "bytes": 35753,
+      "sha256": "3077287e6aba2b1e5f3cf76db2acbd4059c4adf81df8dde7b5aad2aa85b63872"
     },
     {
       "file": "chota-games.js",
@@ -215,13 +215,13 @@
     },
     {
       "file": "index.html",
-      "bytes": 102557,
-      "sha256": "52e787a3aa5a05d21fba210a4562fc007af79ae6daf440b23b41950bacca9d5d"
+      "bytes": 102554,
+      "sha256": "4bfc18c62b40eecbc9d804156d74e2cafd17331caace52f544aaaecd00ce6576"
     },
     {
       "file": "service-worker.js",
-      "bytes": 29320,
-      "sha256": "a007e33ae9c3c699311f0c499e953e9f5231fcf165538eea40931e7f976a93f1"
+      "bytes": 29317,
+      "sha256": "645e6e50cc8220237083746055d88b117d7cc51f5dda0fb53920ae489dba211e"
     },
     {
       "file": "scripts/build-web.mjs",
@@ -279,14 +279,14 @@
       "sha256": "a821b8b3efe32131702332a15077d0f8317119d3421a3211f6ed66dc3dd2dfe4"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-base-v1.webp",
-      "bytes": 91680,
-      "sha256": "37f17703bbe2b59e0b525394aea89c1d20e3e58bb6997fb7c9741c8d73771a16"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-base-v2.webp",
+      "bytes": 108168,
+      "sha256": "aad387b4af2aabf87251f0184e184b87a079a7095d41da4e697e58b5777eb500"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-base-v1.webp",
-      "bytes": 124438,
-      "sha256": "7be1b212a2fba030a5a74865e6d4555ff285e9352efd5488b0f4eb1f247a2f93"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-base-v2.webp",
+      "bytes": 122010,
+      "sha256": "0f6aef96d0d221653614f04f5d9e7bfdfed8c0f16ee9d83e91502cebc5bb5514"
     },
     {
       "file": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-base-v1.webp",
@@ -294,14 +294,14 @@
       "sha256": "3bf8396dda18635829e8f38703d2e5aa73c829e853786c5b27250adb2667c33e"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-directional-v1.webp",
-      "bytes": 30440,
-      "sha256": "cfa040993e6ae72d5d94074ae303732b8dd5436b4c5a31e739571031b2b521b7"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-directional-v2.webp",
+      "bytes": 31986,
+      "sha256": "956a0bef80b366ece5d567be5c3c772d2e7e54dd765fe35855731f3935bf91b6"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-directional-v1.webp",
-      "bytes": 44046,
-      "sha256": "d559c556e3db827a9ac47ce5f1da28b63504fd917500fb4a20beb2eb382ef12f"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-directional-v2.webp",
+      "bytes": 42660,
+      "sha256": "ee76a2b32bd535929664631c483f593cc31fad28e328199f5cf07dffa60f2a57"
     },
     {
       "file": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-directional-v1.webp",
@@ -309,14 +309,14 @@
       "sha256": "06198cdb5ea19a9f0cdcf5947a97167f57f2e07f75d07495eb3d865622b8ff93"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-contextual-v1.webp",
-      "bytes": 13232,
-      "sha256": "24e111ab9b64c89453a66317fedba86e91c1665163d96d29375f03a7d29b19c8"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-contextual-v2.webp",
+      "bytes": 15916,
+      "sha256": "7eb917b75de782c87d2285d3ce0f82cbfbac2ad3f0e33210b45974f9a4785119"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-contextual-v1.webp",
-      "bytes": 18180,
-      "sha256": "ab6f65d0afa1ec15f1e90e38d30092ce0b0e863d1cfcdb49c312c79fa2bbff13"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-contextual-v2.webp",
+      "bytes": 16770,
+      "sha256": "1cfeb6c8d59c21f21ccd3ea92c923d59f318e11a40027203481c5e7fc64ac390"
     },
     {
       "file": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-contextual-v1.webp",
@@ -324,14 +324,14 @@
       "sha256": "f870ff7660e1d2f67d29a40646cbe38d7e93403e19260e4678bcd8b919d336e6"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-room-v1.webp",
-      "bytes": 5550,
-      "sha256": "50a4a0defffdd8437d3de090726e52bac48b6f76b877e2327393c8a51f29cdf0"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-room-v2.webp",
+      "bytes": 6884,
+      "sha256": "e27e4104acc5f11b3fa7f69f0713d659c30a15ef2b98bcd42943a5b05b8fe2e1"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-room-v1.webp",
-      "bytes": 11234,
-      "sha256": "f7fbaaf0d1f6e0512d8a969277e35314fb3e4456f910b6ec0806e13c0d746f7d"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-room-v2.webp",
+      "bytes": 10708,
+      "sha256": "d0cae93cb73ad1e88b4d85ab8c238d661eb844982ac40e680dc5557dbcd9c242"
     },
     {
       "file": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-room-v1.webp",
@@ -339,14 +339,14 @@
       "sha256": "a99178680befa03bfccda0d1d9452efe0909af1ed108d633ac9aec07a44631c9"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-talk-v1.webp",
-      "bytes": 9658,
-      "sha256": "70e2b3fff5c7cfc56e762e6f369008093e908e89ad1c0bba185d97267faf5e41"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-talk-v2.webp",
+      "bytes": 9920,
+      "sha256": "78b0ff38fb93a5ab3c189807c43f772dc105bf4c15ba3c6eec89d3187711402f"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-talk-v1.webp",
-      "bytes": 9186,
-      "sha256": "adcccb10c3543f3ee57f648fd01765f95a8eadd9c538caffcac8751805b9dbd0"
+      "file": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-talk-v2.webp",
+      "bytes": 8460,
+      "sha256": "2cf32a39fb2253e1ee6b743db71863e634818f52a53d7e793bf35587695957ed"
     },
     {
       "file": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-talk-v1.webp",
@@ -355,8 +355,8 @@
     },
     {
       "file": "icons/mascot/chota-v2/neutral/manifest-v1.json",
-      "bytes": 5270,
-      "sha256": "b9fb1a1c838c236426868cb0e294f84cd9fdb7e59a80585635c3a925cbc2b108"
+      "bytes": 5271,
+      "sha256": "e9aba17dc09a64a9c3b7699248e79b426a7b33d845aee25ed95c5a1e6a0b7acb"
     },
     {
       "file": "icons/mascot/chota-v2/neutral/idle-core-mask-v1.png",
@@ -529,204 +529,204 @@
       "sha256": "53dfb169868b0e9453ae6379779c3cb0ccf4d2e4ae3ae3f1eec2bb8b94b6e319"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-base-v3.webp",
-      "bytes": 89490,
-      "sha256": "bf08bf6b54d64a89819bb6c10304d57bd316bd7cb9c463710124dad31a66c3e1"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-base-v4.webp",
+      "bytes": 84668,
+      "sha256": "633cf44644edeeeaf7b34bf1f89dcfa94fece584c3d40c893305cdfad5447c56"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-directional-v3.webp",
-      "bytes": 68818,
-      "sha256": "4b493ab78b9a6ff44534f192b1bdaf440918c8f99f9900eb512a9de3c7175dd6"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-directional-v4.webp",
+      "bytes": 64108,
+      "sha256": "b8ac383b0315d18b0e4361e283594fa35c8ce805acd4e02d3ac586f11e0159a3"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-contextual-v3.webp",
-      "bytes": 31202,
-      "sha256": "e4bbb6179258cf5124a8e039d7d9c4c2ee0fd6b9019501aa20f63608398003a9"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-contextual-v4.webp",
+      "bytes": 26756,
+      "sha256": "6d187f83d94f21d4f27d8708b50ea1f16a393c9175ec08e243987f477c6a1970"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-room-v3.webp",
-      "bytes": 18446,
-      "sha256": "d2421259aa08b08eff94226fc881147926c489ce2a82a7be72d933b069fbe47c"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-room-v4.webp",
+      "bytes": 15272,
+      "sha256": "26959fab6f9d076e1ece4ad17f5ce556bf5ab6eca6b38f76f93699e44f7104f7"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-talk-v3.webp",
-      "bytes": 6148,
-      "sha256": "f176d9de46f995a8fc953d49f823324d324b4d8b1687d9c75d890e5eaeeb5f04"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-marron-talk-v4.webp",
+      "bytes": 7222,
+      "sha256": "d331e4f38fe45df96b7d4e78797e7b3e8f609453886c6ad0e8d240f046f2120f"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-base-v3.webp",
-      "bytes": 80192,
-      "sha256": "532707bba148f5486b9c7e1475824fe653b951a1637f6702dc52c2acc30c94f5"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-base-v4.webp",
+      "bytes": 80176,
+      "sha256": "55b04eeb16635cfee25f9512a71151f75af935d0237de5902b4085557d48381f"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-directional-v3.webp",
-      "bytes": 60282,
-      "sha256": "5ea8dea8f32244de202f359ccb7e299141e597772d2fb39f35d5841e34e00bb6"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-directional-v4.webp",
+      "bytes": 62184,
+      "sha256": "8f7fbe8d3af019ecede417cd4463953aaeaa7faaea35ad98fc7b119dcdbb6e24"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-contextual-v3.webp",
-      "bytes": 26386,
-      "sha256": "a2521ae093e5bdfc9e6cca6e4c815575889007e12f96e069fcae62dcab4c535d"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-contextual-v4.webp",
+      "bytes": 26970,
+      "sha256": "79d362260080c7be2f301b22787f4b9b12adeef804fe6eb552e7388a37633b69"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-room-v3.webp",
-      "bytes": 16502,
-      "sha256": "0edc92c5fa5139e891e7a6edb6b26d573ba546a0dc0140d36935290bd5658f05"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-room-v4.webp",
+      "bytes": 13896,
+      "sha256": "096a4b5307c6768fb3d7d42b9a0aa3d02cfb3d8f2716c5f85070093061ea65e3"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-talk-v3.webp",
-      "bytes": 5318,
-      "sha256": "a9887337abb4ccb5edebd3fb9b158a77325ba4f6b744c217847d0a8af68296a9"
+      "file": "icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-azul-oscuro-talk-v4.webp",
+      "bytes": 7162,
+      "sha256": "2678eee942a3cce395cfaac6db55c468ce7d6402d341933d1aada1fbaf418735"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-base-v3.webp",
-      "bytes": 66310,
-      "sha256": "7d7e66e08aafa206ace3fae2cd394a6d28496480b17f6f933b3ac31235d8b652"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-base-v4.webp",
+      "bytes": 71444,
+      "sha256": "ec60295051094bb7f0c7d4790c84a820f9034c5bca5b0f5dfff02e485a29ba07"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-directional-v3.webp",
-      "bytes": 36094,
-      "sha256": "07ec270798b2329b7860dc652e0526aedf9a23875863b3e1f34bbcfacaf340cd"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-directional-v4.webp",
+      "bytes": 50254,
+      "sha256": "9af63e1ba622c2e737ba5450db742e6973985b1860f62ab5fb95275e46d1020d"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-contextual-v3.webp",
-      "bytes": 27932,
-      "sha256": "3628a34f00cd12136d683ad3993c18ace242ef3b00961409bc5c2bf54ab3ba63"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-contextual-v4.webp",
+      "bytes": 28122,
+      "sha256": "48dc42930b78e09e50a96cb991f742a4151c2e2f8bcab6631e7b937f3f371b00"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-room-v3.webp",
-      "bytes": 13592,
-      "sha256": "1f7032db5216ba2a00993a578a09360448eb6b11a619c52452be84c5bc1451c2"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-room-v4.webp",
+      "bytes": 13168,
+      "sha256": "5929f0a8fed8d23f32fcd71b42de0d56d5118f088436ce501267bdad9c2366f7"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-talk-v3.webp",
-      "bytes": 5408,
-      "sha256": "a5cdaab94fb282c222ba087cce2494baba7f39e3767098de3eddd3269c48f413"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-crudo-talk-v4.webp",
+      "bytes": 6498,
+      "sha256": "f7f91c7854c0671d73735c93ede148d5133e35bcd78ad0956104facc654da10e"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-base-v3.webp",
-      "bytes": 65774,
-      "sha256": "3119c19703dd20d6ed1a4c8a1acaeaf01d6695b2dc598de4ce357ee3181fa8d5"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-base-v4.webp",
+      "bytes": 64416,
+      "sha256": "5d5ac1bd442fbc72a939f47ce0518e6b9fff12138e58cdd6facb373bbbeb63cf"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-directional-v3.webp",
-      "bytes": 39760,
-      "sha256": "9a41d5d384c02c56d3caa0900214fe021525dbb322d7eacb68b0b7e30da5abab"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-directional-v4.webp",
+      "bytes": 43652,
+      "sha256": "2cf845c990a9a44822b73ff445bf7cf0a70cfad31fed4254e82f89ea3858e577"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-contextual-v3.webp",
-      "bytes": 29260,
-      "sha256": "3b24a5783e41c29d25362404b529eb6ffa9f4c7c7890afa6559053fe51660dae"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-contextual-v4.webp",
+      "bytes": 23652,
+      "sha256": "b1218f926a0b5ca0407998030de6541f58121acbe95e4144a6eeb09eb8028883"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-room-v3.webp",
-      "bytes": 12102,
-      "sha256": "abc5eb8d21f79777e416f0e851b835929879eb0e85253fcdd5118c43cf491c24"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-room-v4.webp",
+      "bytes": 10828,
+      "sha256": "6382d5aac8d3f4678009782f91647a48741e7098c3301823dc5e3a5c0416bdc3"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-talk-v3.webp",
-      "bytes": 5032,
-      "sha256": "b98a5acc80b410b3c22c71260960a18d6ac408ad4028285c0ba0d4f15c3fbd77"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/carhartt-oliva-talk-v4.webp",
+      "bytes": 5436,
+      "sha256": "e54f403d3fff7c796a13f92152c60ee87176844367cdbdd32f4636b83fc653df"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-base-v3.webp",
-      "bytes": 68416,
-      "sha256": "11d89882edaa5d35b955e88ae80811064d402a6a1e177d4adc09de47c2f443c6"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-base-v4.webp",
+      "bytes": 67728,
+      "sha256": "15bee373451492f209a76e6b6bc6c51d683e2e05473c6710e35887fa259bc3ff"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-directional-v3.webp",
-      "bytes": 36500,
-      "sha256": "5714cb26642ad271668e5a5a4a5f44d4bca0543169f8f132c61f526724cd6201"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-directional-v4.webp",
+      "bytes": 46892,
+      "sha256": "e893525d1938058a4a57fc8540dca9d9f8eae70fb17c85bfb1f5ff079aace5a0"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-contextual-v3.webp",
-      "bytes": 29084,
-      "sha256": "68c5c8e82e050e5853621153264fa918b42d0a2628a034a8cd7925eef3cb19de"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-contextual-v4.webp",
+      "bytes": 26036,
+      "sha256": "f564b46695e82d1fe4a7198110f44edc884379f884b5471d0f4b5bc83a900562"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-room-v3.webp",
-      "bytes": 13452,
-      "sha256": "7213354e2e57dfbdb2a21a57a38a7df668df6ade78767e95e87b941c480105f1"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-room-v4.webp",
+      "bytes": 12174,
+      "sha256": "2e8862e7169ac8d109520e20c78273e5de04d373cb764d699a2fa28d4d229d21"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-talk-v3.webp",
-      "bytes": 6082,
-      "sha256": "345a6d07370408811aba940c79cd18afb85c96e9e5f7430889cf960b661cedaf"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-negra-talk-v4.webp",
+      "bytes": 6034,
+      "sha256": "5f7bfcb21f519e6030c530e9b7800f9561e29198e2b3feb4f47b498ac710889e"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-base-v3.webp",
-      "bytes": 71564,
-      "sha256": "a7d2172f5833f42c5798ead07ea930c91f7de985c3bb1a59ef8cf54509f35335"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-base-v4.webp",
+      "bytes": 70864,
+      "sha256": "78d8d1513897bd1dbb1138693209b129e8bdc0353d18c6e50b54ee6570febf85"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-directional-v3.webp",
-      "bytes": 48488,
-      "sha256": "86dde871ef6a83e6da3dcf3b1cabf8f371f17992976ee2734abf990416542d60"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-directional-v4.webp",
+      "bytes": 52186,
+      "sha256": "a8a5e9fa88e905640e6f801b6b9e09291226d953a987f0b3a71b1ceb87ca34c8"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-contextual-v3.webp",
-      "bytes": 30924,
-      "sha256": "275279f99ad0595ee25c598001b14198307e1d430093539d6471be641b3235a5"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-contextual-v4.webp",
+      "bytes": 29474,
+      "sha256": "039550db6e8411f95ffb4ac4c7e31cc99f2ef930ab8a457f3b5c51c0ef9f3238"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-room-v3.webp",
-      "bytes": 13908,
-      "sha256": "a79b2d7ad82bcb6e97f1a3ecada27b9d6c3879dfb0bd0f88f0b2fe3a70fa1497"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-room-v4.webp",
+      "bytes": 12966,
+      "sha256": "28d352bcbefe5683e4031c53439145d8d9bd5aef0eabad0ee2b36aedb44ecd30"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-talk-v3.webp",
-      "bytes": 6384,
-      "sha256": "0aa1516a8f36009ff609d3811cf79bf7863458c55b90fd7ebfb83d0fd93ce9d0"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/supreme-roja-talk-v4.webp",
+      "bytes": 6626,
+      "sha256": "8ebd9226c34ada4cf35bb8da44d6de131be74bc5998af18ceb7f991592a31f5f"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-base-v3.webp",
-      "bytes": 62128,
-      "sha256": "7e2316db660777ec807353086908170b299c0c23f0f393c92be40b098b0255cd"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-base-v4.webp",
+      "bytes": 54402,
+      "sha256": "aadff23b4988f62d29f9b4fdfdf5f8299b749a9a7fcae4888d5a3786ecb86b4f"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-directional-v3.webp",
-      "bytes": 33976,
-      "sha256": "24d8370979daae15e70e33871faeff890f9faf07dd9c4b21c2eb838ae79e6173"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-directional-v4.webp",
+      "bytes": 43996,
+      "sha256": "fb07dfeac9904fc170a43521b69c538ec43c99d102f73977079fe6806efd9808"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-contextual-v3.webp",
-      "bytes": 26392,
-      "sha256": "40346d27e1d057503103954f7af6916e7a3b23a042b8364d21f749f44bbb3779"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-contextual-v4.webp",
+      "bytes": 24928,
+      "sha256": "7d950303f9be5d27e3c38e387495423c527a7a7ec57422829e2ed9640db1364f"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-room-v3.webp",
-      "bytes": 12166,
-      "sha256": "ac57d29815db5f8064153db4d20fb57f478bbfebe350af3a3c7e8c704f6124b9"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-room-v4.webp",
+      "bytes": 11694,
+      "sha256": "b8988f8f9759528d4ffeb163bfd909873148a1418a370cbb582d11626af6f14f"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-talk-v3.webp",
-      "bytes": 5702,
-      "sha256": "559080fdbb7b1599051c3f7ae579567b229a5c9d7f5f8277b5dd474739a0b6dd"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-blanca-talk-v4.webp",
+      "bytes": 6472,
+      "sha256": "2a068f2abdd23683e536ca53f8b46b1d3e16ccba7736d3bff3a25dafd7f307c2"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-base-v3.webp",
-      "bytes": 75930,
-      "sha256": "82e9d91944d31b47317e950e6605dbcf7183d1120fc4f6ec2de5fe8044cd113a"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-base-v4.webp",
+      "bytes": 68962,
+      "sha256": "b6cc61158321ec83c4b7ea7a0b29c180dfe471d8dd9ba7f8b3dda56d03e6fca2"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-directional-v3.webp",
-      "bytes": 47464,
-      "sha256": "6dcb82fce580327cf5b0f779fe53922f79788626fcdd382fcadf67178048a18f"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-directional-v4.webp",
+      "bytes": 53810,
+      "sha256": "69a0986fadaf0c9e267cdddba0d66d996fa5de4cc045083755dc2278b9d32944"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-contextual-v3.webp",
-      "bytes": 32872,
-      "sha256": "895c53bfba2b485c49ff4358c586b2745d202de85ece890529128db90b25604d"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-contextual-v4.webp",
+      "bytes": 29170,
+      "sha256": "3b6751ba3170fd5b12c154011d2c954c70ac898c2f9262c98b29f72a1030d7c9"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-room-v3.webp",
-      "bytes": 14386,
-      "sha256": "89a7e901173882c08858e0038b6908986c864a552720028d140513532019538d"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-room-v4.webp",
+      "bytes": 12372,
+      "sha256": "1c302f95525c56b7726519b38294ffeba57b4eec2ee53c760001133aad424c61"
     },
     {
-      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-talk-v3.webp",
-      "bytes": 6960,
-      "sha256": "6dc4f5dc0fe530571e8d863fde8c817115cda46b808b0b146bce83b7a9116bdf"
+      "file": "icons/mascot/chota-v2/wardrobe-topwear/stussy-azul-talk-v4.webp",
+      "bytes": 6874,
+      "sha256": "30387516edba06599f8408ca0b847fc3a4d2d7e1f632114a45f09acbaa7cdc21"
     },
     {
       "file": "supabase/migrations/20261109180000_chota_modular_originals.sql",

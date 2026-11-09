@@ -4,6 +4,11 @@
   pet.innerHTML=tigretonSpriteMarkup(false);const motion=createTigretonMotion(pet,false,null,null);motion.refresh();
   const make=(slot,id,key,name)=>({id,name,item_kind:'clothing',slot,owned:true,active:true,price:0,description:'Artículo de prueba local.',rig_version:slot==='outerwear'?'chota-overlay-v1':'chota-'+slot+'-overlay-v1',garment:{type:'builtin',key}});
   const items=[make('topwear','chota-original-stussy-v1','original-stussy-v1','Camiseta Stüssy original'),make('bottomwear','chota-original-jeans-v1','original-jeans-v1','Vaqueros originales'),make('footwear','chota-original-jordan-chicago-v1','original-jordan-chicago-v1','Jordan Chicago originales'),make('outerwear','chota-tnf-negro-v1','tnf-negro-v1','Plumífero negro'),make('topwear','chota-shirt-supreme-negra-v1','supreme-negra-v1','Camiseta Supreme negra'),make('bottomwear','chota-carhartt-marron-v1','carhartt-marron-v1','Carhartt marrón')];
+  for(const color of ['crema','rojo','azul','oliva','morado'])items.push(make('outerwear','chota-tnf-'+color+'-v1','tnf-'+color+'-v1','Plumífero '+color));
+  for(const key of ['carhartt-crudo','carhartt-oliva','supreme-roja','stussy-blanca','stussy-azul'])items.push(make('topwear','chota-shirt-'+key+'-v1',key+'-v1','Camiseta '+key));
+  items.push(make('bottomwear','chota-carhartt-azul-oscuro-v1','carhartt-azul-oscuro-v1','Carhartt azul oscuro'));
+  for(const slot of ['topwear','bottomwear','outerwear']){const select=document.querySelector('[data-qa-slot="'+slot+'"]');select.innerHTML='<option value="">Sin prenda</option>'+items.filter(item=>item.slot===slot).map(item=>'<option value="'+item.id+'">'+item.name+'</option>').join('');select.value=slot==='topwear'?items[4].id:slot==='bottomwear'?items[5].id:'';}
+  let mode=1,currentLook='defaults';
   let state={wardrobe_version:1,balance:1000,items,outerwear:null,topwear:items[0].id,bottomwear:items[1].id,footwear:items[2].id},requestVersion=0;
   ChotaShop.initialize({cacheNamespace:'modular-local-qa',session:()=> 'qa-user',rpc:async(name,args)=>{
     if(name==='equip_chota_clothing')state={...state,[args.target_slot]:args.target_item_id};
@@ -13,17 +18,18 @@
   ChotaGames.initialize({session:()=> 'qa-user',getOwnedItems:async()=>['football','skateboard','robot-vacuum','darts'],startGame:async()=> 'qa-round',submitScore:async()=>({reward_status:'already_claimed'}),leaderboard:async()=>[]});
   const snapshots={defaults:{outerwear:null,topwear:items[0].id,bottomwear:items[1].id,footwear:items[2].id},bought:{outerwear:items[3].id,topwear:items[4].id,bottomwear:items[5].id,footwear:items[2].id},'no-shirt':{outerwear:null,topwear:null,bottomwear:items[1].id,footwear:items[2].id},bare:{outerwear:null,topwear:null,bottomwear:null,footwear:null}};
   async function look(key){
-    const version=++requestVersion;state={...state,...snapshots[key]};status.textContent='Preparando '+key+'…';
+    const version=++requestVersion;currentLook=key;const selected=key==='custom'?Object.fromEntries([...document.querySelectorAll('[data-qa-slot]')].map(select=>[select.dataset.qaSlot,select.value||null])):snapshots[key];state={...state,...selected,wardrobe_version:mode};status.textContent='Preparando '+key+'…';
     try{
       await ChotaShop.refresh(true);
-      await ChotaWardrobe.applyOutfit(Object.fromEntries(['bottomwear','footwear','topwear','outerwear'].map(slot=>[slot,items.find(item=>item.id===state[slot])||null])));
+      const equipped=Object.fromEntries(['bottomwear','footwear','topwear','outerwear'].map(slot=>[slot,items.find(item=>item.id===state[slot])||null]));if(mode===1)await ChotaWardrobe.applyOutfit(equipped);else{await ChotaWardrobe.applyOutfit(null);await Promise.all([ChotaWardrobe.applyPants(equipped.bottomwear),ChotaWardrobe.applyShirt(equipped.topwear),ChotaWardrobe.applyOwned(equipped.outerwear)]);}
       if(version!==requestVersion)return;
-      status.textContent=`${key}: ${ChotaAppearance.enabled()?'base neutral aprobada activa':'sin activar'}\n${ChotaWardrobe.outfit().map(layer=>layer.slot).join(' → ')||'Sin prendas'}\nCambiar ropa también funciona con el diálogo abierto (controles interiores o Alt+1…4).`;
+      status.textContent=`${key}: ${mode===1?(ChotaAppearance.enabled()?'modular activo':'sin activar'):'legacy (sin migración)'}\n${ChotaWardrobe.outfit().map(layer=>layer.slot).join(' → ')||'Sin prendas'}\nCambiar ropa también funciona con el diálogo abierto (controles interiores o Alt+1…4).`;
     }catch(error){if(version===requestVersion)status.textContent='SIN ACTIVAR: '+error.message+' No se ha sustituido el cuerpo de producción.';}
   }
+  document.getElementById('qaMode').onchange=async event=>{mode=Number(event.target.value);ChotaShop.reset();await look(currentLook);};
   document.addEventListener('click',event=>{const button=event.target.closest('[data-look]');if(button)void look(button.dataset.look);});
   document.addEventListener('keydown',event=>{if(event.altKey&&['1','2','3','4'].includes(event.key)){event.preventDefault();void look(Object.keys(snapshots)[Number(event.key)-1]);}});
-  function controls(dialog){if(!dialog||dialog.querySelector('.qa-dialog-looks'))return;const bar=document.createElement('div');bar.className='qa-tools qa-dialog-looks';bar.innerHTML='<button data-look="defaults">Originales</button><button data-look="bought">Compradas</button><button data-look="no-shirt">Sin camiseta</button><button data-look="bare">Sin ropa</button>';dialog.prepend(bar);}
+  function controls(dialog){if(!dialog||dialog.querySelector('.qa-dialog-looks'))return;const bar=document.createElement('div');bar.className='qa-tools qa-dialog-looks';bar.innerHTML='<button data-look="defaults">Originales</button><button data-look="custom">Selección</button><button data-look="bought">Compradas</button><button data-look="bare">Sin ropa</button>';dialog.prepend(bar);}
   document.getElementById('qaDilemma').onclick=async()=>{await ChotaDecision.open();controls(document.querySelector('#chotaDecisionDialog')||document.querySelector('dialog[open]'));};
   for(const[id,game]of [['qaSkate','skateboard'],['qaFootball','football'],['qaDarts','darts']])document.getElementById(id).onclick=async()=>{await ChotaGames.openGame(game);controls([...document.querySelectorAll('dialog[open]')].at(-1));};
   document.getElementById('qaInventory').onclick=()=>{ChotaShop.openInventory();controls([...document.querySelectorAll('dialog[open]')].at(-1));};

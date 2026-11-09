@@ -1,0 +1,1260 @@
+{
+  "originalRepairs": [
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 0,
+      "removed": 0,
+      "filled": 9,
+      "recovered": 147,
+      "pixels": 2882
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 1,
+      "removed": 0,
+      "filled": 15,
+      "recovered": 194,
+      "pixels": 2460
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 2,
+      "removed": 50,
+      "filled": 14,
+      "recovered": 291,
+      "pixels": 3235
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 3,
+      "removed": 35,
+      "filled": 13,
+      "recovered": 413,
+      "pixels": 3259
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 4,
+      "removed": 53,
+      "filled": 8,
+      "recovered": 391,
+      "pixels": 3170
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 5,
+      "removed": 0,
+      "filled": 10,
+      "recovered": 323,
+      "pixels": 2413
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 6,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 214,
+      "pixels": 2481
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 7,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 341,
+      "pixels": 1973
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 8,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 247,
+      "pixels": 2401
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 9,
+      "removed": 0,
+      "filled": 1,
+      "recovered": 382,
+      "pixels": 1626
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 10,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 447,
+      "pixels": 2479
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 11,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 501,
+      "pixels": 2788
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 12,
+      "removed": 0,
+      "filled": 32,
+      "recovered": 745,
+      "pixels": 2518
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 13,
+      "removed": 0,
+      "filled": 11,
+      "recovered": 573,
+      "pixels": 1886
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 14,
+      "removed": 0,
+      "filled": 13,
+      "recovered": 890,
+      "pixels": 3227
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 15,
+      "removed": 0,
+      "filled": 7,
+      "recovered": 952,
+      "pixels": 3509
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 16,
+      "removed": 0,
+      "filled": 13,
+      "recovered": 539,
+      "pixels": 2429
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 17,
+      "removed": 39,
+      "filled": 7,
+      "recovered": 404,
+      "pixels": 2805
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 18,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 272,
+      "pixels": 2840
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 19,
+      "removed": 0,
+      "filled": 6,
+      "recovered": 380,
+      "pixels": 1976
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 20,
+      "removed": 0,
+      "filled": 3,
+      "recovered": 240,
+      "pixels": 2382
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 21,
+      "removed": 0,
+      "filled": 4,
+      "recovered": 334,
+      "pixels": 2211
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 22,
+      "removed": 0,
+      "filled": 5,
+      "recovered": 147,
+      "pixels": 1473
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "base",
+      "frame": 23,
+      "removed": 0,
+      "filled": 1,
+      "recovered": 5,
+      "pixels": 1165
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 0,
+      "removed": 92,
+      "filled": 3,
+      "recovered": 0,
+      "pixels": 2398
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 1,
+      "removed": 72,
+      "filled": 9,
+      "recovered": 0,
+      "pixels": 2660
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 2,
+      "removed": 95,
+      "filled": 6,
+      "recovered": 0,
+      "pixels": 2680
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 3,
+      "removed": 130,
+      "filled": 2,
+      "recovered": 0,
+      "pixels": 2641
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 4,
+      "removed": 79,
+      "filled": 5,
+      "recovered": 0,
+      "pixels": 2684
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 5,
+      "removed": 106,
+      "filled": 7,
+      "recovered": 0,
+      "pixels": 2621
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 6,
+      "removed": 0,
+      "filled": 7,
+      "recovered": 0,
+      "pixels": 3406
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 7,
+      "removed": 9,
+      "filled": 7,
+      "recovered": 0,
+      "pixels": 2726
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 8,
+      "removed": 0,
+      "filled": 6,
+      "recovered": 0,
+      "pixels": 3451
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 9,
+      "removed": 9,
+      "filled": 8,
+      "recovered": 0,
+      "pixels": 2794
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 10,
+      "removed": 0,
+      "filled": 2,
+      "recovered": 0,
+      "pixels": 3372
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 11,
+      "removed": 12,
+      "filled": 3,
+      "recovered": 0,
+      "pixels": 3617
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 12,
+      "removed": 135,
+      "filled": 1,
+      "recovered": 0,
+      "pixels": 2601
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 13,
+      "removed": 58,
+      "filled": 1,
+      "recovered": 22,
+      "pixels": 1847
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 14,
+      "removed": 56,
+      "filled": 9,
+      "recovered": 2,
+      "pixels": 3288
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 15,
+      "removed": 34,
+      "filled": 3,
+      "recovered": 0,
+      "pixels": 3553
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 16,
+      "removed": 92,
+      "filled": 5,
+      "recovered": 3,
+      "pixels": 2712
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 17,
+      "removed": 43,
+      "filled": 2,
+      "recovered": 0,
+      "pixels": 2564
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 18,
+      "removed": 12,
+      "filled": 3,
+      "recovered": 0,
+      "pixels": 2800
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 19,
+      "removed": 18,
+      "filled": 0,
+      "recovered": 3,
+      "pixels": 1786
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 20,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 1828
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 21,
+      "removed": 27,
+      "filled": 3,
+      "recovered": 196,
+      "pixels": 2234
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 22,
+      "removed": 12,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2306
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "base",
+      "frame": 23,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2001
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 0,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 260,
+      "pixels": 3472
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 1,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 312,
+      "pixels": 3410
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 2,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 368,
+      "pixels": 3404
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 3,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 312,
+      "pixels": 3434
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 4,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 260,
+      "pixels": 3491
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 5,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 315,
+      "pixels": 3535
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 6,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 385,
+      "pixels": 3567
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 7,
+      "removed": 0,
+      "filled": 2,
+      "recovered": 312,
+      "pixels": 3532
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 8,
+      "removed": 38,
+      "filled": 0,
+      "recovered": 208,
+      "pixels": 2910
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 9,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 216,
+      "pixels": 2818
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 10,
+      "removed": 0,
+      "filled": 8,
+      "recovered": 268,
+      "pixels": 2852
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 11,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 216,
+      "pixels": 2848
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 12,
+      "removed": 38,
+      "filled": 0,
+      "recovered": 208,
+      "pixels": 2938
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 13,
+      "removed": 61,
+      "filled": 1,
+      "recovered": 248,
+      "pixels": 2923
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 14,
+      "removed": 20,
+      "filled": 0,
+      "recovered": 259,
+      "pixels": 2929
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 15,
+      "removed": 61,
+      "filled": 1,
+      "recovered": 248,
+      "pixels": 2886
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 16,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 312,
+      "pixels": 3489
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 17,
+      "removed": 40,
+      "filled": 0,
+      "recovered": 175,
+      "pixels": 4074
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 18,
+      "removed": 18,
+      "filled": 0,
+      "recovered": 171,
+      "pixels": 4095
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "directional",
+      "frame": 19,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 212,
+      "pixels": 2875
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 0,
+      "removed": 28,
+      "filled": 0,
+      "recovered": 3,
+      "pixels": 2465
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 1,
+      "removed": 27,
+      "filled": 8,
+      "recovered": 0,
+      "pixels": 2391
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 2,
+      "removed": 50,
+      "filled": 8,
+      "recovered": 0,
+      "pixels": 2405
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 3,
+      "removed": 42,
+      "filled": 12,
+      "recovered": 0,
+      "pixels": 2503
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 4,
+      "removed": 43,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2462
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 5,
+      "removed": 14,
+      "filled": 6,
+      "recovered": 9,
+      "pixels": 2438
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 6,
+      "removed": 25,
+      "filled": 8,
+      "recovered": 0,
+      "pixels": 2485
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 7,
+      "removed": 38,
+      "filled": 4,
+      "recovered": 16,
+      "pixels": 2510
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 8,
+      "removed": 66,
+      "filled": 0,
+      "recovered": 2,
+      "pixels": 2279
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 9,
+      "removed": 10,
+      "filled": 12,
+      "recovered": 0,
+      "pixels": 2321
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 10,
+      "removed": 10,
+      "filled": 8,
+      "recovered": 0,
+      "pixels": 2324
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 11,
+      "removed": 28,
+      "filled": 4,
+      "recovered": 0,
+      "pixels": 2466
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 12,
+      "removed": 22,
+      "filled": 3,
+      "recovered": 1,
+      "pixels": 2473
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 13,
+      "removed": 0,
+      "filled": 12,
+      "recovered": 2,
+      "pixels": 2403
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 14,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 1,
+      "pixels": 2348
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 15,
+      "removed": 10,
+      "filled": 4,
+      "recovered": 5,
+      "pixels": 2366
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 16,
+      "removed": 56,
+      "filled": 8,
+      "recovered": 0,
+      "pixels": 2548
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 17,
+      "removed": 54,
+      "filled": 4,
+      "recovered": 10,
+      "pixels": 2642
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 18,
+      "removed": 56,
+      "filled": 4,
+      "recovered": 0,
+      "pixels": 2600
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "directional",
+      "frame": 19,
+      "removed": 52,
+      "filled": 12,
+      "recovered": 0,
+      "pixels": 2508
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 0,
+      "removed": 0,
+      "filled": 4,
+      "recovered": 164,
+      "pixels": 2862
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 1,
+      "removed": 0,
+      "filled": 4,
+      "recovered": 200,
+      "pixels": 2389
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 2,
+      "removed": 17,
+      "filled": 0,
+      "recovered": 128,
+      "pixels": 2455
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 3,
+      "removed": 17,
+      "filled": 0,
+      "recovered": 128,
+      "pixels": 2455
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 4,
+      "removed": 0,
+      "filled": 4,
+      "recovered": 164,
+      "pixels": 2862
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 5,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 284,
+      "pixels": 3167
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 6,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 712,
+      "pixels": 3224
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 7,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 712,
+      "pixels": 3224
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 8,
+      "removed": 0,
+      "filled": 4,
+      "recovered": 164,
+      "pixels": 2862
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 9,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 284,
+      "pixels": 3167
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 10,
+      "removed": 0,
+      "filled": 22,
+      "recovered": 1050,
+      "pixels": 3428
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 11,
+      "removed": 0,
+      "filled": 22,
+      "recovered": 1050,
+      "pixels": 3428
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 12,
+      "removed": 0,
+      "filled": 4,
+      "recovered": 164,
+      "pixels": 2862
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 13,
+      "removed": 0,
+      "filled": 4,
+      "recovered": 164,
+      "pixels": 2862
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 14,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 635,
+      "pixels": 2708
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "frame": 15,
+      "removed": 0,
+      "filled": 0,
+      "recovered": 635,
+      "pixels": 2708
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 0,
+      "removed": 119,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2443
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 1,
+      "removed": 64,
+      "filled": 12,
+      "recovered": 0,
+      "pixels": 2681
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 2,
+      "removed": 9,
+      "filled": 4,
+      "recovered": 0,
+      "pixels": 2676
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 3,
+      "removed": 9,
+      "filled": 4,
+      "recovered": 0,
+      "pixels": 2676
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 4,
+      "removed": 119,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2443
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 5,
+      "removed": 164,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2675
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 6,
+      "removed": 35,
+      "filled": 4,
+      "recovered": 0,
+      "pixels": 2775
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 7,
+      "removed": 35,
+      "filled": 4,
+      "recovered": 0,
+      "pixels": 2775
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 8,
+      "removed": 119,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2443
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 9,
+      "removed": 164,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2675
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 10,
+      "removed": 9,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2725
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 11,
+      "removed": 9,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2725
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 12,
+      "removed": 119,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2443
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 13,
+      "removed": 119,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2443
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 14,
+      "removed": 43,
+      "filled": 19,
+      "recovered": 8,
+      "pixels": 2855
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "frame": 15,
+      "removed": 43,
+      "filled": 19,
+      "recovered": 8,
+      "pixels": 2855
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "room",
+      "frame": 0,
+      "removed": 0,
+      "filled": 8,
+      "recovered": 301,
+      "pixels": 2440
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "room",
+      "frame": 1,
+      "removed": 100,
+      "filled": 8,
+      "recovered": 292,
+      "pixels": 2023
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "room",
+      "frame": 2,
+      "removed": 0,
+      "filled": 4,
+      "recovered": 528,
+      "pixels": 2482
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "room",
+      "frame": 3,
+      "removed": 0,
+      "filled": 52,
+      "recovered": 892,
+      "pixels": 1860
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "room",
+      "frame": 0,
+      "removed": 91,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 2795
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "room",
+      "frame": 1,
+      "removed": 37,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 3193
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "room",
+      "frame": 2,
+      "removed": 116,
+      "filled": 0,
+      "recovered": 0,
+      "pixels": 3618
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "room",
+      "frame": 3,
+      "removed": 30,
+      "filled": 0,
+      "recovered": 3,
+      "pixels": 2878
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "talk",
+      "frame": 0,
+      "removed": 0,
+      "filled": 9,
+      "recovered": 147,
+      "pixels": 2882
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "talk",
+      "frame": 1,
+      "removed": 0,
+      "filled": 11,
+      "recovered": 147,
+      "pixels": 2958
+    },
+    {
+      "key": "original-stussy",
+      "sheet": "talk",
+      "frame": 2,
+      "removed": 23,
+      "filled": 11,
+      "recovered": 147,
+      "pixels": 2971
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "talk",
+      "frame": 0,
+      "removed": 92,
+      "filled": 3,
+      "recovered": 0,
+      "pixels": 2398
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "talk",
+      "frame": 1,
+      "removed": 92,
+      "filled": 3,
+      "recovered": 0,
+      "pixels": 2398
+    },
+    {
+      "key": "original-jeans",
+      "sheet": "talk",
+      "frame": 2,
+      "removed": 92,
+      "filled": 3,
+      "recovered": 0,
+      "pixels": 2406
+    }
+  ],
+  "garments": [
+    {
+      "id": "carhartt-marron",
+      "poses": 67,
+      "restoredOpaquePixels": 19506,
+      "removedOutOfGarmentPixels": 1530
+    },
+    {
+      "id": "carhartt-azul-oscuro",
+      "poses": 67,
+      "restoredOpaquePixels": 19506,
+      "removedOutOfGarmentPixels": 1530
+    },
+    {
+      "id": "carhartt-crudo",
+      "poses": 67,
+      "restoredOpaquePixels": 21121,
+      "removedOutOfGarmentPixels": 858
+    },
+    {
+      "id": "carhartt-oliva",
+      "poses": 67,
+      "restoredOpaquePixels": 21121,
+      "removedOutOfGarmentPixels": 858
+    },
+    {
+      "id": "supreme-negra",
+      "poses": 67,
+      "restoredOpaquePixels": 21121,
+      "removedOutOfGarmentPixels": 858
+    },
+    {
+      "id": "supreme-roja",
+      "poses": 67,
+      "restoredOpaquePixels": 21121,
+      "removedOutOfGarmentPixels": 858
+    },
+    {
+      "id": "stussy-blanca",
+      "poses": 67,
+      "restoredOpaquePixels": 21121,
+      "removedOutOfGarmentPixels": 858
+    },
+    {
+      "id": "stussy-azul",
+      "poses": 67,
+      "restoredOpaquePixels": 21121,
+      "removedOutOfGarmentPixels": 858
+    }
+  ]
+}

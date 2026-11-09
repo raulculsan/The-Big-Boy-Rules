@@ -20,7 +20,7 @@
     topwear:{name:'shirt',rig:'chota-topwear-overlay-v1',key:/^(carhartt-(crudo|oliva)|supreme-(negra|roja)|stussy-(blanca|azul)|original-stussy)-v1$/,dir:'wardrobe-topwear',idle:[['.chota-idle-body','idle-body'],['.chota-idle-head','idle-head'],['.chota-sleep-chest','sleep-chest']]},
   });
   const rigs=Object.freeze({outerwear:'chota-overlay-v1',bottomwear:overlays.bottomwear.rig,topwear:overlays.topwear.rig,footwear:overlays.footwear.rig});
-  const overlayURL=(slot,key,sheet)=>key.startsWith('original-')?`icons/mascot/chota-v2/wardrobe-originals/${key.replace(/-v1$/,'')}-${sheet}-v1.webp`:`icons/mascot/chota-v2/${overlays[slot].dir}/${key.replace(/-v1$/,'')}-${sheet}-v3.webp`;
+  const overlayURL=(slot,key,sheet)=>key.startsWith('original-')?`icons/mascot/chota-v2/wardrobe-originals/${key.replace(/-v1$/,'')}-${sheet}-${slot==='footwear'?'v1':'v2'}.webp`:`icons/mascot/chota-v2/${overlays[slot].dir}/${key.replace(/-v1$/,'')}-${sheet}-v4.webp`;
   function describe(item){
     if(!item||typeof item.id!=='string'||!item.id||item.id.length>60||item.item_kind!=='clothing'||!Object.hasOwn(rigs,item.slot)||item.rig_version!==rigs[item.slot])return null;
     const garment=item.garment;if(!garment||typeof garment!=='object'||Array.isArray(garment))return null;
@@ -31,7 +31,7 @@
     return {id:item.id,...(overlays[item.slot]?{slot:item.slot}:{}),type:'atlas',cell:garment.cell,atlases};
   }
   function decode(descriptor,signature){
-    if(!requests.has(signature))requests.set(signature,Promise.all(Object.entries(sheets).map(([sheet,grid])=>{const image=new Image();image.src=descriptor.atlases[sheet];return image.decode().then(()=>{if(!image.naturalWidth||(descriptor.type==='atlas'&&(image.naturalWidth!==grid.cols*descriptor.cell||image.naturalHeight!==grid.rows*descriptor.cell)))throw new Error('La prenda no coincide con el rig del Chota.');});})).then(()=>true).catch(error=>{requests.delete(signature);throw error;}));
+    if(!requests.has(signature))requests.set(signature,Promise.all(Object.entries(sheets).map(([sheet,grid])=>{const image=new Image();image.src=descriptor.atlases[sheet];return image.decode().catch(error=>{throw new Error(`No se pudo decodificar ${image.src}: ${error.message}`);}).then(()=>{if(!image.naturalWidth||(descriptor.type==='atlas'&&(image.naturalWidth!==grid.cols*descriptor.cell||image.naturalHeight!==grid.rows*descriptor.cell)))throw new Error('La prenda no coincide con el rig del Chota.');});})).then(()=>true).catch(error=>{requests.delete(signature);throw error;}));
     return requests.get(signature);
   }
   // ── Overlay slots (trousers, T-shirt). Class names: chota-wardrobe-<name>-<kind>, has-chota-<name>.
@@ -87,12 +87,12 @@
     if(overlays[item?.slot])return applyOverlay(item.slot,item);
     const descriptor=describe(item);if(!descriptor||item.owned!==true)throw new TypeError('Esta prenda no está disponible en tu armario.');
     const sequence=++equipSequence,signature=JSON.stringify(descriptor);
-    if(!requests.has(signature))requests.set(signature,Promise.all(Object.entries(sheets).map(([sheet,grid])=>{const image=new Image();image.src=descriptor.atlases[sheet];return image.decode().then(()=>{if(!image.naturalWidth||(descriptor.type==='atlas'&&(image.naturalWidth!==grid.cols*descriptor.cell||image.naturalHeight!==grid.rows*descriptor.cell)))throw new Error('La prenda no coincide con el rig del Chota.');});})).then(()=>true).catch(error=>{requests.delete(signature);throw error;}));
+    if(!requests.has(signature))requests.set(signature,Promise.all(Object.entries(sheets).map(([sheet,grid])=>{const image=new Image();image.src=descriptor.atlases[sheet];return image.decode().catch(error=>{throw new Error(`No se pudo decodificar ${image.src}: ${error.message}`);}).then(()=>{if(!image.naturalWidth||(descriptor.type==='atlas'&&(image.naturalWidth!==grid.cols*descriptor.cell||image.naturalHeight!==grid.rows*descriptor.cell)))throw new Error('La prenda no coincide con el rig del Chota.');});})).then(()=>true).catch(error=>{requests.delete(signature);throw error;}));
     await requests.get(signature);if(sequence!==equipSequence)return null;
     serverId=descriptor.id;serverAtlases=descriptor.atlases;selected=descriptor.id;document.querySelectorAll('.tigreton-character').forEach(character=>{character.querySelector('.chota-wardrobe-main')?.removeAttribute('data-coat-frame');mount(character);});notifyWardrobe();return serverId;
   }
   function ensure(color){
-    if(!requests.has(color))requests.set(color,Promise.all(Object.keys(sheets).map(sheet=>{const image=new Image();image.src=localURL(color,sheet);return image.decode().then(()=>{if(!image.naturalWidth)throw new Error('No se pudo cargar el abrigo.');});})).then(()=>true).catch(error=>{requests.delete(color);throw error;}));
+    if(!requests.has(color))requests.set(color,Promise.all(Object.keys(sheets).map(sheet=>{const image=new Image();image.src=localURL(color,sheet);return image.decode().catch(error=>{throw new Error(`No se pudo decodificar ${image.src}: ${error.message}`);}).then(()=>{if(!image.naturalWidth)throw new Error('No se pudo cargar el abrigo.');});})).then(()=>true).catch(error=>{requests.delete(color);throw error;}));
     return requests.get(color);
   }
   function layer(parent,kind){
