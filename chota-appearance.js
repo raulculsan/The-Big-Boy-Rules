@@ -4,7 +4,9 @@
   'use strict';
   const grids={base:[6,4],directional:[5,4],contextual:[4,4],room:[4,1],talk:[3,1]};
   const legacy={base:'chota-poses.webp',directional:'chota-directional-v1.webp',contextual:'chota-contextual-v1.webp',room:'chota-room-life-v1.webp',talk:'chota-talk.webp'};
-  const root=document.documentElement,absolute=value=>new URL(value,document.baseURI).href,previews=new Set();
+  // Tailored atlases keep their names across art fixes; the revision busts the
+  // public-media cache so a phone never mixes old and new layers of one outfit.
+  const ART_REVISION='603',root=document.documentElement,absolute=value=>{const url=new URL(value,document.baseURI);if(url.pathname.includes('/tailored-v5/')&&!url.search)url.searchParams.set('v',ART_REVISION);return url.href;},previews=new Set();
   let contract=null,preparing=null,enabled=false;
   const valid=paths=>paths&&Object.keys(paths).length===5&&Object.keys(grids).every(sheet=>typeof paths[sheet]==='string'&&/^icons\/mascot\/chota-v2\/tailored-v5\/[a-z0-9-]+\.webp$/.test(paths[sheet]));
   function prepare(){
@@ -26,7 +28,7 @@
     function ensure(){
       if(worker)return worker;
       if(typeof Worker!=='function')throw new Error('Este dispositivo necesita una versión compatible con el armario.');
-      worker=new Worker(new URL('chota-compositor-worker.js?v=20261109-tailored-v5-602',document.baseURI));
+      worker=new Worker(new URL('chota-compositor-worker.js?v=20261109-tailored-v5-603',document.baseURI));
       worker.onmessage=async({data})=>{
         if(!pending||data.sequence!==pending.sequence)return;
         const request=pending,urls={};

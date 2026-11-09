@@ -12,6 +12,10 @@ export function partition(source,tee,jeans,shoes,p){const labels=new Uint8Array(
  for(let k=0;k<65536;k++)if(labels[k]){distance[k]=0;nearest[k]=labels[k];queue[end++]=k;}
  for(let j=0;j<end;j++){const k=queue[j],x=k%256,y=k>>8;if(distance[k]>=12)continue;for(const n of [x>0?k-1:-1,x<255?k+1:-1,y>0?k-256:-1,y<255?k+256:-1])if(n>=0&&distance[n]===65535){distance[n]=distance[k]+1;nearest[n]=nearest[k];queue[end++]=n;}}
  for(let k=0;k<65536;k++)if(!labels[k]&&distance[k]<=2){const i=k*4,[r,g,b,a]=source.subarray(i,i+4),fur=r>90&&g>55&&g/r>.32&&r-b>25&&g-b>15;if(a>=128&&!fur&&Math.max(r,g,b)<110)labels[k]=nearest[k];}
+ // Claude 2026-11-09: paw fur resting on the tee/jeans was extracted with the
+ // garment and then recoloured (a garment-coloured patch on the paw). Warm fur
+ // inside a hand circle is anatomy whatever the garment masks said.
+ for(let k=0;k<65536;k++){const l=labels[k];if(l!==1&&l!==2)continue;const x=k%256,y=k>>8;if(!(p.hands||[]).some(([hx,hy,r])=>Math.hypot(x-hx,y-hy)<r+6))continue;const i=k*4,r=source[i],g=source[i+1],b=source[i+2];if(r>150&&r-b>35&&g>90)labels[k]=0;}
  const anatomy=Buffer.alloc(source.length),parts=[null,Buffer.alloc(source.length),Buffer.alloc(source.length),Buffer.alloc(source.length)],foreground=Buffer.alloc(source.length);
  for(let k=0;k<65536;k++){const i=k*4;if(source[i+3]<128)continue;source.copy(labels[k]?parts[labels[k]]:anatomy,i,i,i+4);if(!labels[k]){const x=k%256,y=k>>8,head=p.headPolygon?inside(x,y,p.headPolygon):x>=p.head[0]-8&&x<=p.head[2]+8&&y>=p.head[1]-8&&y<=p.head[3];if(head||p.hands.some(([hx,hy,r])=>Math.hypot(x-hx,y-hy)<r+3))source.copy(foreground,i,i,i+4);}}
  return{labels,distance,nearest,anatomy,parts,foreground};}

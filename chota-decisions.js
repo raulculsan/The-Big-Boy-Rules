@@ -106,6 +106,18 @@
     navigator.vibrate?.(14);
   }
 
+  // The sprite cell must be a whole number of CSS pixels. A fractional actor
+  // (82 % of a fluid stage) makes the 600 %-wide sheet sample the neighbouring
+  // pose at the edges and shifts the drawing by a pixel between frames.
+  let actorFit = null;
+  function fitActor() {
+    const stage = dialog?.querySelector('.chd-stage'), mover = dialog?.querySelector('.chd-actor');
+    if (!stage || !mover) return;
+    const size = Math.max(1, Math.round(stage.clientHeight * .82));
+    if (mover.style.height !== `${size}px`) { mover.style.height = `${size}px`; mover.style.width = `${size}px`; }
+    if (!actorFit && typeof ResizeObserver === 'function') { actorFit = new ResizeObserver(() => fitActor()); actorFit.observe(stage); }
+  }
+
   // A small sprite player on the Chota sheets: poses (6×4) and talk (3×1).
   const actor = {
     timer: 0, talkTimer: 0, typing: 0, token: 0, x: 0, sheet: 'base', index: 0,
@@ -472,6 +484,7 @@
     document.body.classList.add('chota-decision-open');
     dialog.showModal();
     actor.stop();
+    fitActor();
     actor.wear();
     actor.frame(0);
     dialog.querySelector('.chd-ghost').textContent = '…';
