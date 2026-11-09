@@ -135,7 +135,7 @@
       let seed=level*193;for(let i=cells.length-1;i>0;i--){seed=(seed*1664525+1013904223)>>>0;const j=seed%(i+1);[cells[i],cells[j]]=[cells[j],cells[i]];}
       r.crumbs=cells.slice(0,30);
     }
-    r.art=new Image();r.art.src=`icons/clubhouse/props/${games[id].art}`;r.pet=new Image();r.pet.src='icons/mascot/chota-v2/chota-poses.webp';
+    r.art=new Image();r.art.src=`icons/clubhouse/props/${games[id].art}`;r.pet=new Image();r.pet.src=globalThis.ChotaAppearance?.sheet?.('base')||'icons/mascot/chota-v2/chota-poses.webp';r.pet.modular=globalThis.ChotaAppearance?.enabled?.()===true;
     const clampTarget=p=>{r.target.x=Math.max(46,Math.min(world.width-46,p.x));r.target.y=Math.max(125,Math.min(world.height-35,p.y));};
     const point=e=>{const b=canvas.getBoundingClientRect();return{x:(e.clientX-b.left)/b.width*600+(id==='robot-vacuum'?r.camera.x:0),y:(e.clientY-b.top)/b.height*450+(id==='robot-vacuum'?r.camera.y:0)};};
     function act(e){
@@ -301,6 +301,13 @@
     ctx.fillStyle='#a86d34';ctx.beginPath();ctx.moveTo(-60,-12);ctx.lineTo(-48,-7);ctx.lineTo(48,-7);ctx.lineTo(60,-12);ctx.lineTo(57,-7);ctx.lineTo(46,-2);ctx.lineTo(-46,-2);ctx.lineTo(-57,-7);ctx.closePath();ctx.fill();
     ctx.strokeStyle='#29282d';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-58,-12);ctx.lineTo(-46,-8);ctx.lineTo(46,-8);ctx.lineTo(58,-12);ctx.stroke();
     const hipY=-51+crouch*15,lean=airborne?-5:Math.sin(r.time*3)*2;
+    if(r.pet.modular&&r.pet.complete&&r.pet.naturalWidth){
+      // A complete dressed cell is the unit of animation: torso, knees and feet
+      // never come from different poses or from the old baked blue jeans.
+      const fw=r.pet.naturalWidth/6,fh=r.pet.naturalHeight/4,index=airborne?14:crouch>.5?13:12;
+      ctx.save();ctx.translate(lean,-9);ctx.rotate(airborne?-.07:Math.sin(r.time*4)*.015);
+      ctx.drawImage(r.pet,index%6*fw,Math.floor(index/6)*fh,fw,fh,-82,-153,164,164);ctx.restore();
+    }else{
     // Articulated jeans bend at the knee; the original Jordan pixels stay on deck.
     const leg=(hipX,kneeX,footX,colour)=>{
       ctx.lineJoin='bevel';ctx.lineCap='butt';ctx.strokeStyle='#182336';ctx.lineWidth=22;ctx.beginPath();ctx.moveTo(hipX+lean,hipY-5);ctx.lineTo(kneeX,hipY+18-crouch*5);ctx.lineTo(footX,-15);ctx.stroke();
@@ -320,6 +327,7 @@
       // Shoe samples from the idle sprite retain the mascot's exact footwear.
       ctx.drawImage(r.pet,82/256*fw,212/256*fh,54/256*fw,30/256*fh,-43,-23,34,18);
       ctx.drawImage(r.pet,139/256*fw,212/256*fh,61/256*fw,30/256*fh,10,-23,38,18);
+    }
     }
     ctx.restore();
     if(landing>.3){ctx.save();ctx.globalAlpha=landing*.35;ctx.strokeStyle='#dfb67d';ctx.lineWidth=2;for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(153+side*49,384);ctx.lineTo(153+side*(61+(1-landing)*17),380);ctx.stroke();}ctx.restore();}
@@ -367,5 +375,10 @@
   async function openGame(id){if(!games[id])return;const actor=user();await open();if(!dialog||actor!==user())return;const token=serial,inventory=await owned();if(!dialog||token!==serial||actor!==user())return;if(inventory.has(id))levels(id);else briefing(id,true);}
   function initialize(options={}){config=options;}
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&round){round.endReason='abandoned';finish(round);}});
+  let appearanceLoad=0;
+  globalThis.addEventListener('chota-appearance-change',()=>{
+    const active=round;if(!active)return;const version=++appearanceLoad,image=new Image();image.src=globalThis.ChotaAppearance?.sheet?.('base')||'icons/mascot/chota-v2/chota-poses.webp';image.modular=globalThis.ChotaAppearance?.enabled?.()===true;
+    void image.decode().then(()=>{if(round===active&&version===appearanceLoad)active.pet=image;}).catch(()=>{});
+  });
   globalThis.ChotaGames=Object.freeze({initialize,mount,open,openGame,mountWeeklyChallenge:weeklyChallenge,reset:()=>close({immediate:true})});
 })();

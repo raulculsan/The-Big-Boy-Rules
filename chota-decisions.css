@@ -75,10 +75,10 @@ body.chota-decision-open { overflow: hidden; }
 .chd-actor { position: absolute; z-index: 3; left: -3%; bottom: 1%; height: 82%; aspect-ratio: 1; cursor: pointer; }
 .chd-chota {
   position: absolute; inset: 0; transform-origin: 50% 92%;
-  background: url("icons/mascot/chota-v2/chota-poses.webp") 0 0 / 600% 400% no-repeat; image-rendering: pixelated;
+  background: var(--chota-neutral-base, url("icons/mascot/chota-v2/chota-poses.webp")) 0 0 / 600% 400% no-repeat; image-rendering: pixelated;
   animation: chd-breathe 3.2s ease-in-out infinite;
 }
-.chd-chota.is-talking { background-image: url("icons/mascot/chota-v2/chota-talk.webp"); background-size: 300% 100%; }
+.chd-chota.is-talking { background-image: var(--chota-neutral-talk, url("icons/mascot/chota-v2/chota-talk.webp")); background-size: 300% 100%; }
 .chd-chota.is-facing-left { transform: scaleX(-1); }
 .chd-shadow { position: absolute; left: 23%; bottom: 2%; width: 47%; height: 6%; border-radius: 50%; background: #0007; transition: transform 200ms ease; }
 .chd-chota.is-airborne ~ .chd-shadow, .chd-actor:has(.is-airborne) .chd-shadow { transform: scale(.7); }

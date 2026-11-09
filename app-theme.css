@@ -388,7 +388,7 @@ body.authenticated :is(.message-form input, .message-form textarea, .inbox-searc
 /* El Chota */
 .calendar-chota { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 4px; }
 .calendar-chota-sprite { flex: none; width: 84px; height: 84px; padding: 0; border: 0; background: transparent; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-.calendar-chota-sprite > span { display: block; width: 100%; height: 100%; background: url("icons/mascot/chota-v2/chota-poses.webp") 0 0 / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0007); transform-origin: 50% 92%; }
+.calendar-chota-sprite > span { display: block; width: 100%; height: 100%; background: var(--chota-outfit-base, url("icons/mascot/chota-v2/chota-poses.webp")) 0 0 / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0007); transform-origin: 50% 92%; }
 .calendar-chota.is-bouncing .calendar-chota-sprite > span { animation: calendar-chota-hop .55s cubic-bezier(.3, .7, .3, 1); }
 @keyframes calendar-chota-hop { 0%, 100% { transform: none; } 35% { transform: translateY(-14px) scale(1.04, .97); } 60% { transform: translateY(0) scale(1.06, .94); } 80% { transform: scale(.98, 1.02); } }
 .calendar-chota-bubble { position: relative; flex: 1; min-width: 0; margin-bottom: 18px; padding: 12px 14px; border-radius: 18px 18px 18px 6px; background: var(--ds-raised); }
@@ -435,7 +435,7 @@ body:not(.authenticated) :is(.noise, .aurora, .gold-grid, .cursor-glow) { displa
 @keyframes bb-login-drift { to { transform: translate(6vmax, 4vmax) scale(1.08); } }
 .bb-login-shell { display: grid; gap: 28px; width: min(100%, 400px); }
 .bb-login-hero { display: grid; justify-items: center; text-align: center; }
-.bb-login-chota { width: 128px; height: 128px; margin-bottom: 6px; background: url("icons/mascot/chota-v2/chota-poses.webp") 60% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 14px 18px #000a); animation: bb-login-wave 3.2s ease-in-out infinite; transform-origin: 50% 92%; }
+.bb-login-chota { width: 128px; height: 128px; margin-bottom: 6px; background: var(--chota-outfit-base, url("icons/mascot/chota-v2/chota-poses.webp")) 60% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 14px 18px #000a); animation: bb-login-wave 3.2s ease-in-out infinite; transform-origin: 50% 92%; }
 @keyframes bb-login-wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .bb-login-badge { padding: 5px 12px; border-radius: 14px; background: #ffffff14; color: #ffffffb3; font-size: 12px; font-weight: 600; }
 .bb-login-hero h1 { margin: 14px 0 6px; color: #fff; font-family: var(--ds-font); font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1.05; }
@@ -472,7 +472,7 @@ body:not(.authenticated) :is(.noise, .aurora, .gold-grid, .cursor-glow) { displa
 .account-request-dialog .request-dialog-head .eyebrow { display: none; }
 .account-request-dialog .request-dialog-head button { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #ffffff14; color: #ffffffcc; font-size: 22px; line-height: 1; }
 .account-request-dialog h2 { margin: 6px 0 8px; color: #fff; font-family: var(--ds-font); font-size: 28px; font-weight: 800; letter-spacing: -.025em; }
-.account-request-dialog h2::before { content: ""; display: block; width: 72px; height: 72px; margin: -8px 0 6px -6px; background: url("icons/mascot/chota-v2/chota-poses.webp") 0% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 8px 10px #0009); }
+.account-request-dialog h2::before { content: ""; display: block; width: 72px; height: 72px; margin: -8px 0 6px -6px; background: var(--chota-outfit-base, url("icons/mascot/chota-v2/chota-poses.webp")) 0% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 8px 10px #0009); }
 .account-request-dialog .request-intro { margin: 0; color: #ffffff99; font-size: 15px; line-height: 1.45; }
 .account-request-dialog .request-identity-choice { display: grid; gap: 14px; margin-top: 20px; }
 .account-request-dialog [data-request-google] { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border: 0; border-radius: 16px; background: #fff; color: #111; font: 700 16px/1 var(--ds-font); }
@@ -511,7 +511,7 @@ body:not(.authenticated) :is(.noise, .aurora, .gold-grid, .cursor-glow) { displa
 #sobres#sobres .col-stage .packs-art-button[data-empty] { filter: drop-shadow(0 22px 26px #000b) grayscale(.6) brightness(.7); animation: none; }
 @keyframes col-pack-float { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-8px) rotate(1.5deg); } }
 .col-chota { display: flex; align-items: flex-end; gap: 6px; width: 100%; margin-top: -8px; }
-.col-chota-sprite { flex: none; width: 76px; height: 76px; background: url("icons/mascot/chota-v2/chota-poses.webp") 0% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); }
+.col-chota-sprite { flex: none; width: 76px; height: 76px; background: var(--chota-outfit-base, url("icons/mascot/chota-v2/chota-poses.webp")) 0% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); }
 .col-chota[data-mood="happy"] .col-chota-sprite { background-position: 60% 66.667%; animation: col-chota-hop 2.4s ease-in-out infinite; transform-origin: 50% 92%; }
 .col-chota[data-mood="calm"] .col-chota-sprite { background-position: 40% 100%; }
 @keyframes col-chota-hop { 0%, 70%, 100% { transform: none; } 80% { transform: translateY(-8px); } 90% { transform: translateY(0) scale(1.04, .96); } }
@@ -600,7 +600,7 @@ body:not(.authenticated) :is(.noise, .aurora, .gold-grid, .cursor-glow) { displa
 @keyframes pk-rise { from { opacity: 0; transform: translateY(8px); } }
 .pack-reveal-dialog.pack-reveal-dialog .pack-reveal-actions:empty { display: none; }
 .pack-chota { display: flex; align-items: flex-end; gap: 6px; text-align: left; }
-.pack-chota-sprite { flex: none; display: block; width: 72px; height: 72px; background: url("icons/mascot/chota-v2/chota-poses.webp") 0% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); transform-origin: 50% 92%; }
+.pack-chota-sprite { flex: none; display: block; width: 72px; height: 72px; background: var(--chota-outfit-base, url("icons/mascot/chota-v2/chota-poses.webp")) 0% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); transform-origin: 50% 92%; }
 .pack-chota[data-mood="wave"] .pack-chota-sprite, .pack-reveal-dialog[data-mood="wave"] .pack-summary-title .pack-chota-sprite { background-position: 60% 0%; }
 .pack-chota[data-mood="cheer"] .pack-chota-sprite, .pack-reveal-dialog[data-mood="cheer"] .pack-summary-title .pack-chota-sprite { background-position: 60% 66.667%; animation: pk-hop 1.6s ease-in-out infinite; }
 .pack-chota[data-mood="calm"] .pack-chota-sprite { background-position: 40% 100%; }
@@ -652,7 +652,7 @@ body:not(.authenticated) :is(.noise, .aurora, .gold-grid, .cursor-glow) { displa
 /* El Chota and the progress of the rarity on screen. */
 .album-chota { display: flex; align-items: flex-end; gap: 6px; margin: 0 0 12px; }
 .album-chota[hidden] { display: none; }
-.album-chota-sprite { flex: none; display: block; width: 76px; height: 76px; background: url("icons/mascot/chota-v2/chota-poses.webp") 60% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); transform-origin: 50% 92%; }
+.album-chota-sprite { flex: none; display: block; width: 76px; height: 76px; background: var(--chota-outfit-base, url("icons/mascot/chota-v2/chota-poses.webp")) 60% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); transform-origin: 50% 92%; }
 .album-chota[data-mood="cheer"] .album-chota-sprite { background-position: 60% 66.667%; animation: pk-hop 1.8s ease-in-out infinite; }
 .album-chota[data-mood="calm"] .album-chota-sprite { background-position: 40% 100%; }
 .album-chota-copy { flex: 1; min-width: 0; margin-bottom: 8px; padding: 11px 14px 12px; border-radius: 18px 18px 18px 5px; background: #ffffff14; }
@@ -689,7 +689,7 @@ body:not(.authenticated) :is(.noise, .aurora, .gold-grid, .cursor-glow) { displa
 
 /* Catalog and duplicates share the lit stage: a warm light behind El Chota, rarity dots and glows. */
 .catalog-chota, .dup-chota { display: flex; align-items: flex-end; gap: 6px; }
-.catalog-chota-sprite, .dup-chota-sprite { flex: none; display: block; width: 76px; height: 76px; background: url("icons/mascot/chota-v2/chota-poses.webp") 60% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); }
+.catalog-chota-sprite, .dup-chota-sprite { flex: none; display: block; width: 76px; height: 76px; background: var(--chota-outfit-base, url("icons/mascot/chota-v2/chota-poses.webp")) 60% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); }
 .dup-chota[data-mood="calm"] .dup-chota-sprite { background-position: 40% 100%; }
 .catalog-chota p, .dup-chota p { flex: 1; min-width: 0; margin: 0 0 14px; padding: 11px 14px; border-radius: 18px 18px 18px 5px; background: #ffffff14; color: #fff; font-size: 14px; font-weight: 600; line-height: 1.35; }
 
@@ -742,7 +742,7 @@ body.authenticated #duplicatesDialog#duplicatesDialog :is(#discardAllDuplicates,
    conversations stay as they were. */
 .inbox-chota, .profile-chota { display: flex; align-items: flex-end; gap: 6px; text-align: left; }
 .inbox-chota[hidden] { display: none; }
-.inbox-chota-sprite, .profile-chota-sprite { flex: none; display: block; width: 64px; height: 64px; background: url("icons/mascot/chota-v2/chota-poses.webp") 60% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); transform-origin: 50% 92%; }
+.inbox-chota-sprite, .profile-chota-sprite { flex: none; display: block; width: 64px; height: 64px; background: var(--chota-outfit-base, url("icons/mascot/chota-v2/chota-poses.webp")) 60% 0% / 600% 400% no-repeat; image-rendering: pixelated; filter: drop-shadow(0 6px 8px #0009); transform-origin: 50% 92%; }
 :is(.inbox-chota, .profile-chota)[data-mood="cheer"] :is(.inbox-chota-sprite, .profile-chota-sprite) { background-position: 60% 66.667%; animation: pk-hop 2.4s ease-in-out infinite; }
 .inbox-chota[data-mood="calm"] .inbox-chota-sprite { background-position: 40% 100%; }
 .inbox-chota p, .profile-chota p { flex: 1; min-width: 0; margin: 0 0 12px; padding: 10px 13px; border-radius: 16px 16px 16px 5px; background: #ffffff14; color: #fff; font-size: 14px; font-weight: 600; line-height: 1.35; }

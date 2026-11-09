@@ -3297,7 +3297,7 @@ const chotaDirectionalSprite = new Image();
 let chotaDirectionalRequest = null;
 function ensureChotaDirectionalSprite() {
   if (!chotaDirectionalRequest) {
-    chotaDirectionalSprite.src = "icons/mascot/chota-v2/chota-directional-v1.webp";
+    chotaDirectionalSprite.src = (globalThis.ChotaAppearance?.base?.("directional") || "icons/mascot/chota-v2/chota-directional-v1.webp");
     chotaDirectionalRequest = chotaDirectionalSprite.decode().then(() => chotaDirectionalSprite.naturalWidth > 0, () => false);
   }
   return chotaDirectionalRequest;
@@ -3306,7 +3306,7 @@ const chotaContextSprite = new Image();
 let chotaContextRequest = null;
 function ensureChotaContextSprite() {
   if (!chotaContextRequest) {
-    chotaContextSprite.src = "icons/mascot/chota-v2/chota-contextual-v1.webp";
+    chotaContextSprite.src = (globalThis.ChotaAppearance?.base?.("contextual") || "icons/mascot/chota-v2/chota-contextual-v1.webp");
     chotaContextRequest = chotaContextSprite.decode().then(() => chotaContextSprite.naturalWidth > 0, () => false);
   }
   return chotaContextRequest;
@@ -3315,7 +3315,7 @@ const chotaRoomSprite = new Image();
 let chotaRoomRequest = null;
 function ensureChotaRoomSprite() {
   if (!chotaRoomRequest) {
-    chotaRoomSprite.src = "icons/mascot/chota-v2/chota-room-life-v1.webp";
+    chotaRoomSprite.src = (globalThis.ChotaAppearance?.base?.("room") || "icons/mascot/chota-v2/chota-room-life-v1.webp");
     chotaRoomRequest = chotaRoomSprite.decode().then(() => chotaRoomSprite.naturalWidth > 0, () => false);
   }
   return chotaRoomRequest;
@@ -3325,8 +3325,8 @@ const chotaSpritesReady = {talk: false, poses: false};
 function ensureChotaSprites() {
   if (!chotaSpritesRequest) {
     chotaSpritesRequest = new Promise(resolve => runWhenIdle(() => {
-      chotaTalkSprite.src = "icons/mascot/chota-v2/chota-talk.webp";
-      chotaPoseSprite.src = "icons/mascot/chota-v2/chota-poses.webp";
+      chotaTalkSprite.src = (globalThis.ChotaAppearance?.base?.("talk") || "icons/mascot/chota-v2/chota-talk.webp");
+      chotaPoseSprite.src = (globalThis.ChotaAppearance?.base?.("base") || "icons/mascot/chota-v2/chota-poses.webp");
       Promise.allSettled([
         chotaTalkSprite.decode().then(() => { chotaSpritesReady.talk = chotaTalkSprite.naturalWidth > 0; }),
         chotaPoseSprite.decode().then(() => { chotaSpritesReady.poses = chotaPoseSprite.naturalWidth > 0; })

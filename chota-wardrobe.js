@@ -4,7 +4,10 @@
   const colors=Object.freeze(['negro','crema','rojo','azul','oliva','morado']);
   const sheets=Object.freeze({base:{cols:6,rows:4,count:24},directional:{cols:5,rows:4,count:20},contextual:{cols:4,rows:4,count:16},room:{cols:4,rows:1,count:4},talk:{cols:3,rows:1,count:3}});
   const states=new WeakMap(),requests=new Map();
+  let wardrobeNoticePending=false;
+  function notifyWardrobe(){if(wardrobeNoticePending)return;wardrobeNoticePending=true;queueMicrotask(()=>{wardrobeNoticePending=false;globalThis.dispatchEvent?.(new Event('chota-wardrobe-change'));});}
   let selected=null,equipSequence=0,serverId=null,serverAtlases=null,storageBase='';
+  let outfitSequence=0;
   const localURL=(color,sheet)=>`icons/mascot/chota-v2/wardrobe/tnf-${color}-${sheet}-v3.webp`;
   const selectedID=()=>serverId || (selected?'chota-tnf-'+selected+'-v1':null);
   const url=(color,sheet)=>serverAtlases&&color===serverId?serverAtlases[sheet]:localURL(color,sheet);
@@ -12,11 +15,12 @@
   configure();
   // Trousers and T-shirts are independent slots drawn under the coat; same sheets, cells and pivots.
   const overlays=Object.freeze({
-    bottomwear:{name:'pants',rig:'chota-bottomwear-overlay-v1',key:/^carhartt-(marron|azul-oscuro)-v1$/,dir:'wardrobe-bottomwear',idle:[['.chota-idle-body','idle-body'],['.chota-idle-feet','idle-feet']]},
-    topwear:{name:'shirt',rig:'chota-topwear-overlay-v1',key:/^(carhartt-(crudo|oliva)|supreme-(negra|roja)|stussy-(blanca|azul))-v1$/,dir:'wardrobe-topwear',idle:[['.chota-idle-body','idle-body'],['.chota-idle-head','idle-head'],['.chota-sleep-chest','sleep-chest']]},
+    bottomwear:{name:'pants',rig:'chota-bottomwear-overlay-v1',key:/^(carhartt-(marron|azul-oscuro)|original-jeans)-v1$/,dir:'wardrobe-bottomwear',idle:[['.chota-idle-body','idle-body'],['.chota-idle-feet','idle-feet']]},
+    footwear:{name:'shoes',rig:'chota-footwear-overlay-v1',key:/^original-jordan-chicago-v1$/,dir:'wardrobe-originals',idle:[['.chota-idle-body','idle-body'],['.chota-idle-feet','idle-feet'],['.chota-sleep-chest','sleep-chest']]},
+    topwear:{name:'shirt',rig:'chota-topwear-overlay-v1',key:/^(carhartt-(crudo|oliva)|supreme-(negra|roja)|stussy-(blanca|azul)|original-stussy)-v1$/,dir:'wardrobe-topwear',idle:[['.chota-idle-body','idle-body'],['.chota-idle-head','idle-head'],['.chota-sleep-chest','sleep-chest']]},
   });
-  const rigs=Object.freeze({outerwear:'chota-overlay-v1',bottomwear:overlays.bottomwear.rig,topwear:overlays.topwear.rig});
-  const overlayURL=(slot,key,sheet)=>`icons/mascot/chota-v2/${overlays[slot].dir}/${key.replace(/-v1$/,'')}-${sheet}-v3.webp`;
+  const rigs=Object.freeze({outerwear:'chota-overlay-v1',bottomwear:overlays.bottomwear.rig,topwear:overlays.topwear.rig,footwear:overlays.footwear.rig});
+  const overlayURL=(slot,key,sheet)=>key.startsWith('original-')?`icons/mascot/chota-v2/wardrobe-originals/${key.replace(/-v1$/,'')}-${sheet}-v1.webp`:`icons/mascot/chota-v2/${overlays[slot].dir}/${key.replace(/-v1$/,'')}-${sheet}-v3.webp`;
   function describe(item){
     if(!item||typeof item.id!=='string'||!item.id||item.id.length>60||item.item_kind!=='clothing'||!Object.hasOwn(rigs,item.slot)||item.rig_version!==rigs[item.slot])return null;
     const garment=item.garment;if(!garment||typeof garment!=='object'||Array.isArray(garment))return null;
@@ -31,16 +35,17 @@
     return requests.get(signature);
   }
   // ── Overlay slots (trousers, T-shirt). Class names: chota-wardrobe-<name>-<kind>, has-chota-<name>.
-  const worn={bottomwear:null,topwear:null},wornSequence={bottomwear:0,topwear:0};
+  const worn={bottomwear:null,footwear:null,topwear:null},wornSequence={bottomwear:0,footwear:0,topwear:0};
   const cap=name=>name[0].toUpperCase()+name.slice(1);
   async function applyOverlay(slot,item){
+    outfitSequence++;globalThis.ChotaAppearance?.cancel();
     const sequence=++wornSequence[slot];
-    if(!item){worn[slot]=null;document.querySelectorAll('.tigreton-character').forEach(character=>unmountOverlay(character,slot));return null;}
+    if(!item){worn[slot]=null;document.querySelectorAll('.tigreton-character').forEach(character=>unmountOverlay(character,slot));notifyWardrobe();return null;}
     const descriptor=describe(item);if(!descriptor||descriptor.slot!==slot||item.owned!==true)throw new TypeError('Esta prenda no está disponible en tu armario.');
     await decode(descriptor,JSON.stringify(descriptor));if(sequence!==wornSequence[slot])return null;
-    const name=overlays[slot].name;worn[slot]=descriptor;document.querySelectorAll('.tigreton-character').forEach(character=>{character.querySelectorAll(`.chota-wardrobe-${name}`).forEach(node=>node.removeAttribute(`data-${name}-frame`));mountOverlay(character,slot);});return descriptor.id;
+    const name=overlays[slot].name;worn[slot]=descriptor;document.querySelectorAll('.tigreton-character').forEach(character=>{character.querySelectorAll(`.chota-wardrobe-${name}`).forEach(node=>node.removeAttribute(`data-${name}-frame`));mountOverlay(character,slot);});notifyWardrobe();return descriptor.id;
   }
-  const applyPants=item=>applyOverlay('bottomwear',item),applyShirt=item=>applyOverlay('topwear',item);
+  const applyPants=item=>applyOverlay('bottomwear',item),applyShirt=item=>applyOverlay('topwear',item),applyShoes=item=>applyOverlay('footwear',item);
   function unmountOverlay(character,slot){const name=overlays[slot].name;character.classList.remove(`has-chota-${name}`);delete character.dataset[`chota${cap(name)}`];character.style.removeProperty(`--chota-${name}-base`);character.querySelectorAll(`.chota-wardrobe-${name}`).forEach(node=>node.remove());}
   // Stacking, bottom to top: sprite, trousers, T-shirt, coat; hands stay above inside the idle torso.
   function overlayLayer(parent,slot,kind,before){
@@ -53,9 +58,14 @@
     const name=overlays[slot].name;
     character.classList.add(`has-chota-${name}`);character.dataset[`chota${cap(name)}`]=descriptor.id;
     character.style.setProperty(`--chota-${name}-base`,`url("${descriptor.atlases.base}")`);
-    const above=slot==='bottomwear'?character.querySelector(':scope > .chota-wardrobe-shirt-main')||character.querySelector(':scope > .chota-wardrobe-main'):character.querySelector(':scope > .chota-wardrobe-main');
+    const above=slot==='bottomwear'?character.querySelector(':scope > .chota-wardrobe-shoes-main')||character.querySelector(':scope > .chota-wardrobe-shirt-main')||character.querySelector(':scope > .chota-wardrobe-main'):slot==='footwear'?character.querySelector(':scope > .chota-wardrobe-shirt-main')||character.querySelector(':scope > .chota-wardrobe-main'):character.querySelector(':scope > .chota-wardrobe-main');
     overlayLayer(character,slot,'main',above);
-    for(const [selector,kind]of overlays[slot].idle){const parent=character.querySelector(selector);if(!parent)continue;const under=slot==='topwear'?parent.querySelector(':scope > .chota-wardrobe-pants'):null,before=under?under.nextSibling:undefined;overlayLayer(parent,slot,kind,before);}
+    for(const [selector,kind]of overlays[slot].idle){
+      const parent=character.querySelector(selector);if(!parent)continue;
+      const rank={pants:0,shoes:1,shirt:2},desired=rank[name];
+      const before=[...parent.children].find(child=>{const other=Object.keys(rank).find(key=>child.classList.contains(`chota-wardrobe-${key}`));return other?rank[other]>desired:!child.classList.contains('chota-wardrobe-'+name);});
+      overlayLayer(parent,slot,kind,before||null);
+    }
     paintOverlay(character,slot,states.get(character)||{sheet:'base',frame:0});
   }
   function paintOverlay(character,slot,state){
@@ -68,17 +78,18 @@
     node.style.backgroundSize=`${sheet.cols*100}% ${sheet.rows*100}%`;
     node.style.backgroundPosition=`${sheet.cols===1?0:(state.frame%sheet.cols)*100/(sheet.cols-1)}% ${sheet.rows===1?0:Math.floor(state.frame/sheet.cols)*100/(sheet.rows-1)}%`;
   }
-  const mountOverlays=character=>{for(const slot of ['bottomwear','topwear'])if(worn[slot])mountOverlay(character,slot);};
-  const paintOverlays=(character,state)=>{for(const slot of ['bottomwear','topwear'])if(worn[slot])paintOverlay(character,slot,state);};
+  const mountOverlays=character=>{for(const slot of ['bottomwear','footwear','topwear'])if(worn[slot])mountOverlay(character,slot);};
+  const paintOverlays=(character,state)=>{for(const slot of ['bottomwear','footwear','topwear'])if(worn[slot])paintOverlay(character,slot,state);};
 
   async function applyOwned(item){
+    outfitSequence++;globalThis.ChotaAppearance?.cancel();
     if(item===null)return previewEquip(null);
     if(overlays[item?.slot])return applyOverlay(item.slot,item);
     const descriptor=describe(item);if(!descriptor||item.owned!==true)throw new TypeError('Esta prenda no está disponible en tu armario.');
     const sequence=++equipSequence,signature=JSON.stringify(descriptor);
     if(!requests.has(signature))requests.set(signature,Promise.all(Object.entries(sheets).map(([sheet,grid])=>{const image=new Image();image.src=descriptor.atlases[sheet];return image.decode().then(()=>{if(!image.naturalWidth||(descriptor.type==='atlas'&&(image.naturalWidth!==grid.cols*descriptor.cell||image.naturalHeight!==grid.rows*descriptor.cell)))throw new Error('La prenda no coincide con el rig del Chota.');});})).then(()=>true).catch(error=>{requests.delete(signature);throw error;}));
     await requests.get(signature);if(sequence!==equipSequence)return null;
-    serverId=descriptor.id;serverAtlases=descriptor.atlases;selected=descriptor.id;document.querySelectorAll('.tigreton-character').forEach(character=>{character.querySelector('.chota-wardrobe-main')?.removeAttribute('data-coat-frame');mount(character);});return serverId;
+    serverId=descriptor.id;serverAtlases=descriptor.atlases;selected=descriptor.id;document.querySelectorAll('.tigreton-character').forEach(character=>{character.querySelector('.chota-wardrobe-main')?.removeAttribute('data-coat-frame');mount(character);});notifyWardrobe();return serverId;
   }
   function ensure(color){
     if(!requests.has(color))requests.set(color,Promise.all(Object.keys(sheets).map(sheet=>{const image=new Image();image.src=localURL(color,sheet);return image.decode().then(()=>{if(!image.naturalWidth)throw new Error('No se pudo cargar el abrigo.');});})).then(()=>true).catch(error=>{requests.delete(color);throw error;}));
@@ -118,20 +129,55 @@
     const state={sheet,frame:index};states.set(character,state);if(selected)paint(character,state);paintOverlays(character,state);
   }
   async function previewEquip(id){
+    outfitSequence++;globalThis.ChotaAppearance?.cancel();
     const sequence=++equipSequence;
-    if(id===null){selected=null;serverId=null;serverAtlases=null;for(const character of document.querySelectorAll('.tigreton-character')){character.classList.remove('has-chota-outfit');delete character.dataset.chotaOutfit;character.style.removeProperty('--chota-coat-base');character.querySelectorAll('.chota-wardrobe-layer').forEach(node=>node.remove());}return null;}
+    if(id===null){selected=null;serverId=null;serverAtlases=null;for(const character of document.querySelectorAll('.tigreton-character')){character.classList.remove('has-chota-outfit');delete character.dataset.chotaOutfit;character.style.removeProperty('--chota-coat-base');character.querySelectorAll('.chota-wardrobe-layer').forEach(node=>node.remove());}notifyWardrobe();return null;}
     const color=colors.find(color=>id===color||id===`chota-tnf-${color}-v1`);
     if(!color)throw new TypeError('Abrigo de prueba desconocido.');
     await ensure(color);if(sequence!==equipSequence)return null;
-    serverId=null;serverAtlases=null;selected=color;document.querySelectorAll('.tigreton-character').forEach(mount);
+    serverId=null;serverAtlases=null;selected=color;document.querySelectorAll('.tigreton-character').forEach(mount);notifyWardrobe();
     return 'chota-tnf-'+color+'-v1';
   }
   // What he wears, bottom to top, as five-sheet atlases: lets other scenes (the daily dilemma) dress their own sprite.
   function outfit(){
     const layers=[];
-    for(const slot of ['bottomwear','topwear'])if(worn[slot])layers.push({slot,atlases:{...worn[slot].atlases}});
+    for(const slot of ['bottomwear','footwear','topwear'])if(worn[slot])layers.push({slot,atlases:{...worn[slot].atlases}});
     if(selected)layers.push({slot:'outerwear',atlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,url(selected,sheet)]))});
     return layers;
   }
-  globalThis.ChotaWardrobe=Object.freeze({outfit,mount,frame,previewEquip,applyOwned,applyPants,applyShirt,describe,configure,selected:selectedID,pants:()=>worn.bottomwear?.id||null,shirt:()=>worn.topwear?.id||null,items:()=>colors.map(color=>({id:`chota-tnf-${color}-v1`,color,purchase_enabled:false,active:false,price_coins:null})),poseCount:67});
+  // Modular clients commit all slots together only after the neutral body and
+  // composed cameo sheets are decoded. Late responses cannot revive old outfits.
+  async function applyOutfit(items){
+    const token=++outfitSequence;globalThis.ChotaAppearance?.cancel();
+    if(items===null){
+      equipSequence++;for(const slot of Object.keys(worn)){wornSequence[slot]++;worn[slot]=null;}
+      selected=null;serverId=null;serverAtlases=null;
+      for(const character of document.querySelectorAll('.tigreton-character')){
+        for(const slot of Object.keys(overlays))unmountOverlay(character,slot);
+        character.classList.remove('has-chota-outfit');delete character.dataset.chotaOutfit;character.style.removeProperty('--chota-coat-base');character.querySelectorAll('.chota-wardrobe-layer').forEach(node=>node.remove());
+      }
+      globalThis.ChotaAppearance?.reset();notifyWardrobe();return null;
+    }
+    if(!items||typeof items!=='object'||Array.isArray(items)||!globalThis.ChotaAppearance)throw new TypeError('El nuevo armario aún no está preparado.');
+    const descriptors={};
+    for(const slot of ['bottomwear','footwear','topwear','outerwear']){
+      const item=items[slot];if(!item){descriptors[slot]=null;continue;}
+      const descriptor=describe(item);if(!descriptor||item.owned!==true||item.slot!==slot)throw new TypeError('Esta prenda no está disponible en tu armario.');
+      descriptors[slot]=descriptor;
+    }
+    await Promise.all(Object.values(descriptors).filter(Boolean).map(descriptor=>decode(descriptor,JSON.stringify(descriptor))));
+    if(token!==outfitSequence)return null;
+    const layers=Object.entries(descriptors).filter(([,value])=>value).map(([slot,value])=>({slot,atlases:value.atlases}));
+    if(!await globalThis.ChotaAppearance.compose(layers)||token!==outfitSequence)return null;
+    equipSequence++;for(const slot of Object.keys(worn)){wornSequence[slot]++;worn[slot]=descriptors[slot];}
+    const coat=descriptors.outerwear;selected=coat?.id||null;serverId=coat?.id||null;serverAtlases=coat?.atlases||null;
+    for(const character of document.querySelectorAll('.tigreton-character')){
+      character.querySelectorAll('.chota-wardrobe-layer,.chota-wardrobe-pants,.chota-wardrobe-shoes,.chota-wardrobe-shirt').forEach(node=>node.remove());
+      for(const slot of Object.keys(overlays))if(!worn[slot])unmountOverlay(character,slot);
+      if(!coat){character.classList.remove('has-chota-outfit');delete character.dataset.chotaOutfit;character.style.removeProperty('--chota-coat-base');}
+      mount(character);
+    }
+    notifyWardrobe();return Object.fromEntries(Object.entries(descriptors).map(([slot,value])=>[slot,value?.id||null]));
+  }
+  globalThis.ChotaWardrobe=Object.freeze({outfit,applyOutfit,mount,frame,previewEquip,applyOwned,applyPants,applyShirt,applyShoes,describe,configure,selected:selectedID,pants:()=>worn.bottomwear?.id||null,shirt:()=>worn.topwear?.id||null,shoes:()=>worn.footwear?.id||null,items:()=>colors.map(color=>({id:`chota-tnf-${color}-v1`,color,purchase_enabled:false,active:false,price_coins:null})),poseCount:67});
 })();

@@ -108,12 +108,12 @@
 
   // A small sprite player on the Chota sheets: poses (6×4) and talk (3×1).
   const actor = {
-    timer: 0, talkTimer: 0, typing: 0, token: 0, x: 0,
+    timer: 0, talkTimer: 0, typing: 0, token: 0, x: 0, sheet: 'base', index: 0,
     node() { return dialog?.querySelector('.chd-chota'); },
     frame(index) {
       const node = this.node();
       if (!node) return;
-      node.classList.remove('is-talking');
+      this.sheet='base';this.index=index;node.classList.remove('is-talking');
       node.style.backgroundPosition = `${(index % 6) * 20}% ${Math.floor(index / 6) * (100 / 3)}%`;
       this.dress('base', node.style.backgroundPosition);
     },
@@ -130,7 +130,8 @@
         layer.dataset.talk = atlases.talk;
         node.querySelector('.chd-think') ? node.insertBefore(layer, node.querySelector('.chd-think')) : node.append(layer);
       }
-      this.dress(node.classList.contains('is-talking') ? 'talk' : 'base', node.style.backgroundPosition);
+      const sheet=this.sheet,index=this.index,cols=sheet==='talk'?3:6,rows=sheet==='talk'?1:4;
+      this.dress(sheet,`${index%cols*100/(cols-1)}% ${rows===1?0:Math.floor(index/cols)*100/(rows-1)}%`);
     },
     dress(sheet, position) {
       for (const layer of this.node()?.querySelectorAll('.chd-wear') || []) {
@@ -195,10 +196,10 @@
       if (reduced.matches) { line.textContent = text; finish(); return; }
       line.textContent = '';
       clearInterval(this.timer);
-      node.classList.add('is-talking');
-      this.dress('talk', node.style.backgroundPosition);
+      this.sheet='talk';this.index=0;node.classList.add('is-talking');node.style.backgroundPosition='0% 0%';
+      this.dress('talk', '0% 0%');
       let mouth = 0, shown = 0;
-      this.talkTimer = setInterval(() => { node.style.backgroundPosition = `${[0, 1, 2, 1][mouth++ % 4] * 50}% 0`; this.dress('talk', node.style.backgroundPosition); }, 110);
+      this.talkTimer = setInterval(() => { this.index=[0,1,2,1][mouth++%4];node.style.backgroundPosition = `${this.index * 50}% 0`; this.dress('talk', node.style.backgroundPosition); }, 110);
       const step = () => {
         if (token !== this.token) return;
         shown = Math.min(text.length, shown + 2);
@@ -858,5 +859,6 @@
   pressTimer = setTimeout(pressFlash, 12000);
   moodTimer = setTimeout(showMood, 9000);
 
+  globalThis.addEventListener('chota-wardrobe-change',()=>{if(dialog?.open)actor.wear();});
   globalThis.ChotaDecision = Object.freeze({open, openDrawer, sync: () => syncRoom(snapshot())});
 })();

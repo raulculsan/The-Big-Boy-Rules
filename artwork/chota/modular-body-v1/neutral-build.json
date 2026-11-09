@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "poseCount": 67,
+  "cell": 256,
+  "neutral": {
+    "base": "icons/mascot/chota-v2/neutral/neutral-base-v1.webp",
+    "directional": "icons/mascot/chota-v2/neutral/neutral-directional-v1.webp",
+    "contextual": "icons/mascot/chota-v2/neutral/neutral-contextual-v1.webp",
+    "room": "icons/mascot/chota-v2/neutral/neutral-room-v1.webp",
+    "talk": "icons/mascot/chota-v2/neutral/neutral-talk-v1.webp"
+  },
+  "sources": [
+    {
+      "file": "icons/mascot/chota-v2/chota-poses.webp",
+      "sha256": "51066ef202c5faf90e6ad05e5b2d1a0ab7f4ad58d74f7a6e59c446dbdc8ecc5e"
+    },
+    {
+      "file": "icons/mascot/chota-v2/chota-directional-v1.webp",
+      "sha256": "5564ce1b4b59849659cef5662ba6dc34c938de3851b181ca25b50581aa87667e"
+    },
+    {
+      "file": "icons/mascot/chota-v2/chota-contextual-v1.webp",
+      "sha256": "d742dc0fdde1e6752891e37a2bf25196a7aca130717223f286074e85d3845b42"
+    },
+    {
+      "file": "icons/mascot/chota-v2/chota-room-life-v1.webp",
+      "sha256": "5d8b7cdff41b4eb86c6652916a844397353f96771ac29a12bfba2d1c00fcd384"
+    },
+    {
+      "file": "icons/mascot/chota-v2/chota-talk.webp",
+      "sha256": "f22f324b7978bef75cead74b0b33d64451f55bef6ec03df523f9affcadf93413"
+    }
+  ],
+  "runtime": [
+    {
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/neutral/neutral-base-v1.webp",
+      "cols": 6,
+      "rows": 4,
+      "count": 24,
+      "cell": 256,
+      "bytes": 983784
+    },
+    {
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/neutral/neutral-directional-v1.webp",
+      "cols": 5,
+      "rows": 4,
+      "count": 20,
+      "cell": 256,
+      "bytes": 501578
+    },
+    {
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/neutral/neutral-contextual-v1.webp",
+      "cols": 4,
+      "rows": 4,
+      "count": 16,
+      "cell": 256,
+      "bytes": 382670
+    },
+    {
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/neutral/neutral-room-v1.webp",
+      "cols": 4,
+      "rows": 1,
+      "count": 4,
+      "cell": 256,
+      "bytes": 102062
+    },
+    {
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/neutral/neutral-talk-v1.webp",
+      "cols": 3,
+      "rows": 1,
+      "count": 3,
+      "cell": 256,
+      "bytes": 52364
+    }
+  ],
+  "facialPixelsPreserved": 615491,
+  "generatedWith": "built-in imagegen",
+  "approved": false
+}

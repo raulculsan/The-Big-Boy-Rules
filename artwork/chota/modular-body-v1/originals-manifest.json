@@ -1,0 +1,806 @@
+{
+  "version": 1,
+  "cell": 256,
+  "poseCount": 67,
+  "runtime": [
+    {
+      "slot": "topwear",
+      "key": "original-stussy",
+      "sheet": "base",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-base-v1.webp",
+      "cell": 256,
+      "cols": 6,
+      "rows": 4,
+      "count": 24,
+      "bytes": 91680
+    },
+    {
+      "slot": "bottomwear",
+      "key": "original-jeans",
+      "sheet": "base",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-base-v1.webp",
+      "cell": 256,
+      "cols": 6,
+      "rows": 4,
+      "count": 24,
+      "bytes": 124438
+    },
+    {
+      "slot": "footwear",
+      "key": "original-jordan-chicago",
+      "sheet": "base",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-base-v1.webp",
+      "cell": 256,
+      "cols": 6,
+      "rows": 4,
+      "count": 24,
+      "bytes": 166400
+    },
+    {
+      "slot": "topwear",
+      "key": "original-stussy",
+      "sheet": "directional",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-directional-v1.webp",
+      "cell": 256,
+      "cols": 5,
+      "rows": 4,
+      "count": 20,
+      "bytes": 30440
+    },
+    {
+      "slot": "bottomwear",
+      "key": "original-jeans",
+      "sheet": "directional",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-directional-v1.webp",
+      "cell": 256,
+      "cols": 5,
+      "rows": 4,
+      "count": 20,
+      "bytes": 44046
+    },
+    {
+      "slot": "footwear",
+      "key": "original-jordan-chicago",
+      "sheet": "directional",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-directional-v1.webp",
+      "cell": 256,
+      "cols": 5,
+      "rows": 4,
+      "count": 20,
+      "bytes": 44000
+    },
+    {
+      "slot": "topwear",
+      "key": "original-stussy",
+      "sheet": "contextual",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-contextual-v1.webp",
+      "cell": 256,
+      "cols": 4,
+      "rows": 4,
+      "count": 16,
+      "bytes": 13232
+    },
+    {
+      "slot": "bottomwear",
+      "key": "original-jeans",
+      "sheet": "contextual",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-contextual-v1.webp",
+      "cell": 256,
+      "cols": 4,
+      "rows": 4,
+      "count": 16,
+      "bytes": 18180
+    },
+    {
+      "slot": "footwear",
+      "key": "original-jordan-chicago",
+      "sheet": "contextual",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-contextual-v1.webp",
+      "cell": 256,
+      "cols": 4,
+      "rows": 4,
+      "count": 16,
+      "bytes": 18472
+    },
+    {
+      "slot": "topwear",
+      "key": "original-stussy",
+      "sheet": "room",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-room-v1.webp",
+      "cell": 256,
+      "cols": 4,
+      "rows": 1,
+      "count": 4,
+      "bytes": 5550
+    },
+    {
+      "slot": "bottomwear",
+      "key": "original-jeans",
+      "sheet": "room",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-room-v1.webp",
+      "cell": 256,
+      "cols": 4,
+      "rows": 1,
+      "count": 4,
+      "bytes": 11234
+    },
+    {
+      "slot": "footwear",
+      "key": "original-jordan-chicago",
+      "sheet": "room",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-room-v1.webp",
+      "cell": 256,
+      "cols": 4,
+      "rows": 1,
+      "count": 4,
+      "bytes": 8160
+    },
+    {
+      "slot": "topwear",
+      "key": "original-stussy",
+      "sheet": "talk",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-stussy-talk-v1.webp",
+      "cell": 256,
+      "cols": 3,
+      "rows": 1,
+      "count": 3,
+      "bytes": 9658
+    },
+    {
+      "slot": "bottomwear",
+      "key": "original-jeans",
+      "sheet": "talk",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jeans-talk-v1.webp",
+      "cell": 256,
+      "cols": 3,
+      "rows": 1,
+      "count": 3,
+      "bytes": 9186
+    },
+    {
+      "slot": "footwear",
+      "key": "original-jordan-chicago",
+      "sheet": "talk",
+      "path": "icons/mascot/chota-v2/wardrobe-originals/original-jordan-chicago-talk-v1.webp",
+      "cell": 256,
+      "cols": 3,
+      "rows": 1,
+      "count": 3,
+      "bytes": 15534
+    }
+  ],
+  "defaults": {
+    "base": "icons/mascot/chota-v2/wardrobe-originals/default-composed-base-v1.webp",
+    "directional": "icons/mascot/chota-v2/wardrobe-originals/default-composed-directional-v1.webp",
+    "contextual": "icons/mascot/chota-v2/wardrobe-originals/default-composed-contextual-v1.webp",
+    "room": "icons/mascot/chota-v2/wardrobe-originals/default-composed-room-v1.webp",
+    "talk": "icons/mascot/chota-v2/wardrobe-originals/default-composed-talk-v1.webp"
+  },
+  "sources": [
+    {
+      "path": "icons/mascot/chota-v2/chota-poses.webp",
+      "sha256": "51066ef202c5faf90e6ad05e5b2d1a0ab7f4ad58d74f7a6e59c446dbdc8ecc5e"
+    },
+    {
+      "path": "icons/mascot/chota-v2/chota-directional-v1.webp",
+      "sha256": "5564ce1b4b59849659cef5662ba6dc34c938de3851b181ca25b50581aa87667e"
+    },
+    {
+      "path": "icons/mascot/chota-v2/chota-contextual-v1.webp",
+      "sha256": "d742dc0fdde1e6752891e37a2bf25196a7aca130717223f286074e85d3845b42"
+    },
+    {
+      "path": "icons/mascot/chota-v2/chota-room-life-v1.webp",
+      "sha256": "5d8b7cdff41b4eb86c6652916a844397353f96771ac29a12bfba2d1c00fcd384"
+    },
+    {
+      "path": "icons/mascot/chota-v2/chota-talk.webp",
+      "sha256": "f22f324b7978bef75cead74b0b33d64451f55bef6ec03df523f9affcadf93413"
+    }
+  ],
+  "frames": [
+    {
+      "sheet": "base",
+      "frame": 0,
+      "pixels": {
+        "topwear": 2726,
+        "bottomwear": 2487,
+        "footwear": 2918
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 1,
+      "pixels": {
+        "topwear": 2251,
+        "bottomwear": 2723,
+        "footwear": 3232
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 2,
+      "pixels": {
+        "topwear": 2980,
+        "bottomwear": 2769,
+        "footwear": 3055
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 3,
+      "pixels": {
+        "topwear": 2868,
+        "bottomwear": 2769,
+        "footwear": 2978
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 4,
+      "pixels": {
+        "topwear": 2824,
+        "bottomwear": 2758,
+        "footwear": 3194
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 5,
+      "pixels": {
+        "topwear": 2080,
+        "bottomwear": 2720,
+        "footwear": 3013
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 6,
+      "pixels": {
+        "topwear": 2267,
+        "bottomwear": 3399,
+        "footwear": 3566
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 7,
+      "pixels": {
+        "topwear": 1632,
+        "bottomwear": 2728,
+        "footwear": 2916
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 8,
+      "pixels": {
+        "topwear": 2154,
+        "bottomwear": 3445,
+        "footwear": 3633
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 9,
+      "pixels": {
+        "topwear": 1243,
+        "bottomwear": 2795,
+        "footwear": 2653
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 10,
+      "pixels": {
+        "topwear": 2032,
+        "bottomwear": 3370,
+        "footwear": 3281
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 11,
+      "pixels": {
+        "topwear": 2287,
+        "bottomwear": 3626,
+        "footwear": 3615
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 12,
+      "pixels": {
+        "topwear": 1741,
+        "bottomwear": 2735,
+        "footwear": 3300
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 13,
+      "pixels": {
+        "topwear": 1302,
+        "bottomwear": 1882,
+        "footwear": 3107
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 14,
+      "pixels": {
+        "topwear": 2324,
+        "bottomwear": 3333,
+        "footwear": 2925
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 15,
+      "pixels": {
+        "topwear": 2550,
+        "bottomwear": 3584,
+        "footwear": 3095
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 16,
+      "pixels": {
+        "topwear": 1877,
+        "bottomwear": 2796,
+        "footwear": 3482
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 17,
+      "pixels": {
+        "topwear": 2433,
+        "bottomwear": 2605,
+        "footwear": 3069
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 18,
+      "pixels": {
+        "topwear": 2568,
+        "bottomwear": 2809,
+        "footwear": 3141
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 19,
+      "pixels": {
+        "topwear": 1590,
+        "bottomwear": 1801,
+        "footwear": 3036
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 20,
+      "pixels": {
+        "topwear": 2139,
+        "bottomwear": 1828,
+        "footwear": 2653
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 21,
+      "pixels": {
+        "topwear": 1873,
+        "bottomwear": 2062,
+        "footwear": 1405
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 22,
+      "pixels": {
+        "topwear": 1321,
+        "bottomwear": 2318,
+        "footwear": 1654
+      }
+    },
+    {
+      "sheet": "base",
+      "frame": 23,
+      "pixels": {
+        "topwear": 1159,
+        "bottomwear": 2001,
+        "footwear": 1284
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 0,
+      "pixels": {
+        "topwear": 3212,
+        "bottomwear": 2490,
+        "footwear": 2739
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 1,
+      "pixels": {
+        "topwear": 3098,
+        "bottomwear": 2410,
+        "footwear": 2499
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 2,
+      "pixels": {
+        "topwear": 3036,
+        "bottomwear": 2447,
+        "footwear": 2482
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 3,
+      "pixels": {
+        "topwear": 3122,
+        "bottomwear": 2533,
+        "footwear": 2416
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 4,
+      "pixels": {
+        "topwear": 3231,
+        "bottomwear": 2505,
+        "footwear": 2536
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 5,
+      "pixels": {
+        "topwear": 3220,
+        "bottomwear": 2437,
+        "footwear": 2413
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 6,
+      "pixels": {
+        "topwear": 3182,
+        "bottomwear": 2502,
+        "footwear": 2559
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 7,
+      "pixels": {
+        "topwear": 3218,
+        "bottomwear": 2528,
+        "footwear": 2647
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 8,
+      "pixels": {
+        "topwear": 2740,
+        "bottomwear": 2343,
+        "footwear": 2728
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 9,
+      "pixels": {
+        "topwear": 2602,
+        "bottomwear": 2319,
+        "footwear": 3086
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 10,
+      "pixels": {
+        "topwear": 2576,
+        "bottomwear": 2326,
+        "footwear": 3139
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 11,
+      "pixels": {
+        "topwear": 2632,
+        "bottomwear": 2490,
+        "footwear": 3219
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 12,
+      "pixels": {
+        "topwear": 2768,
+        "bottomwear": 2491,
+        "footwear": 3081
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 13,
+      "pixels": {
+        "topwear": 2735,
+        "bottomwear": 2389,
+        "footwear": 3262
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 14,
+      "pixels": {
+        "topwear": 2690,
+        "bottomwear": 2347,
+        "footwear": 3067
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 15,
+      "pixels": {
+        "topwear": 2698,
+        "bottomwear": 2367,
+        "footwear": 3110
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 16,
+      "pixels": {
+        "topwear": 3177,
+        "bottomwear": 2596,
+        "footwear": 2438
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 17,
+      "pixels": {
+        "topwear": 3939,
+        "bottomwear": 2682,
+        "footwear": 2252
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 18,
+      "pixels": {
+        "topwear": 3942,
+        "bottomwear": 2652,
+        "footwear": 2262
+      }
+    },
+    {
+      "sheet": "directional",
+      "frame": 19,
+      "pixels": {
+        "topwear": 2663,
+        "bottomwear": 2548,
+        "footwear": 2805
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 0,
+      "pixels": {
+        "topwear": 2694,
+        "bottomwear": 2562,
+        "footwear": 2719
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 1,
+      "pixels": {
+        "topwear": 2185,
+        "bottomwear": 2733,
+        "footwear": 2934
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 2,
+      "pixels": {
+        "topwear": 2344,
+        "bottomwear": 2681,
+        "footwear": 2977
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 3,
+      "pixels": {
+        "topwear": 2344,
+        "bottomwear": 2681,
+        "footwear": 2977
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 4,
+      "pixels": {
+        "topwear": 2694,
+        "bottomwear": 2562,
+        "footwear": 2719
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 5,
+      "pixels": {
+        "topwear": 2883,
+        "bottomwear": 2839,
+        "footwear": 2931
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 6,
+      "pixels": {
+        "topwear": 2512,
+        "bottomwear": 2806,
+        "footwear": 3025
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 7,
+      "pixels": {
+        "topwear": 2512,
+        "bottomwear": 2806,
+        "footwear": 3025
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 8,
+      "pixels": {
+        "topwear": 2694,
+        "bottomwear": 2562,
+        "footwear": 2719
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 9,
+      "pixels": {
+        "topwear": 2883,
+        "bottomwear": 2839,
+        "footwear": 2931
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 10,
+      "pixels": {
+        "topwear": 2356,
+        "bottomwear": 2734,
+        "footwear": 2929
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 11,
+      "pixels": {
+        "topwear": 2356,
+        "bottomwear": 2734,
+        "footwear": 2929
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 12,
+      "pixels": {
+        "topwear": 2694,
+        "bottomwear": 2562,
+        "footwear": 2719
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 13,
+      "pixels": {
+        "topwear": 2694,
+        "bottomwear": 2562,
+        "footwear": 2719
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 14,
+      "pixels": {
+        "topwear": 2073,
+        "bottomwear": 2871,
+        "footwear": 2917
+      }
+    },
+    {
+      "sheet": "contextual",
+      "frame": 15,
+      "pixels": {
+        "topwear": 2073,
+        "bottomwear": 2871,
+        "footwear": 2917
+      }
+    },
+    {
+      "sheet": "room",
+      "frame": 0,
+      "pixels": {
+        "topwear": 2131,
+        "bottomwear": 2886,
+        "footwear": 2618
+      }
+    },
+    {
+      "sheet": "room",
+      "frame": 1,
+      "pixels": {
+        "topwear": 1823,
+        "bottomwear": 3230,
+        "footwear": 2412
+      }
+    },
+    {
+      "sheet": "room",
+      "frame": 2,
+      "pixels": {
+        "topwear": 1950,
+        "bottomwear": 3734,
+        "footwear": 2665
+      }
+    },
+    {
+      "sheet": "room",
+      "frame": 3,
+      "pixels": {
+        "topwear": 916,
+        "bottomwear": 2905,
+        "footwear": 2629
+      }
+    },
+    {
+      "sheet": "talk",
+      "frame": 0,
+      "pixels": {
+        "topwear": 2726,
+        "bottomwear": 2487,
+        "footwear": 2918
+      }
+    },
+    {
+      "sheet": "talk",
+      "frame": 1,
+      "pixels": {
+        "topwear": 2800,
+        "bottomwear": 2487,
+        "footwear": 2918
+      }
+    },
+    {
+      "sheet": "talk",
+      "frame": 2,
+      "pixels": {
+        "topwear": 2836,
+        "bottomwear": 2495,
+        "footwear": 2919
+      }
+    }
+  ]
+}

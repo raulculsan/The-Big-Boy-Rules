@@ -25,3 +25,28 @@
 .has-chota-shirt.is-sleep-breathing .chota-sleep-chest{z-index:2}
 /* The idle paw also carries a few pixels of the original tee; this paw has neither the tee nor the jeans. */
 .has-chota-shirt .chota-idle-paw{background-image:url("icons/mascot/chota-v2/wardrobe-topwear/idle-paw-v1.svg")}
+/* Footwear is independent from the neutral feet and stays registered to its atlas cell. */
+.chota-wardrobe-shoes{display:none;position:absolute;inset:0;pointer-events:none;image-rendering:pixelated;background-repeat:no-repeat}
+.has-chota-shoes>.chota-wardrobe-shoes-main{display:block}
+.has-chota-shoes.is-idling>.chota-wardrobe-shoes-main{display:none}
+.has-chota-shoes.is-idling :is(.chota-wardrobe-shoes-idle-body,.chota-wardrobe-shoes-idle-feet){display:block;background-image:var(--chota-shoes-base);background-size:600% 400%;background-position:0 0}
+.has-chota-shoes.is-sleep-breathing>.chota-wardrobe-shoes-main{-webkit-mask:url('icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg') 0 0/100% 100%;mask:url('icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg') 0 0/100% 100%}
+.has-chota-shoes.is-sleep-breathing .chota-wardrobe-shoes-sleep-chest{display:block;background-image:var(--chota-shoes-base);background-size:600% 400%;background-position:80% 100%}
+/* Enable only after the approved neutral atlases have decoded. The clean paw
+   contains neither the old white T-shirt nor blue jeans. Ear/tail art stays original. */
+html[data-chota-modular="true"] .tigreton-character{background-image:var(--chota-outfit-base)}
+html[data-chota-modular="true"] .tigreton-character.is-speaking{background-image:var(--chota-outfit-talk)}
+html[data-chota-modular="true"] .tigreton-character.is-directional{background-image:var(--chota-outfit-directional)}
+html[data-chota-modular="true"] .tigreton-character.is-contextual{background-image:var(--chota-outfit-contextual)}
+html[data-chota-modular="true"] .tigreton-character.is-room-pose{background-image:var(--chota-outfit-room)}
+html[data-chota-modular="true"] .tigreton-character:is(.is-idling,.is-sleep-breathing){background-image:none}
+html[data-chota-modular="true"] :is(.chota-idle-body,.chota-idle-feet,.chota-idle-head){background-image:none}
+html[data-chota-modular="true"] :is(.chota-idle-body,.chota-idle-feet,.chota-idle-head)::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:var(--chota-outfit-base);background-size:600% 400%;background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated;-webkit-mask:url('icons/mascot/chota-v2/neutral/idle-core-mask-v1.png') 0 0/100% 100%;mask:url('icons/mascot/chota-v2/neutral/idle-core-mask-v1.png') 0 0/100% 100%}
+html[data-chota-modular="true"] :is(.chota-sleep-base,.chota-sleep-chest,.chota-sleep-head,.chota-sleep-tail,.chota-sleep-foreground){background-image:var(--chota-outfit-base)}
+html[data-chota-modular="true"] .chota-idle-paw{background-image:url('icons/mascot/chota-v2/wardrobe-topwear/idle-paw-v1.svg')}
+/* One final atlas per pose, shared with canvas and cameos. Retained layer nodes
+   keep legacy APIs compatible but are never drawn twice over a composed sprite. */
+html[data-chota-modular="true"] :is(.chota-wardrobe-layer,.chota-wardrobe-pants,.chota-wardrobe-shoes,.chota-wardrobe-shirt){display:none!important}
+html[data-chota-modular="true"] .chd-chota{background-image:var(--chota-outfit-base)}
+html[data-chota-modular="true"] .chd-chota.is-talking{background-image:var(--chota-outfit-talk)}
+html[data-chota-modular="true"] .chd-wear{display:none}
