@@ -167,30 +167,42 @@ html[data-reduced-motion="true"] .chota-room-remote .chota-remote-motion{animati
 .chota-inventory-empty{padding:clamp(28px,9vh,90px) 0;max-width:440px;margin:auto}.chota-inventory-empty h3{margin:0 0 12px;font-size:24px;letter-spacing:-.03em;font-weight:500}.chota-inventory-empty p{color:#b9bfc1;font-size:15px;line-height:1.6}.chota-inventory-empty button{margin-top:16px}
 @keyframes chota-armario-enter{from{transform:translateY(24px);opacity:.7}to{transform:translateY(0);opacity:1}}
 @media(prefers-reduced-motion:reduce){#chotaInventoryDialog[open]{animation:none}.chota-room-wardrobe-art{transition:none}}
-/* Armario: what he wears now, then one shelf per kind of garment. Worn pieces use a neutral frame. */
-.armario-look{display:grid;grid-template-columns:132px 1fr;align-items:center;gap:18px;margin:0 0 26px;padding:14px 18px 14px 10px;border-radius:16px;background:linear-gradient(160deg,#1e2629,#171d20);border:1px solid #2b3437}
-.armario-look-stage{position:relative;display:block;aspect-ratio:1;border-radius:12px;background:radial-gradient(ellipse 60% 18% at 50% 88%,#00000059,transparent 70%),radial-gradient(circle at 50% 40%,#2c373b,#1a2124 70%);overflow:hidden}
-.armario-look-stage .fitting-chota{left:50%;bottom:4%;height:92%;translate:-50% 0}
-.armario-look-copy h3{margin:0 0 10px;font-size:17px;font-weight:600;letter-spacing:-.02em}
-.armario-look-copy dl{display:grid;gap:7px;margin:0}
-.armario-look-copy dl>div{display:flex;gap:10px;align-items:baseline;min-width:0}
-.armario-look-copy dt{flex:0 0 74px;color:#8f9a9e;font-size:13px}
-.armario-look-copy dd{margin:0;min-width:0;color:#eef0ee;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.armario-shelf{margin:0 0 26px}
-.armario-shelf h3{margin:0 0 12px;font-size:15px;font-weight:600;letter-spacing:.01em;color:#c9d0d2;text-transform:uppercase;font-size:12.5px;letter-spacing:.08em}
-.armario-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:12px}
-#chotaInventoryDialog .armario-card{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:0;min-height:0;padding:0 0 10px;border-radius:14px;background:#1b2225;color:#eef0ee;text-align:left;box-shadow:inset 0 0 0 1px #2c3538;font-weight:500}
+/* Armario, head to feet: what he wears now (each line jumps to its shelf), then
+   abrigo, camiseta, pantalón and zapatillas. Worn pieces use a neutral frame. */
+.armario-look{display:grid;grid-template-columns:minmax(120px,38%) 1fr;align-items:center;gap:16px;margin:0 0 30px;padding:12px;border-radius:16px;background:#1c1c1e}
+.armario-look-stage{position:relative;display:block;aspect-ratio:1;border-radius:12px;background:radial-gradient(ellipse 58% 16% at 50% 90%,#0000006b,transparent 70%),radial-gradient(circle at 50% 38%,#34343a,#202024 72%);overflow:hidden}
+.armario-look-stage .fitting-chota{left:50%;bottom:3%;height:94%;translate:-50% 0}
+.armario-look-copy{min-width:0}
+.armario-look-copy h3{margin:0 0 6px;font-size:17px;font-weight:600;letter-spacing:-.02em}
+.armario-look-copy ul{margin:0;padding:0;list-style:none}
+.armario-look-copy li+li{border-top:1px solid #ffffff14}
+.armario-look-copy a{display:flex;flex-direction:column;gap:1px;min-height:44px;justify-content:center;padding:5px 0;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.armario-look-copy a:focus{outline:none}.armario-look-copy a:focus-visible{outline:2px solid #cfd7db;outline-offset:2px;border-radius:6px}
+.armario-look-copy a:active{opacity:.6}
+.armario-look-copy a span{color:#a1a1aa;font-size:12.5px}
+.armario-look-copy strong{font-size:15px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.armario-look-copy strong.is-bare{color:#a1a1aa}
+.armario-shelf{margin:0 0 30px;scroll-margin-top:12px}
+.armario-shelf-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:0 0 12px}
+.armario-shelf-head>div{min-width:0}
+.armario-shelf-head h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
+.armario-shelf-head p{margin:3px 0 0;color:#ebebf5b3;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.armario-shelf-head p.is-bare{color:#a1a1aa}
+#chotaInventoryDialog .armario-remove{flex:none;min-height:36px;padding:7px 14px;border-radius:999px;background:#2c2c2e;color:#fff;font-size:14px;font-weight:600}
+#chotaInventoryDialog .armario-remove[hidden]{display:none}
+.armario-none{margin:0;padding:16px;border-radius:14px;background:#1c1c1e;color:#a1a1aa;font-size:14px;line-height:1.45}
+.armario-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
+#chotaInventoryDialog .armario-card{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:0;min-height:0;padding:0 0 12px;border-radius:14px;background:#1c1c1e;color:#fff;text-align:left;font-weight:500;box-shadow:none;transition:opacity .12s}
+#chotaInventoryDialog .armario-card:active{filter:none;opacity:.7}
 #chotaInventoryDialog .armario-card:disabled{opacity:1;cursor:default}
-#chotaInventoryDialog .armario-card.is-worn{box-shadow:inset 0 0 0 2px #e9eae7;background:#222b2f}
-#chotaInventoryDialog .armario-card:not(.is-worn):disabled{opacity:.55}
-.armario-card-art{display:grid;place-items:center;aspect-ratio:1;margin:6px 6px 8px;border-radius:10px;background:radial-gradient(circle at 50% 42%,#2c363a,#20282b 72%);overflow:hidden}
+#chotaInventoryDialog .armario-card.is-worn{box-shadow:inset 0 0 0 2px #fff;background:#2c2c2e}
+#chotaInventoryDialog .armario-card:not(.is-worn):disabled{opacity:.5}
+.armario-card-art{display:grid;place-items:center;aspect-ratio:1;margin:6px 6px 8px;border-radius:10px;background:radial-gradient(circle at 50% 42%,#38383d,#26262a 72%);overflow:hidden}
 .armario-card-art img{width:86%;height:86%;object-fit:contain;user-select:none;-webkit-user-drag:none;filter:drop-shadow(0 4px 5px #0007)}
-.armario-card-name{padding:0 10px;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
-.armario-card-state{padding:4px 10px 0;color:#97a2a6;font-size:12px;font-weight:600}
-.armario-card.is-worn .armario-card-state{color:#eef0ee}
-.armario-card.is-worn .armario-card-state::before{content:"✓ "}
-.armario-own{display:block;width:62%;height:62%;opacity:.85;background:center/contain no-repeat}
-.armario-own--outerwear{width:46%;height:46%;border:2px dashed #55626a;border-radius:50%;opacity:.7}
-.armario-own--topwear{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M22 10 10 16 4 30l9 4 4-7v29h30V27l4 7 9-4-6-14-12-6c-2 4-5 6-10 6s-8-2-10-6Z' fill='%23eceae4' stroke='%2318191d' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E")}
-.armario-own--bottomwear{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M16 6h32l4 52H37l-5-30-5 30H12Z' fill='%234a78b5' stroke='%2318191d' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M16 13h32' stroke='%232f5687' stroke-width='2'/%3E%3C/svg%3E")}
-@media(max-width:420px){.armario-look{grid-template-columns:104px 1fr;gap:14px;padding:12px 14px 12px 8px}.armario-row{grid-template-columns:repeat(3,1fr);gap:10px}.armario-card-name{font-size:12.5px;padding:0 8px}.armario-card-state{padding:3px 8px 0}}
+.armario-card-name{padding:0 10px;font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.armario-card-state{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:3px;padding:3px 8px 3px 6px;border-radius:999px;background:#fff;color:#000;font-size:12px;font-weight:700;line-height:1.2;box-shadow:0 2px 6px #0006}
+.armario-card-state:has(span:empty){display:none}
+.armario-check{display:none;width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.armario-card.is-worn .armario-check{display:block}
+@media(max-width:420px){.armario-look{grid-template-columns:42% 1fr;gap:12px;padding:10px}.armario-row{grid-template-columns:repeat(3,1fr);gap:10px}.armario-card-name{font-size:13px;padding:0 8px}.armario-card-state{top:10px;left:10px}.armario-shelf-head h3{font-size:20px}}
+.chota-inventory-status:empty{display:none}
