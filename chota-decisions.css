@@ -364,3 +364,5 @@ body.chota-decision-open { overflow: hidden; }
 .chd-verdict { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--cd-card); color: var(--cd-muted); font-size: 14px; font-weight: 700; }
 .chd-verdict.is-hit { background: #8cc06a26; color: #b8e09f; }
 @media (prefers-reduced-motion: reduce) { .chd-confirm, .chd-result i { animation: none; } }
+/* His clothes from the sede, cell for cell over the sprite. */
+.chd-wear { position: absolute; inset: 0; display: block; background-repeat: no-repeat; image-rendering: pixelated; pointer-events: none; }

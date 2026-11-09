@@ -126,5 +126,12 @@
     serverId=null;serverAtlases=null;selected=color;document.querySelectorAll('.tigreton-character').forEach(mount);
     return 'chota-tnf-'+color+'-v1';
   }
-  globalThis.ChotaWardrobe=Object.freeze({mount,frame,previewEquip,applyOwned,applyPants,applyShirt,describe,configure,selected:selectedID,pants:()=>worn.bottomwear?.id||null,shirt:()=>worn.topwear?.id||null,items:()=>colors.map(color=>({id:`chota-tnf-${color}-v1`,color,purchase_enabled:false,active:false,price_coins:null})),poseCount:67});
+  // What he wears, bottom to top, as five-sheet atlases: lets other scenes (the daily dilemma) dress their own sprite.
+  function outfit(){
+    const layers=[];
+    for(const slot of ['bottomwear','topwear'])if(worn[slot])layers.push({slot,atlases:{...worn[slot].atlases}});
+    if(selected)layers.push({slot:'outerwear',atlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,url(selected,sheet)]))});
+    return layers;
+  }
+  globalThis.ChotaWardrobe=Object.freeze({outfit,mount,frame,previewEquip,applyOwned,applyPants,applyShirt,describe,configure,selected:selectedID,pants:()=>worn.bottomwear?.id||null,shirt:()=>worn.topwear?.id||null,items:()=>colors.map(color=>({id:`chota-tnf-${color}-v1`,color,purchase_enabled:false,active:false,price_coins:null})),poseCount:67});
 })();

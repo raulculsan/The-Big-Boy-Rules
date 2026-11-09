@@ -115,6 +115,29 @@
       if (!node) return;
       node.classList.remove('is-talking');
       node.style.backgroundPosition = `${(index % 6) * 20}% ${Math.floor(index / 6) * (100 / 3)}%`;
+      this.dress('base', node.style.backgroundPosition);
+    },
+    // He wears the clothes he has on in the sede: one layer per garment over the same cell.
+    wear() {
+      const node = this.node();
+      if (!node) return;
+      node.querySelectorAll('.chd-wear').forEach(layer => layer.remove());
+      for (const {slot, atlases} of globalThis.ChotaWardrobe?.outfit?.() || []) {
+        const layer = document.createElement('i');
+        layer.className = 'chd-wear';
+        layer.dataset.slot = slot;
+        layer.dataset.base = atlases.base;
+        layer.dataset.talk = atlases.talk;
+        node.querySelector('.chd-think') ? node.insertBefore(layer, node.querySelector('.chd-think')) : node.append(layer);
+      }
+      this.dress(node.classList.contains('is-talking') ? 'talk' : 'base', node.style.backgroundPosition);
+    },
+    dress(sheet, position) {
+      for (const layer of this.node()?.querySelectorAll('.chd-wear') || []) {
+        const url = layer.dataset[sheet];
+        if (layer.dataset.sheet !== sheet) { layer.dataset.sheet = sheet; layer.style.backgroundImage = url ? `url("${url}")` : 'none'; layer.style.backgroundSize = sheet === 'talk' ? '300% 100%' : '600% 400%'; }
+        layer.style.backgroundPosition = position || '0 0';
+      }
     },
     stop() { clearInterval(this.timer); clearInterval(this.talkTimer); clearTimeout(this.typing); this.timer = this.talkTimer = this.typing = 0; this.token++; },
     play(name, done) {
@@ -173,8 +196,9 @@
       line.textContent = '';
       clearInterval(this.timer);
       node.classList.add('is-talking');
+      this.dress('talk', node.style.backgroundPosition);
       let mouth = 0, shown = 0;
-      this.talkTimer = setInterval(() => { node.style.backgroundPosition = `${[0, 1, 2, 1][mouth++ % 4] * 50}% 0`; }, 110);
+      this.talkTimer = setInterval(() => { node.style.backgroundPosition = `${[0, 1, 2, 1][mouth++ % 4] * 50}% 0`; this.dress('talk', node.style.backgroundPosition); }, 110);
       const step = () => {
         if (token !== this.token) return;
         shown = Math.min(text.length, shown + 2);
@@ -437,6 +461,7 @@
     document.body.classList.add('chota-decision-open');
     dialog.showModal();
     actor.stop();
+    actor.wear();
     actor.frame(0);
     dialog.querySelector('.chd-ghost').textContent = '…';
     dialog.querySelector('.chd-line').textContent = '';
