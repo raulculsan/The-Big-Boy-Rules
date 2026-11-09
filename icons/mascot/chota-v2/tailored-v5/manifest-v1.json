@@ -1,0 +1,685 @@
+{
+  "version": 1,
+  "rigVersion": 5,
+  "approved": true,
+  "cell": 256,
+  "poseCount": 67,
+  "anatomy": {
+    "base": "icons/mascot/chota-v2/tailored-v5/anatomy-base.webp",
+    "directional": "icons/mascot/chota-v2/tailored-v5/anatomy-directional.webp",
+    "contextual": "icons/mascot/chota-v2/tailored-v5/anatomy-contextual.webp",
+    "room": "icons/mascot/chota-v2/tailored-v5/anatomy-room.webp",
+    "talk": "icons/mascot/chota-v2/tailored-v5/anatomy-talk.webp"
+  },
+  "foreground": {
+    "base": "icons/mascot/chota-v2/tailored-v5/foreground-base.webp",
+    "directional": "icons/mascot/chota-v2/tailored-v5/foreground-directional.webp",
+    "contextual": "icons/mascot/chota-v2/tailored-v5/foreground-contextual.webp",
+    "room": "icons/mascot/chota-v2/tailored-v5/foreground-room.webp",
+    "talk": "icons/mascot/chota-v2/tailored-v5/foreground-talk.webp"
+  },
+  "bare": {
+    "topwear": {
+      "base": "icons/mascot/chota-v2/tailored-v5/bare-topwear-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/bare-topwear-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/bare-topwear-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/bare-topwear-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/bare-topwear-talk.webp"
+    },
+    "bottomwear": {
+      "base": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-talk.webp"
+    },
+    "footwear": {
+      "base": "icons/mascot/chota-v2/tailored-v5/bare-footwear-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/bare-footwear-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/bare-footwear-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/bare-footwear-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/bare-footwear-talk.webp"
+    }
+  },
+  "garments": {
+    "original-stussy": {
+      "base": "icons/mascot/chota-v2/tailored-v5/original-stussy-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/original-stussy-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/original-stussy-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/original-stussy-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/original-stussy-talk.webp"
+    },
+    "carhartt-crudo": {
+      "base": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-talk.webp"
+    },
+    "carhartt-oliva": {
+      "base": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-talk.webp"
+    },
+    "supreme-negra": {
+      "base": "icons/mascot/chota-v2/tailored-v5/supreme-negra-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/supreme-negra-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/supreme-negra-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/supreme-negra-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/supreme-negra-talk.webp"
+    },
+    "supreme-roja": {
+      "base": "icons/mascot/chota-v2/tailored-v5/supreme-roja-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/supreme-roja-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/supreme-roja-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/supreme-roja-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/supreme-roja-talk.webp"
+    },
+    "stussy-blanca": {
+      "base": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-talk.webp"
+    },
+    "stussy-azul": {
+      "base": "icons/mascot/chota-v2/tailored-v5/stussy-azul-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/stussy-azul-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/stussy-azul-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/stussy-azul-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/stussy-azul-talk.webp"
+    },
+    "original-jeans": {
+      "base": "icons/mascot/chota-v2/tailored-v5/original-jeans-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/original-jeans-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/original-jeans-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/original-jeans-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/original-jeans-talk.webp"
+    },
+    "carhartt-marron": {
+      "base": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-talk.webp"
+    },
+    "carhartt-azul-oscuro": {
+      "base": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-talk.webp"
+    },
+    "original-jordan-chicago": {
+      "base": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-base.webp",
+      "directional": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-directional.webp",
+      "contextual": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-contextual.webp",
+      "room": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-room.webp",
+      "talk": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-talk.webp"
+    }
+  },
+  "files": [
+    {
+      "name": "anatomy",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/anatomy-base.webp",
+      "bytes": 663458,
+      "sha256": "f72c63a4dcca7dbca902771ed46144bc11eb4ec29f61351cf8115f8967f71a32"
+    },
+    {
+      "name": "foreground",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/foreground-base.webp",
+      "bytes": 539874,
+      "sha256": "9738b331a1c92437b9cd300134f2255274b324a95607164355f78c40a907ebf6"
+    },
+    {
+      "name": "bare-topwear",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-base.webp",
+      "bytes": 136768,
+      "sha256": "c66a9ba319b7a7670b206847ac06549d9f0a541013d0690fc4f1368b8597ce7a"
+    },
+    {
+      "name": "bare-bottomwear",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-base.webp",
+      "bytes": 120470,
+      "sha256": "3a0942f27ea4efe97e32fdc76db547f12ba4dcf5e7a9720a9a68bbeeea9e4caa"
+    },
+    {
+      "name": "bare-footwear",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-footwear-base.webp",
+      "bytes": 114226,
+      "sha256": "ac30a68f3e7174aae04df5f45828b920ac58380b5a89697209b853eb9eaf6f15"
+    },
+    {
+      "name": "original-stussy",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-stussy-base.webp",
+      "bytes": 121428,
+      "sha256": "0d1badf5e6c74e7ecd0f344f2d327a4d806f6b9a7bce4cd2c2543aae5ff09f57"
+    },
+    {
+      "name": "carhartt-crudo",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-base.webp",
+      "bytes": 96104,
+      "sha256": "5b80016822a3225caa2546f2d03d5c5bcc2ce3b56b8d4dfd2acf6c8e64bf7049"
+    },
+    {
+      "name": "carhartt-oliva",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-base.webp",
+      "bytes": 83396,
+      "sha256": "ab5dd265cc6e25ee9ff422ab13d09438efcd294409080aebc0ed0327de06592d"
+    },
+    {
+      "name": "supreme-negra",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-base.webp",
+      "bytes": 66302,
+      "sha256": "026e1cf6c3c9656318192ddcbf127323ad460ba00ce20191db7fafd5f9447f88"
+    },
+    {
+      "name": "supreme-roja",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-base.webp",
+      "bytes": 96026,
+      "sha256": "4e40a34ac5a59d5c1c5141163d122dd4592c6ca6b94029eeee8d62e738481911"
+    },
+    {
+      "name": "stussy-blanca",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-base.webp",
+      "bytes": 97982,
+      "sha256": "47be924b4805c186d11afe8aaae5ee408fb8a4cd454087e889fc3e7f70de32b8"
+    },
+    {
+      "name": "stussy-azul",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-azul-base.webp",
+      "bytes": 98072,
+      "sha256": "4604624ff5c854f3f196b066b211049cb3038b565918821a3ca9e1ecccd9aaae"
+    },
+    {
+      "name": "original-jeans",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jeans-base.webp",
+      "bytes": 128370,
+      "sha256": "812a951f7f69f78517fa0e0d58fbf99d1291fd23ae752691d48dcfbdfbb0a049"
+    },
+    {
+      "name": "carhartt-marron",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-base.webp",
+      "bytes": 93414,
+      "sha256": "daa4c7bf4a0d7be279426f072b1b5f420f7b267f14648a4a516cddcc9d6f7c1f"
+    },
+    {
+      "name": "carhartt-azul-oscuro",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-base.webp",
+      "bytes": 85348,
+      "sha256": "92505c7326207f0d866b8bfcb899296b0a69b3f2a971d3b007f4a25490caf285"
+    },
+    {
+      "name": "original-jordan-chicago",
+      "sheet": "base",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-base.webp",
+      "bytes": 143082,
+      "sha256": "db38c50fccaf4b467f4334531f228fd992111542924d7e1445ded69075ac7ed3"
+    },
+    {
+      "name": "anatomy",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/anatomy-directional.webp",
+      "bytes": 92700,
+      "sha256": "6ad3e48207d025903a0528c6fac10c4934c6f76b86521785341cef175ec0d621"
+    },
+    {
+      "name": "foreground",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/foreground-directional.webp",
+      "bytes": 64228,
+      "sha256": "53e0a9588b40bda9a68bee1ae029c4314d3b4dbce219dc57aa39c043f6757b27"
+    },
+    {
+      "name": "bare-topwear",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-directional.webp",
+      "bytes": 141340,
+      "sha256": "f693aa3e85797821a1e5a6801d0ff57218b34f8577fa8efcfe779e1935fd37e2"
+    },
+    {
+      "name": "bare-bottomwear",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-directional.webp",
+      "bytes": 95220,
+      "sha256": "dfd2cb2ced7c4eaff5af7e1160b09331b3ba6ce8af46ce6fc13bbf61194607a9"
+    },
+    {
+      "name": "bare-footwear",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-footwear-directional.webp",
+      "bytes": 82918,
+      "sha256": "d8342cf2315f04c9d73a55fa93efd5b367c6fdedee67ba67c5b97ddb4359452c"
+    },
+    {
+      "name": "original-stussy",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-stussy-directional.webp",
+      "bytes": 34184,
+      "sha256": "534b017aef32b431d6c70d6ce0bc077b8b17cc4001bcf051948ae289a9932940"
+    },
+    {
+      "name": "carhartt-crudo",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-directional.webp",
+      "bytes": 36116,
+      "sha256": "531e9d5742449d0a69394ef693300e6d10b1d7b5d76543d5b535185308c5bb1a"
+    },
+    {
+      "name": "carhartt-oliva",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-directional.webp",
+      "bytes": 32962,
+      "sha256": "1e2798d57d74fb7ba798f5641f951fba242918a6ba3d80c8127c7f3a7b610854"
+    },
+    {
+      "name": "supreme-negra",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-directional.webp",
+      "bytes": 26112,
+      "sha256": "097d08a8b3610e41ebd2bdd11c7f642dd268cf3f7527697d69d61e512cce5646"
+    },
+    {
+      "name": "supreme-roja",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-directional.webp",
+      "bytes": 34050,
+      "sha256": "e24f62c56b39508e3a0881103968b17df9a4aad255219ee263f4f27e657060de"
+    },
+    {
+      "name": "stussy-blanca",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-directional.webp",
+      "bytes": 30522,
+      "sha256": "ca592a6bd36006ee7a8e15ecd0ee5e7c65e3fb32e021fc020075ae1fad191eaa"
+    },
+    {
+      "name": "stussy-azul",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-azul-directional.webp",
+      "bytes": 36566,
+      "sha256": "174411d741cf5a78c88893f9bb713c93886e3c106cd29565a8461fc5532ca92c"
+    },
+    {
+      "name": "original-jeans",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jeans-directional.webp",
+      "bytes": 41492,
+      "sha256": "91b19ad866f76409f487310238c59a9ce7e8d726754d06caf8d8c35b72a3534d"
+    },
+    {
+      "name": "carhartt-marron",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-directional.webp",
+      "bytes": 42722,
+      "sha256": "ba7fc62e1e7aa10a6014d2e053ae23f5e63b5db873a9776b0cb085df89608dc5"
+    },
+    {
+      "name": "carhartt-azul-oscuro",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-directional.webp",
+      "bytes": 37756,
+      "sha256": "1deb6b7a77294da0d5a44ef2b279e411fcc02435997657cede2cc1e8a3ec691b"
+    },
+    {
+      "name": "original-jordan-chicago",
+      "sheet": "directional",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-directional.webp",
+      "bytes": 36788,
+      "sha256": "da8275391d5b72868c1bfa0f292ed7e54d5bee0b11a598c15279219974425ff3"
+    },
+    {
+      "name": "anatomy",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/anatomy-contextual.webp",
+      "bytes": 77108,
+      "sha256": "7c3a220c8c66132e9fef4ab55d025fb23e5e1ddc070f804585510de0190ccbd2"
+    },
+    {
+      "name": "foreground",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/foreground-contextual.webp",
+      "bytes": 62188,
+      "sha256": "12d8ddc4b5353300a11138037fdedac25708a4a507b0bb16544addace72c1d16"
+    },
+    {
+      "name": "bare-topwear",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-contextual.webp",
+      "bytes": 103178,
+      "sha256": "c8e87510f921bb67981c228142a935765ba2dc3ebc2425098ae37574b8b02db7"
+    },
+    {
+      "name": "bare-bottomwear",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-contextual.webp",
+      "bytes": 73264,
+      "sha256": "83fdf968707ef86f3eb776a4831a6d6a148c3655702413fac8268c947096bb79"
+    },
+    {
+      "name": "bare-footwear",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-footwear-contextual.webp",
+      "bytes": 66580,
+      "sha256": "2c472c0217cb20a29cb02fddeaab937c9b446c48aecb211016821a89e2d47cb7"
+    },
+    {
+      "name": "original-stussy",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-stussy-contextual.webp",
+      "bytes": 17282,
+      "sha256": "72a2aad3db6545e72bb142f950a66d62b8d4558f2aa4adbb54e9ee3460e1cf50"
+    },
+    {
+      "name": "carhartt-crudo",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-contextual.webp",
+      "bytes": 21198,
+      "sha256": "f4e52ab85553e27ccbe3c82993b0cf22ef1ed59701a3dc9519da1a140024ccd2"
+    },
+    {
+      "name": "carhartt-oliva",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-contextual.webp",
+      "bytes": 18234,
+      "sha256": "5aa92257c5e69ae76f3252f58f41058793b25d481d1a0d60f1709acbf77a4bb1"
+    },
+    {
+      "name": "supreme-negra",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-contextual.webp",
+      "bytes": 16732,
+      "sha256": "0d7ac5876bde260916bb7522f907341f43ef7c62eb44f204bf0ebd1991ffee41"
+    },
+    {
+      "name": "supreme-roja",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-contextual.webp",
+      "bytes": 23728,
+      "sha256": "c0794a89b1d655c42842ee6ca821296bfe62f11f3ae93332a83770b8fe271c35"
+    },
+    {
+      "name": "stussy-blanca",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-contextual.webp",
+      "bytes": 15834,
+      "sha256": "ad9e46a046505b0ef774f25b013f738d9191844a74cd49f2a3851b0db8ee30c9"
+    },
+    {
+      "name": "stussy-azul",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-azul-contextual.webp",
+      "bytes": 21534,
+      "sha256": "c39d278e3df12037d12f7058f8344fa362970e4f093d4407d07fa52e13de1131"
+    },
+    {
+      "name": "original-jeans",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jeans-contextual.webp",
+      "bytes": 16468,
+      "sha256": "e75a0ca1706e2c91c25126d5210cb137787c4d1deb0e07d327ad1c999eb09c71"
+    },
+    {
+      "name": "carhartt-marron",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-contextual.webp",
+      "bytes": 15816,
+      "sha256": "ccab3ced524fe8f497ee5d48c7084de8122e11b779b38a825c43b86ed825a3df"
+    },
+    {
+      "name": "carhartt-azul-oscuro",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-contextual.webp",
+      "bytes": 16104,
+      "sha256": "5ebcacd63af3d8f0dc86a4ac243314a8602f858f1e60487f5102e7185a0064bd"
+    },
+    {
+      "name": "original-jordan-chicago",
+      "sheet": "contextual",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-contextual.webp",
+      "bytes": 15652,
+      "sha256": "b4c6ad00c830a4a3734974fda03400d667f6168adbad24d56a193610c345f912"
+    },
+    {
+      "name": "anatomy",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/anatomy-room.webp",
+      "bytes": 35552,
+      "sha256": "eb61c2d3d7ecab0972d14977d2ddb354ab7c9568f589c49596ead2f864a58c8f"
+    },
+    {
+      "name": "foreground",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/foreground-room.webp",
+      "bytes": 29122,
+      "sha256": "bf9d22ba1a41b71a8677587fb49f39438f8ef7a48b083f7ae43d65ccc325146d"
+    },
+    {
+      "name": "bare-topwear",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-room.webp",
+      "bytes": 17468,
+      "sha256": "88bb452f4fd3ce3307de05e37106af8e40e401e7876ea9a8c1198c7bf8b8ccb9"
+    },
+    {
+      "name": "bare-bottomwear",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-room.webp",
+      "bytes": 20898,
+      "sha256": "876eecbcfb6ade0de56771e9ba6bbe97a34e7170f80fe277c673e86eac76aed2"
+    },
+    {
+      "name": "bare-footwear",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-footwear-room.webp",
+      "bytes": 14754,
+      "sha256": "53e744c1a835fd3e01190609237c024c2d430d404238d3713d1cc6a4bc09600c"
+    },
+    {
+      "name": "original-stussy",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-stussy-room.webp",
+      "bytes": 7688,
+      "sha256": "7b7fbca4c68786381b1f523ca6febbaa7db5d857d2c633034ea9695f3e067dd0"
+    },
+    {
+      "name": "carhartt-crudo",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-room.webp",
+      "bytes": 9606,
+      "sha256": "9baa178f324d9132bf8751cf2fa6d6a8c253f51c999374c929305b4de951e198"
+    },
+    {
+      "name": "carhartt-oliva",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-room.webp",
+      "bytes": 8916,
+      "sha256": "a9038cee36bd52b0c783aa98afaf29ac222b9c1c9748dbcc33a3ac8e88d767a3"
+    },
+    {
+      "name": "supreme-negra",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-room.webp",
+      "bytes": 8180,
+      "sha256": "d089fd37e58063474baa89ccd7e8747a3c9cdf2326ebf02c42d94de48161a319"
+    },
+    {
+      "name": "supreme-roja",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-room.webp",
+      "bytes": 10128,
+      "sha256": "3bd80d99adc5575603005cc927828db1416f4875d3b05b9bb8b20e4697d15ce4"
+    },
+    {
+      "name": "stussy-blanca",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-room.webp",
+      "bytes": 6820,
+      "sha256": "dba9513637d545b47d4e82bd8ff5be3cefca811c444abe7384c394171fd68b0a"
+    },
+    {
+      "name": "stussy-azul",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-azul-room.webp",
+      "bytes": 9930,
+      "sha256": "b6fb533fb3d5ce71501d3848683a6e4eaebd431e5b4fd3ee21bba2d559d23dc3"
+    },
+    {
+      "name": "original-jeans",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jeans-room.webp",
+      "bytes": 10610,
+      "sha256": "063c927a16bc4b7171dc2c476c32d6c934009147d548554e5158317c8087035c"
+    },
+    {
+      "name": "carhartt-marron",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-room.webp",
+      "bytes": 11230,
+      "sha256": "49ab5f1330d2544c6c73bb2b8abcbae032547a24b080eeaf279c8efac7a8dee3"
+    },
+    {
+      "name": "carhartt-azul-oscuro",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-room.webp",
+      "bytes": 10142,
+      "sha256": "4cb66eb41e6ff5603796e950fc771c417cd362994249eb328684504e714db360"
+    },
+    {
+      "name": "original-jordan-chicago",
+      "sheet": "room",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-room.webp",
+      "bytes": 7330,
+      "sha256": "6a291a369a553b9fddca14c665603c59f6aa418ea23fab62513b2cb14269b690"
+    },
+    {
+      "name": "anatomy",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/anatomy-talk.webp",
+      "bytes": 54486,
+      "sha256": "4ced4c7664d0b4ee8cc732f4bca44c5da5068dec6511349a3f591c5283ea3dff"
+    },
+    {
+      "name": "foreground",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/foreground-talk.webp",
+      "bytes": 42220,
+      "sha256": "5173a5f743aa7c36ceb325684bdbed32e7a3ec70c634a216e668684fd1b8b5d4"
+    },
+    {
+      "name": "bare-topwear",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-talk.webp",
+      "bytes": 8264,
+      "sha256": "26678f69f146cec30aa3be3fcfb430824b8034651de3f224b7b31fdc64590c1c"
+    },
+    {
+      "name": "bare-bottomwear",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-talk.webp",
+      "bytes": 5324,
+      "sha256": "86875774fd1f647cc2ba358a30af2620c5576bf6d17641242b27bf375f23cad3"
+    },
+    {
+      "name": "bare-footwear",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/bare-footwear-talk.webp",
+      "bytes": 5396,
+      "sha256": "50ff1a5ee8280a00c33dbecde5fe8603bdcbec9f2af94a176a5092f609711e8f"
+    },
+    {
+      "name": "original-stussy",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-stussy-talk.webp",
+      "bytes": 10668,
+      "sha256": "5b12e3fff924066d881b584e5efb8e8f4998622711fdf2b15c277dc04212a81e"
+    },
+    {
+      "name": "carhartt-crudo",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-talk.webp",
+      "bytes": 7516,
+      "sha256": "f4c69fd1e9fefd1c4d6c601d6922bed000e48cc622d38d2392515562454e4d36"
+    },
+    {
+      "name": "carhartt-oliva",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-talk.webp",
+      "bytes": 6738,
+      "sha256": "c9fc8676957821129837a8cc5b3da3958248cd55bc0f393a3bb44e2c93644b93"
+    },
+    {
+      "name": "supreme-negra",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-talk.webp",
+      "bytes": 6318,
+      "sha256": "e02972ffb89d4d2d0747e7df91d1e1153982801bf2f55d33e5cdc16f5fd1135d"
+    },
+    {
+      "name": "supreme-roja",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-talk.webp",
+      "bytes": 7740,
+      "sha256": "afe156013f4fcad231ba5452d7f88eca2c928baf250f3bdcc531c8e12dbbed49"
+    },
+    {
+      "name": "stussy-blanca",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-talk.webp",
+      "bytes": 7660,
+      "sha256": "0fc92ee83b11fd01598ca8963d2b8e057c5cc0aeeb205a2fc753bb79fda94655"
+    },
+    {
+      "name": "stussy-azul",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/stussy-azul-talk.webp",
+      "bytes": 7746,
+      "sha256": "ca809199b0b2a03ef600d3e3689a85a0ad740908a2bd4c675569d3d78468c2eb"
+    },
+    {
+      "name": "original-jeans",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jeans-talk.webp",
+      "bytes": 8928,
+      "sha256": "411be5c87a59e734b0d5b5973d3212257ff9b8d2185a1fdbc8e2c8a03c9ae762"
+    },
+    {
+      "name": "carhartt-marron",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-marron-talk.webp",
+      "bytes": 6900,
+      "sha256": "ecae2d2b77aac6c06b5e76b43b2a834960acf3e76d6c6b170842a55b8ed3d282"
+    },
+    {
+      "name": "carhartt-azul-oscuro",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/carhartt-azul-oscuro-talk.webp",
+      "bytes": 5996,
+      "sha256": "db153056ea2f64714b5554ce8ef300fe946c9a51f468e2113dfe3cc7d2589bcd"
+    },
+    {
+      "name": "original-jordan-chicago",
+      "sheet": "talk",
+      "file": "icons/mascot/chota-v2/tailored-v5/original-jordan-chicago-talk.webp",
+      "bytes": 13072,
+      "sha256": "0d0b34e4593c7b3088ddad48e2ec4d6c9f654e3746e68e2313b0fd9ad9b0fb03"
+    }
+  ]
+}

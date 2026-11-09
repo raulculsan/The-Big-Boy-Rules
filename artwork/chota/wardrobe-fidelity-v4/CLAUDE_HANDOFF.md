@@ -1,5 +1,12 @@
 # Clothing cuts and daily dilemma synchronization — release 601
 
+**Visual acceptance update (2026-11-09):** the user rejected v4 fit in new
+screenshots. Its coverage tests do not certify a natural dressed character.
+A complete replacement is being prepared under `../wardrobe-tailored-v5/`; see
+its `STATUS.md`. Do not publish a partial v5 pilot or treat this old handoff as
+current visual approval.
+
+
 Prepared locally by Codex. Claude owns publication. No push, build, deployment
 or Supabase migration has been executed for this fix.
 

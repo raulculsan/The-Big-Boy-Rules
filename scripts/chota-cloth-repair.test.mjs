@@ -41,9 +41,9 @@ test('all eight new garments cover every repaired cloth pixel in all 536 cells, 
  }
  assert.equal(totals.size,8);for(const[id,count]of totals)assert.equal(count,67,id);
 });
-test('built-in wardrobe resolves repaired assets for legacy and modular states without changing server IDs or coat assets',()=>{
+test('built-in wardrobe resolves tailored v5 assets for legacy and modular states without changing server IDs or coat assets',()=>{
  const source=fs.readFileSync(path.join(root,'chota-wardrobe.js'),'utf8');
- assert.match(source,/slot==='footwear'\?'v1':'v2'/);assert.match(source,/\$\{sheet\}-v4.webp/);
+ assert.match(source,/tailored-v5\/\$\{key\.replace\(\/-v1\$\/,''\)\}-\$\{sheet\}\.webp/);
  assert.match(source,/wardrobe\/tnf-\$\{color\}-\$\{sheet\}-v3.webp/);
 });
 

@@ -1,0 +1,409 @@
+{
+  "productionChanged": false,
+  "sourceTopology": true,
+  "poseCount": 67,
+  "frames": [
+    {
+      "sheet": "base",
+      "frame": 0,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 1,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 2,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 3,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 4,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 5,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 6,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 7,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 8,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 9,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 10,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 11,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 12,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 13,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 14,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 15,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 16,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 17,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 18,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 19,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 20,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 21,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 22,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "base",
+      "frame": 23,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 0,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 1,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 2,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 3,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 4,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 5,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 6,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 7,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 8,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 9,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 10,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 11,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 12,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 13,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 14,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 15,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 16,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 17,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 18,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "directional",
+      "frame": 19,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 0,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 1,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 2,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 3,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 4,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 5,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 6,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 7,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 8,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 9,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 10,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 11,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 12,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 13,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 14,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "contextual",
+      "frame": 15,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "room",
+      "frame": 0,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "room",
+      "frame": 1,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "room",
+      "frame": 2,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "room",
+      "frame": 3,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "talk",
+      "frame": 0,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "talk",
+      "frame": 1,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    },
+    {
+      "sheet": "talk",
+      "frame": 2,
+      "alphaChanges": 0,
+      "anatomyChanges": 0
+    }
+  ]
+}

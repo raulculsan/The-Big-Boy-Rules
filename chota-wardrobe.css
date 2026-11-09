@@ -50,3 +50,7 @@ html[data-chota-modular="true"] :is(.chota-wardrobe-layer,.chota-wardrobe-pants,
 html[data-chota-modular="true"] .chd-chota{background-image:var(--chota-outfit-base)}
 html[data-chota-modular="true"] .chd-chota.is-talking{background-image:var(--chota-outfit-talk)}
 html[data-chota-modular="true"] .chd-wear{display:none}
+
+/* Fitting, inventory and checkout select cells of one composed trial/equipped
+   atlas, with the same geometry as the room and daily dilemma. */
+.fitting-chota[data-chota-composed="true"] > :not(.fitting-chota-body){display:none!important}

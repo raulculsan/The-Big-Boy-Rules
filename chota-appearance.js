@@ -1,89 +1,74 @@
-/* A shared, versioned appearance for CSS cameos and canvas scenes. Disabled until
-   the anatomical asset manifest is explicitly approved and every sheet decodes. */
+/* Outfit composition is shared by every scene. Body parts and clothes are paired
+   to the original 67 poses; previews have independent workers and blob lifetimes. */
 (() => {
   'use strict';
   const grids={base:[6,4],directional:[5,4],contextual:[4,4],room:[4,1],talk:[3,1]};
   const legacy={base:'chota-poses.webp',directional:'chota-directional-v1.webp',contextual:'chota-contextual-v1.webp',room:'chota-room-life-v1.webp',talk:'chota-talk.webp'};
-  let contract=null,preparing=null,enabled=false,worker=null,sequence=0,current=null,pending=null,retiring=null;
-  const root=document.documentElement;
-  const absolute=value=>new URL(value,document.baseURI).href;
-  function validatePaths(paths){
-    if(!paths||Object.keys(paths).length!==5)return false;
-    return Object.keys(grids).every(sheet=>typeof paths[sheet]==='string'&&/^icons\/mascot\/chota-v2\/(neutral|wardrobe-originals)\/[a-z0-9-]+\.webp$/.test(paths[sheet]));
-  }
-  async function decode(paths){
-    await Promise.all(Object.entries(grids).map(async([sheet,[cols,rows]])=>{const image=new Image();image.src=paths[sheet];await image.decode().catch(error=>{throw new Error(`No se pudo decodificar ${image.src}: ${error.message}`);});if(image.naturalWidth!==cols*256||image.naturalHeight!==rows*256)throw new Error('El cuerpo del Chota no coincide con sus animaciones.');}));
-  }
+  const root=document.documentElement,absolute=value=>new URL(value,document.baseURI).href,previews=new Set();
+  let contract=null,preparing=null,enabled=false;
+  const valid=paths=>paths&&Object.keys(paths).length===5&&Object.keys(grids).every(sheet=>typeof paths[sheet]==='string'&&/^icons\/mascot\/chota-v2\/tailored-v5\/[a-z0-9-]+\.webp$/.test(paths[sheet]));
   function prepare(){
     if(preparing)return preparing;
     preparing=(async()=>{
-      const response=await fetch('icons/mascot/chota-v2/neutral/manifest-v1.json',{credentials:'same-origin',cache:'no-cache'});
-      if(!response.ok)throw new Error('La nueva base del Chota aún no está disponible.');
+      const response=await fetch('icons/mascot/chota-v2/tailored-v5/manifest-v1.json',{credentials:'same-origin',cache:'no-cache'});
+      if(!response.ok)throw new Error('La apariencia del Chota aún no está disponible.');
       const value=await response.json();
-      if(value.version!==1||value.approved!==true||!validatePaths(value.neutral)||!validatePaths(value.defaults))throw new Error('La nueva base del Chota está pendiente de revisión.');
-      await Promise.all([decode(value.neutral),decode(value.defaults)]);
+      if(value.version!==1||value.rigVersion!==5||value.approved!==true||value.cell!==256||!valid(value.anatomy)||!valid(value.foreground)||!['topwear','bottomwear','footwear'].every(slot=>valid(value.bare?.[slot])))throw new Error('La apariencia del Chota está pendiente de revisión.');
       contract=value;return value;
-    })().catch(error=>{preparing=null;throw error;});
-    return preparing;
+    })().catch(error=>{preparing=null;throw error;});return preparing;
   }
-  function revoke(entry){if(entry)for(const url of Object.values(entry.urls))URL.revokeObjectURL(url);}
-  function retire(entry){
-    if(!entry)return;if(retiring)revoke(retiring);retiring=entry;
-    const frame=globalThis.requestAnimationFrame||((fn)=>setTimeout(fn,16));
-    frame(()=>frame(()=>{if(retiring===entry){revoke(entry);retiring=null;}}));
+  const revoke=entry=>{if(entry&&!entry.released){entry.released=true;for(const url of Object.values(entry.urls))URL.revokeObjectURL(url);}};
+  async function decode(paths){await Promise.all(Object.entries(grids).map(async([sheet,[cols,rows]])=>{const image=new Image();image.src=paths[sheet];await image.decode().catch(error=>{throw new Error(`No se pudo decodificar ${image.src}: ${error.message}`);});if(image.naturalWidth!==cols*256||image.naturalHeight!==rows*256)throw new Error('La apariencia no coincide con sus animaciones.');}));}
+  function channel(publish){
+    let worker=null,sequence=0,pending=null,current=null,disposed=false;
+    const finish=value=>{if(pending){pending.resolve(value);pending=null;}};
+    function cancel(){sequence++;finish(false);}
+    function ensure(){
+      if(worker)return worker;
+      if(typeof Worker!=='function')throw new Error('Este dispositivo necesita una versión compatible con el armario.');
+      worker=new Worker(new URL('chota-compositor-worker.js?v=20261109-tailored-v5-602',document.baseURI));
+      worker.onmessage=async({data})=>{
+        if(!pending||data.sequence!==pending.sequence)return;
+        const request=pending,urls={};
+        if(data.error){pending=null;request.reject(new Error(data.error));return;}
+        try{
+          if(!Array.isArray(data.results)||data.results.length!==5)throw new Error('La apariencia está incompleta.');
+          for(const result of data.results){if(!grids[result.sheet]||urls[result.sheet]||!(result.blob instanceof Blob))throw new Error('La apariencia no es válida.');urls[result.sheet]=URL.createObjectURL(result.blob);}
+          await decode(urls);
+          if(request.sequence!==sequence||disposed){revoke({urls});return;}
+          const old=current,entry={signature:request.signature,urls,released:false};entry.release=()=>{revoke(entry);if(current===entry)current=null;};current=entry;
+          if(publish){enabled=true;for(const sheet of Object.keys(grids)){root.style.setProperty(`--chota-outfit-${sheet}`,`url("${urls[sheet]}")`);root.style.setProperty(`--chota-neutral-${sheet}`,`url("${urls[sheet]}")`);}root.dataset.chotaModular='true';}
+          pending=null;request.resolve(publish?true:entry);
+          // CSS/canvas consumers get the replacement before the previous blobs
+          // are retired; a canceled decode can never install a stale outfit.
+          const frame=globalThis.requestAnimationFrame||((fn)=>setTimeout(fn,16));frame(()=>frame(()=>revoke(old)));
+          if(publish)globalThis.dispatchEvent(new Event('chota-appearance-change'));
+        }catch(error){revoke({urls});if(pending===request){pending=null;request.reject(error);}}
+      };
+      worker.onerror=()=>{const request=pending;pending=null;request?.reject(new Error('No se pudo preparar la apariencia del Chota.'));worker?.terminate();worker=null;};return worker;
+    }
+    async function render(layers){
+      const token=++sequence;finish(false);await prepare();if(token!==sequence||disposed)return false;
+      const signature=JSON.stringify(layers);if(publish&&enabled&&current?.signature===signature&&!current.released)return true;
+      return new Promise((resolve,reject)=>{
+        pending={sequence:token,signature,resolve,reject};
+        const paths=map=>Object.fromEntries(Object.entries(map).map(([sheet,url])=>[sheet,absolute(url)]));
+        try{ensure().postMessage({sequence:token,anatomy:paths(contract.anatomy),bare:Object.fromEntries(Object.entries(contract.bare).map(([slot,atlases])=>[slot,paths(atlases)])),foreground:paths(contract.foreground),layers:layers.map(layer=>({slot:layer.slot,type:layer.type,atlases:paths(layer.atlases)}))});}
+        catch(error){pending=null;reject(error);}
+      });
+    }
+    function clear(){cancel();worker?.terminate();worker=null;revoke(current);current=null;}
+    function dispose(){disposed=true;clear();previews.delete(api);}
+    const api={render,cancel,clear,dispose,current:()=>current,disposed:()=>disposed};return api;
   }
-  function finishPending(value){if(pending){pending.resolve(value);pending=null;}}
-  function ensureWorker(){
-    if(worker)return worker;
-    if(typeof Worker!=='function')throw new Error('Este dispositivo necesita una versión compatible para el nuevo armario.');
-    worker=new Worker(new URL('chota-compositor-worker.js?v=20261109-chota-modular-600',document.baseURI));
-    worker.onmessage=async({data})=>{
-      if(!pending||data.sequence!==pending.sequence)return;
-      if(data.error){pending.reject(new Error(data.error));pending=null;return;}
-      const request=pending,urls={};
-      try{
-        if(!Array.isArray(data.results)||data.results.length!==5)throw new Error('La apariencia está incompleta.');
-        for(const result of data.results){if(!grids[result.sheet]||!(result.blob instanceof Blob))throw new Error('La apariencia no es válida.');urls[result.sheet]=URL.createObjectURL(result.blob);}
-        await decode(urls);
-        if(request.sequence!==sequence){revoke({urls});return;}
-        const previous=current;current={signature:request.signature,urls};enabled=true;
-        for(const sheet of Object.keys(grids)){
-          root.style.setProperty(`--chota-outfit-${sheet}`,`url("${urls[sheet]}")`);
-          root.style.setProperty(`--chota-neutral-${sheet}`,`url("${contract.neutral[sheet]}")`);
-        }
-        root.dataset.chotaModular='true';
-        // Old textures remain valid until the replacement has decoded and committed.
-        retire(previous);
-        finishPending(true);globalThis.dispatchEvent(new Event('chota-appearance-change'));
-      }catch(error){revoke({urls});if(pending===request){pending=null;request.reject(error);}}
-    };
-    worker.onerror=()=>{if(pending){pending.reject(new Error('No se pudo preparar la apariencia del Chota.'));pending=null;}worker?.terminate();worker=null;};
-    return worker;
-  }
-  async function compose(layers){
-    const token=++sequence;finishPending(false);
-    await prepare();
-    if(token!==sequence)return false;
-    const signature=JSON.stringify(layers);
-    if(current?.signature===signature&&enabled)return true;
-    return new Promise((resolve,reject)=>{
-      pending={sequence:token,signature,resolve,reject};
-      const originals={bottomwear:'original-jeans',footwear:'original-jordan-chicago',topwear:'original-stussy'};
-      const allOriginal=layers.length===3&&new Set(layers.map(layer=>layer.slot)).size===3&&layers.every(layer=>originals[layer.slot]&&Object.keys(grids).every(sheet=>layer.atlases[sheet]===`icons/mascot/chota-v2/wardrobe-originals/${originals[layer.slot]}-${sheet}-${layer.slot==='footwear'?'v1':'v2'}.webp`));
-      const compositionBase=allOriginal?contract.defaults:contract.neutral,compositionLayers=allOriginal?[]:layers;
-      try{ensureWorker().postMessage({sequence:token,base:Object.fromEntries(Object.entries(compositionBase).map(([sheet,url])=>[sheet,absolute(url)])),layers:compositionLayers.map(layer=>({slot:layer.slot,atlases:Object.fromEntries(Object.entries(layer.atlases).map(([sheet,url])=>[sheet,absolute(url)]))}))});}
-      catch(error){pending=null;reject(error);}
-    });
-  }
+  const equipped=channel(true);
   function reset(){
-    sequence++;finishPending(false);enabled=false;delete root.dataset.chotaModular;
-    for(const sheet of Object.keys(grids)){if(contract)root.style.setProperty(`--chota-outfit-${sheet}`,`url("${contract.defaults[sheet]}")`);else root.style.removeProperty(`--chota-outfit-${sheet}`);root.style.removeProperty(`--chota-neutral-${sheet}`);}
-    const previous=current;current=null;retire(previous);
-    worker?.terminate();worker=null;globalThis.dispatchEvent(new Event('chota-appearance-change'));
+    equipped.clear();for(const preview of [...previews])preview.dispose();enabled=false;delete root.dataset.chotaModular;
+    for(const sheet of Object.keys(grids)){root.style.removeProperty(`--chota-outfit-${sheet}`);root.style.removeProperty(`--chota-neutral-${sheet}`);}
+    globalThis.dispatchEvent(new Event('chota-appearance-change'));
   }
-  function cancel(){sequence++;finishPending(false);}
-  const base=sheet=>enabled?contract.neutral[sheet]:contract?.defaults[sheet]||'icons/mascot/chota-v2/'+legacy[sheet];
-  const sheet=key=>current?.urls[key]||contract?.defaults[key]||'icons/mascot/chota-v2/'+legacy[key];
-  globalThis.addEventListener('pagehide',()=>{worker?.terminate();worker=null;finishPending(false);if(retiring){revoke(retiring);retiring=null;}});
-  globalThis.ChotaAppearance=Object.freeze({prepare,compose,cancel,reset,base,sheet,enabled:()=>enabled});
+  function createPreview(){const preview=channel(false);previews.add(preview);return preview;}
+  const sheet=key=>equipped.current()?.urls[key]||'icons/mascot/chota-v2/'+legacy[key];
+  globalThis.addEventListener('pagehide',reset);
+  globalThis.ChotaAppearance=Object.freeze({prepare,compose:layers=>equipped.render(layers),cancel:()=>equipped.cancel(),reset,createPreview,base:sheet,sheet,enabled:()=>enabled});
 })();

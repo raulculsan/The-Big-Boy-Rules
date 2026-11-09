@@ -1,0 +1,744 @@
+{
+  "poseCount": 67,
+  "sourceMismatch": 0,
+  "anatomyClothes": 0,
+  "frames": [
+    {
+      "sheet": "base",
+      "frame": 0,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3092,
+        2497,
+        2454
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 1,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2678,
+        2762,
+        2490
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 2,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3459,
+        2794,
+        2500
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 3,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3465,
+        2724,
+        2530
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 4,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3417,
+        2787,
+        2524
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 5,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2676,
+        2754,
+        2481
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 6,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2726,
+        3491,
+        3186
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 7,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2202,
+        2909,
+        2421
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 8,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2687,
+        3538,
+        3277
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 9,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        1822,
+        3004,
+        2341
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 10,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2740,
+        3524,
+        2859
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 11,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3108,
+        3683,
+        3313
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 12,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2771,
+        2748,
+        2628
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 13,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2127,
+        1951,
+        2454
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 14,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3539,
+        3336,
+        2265
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 15,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3852,
+        3561,
+        2461
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 16,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2682,
+        2821,
+        3097
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 17,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3003,
+        2694,
+        2648
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 18,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3068,
+        2891,
+        2721
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 19,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2232,
+        2033,
+        2546
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 20,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2587,
+        1971,
+        2406
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 21,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2475,
+        2490,
+        1321
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 22,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        1630,
+        2418,
+        1537
+      ]
+    },
+    {
+      "sheet": "base",
+      "frame": 23,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        1233,
+        2162,
+        1126
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 0,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3777,
+        2528,
+        2043
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 1,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3702,
+        2517,
+        2104
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 2,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3654,
+        2531,
+        2099
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 3,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3728,
+        2611,
+        2120
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 4,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3804,
+        2561,
+        2107
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 5,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3816,
+        2488,
+        2008
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 6,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3809,
+        2588,
+        1974
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 7,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3780,
+        2553,
+        1980
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 8,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3156,
+        2404,
+        2239
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 9,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3055,
+        2426,
+        2310
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 10,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3086,
+        2421,
+        2383
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 11,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3089,
+        2546,
+        2450
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 12,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3185,
+        2595,
+        2435
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 13,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3128,
+        2472,
+        2304
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 14,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3078,
+        2436,
+        2314
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 15,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3094,
+        2438,
+        2366
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 16,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3817,
+        2685,
+        2204
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 17,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        4442,
+        2817,
+        2130
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 18,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        4440,
+        2795,
+        2112
+      ]
+    },
+    {
+      "sheet": "directional",
+      "frame": 19,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3156,
+        2654,
+        2485
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 0,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3070,
+        2560,
+        2401
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 1,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2640,
+        2799,
+        2460
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 2,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2749,
+        2780,
+        2439
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 3,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2749,
+        2780,
+        2439
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 4,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3070,
+        2560,
+        2401
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 5,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3439,
+        2798,
+        2519
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 6,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3550,
+        2900,
+        2534
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 7,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3550,
+        2900,
+        2534
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 8,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3070,
+        2560,
+        2401
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 9,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3439,
+        2798,
+        2519
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 10,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3796,
+        2840,
+        2361
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 11,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3796,
+        2840,
+        2361
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 12,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3070,
+        2560,
+        2401
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 13,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3070,
+        2560,
+        2401
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 14,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2959,
+        2993,
+        2350
+      ]
+    },
+    {
+      "sheet": "contextual",
+      "frame": 15,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2959,
+        2993,
+        2350
+      ]
+    },
+    {
+      "sheet": "room",
+      "frame": 0,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2689,
+        2955,
+        2221
+      ]
+    },
+    {
+      "sheet": "room",
+      "frame": 1,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2292,
+        3425,
+        2060
+      ]
+    },
+    {
+      "sheet": "room",
+      "frame": 2,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2753,
+        3831,
+        2588
+      ]
+    },
+    {
+      "sheet": "room",
+      "frame": 3,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        2129,
+        3154,
+        2204
+      ]
+    },
+    {
+      "sheet": "talk",
+      "frame": 0,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3092,
+        2497,
+        2454
+      ]
+    },
+    {
+      "sheet": "talk",
+      "frame": 1,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3116,
+        2503,
+        2517
+      ]
+    },
+    {
+      "sheet": "talk",
+      "frame": 2,
+      "sourceMismatch": 0,
+      "anatomyClothes": 0,
+      "partPixels": [
+        3129,
+        2505,
+        2577
+      ]
+    }
+  ]
+}

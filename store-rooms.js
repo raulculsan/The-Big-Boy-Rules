@@ -107,7 +107,8 @@
   function describe(button) {
     if (button.matches('[data-chota-buy]')) {
       const id = button.dataset.chotaBuy;
-      if (button.dataset.checkoutKind === 'clothing') return {kind: button.dataset.checkoutSlot === 'bottomwear' ? 'trousers' : button.dataset.checkoutSlot === 'topwear' ? 'shirt' : 'clothing', id, name: button.dataset.checkoutName, desc: button.dataset.checkoutDesc, price: Number(button.dataset.checkoutPrice) || 0, coat: button.dataset.checkoutCoat || '', pants: button.dataset.checkoutPants || '', shirt: button.dataset.checkoutShirt || '', shoes: button.dataset.checkoutShoes || '', selector: `[data-chota-buy="${CSS.escape(id)}"]`};
+      let look=null;try{look=JSON.parse(button.dataset.checkoutLook||'null');}catch{}
+      if (button.dataset.checkoutKind === 'clothing') return {kind: button.dataset.checkoutSlot === 'bottomwear' ? 'trousers' : button.dataset.checkoutSlot === 'topwear' ? 'shirt' : 'clothing', id, name: button.dataset.checkoutName, desc: button.dataset.checkoutDesc, price: Number(button.dataset.checkoutPrice) || 0, coat: button.dataset.checkoutCoat || '', pants: button.dataset.checkoutPants || '', shirt: button.dataset.checkoutShirt || '', shoes: button.dataset.checkoutShoes || '', look, legacy:button.dataset.checkoutLegacy==='true', selector: `[data-chota-buy="${CSS.escape(id)}"]`};
       const article = button.closest('[data-chota-item]');
       return {kind: article?.classList.contains('chota-shop-style') ? 'style' : 'object', id, name: article?.querySelector('h4')?.textContent, desc: article?.querySelector('p')?.textContent, price: number(article?.querySelector('.chota-shop-purchase strong')), art: article?.querySelector('.chota-shop-object')?.innerHTML || '', selector: `[data-chota-buy="${CSS.escape(id)}"]`};
     }
@@ -117,7 +118,7 @@
   }
   function preview(item) {
     const layer = (name, url) => `<span class="fitting-chota-${name}"${url ? ` style="background-image:url('${esc(url)}')"` : ''}></span>`;
-    if (['clothing', 'trousers', 'shirt'].includes(item.kind)) return `<div class="checkout-model"><span class="checkout-glow"></span><span class="fitting-chota" data-chota-fitting><span class="fitting-chota-body"></span>${layer('pants', item.pants)}${layer('shoes', item.shoes)}${layer('shirt', item.shirt)}${layer('coat', item.coat)}</span><span class="checkout-floor"></span></div>`;
+    if (['clothing', 'trousers', 'shirt'].includes(item.kind)) return `<div class="checkout-model"><span class="checkout-glow"></span><span class="fitting-chota" data-chota-fitting><span class="fitting-chota-body"></span>${item.look?'':layer('pants', item.pants)+layer('shoes', item.shoes)+layer('shirt', item.shirt)+layer('coat', item.coat)}</span><span class="checkout-floor"></span></div>`;
     return `<div class="checkout-art checkout-art--${item.kind}">${item.art}</div>`;
   }
   function sheet() {
@@ -138,6 +139,7 @@
     node.dataset.kind = item.kind;
     node.dataset.state = 'review';
     node.querySelector('.checkout-preview').innerHTML = preview(item);
+    if(item.look)void globalThis.ChotaWardrobe?.preview?.(node.querySelector('[data-chota-fitting]'),item.look,{legacy:item.legacy}).catch(()=>{if(current?.id===item.id)node.querySelector('.checkout-note').textContent='No se pudo preparar la vista.';});
     node.querySelectorAll('.checkout-preview video').forEach(video => { video.muted = true; video.play?.().catch(() => {}); });
     node.querySelector('.checkout-kind').textContent = kinds[item.kind].label;
     node.querySelector('#checkoutTitle').textContent = item.name || '';
@@ -171,7 +173,7 @@
     if (current?.state === 'buying') return;
     const opener = current?.opener;
     current = null;
-    const finish = () => { node.hidden = true; node.classList.remove('is-leaving'); node.querySelector('.checkout-preview').innerHTML = ''; };
+    const finish = () => { globalThis.ChotaWardrobe?.releasePreview?.(node.querySelector('[data-chota-fitting]'));node.hidden = true; node.classList.remove('is-leaving'); node.querySelector('.checkout-preview').innerHTML = ''; };
     if (opener?.isConnected && !opener.disabled) opener.focus({preventScroll: true});
     if (reduced()) { finish(); return; }
     node.classList.add('is-leaving');

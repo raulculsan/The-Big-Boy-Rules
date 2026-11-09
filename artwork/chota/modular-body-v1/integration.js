@@ -7,7 +7,7 @@
   for(const color of ['crema','rojo','azul','oliva','morado'])items.push(make('outerwear','chota-tnf-'+color+'-v1','tnf-'+color+'-v1','Plumífero '+color));
   for(const key of ['carhartt-crudo','carhartt-oliva','supreme-roja','stussy-blanca','stussy-azul'])items.push(make('topwear','chota-shirt-'+key+'-v1',key+'-v1','Camiseta '+key));
   items.push(make('bottomwear','chota-carhartt-azul-oscuro-v1','carhartt-azul-oscuro-v1','Carhartt azul oscuro'));
-  for(const slot of ['topwear','bottomwear','outerwear']){const select=document.querySelector('[data-qa-slot="'+slot+'"]');select.innerHTML='<option value="">Sin prenda</option>'+items.filter(item=>item.slot===slot).map(item=>'<option value="'+item.id+'">'+item.name+'</option>').join('');select.value=slot==='topwear'?items[4].id:slot==='bottomwear'?items[5].id:'';}
+  for(const slot of ['topwear','bottomwear','outerwear','footwear']){const select=document.querySelector('[data-qa-slot="'+slot+'"]');select.innerHTML='<option value="">Sin prenda</option>'+items.filter(item=>item.slot===slot).map(item=>'<option value="'+item.id+'">'+item.name+'</option>').join('');select.value=slot==='topwear'?items[4].id:slot==='bottomwear'?items[5].id:slot==='footwear'?items[2].id:'';}
   let mode=1,currentLook='defaults';
   let state={wardrobe_version:1,balance:1000,items,outerwear:null,topwear:items[0].id,bottomwear:items[1].id,footwear:items[2].id},requestVersion=0;
   ChotaShop.initialize({cacheNamespace:'modular-local-qa',session:()=> 'qa-user',rpc:async(name,args)=>{
@@ -16,12 +16,12 @@
     return{data:structuredClone(state)};
   }});
   ChotaGames.initialize({session:()=> 'qa-user',getOwnedItems:async()=>['football','skateboard','robot-vacuum','darts'],startGame:async()=> 'qa-round',submitScore:async()=>({reward_status:'already_claimed'}),leaderboard:async()=>[]});
-  const snapshots={defaults:{outerwear:null,topwear:items[0].id,bottomwear:items[1].id,footwear:items[2].id},bought:{outerwear:items[3].id,topwear:items[4].id,bottomwear:items[5].id,footwear:items[2].id},'no-shirt':{outerwear:null,topwear:null,bottomwear:items[1].id,footwear:items[2].id},bare:{outerwear:null,topwear:null,bottomwear:null,footwear:null}};
+  const snapshots={defaults:{outerwear:null,topwear:items[0].id,bottomwear:items[1].id,footwear:items[2].id},bought:{outerwear:items[3].id,topwear:items[4].id,bottomwear:items[5].id,footwear:items[2].id},'no-shirt':{outerwear:null,topwear:null,bottomwear:items[1].id,footwear:items[2].id},bare:{outerwear:null,topwear:null,bottomwear:null,footwear:null},'no-pants':{outerwear:null,topwear:items[0].id,bottomwear:null,footwear:items[2].id},'no-shoes':{outerwear:null,topwear:items[0].id,bottomwear:items[1].id,footwear:null}};
   async function look(key){
     const version=++requestVersion;currentLook=key;const selected=key==='custom'?Object.fromEntries([...document.querySelectorAll('[data-qa-slot]')].map(select=>[select.dataset.qaSlot,select.value||null])):snapshots[key];state={...state,...selected,wardrobe_version:mode};status.textContent='Preparando '+key+'…';
     try{
       await ChotaShop.refresh(true);
-      const equipped=Object.fromEntries(['bottomwear','footwear','topwear','outerwear'].map(slot=>[slot,items.find(item=>item.id===state[slot])||null]));if(mode===1)await ChotaWardrobe.applyOutfit(equipped);else{await ChotaWardrobe.applyOutfit(null);await Promise.all([ChotaWardrobe.applyPants(equipped.bottomwear),ChotaWardrobe.applyShirt(equipped.topwear),ChotaWardrobe.applyOwned(equipped.outerwear)]);}
+      const equipped=Object.fromEntries(['bottomwear','footwear','topwear','outerwear'].map(slot=>[slot,items.find(item=>item.id===state[slot])||null]));await (mode===1?ChotaWardrobe.applyOutfit(equipped):ChotaWardrobe.applyLegacyOutfit(equipped));
       if(version!==requestVersion)return;
       status.textContent=`${key}: ${mode===1?(ChotaAppearance.enabled()?'modular activo':'sin activar'):'legacy (sin migración)'}\n${ChotaWardrobe.outfit().map(layer=>layer.slot).join(' → ')||'Sin prendas'}\nCambiar ropa también funciona con el diálogo abierto (controles interiores o Alt+1…4).`;
     }catch(error){if(version===requestVersion)status.textContent='SIN ACTIVAR: '+error.message+' No se ha sustituido el cuerpo de producción.';}
