@@ -1,5 +1,5 @@
-const CACHE_NAME = "big-boy-rules-v593";
-const APP_SHELL = ["./icons/shop/club-store-v1/manifest.json?v=20261108-club-store-583","./club-store.css?v=20261108-store-rooms-586","./club-store.js?v=20261108-store-sky-587","./store-sky.js?v=20261108-rain-v2-593","./store-sky.css?v=20261108-rain-v2-593","./store-rooms.css?v=20261108-pants-shelf-592","./store-rooms.js?v=20261108-bottomwear-591","./icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg","./icons/mascot/chota-v2/wardrobe/idle-body-mask.svg","./chota-wardrobe.css?v=20261108-bottomwear-591","./chota-wardrobe.js?v=20261108-bottomwear-591","./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
+const CACHE_NAME = "big-boy-rules-v595";
+const APP_SHELL = ["./icons/shop/club-store-v1/manifest.json?v=20261109-clothing-shelves-v2-594","./club-store.css?v=20261109-clothing-shelves-v2-594","./club-store.js?v=20261109-clothing-shelves-v2-594","./store-sky.js?v=20261108-rain-v2-593","./store-sky.css?v=20261108-rain-v2-593","./store-rooms.css?v=20261109-shirts-595","./store-rooms.js?v=20261109-shirts-595","./icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg","./icons/mascot/chota-v2/wardrobe/idle-body-mask.svg","./chota-wardrobe.css?v=20261109-shirts-595","./chota-wardrobe.js?v=20261109-shirts-595","./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
   "./icons/clubhouse/chota-room-occlusion.svg",
@@ -33,7 +33,7 @@ const APP_SHELL = ["./icons/shop/club-store-v1/manifest.json?v=20261108-club-sto
   "./notifications.css?v=20261102-theme-532",
   "./club.css?v=20261103-ladders-552",
   "./clubhouse.css?v=20261108-chota-life-v2-581",
-  "./chota-shop.js?v=20261108-pants-shelf-592",
+  "./chota-shop.js?v=20261109-shirts-595",
   "./chota-shop.css?v=20261108-chota-inventory-590",
   "./coin-missions.js?v=20261103-economy-555",
   "./club-day.js?v=20261107-chota-asleep-574",

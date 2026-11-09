@@ -1,0 +1,275 @@
+{
+  "version": 1,
+  "id": "club-store-v1",
+  "width": 1024,
+  "height": 1280,
+  "poster": "icons/shop/club-store-v1/assembled-poster-v1.webp",
+  "style_reference": "icons/clubhouse/club-room-v1.webp",
+  "layers": [
+    {
+      "id": "architecture",
+      "src": "icons/shop/club-store-v1/architecture-v1.webp",
+      "z": 0,
+      "rect": [
+        0,
+        0,
+        1024,
+        1280
+      ],
+      "master": "/Users/raulculsan/Documents/Codex/2026-07-29/co/work/The-Big-Boy-Rules/artwork/shop/club-store-v1/layers/architecture.png",
+      "width": 1024,
+      "height": 1280,
+      "source": "/Users/raulculsan/.codex/generated_images/01a112bb-9a2f-7cb1-8eca-b1fde661a37d/exec-9d4d4bca-55ec-4cc8-a1df-33d077281043.png",
+      "source_crop": null,
+      "transparent": false,
+      "bytes": 161498,
+      "sha256": "614fe817391726a1b09d4417102daf5058344bc5e9ade4ce168798132d60da5c"
+    },
+    {
+      "id": "banners-display",
+      "src": "icons/shop/club-store-v1/banners-display-v1.webp",
+      "z": 2,
+      "rect": [
+        55,
+        135,
+        432,
+        488
+      ],
+      "master": "/Users/raulculsan/Documents/Codex/2026-07-29/co/work/The-Big-Boy-Rules/artwork/shop/club-store-v1/layers/banners-display.png",
+      "width": 432,
+      "height": 488,
+      "source": "/Users/raulculsan/.codex/generated_images/01a112bb-9a2f-7cb1-8eca-b1fde661a37d/exec-c8f76bc4-7fad-456e-b425-f7fe14913d5a.png",
+      "source_crop": {
+        "left": 98,
+        "top": 36,
+        "width": 1013,
+        "height": 1219
+      },
+      "transparent": true,
+      "bytes": 106066,
+      "sha256": "89873b36149239d65257c81ece6596d40fadda942da3ff0d4f48d2506acb131d"
+    },
+    {
+      "id": "vouchers-counter",
+      "src": "icons/shop/club-store-v1/vouchers-counter-v1.webp",
+      "z": 3,
+      "rect": [
+        569,
+        320,
+        394,
+        299
+      ],
+      "master": "/Users/raulculsan/Documents/Codex/2026-07-29/co/work/The-Big-Boy-Rules/artwork/shop/club-store-v1/layers/vouchers-counter.png",
+      "width": 394,
+      "height": 299,
+      "source": "/Users/raulculsan/.codex/generated_images/01a112bb-9a2f-7cb1-8eca-b1fde661a37d/exec-43c7d73e-9c9b-48b3-84a1-366d1a390fcb.png",
+      "source_crop": {
+        "left": 153,
+        "top": 24,
+        "width": 1216,
+        "height": 954
+      },
+      "transparent": true,
+      "bytes": 54552,
+      "sha256": "e67fcac93bc8d1802d28ab315651d7aa9324f1737d13048d657c2e889270655d"
+    },
+    {
+      "id": "accessories-shelf",
+      "src": "icons/shop/club-store-v1/accessories-shelf-v1.webp",
+      "z": 5,
+      "rect": [
+        20,
+        627,
+        424,
+        390
+      ],
+      "master": "/Users/raulculsan/Documents/Codex/2026-07-29/co/work/The-Big-Boy-Rules/artwork/shop/club-store-v1/layers/accessories-shelf.png",
+      "width": 424,
+      "height": 390,
+      "source": "/Users/raulculsan/.codex/generated_images/01a112bb-9a2f-7cb1-8eca-b1fde661a37d/exec-35fd7bcb-3933-41c1-8924-46fd140712bc.png",
+      "source_crop": {
+        "left": 138,
+        "top": 38,
+        "width": 1081,
+        "height": 1052
+      },
+      "transparent": true,
+      "bytes": 80520,
+      "sha256": "b99ced89479a02a1b37268f0eb14e564a7d97e9d11990b1471c4a921e19a07dd"
+    },
+    {
+      "id": "clothing-rail",
+      "src": "icons/shop/club-store-v1/clothing-rail-v1.webp",
+      "z": 6,
+      "rect": [
+        565,
+        654,
+        420,
+        363
+      ],
+      "master": "/Users/raulculsan/Documents/Codex/2026-07-29/co/work/The-Big-Boy-Rules/artwork/shop/club-store-v1/layers/clothing-rail.png",
+      "width": 420,
+      "height": 363,
+      "source": "/Users/raulculsan/.codex/generated_images/01a112bb-9a2f-7cb1-8eca-b1fde661a37d/exec-b9b8f230-f1cf-4e01-80bb-fbe907f15535.png",
+      "source_crop": {
+        "left": 127,
+        "top": 55,
+        "width": 1147,
+        "height": 1017
+      },
+      "transparent": true,
+      "bytes": 73406,
+      "sha256": "15d26cd79041c6f7617e3ac32d263dedfe12cfd5061f4215e56c245aed8729dd"
+    },
+    {
+      "id": "foreground-left",
+      "src": "icons/shop/club-store-v1/foreground-left-v1.png",
+      "z": 8,
+      "rect": [
+        0,
+        1026,
+        139,
+        254
+      ],
+      "master": "/Users/raulculsan/Documents/Codex/2026-07-29/co/work/The-Big-Boy-Rules/artwork/shop/club-store-v1/layers/foreground-left.png",
+      "width": 139,
+      "height": 254,
+      "source": "/Users/raulculsan/.codex/generated_images/01a112bb-9a2f-7cb1-8eca-b1fde661a37d/exec-82e3a941-8d56-4edc-b285-aef407563132.png",
+      "source_crop": {
+        "left": 160,
+        "top": 79,
+        "width": 864,
+        "height": 1162
+      },
+      "transparent": true,
+      "bytes": 51307,
+      "sha256": "115ac459dd5e948ea23d24d0e96c771132ff951642227d7132cb61eb6fc4e4d1",
+      "delivery_format": "png"
+    },
+    {
+      "id": "foreground-right",
+      "src": "icons/shop/club-store-v1/foreground-right-v1.webp",
+      "z": 9,
+      "rect": [
+        870,
+        1025,
+        154,
+        255
+      ],
+      "master": "/Users/raulculsan/Documents/Codex/2026-07-29/co/work/The-Big-Boy-Rules/artwork/shop/club-store-v1/layers/foreground-right.png",
+      "width": 154,
+      "height": 255,
+      "source": "/Users/raulculsan/.codex/generated_images/01a112bb-9a2f-7cb1-8eca-b1fde661a37d/exec-0d9e9f40-1e21-4a57-9793-d66a42c8e9cc.png",
+      "source_crop": {
+        "left": 205,
+        "top": 67,
+        "width": 964,
+        "height": 1055
+      },
+      "transparent": true,
+      "bytes": 17180,
+      "sha256": "91ebf7dbdddfc78688cad74f23351e47ca1c10048958b93128f79aa8aaf0bda3"
+    },
+    {
+      "id": "pendant-lamps",
+      "src": "icons/shop/club-store-v1/pendant-lamps-v1.png",
+      "z": 10,
+      "rect": [
+        159,
+        0,
+        739,
+        217
+      ],
+      "master": "/Users/raulculsan/Documents/Codex/2026-07-29/co/work/The-Big-Boy-Rules/artwork/shop/club-store-v1/layers/pendant-lamps.png",
+      "width": 739,
+      "height": 217,
+      "source": "/Users/raulculsan/.codex/generated_images/01a112bb-9a2f-7cb1-8eca-b1fde661a37d/exec-71d80cca-93e8-4b92-987e-614dfcd5254a.png",
+      "source_crop": {
+        "left": 300,
+        "top": 12,
+        "width": 1573,
+        "height": 660
+      },
+      "transparent": true,
+      "bytes": 65462,
+      "sha256": "876b5eb6befa400e57d1313f6dfe3161ddb54d8fd5fe98a2c6627f7b4a2c2d0e",
+      "placement_crop_top": 30,
+      "delivery_format": "png"
+    }
+  ],
+  "hotspots": [
+    {
+      "section": "banners",
+      "layer": "banners-display",
+      "label": "Banners",
+      "rect": [
+        65,
+        180,
+        420,
+        450
+      ],
+      "labelPoint": [
+        264,
+        246
+      ]
+    },
+    {
+      "section": "vouchers",
+      "layer": "vouchers-counter",
+      "label": "Vales",
+      "rect": [
+        560,
+        310,
+        410,
+        320
+      ],
+      "labelPoint": [
+        767,
+        327
+      ]
+    },
+    {
+      "section": "accessories",
+      "layer": "accessories-shelf",
+      "label": "Accesorios",
+      "rect": [
+        20,
+        620,
+        430,
+        400
+      ],
+      "labelPoint": [
+        253,
+        681
+      ]
+    },
+    {
+      "section": "clothing",
+      "layer": "clothing-rail",
+      "label": "Ropa",
+      "rect": [
+        555,
+        640,
+        435,
+        385
+      ],
+      "labelPoint": [
+        775,
+        684
+      ]
+    }
+  ],
+  "expansion": {
+    "catalog_driven": true,
+    "visible_products_are_examples": true,
+    "reserved_floor_rect": [
+      210,
+      1030,
+      640,
+      210
+    ],
+    "clothing_categories_expandable": true
+  },
+  "generated_with": "built-in imagegen",
+  "created_on": "2026-11-08"
+}

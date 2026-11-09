@@ -27,7 +27,7 @@
 .fitting-chota{position:absolute;display:block;aspect-ratio:1;--fx:0%;--fy:0%}
 .fitting-chota>span{position:absolute;inset:0;background-repeat:no-repeat;background-size:600% 400%;background-position:var(--fx) var(--fy);image-rendering:pixelated}
 .fitting-chota-body{background-image:url('icons/mascot/chota-v2/chota-poses.webp')}
-.fitting-chota-pants,.fitting-chota-coat{background-image:none}
+.fitting-chota-pants,.fitting-chota-shirt,.fitting-chota-coat{background-image:none}
 
 /* ── Fitting room ──────────────────────────────────────────────────── */
 .fitting{display:grid;gap:18px}
@@ -166,3 +166,5 @@
 @media(max-width:600px){.store-hall{min-height:150px;padding:16px 0 0 16px}.store-hall h3{font-size:23px}.store-hall-art{max-height:150px}}
 @media(prefers-reduced-motion:reduce){.fitting-mirror i,.checkout-burst{display:none}.fitting-hanger,.fitting-actions button,.checkout-actions button{transition:none}}
 :root[data-motion-quality=low] .fitting-mirror i{animation:none;display:none}
+/* Department names (Pantalones, Camisetas) fit beside the back button and the balance on phones. */
+@media(max-width:640px){body #bannerShopDialog.club-store:not([data-store-view="scene"]) #bannerShopTitle{font-size:min(29px,5.5vw);white-space:nowrap}}

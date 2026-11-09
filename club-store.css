@@ -68,3 +68,17 @@ html[data-reduced-motion="true"] .club-store-stage.is-ready .club-store-layer{an
 #bannerShopDialog.club-store{font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif}
 #bannerShopDialog.club-store .shop-wallet,#bannerShopDialog.club-store .shop-wallet :is(span,strong){font-family:inherit}
 .club-store-stage.has-poster-fallback{background-size:100% 100%;background-repeat:no-repeat}.club-store-stage.has-poster-fallback .club-store-layer{visibility:hidden}
+/* The front-row shelves share the room's depth; their garments remain independent. */
+.club-store-display{position:absolute;display:block;isolation:isolate;pointer-events:none;user-select:none}
+.club-store-display::before{content:"";position:absolute;left:3%;right:3%;bottom:-.8%;height:5%;background:radial-gradient(ellipse,#0009,transparent 70%);z-index:-1}
+.club-store-fold{position:absolute;display:block;object-fit:contain;image-rendering:pixelated;pointer-events:none;-webkit-user-drag:none}
+.club-store-stage.has-poster-fallback .club-store-display{visibility:hidden}
+.club-store-furniture:is([data-store-department="pants"],[data-store-department="shirts"]) .club-store-label{max-width:44%;font-size:clamp(7px,1.75vw,15px);font-weight:600;white-space:nowrap;text-shadow:0 1px 1px #301a12}
+@supports(font-size:1cqw){.club-store-stage{container-type:inline-size}.club-store-furniture:is([data-store-department="pants"],[data-store-department="shirts"]) .club-store-label{font-size:clamp(7px,1.78cqw,15px)}}
+.club-store-clothing-preview[hidden]{display:none}
+#shopClothingPanel :is(#clothingShopItems,#clothingShopStatus)[hidden]{display:none}
+.club-store-clothing-preview{max-width:700px;margin:0 auto}
+.club-store-clothing-preview>p{max-width:520px;margin:0 auto 20px;color:#bec8d1;font-size:14px;line-height:1.5;text-align:center}
+.club-store-catalogue-cabinet{position:relative;isolation:isolate;aspect-ratio:1;width:min(100%,460px);margin:0 auto;overflow:hidden}
+.club-store-cabinet-art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;pointer-events:none;user-select:none}
+.club-store-design-names{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 20px;padding:0;margin:18px 0 0;list-style:none;color:#d8dde2;font-size:13px;line-height:1.4}

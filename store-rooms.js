@@ -90,6 +90,7 @@
   // ── Checkout.
   const kinds = {
     clothing: {label: 'Abrigo para el Chota', note: 'Se lo pondrá en cuanto lo compres.', done: 'Ya lo lleva puesto. Míralo en la sede.'},
+    shirt: {label: 'Camiseta para el Chota', note: 'Se la pondrá en cuanto la compres.', done: 'Ya la lleva puesta. Míralo en la sede.'},
     trousers: {label: 'Pantalón para el Chota', note: 'Se los pondrá en cuanto los compres.', done: 'Ya los lleva puestos. Míralo en la sede.'},
     banner: {label: 'Banner de perfil', note: 'Lo podrás poner en la cabecera de tu perfil.', done: 'Ya es tuyo. Equípalo cuando quieras.'},
     voucher: {label: 'Vale del club', note: 'Se guarda en Vales para canjearlo cuando quieras.', done: 'Vale guardado. Canjéalo cuando quieras.'},
@@ -106,7 +107,7 @@
   function describe(button) {
     if (button.matches('[data-chota-buy]')) {
       const id = button.dataset.chotaBuy;
-      if (button.dataset.checkoutKind === 'clothing') return {kind: button.dataset.checkoutSlot === 'bottomwear' ? 'trousers' : 'clothing', id, name: button.dataset.checkoutName, desc: button.dataset.checkoutDesc, price: Number(button.dataset.checkoutPrice) || 0, coat: button.dataset.checkoutCoat || '', pants: button.dataset.checkoutPants || '', selector: `[data-chota-buy="${CSS.escape(id)}"]`};
+      if (button.dataset.checkoutKind === 'clothing') return {kind: button.dataset.checkoutSlot === 'bottomwear' ? 'trousers' : button.dataset.checkoutSlot === 'topwear' ? 'shirt' : 'clothing', id, name: button.dataset.checkoutName, desc: button.dataset.checkoutDesc, price: Number(button.dataset.checkoutPrice) || 0, coat: button.dataset.checkoutCoat || '', pants: button.dataset.checkoutPants || '', shirt: button.dataset.checkoutShirt || '', selector: `[data-chota-buy="${CSS.escape(id)}"]`};
       const article = button.closest('[data-chota-item]');
       return {kind: article?.classList.contains('chota-shop-style') ? 'style' : 'object', id, name: article?.querySelector('h4')?.textContent, desc: article?.querySelector('p')?.textContent, price: number(article?.querySelector('.chota-shop-purchase strong')), art: article?.querySelector('.chota-shop-object')?.innerHTML || '', selector: `[data-chota-buy="${CSS.escape(id)}"]`};
     }
@@ -116,7 +117,7 @@
   }
   function preview(item) {
     const layer = (name, url) => `<span class="fitting-chota-${name}"${url ? ` style="background-image:url('${esc(url)}')"` : ''}></span>`;
-    if (item.kind === 'clothing' || item.kind === 'trousers') return `<div class="checkout-model"><span class="checkout-glow"></span><span class="fitting-chota" data-chota-fitting><span class="fitting-chota-body"></span>${layer('pants', item.pants)}${layer('coat', item.coat)}</span><span class="checkout-floor"></span></div>`;
+    if (['clothing', 'trousers', 'shirt'].includes(item.kind)) return `<div class="checkout-model"><span class="checkout-glow"></span><span class="fitting-chota" data-chota-fitting><span class="fitting-chota-body"></span>${layer('pants', item.pants)}${layer('shirt', item.shirt)}${layer('coat', item.coat)}</span><span class="checkout-floor"></span></div>`;
     return `<div class="checkout-art checkout-art--${item.kind}">${item.art}</div>`;
   }
   function sheet() {
@@ -227,7 +228,7 @@
     setState('buying');
     bypass = true;
     try { button.click(); } finally { bypass = false; }
-    const statusFor = ['clothing', 'trousers'].includes(item.kind) ? 'clothingShopStatus' : ['object', 'style'].includes(item.kind) ? 'chotaShopStatus' : 'bannerShopStatus';
+    const statusFor = ['clothing', 'trousers', 'shirt'].includes(item.kind) ? 'clothingShopStatus' : ['object', 'style'].includes(item.kind) ? 'chotaShopStatus' : 'bannerShopStatus';
     const owned = () => item.kind === 'banner' ? !!document.querySelector(`[data-banner-id="${CSS.escape(item.id)}"]:not([data-banner-action="buy"])`)
       : item.kind === 'voucher' ? !!document.querySelector(`[data-voucher-action="redeem"][data-voucher-id="${CSS.escape(item.id)}"]`)
       : false;

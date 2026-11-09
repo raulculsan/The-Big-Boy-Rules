@@ -15,3 +15,13 @@
 .has-chota-pants.is-idling :is(.chota-wardrobe-pants-idle-body,.chota-wardrobe-pants-idle-feet){display:block;background-image:var(--chota-pants-base);background-size:600% 400%;background-position:0 0}
 /* The idle paw carries a few pixels of the original jeans; with trousers on, a clean paw lets them show. */
 .has-chota-pants .chota-idle-paw{background-image:url("icons/mascot/chota-v2/wardrobe-bottomwear/idle-paw-v1.svg")}
+/* The T-shirt covers the original tee: over the trousers, under the coat and the hands. */
+.chota-wardrobe-shirt{display:none;position:absolute;inset:0;pointer-events:none;image-rendering:pixelated;background-repeat:no-repeat}
+.has-chota-shirt>.chota-wardrobe-shirt-main{display:block}
+.has-chota-shirt.is-idling>.chota-wardrobe-shirt-main{display:none}
+.has-chota-shirt.is-idling :is(.chota-wardrobe-shirt-idle-body,.chota-wardrobe-shirt-idle-head){display:block;background-image:var(--chota-shirt-base);background-size:600% 400%;background-position:0 0}
+.has-chota-shirt.is-sleep-breathing>.chota-wardrobe-shirt-main{-webkit-mask:url('icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg') 0 0/100% 100%;mask:url('icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg') 0 0/100% 100%}
+.has-chota-shirt.is-sleep-breathing .chota-wardrobe-shirt-sleep-chest{display:block;background-image:var(--chota-shirt-base);background-size:600% 400%;background-position:80% 100%}
+.has-chota-shirt.is-sleep-breathing .chota-sleep-chest{z-index:2}
+/* The idle paw also carries a few pixels of the original tee; this paw has neither the tee nor the jeans. */
+.has-chota-shirt .chota-idle-paw{background-image:url("icons/mascot/chota-v2/wardrobe-topwear/idle-paw-v1.svg")}

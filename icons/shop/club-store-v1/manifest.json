@@ -3,7 +3,7 @@
   "id": "club-store-v1",
   "width": 1024,
   "height": 1280,
-  "poster": "icons/shop/club-store-v1/assembled-poster-v1.webp",
+  "poster": "icons/shop/club-store-v1/assembled-poster-v2.webp",
   "style_reference": "icons/clubhouse/club-room-v1.webp",
   "layers": [
     {
@@ -195,6 +195,34 @@
       "sha256": "876b5eb6befa400e57d1313f6dfe3161ddb54d8fd5fe98a2c6627f7b4a2c2d0e",
       "placement_crop_top": 30,
       "delivery_format": "png"
+    },
+    {
+      "id": "pants-shelf",
+      "src": "icons/shop/club-store-v1/clothing-cabinet-v2.webp",
+      "z": 7,
+      "rect": [
+        148,
+        958,
+        304,
+        304
+      ],
+      "width": 1024,
+      "height": 1024,
+      "transparent": true
+    },
+    {
+      "id": "shirts-shelf",
+      "src": "icons/shop/club-store-v1/clothing-cabinet-v2.webp",
+      "z": 7,
+      "rect": [
+        572,
+        958,
+        304,
+        304
+      ],
+      "width": 1024,
+      "height": 1024,
+      "transparent": true
     }
   ],
   "hotspots": [
@@ -246,7 +274,7 @@
     {
       "section": "clothing",
       "layer": "clothing-rail",
-      "label": "Ropa",
+      "label": "Abrigos",
       "rect": [
         555,
         640,
@@ -256,6 +284,36 @@
       "labelPoint": [
         775,
         684
+      ]
+    },
+    {
+      "section": "pants",
+      "layer": "pants-shelf",
+      "label": "Pantalones",
+      "rect": [
+        148,
+        958,
+        304,
+        304
+      ],
+      "labelPoint": [
+        300,
+        980
+      ]
+    },
+    {
+      "section": "shirts",
+      "layer": "shirts-shelf",
+      "label": "Camisetas",
+      "rect": [
+        572,
+        958,
+        304,
+        304
+      ],
+      "labelPoint": [
+        724,
+        980
       ]
     }
   ],
@@ -268,8 +326,90 @@
       640,
       210
     ],
-    "clothing_categories_expandable": true
+    "clothing_categories_expandable": true,
+    "front_floor_displays": true,
+    "folded_models_are_separate_layers": true
   },
   "generated_with": "built-in imagegen",
-  "created_on": "2026-11-08"
+  "created_on": "2026-11-08",
+  "displays": [
+    {
+      "section": "pants",
+      "layer": "pants-shelf",
+      "groupByBrand": false,
+      "models": [
+        {
+          "id": "chota-carhartt-azul-oscuro-v1",
+          "name": "Carhartt azul oscuro",
+          "brand": "Carhartt",
+          "src": "icons/shop/club-store-v1/pants-carhartt-azul-oscuro-fold-v2.webp",
+          "width": 384,
+          "height": 128
+        },
+        {
+          "id": "chota-carhartt-marron-v1",
+          "name": "Carhartt marrón",
+          "brand": "Carhartt",
+          "src": "icons/shop/club-store-v1/pants-carhartt-marron-fold-v2.webp",
+          "width": 384,
+          "height": 128
+        }
+      ]
+    },
+    {
+      "section": "shirts",
+      "layer": "shirts-shelf",
+      "groupByBrand": true,
+      "models": [
+        {
+          "id": "chota-shirt-carhartt-crudo-v1",
+          "name": "Carhartt crudo",
+          "brand": "Carhartt",
+          "src": "icons/shop/club-store-v1/shirt-carhartt-crudo-fold-v1.webp",
+          "width": 384,
+          "height": 128
+        },
+        {
+          "id": "chota-shirt-carhartt-oliva-v1",
+          "name": "Carhartt oliva",
+          "brand": "Carhartt",
+          "src": "icons/shop/club-store-v1/shirt-carhartt-oliva-fold-v1.webp",
+          "width": 384,
+          "height": 128
+        },
+        {
+          "id": "chota-shirt-supreme-negra-v1",
+          "name": "Supreme negra",
+          "brand": "Supreme",
+          "src": "icons/shop/club-store-v1/shirt-supreme-negra-fold-v1.webp",
+          "width": 384,
+          "height": 128
+        },
+        {
+          "id": "chota-shirt-supreme-roja-v1",
+          "name": "Supreme roja",
+          "brand": "Supreme",
+          "src": "icons/shop/club-store-v1/shirt-supreme-roja-fold-v1.webp",
+          "width": 384,
+          "height": 128
+        },
+        {
+          "id": "chota-shirt-stussy-azul-v1",
+          "name": "Stüssy azul",
+          "brand": "Stüssy",
+          "src": "icons/shop/club-store-v1/shirt-stussy-azul-fold-v1.webp",
+          "width": 384,
+          "height": 128
+        },
+        {
+          "id": "chota-shirt-stussy-blanca-v1",
+          "name": "Stüssy blanca",
+          "brand": "Stüssy",
+          "src": "icons/shop/club-store-v1/shirt-stussy-blanca-fold-v1.webp",
+          "width": 384,
+          "height": 128
+        }
+      ]
+    }
+  ]
 }

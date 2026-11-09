@@ -10,61 +10,70 @@
   const url=(color,sheet)=>serverAtlases&&color===serverId?serverAtlases[sheet]:localURL(color,sheet);
   function configure(origin){try{const parsed=new URL(origin||globalThis.BIG_BOY_CONFIG?.supabaseUrl);storageBase=parsed.protocol==='https:'&&!parsed.username&&!parsed.password?parsed.origin+'/storage/v1/object/public/shop-media/':'';}catch{storageBase='';}}
   configure();
-  // Trousers are a second slot drawn under the coat; same sheets, cells and pivots.
-  const pantsColors=Object.freeze(['marron','azul-oscuro']);
-  const pantsURL=(color,sheet)=>`icons/mascot/chota-v2/wardrobe-bottomwear/carhartt-${color}-${sheet}-v1.webp`;
-  const rigs=Object.freeze({outerwear:'chota-overlay-v1',bottomwear:'chota-bottomwear-overlay-v1'});
+  // Trousers and T-shirts are independent slots drawn under the coat; same sheets, cells and pivots.
+  const overlays=Object.freeze({
+    bottomwear:{name:'pants',rig:'chota-bottomwear-overlay-v1',key:/^carhartt-(marron|azul-oscuro)-v1$/,dir:'wardrobe-bottomwear',idle:[['.chota-idle-body','idle-body'],['.chota-idle-feet','idle-feet']]},
+    topwear:{name:'shirt',rig:'chota-topwear-overlay-v1',key:/^(carhartt-(crudo|oliva)|supreme-(negra|roja)|stussy-(blanca|azul))-v1$/,dir:'wardrobe-topwear',idle:[['.chota-idle-body','idle-body'],['.chota-idle-head','idle-head'],['.chota-sleep-chest','sleep-chest']]},
+  });
+  const rigs=Object.freeze({outerwear:'chota-overlay-v1',bottomwear:overlays.bottomwear.rig,topwear:overlays.topwear.rig});
+  const overlayURL=(slot,key,sheet)=>`icons/mascot/chota-v2/${overlays[slot].dir}/${key.replace(/-v1$/,'')}-${sheet}-v1.webp`;
   function describe(item){
     if(!item||typeof item.id!=='string'||!item.id||item.id.length>60||item.item_kind!=='clothing'||!Object.hasOwn(rigs,item.slot)||item.rig_version!==rigs[item.slot])return null;
     const garment=item.garment;if(!garment||typeof garment!=='object'||Array.isArray(garment))return null;
-    if(garment.type==='builtin'&&item.slot==='bottomwear'){const color=pantsColors.find(color=>garment.key==='carhartt-'+color+'-v1');return color?{id:item.id,slot:'bottomwear',type:'builtin',color,cell:128,atlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,pantsURL(color,sheet)]))}:null;}
+    if(garment.type==='builtin'&&overlays[item.slot]){if(typeof garment.key!=='string'||!overlays[item.slot].key.test(garment.key))return null;const color=garment.key.replace(/-v1$/,'');return {id:item.id,slot:item.slot,type:'builtin',color,cell:128,atlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,overlayURL(item.slot,garment.key,sheet)]))};}
     if(garment.type==='builtin'){const color=colors.find(color=>garment.key==='tnf-'+color+'-v1');return color?{id:item.id,type:'builtin',color,cell:128,atlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,localURL(color,sheet)]))}:null;}
     if(garment.type!=='atlas'||![128,256].includes(garment.cell)||!garment.atlases||!storageBase||Object.keys(garment.atlases).length!==5)return null;
     const atlases={};for(const sheet of Object.keys(sheets)){const path=garment.atlases[sheet];if(typeof path!=='string'||!/^chota\/wardrobe\/[A-Za-z0-9/_-]{1,180}\.webp$/.test(path)||path.split('/').some(part=>!part||part==='.'||part==='..'))return null;atlases[sheet]=storageBase+path.split('/').map(encodeURIComponent).join('/');}
-    return {id:item.id,...(item.slot==='bottomwear'?{slot:'bottomwear'}:{}),type:'atlas',cell:garment.cell,atlases};
+    return {id:item.id,...(overlays[item.slot]?{slot:item.slot}:{}),type:'atlas',cell:garment.cell,atlases};
   }
-  // ── Trousers.
-  let pants=null,pantsSequence=0;
   function decode(descriptor,signature){
     if(!requests.has(signature))requests.set(signature,Promise.all(Object.entries(sheets).map(([sheet,grid])=>{const image=new Image();image.src=descriptor.atlases[sheet];return image.decode().then(()=>{if(!image.naturalWidth||(descriptor.type==='atlas'&&(image.naturalWidth!==grid.cols*descriptor.cell||image.naturalHeight!==grid.rows*descriptor.cell)))throw new Error('La prenda no coincide con el rig del Chota.');});})).then(()=>true).catch(error=>{requests.delete(signature);throw error;}));
     return requests.get(signature);
   }
-  async function applyPants(item){
-    const sequence=++pantsSequence;
-    if(!item){pants=null;document.querySelectorAll('.tigreton-character').forEach(unmountPants);return null;}
-    const descriptor=describe(item);if(!descriptor||descriptor.slot!=='bottomwear'||item.owned!==true)throw new TypeError('Esta prenda no está disponible en tu armario.');
-    await decode(descriptor,JSON.stringify(descriptor));if(sequence!==pantsSequence)return null;
-    pants=descriptor;document.querySelectorAll('.tigreton-character').forEach(character=>{character.querySelectorAll('.chota-wardrobe-pants').forEach(node=>node.removeAttribute('data-pants-frame'));mountPants(character);});return pants.id;
+  // ── Overlay slots (trousers, T-shirt). Class names: chota-wardrobe-<name>-<kind>, has-chota-<name>.
+  const worn={bottomwear:null,topwear:null},wornSequence={bottomwear:0,topwear:0};
+  const cap=name=>name[0].toUpperCase()+name.slice(1);
+  async function applyOverlay(slot,item){
+    const sequence=++wornSequence[slot];
+    if(!item){worn[slot]=null;document.querySelectorAll('.tigreton-character').forEach(character=>unmountOverlay(character,slot));return null;}
+    const descriptor=describe(item);if(!descriptor||descriptor.slot!==slot||item.owned!==true)throw new TypeError('Esta prenda no está disponible en tu armario.');
+    await decode(descriptor,JSON.stringify(descriptor));if(sequence!==wornSequence[slot])return null;
+    const name=overlays[slot].name;worn[slot]=descriptor;document.querySelectorAll('.tigreton-character').forEach(character=>{character.querySelectorAll(`.chota-wardrobe-${name}`).forEach(node=>node.removeAttribute(`data-${name}-frame`));mountOverlay(character,slot);});return descriptor.id;
   }
-  function unmountPants(character){character.classList.remove('has-chota-pants');delete character.dataset.chotaPants;character.style.removeProperty('--chota-pants-base');character.querySelectorAll('.chota-wardrobe-pants').forEach(node=>node.remove());}
-  function pantsLayer(parent,kind,before){
-    let node=parent.querySelector(`:scope > .chota-wardrobe-pants-${kind}`);
-    if(!node){node=document.createElement('span');node.className=`chota-wardrobe-pants chota-wardrobe-pants-${kind}`;node.setAttribute('aria-hidden','true');parent.insertBefore(node,before===undefined?parent.firstChild:before);}
+  const applyPants=item=>applyOverlay('bottomwear',item),applyShirt=item=>applyOverlay('topwear',item);
+  function unmountOverlay(character,slot){const name=overlays[slot].name;character.classList.remove(`has-chota-${name}`);delete character.dataset[`chota${cap(name)}`];character.style.removeProperty(`--chota-${name}-base`);character.querySelectorAll(`.chota-wardrobe-${name}`).forEach(node=>node.remove());}
+  // Stacking, bottom to top: sprite, trousers, T-shirt, coat; hands stay above inside the idle torso.
+  function overlayLayer(parent,slot,kind,before){
+    const name=overlays[slot].name;let node=parent.querySelector(`:scope > .chota-wardrobe-${name}-${kind}`);
+    if(!node){node=document.createElement('span');node.className=`chota-wardrobe-${name} chota-wardrobe-${name}-${kind}`;node.setAttribute('aria-hidden','true');parent.insertBefore(node,before===undefined?parent.firstChild:before);}
     return node;
   }
-  function mountPants(character){
-    if(!character||!pants)return;
-    character.classList.add('has-chota-pants');character.dataset.chotaPants=pants.id;
-    character.style.setProperty('--chota-pants-base',`url("${pants.atlases.base}")`);
-    // Under the coat and the hands: before the coat layer, first inside the idle torso and feet.
-    pantsLayer(character,'main',character.querySelector(':scope > .chota-wardrobe-main'));
-    for(const [selector,kind]of [['.chota-idle-body','idle-body'],['.chota-idle-feet','idle-feet']]){const parent=character.querySelector(selector);if(parent)pantsLayer(parent,kind);}
-    paintPants(character,states.get(character)||{sheet:'base',frame:0});
+  function mountOverlay(character,slot){
+    const descriptor=worn[slot];if(!character||!descriptor)return;
+    const name=overlays[slot].name;
+    character.classList.add(`has-chota-${name}`);character.dataset[`chota${cap(name)}`]=descriptor.id;
+    character.style.setProperty(`--chota-${name}-base`,`url("${descriptor.atlases.base}")`);
+    const above=slot==='bottomwear'?character.querySelector(':scope > .chota-wardrobe-shirt-main')||character.querySelector(':scope > .chota-wardrobe-main'):character.querySelector(':scope > .chota-wardrobe-main');
+    overlayLayer(character,slot,'main',above);
+    for(const [selector,kind]of overlays[slot].idle){const parent=character.querySelector(selector);if(!parent)continue;const under=slot==='topwear'?parent.querySelector(':scope > .chota-wardrobe-pants'):null,before=under?under.nextSibling:undefined;overlayLayer(parent,slot,kind,before);}
+    paintOverlay(character,slot,states.get(character)||{sheet:'base',frame:0});
   }
-  function paintPants(character,state){
-    if(!pants)return;
-    const sheet=sheets[state.sheet],node=character.querySelector(':scope > .chota-wardrobe-pants-main');
+  function paintOverlay(character,slot,state){
+    const descriptor=worn[slot];if(!descriptor)return;
+    const name=overlays[slot].name,sheet=sheets[state.sheet],node=character.querySelector(`:scope > .chota-wardrobe-${name}-main`);
     if(!node)return;
-    const signature=pants.id+':'+state.sheet+':'+state.frame;if(node.dataset.pantsFrame===signature)return;
-    node.dataset.pantsFrame=signature;
-    node.style.backgroundImage=`url("${pants.atlases[state.sheet]}")`;
+    const signature=descriptor.id+':'+state.sheet+':'+state.frame;if(node.dataset[`${name}Frame`]===signature)return;
+    node.dataset[`${name}Frame`]=signature;
+    node.style.backgroundImage=`url("${descriptor.atlases[state.sheet]}")`;
     node.style.backgroundSize=`${sheet.cols*100}% ${sheet.rows*100}%`;
     node.style.backgroundPosition=`${sheet.cols===1?0:(state.frame%sheet.cols)*100/(sheet.cols-1)}% ${sheet.rows===1?0:Math.floor(state.frame/sheet.cols)*100/(sheet.rows-1)}%`;
   }
+  const mountOverlays=character=>{for(const slot of ['bottomwear','topwear'])if(worn[slot])mountOverlay(character,slot);};
+  const paintOverlays=(character,state)=>{for(const slot of ['bottomwear','topwear'])if(worn[slot])paintOverlay(character,slot,state);};
 
   async function applyOwned(item){
     if(item===null)return previewEquip(null);
-    if(item?.slot==='bottomwear')return applyPants(item);
+    if(overlays[item?.slot])return applyOverlay(item.slot,item);
     const descriptor=describe(item);if(!descriptor||item.owned!==true)throw new TypeError('Esta prenda no está disponible en tu armario.');
     const sequence=++equipSequence,signature=JSON.stringify(descriptor);
     if(!requests.has(signature))requests.set(signature,Promise.all(Object.entries(sheets).map(([sheet,grid])=>{const image=new Image();image.src=descriptor.atlases[sheet];return image.decode().then(()=>{if(!image.naturalWidth||(descriptor.type==='atlas'&&(image.naturalWidth!==grid.cols*descriptor.cell||image.naturalHeight!==grid.rows*descriptor.cell)))throw new Error('La prenda no coincide con el rig del Chota.');});})).then(()=>true).catch(error=>{requests.delete(signature);throw error;}));
@@ -93,7 +102,7 @@
   function mount(character){
     if(!character)return;
     if(!states.has(character))states.set(character,{sheet:'base',frame:0});
-    if(pants)mountPants(character);
+    mountOverlays(character);
     if(!selected)return;
     character.classList.add('has-chota-outfit');
     character.dataset.chotaOutfit=selectedID();
@@ -106,7 +115,7 @@
     if(!character||!sheets[sheet]||!Number.isInteger(index)||index<0||index>=sheets[sheet].count)return;
     const old=states.get(character);
     if(old?.sheet===sheet&&old.frame===index)return;
-    const state={sheet,frame:index};states.set(character,state);if(selected)paint(character,state);if(pants)paintPants(character,state);
+    const state={sheet,frame:index};states.set(character,state);if(selected)paint(character,state);paintOverlays(character,state);
   }
   async function previewEquip(id){
     const sequence=++equipSequence;
@@ -117,5 +126,5 @@
     serverId=null;serverAtlases=null;selected=color;document.querySelectorAll('.tigreton-character').forEach(mount);
     return 'chota-tnf-'+color+'-v1';
   }
-  globalThis.ChotaWardrobe=Object.freeze({mount,frame,previewEquip,applyOwned,applyPants,describe,configure,selected:selectedID,pants:()=>pants?.id||null,items:()=>colors.map(color=>({id:`chota-tnf-${color}-v1`,color,purchase_enabled:false,active:false,price_coins:null})),poseCount:67});
+  globalThis.ChotaWardrobe=Object.freeze({mount,frame,previewEquip,applyOwned,applyPants,applyShirt,describe,configure,selected:selectedID,pants:()=>worn.bottomwear?.id||null,shirt:()=>worn.topwear?.id||null,items:()=>colors.map(color=>({id:`chota-tnf-${color}-v1`,color,purchase_enabled:false,active:false,price_coins:null})),poseCount:67});
 })();
