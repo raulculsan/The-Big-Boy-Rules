@@ -27,7 +27,7 @@
     if (reduced()) setFrame(node, 0);
   }
   setInterval(() => {
-    if (document.hidden || !dialog()?.open) return;
+    if (document.hidden || (!dialog()?.open && !document.getElementById('chotaInventoryDialog')?.open)) return;
     for (const node of document.querySelectorAll('[data-chota-fitting]')) {
       if (!node.offsetParent) continue;
       const player = players.get(node) || {idle: 0, queue: []};

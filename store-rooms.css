@@ -85,6 +85,7 @@
 .fitting-hanger-hook{position:absolute;top:-10px;left:50%;width:14px;height:16px;translate:-50% 0;border:2px solid #aab2bc;border-bottom:0;border-radius:8px 8px 0 0}
 .fitting-hanger-hook::after{content:"";position:absolute;left:-12px;right:-12px;bottom:-4px;height:3px;border-radius:2px;background:#aab2bc}
 .fitting-hanger-coat{--cell:var(--hc,142px);display:block;width:60px;height:60px;border-radius:8px;background:var(--coat) calc(var(--cell) * var(--hx,-.324)) calc(var(--cell) * var(--hy,-.39))/calc(var(--cell) * 6) calc(var(--cell) * 4) no-repeat;image-rendering:pixelated}
+.fitting-hanger-coat.is-product{background-position:center;background-size:contain;image-rendering:auto}
 .fitting-hanger.is-bare .fitting-hanger-coat{background:url('icons/mascot/chota-v2/chota-poses.webp') calc(var(--cell) * var(--hx,-.324)) calc(var(--cell) * var(--hy,-.39))/calc(var(--cell) * 6) calc(var(--cell) * 4) no-repeat;opacity:.55;filter:grayscale(.6)}
 .fitting-hanger-mark{min-height:16px;font:700 12px/1.3 system-ui;font-variant-numeric:tabular-nums;color:#aeb7c2}
 .fitting-hanger:not(.is-owned):not(.is-bare) .fitting-hanger-mark::before{content:"";display:inline-block;width:9px;height:9px;margin-right:4px;border-radius:50%;background:#f2c14e;box-shadow:inset -1px -1px 0 #c99a2e;vertical-align:-1px}

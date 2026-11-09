@@ -5,7 +5,7 @@
   const sheets=Object.freeze({base:{cols:6,rows:4,count:24},directional:{cols:5,rows:4,count:20},contextual:{cols:4,rows:4,count:16},room:{cols:4,rows:1,count:4},talk:{cols:3,rows:1,count:3}});
   const states=new WeakMap(),requests=new Map();
   let selected=null,equipSequence=0,serverId=null,serverAtlases=null,storageBase='';
-  const localURL=(color,sheet)=>`icons/mascot/chota-v2/wardrobe/tnf-${color}-${sheet}-v2.webp`;
+  const localURL=(color,sheet)=>`icons/mascot/chota-v2/wardrobe/tnf-${color}-${sheet}-v3.webp`;
   const selectedID=()=>serverId || (selected?'chota-tnf-'+selected+'-v1':null);
   const url=(color,sheet)=>serverAtlases&&color===serverId?serverAtlases[sheet]:localURL(color,sheet);
   function configure(origin){try{const parsed=new URL(origin||globalThis.BIG_BOY_CONFIG?.supabaseUrl);storageBase=parsed.protocol==='https:'&&!parsed.username&&!parsed.password?parsed.origin+'/storage/v1/object/public/shop-media/':'';}catch{storageBase='';}}
@@ -16,7 +16,7 @@
     topwear:{name:'shirt',rig:'chota-topwear-overlay-v1',key:/^(carhartt-(crudo|oliva)|supreme-(negra|roja)|stussy-(blanca|azul))-v1$/,dir:'wardrobe-topwear',idle:[['.chota-idle-body','idle-body'],['.chota-idle-head','idle-head'],['.chota-sleep-chest','sleep-chest']]},
   });
   const rigs=Object.freeze({outerwear:'chota-overlay-v1',bottomwear:overlays.bottomwear.rig,topwear:overlays.topwear.rig});
-  const overlayURL=(slot,key,sheet)=>`icons/mascot/chota-v2/${overlays[slot].dir}/${key.replace(/-v1$/,'')}-${sheet}-v2.webp`;
+  const overlayURL=(slot,key,sheet)=>`icons/mascot/chota-v2/${overlays[slot].dir}/${key.replace(/-v1$/,'')}-${sheet}-v3.webp`;
   function describe(item){
     if(!item||typeof item.id!=='string'||!item.id||item.id.length>60||item.item_kind!=='clothing'||!Object.hasOwn(rigs,item.slot)||item.rig_version!==rigs[item.slot])return null;
     const garment=item.garment;if(!garment||typeof garment!=='object'||Array.isArray(garment))return null;

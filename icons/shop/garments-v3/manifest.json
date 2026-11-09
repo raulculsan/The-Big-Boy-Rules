@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "purpose": "garment-only catalogue artwork; prices and ownership unchanged",
+  "items": [
+    {
+      "key": "tnf-negro-v1",
+      "id": "chota-tnf-negro-v1",
+      "slot": "outerwear",
+      "source": "artwork/chota/wardrobe-fidelity-v3/coat-masters/negro.png",
+      "image": "icons/shop/garments-v3/tnf-negro.webp"
+    },
+    {
+      "key": "tnf-crema-v1",
+      "id": "chota-tnf-crema-v1",
+      "slot": "outerwear",
+      "source": "artwork/chota/wardrobe-fidelity-v3/coat-masters/crema.png",
+      "image": "icons/shop/garments-v3/tnf-crema.webp"
+    },
+    {
+      "key": "tnf-rojo-v1",
+      "id": "chota-tnf-rojo-v1",
+      "slot": "outerwear",
+      "source": "artwork/chota/wardrobe-fidelity-v3/coat-masters/rojo.png",
+      "image": "icons/shop/garments-v3/tnf-rojo.webp"
+    },
+    {
+      "key": "tnf-azul-v1",
+      "id": "chota-tnf-azul-v1",
+      "slot": "outerwear",
+      "source": "artwork/chota/wardrobe-fidelity-v3/coat-masters/azul.png",
+      "image": "icons/shop/garments-v3/tnf-azul.webp"
+    },
+    {
+      "key": "tnf-oliva-v1",
+      "id": "chota-tnf-oliva-v1",
+      "slot": "outerwear",
+      "source": "artwork/chota/wardrobe-fidelity-v3/coat-masters/oliva.png",
+      "image": "icons/shop/garments-v3/tnf-oliva.webp"
+    },
+    {
+      "key": "tnf-morado-v1",
+      "id": "chota-tnf-morado-v1",
+      "slot": "outerwear",
+      "source": "artwork/chota/wardrobe-fidelity-v3/coat-masters/morado.png",
+      "image": "icons/shop/garments-v3/tnf-morado.webp"
+    },
+    {
+      "key": "carhartt-marron-v1",
+      "id": "chota-carhartt-marron-v1",
+      "slot": "bottomwear",
+      "source": "artwork/chota/wardrobe-pants-carhartt-v1/marron/preview.png",
+      "image": "icons/shop/garments-v3/carhartt-marron.webp"
+    },
+    {
+      "key": "carhartt-azul-oscuro-v1",
+      "id": "chota-carhartt-azul-oscuro-v1",
+      "slot": "bottomwear",
+      "source": "artwork/chota/wardrobe-pants-carhartt-v1/azul-oscuro/preview.png",
+      "image": "icons/shop/garments-v3/carhartt-azul-oscuro.webp"
+    },
+    {
+      "key": "carhartt-crudo-v1",
+      "id": "chota-shirt-carhartt-crudo-v1",
+      "slot": "topwear",
+      "source": "artwork/chota/wardrobe-shirts-v1/carhartt-crudo/front-master.png",
+      "image": "icons/shop/garments-v3/carhartt-crudo.webp"
+    },
+    {
+      "key": "carhartt-oliva-v1",
+      "id": "chota-shirt-carhartt-oliva-v1",
+      "slot": "topwear",
+      "source": "artwork/chota/wardrobe-shirts-v1/carhartt-oliva/front-master.png",
+      "image": "icons/shop/garments-v3/carhartt-oliva.webp"
+    },
+    {
+      "key": "supreme-negra-v1",
+      "id": "chota-shirt-supreme-negra-v1",
+      "slot": "topwear",
+      "source": "artwork/chota/wardrobe-shirts-v1/supreme-negra/front-master.png",
+      "image": "icons/shop/garments-v3/supreme-negra.webp"
+    },
+    {
+      "key": "supreme-roja-v1",
+      "id": "chota-shirt-supreme-roja-v1",
+      "slot": "topwear",
+      "source": "artwork/chota/wardrobe-shirts-v1/supreme-roja/front-master.png",
+      "image": "icons/shop/garments-v3/supreme-roja.webp"
+    },
+    {
+      "key": "stussy-blanca-v1",
+      "id": "chota-shirt-stussy-blanca-v1",
+      "slot": "topwear",
+      "source": "artwork/chota/wardrobe-shirts-v1/stussy-blanca/front-master.png",
+      "image": "icons/shop/garments-v3/stussy-blanca.webp"
+    },
+    {
+      "key": "stussy-azul-v1",
+      "id": "chota-shirt-stussy-azul-v1",
+      "slot": "topwear",
+      "source": "artwork/chota/wardrobe-shirts-v1/stussy-azul/front-master.png",
+      "image": "icons/shop/garments-v3/stussy-azul.webp"
+    }
+  ]
+}

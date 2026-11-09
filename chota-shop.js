@@ -50,9 +50,16 @@
   const clothingSlots=Object.freeze({outerwear:'Abrigos',topwear:'Parte de arriba',bottomwear:'Pantalones',footwear:'Calzado',headwear:'Cabeza',accessories:'Accesorios'});
   const isClothing=item=>item?.item_kind==='clothing' && Object.hasOwn(clothingSlots,item.slot);
   const clothingDescriptor=item=>globalThis.ChotaWardrobe?.describe?.(item) || null;
+  const clothingProductImage=item=>{
+    if(!clothingDescriptor(item)||item.garment?.type!=='builtin')return '';
+    const value=String(item.garment.key||''),patterns={outerwear:/^tnf-(negro|crema|rojo|azul|oliva|morado)-v1$/,bottomwear:/^carhartt-(marron|azul-oscuro)-v1$/,topwear:/^(carhartt-(crudo|oliva)|supreme-(negra|roja)|stussy-(blanca|azul))-v1$/};
+    return patterns[item.slot]?.test(value)?`icons/shop/garments-v3/${value.replace(/-v1$/,'')}.webp`:'';
+  };
   function clothingArt(item){
     const descriptor=clothingDescriptor(item);
     if(!descriptor)return '<span class="chota-clothing-unavailable">Vista pendiente</span>';
+    const product=clothingProductImage(item);
+    if(product)return `<span class="chota-clothing-preview chota-clothing-product"><img src="${product}" width="384" height="384" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false"></span>`;
     return `<span class="chota-clothing-preview"><span class="chota-clothing-base"></span><span class="chota-clothing-coat" style="background-image:url('${esc(descriptor.atlases.base)}')"></span></span>`;
   }
   function paintWardrobe(){
@@ -86,6 +93,11 @@
     topwear:{tab:'Camisetas',none:'Su camiseta',noneDesc:'La camiseta blanca de siempre.',worn:'La lleva puesta',stored:'En su armario',put:'Ponérsela',putting:'Poniéndosela…',remove:'Quitársela',removing:'Quitándosela…',bare:'Volver a su camiseta',trying:'Probando su camiseta',now:'Así va ahora',thumb:'--hc:142px;--hx:-.324;--hy:-.47'},
     bottomwear:{tab:'Pantalones',none:'Sus vaqueros',noneDesc:'Los vaqueros de siempre, con sus zapatillas.',worn:'Los lleva puestos',stored:'En su armario',put:'Ponérselos',putting:'Poniéndoselos…',remove:'Quitárselos',removing:'Quitándoselos…',bare:'Volver a sus vaqueros',trying:'Probando sus vaqueros',now:'Así va ahora',thumb:'--hc:154px;--hx:-.316;--hy:-.608'},
   });
+  const ARMARIO=Object.freeze([
+    {slot:'outerwear',layer:'coat',title:'Abrigos',one:'Abrigo',own:'Sin abrigo',words:['Quitándoselo…','Poniéndoselo…','Puesto','Quitar abrigo','Ponérselo']},
+    {slot:'topwear',layer:'shirt',title:'Camisetas',one:'Camiseta',own:'Su camiseta blanca',words:['Quitándosela…','Poniéndosela…','Puesta','Volver a esta','Ponérsela']},
+    {slot:'bottomwear',layer:'pants',title:'Pantalones',one:'Pantalón',own:'Sus vaqueros',words:['Quitándoselos…','Poniéndoselos…','Puestos','Volver a estos','Ponérselos']},
+  ]);
   const removing=slot=>slot==='outerwear'?'original':'original-'+slot;
   // Trousers and T-shirts live folded on Codex's three-shelf cabinet: nine stacks of up to four
   // models, bottom to top; T-shirts keep each brand in its own stacks. Positions follow its 1024 × 1024 layout.
@@ -121,7 +133,7 @@
     const signature=JSON.stringify([fittingSlot,slots,all.map(item=>[item.id,item.name,item.description,item.garment])]);
     if(container.dataset.catalogue!==signature){
       const tabs=slots.length>1?`<div class="fitting-tabs" role="tablist" aria-label="Tipo de prenda">${slots.map(slot=>`<button type="button" role="tab" data-fitting-slot="${slot}" aria-selected="${slot===fittingSlot}">${fitCopy[slot].tab}</button>`).join('')}</div>`:'';
-      const hangers=[{id:'original',name:copy.none},...items].map(item=>`<button type="button" class="fitting-hanger${item.id==='original'?' is-bare':''}" role="radio" data-clothing-try="${esc(item.id)}" aria-label="${esc(item.name)}" style="${copy.thumb}"><span class="fitting-hanger-hook" aria-hidden="true"></span><span class="fitting-hanger-coat" aria-hidden="true"${item.id==='original'?'':` style="--coat:url('${esc(coatAtlas(item))}')"`}></span><span class="fitting-hanger-mark"></span></button>`).join('');
+      const hangers=[{id:'original',name:copy.none},...items].map(item=>{const product=clothingProductImage(item);return `<button type="button" class="fitting-hanger${item.id==='original'?' is-bare':''}" role="radio" data-clothing-try="${esc(item.id)}" aria-label="${esc(item.name)}" style="${copy.thumb}"><span class="fitting-hanger-hook" aria-hidden="true"></span><span class="fitting-hanger-coat${product?' is-product':''}" aria-hidden="true"${item.id==='original'?'':` style="--coat:url('${esc(product||coatAtlas(item))}')"`}></span><span class="fitting-hanger-mark"></span></button>`;}).join('');
       const pct=value=>`${(value/10.24).toFixed(3)}%`;
       const shelf=fittingSlot==='outerwear'?[]:shelfPlan(items);
       const picker=shelf.length?`<div class="pants-shelf" aria-hidden="true"><img class="pants-shelf-cabinet" src="${SHELF.src}" alt="" width="1024" height="1024" draggable="false" decoding="async">${shelf.map(stack=>`<button type="button" class="pants-shelf-stack" tabindex="-1" data-shelf-stack="${esc(stack.ids.join(','))}" style="left:${pct(stack.layers[0].left)};top:${pct(stack.layers.at(-1).top)};width:${pct(SHELF.garment)};height:${pct(stack.layers[0].top+stack.layers[0].height-stack.layers.at(-1).top)}"></button>${stack.layers.map(layer=>`<img class="pants-shelf-fold" data-shelf-item="${esc(layer.item.id)}" src="${esc(layer.art.src)}" alt="" draggable="false" decoding="async" style="left:${pct(layer.left)};top:${pct(layer.top)};width:${pct(layer.width)};height:${pct(layer.height)};z-index:${layer.z}">`).join('')}`).join('')}</div><div class="fitting-rail fitting-chips" role="radiogroup" aria-label="${copy.tab} del Chota">${[{id:'original',name:copy.none},...items].map(item=>`<button type="button" class="fitting-chip${item.id==='original'?' is-bare':''}" role="radio" data-clothing-try="${esc(item.id)}" aria-label="${esc(item.name)}"><span class="fitting-chip-name">${esc(item.id==='original'?copy.none:chipName(item))}</span><span class="fitting-hanger-mark"></span></button>`).join('')}</div>`:'';
@@ -178,17 +190,26 @@
     status.classList.toggle('is-error',!!failure);
     if(!stateTrusted){list.innerHTML=`<div class="chota-inventory-empty"><h3>${failure?'No se pudo abrir tu armario':'Preparando tu ropa'}</h3><p>${failure?'Tus prendas siguen guardadas. Vuelve a intentarlo.':'Comprobando las prendas de tu inventario.'}</p>${failure?'<button type="button" data-chota-retry>Reintentar</button>':''}</div>`;delete list.dataset.catalogue;return;}
     const items=state.items.filter(item=>item.owned&&isClothing(item)&&clothingDescriptor(item));
+    // One shelf per kind of garment, in the order he wears them; each starts with his own clothes.
+    const shelves=ARMARIO.filter(shelf=>items.some(item=>item.slot===shelf.slot));
     const signature=JSON.stringify(items.map(item=>[item.id,item.name,item.garment]));
     if(list.dataset.catalogue!==signature){
-      list.innerHTML=items.length?`<div class="chota-inventory-original"><span>Su ropa de siempre</span><button type="button" data-chota-clothing-equip="original" data-chota-clothing-slot="outerwear">Quitar abrigo</button>${items.some(item=>item.slot==='topwear')?'<button type="button" data-chota-clothing-equip="original" data-chota-clothing-slot="topwear">Quitar camiseta</button>':''}${items.some(item=>item.slot==='bottomwear')?'<button type="button" data-chota-clothing-equip="original" data-chota-clothing-slot="bottomwear">Quitar pantalón</button>':''}</div><div class="chota-inventory-grid">${items.map(item=>`<article class="chota-inventory-piece" data-inventory-item="${esc(item.id)}"><div class="chota-inventory-art" aria-hidden="true">${clothingArt(item)}</div><h3>${esc(item.name)}</h3><button type="button" data-chota-clothing-equip="${esc(item.id)}">Ponérselo</button></article>`).join('')}</div>`:'<div class="chota-inventory-empty"><h3>Aún no tiene prendas guardadas</h3><p>La ropa que consigas en la tienda aparecerá aquí.</p></div>';
+      const card=(shelf,item)=>{const product=item?clothingProductImage(item):'';return `<button type="button" class="armario-card${item?'':' is-own'}" ${item?`data-inventory-item="${esc(item.id)}" `:''}data-chota-clothing-equip="${item?esc(item.id):'original'}" data-chota-clothing-slot="${shelf.slot}"><span class="armario-card-art" aria-hidden="true">${item?(product?`<img src="${esc(product)}" alt="" width="384" height="384" loading="lazy" decoding="async" draggable="false">`:clothingArt(item)):`<span class="armario-own armario-own--${shelf.slot}"></span>`}</span><span class="armario-card-name">${esc(item?(item.slot==='topwear'?item.name.replace(/^Camiseta\s+/i,''):item.name):shelf.own)}</span><span class="armario-card-state"></span></button>`;};
+      list.innerHTML=items.length?`<section class="armario-look" aria-label="Lo que lleva ahora"><span class="armario-look-stage" aria-hidden="true"><span class="fitting-chota" data-chota-fitting><span class="fitting-chota-body"></span><span class="fitting-chota-pants"></span><span class="fitting-chota-shirt"></span><span class="fitting-chota-coat"></span></span></span><div class="armario-look-copy"><h3>Lo que lleva ahora</h3><dl>${shelves.map(shelf=>`<div><dt>${shelf.one}</dt><dd data-armario-wearing="${shelf.slot}"></dd></div>`).join('')}</dl></div></section>${shelves.map(shelf=>`<section class="armario-shelf" data-armario-slot="${shelf.slot}"><h3>${shelf.title}</h3><div class="armario-row" role="group" aria-label="${shelf.title}">${card(shelf,null)}${items.filter(item=>item.slot===shelf.slot).map(item=>card(shelf,item)).join('')}</div></section>`).join('')}`:'<div class="chota-inventory-empty"><h3>Aún no tiene prendas guardadas</h3><p>La ropa que consigas en la tienda aparecerá aquí.</p></div>';
       list.dataset.catalogue=signature;
     }
     const busy=!!buying||!!equipping||loading||!owner||navigator.onLine===false;
     for(const button of list.querySelectorAll('[data-chota-clothing-equip]')){
-      const id=button.dataset.chotaClothingEquip,original=id==='original',slot=original?(button.dataset.chotaClothingSlot||'outerwear'):(items.find(item=>item.id===id)?.slot||'outerwear'),worn=original?!state[slot]:state[slot]===id,busyKey=original?removing(slot):id;
-      const words={outerwear:['Quitándoselo…','Poniéndoselo…','Sin abrigo','Quitar abrigo','Puesto','Ponérselo'],topwear:['Quitándosela…','Poniéndosela…','Con su camiseta','Quitar camiseta','Puesta','Ponérsela'],bottomwear:['Quitándoselos…','Poniéndoselos…','Con sus vaqueros','Quitar pantalón','Puestos','Ponérselos']}[slot]||[];
-      button.textContent=equipping===busyKey?(original?words[0]:words[1]):original?(worn?words[2]:words[3]):worn?words[4]:words[5];
-      button.disabled=busy||worn;button.setAttribute('aria-pressed',String(worn));
+      const id=button.dataset.chotaClothingEquip,original=id==='original',slot=button.dataset.chotaClothingSlot||'outerwear',worn=original?!state[slot]:state[slot]===id,busyKey=original?removing(slot):id;
+      const words=ARMARIO.find(shelf=>shelf.slot===slot)?.words||[];
+      const label=button.querySelector('.armario-card-state');if(label)label.textContent=equipping===busyKey?(original?words[0]:words[1]):worn?(original?'Así va':words[2]):(original?words[3]:words[4]);
+      button.disabled=busy||worn;button.classList.toggle('is-worn',worn);button.setAttribute('aria-pressed',String(worn));
+    }
+    for(const shelf of ARMARIO){
+      const item=state[shelf.slot]?items.find(item=>item.id===state[shelf.slot]):null,line=list.querySelector(`[data-armario-wearing="${shelf.slot}"]`);
+      if(line)line.textContent=item?(shelf.slot==='topwear'?item.name.replace(/^Camiseta\s+/i,''):item.name):shelf.own;
+      const layer=list.querySelector(`.armario-look .fitting-chota-${shelf.layer}`),url=item?coatAtlas(item):'';
+      if(layer&&layer.dataset.coat!==url){const first=layer.dataset.coat===undefined;layer.dataset.coat=url;layer.style.backgroundImage=url?`url("${url}")`:'none';if(!first)globalThis.StoreRooms?.showOff(list.querySelector('.armario-look [data-chota-fitting]'));}
     }
   }
   function openInventory(trigger){
