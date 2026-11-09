@@ -15,7 +15,14 @@ export function partition(source,tee,jeans,shoes,p){const labels=new Uint8Array(
  // Claude 2026-11-09: paw fur resting on the tee/jeans was extracted with the
  // garment and then recoloured (a garment-coloured patch on the paw). Warm fur
  // inside a hand circle is anatomy whatever the garment masks said.
- for(let k=0;k<65536;k++){const l=labels[k];if(l!==1&&l!==2)continue;const x=k%256,y=k>>8;if(!(p.hands||[]).some(([hx,hy,r])=>Math.hypot(x-hx,y-hy)<r+6))continue;const i=k*4,r=source[i],g=source[i+1],b=source[i+2];if(r>150&&r-b>35&&g>90)labels[k]=0;}
+ for(let k=0;k<65536;k++){const l=labels[k];if(l!==1&&l!==2)continue;const x=k%256,y=k>>8,i=k*4,r=source[i],g=source[i+1],b=source[i+2],nearHand=(p.hands||[]).some(([hx,hy,rr])=>Math.hypot(x-hx,y-hy)<rr+6);
+  // The old tee is neutral white and the jeans blue: warm fur/cream is never cloth.
+  if((r>150&&r-b>30&&g>90&&r>=g)||(nearHand&&r>170&&r-b>12&&r>=g))labels[k]=0;}
+ // Pale cream paw pads and the white collar band of the old tee: anything
+ // near-neutral white left unlabelled right against the tee belongs to the tee
+ // (it was the collar); warm cream inside a hand stays paw (rule above).
+ {const near=new Uint16Array(65536).fill(65535),q=[];for(let k=0;k<65536;k++)if(labels[k]===1){near[k]=0;q.push(k);}for(let j=0;j<q.length;j++){const k=q[j],x=k%256,y=k>>8;if(near[k]>=3)continue;for(const n of [x>0?k-1:-1,x<255?k+1:-1,y>0?k-256:-1,y<255?k+256:-1])if(n>=0&&near[n]===65535){near[n]=near[k]+1;q.push(n);}}
+  for(let k=0;k<65536;k++){if(labels[k]||near[k]>3||near[k]===0)continue;const i=k*4,r=source[i],g=source[i+1],b=source[i+2],a=source[i+3];if(a<128)continue;const x=k%256,y=k>>8;if((p.hands||[]).some(([hx,hy,rr])=>Math.hypot(x-hx,y-hy)<rr+6))continue;if(Math.min(r,g,b)>190&&Math.max(r,g,b)-Math.min(r,g,b)<18)labels[k]=1;}}
  const anatomy=Buffer.alloc(source.length),parts=[null,Buffer.alloc(source.length),Buffer.alloc(source.length),Buffer.alloc(source.length)],foreground=Buffer.alloc(source.length);
  for(let k=0;k<65536;k++){const i=k*4;if(source[i+3]<128)continue;source.copy(labels[k]?parts[labels[k]]:anatomy,i,i,i+4);if(!labels[k]){const x=k%256,y=k>>8,head=p.headPolygon?inside(x,y,p.headPolygon):x>=p.head[0]-8&&x<=p.head[2]+8&&y>=p.head[1]-8&&y<=p.head[3];if(head||p.hands.some(([hx,hy,r])=>Math.hypot(x-hx,y-hy)<r+3))source.copy(foreground,i,i,i+4);}}
  return{labels,distance,nearest,anatomy,parts,foreground};}

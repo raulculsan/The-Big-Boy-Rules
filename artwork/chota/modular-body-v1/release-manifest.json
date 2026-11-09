@@ -1,7 +1,7 @@
 {
   "version": 2,
   "rigVersion": 5,
-  "prepared": "2026-11-09T21:30:34.259Z",
+  "prepared": "2026-11-09T22:10:32.375Z",
   "published": false,
   "platforms": [
     "web/PWA",
@@ -199,8 +199,8 @@
   "files": [
     {
       "file": "app.js",
-      "bytes": 511251,
-      "sha256": "2c5aa1e3339f96e9345fd6e07a9f16533e61b3d2751cbf72e7e8a9d913ef27b5"
+      "bytes": 511367,
+      "sha256": "848cedf6a1f5d7625e1afbb17f28cd195d8d93658b324bff95c206144d238606"
     },
     {
       "file": "app-theme.css",
@@ -239,13 +239,13 @@
     },
     {
       "file": "chota-wardrobe.css",
-      "bytes": 7704,
-      "sha256": "bbd0145218f4c4db359d5306c3b69eb291c0735586c88373dbe98848d022f62f"
+      "bytes": 8110,
+      "sha256": "c116a6155e47deb8a5b2e49e0770acc6599e4ca93657aa019eab730314de824a"
     },
     {
       "file": "chota-appearance.js",
-      "bytes": 6974,
-      "sha256": "0c2f82ea1714a42892c7e21bb76221bd8a4246ce35595c25b639803b223f79ba"
+      "bytes": 10193,
+      "sha256": "918204ecee5990a37d868166733820a24d71211a283ecbf89a51583855992140"
     },
     {
       "file": "chota-compositor-worker.js",
@@ -269,18 +269,18 @@
     },
     {
       "file": "chota-shop.js",
-      "bytes": 51888,
-      "sha256": "959f31926ddf479c2ab4ba43bbca28b8f7bee5f90b3160815d076496fd7a0a92"
+      "bytes": 51956,
+      "sha256": "d1f6653dbdbe847e2cd1405a92f60746e8542d8462418e297eb0c2d4fc189fbc"
     },
     {
       "file": "index.html",
       "bytes": 102525,
-      "sha256": "cb9815ff5a70e6d19371f5e5ee6336ff2d0623b5da2d54f2716d36a50ebe7ca8"
+      "sha256": "00c90fdccd56787371629e84e4363714406345a534e65ee460558abdb89e1d45"
     },
     {
       "file": "service-worker.js",
       "bytes": 27430,
-      "sha256": "4084e3f7591f59b91a3f6d89805bedd8a649d49b5e9607f02b066470dee3a08c"
+      "sha256": "f6cda89e96ede4a6539aeed43ef5eca43e283adf772a5c581698680906a6e875"
     },
     {
       "file": "scripts/build-web.mjs",
@@ -289,18 +289,18 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/anatomy-base.webp",
-      "bytes": 664046,
-      "sha256": "9ad5bc11cfb5c7d73d7c244755f338107805abdad72354e306d3a9074a3a0f6f"
+      "bytes": 664430,
+      "sha256": "24d343ff320f248250b0ff1a9df36f41d433aa449575c9beeca58d714e8ddbc3"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/foreground-base.webp",
-      "bytes": 540466,
-      "sha256": "6b8494d15fa28dbb8fd3ba7d988861d8409cf26f66544ec9e09dc96b15ca1cee"
+      "bytes": 540648,
+      "sha256": "ee4fe29b0dd083c8952b2e3862cc529fb4514eae5c6b3c99a98fe1810c9aabec"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-base.webp",
-      "bytes": 135904,
-      "sha256": "2d8445b419af938d97e5ddabf5e6496b6b7537985d9da301f896dddbf1b283dc"
+      "bytes": 135640,
+      "sha256": "c59bb6667a8c314389e92ea01839e3d802e8daaa67a347d9a86dabb51bee0be5"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-base.webp",
@@ -314,48 +314,48 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-stussy-base.webp",
-      "bytes": 120472,
-      "sha256": "5dfd1924dd17968c67242128047c99245f1edb2363ece3c751e6edb3d09e02c1"
+      "bytes": 119966,
+      "sha256": "2294b42f3783caab2ba684d177e28d9565af4afac138329dfadbdcf9bc600961"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-base.webp",
-      "bytes": 95420,
-      "sha256": "725b0deec8be895e3f17e222c187411d30f4ddbff50a5803c0f6cd068fb4ecb5"
+      "bytes": 95116,
+      "sha256": "b9f393a9bc1e984f782b4dbb804557897608a1f7353e36fb2b5e4270fd704948"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-base.webp",
-      "bytes": 82954,
-      "sha256": "bf61e331754790b9dd27792a820894288530508d1052a1eb15e5dd31ee5a54d4"
+      "bytes": 82706,
+      "sha256": "518a743662a0a505138f8672f7331eed3fe239a72e92639b390caa63ce13dcee"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-base.webp",
-      "bytes": 66052,
-      "sha256": "9a8f3adace24f03a467fcd40e0e021ec863f6adfbf12a7b3d512444a06da27ce"
+      "bytes": 65942,
+      "sha256": "cf704ad320d0e44f9fa9b9682038c5d53af81fe7467cc8b09ddad2812388dd0b"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-flip-base.webp",
-      "bytes": 66038,
-      "sha256": "6feacf5784818fab7eab446224d4336d9c85d711fb91026c627b79f6a28bbbca"
+      "bytes": 65930,
+      "sha256": "6ee94f26016dd0d1dd1ed405e8dba77f8d2e6dde6dad75d003e83d2640c8d796"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-base.webp",
-      "bytes": 95482,
-      "sha256": "64bd3e93f9f98b275e6ffff6be09ed115fc998bf1947ba67c43f5bc1acac22cf"
+      "bytes": 95074,
+      "sha256": "47c7c30a558b635970907791b2a8fc939bcb8aa5196d059f427f475ee1852873"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-flip-base.webp",
-      "bytes": 95038,
-      "sha256": "3ec6e439cbe63673c57cb451502147ff6cbbe6b7af1a75d8abf07fa0ed7dcda2"
+      "bytes": 94762,
+      "sha256": "c90146c85c67660e64fb6bae8fe5008ef0be879478398a6281cfd4a2b99048c6"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-base.webp",
-      "bytes": 97382,
-      "sha256": "3469514db9c814cbb4ee79ebed5ad3e1caa3f36299ed5ca8ebc19b83841ed24e"
+      "bytes": 97072,
+      "sha256": "61589c3eee84b7b784e0e7aee8a598f90e5fb08be559b897d1a2cd321c279f59"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/stussy-azul-base.webp",
-      "bytes": 97516,
-      "sha256": "0f768a43d018d5eb0ddcc6fcbcb650eb5bf7330b877049f4c65da61937043020"
+      "bytes": 97192,
+      "sha256": "595b4f73cf1809265f937638547036bd13d48278580be24a0f51dce813a368ef"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-jeans-base.webp",
@@ -389,8 +389,8 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/anatomy-directional.webp",
-      "bytes": 92710,
-      "sha256": "c379aac7ac34d1de3e428f14d33b4aed830f2f813313b8ea792b55a0eac3e926"
+      "bytes": 92716,
+      "sha256": "83c125cffea24ff139393117982516ec2dbbd7019cfdce4f5877b5be188b9ea9"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/foreground-directional.webp",
@@ -399,8 +399,8 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-directional.webp",
-      "bytes": 141366,
-      "sha256": "39d083087576b9cad3ea552dc10b26caff4ee58b7a52891aa80a8d8c7ffdd907"
+      "bytes": 141344,
+      "sha256": "16a8853a6323562b88a673fae012d011070a5f958e5fee58f8e2d92e0fcc2e56"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-directional.webp",
@@ -414,48 +414,48 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-stussy-directional.webp",
-      "bytes": 34176,
-      "sha256": "d28cd3ba17b751456c5af782dc1c99f4255996c53ba79f11c41f6dae123ade9d"
+      "bytes": 34170,
+      "sha256": "a951cfbdbc532969d5f0143eedbf891d372cd0b4dec5e896d2aa3a539cb489bb"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-directional.webp",
-      "bytes": 36108,
-      "sha256": "15c49c9120cd02b7a06440458a208eaf4151823b1f230c3a0e2c959ba94c9da7"
+      "bytes": 36106,
+      "sha256": "ac40c3b0a0a3d7a8a985434ea6a0d3d444a521e5d9f8cbcbdb68b5f0b7b72046"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-directional.webp",
-      "bytes": 32952,
-      "sha256": "a9d11105fd6c33b77dd083c3cd9a48b32e5a01b6a2a30b202d9ddec2f445e66c"
+      "bytes": 32950,
+      "sha256": "37542f816c4c3a3f328e562a0adc9c3374b90b6c1c24b9971e49f34a390e5fde"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-directional.webp",
-      "bytes": 26100,
-      "sha256": "0a824d7ccb9f2db9242615948cf9c6ad7029b323bf917d99d11908137bac0e7c"
+      "bytes": 26096,
+      "sha256": "55dca938216c3060223082141f4d47574c6e2bbe28c04505f4b419a05f7965b3"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-flip-directional.webp",
-      "bytes": 26110,
-      "sha256": "2a1e7f59e6f1068f24cc19130ecc909a8865ea187e3b7ec2fa75bca6ceb16c24"
+      "bytes": 26106,
+      "sha256": "fe5f7240952d83c420e6f5d931d9e21aecf8b9c5563c6029a15174e0fd6e35d2"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-directional.webp",
-      "bytes": 34044,
-      "sha256": "3d4e45ef928d8d68c5aa507d63871bbea8cbcbf9b4cea8164639cececc24733b"
+      "bytes": 34040,
+      "sha256": "369cdc8ee8e2c9c04b7df9af621cbf204acef381395d77ba810eef2121bfe0de"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-flip-directional.webp",
-      "bytes": 34098,
-      "sha256": "f71ec1c1be9eb2294f2fc57622b2f276ad44bdbf058c44d905643b22907d3575"
+      "bytes": 34094,
+      "sha256": "5115dbb633ad0516d29154261819b403bf0e49fd3c41558104b3eb4bfda64f11"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-directional.webp",
-      "bytes": 30514,
-      "sha256": "90ba4f93ebc59fa26933d150ed9a7bd9ffd8da26ac7d897c832171ef6710f689"
+      "bytes": 30510,
+      "sha256": "04c346067f877aec9071cb4a0625d4d5872bf9578fa3417e6133e0eb48deff81"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/stussy-azul-directional.webp",
-      "bytes": 36558,
-      "sha256": "3d9752694504360bffa24cac36965977092efe761f1dce1e0b181a192586691e"
+      "bytes": 36554,
+      "sha256": "613391685da5e5b5686b4d9115bb5dabf6de3b7a6a2a44364a0fb7a21fcb5b32"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-jeans-directional.webp",
@@ -489,18 +489,18 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/anatomy-contextual.webp",
-      "bytes": 76428,
-      "sha256": "1ad07af38c5a69996507016652db1afbed5b6efde049fdb68cfc02cf450fcbb2"
+      "bytes": 76772,
+      "sha256": "653692e41bcd57f4990c15df8841fa47b8924bfdc708f7c6a978b60df5b5237e"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/foreground-contextual.webp",
-      "bytes": 61794,
-      "sha256": "aebc09fd28b4ce4d6ac30a06717b467c5756792c8575aec81d1fa90d3e6a1f28"
+      "bytes": 61256,
+      "sha256": "c24c4e15df7812f9c9084af984e12e6dc21dec7901c0c7357ddfb1286d9d94e0"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-contextual.webp",
-      "bytes": 102672,
-      "sha256": "6e7a297f23d1558e9a9bb6c3b6f587bad77c85eccd144324a3d435404541446d"
+      "bytes": 102698,
+      "sha256": "e531d816b63a82dd6d75aee68669baa7312341342f8e962460aaddd2e51ca292"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-contextual.webp",
@@ -514,48 +514,48 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-stussy-contextual.webp",
-      "bytes": 17020,
-      "sha256": "2aa9234945616d24e709a9328ef555bb1b3b49fa893163fe1437599a69e82cfe"
+      "bytes": 17004,
+      "sha256": "fccdeac1899cc3f2f09972a5e830413e5a26d2302fc2c4344813bbbb41719451"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-contextual.webp",
-      "bytes": 21020,
-      "sha256": "6e2714994ea79bed8e32f6cf7a8e5f36fcd5223a834b0ed0859810514b6d7270"
+      "bytes": 21166,
+      "sha256": "14f5310beca39e1ff9e32ef76fab9c5cbe97183811331b43bc6b398066f98b49"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-contextual.webp",
-      "bytes": 18098,
-      "sha256": "05242fe8d966b19ea181a8277e8d00adcd1dacf2de0656059a6d9d2122323922"
+      "bytes": 18102,
+      "sha256": "41755e9fc6f116f7fdc98464bd207d73367bfa87b40c7176a8ff2a2b2a62d701"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-contextual.webp",
-      "bytes": 16622,
-      "sha256": "c2bc79645b3aebac3b7e66a8b88447b756318d2f046a493085ba0d123a74433e"
+      "bytes": 16628,
+      "sha256": "4da660ac9cea4917b3118d4d5db8b49187e1c2e13e3aeda74ddec5f208645c79"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-flip-contextual.webp",
-      "bytes": 16644,
-      "sha256": "664b743321520ea371cec0c827fff6dcab10e9f518cdbb3d704edc72b5626df9"
+      "bytes": 16650,
+      "sha256": "387b4f433465b6101cfa1c2c4903bdba15c1f3e3b7910de19cac6d938dc2dfbd"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-contextual.webp",
-      "bytes": 24012,
-      "sha256": "88efb30e4a2a5b820b55a0b3133b1604b97e907a16d6d4c0e995cc7f9028d57f"
+      "bytes": 23204,
+      "sha256": "6f0f7b575cd3d4de63be9ef44b2c52ce4bf20d09cdaecdd4abac53974555770b"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-flip-contextual.webp",
-      "bytes": 23296,
-      "sha256": "31f117b0badac4ba8ce9c4c9d9f1e4c84d03d56f396f9830f573244722578de7"
+      "bytes": 23260,
+      "sha256": "899b8588a3578fa4dac376138d228eeede433c8263c192d4581ceb69c85fc420"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-contextual.webp",
-      "bytes": 15682,
-      "sha256": "171b5caaf69ad9097920fc931e8dff0927ea1b4177a3289c981d670c9a2e952d"
+      "bytes": 15678,
+      "sha256": "a3ead68b86a0b900890f37fd62c451d59f58687ae3f9c4ff3bb9ebbc087bcd76"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/stussy-azul-contextual.webp",
-      "bytes": 21242,
-      "sha256": "d65e28be5e6e8602a256c6dd1b57a8c90dbe2b9909f10cbc803d1df850e5df65"
+      "bytes": 21380,
+      "sha256": "d0c0def07bd4ef64fc79b5133bcb024daa456127ae27df8d8774094423b7aff0"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-jeans-contextual.webp",
@@ -589,18 +589,18 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/anatomy-room.webp",
-      "bytes": 35712,
-      "sha256": "f6128bf28a815b96171b1417f3551cbc8fcc232434bbadbc1b0c8f8237571528"
+      "bytes": 35806,
+      "sha256": "9bebda0052800991aaff7ac3fd0a51ab07175acf856889baa12ccf5a7ac07bde"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/foreground-room.webp",
-      "bytes": 29298,
-      "sha256": "744c7588c33821c5f0111cdc8453f095ff501e37125053848e8934453ca8bcde"
+      "bytes": 29364,
+      "sha256": "d12d544adcbcf1af051c0da53c99d31f14e74c5806166fc6a36f55579bd17488"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-room.webp",
-      "bytes": 17278,
-      "sha256": "2a32840f0135ab10b1f9e63cabdd7621a3624df14dbd111ad1b73c92fe8d5e8e"
+      "bytes": 17314,
+      "sha256": "838adda08463d31e814b6928dba45087dc41a79b179c8425d5dd0a85d07beeef"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-room.webp",
@@ -614,48 +614,48 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-stussy-room.webp",
-      "bytes": 7464,
-      "sha256": "26e6fb88feae318b0e41e28b4cd23afd006f75d67b5fdfdebe833397ee6ce4ca"
+      "bytes": 7418,
+      "sha256": "74785de0b6475d5226a183288015948ae12e3129d8bfd7dcc6e8863ac1598110"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-crudo-room.webp",
-      "bytes": 9506,
-      "sha256": "7961cfb65ae12b8e851fecfb719fba2e18884d1444a41ab1679ab29a4935bedf"
+      "bytes": 9458,
+      "sha256": "61bbd004d6752a44585b994b5fe35add5c41fb7c767ee7b25e938ce09537c08a"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/carhartt-oliva-room.webp",
-      "bytes": 8786,
-      "sha256": "14e97a5192b5a32e95902940766bd246f6d1430aaa476e568ffb40230a8c9f1a"
+      "bytes": 8746,
+      "sha256": "714ac99aeb335f79477aad2eb102d4073d3da0c864dbfa88a0dcef5294916063"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-room.webp",
-      "bytes": 8114,
-      "sha256": "c3b5eb4869abefa136a8ec12c307c720fa20e75fca2132290a997861a7beb6a5"
+      "bytes": 8092,
+      "sha256": "f2ae61af92acbcd2e99851b04ecd5df7821a97e38d527234f2d9a17560c3d8ad"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-negra-flip-room.webp",
-      "bytes": 8146,
-      "sha256": "79475adb1b754b63671362dddfc30e151aba469d75e7f2acd50ab7d8eef417da"
+      "bytes": 8060,
+      "sha256": "30def6166ad795f3c9db253396e8eebd802c01935cbd1898b849a0b17a13a58a"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-room.webp",
-      "bytes": 10030,
-      "sha256": "1a276ccbd17e92a1b1d4b169819a979e843e02cedac1af1b80ed7b23d0c4fd8a"
+      "bytes": 9986,
+      "sha256": "930960846dedd66ab0df5efe6821ab947fa86fd78d15ab1d2b84b2fc3faca10f"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/supreme-roja-flip-room.webp",
-      "bytes": 10030,
-      "sha256": "c4dabf69dfdc7a1914c7c2d429d2228bb790d4516aee5db509326b6d406fdfb3"
+      "bytes": 10000,
+      "sha256": "2af33ffb531ab0a20d6370626b9b30b37eb36bcb5e54f8d44c10e4cc2f0b4d29"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/stussy-blanca-room.webp",
-      "bytes": 6702,
-      "sha256": "ce5f1c037b2891a4167e3e883871fb50802e8652579d321f45f0ca0e03558bb4"
+      "bytes": 6664,
+      "sha256": "9c79212cd2f6b99bce47e28db44967910ce60179168c9c1d32008b4f3f784daa"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/stussy-azul-room.webp",
-      "bytes": 9820,
-      "sha256": "c68b276688720262b7b32872a3e955aead51b379246e42c94a607ce040623926"
+      "bytes": 9766,
+      "sha256": "63fafe8375ad0c85622a0984014a087546aa0c20db7cb6f8c6c7ca3201e17fd7"
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/original-jeans-room.webp",
@@ -789,8 +789,8 @@
     },
     {
       "file": "icons/mascot/chota-v2/tailored-v5/manifest-v1.json",
-      "bytes": 34564,
-      "sha256": "887eda9b4a1bbc09b0346e30e1a3cc09f895d53628c1217e41eedf58e2a7c94f"
+      "bytes": 34563,
+      "sha256": "ddbd1f42cd7b9190fa72e8a9bf40aae2287d149eab36493a871cfaff3d119376"
     },
     {
       "file": "icons/mascot/chota-v2/neutral/idle-core-mask-v1.png",
