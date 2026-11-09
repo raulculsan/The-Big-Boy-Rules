@@ -3,11 +3,13 @@
 'use strict';
 const dimensions={base:[6,4],directional:[5,4],contextual:[4,4],room:[4,1],talk:[3,1]};let latestSequence=0;
 self.onmessage=async({data})=>{
-  const{sequence,anatomy,bare,foreground,layers}=data||{};latestSequence=sequence;
+  const{sequence,anatomy,bare,foreground,layers,flip}=data||{};latestSequence=sequence;
   try{
     if(!Number.isSafeInteger(sequence)||!anatomy||!bare||!foreground||!Array.isArray(layers))throw new Error('Invalid outfit composition.');
     const slots=new Set(layers.map(layer=>layer.slot)),results=[];
-    for(const[sheet,[cols,rows]]of Object.entries(dimensions)){
+    // A second, scaleX(-1)-ready set only when a worn garment has a printed mark.
+    const passes=flip&&layers.some(layer=>layer.flipAtlases)?['','flip-']:[''];
+    for(const pass of passes)for(const[sheet,[cols,rows]]of Object.entries(dimensions)){
       const canvas=new OffscreenCanvas(cols*256,rows*256),ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas unavailable.');ctx.imageSmoothingEnabled=false;
       const draw=async(url,allow128=false)=>{
         if(sequence!==latestSequence)return false;
@@ -19,9 +21,9 @@ self.onmessage=async({data})=>{
       // clothes, and all original garments follow the exact same layer contract.
       for(const slot of ['bottomwear','footwear','topwear'])if(!slots.has(slot))if(!await draw(bare[slot][sheet]))return;
       if(!await draw(anatomy[sheet]))return;
-      for(const slot of ['bottomwear','footwear','topwear','outerwear'])for(const layer of layers.filter(layer=>layer.slot===slot))if(!await draw(layer.atlases[sheet],true))return;
+      for(const slot of ['bottomwear','footwear','topwear','outerwear'])for(const layer of layers.filter(layer=>layer.slot===slot))if(!await draw((pass&&layer.flipAtlases?layer.flipAtlases:layer.atlases)[sheet],true))return;
       if(layers.some(layer=>layer.slot==='outerwear'||layer.type==='atlas'))if(!await draw(foreground[sheet]))return;
-      results.push({sheet,blob:await canvas.convertToBlob({type:'image/png'})});if(sequence!==latestSequence)return;
+      results.push({sheet:pass+sheet,blob:await canvas.convertToBlob({type:'image/png'})});if(sequence!==latestSequence)return;
     }
     if(sequence===latestSequence)self.postMessage({sequence,results});
   }catch(error){if(sequence===latestSequence)self.postMessage({sequence,error:error.message||'Outfit composition failed.'});}

@@ -20,11 +20,13 @@
     topwear:{name:'shirt',rig:'chota-topwear-overlay-v1',key:/^(carhartt-(crudo|oliva)|supreme-(negra|roja)|stussy-(blanca|azul)|original-stussy)-v1$/,dir:'wardrobe-topwear',idle:[['.chota-idle-body','idle-body'],['.chota-idle-head','idle-head'],['.chota-sleep-chest','sleep-chest']]},
   });
   const rigs=Object.freeze({outerwear:'chota-overlay-v1',bottomwear:overlays.bottomwear.rig,topwear:overlays.topwear.rig,footwear:overlays.footwear.rig});
+  // Garments whose printed mark has a pre-mirrored variant for scaleX(-1) scenes.
+  const FLIPPED=/^(carhartt-(marron|azul-oscuro)|supreme-(negra|roja))-v1$/;
   const overlayURL=(slot,key,sheet)=>`icons/mascot/chota-v2/tailored-v5/${key.replace(/-v1$/,'')}-${sheet}.webp`;
   function describe(item){
     if(!item||typeof item.id!=='string'||!item.id||item.id.length>60||item.item_kind!=='clothing'||!Object.hasOwn(rigs,item.slot)||item.rig_version!==rigs[item.slot])return null;
     const garment=item.garment;if(!garment||typeof garment!=='object'||Array.isArray(garment))return null;
-    if(garment.type==='builtin'&&overlays[item.slot]){if(typeof garment.key!=='string'||!overlays[item.slot].key.test(garment.key))return null;const color=garment.key.replace(/-v1$/,'');return {id:item.id,slot:item.slot,type:'builtin',color,cell:256,atlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,overlayURL(item.slot,garment.key,sheet)]))};}
+    if(garment.type==='builtin'&&overlays[item.slot]){if(typeof garment.key!=='string'||!overlays[item.slot].key.test(garment.key))return null;const color=garment.key.replace(/-v1$/,'');return {id:item.id,slot:item.slot,type:'builtin',color,cell:256,atlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,overlayURL(item.slot,garment.key,sheet)])),...(FLIPPED.test(garment.key)?{flipAtlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,overlayURL(item.slot,garment.key.replace(/-v1$/,'-flip-v1'),sheet)]))}:{})};}
     if(garment.type==='builtin'){const color=colors.find(color=>garment.key==='tnf-'+color+'-v1');return color?{id:item.id,type:'builtin',color,cell:256,atlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,localURL(color,sheet)]))}:null;}
     if(garment.type!=='atlas'||![128,256].includes(garment.cell)||!garment.atlases||!storageBase||Object.keys(garment.atlases).length!==5)return null;
     const atlases={};for(const sheet of Object.keys(sheets)){const path=garment.atlases[sheet];if(typeof path!=='string'||!/^chota\/wardrobe\/[A-Za-z0-9/_-]{1,180}\.webp$/.test(path)||path.split('/').some(part=>!part||part==='.'||part==='..'))return null;atlases[sheet]=storageBase+path.split('/').map(encodeURIComponent).join('/');}
@@ -157,7 +159,7 @@
   const slots=['bottomwear','footwear','topwear','outerwear'];
   function currentDescriptors(){return{...worn,outerwear:selected?{id:selectedID(),type:serverAtlases?'atlas':'builtin',cell:256,atlases:Object.fromEntries(Object.keys(sheets).map(sheet=>[sheet,url(selected,sheet)]))}:null};}
   function originals(){return Object.fromEntries(Object.entries({topwear:'original-stussy-v1',bottomwear:'original-jeans-v1',footwear:'original-jordan-chicago-v1'}).map(([slot,key])=>[slot,describe({id:'visual-'+key,item_kind:'clothing',slot,rig_version:rigs[slot],garment:{type:'builtin',key}})]));}
-  function visualLayers(descriptors,legacy){const defaults=legacy?originals():{};return slots.map(slot=>[slot,descriptors[slot]||defaults[slot]]).filter(([,d])=>d).map(([slot,d])=>({slot,type:d.type,atlases:d.atlases}));}
+  function visualLayers(descriptors,legacy){const defaults=legacy?originals():{};return slots.map(slot=>[slot,descriptors[slot]||defaults[slot]]).filter(([,d])=>d).map(([slot,d])=>({slot,type:d.type,atlases:d.atlases,...(d.flipAtlases?{flipAtlases:d.flipAtlases}:{})}));}
   async function commit(descriptors,legacy,token){
     await Promise.all(Object.values(descriptors).filter(Boolean).map(d=>decode(d,JSON.stringify(d))));if(token!==outfitSequence)return null;
     if(!await globalThis.ChotaAppearance.compose(visualLayers(descriptors,legacy))||token!==outfitSequence)return null;

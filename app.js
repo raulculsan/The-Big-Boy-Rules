@@ -3529,6 +3529,8 @@ function chotaLifeTracks(action, direction=1) {
 }
 function createTigretonMotion(pet, reactToPlan, event, date) {
   const character = pet.querySelector(".tigreton-character");
+  // A mirrored Chota swaps to the pre-mirrored outfit sheets (printed marks).
+  if (character && typeof MutationObserver === "function") new MutationObserver(() => character.classList.toggle("is-mirrored", /scaleX\(-1\)/.test(character.style.transform))).observe(character, {attributes:true, attributeFilter:["style"]});
   globalThis.ChotaWardrobe?.mount(character);
   const shadow = pet.querySelector(".tigreton-shadow");
   const sleepMark = pet.querySelector(".tigreton-sleep-mark");

@@ -6,7 +6,7 @@
   const legacy={base:'chota-poses.webp',directional:'chota-directional-v1.webp',contextual:'chota-contextual-v1.webp',room:'chota-room-life-v1.webp',talk:'chota-talk.webp'};
   // Tailored atlases keep their names across art fixes; the revision busts the
   // public-media cache so a phone never mixes old and new layers of one outfit.
-  const ART_REVISION='604',root=document.documentElement,absolute=value=>{const url=new URL(value,document.baseURI);if(url.pathname.includes('/tailored-v5/')&&!url.search)url.searchParams.set('v',ART_REVISION);return url.href;},previews=new Set();
+  const ART_REVISION='606',root=document.documentElement,absolute=value=>{const url=new URL(value,document.baseURI);if(url.pathname.includes('/tailored-v5/')&&!url.search)url.searchParams.set('v',ART_REVISION);return url.href;},previews=new Set();
   let contract=null,preparing=null,enabled=false;
   const valid=paths=>paths&&Object.keys(paths).length===5&&Object.keys(grids).every(sheet=>typeof paths[sheet]==='string'&&/^icons\/mascot\/chota-v2\/tailored-v5\/[a-z0-9-]+\.webp$/.test(paths[sheet]));
   function prepare(){
@@ -28,18 +28,18 @@
     function ensure(){
       if(worker)return worker;
       if(typeof Worker!=='function')throw new Error('Este dispositivo necesita una versión compatible con el armario.');
-      worker=new Worker(new URL('chota-compositor-worker.js?v=20261109-tailored-v5-604',document.baseURI));
+      worker=new Worker(new URL('chota-compositor-worker.js?v=20261109-tailored-v5-606',document.baseURI));
       worker.onmessage=async({data})=>{
         if(!pending||data.sequence!==pending.sequence)return;
         const request=pending,urls={};
         if(data.error){pending=null;request.reject(new Error(data.error));return;}
         try{
-          if(!Array.isArray(data.results)||data.results.length!==5)throw new Error('La apariencia está incompleta.');
-          for(const result of data.results){if(!grids[result.sheet]||urls[result.sheet]||!(result.blob instanceof Blob))throw new Error('La apariencia no es válida.');urls[result.sheet]=URL.createObjectURL(result.blob);}
+          if(!Array.isArray(data.results)||(data.results.length!==5&&data.results.length!==10))throw new Error('La apariencia está incompleta.');
+          for(const result of data.results){const key=String(result.sheet).replace(/^flip-/,'');if(!grids[key]||urls[result.sheet]||!(result.blob instanceof Blob))throw new Error('La apariencia no es válida.');urls[result.sheet]=URL.createObjectURL(result.blob);}
           await decode(urls);
           if(request.sequence!==sequence||disposed){revoke({urls});return;}
           const old=current,entry={signature:request.signature,urls,released:false};entry.release=()=>{revoke(entry);if(current===entry)current=null;};current=entry;
-          if(publish){enabled=true;for(const sheet of Object.keys(grids)){root.style.setProperty(`--chota-outfit-${sheet}`,`url("${urls[sheet]}")`);root.style.setProperty(`--chota-neutral-${sheet}`,`url("${urls[sheet]}")`);}root.dataset.chotaModular='true';}
+          if(publish){enabled=true;for(const sheet of Object.keys(grids)){root.style.setProperty(`--chota-outfit-${sheet}`,`url("${urls[sheet]}")`);root.style.setProperty(`--chota-neutral-${sheet}`,`url("${urls[sheet]}")`);root.style.setProperty(`--chota-flip-${sheet}`,`url("${urls['flip-'+sheet]||urls[sheet]}")`);}root.dataset.chotaModular='true';}
           pending=null;request.resolve(publish?true:entry);
           // CSS/canvas consumers get the replacement before the previous blobs
           // are retired; a canceled decode can never install a stale outfit.
@@ -55,7 +55,7 @@
       return new Promise((resolve,reject)=>{
         pending={sequence:token,signature,resolve,reject};
         const paths=map=>Object.fromEntries(Object.entries(map).map(([sheet,url])=>[sheet,absolute(url)]));
-        try{ensure().postMessage({sequence:token,anatomy:paths(contract.anatomy),bare:Object.fromEntries(Object.entries(contract.bare).map(([slot,atlases])=>[slot,paths(atlases)])),foreground:paths(contract.foreground),layers:layers.map(layer=>({slot:layer.slot,type:layer.type,atlases:paths(layer.atlases)}))});}
+        try{ensure().postMessage({sequence:token,anatomy:paths(contract.anatomy),bare:Object.fromEntries(Object.entries(contract.bare).map(([slot,atlases])=>[slot,paths(atlases)])),foreground:paths(contract.foreground),flip:publish,layers:layers.map(layer=>({slot:layer.slot,type:layer.type,atlases:paths(layer.atlases),...(layer.flipAtlases?{flipAtlases:paths(layer.flipAtlases)}:{})}))});}
         catch(error){pending=null;reject(error);}
       });
     }
@@ -66,7 +66,7 @@
   const equipped=channel(true);
   function reset(){
     equipped.clear();for(const preview of [...previews])preview.dispose();enabled=false;delete root.dataset.chotaModular;
-    for(const sheet of Object.keys(grids)){root.style.removeProperty(`--chota-outfit-${sheet}`);root.style.removeProperty(`--chota-neutral-${sheet}`);}
+    for(const sheet of Object.keys(grids)){root.style.removeProperty(`--chota-outfit-${sheet}`);root.style.removeProperty(`--chota-neutral-${sheet}`);root.style.removeProperty(`--chota-flip-${sheet}`);}
     globalThis.dispatchEvent(new Event('chota-appearance-change'));
   }
   function createPreview(){const preview=channel(false);previews.add(preview);return preview;}

@@ -54,3 +54,9 @@ html[data-chota-modular="true"] .chd-wear{display:none}
 /* Fitting, inventory and checkout select cells of one composed trial/equipped
    atlas, with the same geometry as the room and daily dilemma. */
 .fitting-chota[data-chota-composed="true"] > :not(.fitting-chota-body){display:none!important}
+
+/* Scenes drawn with scaleX(-1) use the pre-mirrored outfit, so printed marks
+   (Carhartt patch, Supreme box) stay on the same hip and read the right way. */
+html[data-chota-modular="true"] .tigreton-character.is-mirrored{--chota-outfit-base:var(--chota-flip-base);--chota-outfit-talk:var(--chota-flip-talk);--chota-outfit-directional:var(--chota-flip-directional);--chota-outfit-contextual:var(--chota-flip-contextual);--chota-outfit-room:var(--chota-flip-room);--chota-neutral-base:var(--chota-flip-base);--chota-neutral-talk:var(--chota-flip-talk);--chota-neutral-directional:var(--chota-flip-directional);--chota-neutral-contextual:var(--chota-flip-contextual);--chota-neutral-room:var(--chota-flip-room)}
+html[data-chota-modular="true"] .chd-chota.is-facing-left{background-image:var(--chota-flip-base)}
+html[data-chota-modular="true"] .chd-chota.is-facing-left.is-talking{background-image:var(--chota-flip-talk)}
