@@ -10,9 +10,12 @@
     el('ownedPackOpen')?.classList.toggle('is-boosted', !!luck?.next_boosted);
     if (el('packBoostBadge')) el('packBoostBadge').hidden = !luck?.next_boosted;
     if (!luck) return;
-    const row = (id, done, total, text) => { const node = el(id); if (!node) return; node.querySelector('span').textContent = text; node.querySelector('i').style.width = `${Math.max(0, Math.min(100, done / total * 100))}%`; };
-    row('packLuckPity', luck.since_top, luck.pity_after, luck.guaranteed_next || luck.pity_in <= 0 ? 'Legendaria o mejor garantizada en tu próximo sobre' : `Legendaria o mejor garantizada en ${luck.pity_in} ${luck.pity_in === 1 ? 'sobre' : 'sobres'}`);
-    row('packLuckStreak', luck.boost_every - luck.boost_in, luck.boost_every, luck.next_boosted ? 'Tu próximo sobre es mejorado' : `Sobre mejorado en ${luck.boost_in} ${luck.boost_in === 1 ? 'apertura' : 'aperturas'}`);
+    // One quiet line: how far the guaranteed legendary and the boosted pack are.
+    const pity = luck.guaranteed_next || luck.pity_in <= 0 ? 'Legendaria asegurada' : `Legendaria asegurada en ${luck.pity_in}`;
+    const boost = luck.next_boosted ? 'sobre mejorado' : `mejorado en ${luck.boost_in}`;
+    const text = `${pity} · ${boost}`;
+    if (box.textContent !== text) box.textContent = text;
+    box.classList.toggle('is-near', !!(luck.guaranteed_next || luck.pity_in <= 0 || luck.next_boosted));
   }
   async function loadPackLuck(token, user) {
     try { const data = await rpc('get_pack_luck'); if (token === generation && user === options.session()) { packLuck = data; renderPackLuck(); } }
