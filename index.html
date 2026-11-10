@@ -50,7 +50,7 @@
   <link rel="stylesheet" href="chat-themes.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="tickets.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="chat-custom.css?v=20261101-mentions-480" />
-  <link rel="stylesheet" href="packs.css?v=20261103-economy-555" />
+  <link rel="stylesheet" href="packs.css?v=20261110-suerte-613" />
   <link rel="stylesheet" href="achievement-admin.css?v=20261103-admin-557" />
   <link rel="stylesheet" href="club.css?v=20261109-tailored-v5-609" />
   <link rel="stylesheet" href="banner-shop.css?v=20261104-lite-motion-561" />
@@ -232,10 +232,11 @@
         <div class="packs-display col-stage">
           <div class="col-stage-glow" aria-hidden="true"><i></i><i></i></div>
           <div class="col-stage-top"><span class="col-edition">Los nuestros · 6 cartas por sobre</span><span class="col-count"><span id="packsCount" class="packs-count-badge" role="status" aria-label="Saldo de sobres pendiente de sincronización">—</span><small>sobres</small></span></div>
-          <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-coleccion-01-v3.png" width="1024" height="1536" loading="lazy" decoding="async" alt=""></button>
+          <button class="packs-art-button" type="button" id="ownedPackOpen" aria-label="Abrir un sobre de Los nuestros" disabled><img class="packs-art" src="icons/cards/sobre-coleccion-01-v3.png" width="1024" height="1536" loading="lazy" decoding="async" alt=""><span class="pack-boost-badge" id="packBoostBadge" hidden>Mejorado</span></button>
+          <div class="pack-luck" id="packLuck" hidden><p id="packLuckPity"><span></span><b aria-hidden="true"><i></i></b></p><p id="packLuckStreak"><span></span><b aria-hidden="true"><i></i></b></p></div>
           <div class="col-chota"><span class="col-chota-sprite" aria-hidden="true"></span><p class="col-chota-bubble" data-pack-chota>Contando tus sobres…</p></div>
           <div class="col-stage-actions"><button type="button" class="col-open" data-pack-open disabled>Abrir sobre</button><button type="button" class="packs-info-trigger" id="packsInfoTrigger" aria-label="Información y saldo de sobres" aria-expanded="false" aria-controls="packsInfoPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button></div>
-          <aside class="packs-info-panel" id="packsInfoPanel" hidden tabindex="0" aria-labelledby="packsInfoTitle"><strong id="packsInfoTitle">Información del sobre</strong><p><span>Sobres disponibles</span><b id="packsInfoBalance">—</b></p><p><span>Monedas</span><b id="packsInfoCoins">—</b></p><p class="pack-rarity-odds" id="packRarityOdds">Actualiza para consultar las probabilidades.</p></aside>
+          <aside class="packs-info-panel" id="packsInfoPanel" hidden tabindex="0" aria-labelledby="packsInfoTitle"><strong id="packsInfoTitle">Información del sobre</strong><p><span>Sobres disponibles</span><b id="packsInfoBalance">—</b></p><p><span>Monedas</span><b id="packsInfoCoins">—</b></p><p class="pack-luck-rules">Tras 12 sobres sin legendaria o mejor, el siguiente la garantiza. Cada 25 aperturas ganas un sobre mejorado: una épica o mejor asegurada y el doble de opciones de legendaria.</p><p class="pack-rarity-odds" id="packRarityOdds">Actualiza para consultar las probabilidades.</p></aside>
           <div id="ownedPackResult" class="owned-pack-result packs-screen-reader" aria-live="polite"></div>
         </div>
         <div class="packs-information col-tiles">
@@ -974,7 +975,7 @@
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="shop-catalog-media.js?v=20261030-audit-hardening-443"></script>
   <script defer src="pack-opening.js?v=20261105-adaptive-motion-563"></script>
-  <script defer src="banner-shop.js?v=20261105-adaptive-motion-563"></script>
+  <script defer src="banner-shop.js?v=20261110-suerte-613"></script>
   <script defer src="chota-shop.js?v=20261110-entrada-612"></script>
   <script defer src="club-store.js?v=20261109-clothing-shelves-v2-594"></script>
   <script defer src="store-rooms.js?v=20261109-tailored-v5-609"></script>

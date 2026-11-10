@@ -1,6 +1,23 @@
 /* Wallet, inventory and purchases are authoritative server RPC results. */
 (() => {
   let options, state = null, busy = false, loading = false, failure = '', notice = '', generation = 0, request = null, profileTarget = null;
+  // Bad-luck protection and opening streak (get_pack_luck); absent until the server has it.
+  let packLuck = null;
+  function renderPackLuck() {
+    const box = el('packLuck'); if (!box) return;
+    const luck = state && packLuck;
+    box.hidden = !luck;
+    el('ownedPackOpen')?.classList.toggle('is-boosted', !!luck?.next_boosted);
+    if (el('packBoostBadge')) el('packBoostBadge').hidden = !luck?.next_boosted;
+    if (!luck) return;
+    const row = (id, done, total, text) => { const node = el(id); if (!node) return; node.querySelector('span').textContent = text; node.querySelector('i').style.width = `${Math.max(0, Math.min(100, done / total * 100))}%`; };
+    row('packLuckPity', luck.since_top, luck.pity_after, luck.guaranteed_next || luck.pity_in <= 0 ? 'Legendaria o mejor garantizada en tu próximo sobre' : `Legendaria o mejor garantizada en ${luck.pity_in} ${luck.pity_in === 1 ? 'sobre' : 'sobres'}`);
+    row('packLuckStreak', luck.boost_every - luck.boost_in, luck.boost_every, luck.next_boosted ? 'Tu próximo sobre es mejorado' : `Sobre mejorado en ${luck.boost_in} ${luck.boost_in === 1 ? 'apertura' : 'aperturas'}`);
+  }
+  async function loadPackLuck(token, user) {
+    try { const data = await rpc('get_pack_luck'); if (token === generation && user === options.session()) { packLuck = data; renderPackLuck(); } }
+    catch { /* Older servers have no pack luck: the counters simply stay hidden. */ }
+  }
   const memberBanners = new Map();
   const memberBannerRequests = new Map(), memberBannerFetchedAt = new Map();
   let membersTarget = null, memberObserver = null, memberBannerCacheOwner = null, memberBannerCacheSignature = '';
@@ -1020,6 +1037,7 @@
     el('ownedPackOpen')?.setAttribute('aria-busy',String(busy));
     document.querySelectorAll('[data-pack-open]').forEach(button => {button.disabled = !!el('ownedPackOpen')?.disabled;});
     if (el('packsInfoBalance')) el('packsInfoBalance').textContent = state ? String(state.available_packs?.length ?? 0) : '—';
+    renderPackLuck();
     if (el('packsInfoCoins')) el('packsInfoCoins').textContent = state ? `${Number(state.balance).toLocaleString('es-ES')} monedas` : '—';
     if (el('packRarityOdds')) el('packRarityOdds').textContent = state?.rarity_probabilities ? Object.keys(rarityNames).filter(rarity => state.rarity_probabilities[rarity] != null).map(rarity => `${rarityNames[rarity]} ${state.rarity_probabilities[rarity]}%`).join(' · ') : 'Probabilidades disponibles al sincronizar.';
     const shopHeading = el('shopBannersPanel')?.querySelector('.shop-section-heading');
@@ -1156,7 +1174,7 @@
         await options?.synchronizePacks?.(forceDaily);
         if (token !== generation || user !== options.session()) return;
         const catalogRefresh = globalThis.CardCatalogSync?.refresh();
-        const data = await rpc('get_banner_shop_state'); if ((data.cards || []).some(item => !card(item.card_id))) await catalogRefresh; if (token === generation && user === options.session()) {state = {...data, banners:(data.banners || []).filter(banner => banner.id !== 'banner-de-prueba'), daily_banner_ids:Array.isArray(data.daily_banner_ids) ? data.daily_banner_ids.filter(id => id !== 'banner-de-prueba') : undefined, equipped_banner_id:data.equipped_banner_id === 'banner-de-prueba' ? null : data.equipped_banner_id}; scheduleShopReset(); saveInventory(user, data.cards); saveProfileSnapshot(user); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
+        void loadPackLuck(token, user); const data = await rpc('get_banner_shop_state'); if ((data.cards || []).some(item => !card(item.card_id))) await catalogRefresh; if (token === generation && user === options.session()) {state = {...data, banners:(data.banners || []).filter(banner => banner.id !== 'banner-de-prueba'), daily_banner_ids:Array.isArray(data.daily_banner_ids) ? data.daily_banner_ids.filter(id => id !== 'banner-de-prueba') : undefined, equipped_banner_id:data.equipped_banner_id === 'banner-de-prueba' ? null : data.equipped_banner_id}; scheduleShopReset(); saveInventory(user, data.cards); saveProfileSnapshot(user); globalThis.DailyPacks?.updateBalance(state.available_packs.length); failure = ''; render();} }
       catch (error) { if (token === generation) {failure = errorMessage(error); render();} }
       finally {if (token === generation) {loading = false; request = null; render();}}
     })();
@@ -1244,7 +1262,8 @@
         const draws = data.cards || (data.card ? [data.card] : []);
         if (draws.some(item => !card(item.card_id))) await globalThis.CardCatalogSync?.refresh(true);
         if (token !== generation || user !== options.session()) return;
-        el('ownedPackResult').textContent = `${draws.length} cartas guardadas en tu colección.`;
+        if (data.luck) { packLuck = {...(packLuck || {}), ...data.luck, guaranteed_next: data.luck.pity_in <= 0, next_boosted: false}; void loadPackLuck(token, user); }
+        el('ownedPackResult').textContent = `${draws.length} cartas guardadas en tu colección.${data.luck?.guaranteed ? ' Este sobre traía una legendaria o mejor garantizada.' : ''}${data.luck?.granted_boosted ? ' Has ganado un sobre mejorado.' : ''}`;
         startReveal(draws);
         await options.synchronizePacks?.(true);
         if (token !== generation || user !== options.session()) return;
@@ -1428,7 +1447,7 @@
     discardEffects.forEach(cleanup => cleanup());
     if (inventoryOwner) { try { localStorage.removeItem(inventoryCacheKey(inventoryOwner)); if(localStorage.getItem(offlineInventoryOwnerKey)===inventoryOwner)localStorage.removeItem(offlineInventoryOwnerKey); } catch {} }
     inventoryOwner = null; inventorySavedAt = 0;
-    generation++; state = null; lastInventory = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear(); memberBannerRequests.clear(); memberBannerFetchedAt.clear();
+    generation++; state = null; packLuck = null; lastInventory = null; busy = false; loading = false; request = null; failure = ''; notice = ''; profileTarget = null; memberBanners.clear(); memberBannerRequests.clear(); memberBannerFetchedAt.clear();
     memberBannerCacheOwner = null; memberBannerCacheSignature = '';
     memberObserver?.disconnect(); memberObserver = null; visibleMemberTiles.clear(); observedMemberTiles.clear();
     paintMembers(); membersTarget = null;
