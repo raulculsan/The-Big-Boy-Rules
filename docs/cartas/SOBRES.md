@@ -18,4 +18,8 @@ Aprobado por el usuario el 2026-11-10. Todo el sorteo vive en `open_owned_card_p
 - **Compartir:** un sobre propio ya abierto se comparte una vez; el chat muestra la tira de seis cartas (`[[sobre:ID]]`) y cualquiera puede verlo.
 
 ## Dibujo
-Los sobres mejorado, de elección y temáticos usan el sobre actual con una etiqueta hasta que haya arte propio.
+Los sobres temáticos tienen arte propio (`artwork/packs/themed-template.html`, ver `artwork/packs/README.md`). Los sobres mejorado y de elección usan el sobre de Los nuestros con una etiqueta pequeña.
+
+**Carrusel:** en «Sobres» se desliza de izquierda a derecha: primero Los nuestros y después un sobre por tema. El sobre centrado es el que abre o compra el botón principal (la compra pide un segundo toque para confirmar). Cada sobre abre solo los suyos: Los nuestros nunca abre un temático y viceversa. La animación de apertura usa el arte del sobre que se abre.
+
+**Compartir:** un icono pequeño junto a cerrar, en el resumen del sobre, abre un menú con las secciones del grupo y los chats privados.

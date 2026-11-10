@@ -112,7 +112,7 @@ export default {
       if (!message || message.sender_id !== user.id || !isRecent(message.created_at)) return json({error: "Acción no autorizada."}, 403);
       recipients = [message.recipient_id];
       title = actorName;
-      body = message.body || (message.attachment_type?.startsWith("audio/") ? "Te ha enviado una nota de voz." : "Te ha enviado un archivo.");
+      body = /^\[\[sobre:\d{1,15}\]\]$/.test(String(message.body || "").trim()) ? "Te ha compartido un sobre." : message.body || (message.attachment_type?.startsWith("audio/") ? "Te ha enviado una nota de voz." : "Te ha enviado un archivo.");
       targetUrl = "./#chat";
     } else if (kind === "media_created") {
       let media = null;

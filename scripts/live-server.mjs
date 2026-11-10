@@ -11,6 +11,14 @@ const port = Number(process.env.TBBR_DEV_PORT || 5173);
 const clients = new Set();
 const allowedFiles = new Set([
   "index.html",
+  "pack-extras.js",
+  "chota-cloth.js",
+  "chota-interact.js",
+  "chota-appearance.js",
+  "chota-wardrobe.js",
+  "club-store.js",
+  "store-rooms.js",
+  "store-sky.js",
   "feature-loader.js",
   "styles.css",
   "club.css",

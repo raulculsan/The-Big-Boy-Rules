@@ -3125,7 +3125,7 @@ function renderPrivateConversation() {
     return `${conversationDayDivider(message.createdAt, items[index - 1]?.createdAt)}<div class="message private-message ${own ? "own own-message" : ""}">
       <div class="message-bubble" data-message-bubble data-message-kind="private" data-message-id="${escapeHtml(String(message.id))}" tabindex="0" role="button" aria-haspopup="menu" aria-label="Mensaje de ${escapeHtml(own ? currentUser?.name || "Tú" : member.name)}: ${escapeHtml(String(message.body || "Adjunto").slice(0, 160))}. Mantén pulsado para ver opciones">
         ${renderChatQuote("private", message)}
-        ${message.body ? `<p>${formatChatText(message.body)}</p>` : ""}
+        ${globalThis.PackExtras?.sharedId(message.body) ? globalThis.PackExtras.sharedMarkup(globalThis.PackExtras.sharedId(message.body)) : message.body ? `<p>${formatChatText(message.body)}</p>` : ""}
         ${message.attachmentUrl ? renderMessageAttachment(message) : ""}
         <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>${message.editedAt ? '<span class="message-edited">editado</span>' : ""}
         </div>
@@ -3140,6 +3140,7 @@ function renderPrivateConversation() {
   camera.disabled = false;
   audio.disabled = false;
   syncComposerState("private");
+  globalThis.PackExtras?.hydrate(container);
   finishReading();
 }
 
@@ -6885,16 +6886,30 @@ async function sendMessage(text, file = null, attempt = {}) {
   return mapMessage(data);
 }
 
-// A shared pack opening is posted to the group's default channel as a token
-// the chat draws as a strip of the six cards.
-document.addEventListener("bb:share-pack", event => {
-  const token = event.detail?.token;
-  const channel = chatChannels.find(item => item.isDefault) || chatChannels[0];
-  if (!token || !channel) return;
-  void sendMessage(token, null, {destination: channel.id}).then(message => {
+// A shared pack opening is posted as a token the chat draws as a strip of the
+// six cards, in whichever group section or private chat the member picks.
+globalThis.ChatShare = {
+  targets() {
+    const groups = chatChannels.filter(channel => !channel.readOnly || canManageSite())
+      .map(channel => ({type: "group", id: String(channel.id), label: `# ${channel.name}`}));
+    const people = members.filter(member => member.id !== currentUser?.id && member.authId && !member.hidden)
+      .sort((a, b) => String(a.name).localeCompare(String(b.name), "es"))
+      .map(member => ({type: "private", id: String(member.id), label: member.name}));
+    return {groups, people};
+  },
+  async send(token, target) {
+    if (target?.type === "private") {
+      const message = await sendPrivateMessage(token, null, {destination: target.id});
+      if (message && !privateMessages.some(item => String(item.id) === String(message.id))) { privateMessages.push(message); if (String(activePrivateMemberId) === String(target.id)) renderPrivateConversation(); }
+      return {label: getMember(target.id)?.name || "el chat privado"};
+    }
+    const channel = chatChannels.find(item => String(item.id) === String(target?.id)) || chatChannels.find(item => item.isDefault) || chatChannels[0];
+    if (!channel) throw new Error("No hay ningún chat disponible.");
+    const message = await sendMessage(token, null, {destination: channel.id});
     if (message && !messages.some(item => String(item.id) === String(message.id))) { messages.push(message); if (String(activeChatChannelId) === String(channel.id)) renderMessages(); }
-  }).catch(error => console.warn("No se pudo compartir el sobre:", error));
-});
+    return {label: `#${channel.name}`};
+  },
+};
 
 let editingChatChannel = null;
 let channelEditorRequest = 0;

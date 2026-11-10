@@ -14,3 +14,13 @@ Render:
 ```
 
 Cuando salga la Colección 02 de verdad, crear su tema definitivo (título, ilustración, colores) en lugar de la variante «Próximamente» y quitar el bloque `.col-next` de `index.html`.
+
+## Sobres temáticos
+
+`themed-template.html?theme=<clave>` genera los seis sobres temáticos con la misma geometría (así la animación de rasgado los abre igual): `retro`, `vice_city`, `halloween`, `full_art`, `objects` y `locations`. Cada uno tiene paleta, escena de fondo, textos y dos cartas reales de su tema en abanico detrás del medallón. Se exportan a 768 × 1152 como `icons/cards/sobre-tema-<clave-con-guiones>-v1.png`:
+
+```bash
+for t in retro vice_city halloween full_art objects locations; do "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu --allow-file-access-from-files --hide-scrollbars --default-background-color=00000000 --force-device-scale-factor=1 --window-size=1024,1536 --screenshot="$TMPDIR/$t.png" "file://$PWD/artwork/packs/themed-template.html?theme=$t"; sips -Z 1152 "$TMPDIR/$t.png" --out "icons/cards/sobre-tema-${t//_/-}-v1.png"; done
+```
+
+Las rutas van escritas literalmente en `pack-extras.js` (`THEME_ART`) para que la compilación web las empaquete. Si se cambia un diseño, subir la versión (`-v2`) y actualizar esas rutas.

@@ -6,11 +6,11 @@
   function renderPackLuck() {
     const box = el('packLuck'); if (!box) return;
     const luck = state && packLuck;
-    box.hidden = !luck;
+    box.hidden = !luck || (globalThis.PackExtras?.activeSlide?.() || 'standard') !== 'standard';
     const tag = luck?.next_variant === 'themed' ? globalThis.PackExtras?.THEMES?.[luck.next_theme] || 'Temático' : luck?.next_variant === 'choice' ? 'Elección' : luck?.next_boosted ? 'Mejorado' : '';
     el('ownedPackOpen')?.classList.toggle('is-boosted', !!tag);
     if (el('packBoostBadge')) { el('packBoostBadge').hidden = !tag; el('packBoostBadge').textContent = tag; }
-    globalThis.PackExtras?.renderThemes(state && luck ? {...luck, balance: state.balance} : null);
+    globalThis.PackExtras?.renderCarousel(state && luck ? {...luck, balance: state.balance} : null);
     const pendingButton = el('packChoicePending'); if (pendingButton) pendingButton.hidden = !luck?.pending_choice;
     if (!luck) return;
     // One quiet line: how far the guaranteed legendary and the boosted pack are.
@@ -278,6 +278,8 @@
     revealDialog.querySelector('[data-reveal-save]')?.focus({preventScroll:true});
   }
   const closeGlyph = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+  const shareGlyph = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M6 12v6.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V12"/></svg>';
+  const sharedGlyph = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
   const summaryRarityOrder = ['halloween','vice_city','full_art','legendary','epic','special','retro','common'];
   const summaryRank = item => {const rank = summaryRarityOrder.indexOf(item.edition); return rank < 0 ? summaryRarityOrder.length : rank;};
   // The best pull leads the layout; ties favour a new card, then the draw order.
@@ -290,6 +292,27 @@
   // Grid tiles and the rail are small: a 360 px thumbnail decodes in a fraction
   // of the full art (PNG fronts reach 4 MB), so the summary deals without stalling.
   const summaryThumb = item => {const design = card(item.card_id); return (design?.front && globalThis.CardThumbnails?.[globalThis.CardMedia?.canonical(design.front) || design.front]) || summaryArt(item);};
+  // The share icon opens a small menu of the group sections and private chats.
+  function closeShareMenu() {
+    const menu = revealDialog?.querySelector('.pack-share-menu');
+    if (!menu || menu.hidden) return;
+    menu.hidden = true;
+    revealDialog.querySelector('[data-pack-share]')?.setAttribute('aria-expanded', 'false');
+  }
+  function toggleShareMenu() {
+    const menu = revealDialog?.querySelector('.pack-share-menu'), button = revealDialog?.querySelector('[data-pack-share]');
+    if (!menu || !button) return;
+    if (!menu.hidden) { closeShareMenu(); return; }
+    const {groups = [], people = []} = globalThis.PackExtras?.shareTargets?.() || {};
+    const item = target => `<button type="button" role="menuitem" data-share-type="${escape(target.type)}" data-share-target="${escape(target.id)}">${escape(target.label)}</button>`;
+    menu.innerHTML = [
+      groups.length ? `<p class="pack-share-menu-label">Grupo</p>${groups.map(item).join('')}` : '',
+      people.length ? `<p class="pack-share-menu-label">Privado</p>${people.map(item).join('')}` : '',
+    ].join('') || '<p class="pack-share-menu-empty">No hay chats disponibles.</p>';
+    menu.hidden = false;
+    button.setAttribute('aria-expanded', 'true');
+    menu.querySelector('[role="menuitem"]')?.focus({preventScroll: true});
+  }
   function renderRevealSummary() {
     if (!reveal?.summary || !revealDialog.open) return;
     revealDialog.classList.add('is-pack-summary');
@@ -298,7 +321,7 @@
       const best = reveal.cards[reveal.order[0]].edition;
       revealDialog.dataset.rarity = best;
       revealDialog.dataset.mood = chotaBig.has(best) ? 'cheer' : 'wave';
-      revealDialog.innerHTML = `<header class="pack-summary-header"><div class="pack-summary-title"><i class="pack-chota-sprite" aria-hidden="true"></i><div><h2>Tu sobre</h2><p class="pack-summary-tally"></p></div></div><button type="button" class="pack-summary-close" data-reveal-close aria-label="Cerrar: tus cartas están guardadas">${closeGlyph}</button></header><div class="pack-summary-content"><div class="pack-summary-grid${reveal.cards.length === 6 ? ' is-featured' : ''}" role="group" aria-label="Cartas del sobre"></div></div><footer class="pack-summary-footer"><div class="pack-summary-actions"><p class="pack-summary-balance"></p><button type="button" class="pack-summary-share" data-pack-share hidden>Compartir en el chat</button><button type="button" class="packs-buy" data-reveal-save>Guardar todo</button></div><p class="pack-reveal-status" role="status" aria-live="polite"></p></footer><section class="pack-viewer" role="group" aria-label="Carta en grande" hidden><header class="pack-viewer-header"><span class="pack-viewer-count"></span><button type="button" class="pack-summary-close" data-viewer-close aria-label="Volver al sobre">${closeGlyph}</button></header><div class="pack-viewer-stage"><i class="pack-viewer-aura"></i><div class="collection-card-perspective pack-viewer-perspective"><div class="collection-card-tilt pack-viewer-tilt" tabindex="0" role="group" aria-label="Carta interactiva. Flechas para cambiar de carta"><div class="collection-card-stage"><img class="collection-card-face pack-viewer-image" width="948" height="1660" decoding="async" alt="" draggable="false"></div><div class="collection-card-foil" aria-hidden="true"></div></div></div></div><div class="pack-viewer-info" aria-live="polite"><h3></h3><p></p></div><button type="button" class="pack-viewer-discard" data-viewer-discard hidden></button><div class="pack-viewer-rail" role="group" aria-label="Cambiar de carta"></div></section>`;
+      revealDialog.innerHTML = `<header class="pack-summary-header"><div class="pack-summary-title"><i class="pack-chota-sprite" aria-hidden="true"></i><div><h2>Tu sobre</h2><p class="pack-summary-tally"></p></div></div><div class="pack-summary-tools"><button type="button" class="pack-summary-share" data-pack-share aria-haspopup="menu" aria-expanded="false" aria-label="Compartir el sobre en un chat" hidden>${shareGlyph}</button><button type="button" class="pack-summary-close" data-reveal-close aria-label="Cerrar: tus cartas están guardadas">${closeGlyph}</button></div><div class="pack-share-menu" role="menu" aria-label="Compartir en" hidden></div></header><div class="pack-summary-content"><div class="pack-summary-grid${reveal.cards.length === 6 ? ' is-featured' : ''}" role="group" aria-label="Cartas del sobre"></div></div><footer class="pack-summary-footer"><div class="pack-summary-actions"><p class="pack-summary-balance"></p><button type="button" class="packs-buy" data-reveal-save>Guardar todo</button></div><p class="pack-reveal-status" role="status" aria-live="polite"></p></footer><section class="pack-viewer" role="group" aria-label="Carta en grande" hidden><header class="pack-viewer-header"><span class="pack-viewer-count"></span><button type="button" class="pack-summary-close" data-viewer-close aria-label="Volver al sobre">${closeGlyph}</button></header><div class="pack-viewer-stage"><i class="pack-viewer-aura"></i><div class="collection-card-perspective pack-viewer-perspective"><div class="collection-card-tilt pack-viewer-tilt" tabindex="0" role="group" aria-label="Carta interactiva. Flechas para cambiar de carta"><div class="collection-card-stage"><img class="collection-card-face pack-viewer-image" width="948" height="1660" decoding="async" alt="" draggable="false"></div><div class="collection-card-foil" aria-hidden="true"></div></div></div></div><div class="pack-viewer-info" aria-live="polite"><h3></h3><p></p></div><button type="button" class="pack-viewer-discard" data-viewer-discard hidden></button><div class="pack-viewer-rail" role="group" aria-label="Cambiar de carta"></div></section>`;
       revealDialog.querySelector('.pack-summary-grid').innerHTML = reveal.order.map((index,position) => {
         const item = reveal.cards[index], art = position === 0 && reveal.cards.length === 6 ? summaryArt(item) : summaryThumb(item);
         return `<div class="pack-summary-item" data-rarity="${escape(item.edition)}"${item.finish ? ` data-finish="${escape(item.finish)}"` : ''}><i class="pack-summary-aura"></i><button type="button" class="pack-summary-card" data-summary-card="${index}"><img src="${escape(art)}" width="948" height="1660" alt="" draggable="false" decoding="async"><i class="pack-summary-sheen"></i></button><span class="pack-summary-label"></span></div>`;
@@ -316,7 +339,15 @@
     revealDialog.querySelector('.pack-summary-tally').textContent = [fresh ? `${fresh} ${fresh === 1 ? 'nueva' : 'nuevas'}` : '', repeated ? `${repeated} ${repeated === 1 ? 'repetida' : 'repetidas'}` : ''].filter(Boolean).join(' · ');
     revealDialog.querySelector('[data-reveal-save]').textContent = reveal.discarded.size ? 'Guardar restantes' : 'Guardar todo';
     const shareButton = revealDialog.querySelector('[data-pack-share]');
-    if (shareButton) { shareButton.hidden = !reveal.packId || !globalThis.PackExtras || reveal.cards.length < 6; shareButton.disabled = reveal.shared || reveal.sharing || !online(); shareButton.textContent = reveal.shared ? 'Compartido en el chat' : reveal.sharing ? 'Compartiendo…' : 'Compartir en el chat'; }
+    if (shareButton) {
+      shareButton.hidden = !reveal.packId || !globalThis.PackExtras || reveal.cards.length < 6;
+      shareButton.disabled = Boolean(reveal.shared) || reveal.sharing || !online();
+      shareButton.toggleAttribute('data-shared', Boolean(reveal.shared));
+      shareButton.setAttribute('aria-busy', String(Boolean(reveal.sharing)));
+      shareButton.setAttribute('aria-label', reveal.shared ? `Sobre compartido en ${reveal.shared}` : 'Compartir el sobre en un chat');
+      shareButton.innerHTML = reveal.shared ? sharedGlyph : shareGlyph;
+      if (shareButton.disabled) closeShareMenu();
+    }
     revealDialog.querySelector('.pack-summary-balance').textContent = state ? coins() : 'Actualizando saldo…';
     const hint = reveal.cards.some((item,index) => canDiscardReveal(index)) && online() ? 'Desliza una repetida arriba para cambiarla' : '';
     revealDialog.querySelector('.pack-summary-footer .pack-reveal-status').textContent = failure || notice || hint;
@@ -550,11 +581,11 @@
     const sources = new Set(cards.flatMap(item => {const design = card(item.card_id); return [design?.front, design?.back, design && summaryThumb(item)];}).filter(Boolean));
     revealPreload = [...sources].map(src => {const image = new Image(); image.decoding = 'async'; image.src = src; void image.decode?.().catch(() => {}); return image;});
   }
-  function startReveal(cards, packId = null) {
+  function startReveal(cards, packId = null, theme = null) {
     if (!cards.length) return;
     preloadReveal(cards);
     globalThis.MotionQuality?.watch();
-    reveal = {packId,shared:false,cards,index:0,flipped:false,discarded:new Set(),uncertain:new Set(),pending:new Set(),queue:[],earned:0,phase:'idle'};
+    reveal = {packId,theme,shared:false,cards,index:0,flipped:false,discarded:new Set(),uncertain:new Set(),pending:new Set(),queue:[],earned:0,phase:'idle'};
     revealDialog.classList.remove('is-pack-summary');
     delete revealDialog.dataset.cardIndex; delete revealDialog.dataset.rarity; delete revealDialog.dataset.mood;
     if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(revealDialog);else revealDialog.showModal(); renderReveal();
@@ -564,7 +595,7 @@
       current.phase = 'opening';
       revealDialog.classList.add('is-opening-pack');
       revealOpening = globalThis.PackOpening?.play({stage:revealDialog.querySelector('.pack-reveal-stage'),
-        back:escape(card(cards[0].card_id)?.back || 'icons/cards/reverso-comun-unificado-v1.jpg'),count:cards.length,
+        back:escape(card(cards[0].card_id)?.back || 'icons/cards/reverso-comun-unificado-v1.jpg'),art:globalThis.PackExtras?.themeArt?.(current.theme) || undefined,count:cards.length,
         edition:globalThis.PackOpening.bestEdition(cards),onDone:() => {revealOpening = null; finishRevealMotion(current);}});
       if (!revealOpening) finishRevealMotion(current);
       paintRevealChota();
@@ -584,11 +615,15 @@
     }
     const summaryCard = event.target.closest('[data-summary-card]');
     if (summaryCard) {openPackViewer(Number(summaryCard.dataset.summaryCard)); return;}
-    if (event.target.closest('[data-pack-share]') && reveal?.packId && !reveal.shared && !reveal.sharing) {
-      const current = reveal; current.sharing = true; renderRevealSummary();
-      void globalThis.PackExtras.share(current.packId).then(() => { current.shared = true; notice = 'Compartido en el chat del grupo.'; }).catch(error => { notice = errorMessage(error); }).finally(() => { current.sharing = false; if (reveal === current) renderRevealSummary(); });
+    const shareTarget = event.target.closest('[data-share-target]');
+    if (shareTarget && reveal?.packId && !reveal.shared && !reveal.sharing) {
+      const current = reveal, target = {type: shareTarget.dataset.shareType, id: shareTarget.dataset.shareTarget};
+      closeShareMenu(); current.sharing = true; renderRevealSummary();
+      void globalThis.PackExtras.share(current.packId, target).then(data => { current.shared = data.label || 'el chat'; notice = `Compartido en ${current.shared}.`; }).catch(error => { notice = errorMessage(error); }).finally(() => { current.sharing = false; if (reveal === current) renderRevealSummary(); });
       return;
     }
+    if (event.target.closest('[data-pack-share]') && reveal?.packId && !reveal.shared && !reveal.sharing) { toggleShareMenu(); return; }
+    if (!event.target.closest('.pack-share-menu')) closeShareMenu();
     if (event.target.closest('[data-reveal-save]')) {globalThis.ClubMotion?.closeDialog ? void globalThis.ClubMotion.closeDialog(revealDialog) : revealDialog.close(); return;}
     if (event.target.closest('[data-reveal-flip]')) {if (revealOpening) revealOpening.tear(); else activateReveal();}
   });
@@ -713,6 +748,11 @@
     else flipReveal();
   }
   revealDialog.addEventListener('pointerup', finishSwipe);
+  // Escape first folds the share menu, then closes the summary as before.
+  revealDialog.addEventListener('cancel', event => {
+    const menu = revealDialog.querySelector('.pack-share-menu');
+    if (menu && !menu.hidden) { event.preventDefault(); closeShareMenu(); revealDialog.querySelector('[data-pack-share]')?.focus({preventScroll: true}); }
+  });
   revealDialog.addEventListener('pointercancel', finishSwipe);
   revealDialog.addEventListener('lostpointercapture', finishSwipe);
   revealDialog.addEventListener('dragstart',event => {if (event.target.closest('.pack-reveal-stage, .pack-summary-card')) event.preventDefault();});
@@ -1047,12 +1087,12 @@
     document.querySelectorAll('[data-wallet]').forEach(node => node.setAttribute('aria-label', `Saldo: ${coins()}`));
     // A background refresh keeps the known packs usable; only a first load with
     // no snapshot, an action in flight or an empty wallet disables the button.
-    if (el('ownedPackOpen')) el('ownedPackOpen').disabled = busy || !state?.available_packs?.length || !online(); el('ownedPackOpen')?.toggleAttribute('data-empty', !busy && !loading && !!state && !state.available_packs?.length);
+    const standardPacks = packLuck?.waiting ? Number(packLuck.waiting.standard?.count) || 0 : state?.available_packs?.length || 0; if (el('ownedPackOpen')) el('ownedPackOpen').disabled = busy || !standardPacks || !online(); el('ownedPackOpen')?.toggleAttribute('data-empty', !busy && !loading && !!state && !standardPacks);
     if (el('packsStatusTitle')) el('packsStatusTitle').textContent = failure ? 'No se pudo actualizar' : busy || (loading && !state) ? 'Sincronizando sobres' : !online() ? 'Sin conexión' : !state ? 'Consulta tus sobres' : state.available_packs?.length ? 'Sobres disponibles' : 'Sin sobres disponibles';
     if (el('packsStatusMessage')) el('packsStatusMessage').textContent = failure || (busy || (loading && !state) ? 'Consultando tu colección y tu saldo…' : !online() ? 'Conéctate a internet para abrir sobres.' : state?.available_packs?.length ? 'Pulsa un sobre para abrirlo.' : state ? 'Vuelve mañana para recibir tu sobre diario.' : 'Pulsa Actualizar saldo para consultar tu cuenta.');
     if (el('packsSyncButton')) {el('packsSyncButton').disabled = busy || loading || !online(); el('packsSyncButton').textContent = loading || busy ? 'Actualizando…' : failure ? 'Reintentar' : 'Actualizar saldo';}
     el('ownedPackOpen')?.setAttribute('aria-busy',String(busy));
-    document.querySelectorAll('[data-pack-open]').forEach(button => {button.disabled = !!el('ownedPackOpen')?.disabled;});
+    if (!globalThis.PackExtras?.syncAction?.()) document.querySelectorAll('[data-pack-open]').forEach(button => {button.disabled = !!el('ownedPackOpen')?.disabled; if (button.textContent !== 'Abrir sobre') button.textContent = 'Abrir sobre';});
     if (el('packsInfoBalance')) el('packsInfoBalance').textContent = state ? String(state.available_packs?.length ?? 0) : '—';
     renderPackLuck();
     if (el('packsInfoCoins')) el('packsInfoCoins').textContent = state ? `${Number(state.balance).toLocaleString('es-ES')} monedas` : '—';
@@ -1291,7 +1331,7 @@
         lastOpenedPack = data.pack_id;
         if (data.luck) { packLuck = {...(packLuck || {}), ...data.luck, guaranteed_next: data.luck.pity_in <= 0, next_boosted: false}; void loadPackLuck(token, user); }
         el('ownedPackResult').textContent = `${draws.length} cartas guardadas en tu colección.${data.luck?.guaranteed ? ' Este sobre traía una legendaria o mejor garantizada.' : ''}${data.luck?.granted_boosted ? ' Has ganado un sobre mejorado.' : ''}`;
-        startReveal(draws, data.pack_id);
+        startReveal(draws, data.pack_id, data.theme || null);
         await options.synchronizePacks?.(true);
         if (token !== generation || user !== options.session()) return;
       }
@@ -1361,7 +1401,7 @@
     options = config;globalThis.ShopCatalogMedia?.configure(config.cacheNamespace);
     globalThis.CollectionSocial?.initialize({session:options.session,rpc:options.rpc,refreshInventory:() => refresh(true)});
     globalThis.CardEconomy?.initialize({session:options.session,rpc:options.rpc,refreshInventory:() => refresh(true)});
-    globalThis.PackExtras?.initialize({session:options.session,rpc:options.rpc,state:() => state && packLuck ? {...packLuck,balance:state.balance} : null,changed:() => renderPackLuck(),refresh:() => refresh(true)});
+    globalThis.PackExtras?.initialize({session:options.session,rpc:options.rpc,state:() => state && packLuck ? {...packLuck,balance:state.balance} : null,changed:() => renderPackLuck(),refresh:() => refresh(true),slideChanged:() => {renderPackLuck(); render();},open:async packId => {if (busy || !online()) return; if (loading && request) await request.catch(() => {}); void mutate('open_owned_card_pack', {target_pack_id: packId}, '');}});
     const duplicatesDialog = el('duplicatesDialog');
     if (duplicatesDialog?.parentElement !== document.body && duplicatesDialog) document.body.append(duplicatesDialog);
     duplicatesDialog?.addEventListener('close',() => {
@@ -1461,7 +1501,7 @@
       if (chosen) { startReveal([chosen], null); await refresh(true); }
     });
     document.addEventListener('bb:card-target', event => { if (event.detail && options?.session()) { packLuck = {...(packLuck || {}), ...event.detail}; renderPackLuck(); } });
-    el('ownedPackOpen').addEventListener('click', async () => {if (loading && request) await request.catch(() => {}); void mutate('open_owned_card_pack', {}, '');});
+    el('ownedPackOpen').addEventListener('click', async () => {if (loading && request) await request.catch(() => {}); const next = packLuck?.waiting ? packLuck.waiting.standard?.next_id : undefined; if (next === null) return; void mutate('open_owned_card_pack', next ? {target_pack_id: next} : {}, '');});
     document.addEventListener('click', event => {if (event.target.closest('[data-pack-open]')) el('ownedPackOpen')?.click();});
     window.addEventListener('online', () => {
       if (options.session()) void refresh();

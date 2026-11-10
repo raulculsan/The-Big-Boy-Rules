@@ -179,3 +179,22 @@ test('the earlier pack luck rules still hold with the new opening', async () => 
     for (let n = 2; n <= 25; n++) { const x = await open(db); assert.equal(x.luck.granted_boosted, n === 25); }
   } finally { await db.close(); }
 });
+
+const carouselSql = fs.readFileSync(new URL('../supabase/migrations/20261110190000_pack_carousel.sql', import.meta.url), 'utf8');
+test('the carousel lists unopened packs per theme and opens the one on screen', async () => {
+  const db = await fixture(); try {
+    await db.exec(carouselSql);
+    await as(db, A);
+    await give(db, A, 2);
+    await call(db, 'public.buy_themed_pack($1,$2)', ['vice_city', 120]);
+    await call(db, 'public.buy_themed_pack($1,$2)', ['vice_city', 120]);
+    const state = await luck(db);
+    assert.equal(state.waiting.standard.count, 2); assert.equal(state.waiting.vice_city.count, 2);
+    assert.equal(state.next_variant, 'standard', 'the standard slide ignores themed packs');
+    const pack = await call(db, 'public.open_owned_card_pack($1)', [state.waiting.vice_city.next_id]);
+    assert.equal(pack.theme, 'vice_city');
+    const after = await luck(db);
+    assert.equal(after.waiting.vice_city.count, 1); assert.equal(after.waiting.standard.count, 2);
+    await as(db, B); assert.deepEqual((await luck(db)).waiting, {});
+  } finally { await db.close(); }
+});

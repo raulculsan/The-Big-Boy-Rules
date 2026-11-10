@@ -72,33 +72,149 @@
     });
   }
 
-  // ── Themed packs ──────────────────────────────────────────────────────────
-  let confirming = null, confirmTimer = 0, buying = false;
-  function renderThemes(state) {
-    const root = document.getElementById('packThemes');
-    if (!root) return;
-    const price = state?.themed_price;
-    root.hidden = !price;
-    if (!price) return;
-    const balance = Number(state?.balance ?? NaN);
-    const markup = Object.entries(THEMES).map(([key, name]) => {
-      const asking = confirming === key;
-      return `<button type="button" class="pack-theme" data-pack-theme="${key}" ${buying || (Number.isFinite(balance) && balance < price) ? 'disabled' : ''} aria-label="${asking ? `Confirmar compra del sobre ${name} por ${price} monedas` : `Sobre ${name}, ${price} monedas`}"><span>${esc(name)}</span><small>${asking ? 'Toca para comprar' : `${price}`}</small></button>`;
-    }).join('');
-    const list = root.querySelector('.pack-theme-list');
-    if (list && list.innerHTML !== markup) list.innerHTML = markup;
+  // ── Pack carousel ─────────────────────────────────────────────────────────
+  // Los nuestros is the first slide; each theme follows with its own artwork.
+  // Swiping left and right brings the next pack up from behind; the centred
+  // one is the pack the main button opens or buys.
+  // Literal paths so the web build packages every themed pack's artwork.
+  const THEME_ART = Object.freeze({retro: 'icons/cards/sobre-tema-retro-v1.png', vice_city: 'icons/cards/sobre-tema-vice-city-v1.png', halloween: 'icons/cards/sobre-tema-halloween-v1.png', full_art: 'icons/cards/sobre-tema-full-art-v1.png', objects: 'icons/cards/sobre-tema-objects-v1.png', locations: 'icons/cards/sobre-tema-locations-v1.png'});
+  const THEME_LINES = Object.freeze({retro: 'Retro asegurada', vice_city: 'Vice City asegurada', halloween: 'Halloween asegurada', full_art: 'Full Art asegurada', objects: 'Objeto épico o mejor', locations: 'Ubicación épica o mejor'});
+  const themeArt = theme => THEME_ART[theme] || null;
+  let confirming = null, confirmTimer = 0, buying = false, active = 'standard', carouselBound = false, motionFrame = 0;
+  const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const waitingFor = (state, slot) => Number(state?.waiting?.[slot]?.count) || 0;
+  function slideMeta(state, theme) {
+    const owned = waitingFor(state, theme), price = state?.themed_price;
+    if (owned) return `${owned} ${owned === 1 ? 'sobre' : 'sobres'}`;
+    return confirming === theme ? 'Toca otra vez para comprar' : `${price} monedas`;
   }
+  function renderCarousel(state) {
+    const track = document.getElementById('packCarouselTrack');
+    if (!track) return;
+    const price = state?.themed_price;
+    for (const slide of track.querySelectorAll('[data-pack-slide]:not([data-pack-slide="standard"])')) if (!price) slide.remove();
+    if (price) {
+      const balance = Number(state?.balance ?? NaN);
+      for (const [theme, name] of Object.entries(THEMES)) {
+        let slide = track.querySelector(`[data-pack-slide="${theme}"]`);
+        if (!slide) {
+          slide = document.createElement('div');
+          slide.className = 'pack-slide'; slide.dataset.packSlide = theme;
+          slide.innerHTML = `<button type="button" class="packs-art-button pack-slide-art" data-pack-theme="${theme}"><img class="packs-art" src="${themeArt(theme)}" width="768" height="1152" loading="lazy" decoding="async" alt="" draggable="false"><span class="pack-slide-count" hidden></span></button><p class="pack-slide-label"><strong>${esc(name)}</strong><span></span></p>`;
+          track.append(slide);
+        }
+        const owned = waitingFor(state, theme), button = slide.querySelector('button');
+        const cannot = buying || (!owned && Number.isFinite(balance) && balance < price);
+        button.disabled = cannot || !navigator.onLine;
+        button.toggleAttribute('data-owned', owned > 0);
+        button.toggleAttribute('data-confirming', confirming === theme);
+        button.setAttribute('aria-label', owned ? `Abrir un sobre ${name}. Tienes ${owned}.` : confirming === theme ? `Confirmar compra del sobre ${name} por ${price} monedas` : `Comprar un sobre ${name} por ${price} monedas. ${THEME_LINES[theme]}.`);
+        const count = slide.querySelector('.pack-slide-count');
+        count.hidden = !owned; count.textContent = owned > 1 ? `×${owned}` : '';
+        if (owned === 1) count.hidden = true;
+        const meta = slide.querySelector('.pack-slide-label span'), text = confirming === theme ? slideMeta(state, theme) : `${slideMeta(state, theme)} · ${THEME_LINES[theme]}`;
+        if (meta.textContent !== text) meta.textContent = text;
+      }
+    }
+    const standardMeta = track.querySelector('[data-pack-slide="standard"] .pack-slide-label span');
+    if (standardMeta) {
+      const count = state?.waiting ? waitingFor(state, 'standard') : null;
+      const text = count == null ? '6 cartas por sobre' : count ? `${count} ${count === 1 ? 'sobre' : 'sobres'} · 6 cartas` : 'Sin sobres · vuelve mañana';
+      if (standardMeta.textContent !== text) standardMeta.textContent = text;
+    }
+    renderDots(track);
+    bindCarousel(track);
+    syncAction(state);
+    paintCarousel(track);
+  }
+  function renderDots(track) {
+    const dots = document.getElementById('packCarouselDots');
+    if (!dots) return;
+    const slides = [...track.querySelectorAll('[data-pack-slide]')];
+    dots.hidden = slides.length < 2;
+    const markup = slides.map(slide => `<i${slide.dataset.packSlide === active ? ' data-active' : ''}></i>`).join('');
+    if (dots.innerHTML !== markup) dots.innerHTML = markup;
+  }
+  // The centred slide drives the main button; transforms follow the scroll.
+  function paintCarousel(track = document.getElementById('packCarouselTrack')) {
+    if (!track) return;
+    const box = track.getBoundingClientRect(), centre = box.left + box.width / 2;
+    let nearest = null, distance = Infinity;
+    for (const slide of track.querySelectorAll('[data-pack-slide]')) {
+      const rect = slide.getBoundingClientRect(), offset = (rect.left + rect.width / 2 - centre) / Math.max(1, rect.width);
+      const t = Math.max(-1.6, Math.min(1.6, offset)), near = Math.abs(t);
+      if (near < distance) { distance = near; nearest = slide; }
+      if (reducedMotion()) { slide.style.removeProperty('--slide-scale'); slide.style.removeProperty('--slide-rise'); slide.style.removeProperty('--slide-tilt'); slide.style.setProperty('--slide-fade', String(1 - Math.min(1, near) * .45)); continue; }
+      slide.style.setProperty('--slide-scale', (1 - Math.min(1, near) * .2).toFixed(3));
+      slide.style.setProperty('--slide-rise', `${(Math.min(1, near) * 34).toFixed(1)}px`);
+      slide.style.setProperty('--slide-tilt', `${(t * 7).toFixed(2)}deg`);
+      slide.style.setProperty('--slide-fade', (1 - Math.min(1, near) * .5).toFixed(3));
+    }
+    const next = nearest?.dataset.packSlide || 'standard';
+    track.querySelectorAll('[data-pack-slide]').forEach(slide => slide.classList.toggle('is-active', slide === nearest));
+    if (next !== active) {
+      active = next;
+      if (confirming && confirming !== active) { confirming = null; clearTimeout(confirmTimer); }
+      renderDots(track); syncAction(options?.state?.()); options?.slideChanged?.(active);
+    }
+  }
+  function bindCarousel(track) {
+    if (carouselBound) return;
+    carouselBound = true;
+    track.addEventListener('scroll', () => { cancelAnimationFrame(motionFrame); motionFrame = requestAnimationFrame(() => paintCarousel(track)); }, {passive: true});
+    globalThis.addEventListener('resize', () => paintCarousel(track), {passive: true});
+    // Tapping a pack beside the centred one brings it to the centre first.
+    track.addEventListener('click', event => {
+      const slide = event.target.closest('[data-pack-slide]');
+      if (!slide || slide.classList.contains('is-active')) return;
+      event.preventDefault(); event.stopPropagation();
+      slide.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'nearest', inline: 'center'});
+    }, true);
+    track.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      const slides = [...track.querySelectorAll('[data-pack-slide]')], index = slides.findIndex(slide => slide.dataset.packSlide === active);
+      const target = slides[Math.max(0, Math.min(slides.length - 1, index + (event.key === 'ArrowRight' ? 1 : -1)))];
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'nearest', inline: 'center'});
+      target.querySelector('button')?.focus({preventScroll: true});
+    });
+  }
+  // The main button speaks for the centred pack: open it, or buy it.
+  function syncAction(state = options?.state?.()) {
+    const buttons = document.querySelectorAll('[data-pack-open]');
+    const edition = document.querySelector('#sobres .col-edition'), heading = THEMES[active] ? `Sobre temático · ${THEMES[active]}` : 'Los nuestros · 6 cartas por sobre';
+    if (edition && edition.textContent !== heading) edition.textContent = heading;
+    if (active === 'standard' || !THEMES[active]) return false;
+    const owned = waitingFor(state, active), price = state?.themed_price;
+    const button = document.querySelector(`[data-pack-slide="${active}"] button`);
+    const text = owned ? 'Abrir sobre' : confirming === active ? `Confirmar · ${price} monedas` : `Comprar · ${price} monedas`;
+    buttons.forEach(node => { node.disabled = !button || button.disabled; if (node.textContent !== text) node.textContent = text; });
+    return true;
+  }
+  function activeSlide() { return active; }
   async function buyTheme(theme, price) {
-    if (buying) return;
-    if (confirming !== theme) { confirming = theme; clearTimeout(confirmTimer); confirmTimer = setTimeout(() => { confirming = null; options?.changed?.(); }, 4000); options?.changed?.(); return; }
-    confirming = null; buying = true; options?.changed?.();
+    if (buying || !price) return;
     const status = document.getElementById('packThemesStatus');
+    if (confirming !== theme) {
+      confirming = theme; clearTimeout(confirmTimer);
+      confirmTimer = setTimeout(() => { confirming = null; options?.changed?.(); }, 4000);
+      if (status) status.textContent = '';
+      options?.changed?.(); return;
+    }
+    clearTimeout(confirmTimer); confirming = null; buying = true; options?.changed?.();
     try {
       await call('buy_themed_pack', {pack_theme: theme, expected_price: price});
-      if (status) status.textContent = `Sobre ${THEMES[theme]} añadido. Ábrelo cuando quieras.`;
+      if (status) status.textContent = `Sobre ${THEMES[theme]} comprado. Ya puedes abrirlo.`;
       await options?.refresh?.();
     } catch (error) { if (status) status.textContent = message(error); }
     finally { buying = false; options?.changed?.(); }
+  }
+  // A themed slide opens its oldest pack when one is waiting, otherwise buys.
+  function pressTheme(theme) {
+    const state = options?.state?.(), next = state?.waiting?.[theme]?.next_id;
+    if (next && waitingFor(state, theme)) { options?.open?.(next); return; }
+    void buyTheme(theme, state?.themed_price);
   }
 
   // ── Target card ───────────────────────────────────────────────────────────
@@ -111,10 +227,12 @@
   const TOKEN = /^\[\[sobre:(\d{1,15})\]\]$/;
   const sharedId = text => String(text || '').trim().match(TOKEN)?.[1] || null;
   const sharedCache = new Map();
-  async function share(packId) {
+  const shareTargets = () => globalThis.ChatShare?.targets?.() || {groups: [], people: []};
+  async function share(packId, target) {
+    if (!globalThis.ChatShare) throw new Error('El chat no está disponible ahora mismo.');
     const data = await call('share_pack_opening', {target_pack_id: packId});
-    document.dispatchEvent(new CustomEvent('bb:share-pack', {detail: {token: data.token, packId}}));
-    return data;
+    const sent = await globalThis.ChatShare.send(data.token, target);
+    return {...data, label: sent?.label || ''};
   }
   function sharedMarkup(packId) {
     return `<button type="button" class="shared-pack" data-shared-pack="${esc(packId)}" aria-label="Ver el sobre compartido"><span class="shared-pack-title">Ha abierto un sobre</span><span class="shared-pack-strip" aria-hidden="true">${'<i></i>'.repeat(6)}</span><span class="shared-pack-meta">Cargando…</span></button>`;
@@ -155,13 +273,15 @@
     const shared = event.target.closest?.('[data-shared-pack]');
     if (shared) { event.preventDefault(); event.stopPropagation(); void viewShared(shared.dataset.sharedPack); return; }
     const theme = event.target.closest?.('[data-pack-theme]');
-    if (theme && !theme.disabled) void buyTheme(theme.dataset.packTheme, options?.state?.()?.themed_price);
+    if (theme && !theme.disabled && theme.closest('[data-pack-slide]')?.classList.contains('is-active')) { pressTheme(theme.dataset.packTheme); return; }
+    const main = event.target.closest?.('[data-pack-open]');
+    if (main && THEMES[active]) { event.preventDefault(); event.stopPropagation(); if (!main.disabled) pressTheme(active); }
   }, true);
 
-  function reset() { finishes = {}; finishesOwner = null; sharedCache.clear(); confirming = null; buying = false; }
+  function reset() { finishes = {}; finishesOwner = null; sharedCache.clear(); confirming = null; buying = false; clearTimeout(confirmTimer); }
   globalThis.PackExtras = Object.freeze({
     initialize(config) { options = config; },
-    FINISH_NAMES, THEMES, bestFinish, loadFinishes, noteFinish, choose, renderThemes, setTarget, share, sharedId, sharedMarkup, hydrate, reset,
+    FINISH_NAMES, THEMES, bestFinish, loadFinishes, noteFinish, choose, renderCarousel, paintCarousel, syncAction, activeSlide, themeArt, setTarget, share, shareTargets, sharedId, sharedMarkup, hydrate, reset,
     finishOwner: () => finishesOwner,
   });
 })();

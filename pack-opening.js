@@ -42,7 +42,7 @@
     return progress >= TEAR_THRESHOLD || (progress > .12 && speed >= FLICK_SPEED);
   }
 
-  function play({stage, back, count = 6, edition = 'common', onDone = () => {}}) {
+  function play({stage, back, art = ART, count = 6, edition = 'common', onDone = () => {}}) {
     globalThis.MotionQuality?.watch();
     const line = tearLine();
     const body = polygon([...line, [WIDTH, TEAR_Y], [WIDTH, HEIGHT], [0, HEIGHT], [0, TEAR_Y]]);
@@ -55,14 +55,14 @@
     root.setAttribute('aria-hidden', 'true');
     root.innerHTML = `<span class="pack-tear-aura"></span><span class="pack-tear-rays"></span>
       <div class="pack-tear-pack"><div class="pack-tear-float">
-        <div class="pack-tear-shell pack-tear-shell-back"><img class="pack-tear-art pack-tear-inside" src="${ART}" alt="" draggable="false"></div>
+        <div class="pack-tear-shell pack-tear-shell-back"><img class="pack-tear-art pack-tear-inside" src="${art}" alt="" draggable="false"></div>
         <div class="pack-tear-deck">${deck}</div>
         <div class="pack-tear-shell pack-tear-shell-front">
-          <img class="pack-tear-art pack-tear-body" src="${ART}" alt="" draggable="false" style="clip-path:${body}">
+          <img class="pack-tear-art pack-tear-body" src="${art}" alt="" draggable="false" style="clip-path:${body}">
           <span class="pack-tear-sheen" style="clip-path:${body}"></span>
         </div>
-        <img class="pack-tear-art pack-tear-strip-rest" src="${ART}" alt="" draggable="false">
-        <img class="pack-tear-art pack-tear-strip-torn" src="${ART}" alt="" draggable="false">
+        <img class="pack-tear-art pack-tear-strip-rest" src="${art}" alt="" draggable="false">
+        <img class="pack-tear-art pack-tear-strip-torn" src="${art}" alt="" draggable="false">
         <svg class="pack-tear-art pack-tear-edge" viewBox="0 0 ${WIDTH} ${HEIGHT}"><polyline pathLength="1" fill="none"/></svg>
         <img class="pack-tear-flare" src="${FLARE}" alt="" draggable="false">
         <span class="pack-tear-sparks">${sparks}</span>

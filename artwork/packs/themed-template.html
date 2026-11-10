@@ -1,0 +1,265 @@
+<!doctype html>
+<!-- Source for the themed pack artwork. Same geometry as pack-template.html
+     (pack at x 128-894, crimp ending at y 178) so pack-opening.js tears it
+     along the same line. Each theme has its own palette, scene and wording.
+     Render with ?theme=<key> (see artwork/packs/README.md). -->
+<html lang="es"><head><meta charset="utf-8"><style>
+html,body{margin:0;background:transparent}
+svg{display:block;width:1024px;height:1536px}
+text{font-family:"Avenir Next Condensed","Avenir Next","Helvetica Neue",sans-serif}
+.scene{display:none}
+</style></head><body>
+<svg id="pack" viewBox="-96.4 -61.5 1219 1829" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="var(--m1)"/><stop offset=".35" stop-color="var(--m2)"/><stop offset=".55" stop-color="var(--m3)"/><stop offset=".8" stop-color="var(--m2)"/><stop offset="1" stop-color="var(--m4)"/>
+  </linearGradient>
+  <linearGradient id="metalV" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="var(--m3)"/><stop offset=".5" stop-color="var(--m4)"/><stop offset="1" stop-color="var(--m2)"/>
+  </linearGradient>
+  <linearGradient id="holo" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#ff7ab6"/><stop offset=".2" stop-color="#ffd36e"/><stop offset=".4" stop-color="#9dffb0"/><stop offset=".6" stop-color="#7ee8ff"/><stop offset=".8" stop-color="#b28cff"/><stop offset="1" stop-color="#ff7ab6"/>
+  </linearGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="var(--b1)"/><stop offset=".55" stop-color="var(--b2)"/><stop offset="1" stop-color="var(--b3)"/>
+  </linearGradient>
+  <linearGradient id="curve" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset=".07" stop-color="#fff" stop-opacity=".10"/><stop offset=".16" stop-color="#000" stop-opacity="0"/>
+    <stop offset=".84" stop-color="#000" stop-opacity="0"/><stop offset=".93" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".6"/>
+  </linearGradient>
+  <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+    <stop offset=".18" stop-color="#fff" stop-opacity="0"/><stop offset=".26" stop-color="#fff" stop-opacity=".09"/><stop offset=".31" stop-color="#fff" stop-opacity="0"/>
+    <stop offset=".58" stop-color="#fff" stop-opacity="0"/><stop offset=".63" stop-color="#fff" stop-opacity=".05"/><stop offset=".66" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+  <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+    <stop offset="0" stop-color="var(--g1)" stop-opacity=".55"/><stop offset=".6" stop-color="var(--g1)" stop-opacity=".12"/><stop offset="1" stop-color="var(--g1)" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="medal" cx=".5" cy=".42" r=".6">
+    <stop offset="0" stop-color="var(--d1)"/><stop offset="1" stop-color="var(--d2)"/>
+  </radialGradient>
+  <pattern id="ridges" width="14" height="10" patternUnits="userSpaceOnUse">
+    <rect width="14" height="10" fill="url(#metalV)"/><rect width="5" height="10" fill="#000" opacity=".22"/><rect x="5" width="2" height="10" fill="#fff" opacity=".25"/>
+  </pattern>
+  <pattern id="halftone" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
+    <circle cx="11" cy="11" r="3.4" fill="#6b3a17" opacity=".14"/>
+  </pattern>
+  <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
+    <circle cx="20" cy="20" r="1.6" fill="#ffffff" opacity=".10"/>
+  </pattern>
+  <!-- Vice City -->
+  <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffe76a"/><stop offset=".45" stop-color="#ff9a3d"/><stop offset="1" stop-color="#ff2e88"/>
+  </linearGradient>
+  <linearGradient id="neon" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ff4fb3"/><stop offset=".5" stop-color="#ffe2f4"/><stop offset="1" stop-color="#3ee8ff"/>
+  </linearGradient>
+  <linearGradient id="gridFade" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#3ee8ff" stop-opacity="0"/><stop offset=".35" stop-color="#3ee8ff" stop-opacity=".55"/><stop offset="1" stop-color="#3ee8ff" stop-opacity=".9"/>
+  </linearGradient>
+  <mask id="sunCuts"><rect x="0" y="0" width="1024" height="1536" fill="#fff"/>
+    <rect x="0" y="560" width="1024" height="10" fill="#000"/><rect x="0" y="600" width="1024" height="14" fill="#000"/><rect x="0" y="642" width="1024" height="18" fill="#000"/><rect x="0" y="686" width="1024" height="22" fill="#000"/>
+  </mask>
+  <!-- Halloween -->
+  <radialGradient id="moon" cx=".42" cy=".38" r=".6">
+    <stop offset="0" stop-color="#fff6d8"/><stop offset=".7" stop-color="#f3d58e"/><stop offset="1" stop-color="#d89a3c"/>
+  </radialGradient>
+  <radialGradient id="pumpkin" cx=".45" cy=".35" r=".7">
+    <stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#c2500e"/>
+  </radialGradient>
+  <!-- Locations -->
+  <pattern id="contours" width="260" height="260" patternUnits="userSpaceOnUse">
+    <g fill="none" stroke="#9cc8ff" stroke-width="2" opacity=".13">
+      <path d="M-20 60 C60 20 120 100 200 60 S300 40 300 40"/><path d="M-20 110 C70 70 130 150 210 110 S300 90 300 90"/>
+      <path d="M-20 160 C50 130 140 210 220 160 S300 140 300 140"/><path d="M-20 210 C60 180 120 250 200 210 S300 190 300 190"/>
+      <ellipse cx="200" cy="40" rx="30" ry="16"/><ellipse cx="200" cy="40" rx="14" ry="7"/>
+    </g>
+  </pattern>
+  <!-- Objects -->
+  <pattern id="things" width="180" height="180" patternUnits="userSpaceOnUse" patternTransform="rotate(-10)">
+    <g fill="none" stroke="#8ff0d4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".12">
+      <!-- can --><rect x="18" y="16" width="34" height="54" rx="6"/><path d="M18 28h34M18 58h34"/>
+      <!-- burger --><path d="M100 50h52M98 38c0-16 56-16 56 0zM98 62h56c0 10-56 10-56 0z"/>
+      <!-- cup --><path d="M28 112h40l-5 46H33zM68 122c12 0 12 20 0 20"/><path d="M40 100c0-6 6-6 6-12M54 100c0-6 6-6 6-12"/>
+      <!-- jar --><rect x="108" y="108" width="40" height="52" rx="10"/><rect x="112" y="98" width="32" height="10" rx="3"/>
+    </g>
+  </pattern>
+  <clipPath id="cardClip"><rect x="-115" y="-201" width="230" height="403" rx="14"/></clipPath>
+  <clipPath id="bodyClip"><rect x="74" y="132" width="876" height="1372" rx="10"/></clipPath>
+  <clipPath id="medalInner"><circle cx="512" cy="810" r="297"/></clipPath>
+  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="18"/></filter>
+  <filter id="bloom" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="drop" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000" flood-opacity=".55"/></filter>
+  <filter id="sepia"><feColorMatrix type="matrix" values=".5 .55 .2 0 .06  .38 .5 .17 0 .03  .26 .36 .14 0 0  0 0 0 1 0"/></filter>
+</defs>
+
+<!-- Crimped seals -->
+<g filter="url(#drop)">
+  <path d="M56 54 h912 l-6 12 6 12 -6 12 6 12 -6 12 6 12 -6 12 6 12 v8 H56 v-8 l6 -12 -6 -12 6 -12 -6 -12 6 -12 -6 -12 6 -12 Z" fill="url(#ridges)"/>
+  <path transform="translate(0 100)" d="M56 1482 h912 l-6 -12 6 -12 -6 -12 6 -12 -6 -12 6 -12 -6 -12 6 -12 v-8 H56 v8 l6 12 -6 12 6 12 -6 12 6 12 -6 12 6 12 Z" fill="url(#ridges)"/>
+  <rect x="68" y="132" width="888" height="1372" rx="12" fill="url(#body)"/>
+</g>
+<rect x="56" y="126" width="912" height="10" fill="url(#metal)" opacity=".9"/>
+<rect x="56" y="1500" width="912" height="10" fill="url(#metal)" opacity=".9"/>
+
+<g clip-path="url(#bodyClip)">
+  <!-- RETRO: 70s sunburst bands on cream, halftone print -->
+  <g class="scene" data-scene="retro">
+    <g transform="translate(512 1560)">
+      <path d="M0 0 L-1400 -1500 L-700 -1700Z" fill="#e2762b" opacity=".9"/>
+      <path d="M0 0 L-700 -1700 L0 -1760Z" fill="#f2b33d" opacity=".9"/>
+      <path d="M0 0 L0 -1760 L700 -1700Z" fill="#c65a22" opacity=".9"/>
+      <path d="M0 0 L700 -1700 L1400 -1500Z" fill="#8c3d1a" opacity=".9"/>
+    </g>
+    <rect x="68" y="132" width="888" height="1372" fill="url(#halftone)"/>
+    <rect x="68" y="132" width="888" height="300" fill="#f4e6c6" opacity=".78"/>
+    <rect x="68" y="1262" width="888" height="242" fill="#f4e6c6"/>
+    <g fill="none" stroke-width="16"><path d="M68 1250H956" stroke="#7a3214"/><path d="M68 1232H956" stroke="#c65a22"/><path d="M68 1214H956" stroke="#f2b33d"/></g>
+    <rect x="68" y="1262" width="888" height="242" fill="url(#halftone)"/>
+  </g>
+
+  <!-- VICE CITY: synthwave sun, neon grid floor, palm silhouettes -->
+  <g class="scene" data-scene="vice_city">
+    <rect x="68" y="132" width="888" height="1372" fill="url(#dots)"/>
+    <g fill="#fff" opacity=".7"><circle cx="190" cy="470" r="2"/><circle cx="850" cy="520" r="2.4"/><circle cx="300" cy="300" r="1.6"/><circle cx="760" cy="300" r="1.8"/><circle cx="880" cy="760" r="1.6"/><circle cx="150" cy="720" r="2"/></g>
+    <circle cx="512" cy="700" r="380" fill="url(#sun)" mask="url(#sunCuts)" opacity=".38" filter="url(#bloom)"/>
+    <g stroke="url(#gridFade)" stroke-width="3" fill="none">
+      <path d="M68 1040H956M68 1090H956M68 1160H956M68 1250H956M68 1370H956"/>
+      <path d="M512 1000V1504M440 1000 260 1504M584 1000 764 1504M368 1000 8 1504M656 1000 1016 1504M296 1000 -240 1504M728 1000 1264 1504"/>
+    </g>
+    <g fill="#12021f">
+      <path d="M128 1504 C140 1300 150 1150 176 1000 L186 1002 C166 1150 160 1300 160 1504Z"/>
+      <path d="M180 1000 c-60 -40 -130 -30 -170 10 c60 -16 110 -10 150 20 c-70 -10 -120 20 -140 60 c50 -40 100 -50 150 -40 c-30 30 -40 80 -30 120 c10 -50 30 -90 56 -110 c20 40 26 90 20 130 c20 -50 22 -100 8 -140 c50 0 100 30 130 70 c-20 -60 -70 -100 -130 -110 c50 -30 110 -30 160 -10 c-50 -40 -120 -40 -170 -10 c10 -40 40 -70 80 -90 c-50 0 -90 40 -114 100Z"/>
+      <g transform="translate(1024 0) scale(-1 1)">
+        <path d="M118 1504 C128 1330 136 1190 158 1060 L168 1062 C150 1190 146 1330 150 1504Z"/>
+        <path d="M162 1060 c-60 -40 -130 -30 -170 10 c60 -16 110 -10 150 20 c-70 -10 -120 20 -140 60 c50 -40 100 -50 150 -40 c-30 30 -40 80 -30 120 c10 -50 30 -90 56 -110 c20 40 26 90 20 130 c20 -50 22 -100 8 -140 c50 0 100 30 130 70 c-20 -60 -70 -100 -130 -110 c50 -30 110 -30 160 -10 c-50 -40 -120 -40 -170 -10 c10 -40 40 -70 80 -90 c-50 0 -90 40 -114 100Z"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- HALLOWEEN: full moon, bats, cobwebs and a row of pumpkins -->
+  <g class="scene" data-scene="halloween">
+    <circle cx="512" cy="760" r="420" fill="#f3d58e" opacity=".07" filter="url(#soft)"/>
+    <circle cx="760" cy="520" r="120" fill="url(#moon)" opacity=".85"/>
+    <circle cx="726" cy="490" r="16" fill="#d9a85a" opacity=".5"/><circle cx="790" cy="560" r="22" fill="#d9a85a" opacity=".4"/>
+    <g fill="#0a0410">
+      <path id="bat" d="M0 0 c-14 -14 -34 -16 -52 -6 c12 2 18 10 18 18 c-10 -6 -22 -4 -30 4 c16 -2 26 4 32 14 c6 -12 18 -18 32 -16 c14 -2 26 4 32 16 c6 -10 16 -16 32 -14 c-8 -8 -20 -10 -30 -4 c0 -8 6 -16 18 -18 c-18 -10 -38 -8 -52 6 l-6 -10 -4 8 -4 -8z"/>
+      <use href="#bat" transform="translate(250 360) scale(1.4)"/><use href="#bat" transform="translate(360 470) scale(.9) rotate(-10)"/>
+      <use href="#bat" transform="translate(860 680) scale(1.1) rotate(8)"/><use href="#bat" transform="translate(200 900) scale(.8) rotate(-6)"/>
+    </g>
+    <g fill="none" stroke="#e9dcff" stroke-width="1.6" opacity=".28">
+      <path d="M68 132 L330 132 M68 132 L68 394 M68 132 L270 320 M68 132 L190 380 M68 132 L310 230"/>
+      <path d="M140 132 Q150 200 68 205 M210 132 Q225 265 68 278 M280 132 Q300 330 68 350"/>
+      <g transform="translate(1024 0) scale(-1 1)"><path d="M68 132 L330 132 M68 132 L68 394 M68 132 L270 320 M68 132 L190 380 M68 132 L310 230"/><path d="M140 132 Q150 200 68 205 M210 132 Q225 265 68 278 M280 132 Q300 330 68 350"/></g>
+    </g>
+    <g id="pumpkins">
+      <g transform="translate(176 1400) scale(.85)"><ellipse rx="80" ry="62" fill="url(#pumpkin)"/><path d="M-40 -58 Q-50 0 -40 58 M0 -62 V62 M40 -58 Q50 0 40 58" stroke="#8f3507" stroke-width="5" fill="none" opacity=".5"/><path d="M-4 -60 q4 -24 18 -30" stroke="#3f5a1c" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M-36 -12 l14 -18 14 18z M8 -12 l14 -18 14 18z M-40 18 q40 30 80 0 l-12 6 -10 -8 -10 10 -10 -10 -10 10 -10 -8z" fill="#ffd56b"/></g>
+      <g transform="translate(852 1410) scale(.7)"><ellipse rx="80" ry="62" fill="url(#pumpkin)"/><path d="M-40 -58 Q-50 0 -40 58 M0 -62 V62 M40 -58 Q50 0 40 58" stroke="#8f3507" stroke-width="5" fill="none" opacity=".5"/><path d="M-4 -60 q4 -24 18 -30" stroke="#3f5a1c" stroke-width="10" fill="none" stroke-linecap="round"/></g>
+    </g>
+  </g>
+
+  <!-- FULL ART: iridescent prism shards -->
+  <g class="scene" data-scene="full_art">
+    <g opacity=".22" fill="url(#holo)">
+      <path d="M68 132 L420 132 L68 620Z"/><path d="M956 132 L956 560 L640 132Z"/>
+      <path d="M68 900 L380 1504 L68 1504Z"/><path d="M956 980 L956 1504 L620 1504Z"/>
+      <path d="M300 132 L520 132 L160 560Z" opacity=".5"/><path d="M956 700 L956 960 L760 1504 L700 1504Z" opacity=".5"/>
+    </g>
+    <g stroke="url(#holo)" stroke-width="2" opacity=".35" fill="none">
+      <path d="M68 620 L420 132 M640 132 L956 560 M68 900 L380 1504 M620 1504 L956 980"/>
+    </g>
+    <ellipse cx="512" cy="810" rx="430" ry="430" fill="url(#holo)" opacity=".10" filter="url(#soft)"/>
+  </g>
+
+  <!-- OBJECTS: a pattern of the club's everyday objects -->
+  <g class="scene" data-scene="objects">
+    <rect x="68" y="132" width="888" height="1372" fill="url(#things)"/>
+    <ellipse cx="512" cy="810" rx="420" ry="420" fill="url(#glow)"/>
+  </g>
+
+  <!-- LOCATIONS: map contours, a pin and the skyline -->
+  <g class="scene" data-scene="locations">
+    <rect x="68" y="132" width="888" height="1372" fill="url(#contours)"/>
+    <ellipse cx="512" cy="810" rx="420" ry="420" fill="url(#glow)"/>
+    <g fill="#060c1a" opacity=".9">
+      <path d="M68 1504 V1300 h50 v-60 h40 v90 h30 v-150 h60 v60 h24 v-120 l30 -30 30 30 v170 h40 v-90 h50 v40 h30 v-200 h20 v-40 h40 v40 h20 v220 h40 v-110 h60 v70 h30 v-140 h50 v100 h30 v-60 h40 v80 h44 v-50 h50 v220Z"/>
+    </g>
+    <g fill="#9cc8ff" opacity=".35"><rect x="270" y="1220" width="8" height="10"/><rect x="290" y="1250" width="8" height="10"/><rect x="560" y="1140" width="8" height="10"/><rect x="580" y="1180" width="8" height="10"/><rect x="560" y="1220" width="8" height="10"/><rect x="760" y="1290" width="8" height="10"/></g>
+  </g>
+  <rect x="68" y="132" width="888" height="1372" fill="url(#sheen)"/>
+</g>
+
+<!-- Two real cards of the theme fanned behind the medallion -->
+<g id="fan" filter="url(#drop)">
+  <g transform="translate(236 860) rotate(-13)"><g clip-path="url(#cardClip)"><image class="fan-card" x="-115" y="-201" width="230" height="403" preserveAspectRatio="xMidYMid slice"/></g><rect x="-115" y="-201" width="230" height="403" rx="14" fill="none" stroke="url(#metal)" stroke-width="5"/></g>
+  <g transform="translate(788 860) rotate(13)"><g clip-path="url(#cardClip)"><image class="fan-card" x="-115" y="-201" width="230" height="403" preserveAspectRatio="xMidYMid slice"/></g><rect x="-115" y="-201" width="230" height="403" rx="14" fill="none" stroke="url(#metal)" stroke-width="5"/></g>
+</g>
+
+<!-- Frame -->
+<rect x="104" y="166" width="816" height="1304" rx="8" fill="none" stroke="url(#metal)" stroke-width="3"/>
+<rect x="118" y="180" width="788" height="1276" rx="4" fill="none" stroke="url(#metal)" stroke-width="1.2" opacity=".55"/>
+<g fill="url(#metal)">
+  <path d="M104 214 v-48 h48 v6 h-42 v42Z"/><path d="M920 214 v-48 h-48 v6 h42 v42Z"/>
+  <path d="M104 1422 v48 h48 v-6 h-42 v-42Z"/><path d="M920 1422 v48 h-48 v-6 h42 v-42Z"/>
+</g>
+
+<!-- Title -->
+<text id="eyebrow" x="512" y="262" text-anchor="middle" font-size="34" font-weight="600" letter-spacing="14" fill="url(#metal)">SOBRE TEMÁTICO</text>
+<g transform="translate(512 300)"><rect x="-150" y="-1" width="300" height="2" fill="url(#metal)" opacity=".7"/><rect x="-7" y="-7" width="14" height="14" transform="rotate(45)" fill="url(#metal)"/></g>
+<text id="title" x="512" y="408" text-anchor="middle" font-size="112" font-weight="700" letter-spacing="6" fill="url(#metal)">TEMA</text>
+
+<!-- Medallion and Chota -->
+<circle cx="512" cy="810" r="300" fill="url(#medal)" stroke="url(#metal)" stroke-width="6"/>
+<g clip-path="url(#medalInner)" id="medalScene"></g>
+<circle cx="512" cy="810" r="276" fill="none" stroke="url(#metal)" stroke-width="1.5" opacity=".6" stroke-dasharray="2 10"/>
+<ellipse cx="512" cy="1092" rx="190" ry="26" fill="#000" opacity=".45" filter="url(#soft)"/>
+<g id="mascotGroup" filter="url(#drop)">
+  <image id="mascot" href="../../icons/mascot/tigreton.png" x="232" y="516" width="560" height="590" style="image-rendering:pixelated"/>
+</g>
+
+<!-- Ribbon -->
+<g transform="translate(512 1192)">
+  <path d="M-330 -46 H330 L300 0 L330 46 H-330 L-300 0Z" fill="url(#metal)"/>
+  <path d="M-312 -36 H312 L288 0 L312 36 H-312 L-288 0Z" fill="none" stroke="var(--ink)" stroke-opacity=".35" stroke-width="2"/>
+  <text id="ribbon" y="14" text-anchor="middle" font-size="40" font-weight="700" letter-spacing="10" fill="var(--ink)">THE BIG BOY RULES</text>
+</g>
+
+<!-- Footer -->
+<text id="kicker" x="512" y="1320" text-anchor="middle" font-size="34" font-weight="600" letter-spacing="6" fill="url(#metal)">6 CARTAS</text>
+<text id="motto" x="512" y="1374" text-anchor="middle" font-size="30" font-weight="500" letter-spacing="2" fill="var(--motto)"></text>
+
+<!-- Plastic curvature -->
+<rect x="68" y="132" width="888" height="1372" rx="12" fill="url(#curve)"/>
+</svg>
+<script>
+const theme = new URLSearchParams(location.search).get('theme') || 'retro';
+const themes = {
+  retro: {vars: {m1:'#5a2a0e',m2:'#a4501c',m3:'#e69a4a',m4:'#6b3212',b1:'#f4e6c6',b2:'#ecd6a6',b3:'#e2c48e',g1:'#f2b33d',d1:'#fbf1da',d2:'#ecd3a0',ink:'#fdf2da',motto:'#5a2a0e'},
+    title: 'RETRO', kicker: '1 CARTA RETRO ASEGURADA', motto: 'Como antes, pero mejor.', medal: '<rect x="200" y="500" width="624" height="620" fill="url(#halftone)"/>'},
+  vice_city: {vars: {m1:'#ff2e88',m2:'#ff9bd2',m3:'#ffffff',m4:'#3ee8ff',b1:'#12021f',b2:'#2a0640',b3:'#4a0b52',g1:'#ff4fb3',d1:'#3a0a52',d2:'#12021f',ink:'#22042f',motto:'#ffc4e6'},
+    title: 'VICE CITY', kicker: '1 CARTA VICE CITY ASEGURADA', motto: 'Neón, palmeras y leyendas.', medal: '<circle cx="512" cy="760" r="210" fill="url(#sun)" mask="url(#sunCuts)" opacity=".9"/><path d="M212 900 H812" stroke="#3ee8ff" stroke-width="3" opacity=".7"/>', titleFilter: 'url(#bloom)'},
+  halloween: {vars: {m1:'#9a3a06',m2:'#ff8a1f',m3:'#ffd28a',m4:'#b84a0a',b1:'#140a22',b2:'#1d0d30',b3:'#0d0716',g1:'#ff8a1f',d1:'#2a1440',d2:'#0e0718',ink:'#1a0b04',motto:'#e6c3ff'},
+    title: 'HALLOWEEN', kicker: '1 CARTA HALLOWEEN ASEGURADA', motto: 'Truco o carta.', medal: '<circle cx="512" cy="700" r="190" fill="url(#moon)" opacity=".22"/>'},
+  full_art: {vars: {m1:'#9e7bff',m2:'#e7f3ff',m3:'#ffffff',m4:'#7ee8ff',b1:'#111421',b2:'#0a0c14',b3:'#151826',g1:'#b8a4ff',d1:'#1c2034',d2:'#0a0c14',ink:'#12142a',motto:'#cfd8ff'},
+    title: 'FULL ART', kicker: '1 CARTA FULL ART ASEGURADA', motto: 'Arte de borde a borde.', medal: '<circle cx="512" cy="810" r="300" fill="url(#holo)" opacity=".16"/>', holoText: true},
+  objects: {vars: {m1:'#1f6e5a',m2:'#8ff0d4',m3:'#eafff8',m4:'#2d8c72',b1:'#0a2826',b2:'#061a19',b3:'#0b2422',g1:'#5fe0bd',d1:'#123a36',d2:'#061a19',ink:'#062019',motto:'#b9f3e2'},
+    title: 'OBJETOS', kicker: '1 OBJETO ÉPICO O MEJOR', motto: 'Lo que nunca falta.', medal: '<rect x="200" y="500" width="624" height="620" fill="url(#things)"/>'},
+  locations: {vars: {m1:'#3d6fb3',m2:'#a8d0ff',m3:'#f1f8ff',m4:'#4a7fc4',b1:'#0c1a33',b2:'#08111f',b3:'#0b1730',g1:'#6aa8ff',d1:'#15284a',d2:'#08111f',ink:'#081427',motto:'#bcd8ff'},
+    title: 'UBICACIONES', kicker: '1 UBICACIÓN ÉPICA O MEJOR', motto: 'Donde pasó todo.', medal: '<rect x="200" y="500" width="624" height="620" fill="url(#contours)"/><path d="M512 560c-46 0-80 34-80 78 0 58 80 132 80 132s80-74 80-132c0-44-34-78-80-78z" fill="#a8d0ff" opacity=".18"/>', titleSize: 98},
+};
+const fans = {"retro": ["carlos-sanchez-rodriguez-retro-88-v2", "juan-manuel-perez-saldana-retro-90-v1"], "vice_city": ["fufi-vice-city-89-v3", "ruben-king-vice-city-96-v2"], "halloween": ["daniel-gonzalez-motos-halloween-96-v2", "jose-enrique-fernandez-cruz-halloween-97-v1"], "full_art": ["felipe-hp-full-art-87-v4", "lizzy-machado-yong-full-art-85-v1"], "objects": ["big-mac-legendario-v1", "bote-de-nutella-epico-v1"], "locations": ["carabanchel-legendaria-v1", "castellana-legendaria-v2"]};
+const config = themes[theme];
+const svg = document.getElementById('pack');
+for (const [key, value] of Object.entries(config.vars)) svg.style.setProperty('--' + key, value);
+document.querySelector(`[data-scene="${theme}"]`).style.display = 'inline';
+const title = document.getElementById('title');
+title.textContent = config.title;
+if (config.titleSize) title.setAttribute('font-size', config.titleSize);
+if (config.titleFilter) title.setAttribute('filter', config.titleFilter);
+if (config.holoText) { title.setAttribute('fill', 'url(#holo)'); document.getElementById('kicker').setAttribute('fill', 'url(#holo)'); }
+document.getElementById('kicker').textContent = config.kicker;
+document.getElementById('motto').textContent = config.motto;
+document.getElementById('medalScene').innerHTML = config.medal || '';
+document.querySelectorAll('.fan-card').forEach((node, index) => node.setAttribute('href', `../../icons/cards/thumbnails/${fans[theme][index]}.jpg`));
+if (config.mascotFilter) document.getElementById('mascot').setAttribute('filter', config.mascotFilter);
+</script>
+</body></html>
