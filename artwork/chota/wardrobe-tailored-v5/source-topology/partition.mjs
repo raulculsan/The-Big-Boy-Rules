@@ -45,10 +45,14 @@ export function fillBareHoles(source,partition,bare){
  // torso left open towards the neck or a paw are gaps too, not background.
  const bfs=(seed,limit)=>{const d=new Uint16Array(65536).fill(65535),q=[];for(let k=0;k<65536;k++)if(seed(k)){d[k]=0;q.push(k);}for(let j=0;j<q.length;j++){const k=q[j],x=k%256,y=k>>8;if(d[k]>=limit)continue;for(const n of [x>0?k-1:-1,x<255?k+1:-1,y>0?k-256:-1,y<255?k+256:-1,x>0&&y>0?k-257:-1,x<255&&y>0?k-255:-1,x>0&&y<255?k+255:-1,x<255&&y<255?k+257:-1])if(n>=0&&d[n]===65535){d[n]=d[k]+1;q.push(n);}}return d;};
  const R=12,grown=bfs(k=>opaque[k],R),outside=bfs(k=>grown[k]>R,R+1),closed=new Uint8Array(65536);for(let k=0;k<65536;k++)closed[k]=!opaque[k]&&outside[k]>R?1:0;
+ // Baggy trousers are wider than his legs, so only the pelvis (the top of the
+ // trouser region) may be closed with fur; lower down the gap between legs stays.
+ let top=256,bottom=-1;for(let k=0;k<65536;k++)if(partition.labels[k]===2){top=Math.min(top,k>>8);bottom=Math.max(bottom,k>>8);}
+ const pelvis=bottom<0?0:top+(bottom-top)*.42;
  const seen=new Uint8Array(65536);let filled=0;
  for(let start=0;start<65536;start++){if(opaque[start]||seen[start])continue;const q=[start];seen[start]=1;let edge=false;
   for(let j=0;j<q.length;j++){const k=q[j],x=k%256,y=k>>8;if(x===0||y===0||x===255||y===255)edge=true;for(const n of [x>0?k-1:-1,x<255?k+1:-1,y>0?k-256:-1,y<255?k+256:-1])if(n>=0&&!opaque[n]&&!seen[n]){seen[n]=1;q.push(n);}}
-  const gap=edge||q.length>900?q.filter(k=>closed[k]&&source[k*4+3]>=128&&(partition.labels[k]||partition.nearest[k])===1):q;if(!gap.length)continue;if(gap!==q){q.length=0;q.push(...gap);}
+  const gap=edge||q.length>900?q.filter(k=>{if(!closed[k]||source[k*4+3]<128)return false;const slot=partition.labels[k]||partition.nearest[k];return slot===1||(slot===2&&(k>>8)<pelvis);}):q;if(!gap.length)continue;if(gap!==q){q.length=0;q.push(...gap);}
   const hole=new Set(q),colour=new Map();let frontier=[];
   for(const k of q){const x=k%256,y=k>>8;for(const n of [x>0?k-1:-1,x<255?k+1:-1,y>0?k-256:-1,y<255?k+256:-1])if(n>=0&&!hole.has(n)&&opaque[n]){const i=n*4,src=[partition.anatomy,bare[1],bare[2],bare[3]].find(b=>b[i+3]>=128),c=src.subarray(i,i+4);if(Math.max(c[0],c[1],c[2])<110)continue;colour.set(k,c);frontier.push(k);break;}}
   if(!frontier.length)for(const k of q){const x=k%256,y=k>>8;for(const n of [x>0?k-1:-1,x<255?k+1:-1,y>0?k-256:-1,y<255?k+256:-1])if(n>=0&&!hole.has(n)&&opaque[n]){const i=n*4,src=[partition.anatomy,bare[1],bare[2],bare[3]].find(b=>b[i+3]>=128);colour.set(k,src.subarray(i,i+4));frontier.push(k);break;}}

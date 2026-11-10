@@ -3917,12 +3917,13 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       else {
         seated(false);
         const start = back.rise ? approach : back.from;
-        roomWalk(start,home,(t-back.rise)/back.duration,t,start.y > home.y + .012);
+        roomWalk(start,home,(t-back.rise)/back.duration,t,start.y - home.y > Math.max(.03, Math.abs(home.x - start.x) * .7));
       }
     } else if (kind === "spot") {
       const from = visit.from || home, distance = Math.hypot(target.x-from.x, target.y-from.y);
       const travel = Math.min(4200, Math.max(700, distance * 9000));
-      if (elapsed < travel) roomWalk(from,target,elapsed/travel,elapsed,target.y < from.y - .012);
+      // Back view only when he mostly climbs the room; sideways walks keep his face.
+      if (elapsed < travel) roomWalk(from,target,elapsed/travel,elapsed,from.y - target.y > Math.max(.03, Math.abs(target.x - from.x) * .7));
       else if (elapsed < travel + 5200) {
         // He stands where he was sent, facing the room, until called again.
         roomPosition(target); setFrame(0); character.style.transform = ""; pet.classList.remove("is-walking");

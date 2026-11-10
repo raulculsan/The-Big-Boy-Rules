@@ -132,6 +132,7 @@
       node.style.backgroundSize = `${cols * 100}% ${rows * 100}%`;
       node.style.backgroundPosition = `${index % cols * 100 / (cols - 1)}% ${rows === 1 ? 0 : Math.floor(index / cols) * 100 / (rows - 1)}%`;
       this.dress(sheet, node.style.backgroundPosition);
+      globalThis.ChotaCloth?.frame(node, sheet, index);
     },
     frame(index) {
       // A gesture can interrupt speech; no queued mouth tick may select a talk

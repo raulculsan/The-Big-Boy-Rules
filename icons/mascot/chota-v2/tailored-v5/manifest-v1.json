@@ -167,15 +167,15 @@
       "name": "bare-topwear",
       "sheet": "base",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-base.webp",
-      "bytes": 138994,
-      "sha256": "d3c6aa8029eb384b47ae5018cb8188267b65239ef450f187f2d5d10e4ece37f4"
+      "bytes": 139624,
+      "sha256": "21cff93cb480da58f061903202ca39483624d6534ba1e3a6bcfb6d123c6eaa67"
     },
     {
       "name": "bare-bottomwear",
       "sheet": "base",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-base.webp",
-      "bytes": 120470,
-      "sha256": "3a0942f27ea4efe97e32fdc76db547f12ba4dcf5e7a9720a9a68bbeeea9e4caa"
+      "bytes": 122754,
+      "sha256": "fa343172bd157f138da0bcd7a03fbb3058486753d8cd48f28042c02848162645"
     },
     {
       "name": "bare-footwear",
@@ -307,15 +307,15 @@
       "name": "bare-topwear",
       "sheet": "directional",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-directional.webp",
-      "bytes": 141704,
-      "sha256": "d758c20615a1e780181c574a50623ad843839d2ce5b16a541c30b1c262fd600f"
+      "bytes": 141786,
+      "sha256": "09a4c75e6eea35061c4e90665c5dfcdf71ad417fe810f3a73315dc7eb1291814"
     },
     {
       "name": "bare-bottomwear",
       "sheet": "directional",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-directional.webp",
-      "bytes": 95220,
-      "sha256": "dfd2cb2ced7c4eaff5af7e1160b09331b3ba6ce8af46ce6fc13bbf61194607a9"
+      "bytes": 97326,
+      "sha256": "54521ccebc6d00d13fbb3374cced43d58d89f9e694a7c762d79a95e3a4494ea2"
     },
     {
       "name": "bare-footwear",
@@ -447,15 +447,15 @@
       "name": "bare-topwear",
       "sheet": "contextual",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-contextual.webp",
-      "bytes": 104270,
-      "sha256": "acc3b4c27a90763271931b8621a5e1465f026dc072c4fba7edf45c7ea877a42c"
+      "bytes": 104444,
+      "sha256": "d05aacba485b9680be2f6cc2e206954062885317d01bfd558566275f0c7ec51a"
     },
     {
       "name": "bare-bottomwear",
       "sheet": "contextual",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-contextual.webp",
-      "bytes": 73264,
-      "sha256": "83fdf968707ef86f3eb776a4831a6d6a148c3655702413fac8268c947096bb79"
+      "bytes": 75908,
+      "sha256": "5cd3715a27ab79df2b01a941357aeddf604069c2db69cc9aa58241fc8ac8bdc6"
     },
     {
       "name": "bare-footwear",
@@ -587,15 +587,15 @@
       "name": "bare-topwear",
       "sheet": "room",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-room.webp",
-      "bytes": 17386,
-      "sha256": "7879e56019cd2618b048406391791f837f627198f64760639ef950b578d7b2d1"
+      "bytes": 17476,
+      "sha256": "f19bc117529ba5206e3bd2efb1e470e6d0a0186fe997af32ddea1beb8692692b"
     },
     {
       "name": "bare-bottomwear",
       "sheet": "room",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-room.webp",
-      "bytes": 20898,
-      "sha256": "876eecbcfb6ade0de56771e9ba6bbe97a34e7170f80fe277c673e86eac76aed2"
+      "bytes": 21962,
+      "sha256": "987ce1a19219f9a580a1181b1d7e229b42bb75953cd2a4ed636fb93c9ee92da4"
     },
     {
       "name": "bare-footwear",
@@ -727,15 +727,15 @@
       "name": "bare-topwear",
       "sheet": "talk",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-topwear-talk.webp",
-      "bytes": 8378,
-      "sha256": "d537a2055b37d72676e0db209cb345f23d7e7c1af31d66b9ab0c21295ad43027"
+      "bytes": 7864,
+      "sha256": "0ef1b528f26c3df188cf33bcfd1e4531a68fe6ee629a222707eead32c143bb31"
     },
     {
       "name": "bare-bottomwear",
       "sheet": "talk",
       "file": "icons/mascot/chota-v2/tailored-v5/bare-bottomwear-talk.webp",
-      "bytes": 5324,
-      "sha256": "86875774fd1f647cc2ba358a30af2620c5576bf6d17641242b27bf375f23cad3"
+      "bytes": 5278,
+      "sha256": "081a2a21b040cc54fa2174248c285e9418c58e72c26ead04fd685546268f536c"
     },
     {
       "name": "bare-footwear",

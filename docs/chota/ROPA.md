@@ -25,6 +25,13 @@ Aprobado por el usuario el 2026-11-09, tras la v5 «a medida» (`artwork/chota/w
 - **Pose atómica.** El cuerpo y la ropa cambian siempre juntos de hoja y de celda. Interrumpir el habla, un gesto o la caminata no puede dejar la ropa de otra pose.
 - **Versionar el arte.** Los atlas `tailored-v5` mantienen su nombre. Si se redibujan, hay que subir `ART_REVISION` en `chota-appearance.js` y la caché (`CACHE_NAME` y los `?v=`), para que ningún móvil mezcle capas viejas y nuevas.
 
+## 3b. Movimiento de la tela
+
+- La camiseta y el abrigo llevan inercia (`chota-cloth.js`): se redibujan sobre el sprite y se inclinan desde el cuello con un muelle amortiguado, de modo que el bajo se queda atrás al arrancar, se pasa al frenar y bota al saltar. Cabeza, brazos y patas se redibujan encima.
+- En reposo la tela es idéntica al sprite y las capas se ocultan. Con movimiento reducido no actúa.
+- Una prenda nueva de torso o de abrigo funciona sin más si sigue estas normas. Los pantalones y las zapatillas no llevan inercia.
+- El efecto es de uno a tres píxeles. No subir la ganancia: en pixel art más movimiento se ve falso.
+
 ## 4. Inventario y base de datos
 
 - Hay que conservar los IDs, precios, propiedad y huecos de las prendas existentes. Las originales (camiseta Stüssy blanca, vaqueros y Jordan Chicago) son gratis y se pueden quitar.
@@ -38,5 +45,5 @@ Que las pruebas automáticas de cobertura o de alfa pasen no basta; el usuario r
 2. Mirar las 67 poses ampliadas con muestreo nearest-neighbour para cada prenda nueva: puesta, sin ella y con abrigo. Fijarse en cuello, mangas, puños, cintura, entrepierna, bajos sobre las zapatillas, **las patas** y que **cada logo siga a su tela** pose a pose (andando, saltando, sentado, dormido y de espaldas).
 3. Comprobar que ninguna pose deja píxeles de piel cálida dentro de las manos con etiqueta de prenda (debe dar 0).
 4. Probar en `artwork/chota/modular-body-v1/integration.html` a 390×844: sede, dilema (andar, hablar, tocar para saltar y cambiar de ropa con el diálogo abierto), probador, armario y un minijuego, sin errores de consola.
-5. Ejecutar las pruebas `scripts/chota-*.test.mjs`.
+5. Ejecutar las pruebas `scripts/chota-*.test.mjs`. La revisión de encaje `scripts/chota-garment-fit.test.mjs` debe pasar entera: un solo dueño por píxel, misma silueta para todas las camisetas y para todos los pantalones, ningún hueco al quitar prendas, nada de pelo pintado como tela y logos visibles en todas las poses. Si se añade una prenda con logo, se añade su comprobación ahí.
 6. Publicar en web, Android e iPhone. Si cambia el código de la app, el Android se marca obligatorio. Comprobarlo en un móvil real no puede darse por hecho si no se ha hecho.

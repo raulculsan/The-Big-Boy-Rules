@@ -130,6 +130,7 @@
     const old=states.get(character);
     if(old?.sheet===sheet&&old.frame===index)return;
     const state={sheet,frame:index};states.set(character,state);if(selected)paint(character,state);paintOverlays(character,state);
+    globalThis.ChotaCloth?.frame(character,sheet,index);
   }
   async function previewEquip(id){
     if(globalThis.ChotaAppearance?.createPreview){
@@ -203,5 +204,7 @@
       const previous=state.entry;state.entry=entry;body.style.backgroundImage=`url("${entry.urls.base}")`;body.style.backgroundSize='600% 400%';node.dataset.chotaComposed='true';if(previous!==entry)previous?.release();return true;
     }).finally(()=>{if(state.token===token)state.promise=null;});return state.promise;
   }
-  globalThis.ChotaWardrobe=Object.freeze({outfit,applyOutfit,applyLegacyOutfit,preview,releasePreview,mount,frame,previewEquip,applyOwned,applyPants,applyShirt,applyShoes,describe,configure,selected:selectedID,pants:()=>worn.bottomwear?.id||null,shirt:()=>worn.topwear?.id||null,shoes:()=>worn.footwear?.id||null,items:()=>colors.map(color=>({id:`chota-tnf-${color}-v1`,color,purchase_enabled:false,active:false,price_coins:null})),poseCount:67});
+  // What the cloth follow-through (chota-cloth.js) redraws: shirt and coat as worn, defaults included.
+  const clothLayers=()=>visualLayers(currentDescriptors(),legacyVisual).filter(layer=>layer.slot==='topwear'||layer.slot==='outerwear');
+  globalThis.ChotaWardrobe=Object.freeze({clothLayers,outfit,applyOutfit,applyLegacyOutfit,preview,releasePreview,mount,frame,previewEquip,applyOwned,applyPants,applyShirt,applyShoes,describe,configure,selected:selectedID,pants:()=>worn.bottomwear?.id||null,shirt:()=>worn.topwear?.id||null,shoes:()=>worn.footwear?.id||null,items:()=>colors.map(color=>({id:`chota-tnf-${color}-v1`,color,purchase_enabled:false,active:false,price_coins:null})),poseCount:67});
 })();

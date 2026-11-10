@@ -64,3 +64,10 @@ html[data-chota-modular="true"] .chd-chota.is-facing-left.is-talking{background-
 /* While the saved outfit is restored on launch (at most 2.5 s), the Chota is
    hidden instead of showing the old baked clothes. */
 html[data-chota-pending="true"] :is(.tigreton-character,.chd-chota,.calendar-chota-sprite>span,.col-chota-sprite,.pack-chota-sprite,.album-chota-sprite,.catalog-chota-sprite,.dup-chota-sprite,.inbox-chota-sprite,.profile-chota-sprite,.store-hall-chota){visibility:hidden}
+
+/* Cloth follow-through: shirt and coat redrawn over the sprite and leaned from the
+   neck; head, arms and paws drawn again on top. Hidden at rest and while idling. */
+.chota-cloth,.chota-cloth-front{position:absolute;inset:0;display:none;background-repeat:no-repeat;image-rendering:pixelated;pointer-events:none}
+.chota-cloth{transform-origin:50% 46%;will-change:transform}
+.has-chota-cloth>.chota-cloth,.has-chota-cloth>.chota-cloth-front{display:block}
+@media(prefers-reduced-motion:reduce){.chota-cloth,.chota-cloth-front{display:none!important}}
