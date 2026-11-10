@@ -80,7 +80,7 @@
   const THEME_ART = Object.freeze({retro: 'icons/cards/sobre-tema-retro-v1.png', vice_city: 'icons/cards/sobre-tema-vice-city-v1.png', halloween: 'icons/cards/sobre-tema-halloween-v1.png', full_art: 'icons/cards/sobre-tema-full-art-v1.png', objects: 'icons/cards/sobre-tema-objects-v1.png', locations: 'icons/cards/sobre-tema-locations-v1.png'});
   const THEME_LINES = Object.freeze({retro: 'Retro asegurada', vice_city: 'Vice City asegurada', halloween: 'Halloween asegurada', full_art: 'Full Art asegurada', objects: 'Objeto épico o mejor', locations: 'Ubicación épica o mejor'});
   const themeArt = theme => THEME_ART[theme] || null;
-  let confirming = null, confirmTimer = 0, buying = false, active = 'standard', carouselBound = false, motionFrame = 0;
+  let confirming = null, confirmTimer = 0, buying = false, active = 'standard', carouselBound = false, motionFrame = 0, lastScroll = 0;
   const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const waitingFor = (state, slot) => Number(state?.waiting?.[slot]?.count) || 0;
   function slideMeta(state, theme) {
@@ -92,7 +92,8 @@
     const track = document.getElementById('packCarouselTrack');
     if (!track) return;
     const price = state?.themed_price;
-    for (const slide of track.querySelectorAll('[data-pack-slide]:not([data-pack-slide="standard"])')) if (!price) slide.remove();
+    // Only a loaded state without themed packs removes them; a refresh in progress keeps the slides.
+    if (state && !price) for (const slide of track.querySelectorAll('[data-pack-slide]:not([data-pack-slide="standard"])')) slide.remove();
     if (price) {
       const balance = Number(state?.balance ?? NaN);
       for (const [theme, name] of Object.entries(THEMES)) {
@@ -125,6 +126,7 @@
     renderDots(track);
     bindCarousel(track);
     syncAction(state);
+    keepChosen(track);
     paintCarousel(track);
   }
   function renderDots(track) {
@@ -139,6 +141,7 @@
   function paintCarousel(track = document.getElementById('packCarouselTrack')) {
     if (!track) return;
     const box = track.getBoundingClientRect(), centre = box.left + box.width / 2;
+    if (!box.width || !track.isConnected || track.closest('[hidden]')) return;
     let nearest = null, distance = Infinity;
     for (const slide of track.querySelectorAll('[data-pack-slide]')) {
       const rect = slide.getBoundingClientRect(), offset = (rect.left + rect.width / 2 - centre) / Math.max(1, rect.width);
@@ -161,7 +164,7 @@
   function bindCarousel(track) {
     if (carouselBound) return;
     carouselBound = true;
-    track.addEventListener('scroll', () => { cancelAnimationFrame(motionFrame); motionFrame = requestAnimationFrame(() => paintCarousel(track)); }, {passive: true});
+    track.addEventListener('scroll', () => { lastScroll = Date.now(); cancelAnimationFrame(motionFrame); motionFrame = requestAnimationFrame(() => paintCarousel(track)); }, {passive: true});
     globalThis.addEventListener('resize', () => paintCarousel(track), {passive: true});
     // Tapping a pack beside the centred one brings it to the centre first.
     track.addEventListener('click', event => {
@@ -193,6 +196,14 @@
     return true;
   }
   function activeSlide() { return active; }
+  // After opening or buying, the pack the member chose stays centred.
+  function keepChosen(track) {
+    const slide = track.querySelector(`[data-pack-slide="${active}"]`);
+    const box = track.getBoundingClientRect();
+    if (!slide || !box.width || Date.now() - lastScroll < 500) return;
+    const rect = slide.getBoundingClientRect(), delta = rect.left + rect.width / 2 - (box.left + box.width / 2);
+    if (Math.abs(delta) > 2) track.scrollTo({left: track.scrollLeft + delta, behavior: 'auto'});
+  }
   async function buyTheme(theme, price) {
     if (buying || !price) return;
     const status = document.getElementById('packThemesStatus');
