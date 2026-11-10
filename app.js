@@ -222,7 +222,17 @@ let notificationFilter = "all";
 let notificationPreferences = null, notificationPreferencesOwner = null, notificationPreferencesLoading = false, notificationPreferencesSaving = false, notificationPreferencesError = "";
 let newsNoticePending = false;
 let privateMessages = [];
-let groupEvents = [];
+// Home's first frame already uses the agenda saved by the last session of the
+// member whose sign-in is stored on this device (see saveEventsSnapshot).
+let groupEvents = (() => {
+  try {
+    if (!backendReady) return [];
+    const stored = JSON.parse(localStorage.getItem(`sb-${new URL(config.supabaseUrl).hostname.split(".")[0]}-auth-token`) || "null");
+    const owner = stored?.user?.id;
+    const saved = owner && JSON.parse(localStorage.getItem(`bb-events-snapshot:${owner}`) || "null");
+    return Array.isArray(saved?.events) && saved.events.every(item => item && item.id != null && typeof item.startsAt === "string") ? saved.events : [];
+  } catch { return []; }
+})();
 let pendingWidgetEventId = null;
 let calendarChatAnnouncements = [];
 let channelAutomationMessages = [];
@@ -4780,7 +4790,7 @@ function renderClubhouse(upcoming) {
   const countdown = !next ? "" : days === 0 ? "Es hoy" : days === 1 ? "Mañana" : `En ${days} días`;
   const date = next ? next.date.toLocaleDateString("es-ES", {day: "numeric", month: "short"}).replace(".", "") : "";
   const schedule = next ? (birthday ? "Cumpleaños" : conversationTimeFormatter.format(next.date)) : "";
-  const signature = JSON.stringify([homeEventsReady, birthday, next?.event.id, next?.event.title, next?.event.description, next?.event.eventType, days, date, schedule]);
+  const signature = JSON.stringify([next ? true : homeEventsReady, birthday, next?.event.id, next?.event.title, next?.event.description, next?.event.eventType, days, date, schedule]);
   if (content.dataset.roomSignature === signature && content.firstElementChild) {
     globalThis.ChotaShop?.mountRoom(content.firstElementChild);
     globalThis.ChotaGames?.mount(content.querySelector("#chotaArcadeEntry"));
@@ -4914,7 +4924,9 @@ function renderUpcomingEvents() {
   });
   const viewer = document.getElementById("chotaViewer");
   if (viewer?.open && viewer.dataset.contextKey !== tigretonRenderedKey) viewer.close();
-  mountTigretonMotion(previousPlanKey !== tigretonRenderedKey, context.event, context.date);
+  // The member's id joins the key once the session arrives; only a different plan restarts the Chota.
+  const planPart = key => { try { const parts = JSON.parse(key); parts[0] = ""; return JSON.stringify(parts); } catch { return key; } };
+  mountTigretonMotion(planPart(previousPlanKey) !== planPart(tigretonRenderedKey), context.event, context.date);
   if (homeEventsReady && upcoming.length && previousPlanKey !== tigretonRenderedKey && currentAuthUser) {
     const expected = tigretonRenderedKey, first = upcoming[0];
     const warm = () => { if (!document.hidden && expected === tigretonRenderedKey && !tigretonComments.has(expected)) void loadTigretonComment(first.event, first.date, expected); };
@@ -5232,6 +5244,26 @@ const achievementSnapshotKey = userId => `bb:achievements:v1:${config.supabaseUr
 function rememberAchievementSnapshot(userId) {
   try { localStorage.setItem(achievementSnapshotKey(userId), JSON.stringify({achievements, achievementAwards, achievementProgress, achievementCardScopes})); } catch {}
 }
+// The agenda of the last session is kept on the device so Home opens with the
+// real next plan: the note and the Chota (who reacts to that plan) no longer
+// change a moment after launch when the fresh agenda arrives.
+const eventsSnapshotKey = userId => `bb-events-snapshot:${userId}`;
+function saveEventsSnapshot(userId) {
+  if (!userId) return;
+  try { localStorage.setItem(eventsSnapshotKey(userId), JSON.stringify({savedAt: Date.now(), events: groupEvents})); } catch {}
+}
+function restoreEventsSnapshot(userId) {
+  if (!userId || homeEventsReady || groupEvents.length) return;
+  try {
+    const saved = JSON.parse(localStorage.getItem(eventsSnapshotKey(userId)) || "null");
+    if (!Array.isArray(saved?.events) || !saved.events.every(item => item && item.id != null && typeof item.startsAt === "string")) return;
+    groupEvents = saved.events;
+    renderCalendar();
+  } catch {}
+}
+function forgetEventsSnapshots() {
+  try { for (const key of Object.keys(localStorage)) if (key.startsWith("bb-events-snapshot:")) localStorage.removeItem(key); } catch {}
+}
 function restoreAchievementSnapshot(userId) {
   if (achievementsLoaded) return;
   try {
@@ -5294,6 +5326,7 @@ function applyUserHeader(user) {
 async function hydrateAuthenticatedData(authUser) {
   const isCurrent = () => currentAuthUser?.id === authUser.id;
   restoreAchievementSnapshot(authUser.id);
+  restoreEventsSnapshot(authUser.id);
   // Only the visible Home's data and unread badges compete for the initial
   // connection. Other requests start independently once input/rendering is idle.
   const reportLoadFailure = (name, error) => console.warn(`[BigBoy startup] ${name} failed (${String(error?.code || error?.name || "unknown").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40)})`);
@@ -5545,6 +5578,7 @@ async function logoutCurrentUser() {
   privateAttachmentRequest = null;
   clearChatImageWarmCache();
   groupEvents = [];
+  forgetEventsSnapshots();
   calendarChatAnnouncements = [];
   channelAutomationMessages = [];
   calendarChatSyncDay = "";
@@ -6375,6 +6409,7 @@ async function loadGroupEvents() {
     endsAt: item.ends_at, location: item.location, createdBy: item.created_by,
     eventType: item.event_type || "event", annual: Boolean(item.annual)
   }));
+  saveEventsSnapshot(currentAuthUser?.id);
   renderCalendar();
   renderGroupChatEventNotice();
   globalThis.GroupInteractions?.refreshPlan(groupEvents);
