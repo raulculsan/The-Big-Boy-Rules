@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "status": "draft-not-active",
+  "name": "Mocha",
+  "palette": [
+    128,
+    92,
+    63
+  ],
+  "slot": "footwear",
+  "rig_version": "chota-footwear-overlay-v1",
+  "poseCount": 67,
+  "cell": 256,
+  "files": [
+    {
+      "sheet": "base",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-base-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/mocha-base-v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 138026,
+      "sha256": "980fc6bc062b29c84c064d4633a0cfea75c8ba7278aa98a98f0ad78ef5dbaf59"
+    },
+    {
+      "sheet": "directional",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-directional-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/mocha-directional-v1.webp",
+      "width": 1280,
+      "height": 1024,
+      "bytes": 37518,
+      "sha256": "ea1e609169ad0326a29e4a4c5cfe5bde73fb00ad0f9661365913347864a3e29e"
+    },
+    {
+      "sheet": "contextual",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-contextual-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/mocha-contextual-v1.webp",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 15648,
+      "sha256": "b98679673cd77569c02fbf2e6bb005a7030480e032df90367666fd46175541e5"
+    },
+    {
+      "sheet": "room",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-room-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/mocha-room-v1.webp",
+      "width": 1024,
+      "height": 256,
+      "bytes": 7558,
+      "sha256": "7dbc1fe48a2f84157437d284e8100055405e569def99d2208ba0a3cf5624d9ed"
+    },
+    {
+      "sheet": "talk",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-talk-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/mocha-talk-v1.webp",
+      "width": 768,
+      "height": 256,
+      "bytes": 12720,
+      "sha256": "2ceebd0af63dfa1af8fde9072a9830c24084440644c5fe0ff8fc52ebcbe6b685"
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "id": "club-store-v1",
   "width": 1024,
   "height": 1280,
-  "poster": "icons/shop/club-store-v1/assembled-poster-v2.webp",
+  "poster": "icons/shop/club-store-v1/assembled-poster-v3.webp",
   "style_reference": "icons/clubhouse/club-room-v1.webp",
   "layers": [
     {
@@ -201,10 +201,10 @@
       "src": "icons/shop/club-store-v1/clothing-cabinet-v2.webp",
       "z": 7,
       "rect": [
-        148,
-        958,
-        304,
-        304
+        132,
+        990,
+        248,
+        248
       ],
       "width": 1024,
       "height": 1024,
@@ -215,10 +215,24 @@
       "src": "icons/shop/club-store-v1/clothing-cabinet-v2.webp",
       "z": 7,
       "rect": [
-        572,
-        958,
-        304,
-        304
+        644,
+        990,
+        248,
+        248
+      ],
+      "width": 1024,
+      "height": 1024,
+      "transparent": true
+    },
+    {
+      "id": "shoes-shelf",
+      "src": "icons/shop/club-store-v1/clothing-cabinet-v2.webp",
+      "z": 7,
+      "rect": [
+        388,
+        990,
+        248,
+        248
       ],
       "width": 1024,
       "height": 1024,
@@ -291,14 +305,14 @@
       "layer": "pants-shelf",
       "label": "Pantalones",
       "rect": [
-        148,
-        958,
-        304,
-        304
+        132,
+        990,
+        248,
+        248
       ],
       "labelPoint": [
-        300,
-        980
+        256,
+        1008
       ]
     },
     {
@@ -306,14 +320,29 @@
       "layer": "shirts-shelf",
       "label": "Camisetas",
       "rect": [
-        572,
-        958,
-        304,
-        304
+        644,
+        990,
+        248,
+        248
       ],
       "labelPoint": [
-        724,
-        980
+        768,
+        1008
+      ]
+    },
+    {
+      "section": "shoes",
+      "layer": "shoes-shelf",
+      "label": "Zapatillas",
+      "rect": [
+        388,
+        990,
+        248,
+        248
+      ],
+      "labelPoint": [
+        512,
+        1008
       ]
     }
   ],
@@ -408,6 +437,59 @@
           "src": "icons/shop/club-store-v1/shirt-stussy-blanca-fold-v1.webp",
           "width": 384,
           "height": 128
+        }
+      ]
+    },
+    {
+      "section": "shoes",
+      "kind": "shoes",
+      "layer": "shoes-shelf",
+      "groupByBrand": false,
+      "models": [
+        {
+          "id": "chota-jordan-royal-v1",
+          "name": "Jordan Royal",
+          "brand": "Jordan",
+          "src": "icons/shop/club-store-v1/shoes-royal-pair-v1.webp",
+          "width": 384,
+          "height": 384,
+          "contact": 320
+        },
+        {
+          "id": "chota-jordan-graphite-v1",
+          "name": "Jordan Graphite",
+          "brand": "Jordan",
+          "src": "icons/shop/club-store-v1/shoes-graphite-pair-v1.webp",
+          "width": 384,
+          "height": 384,
+          "contact": 318
+        },
+        {
+          "id": "chota-jordan-pine-v1",
+          "name": "Jordan Pine",
+          "brand": "Jordan",
+          "src": "icons/shop/club-store-v1/shoes-pine-pair-v1.webp",
+          "width": 384,
+          "height": 384,
+          "contact": 317
+        },
+        {
+          "id": "chota-jordan-mocha-v1",
+          "name": "Jordan Mocha",
+          "brand": "Jordan",
+          "src": "icons/shop/club-store-v1/shoes-mocha-pair-v1.webp",
+          "width": 384,
+          "height": 384,
+          "contact": 321
+        },
+        {
+          "id": "chota-original-jordan-chicago-v1",
+          "name": "Jordan Chicago",
+          "brand": "Jordan",
+          "src": "icons/shop/club-store-v1/shoes-chicago-pair-v1.webp",
+          "width": 384,
+          "height": 384,
+          "contact": 327
         }
       ]
     }

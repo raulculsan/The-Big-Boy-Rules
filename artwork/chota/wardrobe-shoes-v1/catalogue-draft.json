@@ -1,0 +1,106 @@
+[
+  {
+    "id": "chota-jordan-royal-v1",
+    "name": "Jordan Royal",
+    "item_kind": "clothing",
+    "slot": "footwear",
+    "rig_version": "chota-footwear-overlay-v1",
+    "active": false,
+    "garment": {
+      "type": "atlas",
+      "cell": 256,
+      "atlases": {
+        "base": "chota/wardrobe/shoes-v1/royal-base-v1.webp",
+        "directional": "chota/wardrobe/shoes-v1/royal-directional-v1.webp",
+        "contextual": "chota/wardrobe/shoes-v1/royal-contextual-v1.webp",
+        "room": "chota/wardrobe/shoes-v1/royal-room-v1.webp",
+        "talk": "chota/wardrobe/shoes-v1/royal-talk-v1.webp"
+      }
+    },
+    "localAtlasPaths": {
+      "base": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-base-v1.webp",
+      "directional": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-directional-v1.webp",
+      "contextual": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-contextual-v1.webp",
+      "room": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-room-v1.webp",
+      "talk": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-talk-v1.webp"
+    }
+  },
+  {
+    "id": "chota-jordan-graphite-v1",
+    "name": "Jordan Graphite",
+    "item_kind": "clothing",
+    "slot": "footwear",
+    "rig_version": "chota-footwear-overlay-v1",
+    "active": false,
+    "garment": {
+      "type": "atlas",
+      "cell": 256,
+      "atlases": {
+        "base": "chota/wardrobe/shoes-v1/graphite-base-v1.webp",
+        "directional": "chota/wardrobe/shoes-v1/graphite-directional-v1.webp",
+        "contextual": "chota/wardrobe/shoes-v1/graphite-contextual-v1.webp",
+        "room": "chota/wardrobe/shoes-v1/graphite-room-v1.webp",
+        "talk": "chota/wardrobe/shoes-v1/graphite-talk-v1.webp"
+      }
+    },
+    "localAtlasPaths": {
+      "base": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-base-v1.webp",
+      "directional": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-directional-v1.webp",
+      "contextual": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-contextual-v1.webp",
+      "room": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-room-v1.webp",
+      "talk": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-talk-v1.webp"
+    }
+  },
+  {
+    "id": "chota-jordan-pine-v1",
+    "name": "Jordan Pine",
+    "item_kind": "clothing",
+    "slot": "footwear",
+    "rig_version": "chota-footwear-overlay-v1",
+    "active": false,
+    "garment": {
+      "type": "atlas",
+      "cell": 256,
+      "atlases": {
+        "base": "chota/wardrobe/shoes-v1/pine-base-v1.webp",
+        "directional": "chota/wardrobe/shoes-v1/pine-directional-v1.webp",
+        "contextual": "chota/wardrobe/shoes-v1/pine-contextual-v1.webp",
+        "room": "chota/wardrobe/shoes-v1/pine-room-v1.webp",
+        "talk": "chota/wardrobe/shoes-v1/pine-talk-v1.webp"
+      }
+    },
+    "localAtlasPaths": {
+      "base": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-base-v1.webp",
+      "directional": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-directional-v1.webp",
+      "contextual": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-contextual-v1.webp",
+      "room": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-room-v1.webp",
+      "talk": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-talk-v1.webp"
+    }
+  },
+  {
+    "id": "chota-jordan-mocha-v1",
+    "name": "Jordan Mocha",
+    "item_kind": "clothing",
+    "slot": "footwear",
+    "rig_version": "chota-footwear-overlay-v1",
+    "active": false,
+    "garment": {
+      "type": "atlas",
+      "cell": 256,
+      "atlases": {
+        "base": "chota/wardrobe/shoes-v1/mocha-base-v1.webp",
+        "directional": "chota/wardrobe/shoes-v1/mocha-directional-v1.webp",
+        "contextual": "chota/wardrobe/shoes-v1/mocha-contextual-v1.webp",
+        "room": "chota/wardrobe/shoes-v1/mocha-room-v1.webp",
+        "talk": "chota/wardrobe/shoes-v1/mocha-talk-v1.webp"
+      }
+    },
+    "localAtlasPaths": {
+      "base": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-base-v1.webp",
+      "directional": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-directional-v1.webp",
+      "contextual": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-contextual-v1.webp",
+      "room": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-room-v1.webp",
+      "talk": "icons/mascot/chota-v2/wardrobe-shoes-v1/mocha-talk-v1.webp"
+    }
+  }
+]

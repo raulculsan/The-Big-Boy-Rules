@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "status": "draft-not-active",
+  "name": "Royal",
+  "palette": [
+    44,
+    88,
+    200
+  ],
+  "slot": "footwear",
+  "rig_version": "chota-footwear-overlay-v1",
+  "poseCount": 67,
+  "cell": 256,
+  "files": [
+    {
+      "sheet": "base",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-base-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/royal-base-v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 147100,
+      "sha256": "95242aec5fd5004423966d451115bc65dbaec8066893346203e3d9f8024f4610"
+    },
+    {
+      "sheet": "directional",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-directional-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/royal-directional-v1.webp",
+      "width": 1280,
+      "height": 1024,
+      "bytes": 39890,
+      "sha256": "83a4c5c03135f29cf09fd6c553a2a619d062b103dd0273adf44ed395a8c9c843"
+    },
+    {
+      "sheet": "contextual",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-contextual-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/royal-contextual-v1.webp",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 16574,
+      "sha256": "fbebd0e0716d423febd0324e2821ae7f14bad5428de6c4b9767db0b47821506c"
+    },
+    {
+      "sheet": "room",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-room-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/royal-room-v1.webp",
+      "width": 1024,
+      "height": 256,
+      "bytes": 8006,
+      "sha256": "eac3db44f315be95b85b727ca6e208689dc44c2d4a17574bcc6d2eabc2054f9c"
+    },
+    {
+      "sheet": "talk",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/royal-talk-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/royal-talk-v1.webp",
+      "width": 768,
+      "height": 256,
+      "bytes": 12586,
+      "sha256": "5f4304a81c36e316a178a8925499364e9699fd6445dc0f1a11b1cf330be40f69"
+    }
+  ]
+}

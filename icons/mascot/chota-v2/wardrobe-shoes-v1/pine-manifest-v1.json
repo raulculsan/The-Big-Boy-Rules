@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "status": "draft-not-active",
+  "name": "Pine",
+  "palette": [
+    32,
+    109,
+    82
+  ],
+  "slot": "footwear",
+  "rig_version": "chota-footwear-overlay-v1",
+  "poseCount": 67,
+  "cell": 256,
+  "files": [
+    {
+      "sheet": "base",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-base-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/pine-base-v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 137378,
+      "sha256": "d60caffc9841dd4fc8500f9840e94012fb1f8183903728e6e336de3be484a2a3"
+    },
+    {
+      "sheet": "directional",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-directional-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/pine-directional-v1.webp",
+      "width": 1280,
+      "height": 1024,
+      "bytes": 38374,
+      "sha256": "8d18de9179cb5a4893f4f9cf31fee937bf1cde1833ce443dd66ad6a810f19b79"
+    },
+    {
+      "sheet": "contextual",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-contextual-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/pine-contextual-v1.webp",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 16008,
+      "sha256": "044b705cb3fc38c2efb16e2c57b9131bee4d0be8fba9f4af27771182bfcf27de"
+    },
+    {
+      "sheet": "room",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-room-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/pine-room-v1.webp",
+      "width": 1024,
+      "height": 256,
+      "bytes": 7748,
+      "sha256": "d2cf31d78cfe364bebf305d913bbb64a7b46a64fe1c6b426a36bcb03c1e286ea"
+    },
+    {
+      "sheet": "talk",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/pine-talk-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/pine-talk-v1.webp",
+      "width": 768,
+      "height": 256,
+      "bytes": 11898,
+      "sha256": "a091d130e154c3802c66024bbe6343501c678e23ab56f45b1df741abb6d5aaec"
+    }
+  ]
+}

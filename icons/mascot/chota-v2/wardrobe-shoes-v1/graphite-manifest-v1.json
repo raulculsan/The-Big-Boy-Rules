@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "status": "draft-not-active",
+  "name": "Graphite",
+  "palette": [
+    90,
+    99,
+    112
+  ],
+  "slot": "footwear",
+  "rig_version": "chota-footwear-overlay-v1",
+  "poseCount": 67,
+  "cell": 256,
+  "files": [
+    {
+      "sheet": "base",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-base-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/graphite-base-v1.webp",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 130370,
+      "sha256": "82b81b8b37212972f471ecf7569ac0edb0a55c9bcb286354da34aa1b654047b1"
+    },
+    {
+      "sheet": "directional",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-directional-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/graphite-directional-v1.webp",
+      "width": 1280,
+      "height": 1024,
+      "bytes": 34634,
+      "sha256": "23997220a5e1758b4ab8791c9deed9776e143b88ed05bfcefaa9c9e84ff76592"
+    },
+    {
+      "sheet": "contextual",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-contextual-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/graphite-contextual-v1.webp",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 14558,
+      "sha256": "653412e49d23c7b2640af075607be4872d08c8566f2786a57086cc7185e31fc0"
+    },
+    {
+      "sheet": "room",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-room-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/graphite-room-v1.webp",
+      "width": 1024,
+      "height": 256,
+      "bytes": 6968,
+      "sha256": "8b4beffdafe3da2debf88da82352bbb73ed9f8430d16594b5b4e67ff3b685468"
+    },
+    {
+      "sheet": "talk",
+      "path": "icons/mascot/chota-v2/wardrobe-shoes-v1/graphite-talk-v1.webp",
+      "storagePath": "chota/wardrobe/shoes-v1/graphite-talk-v1.webp",
+      "width": 768,
+      "height": 256,
+      "bytes": 11318,
+      "sha256": "2ac35ce8cd8541031cf53d598a534a7a865fd925c10d71dc73354ee29286b163"
+    }
+  ]
+}

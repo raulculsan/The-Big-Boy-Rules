@@ -169,3 +169,13 @@
 :root[data-motion-quality=low] .fitting-mirror i{animation:none;display:none}
 /* Department names (Pantalones, Camisetas) fit beside the back button and the balance on phones. */
 @media(max-width:640px){body #bannerShopDialog.club-store:not([data-store-view="scene"]) #bannerShopTitle{font-size:min(29px,5.5vw);white-space:nowrap}}
+
+/* Product pairs have their own picker: every verified catalogue item stays reachable. */
+.fitting-shoes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.fitting-shoe{display:flex;flex-direction:column;align-items:center;min-width:0;padding:8px;border:0;border-radius:10px;background:#1d2229;color:#e8edf2;cursor:pointer;touch-action:manipulation}
+.fitting-shoe>img,.fitting-shoe>.chota-clothing-preview,.fitting-shoe-bare{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain;pointer-events:none;user-select:none}
+.fitting-shoe-name{font:600 12px/1.35 system-ui;text-align:center;overflow-wrap:anywhere}
+.fitting-shoe .fitting-hanger-mark{margin-top:5px;font-size:11px}
+.fitting-shoe[aria-checked="true"]{background:#343c46;box-shadow:inset 0 0 0 2px #e3e8ed}
+.fitting-shoe:focus{outline:none}.fitting-shoe:focus-visible{outline:2px solid #dce1e7;outline-offset:3px}
+.fitting-shoe-bare{opacity:.45;background:var(--chota-neutral-base,url('icons/mascot/chota-v2/chota-poses.webp')) 0 0/600% 400% no-repeat;image-rendering:pixelated}
