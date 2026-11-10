@@ -3343,6 +3343,7 @@ function mountTigretonMotion(reactToPlan, event, date) {
   tigretonMotionPet = pet;
   if (!pet) return;
   tigretonMotion = createTigretonMotion(pet, reactToPlan, event, date);
+  globalThis.ChotaInteract?.welcome(tigretonMotion);
   if (document.getElementById("chotaViewer")?.open) tigretonMotion.pause();
 }
 // 2.5D room: x/y are floor coordinates, z is height above that floor.
@@ -3562,6 +3563,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   let lastPersonalAt = performance.now(), lastTouchAt = -Infinity;
   let pendingRoomState = null;
   let roomVisit = null, lastRoomVisitAt = performance.now() - 18000;
+  let lastMoodAt = performance.now(), lastAnnoyedAt = -Infinity, gazeAnimation = null, gazeTimer = 0;
   const roomVisitTimes = new Map();
   const motionRoot = pet.querySelector(".chota-character-row") || pet;
   const active = () => !destroyed && !paused && inView && !document.hidden && !tigretonReducedMotion.matches && !isChotaSleeping() && !bedtimeActive && !wakingActive;
@@ -3587,6 +3589,7 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     clearTimeout(timer);
     clearTimeout(frameTimer);
     clearTimeout(blinkTimer);
+    clearTimeout(gazeTimer); gazeAnimation = null;
     if (frameRaf) { if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(frameRaf); else clearTimeout(frameRaf); frameRaf = 0; }
     animations.forEach(animation => animation.cancel());
     animations = [];
@@ -3641,6 +3644,12 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     if (moment && moment !== lastRoomMoment) {
       lastRoomMoment = moment;
       return {action:"window", target:room.querySelector(".clubhouse-sky")};
+    }
+    // The season's mood colours his routine: tired rests, restless paces, happy jumps.
+    if (now - lastMoodAt > 75000 && now - lastTouchAt > 15000 && globalThis.ChotaInteract) {
+      lastMoodAt = now;
+      const pick = globalThis.ChotaInteract.moodAction(globalThis.ChotaInteract.mood());
+      if (pick) return {action:`mood-${pick}`};
     }
     const outdoor=room.querySelector(".club-outdoor-flyer, .club-outdoor-patrol");
     const lifeChoice=now-lastLifeAt>22000 ? chotaChooseLifeAction({now,moment,lastAction:lastAmbientAction,times:attentionTimes,families:familyTimes,lastTouchAt,outdoor:!!outdoor}) : null;
@@ -3744,6 +3753,13 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
   function performAttention(choice) {
     const {action,target} = choice, now = performance.now();
     if(action==="quiet") {schedule();return;}
+    if(action.startsWith("mood-")) {
+      const mood=action.slice(5);pet.dataset.attention=action;lastAmbientAction=action;
+      if(mood==="rest") play("rest"); else if(mood==="sofa") visitRoom("sofa"); else if(mood==="ears") playLifeAction("ear-scan");
+      else if(mood==="pace") {if(!goTo({x:.22+Math.random()*.56,y:.79+Math.random()*.13},true)) schedule();}
+      else play(mood==="jump"?"jump":"greet");
+      return;
+    }
     if(lifeCatalog[action]) {playLifeAction(action,{target});return;}
     familyTimes.set(chotaAttentionFamily(action),now);
     attentionTimes.set(action, now); lastAmbientAction = action;
@@ -3829,7 +3845,37 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       duration:Math.min(3700, Math.max(1600, Math.hypot(roomVisit.position.x-roomVisit.home.x, roomVisit.position.y-roomVisit.home.y) * 10000)),
     };
   }
-  function visitRoom(kind) {
+  // Geometry shared by commanded walks: where his feet are and how he shrinks with depth.
+  function roomFooting() {
+    const room = pet.closest(".clubhouse-room, .chota-viewer-room-scene");
+    const roomBox = room?.getBoundingClientRect(), spriteBox = pet.querySelector(".tigreton-sprite")?.getBoundingClientRect();
+    if (!roomBox?.width || !spriteBox?.width) return null;
+    const home = roomVisit?.home || {x:(spriteBox.left + spriteBox.width * .5 - roomBox.left)/roomBox.width, y:(spriteBox.top + spriteBox.width * .945 - roomBox.top)/roomBox.width, s:1};
+    const far = roomVisit?.far || .23 * roomBox.width / spriteBox.width;
+    const scaleAt = y => 1 + (far - 1) * Math.max(-.35, Math.min(1, (home.y - y) / Math.max(.05, home.y - .605)));
+    return {room, roomBox, home, far, scaleAt};
+  }
+  // Tap the floor: he walks to that point, waits a moment and comes back.
+  function goTo(point, ambient = false) {
+    if (!active() || bedtimeActive || wakingActive) return false;
+    const footing = roomFooting();
+    if (!footing) return false;
+    const target = {x:Math.max(.05, Math.min(.95, point.x)), y:Math.max(.6, Math.min(.955, point.y)), z:0};
+    target.s = footing.scaleAt(target.y);
+    if (!ambient) lastTouchAt = performance.now();
+    if (pet.classList.contains("is-sitting-on-sofa")) { returnFromRoom(() => goTo(point, ambient)); return true; }
+    const from = roomVisit ? {...roomVisit.position} : footing.home;
+    const geometry = roomVisit?.geometry || roomGeometry(footing.room, footing.roomBox.width);
+    if (chotaRoomRoute(from, target, geometry.obstacles).length < 2) { if (!ambient) lookAt(footing.roomBox.left + point.x * footing.roomBox.width, footing.roomBox.top + point.y * footing.roomBox.width); return false; }
+    if (roomVisit) {
+      Object.assign(roomVisit, {kind:"spot", from, target, started:performance.now(), returning:null, afterReturn:null, routes:{}});
+      pet.dataset.attention = "visit-spot"; pet.classList.add("is-walking");
+      return true;
+    }
+    visitRoom("spot", target);
+    return true;
+  }
+  function visitRoom(kind, spot = null) {
     const request = ++spriteRequest;
     void Promise.all([ensureChotaDirectionalSprite(), kind === "sofa" ? ensureChotaRoomSprite() : true]).then(ready => {
       if (request !== spriteRequest || !active()) return;
@@ -3841,12 +3887,12 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       lastRoomVisitAt = performance.now(); roomVisitTimes.set(kind, lastRoomVisitAt);
       const feetX = spriteBox.left + spriteBox.width * .5, feetY = spriteBox.top + spriteBox.width * .945;
       const home = {x:(feetX-roomBox.left)/roomBox.width, y:(feetY-roomBox.top)/roomBox.width, s:1};
-      const layout = chotaRoomVisitLayout(kind);
+      const layout = chotaRoomVisitLayout(kind === "spot" ? "window" : kind);
       const scale = layout.width * roomBox.width / spriteBox.width;
-      const target = {...layout.target,s:scale}, approach = {...layout.approach,s:scale};
+      const target = spot ? {...spot} : {...layout.target,s:scale}, approach = {...layout.approach,s:scale};
       const geometry=roomGeometry(room,roomBox.width);
       if(chotaRoomRoute(home,kind==="sofa"?approach:target,geometry.obstacles).length<2) {schedule();return;}
-      roomVisit = {kind, home, target, approach, position:home, size:roomBox.width, started:performance.now(), room, geometry, routes:{}, returning:null, afterReturn:null};
+      roomVisit = {kind, home, far:.23 * roomBox.width / spriteBox.width, from:home, target, approach, position:home, size:roomBox.width, started:performance.now(), room, geometry, routes:{}, returning:null, afterReturn:null};
       motionRoot.style.transformOrigin = "50% 94.5%";
       pet.classList.add("is-awake", "is-visiting-room", "is-walking");
       pet.dataset.attention = `visit-${kind}`;
@@ -3870,8 +3916,17 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
       if (t < back.rise) { seated(true); roomPosition(chotaRoomSupportPoint(back.from,approach,t/back.rise)); roomPose(3); }
       else {
         seated(false);
-        roomWalk(back.rise ? approach : back.from,home,(t-back.rise)/back.duration,t,false);
+        const start = back.rise ? approach : back.from;
+        roomWalk(start,home,(t-back.rise)/back.duration,t,start.y > home.y + .012);
       }
+    } else if (kind === "spot") {
+      const from = visit.from || home, distance = Math.hypot(target.x-from.x, target.y-from.y);
+      const travel = Math.min(4200, Math.max(700, distance * 9000));
+      if (elapsed < travel) roomWalk(from,target,elapsed/travel,elapsed,target.y < from.y - .012);
+      else if (elapsed < travel + 5200) {
+        // He stands where he was sent, facing the room, until called again.
+        roomPosition(target); setFrame(0); character.style.transform = ""; pet.classList.remove("is-walking");
+      } else { pet.classList.add("is-walking"); returnFromRoom(); }
     } else if (kind === "window" || kind === "board") {
       const travel = kind === "board" ? 4300 : 5600;
       const pause = kind === "board" ? 4500 : 5800;
@@ -3907,10 +3962,62 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     frameRaf = typeof requestAnimationFrame === "function" ? requestAnimationFrame(advanceRoomVisit) : setTimeout(advanceRoomVisit, 16);
   }
   function noticeUser() {
-    if (!active() || performance.now() - lastTouchAt < 3000) return;
-    lastTouchAt = performance.now(); attentionTimes.set("user", lastTouchAt);
-    if (roomVisit) { returnFromRoom(() => play("greet")); return; }
-    play("greet");
+    // Where and how insistently he was touched decides the reaction.
+    const kind = globalThis.ChotaInteract?.takeTouch?.() || "greet", now = performance.now();
+    if (!active()) return;
+    if (kind === "annoyed" ? now - lastAnnoyedAt < 6000 : now - lastTouchAt < 3000) return;
+    lastTouchAt = now; attentionTimes.set("user", now);
+    if (kind === "annoyed") lastAnnoyedAt = now;
+    const react = () => kind === "happy" ? play("jump") : kind === "shoes" ? playLifeAction("check-shoes") : kind === "annoyed" ? turnAway() : play("greet");
+    if (roomVisit) { returnFromRoom(react); return; }
+    react();
+  }
+  // Fed up with the poking: he turns his back for a moment, then peeks.
+  function turnAway() {
+    const request = ++spriteRequest;
+    void ensureChotaDirectionalSprite().then(ready => {
+      if (request !== spriteRequest || !active()) return;
+      if (!ready) { play("greet"); return; }
+      stop();
+      pet.classList.add("is-awake"); pet.dataset.attention = "annoyed";
+      setDirectionalFrame(16);
+      frameTimer = setTimeout(() => { if (!active()) return; setDirectionalFrame(19); frameTimer = setTimeout(() => { if (active()) idle(); }, 650); }, 1700);
+    });
+  }
+  // His head follows the finger while it touches the room.
+  function lookAt(clientX, clientY) {
+    if (!active() || !character.classList.contains("is-idling") || lifeAction || roomVisit || !idleHead) return;
+    const body = character.getBoundingClientRect();
+    if (!body.width) return;
+    const dx = Math.max(-1, Math.min(1, (clientX - body.left - body.width * .5) / (body.width * 1.6)));
+    const dy = Math.max(-1, Math.min(1, (clientY - body.top - body.height * .3) / (body.height * 1.6)));
+    const to = `translate(${(dx * .9).toFixed(2)}%,${(dy * .6).toFixed(2)}%) rotate(${(dx * 2.2).toFixed(2)}deg)`;
+    const previous = gazeAnimation;
+    gazeAnimation = animateIdle(idleHead, [{transform:previous?.gazeTo || "translate(0,0) rotate(0deg)"},{transform:to}], {duration:260,fill:"forwards",easing:"ease-out"});
+    if (gazeAnimation) gazeAnimation.gazeTo = to;
+    if (previous) { previous.cancel(); animations = animations.filter(item => item !== previous); }
+    clearTimeout(gazeTimer);
+    gazeTimer = setTimeout(() => {
+      const held = gazeAnimation; gazeAnimation = null;
+      if (!held || !active() || !character.classList.contains("is-idling")) return;
+      animateIdle(idleHead, [{transform:held.gazeTo},{transform:"translate(0,0) rotate(0deg)"}], {duration:520,easing:"ease-in-out"});
+      held.cancel(); animations = animations.filter(item => item !== held);
+    }, 1500);
+  }
+  function glance(target) {
+    if (!active() || !character.classList.contains("is-idling") || lifeAction || roomVisit) return;
+    lastTouchAt = performance.now(); gazeAt(target, "look");
+  }
+  function visit(kind) {
+    if (!active() || !["window","sofa","board"].includes(kind)) return;
+    lastTouchAt = performance.now();
+    if (roomVisit) { if (roomVisit.kind === kind && !roomVisit.returning) return; returnFromRoom(() => visitRoom(kind)); return; }
+    visitRoom(kind);
+  }
+  function welcome(kind) {
+    if (!active() || !character.classList.contains("is-idling") || roomVisit) return false;
+    if (kind === "excited") play("jump"); else if (kind === "sleepy") playLifeAction("drowsy"); else play("greet");
+    return true;
   }
   function idle() {
     stop();
@@ -4243,6 +4350,8 @@ function createTigretonMotion(pet, reactToPlan, event, date) {
     speak,
     reactSleeping,
     noticeUser,
+    goTo, visit, lookAt, glance, welcome,
+    cheer: () => { if (active() && !roomVisit) play("jump"); },
     bedtime,
     wakeup,
     isWaking: () => wakingActive,
@@ -4260,6 +4369,8 @@ function tigretonSpriteMarkup(interactive = false) {
   return `<${tag} class="tigreton-sprite" ${interactive ? 'type="button" data-chota-open aria-label="Mostrar comentario de El Chota sobre el próximo plan" aria-expanded="false" aria-keyshortcuts="Shift+Enter"' : 'role="img" aria-label="El Chota"'}><span class="tigreton-character" aria-hidden="true"><span class="chota-idle-tail"></span><span class="chota-idle-body"><span class="chota-idle-paw"></span></span><span class="chota-idle-feet"></span><span class="chota-idle-head"><span class="chota-idle-ear chota-idle-ear--left"></span><span class="chota-idle-ear chota-idle-ear--right"></span><svg class="chota-idle-eyelids" viewBox="0 0 256 256" aria-hidden="true"><path fill="#fa7906" d="M117 84Q126 81 136 93L141 99 138 105Q126 108 119 99Z M164 98Q174 94 182 100L184 105 180 113Q172 116 164 108Z"/><path fill="none" stroke="#27170f" stroke-width="1.7" stroke-linecap="round" d="M119 96q11 10 20 3m26 5q8 7 17 1"/></svg></span><span class="chota-sleep-base"></span><span class="chota-sleep-tail"></span><span class="chota-sleep-chest"></span><span class="chota-sleep-head"></span><span class="chota-sleep-foreground"></span></span><i class="tigreton-shadow" aria-hidden="true"></i><span class="tigreton-sleep-mark" aria-hidden="true">z</span><span class="tigreton-spark" aria-hidden="true">✦</span></${tag}>`;
 }
 let chotaViewerMotion = null;
+// The touch layer (chota-interact.js) asks for the engine of the room it was touched in.
+globalThis.ChotaRoom = Object.freeze({motion: room => room?.classList?.contains("chota-viewer-room-scene") ? chotaViewerMotion : tigretonMotion});
 let chotaViewerMotionKey = "";
 let chotaViewerTrigger = null;
 let chotaBubbleFrame = 0;

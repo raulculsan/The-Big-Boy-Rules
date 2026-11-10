@@ -1,5 +1,5 @@
-const CACHE_NAME = "big-boy-rules-v609";
-const APP_SHELL = ["./chota-appearance.js?v=20261109-tailored-v5-609","./chota-compositor-worker.js?v=20261109-tailored-v5-609","./icons/mascot/chota-v2/tailored-v5/manifest-v1.json","./icons/mascot/chota-v2/neutral/idle-core-mask-v1.png","./icons/shop/garments-v3/original-shirt.webp","./icons/shop/garments-v3/original-pants.webp","./icons/shop/garments-v3/original-shoes.webp","./icons/shop/club-store-v1/manifest.json?v=20261109-clothing-shelves-v2-594","./club-store.css?v=20261109-tailored-v5-609","./club-store.js?v=20261109-clothing-shelves-v2-594","./store-sky.js?v=20261108-rain-v2-593","./store-sky.css?v=20261108-rain-v2-593","./store-rooms.css?v=20261109-tailored-v5-609","./store-rooms.js?v=20261109-tailored-v5-609","./icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg","./icons/mascot/chota-v2/wardrobe/idle-body-mask.svg","./chota-wardrobe.css?v=20261109-tailored-v5-609","./chota-wardrobe.js?v=20261109-tailored-v5-609","./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
+const CACHE_NAME = "big-boy-rules-v610";
+const APP_SHELL = ["./chota-interact.js?v=20261110-sede-viva-610","./chota-appearance.js?v=20261109-tailored-v5-609","./chota-compositor-worker.js?v=20261109-tailored-v5-609","./icons/mascot/chota-v2/tailored-v5/manifest-v1.json","./icons/mascot/chota-v2/neutral/idle-core-mask-v1.png","./icons/shop/garments-v3/original-shirt.webp","./icons/shop/garments-v3/original-pants.webp","./icons/shop/garments-v3/original-shoes.webp","./icons/shop/club-store-v1/manifest.json?v=20261109-clothing-shelves-v2-594","./club-store.css?v=20261109-tailored-v5-609","./club-store.js?v=20261109-clothing-shelves-v2-594","./store-sky.js?v=20261108-rain-v2-593","./store-sky.css?v=20261108-rain-v2-593","./store-rooms.css?v=20261109-tailored-v5-609","./store-rooms.js?v=20261109-tailored-v5-609","./icons/mascot/chota-v2/wardrobe/sleep-static-mask.svg","./icons/mascot/chota-v2/wardrobe/idle-body-mask.svg","./chota-wardrobe.css?v=20261109-tailored-v5-609","./chota-wardrobe.js?v=20261109-tailored-v5-609","./icons/mascot/chota-v2/chota-idle-paw-v2.svg","./icons/mascot/chota-v2/chota-idle-core-v2.svg",
   "./chota-outdoor.js?v=20261030-outdoor-events-448",
   "./chota-outdoor.css?v=20261030-outdoor-events-448",
   "./icons/clubhouse/chota-room-occlusion.svg",
@@ -32,7 +32,7 @@ const APP_SHELL = ["./chota-appearance.js?v=20261109-tailored-v5-609","./chota-c
   "./visual-system.css?v=20261106-pwa-dock-564",
   "./notifications.css?v=20261102-theme-532",
   "./club.css?v=20261109-tailored-v5-609",
-  "./clubhouse.css?v=20261109-tailored-v5-609",
+  "./clubhouse.css?v=20261110-sede-viva-610",
   "./chota-shop.js?v=20261109-armario-609",
   "./chota-shop.css?v=20261109-armario-609",
   "./coin-missions.js?v=20261103-economy-555",
@@ -108,7 +108,7 @@ const APP_SHELL = ["./chota-appearance.js?v=20261109-tailored-v5-609","./chota-c
   "./tab-navigation.js?v=20261026-dock-drag-411",
   "./admin-console.js?v=20261103-admin-557",
   "./admin-console.css?v=20261103-accounts-558",
-  "./app.js?v=20261109-tailored-v5-609",
+  "./app.js?v=20261110-sede-viva-610",
   "./spotify-player.js?v=20261103-news-music-554",
   "./spotify-player.css?v=20261103-news-music-554",
   "./album.js?v=20261102-pack-stage-549",

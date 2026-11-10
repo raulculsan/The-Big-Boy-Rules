@@ -28,6 +28,7 @@ const sources = [
   "notifications.css",
   "club.css",
   "clubhouse.css",
+  "chota-interact.js",
   "chota-appearance.js",
   "chota-compositor-worker.js",
   "chota-wardrobe.js",
