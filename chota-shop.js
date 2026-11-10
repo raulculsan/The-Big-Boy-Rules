@@ -293,7 +293,9 @@
     // Seasonal art belongs to the room's own layer. Purchased decorations never replace it.
     layer.innerHTML = owned.map(item => `<div class="chota-room-prop chota-room-${remote(item)?'remote':esc(item.art_key)}${remote(item)||propArt[item.art_key]?.decoration ? ' chota-room-prop--decoration' : ''}" data-chota-room-item="${esc(item.id)}"${floorDepth(item)!==null?` data-chota-rest-z="${floorDepth(item)}"`: ''} style="${globalThis.ShopCatalogMedia?.placement(remote(item)) || ''};${floorDepth(item)!==null?`z-index:${floorDepth(item)};`: ''}">${art(item.art_key, true,item)}</div>`).join('');
   }
-  function paintRooms() { if(!paintModularWardrobe()){paintWardrobe();paintTrousers();paintShirt();}for (const room of rooms) if (room.isConnected) paintRoom(room); paintMotion(); }
+  // Until the server confirms the wardrobe nothing is repainted: an unconfirmed
+  // "wears nothing" would compose the default clothes over the outfit restored at launch.
+  function paintRooms() { if(stateTrusted&&!paintModularWardrobe()){paintWardrobe();paintTrousers();paintShirt();}for (const room of rooms) if (room.isConnected) paintRoom(room); paintMotion(); }
   function mountRoom(room) {
     if (!room) return;
     changeOwner();
