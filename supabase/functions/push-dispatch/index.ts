@@ -105,7 +105,7 @@ export default {
       const {data: profiles} = await admin.from("profiles").select("id").eq("is_hidden", false).neq("id", user.id);
       recipients = (profiles || []).map(item => item.id);
       title = actorName;
-      body = message.body || (message.attachment_type?.startsWith("audio/") ? "Ha enviado una nota de voz." : "Ha enviado un archivo.");
+      body = /^\[\[sobre:\d{1,15}\]\]$/.test(String(message.body || "").trim()) ? "Ha compartido un sobre." : message.body || (message.attachment_type?.startsWith("audio/") ? "Ha enviado una nota de voz." : "Ha enviado un archivo.");
       targetUrl = "./#chat";
     } else if (kind === "private_message") {
       const {data: message} = await admin.from("private_messages").select("sender_id,recipient_id,body,attachment_type,created_at").eq("id", entityId).single();

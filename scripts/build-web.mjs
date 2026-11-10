@@ -103,6 +103,7 @@ const sources = [
   "group-interactions.css",
   "packs.css",
   "pack-opening.js",
+  "pack-extras.js",
   "banner-shop.js",
   "banner-shop.css",
   "design-system.css",

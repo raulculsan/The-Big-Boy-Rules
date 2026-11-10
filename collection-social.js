@@ -9,7 +9,8 @@
   let popupId = null, seen = new Set(), lastRefresh = 0, recovering = false, stateVersion = 0, seenOwner = null;
   let tradePage = 'desk', pickerOfferId = null, pickerCard = '', search = '';
   let draft = {peer:'',give:''}, createId = null, marksLoading = false;
-  let holders = {}, holdersLoading = false;
+  let holders = {}, holdersLoading = false, targetId = null, targetBusy = '';
+  document.addEventListener('bb:card-target', event => { targetId = event.detail?.target?.card_id || null; render(); });
   const dialog = document.createElement('dialog'); dialog.className = 'collection-social-dialog'; dialog.setAttribute('aria-labelledby','collectionSocialTitle'); document.body.append(dialog);
   const tradeDialog = document.createElement('dialog'); tradeDialog.className = 'collection-social-dialog collection-trade-dialog'; tradeDialog.setAttribute('aria-labelledby','collectionTradeTitle'); document.body.append(tradeDialog);
   const requestDialog = document.createElement('dialog'); requestDialog.className = 'collection-social-dialog trade-request-dialog'; requestDialog.setAttribute('aria-labelledby','tradeRequestTitle'); document.body.append(requestDialog);
@@ -60,7 +61,7 @@
   }
   function cardTile(id,kind) {
     const card = design(id); if (!card) return '';
-    return `<article class="social-card" data-social-rarity="${esc(card.edition)}"><button type="button" class="social-card-art" data-social-view="${esc(id)}" aria-label="Ver ${esc(card.name)}">${cardImage(card)}</button><div><strong>${esc(card.name)}</strong><small>${esc(card.edition)}${card.score ? ` · ${esc(card.score)} PTS` : ''}</small>${kind==='wanted'?holderList(id):''}</div><button type="button" class="social-remove" data-collection-mark="${kind}" data-mark-card="${esc(id)}" aria-label="Quitar ${esc(card.name)} de ${kind==='favorite'?'favoritas':'deseadas'}">${svg(kind)}</button></article>`;
+    return `<article class="social-card" data-social-rarity="${esc(card.edition)}"><button type="button" class="social-card-art" data-social-view="${esc(id)}" aria-label="Ver ${esc(card.name)}">${cardImage(card)}</button><div><strong>${esc(card.name)}</strong><small>${esc(card.edition)}${card.score ? ` · ${esc(card.score)} PTS` : ''}</small>${kind==='wanted'?holderList(id):''}${kind==='wanted'&&globalThis.PackExtras?`<button type="button" class="social-target" data-card-target="${esc(id)}" aria-pressed="${targetId===id}" ${targetBusy?'disabled':''}>${targetBusy===id?'Guardando…':targetId===id?'Tu carta objetivo':'Hacer objetivo'}</button>`:''}</div><button type="button" class="social-remove" data-collection-mark="${kind}" data-mark-card="${esc(id)}" aria-label="Quitar ${esc(card.name)} de ${kind==='favorite'?'favoritas':'deseadas'}">${svg(kind)}</button></article>`;
   }
   // Who has a wanted card duplicated, so a trade can start with the right person.
   function holderList(id) {
@@ -69,7 +70,8 @@
     if (!list.length) return '<p class="social-holders">Nadie la tiene repetida todavía.</p>';
     return `<p class="social-holders">La tiene${list.length===1?'':'n'} repetida:</p><div class="social-holder-actions">${list.slice(0,4).map(peer=>`<button type="button" data-wish-trade="${esc(peer.id)}" aria-label="Proponer un intercambio a ${esc(peer.name)}">${esc(peer.name)}</button>`).join('')}</div>`;
   }
-  async function loadHolders() {
+  function loadTarget(){if(!globalThis.PackExtras||!config?.rpc)return;void Promise.resolve(config.rpc('get_pack_luck')).then(result=>{if(!result?.error){targetId=result?.data?.target?.card_id||null;render();}}).catch(()=>{});}
+    async function loadHolders() {
     if (holdersLoading || !session()) return;
     holdersLoading = true; render(); const token = epoch;
     try { const data = await rpc('get_wanted_card_holders'); if (token === epoch) holders = data || {}; }
@@ -191,13 +193,14 @@
     catch(error){if(token===epoch)failure=message(error);}
     finally{if(token===epoch){busy=false;render();}}
   }
-  function open(opener,section=tab) {if(section==='trades')return openTrades(opener);trigger=opener||document.activeElement;tab=['favorite','wanted'].includes(section)?section:'favorite';notice='';if(!dialog.open)dialog.showModal();render();dialog.querySelector('h2')?.focus({preventScroll:true});void refresh();if(tab==='wanted')void loadHolders();}
+  function open(opener,section=tab) {if(section==='trades')return openTrades(opener);trigger=opener||document.activeElement;tab=['favorite','wanted'].includes(section)?section:'favorite';notice='';if(!dialog.open)dialog.showModal();render();dialog.querySelector('h2')?.focus({preventScroll:true});void refresh();if(tab==='wanted'){void loadHolders();loadTarget();}}
   function openTrades(opener){tradePage='desk';search='';pickerOfferId=null;trigger=opener||document.activeElement;notice='';if(!tradeDialog.open)tradeDialog.showModal();requestDialog.close();dialog.close();render();tradeDialog.querySelector('h2')?.focus({preventScroll:true});void refresh();}
   function handleClick(event){
     if(event.target.closest('[data-social-close]'))event.currentTarget.close();
     if(event.target.closest('[data-request-later]'))requestDialog.close();
-    const selected=event.target.closest('[data-social-tab]');if(selected){tab=selected.dataset.socialTab;failure='';notice='';render();if(tab==='wanted')void loadHolders();}
+    const selected=event.target.closest('[data-social-tab]');if(selected){tab=selected.dataset.socialTab;failure='';notice='';render();if(tab==='wanted'){void loadHolders();loadTarget();}}
     const wish=event.target.closest('[data-wish-trade]');if(wish){const peer=wish.dataset.wishTrade;openTrades(wish);draft={peer,give:''};createId=null;tradePage='cards';search='';render();tradeDialog.scrollTop=0;return;}
+    const target=event.target.closest('[data-card-target]');if(target&&!targetBusy){const id=target.dataset.cardTarget;targetBusy=id;render();void globalThis.PackExtras.setTarget(targetId===id?null:id).then(data=>{targetId=data?.target?.card_id||null;notice=targetId?`«${design(id)?.name||id}» es tu carta objetivo: cada sobre que abras suma un fragmento.`:'Ya no tienes carta objetivo.';}).catch(error=>{failure=error.message;}).finally(()=>{targetBusy='';render();});return;}
     if(event.target.closest('[data-social-retry]'))void refresh();
     const view=event.target.closest('[data-social-view]');if(view)globalThis.CardCollection?.open(view.dataset.socialView,view);
     if(event.target.closest('[data-trade-start]')){tradePage='members';search='';draft={peer:'',give:''};pickerOfferId=null;render();tradeDialog.scrollTop=0;}

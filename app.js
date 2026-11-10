@@ -1778,13 +1778,14 @@ function renderMessages() {
           <button class="message-author" data-profile="${message.member}">${escapeHtml(globalThis.ChatCustom?.name("group", member) || member?.name || "Miembro")}</button>
         </div>`}
         ${renderChatQuote("group", message)}
-        ${message.text ? `<p>${formatChatText(message.text)}</p>` : ""}${attachment}
+        ${globalThis.PackExtras?.sharedId(message.text) ? globalThis.PackExtras.sharedMarkup(globalThis.PackExtras.sharedId(message.text)) : message.text ? `<p>${formatChatText(message.text)}</p>` : ""}${attachment}
         <div class="message-footer"><time class="private-message-time" datetime="${escapeHtml(message.createdAt)}" title="${escapeHtml(formatMessageDate(message.createdAt))}">${formatConversationTime(message.createdAt)}</time>${message.editedAt ? '<span class="message-edited">editado</span>' : ""}
         </div>
         ${globalThis.ChatCustom?.chips("group", message.id) || ""}
       </div>
     </div>`;
   }).join(""));
+  globalThis.PackExtras?.hydrate(container);
   finishReading();
 }
 
@@ -1805,7 +1806,7 @@ const chatReplies = new Map();
 function chatReplyKey(kind) { return `${currentAuthUser?.id || ""}:${kind}:${kind === "private" ? activePrivateMemberId : activeChatChannelId}`; }
 function chatReplyDescription(kind, message) {
   const author = kind === "group" ? getMember(message.member) : getMemberByAuthId(message.senderId);
-  return {name: author?.name || "Miembro", text: String(message.text || message.body || (message.attachmentType?.startsWith("image/") ? "Imagen" : message.attachmentType?.startsWith("audio/") ? "Nota de voz" : message.attachmentType?.startsWith("video/") ? "Vídeo" : "Archivo adjunto")).slice(0, 180)};
+  return {name: author?.name || "Miembro", text: String((globalThis.PackExtras?.sharedId(message.text || message.body) ? "Sobre compartido" : "") || message.text || message.body || (message.attachmentType?.startsWith("image/") ? "Imagen" : message.attachmentType?.startsWith("audio/") ? "Nota de voz" : message.attachmentType?.startsWith("video/") ? "Vídeo" : "Archivo adjunto")).slice(0, 180)};
 }
 function renderChatQuote(kind, message) {
   if (!message.replyToId) return "";
@@ -3051,6 +3052,7 @@ function formatChatText(text) {
 }
 
 function messagePreviewText(body, attachmentType) {
+  if (globalThis.PackExtras?.sharedId(body)) return "Ha compartido un sobre";
   if (body?.trim()) return body.trim();
   if (attachmentType?.startsWith("audio/")) return "Nota de voz";
   if (attachmentType?.startsWith("image/")) return "Foto";
@@ -6882,6 +6884,17 @@ async function sendMessage(text, file = null, attempt = {}) {
   globalThis.DailyPacks?.activityCompleted?.('message');
   return mapMessage(data);
 }
+
+// A shared pack opening is posted to the group's default channel as a token
+// the chat draws as a strip of the six cards.
+document.addEventListener("bb:share-pack", event => {
+  const token = event.detail?.token;
+  const channel = chatChannels.find(item => item.isDefault) || chatChannels[0];
+  if (!token || !channel) return;
+  void sendMessage(token, null, {destination: channel.id}).then(message => {
+    if (message && !messages.some(item => String(item.id) === String(message.id))) { messages.push(message); if (String(activeChatChannelId) === String(channel.id)) renderMessages(); }
+  }).catch(error => console.warn("No se pudo compartir el sobre:", error));
+});
 
 let editingChatChannel = null;
 let channelEditorRequest = 0;
