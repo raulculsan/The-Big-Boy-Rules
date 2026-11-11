@@ -50,7 +50,7 @@
  }
  function question(data){
   const q=data.question;
-  if(!q.results)return `<h4>${esc(q.prompt)}</h4><p class="club-day-note">Vota para ver qué piensa el club. +3 monedas.</p>${chooser('data-day-answer')}`;
+  if(!q.results)return `<h4>${esc(q.prompt)}</h4><p class="club-day-note">Vota para ver qué piensa el club. +6 monedas.</p>${chooser('data-day-answer')}`;
   const top=Math.max(1,...q.results.map(r=>r.votes));
   return `<h4>${esc(q.prompt)}</h4><ul class="club-day-results">${q.results.map(r=>`<li class="${r.id===q.pick?'is-own':''}"><span>${esc(nameOf(r.id))}</span><b>${r.votes}</b><i style="--share:${Math.round(r.votes/top*100)}%"></i></li>`).join('')}</ul><p class="club-day-note">${plural(q.total,'voto','votos')} hoy. Mañana, otra pregunta.</p>`;
  }
@@ -61,11 +61,11 @@
    return `<button type="button" data-day-pick="${esc(p.id)}" data-day-option="${index}" aria-pressed="${own}" class="${right?'is-right':''}"${p.closed?' disabled':''}><span>${esc(option)}</span>${count===undefined?'':`<b>${total?Math.round(count/total*100):0} %</b>`}</button>`;
   }).join('');
   const won=p.resolved&&p.pick===p.correct;
-  const foot=won&&!p.claimed?`<button type="button" class="club-day-action" data-day-claim="${esc(p.id)}">Cobrar 15 monedas</button>`
+  const foot=won&&!p.claimed?`<button type="button" class="club-day-action" data-day-claim="${esc(p.id)}">Cobrar 30 monedas</button>`
    :won?'<p class="club-day-note">Acertaste. Premio cobrado.</p>'
    :p.resolved?'<p class="club-day-note">Resultado publicado.</p>'
    :p.closed?'<p class="club-day-note">Cerrada. Falta el resultado.</p>'
-   :`<p class="club-day-note">${esc(closeLabel(p.closes_at))}. Acertar da 15 monedas.</p>`;
+   :`<p class="club-day-note">${esc(closeLabel(p.closes_at))}. Acertar da 30 monedas.</p>`;
   const manage=config.canManage?.()&&!p.resolved?`<details class="club-day-manage"><summary>Publicar resultado</summary>${p.options.map((option,index)=>`<button type="button" data-day-resolve="${esc(p.id)}" data-day-option="${index}">${esc(option)}</button>`).join('')}</details>`:'';
   return `<article class="club-day-prediction"><h4>${esc(p.question)}</h4><div class="club-day-options">${options}</div>${foot}${manage}</article>`;
  }
@@ -81,7 +81,7 @@
  function premios(data){
   const month=months[Number(String(data.awards.month).slice(5,7))-1];
   const rows=data.awards.categories.map(c=>`<article class="club-day-award"><h4>${esc(c.title)}</h4>${c.winners.length?`<p class="club-day-note">El mes pasado: ${esc(c.winners.map(nameOf).join(', '))}</p>`:''}${chooser('data-day-vote',c.vote,c.id)}</article>`).join('');
-  return `<p class="club-day-note">Votos de ${esc(month)}. Son anónimos y el ganador se ve el mes que viene. Votar todos da 10 monedas.</p>${rows}`;
+  return `<p class="club-day-note">Votos de ${esc(month)}. Son anónimos y el ganador se ve el mes que viene. Votar todos da 20 monedas.</p>${rows}`;
  }
  function ranking(data){
   const rows=data.ranking.map((r,index)=>`<li><b>${index+1}</b><span>${esc(nameOf(r.id))}</span><small>${plural(r.hits,'acierto','aciertos')} · ${plural(r.streak,'día','días')}</small></li>`).join('');
@@ -102,13 +102,13 @@
  }
  function duelos(){
   const list=extras.duels.map(duelRow).join('');
-  const launch=duelRival?`<h4>Tu carta contra ${esc(nameOf(duelRival))}</h4>${cardPicker('data-day-duel-new')}`:`<h4>Reta a alguien</h4><p class="club-day-note">Gana la carta con más puntos. No se pierde ninguna carta. Una victoria al día da 10 monedas.</p>${chooser('data-day-duel-rival')}`;
+  const launch=duelRival?`<h4>Tu carta contra ${esc(nameOf(duelRival))}</h4>${cardPicker('data-day-duel-new')}`:`<h4>Reta a alguien</h4><p class="club-day-note">Gana la carta con más puntos. No se pierde ninguna carta. Una victoria al día da 20 monedas.</p>${chooser('data-day-duel-rival')}`;
   return `${launch}${list}`;
  }
  function carta(){
   const c=extras.week_card;
   if(!c)return '<p class="club-day-note">Esta semana no hay carta.</p>';
-  const foot=c.claimed?'<p class="club-day-note">Premio cobrado esta semana.</p>':c.owned?`<button type="button" class="club-day-action" data-day-week-claim>Cobrar 10 monedas</button>`:'<p class="club-day-note">Consíguela esta semana para cobrar 10 monedas.</p>';
+  const foot=c.claimed?'<p class="club-day-note">Premio cobrado esta semana.</p>':c.owned?`<button type="button" class="club-day-action" data-day-week-claim>Cobrar 20 monedas</button>`:'<p class="club-day-note">Consíguela esta semana para cobrar 20 monedas.</p>';
   return `<div class="club-day-week"><img src="${esc(c.thumb)}" alt=""><div><h4>${esc(c.name)}</h4><p class="club-day-note">${c.owners===1?'La tiene 1 miembro':`La tienen ${c.owners} miembros`}</p>${foot}</div></div>`;
  }
  function capsula(){
@@ -133,10 +133,10 @@
  }
  function quien(){
   const r=whois.round;let body;
-  if(r.phase==='answer')body=`<p class="club-day-note">${plural(r.answered,'respuesta','respuestas')}. Quedan ${timeLeft(r.until)} para responder. Luego tocará adivinar de quién es cada una. Responder da 3 monedas.</p><form class="club-day-form" data-day-whois><label>Tu respuesta<textarea name="body" rows="2" maxlength="140" required>${esc(r.own||'')}</textarea></label><div><button type="submit" class="club-day-action">${r.own?'Cambiar':'Enviar'}</button></div></form>`;
+  if(r.phase==='answer')body=`<p class="club-day-note">${plural(r.answered,'respuesta','respuestas')}. Quedan ${timeLeft(r.until)} para responder. Luego tocará adivinar de quién es cada una. Responder da 6 monedas.</p><form class="club-day-form" data-day-whois><label>Tu respuesta<textarea name="body" rows="2" maxlength="140" required>${esc(r.own||'')}</textarea></label><div><button type="submit" class="club-day-action">${r.own?'Cambiar':'Enviar'}</button></div></form>`;
   else if(r.guessed)body=`<p class="club-day-note">Has acertado ${r.guessed.score} de ${r.guessed.total}. Los autores se ven en ${timeLeft(r.until)}.</p>`;
   else if(!r.answers.length)body=`<p class="club-day-note">Esta ronda no tiene respuestas para ti. Termina en ${timeLeft(r.until)}.</p>`;
-  else body=`<p class="club-day-note">¿De quién es cada respuesta? Solo tienes un intento. Cada acierto da 2 monedas. Quedan ${timeLeft(r.until)}.</p><form class="club-day-form" data-day-guess>${r.answers.map(a=>`<label><span class="club-day-message">${esc(a.body)}</span><select name="${esc(a.id)}" required><option value="">Elige</option>${r.authors.map(id=>`<option value="${esc(id)}"${guesses[a.id]===id?' selected':''}>${esc(nameOf(id))}</option>`).join('')}</select></label>`).join('')}<div><button type="submit" class="club-day-action">Enviar</button></div></form>`;
+  else body=`<p class="club-day-note">¿De quién es cada respuesta? Solo tienes un intento. Cada acierto da 4 monedas. Quedan ${timeLeft(r.until)}.</p><form class="club-day-form" data-day-guess>${r.answers.map(a=>`<label><span class="club-day-message">${esc(a.body)}</span><select name="${esc(a.id)}" required><option value="">Elige</option>${r.authors.map(id=>`<option value="${esc(id)}"${guesses[a.id]===id?' selected':''}>${esc(nameOf(id))}</option>`).join('')}</select></label>`).join('')}<div><button type="submit" class="club-day-action">Enviar</button></div></form>`;
   return `<h4>${esc(r.prompt)}</h4>${body}${whoisLast(whois.last)}`;
  }
  function pending(data){
@@ -185,7 +185,7 @@
    case 'quien':return !round?{note:blurbs.quien}:round.phase==='answer'?(round.own?{note:'Respondido',done:true}:{note:'Toca responder',todo:true,reward:3}):round.guessed?{note:`${round.guessed.score} de ${round.guessed.total} aciertos`,done:true}:round.answers.length?{note:'Toca adivinar',todo:true}:{note:blurbs.quien};
    case 'porra':{const open=data.predictions.filter(p=>!p.closed&&p.pick===null).length,claim=data.predictions.some(p=>p.resolved&&p.pick===p.correct&&!p.claimed);return claim?{note:'Tienes un premio',todo:true,reward:15}:open?{note:plural(open,'porra abierta','porras abiertas'),todo:true,reward:15}:{note:blurbs.porra};}
    case 'duelos':{const d=extras?.duels||[],incoming=d.filter(x=>x.incoming).length,claim=d.some(x=>x.winner===me&&!x.claimed);return claim?{note:'Cobra tu victoria',todo:true,reward:10}:incoming?{note:`${incoming===1?'Te reta alguien':`${incoming} te retan`}`,todo:true}:{note:blurbs.duelos};}
-   case 'carta':{const c=extras?.week_card;return c?(c.claimed?{note:c.name,done:true}:c.owned?{note:'Cobra 10 monedas',todo:true,reward:10}:{note:c.name}):{note:blurbs.carta};}
+   case 'carta':{const c=extras?.week_card;return c?(c.claimed?{note:c.name,done:true}:c.owned?{note:'Cobra 20 monedas',todo:true,reward:20}:{note:c.name}):{note:blurbs.carta};}
    default:return {note:blurbs[id]||''};
   }
  }

@@ -100,7 +100,7 @@
         welcome.hidden=state.data?.welcome_credited_packs!==20;
         welcome.textContent=welcome.hidden ? '' : 'Has recibido 20 sobres de bienvenida por tu primer acceso al club. Se conceden una sola vez por cuenta.';
         const streak=state.data?.streak_days, allowance=state.data?.daily_reward_packs;
-        rewards.textContent=(Number.isSafeInteger(streak) ? `Tu racha: ${streak} ${streak === 1 ? 'día' : 'días'} · ${allowance} ${allowance === 1 ? 'sobre hoy' : 'sobres hoy'}. ` : '')+'Racha: 1–2 días → 2 sobres y 10 monedas; 3–6 → 3 y 15; 7–13 → 4 y 20; 14–29 → 5 y 25; 30 o más → 6 y 30. Trofeos: bronce 2 · plata 3 · oro 5 · platino 8 sobres.';
+        rewards.textContent=(Number.isSafeInteger(streak) ? `Tu racha: ${streak} ${streak === 1 ? 'día' : 'días'} · ${allowance} ${allowance === 1 ? 'sobre hoy' : 'sobres hoy'}. ` : '')+'Racha: 1–2 días → 3 sobres y 20 monedas; 3–6 → 4 y 30; 7–13 → 5 y 40; 14–29 → 6 y 50; 30 o más → 7 y 60. Trofeos: bronce 2 · plata 3 · oro 5 · platino 8 sobres.';
         let shields=info.querySelector('[data-pack-shields]');
         if(!shields){shields=document.createElement('div');shields.className='pack-shields';shields.dataset.packShields='';info.append(shields);}
         shields.hidden=!Number.isSafeInteger(state.data?.streak_shields);
@@ -112,7 +112,7 @@
           activities.hidden=!enabled;
           if(enabled){
             const earned=state.data.activity_rewards||{}, completed=['message','poll','event'].filter(key=>earned[key]===true).length;
-            activities.textContent=`3 sobres extra cada día: +1 por tu primer mensaje en un grupo, +1 por votar en una encuesta y +1 por responder a un plan nuevo. Hoy: ${completed}/3 conseguidos. Se suman automáticamente; cambiar una respuesta no da otro sobre. El día se reinicia a las 00:00, hora de Madrid.`;
+            activities.textContent=`6 sobres extra cada día: +2 por tu primer mensaje en un grupo, +2 por votar en una encuesta y +2 por responder a un plan nuevo. Hoy: ${completed}/3 conseguidos. Se suman automáticamente; cambiar una respuesta no da otro sobre. El día se reinicia a las 00:00, hora de Madrid.`;
           }
         }
       }

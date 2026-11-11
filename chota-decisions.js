@@ -456,7 +456,7 @@
     });
     const ok = same || await globalThis.ClubPlus?.storyVote?.(today.id, option);
     voting = false;
-    if (ok && !same) { lastVoteLabel = label; saveMyVote(today.title, label); if (first) reward('+2 monedas'); }
+    if (ok && !same) { lastVoteLabel = label; saveMyVote(today.title, label); if (first) reward('+4 monedas'); }
     choice = null;
     notice = ok ? '' : globalThis.ClubPlus?.lastNotice?.() || 'No se ha podido guardar el voto.';
     render();
