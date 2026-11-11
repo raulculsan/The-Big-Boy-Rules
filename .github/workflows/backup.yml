@@ -39,6 +39,15 @@ jobs:
             if [ -z "${!name}" ]; then echo "::error::Falta el secreto $name"; missing=1; fi
           done
           [ "${#BACKUP_PASSPHRASE}" -ge 32 ] || { echo "::error::BACKUP_PASSPHRASE es demasiado corta"; missing=1; }
+          # Tidy a pasted connection string (spaces, quotes, a leading "psql") and
+          # explain what is wrong with it without ever printing it.
+          url=$(printf %s "$SUPABASE_DB_URL" | tr -d '\r\n' | sed -E 's/^[[:space:]]*(psql[[:space:]]+)?["'"'"']?//; s/["'"'"']?[[:space:]]*$//')
+          case "$url" in postgres://*|postgresql://*) ;; *) echo "::error::SUPABASE_DB_URL no empieza por postgresql:// (empieza por '$(printf %s "$url" | cut -c1-6)…', ${#url} caracteres)"; missing=1;; esac
+          case "$url" in *'[YOUR-PASSWORD]'*|*'YOUR-PASSWORD'*) echo "::error::SUPABASE_DB_URL todavía contiene [YOUR-PASSWORD]"; missing=1;; esac
+          case "$url" in *pooler.supabase.com*) ;; *) echo "::warning::SUPABASE_DB_URL no es la de Session pooler (GitHub necesita la de pooler)";; esac
+          case "$url" in *:6543/*) echo "::warning::SUPABASE_DB_URL usa el puerto 6543 (Transaction pooler); hace falta Session pooler, puerto 5432";; esac
+          echo "::add-mask::$url"
+          echo "DB_URL=$url" >> "$GITHUB_ENV"
           exit $missing
 
       - uses: actions/checkout@v4
@@ -60,7 +69,7 @@ jobs:
           set -euo pipefail
           stamp=$(date -u +%Y-%m-%d)
           mkdir -p out
-          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" --format=custom --compress=9 --no-owner --no-privileges \
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --format=custom --compress=9 --no-owner --no-privileges \
             --exclude-schema='supabase_migrations' --file=db.dump
           /usr/lib/postgresql/17/bin/pg_restore --list db.dump >/dev/null
           echo "Tamaño de la copia: $(du -h db.dump | cut -f1)"
