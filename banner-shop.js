@@ -586,6 +586,7 @@
     preloadReveal(cards);
     globalThis.MotionQuality?.watch();
     reveal = {packId,theme,shared:false,cards,index:0,flipped:false,discarded:new Set(),uncertain:new Set(),pending:new Set(),queue:[],earned:0,phase:'idle'};
+    globalThis.PackDiagnostics?.start(revealDialog,{cards:cards.length,theme,send:payload => rpc('record_pack_opening_diagnostic',{payload})});
     revealDialog.classList.remove('is-pack-summary');
     delete revealDialog.dataset.cardIndex; delete revealDialog.dataset.rarity; delete revealDialog.dataset.mood;
     if(globalThis.ClubMotion?.openDialog)globalThis.ClubMotion.openDialog(revealDialog);else revealDialog.showModal(); renderReveal();
@@ -769,7 +770,7 @@
       else flipReveal();
     }
   });
-  revealDialog.addEventListener('close', () => {revealPreload = [];const syncAfterClose = reveal?.dirty && !reveal.draining;stopRevealOpening();detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;detachViewerMotion?.();detachViewerMotion=null;packViewer=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); (document.querySelector('#packCarouselTrack .pack-slide.is-active button') || el('ownedPackOpen'))?.focus({preventScroll:true});if (syncAfterClose) void refresh();});
+  revealDialog.addEventListener('close', () => {globalThis.PackDiagnostics?.stop();revealPreload = [];const syncAfterClose = reveal?.dirty && !reveal.draining;stopRevealOpening();detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;detachViewerMotion?.();detachViewerMotion=null;packViewer=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); (document.querySelector('#packCarouselTrack .pack-slide.is-active button') || el('ownedPackOpen'))?.focus({preventScroll:true});if (syncAfterClose) void refresh();});
   const el = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);

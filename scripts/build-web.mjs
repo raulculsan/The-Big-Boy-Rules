@@ -104,6 +104,7 @@ const sources = [
   "packs.css",
   "pack-opening.js",
   "pack-extras.js",
+  "pack-diagnostics.js",
   "banner-shop.js",
   "banner-shop.css",
   "design-system.css",

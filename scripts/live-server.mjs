@@ -12,6 +12,7 @@ const clients = new Set();
 const allowedFiles = new Set([
   "index.html",
   "pack-extras.js",
+  "pack-diagnostics.js",
   "chota-cloth.js",
   "chota-interact.js",
   "chota-appearance.js",
