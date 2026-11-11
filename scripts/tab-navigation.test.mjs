@@ -73,14 +73,14 @@ function navigation() {
   const node = id => {
     const classes = new Set();
     return {id,inert:false,classList:{contains:key=>classes.has(key),add:key=>classes.add(key),remove:key=>classes.delete(key),toggle(key,on){on?classes.add(key):classes.delete(key);}},
-      scrollTo:options=>scrolls.push({id,...options}),scrollIntoView:()=>anchors.push(id),setAttribute(){}};
+      scrollTo:options=>scrolls.push({id,...options}),scrollIntoView:()=>anchors.push(id),setAttribute(){},hasAttribute:()=>false,getAttribute:()=>null,getBoundingClientRect:()=>({top:0,bottom:0,left:0,right:0,width:0,height:0})};
   };
   const sections = ['inicio','chat','calendario','perfil','privados','ayuda','administracion'].map(node);
   sections[0].classList.add('active');
   const elements = Object.fromEntries([...sections,node('miembros'),node('noticias')].map(n=>[n.id,n]));
   const body = node('body'), root = node('app');
   const context = vm.createContext({
-    navigationGeneration:0,navigationFrame:null,navigationWorkTimer:null,sections,navLinks:[],currentUser:{id:1},achievementsLoaded:true,
+    /*GLOBALS*/isMobileSidebar(){},renderSpotify(){},scheduleChatImageWarmup(){},renderPrivateContacts(){},activeChatMotionScene:null,pageBackSettling:false,adminConsole:null,closeMessageUI(){},cancelActiveAudioRecording(){},capturePageBackLayout(){},capturePagePosition(){},pageBackPositions:new Map(),featureNavigationRequest:0,navigationGeneration:0,navigationFrame:null,navigationWorkTimer:null,sections,navLinks:[],currentUser:{id:1},achievementsLoaded:true,
     requestAnimationFrame:frame.set,cancelAnimationFrame:frame.clear,clearTimeout:timer.clear,
     window:{setTimeout:timer.set,scrollTo:options=>scrolls.push({id:'window',...options})},
     document:{body,getElementById:id=>elements[id],querySelector:()=>root},HTMLElement:class {},
@@ -106,12 +106,15 @@ test('superseded section callbacks cannot scroll or rewrite the destination', ()
 });
 
 test('rapid tab switches coalesce background work and preserve explicit home anchors', () => {
-  const {context,frame,timer,history,anchors} = navigation();
+  const {context,frame,timer,history,anchors,scrolls} = navigation();
   for(let i=0;i<100;i++) {context.goTo(['perfil','chat','calendario','inicio'][i%4]); frame.flush();}
   timer.flush();
   assert.deepEqual(history,['#inicio']);
+  const before=scrolls.length;
   context.goTo('miembros'); frame.flush(); timer.flush();
-  assert.deepEqual(anchors,['miembros']);
+  // The jump scrolls only the page (scrollIntoView also moved WebKit ancestors).
+  assert.deepEqual(anchors,[]);
+  assert.ok(scrolls.slice(before).some(s=>s.id==='window' && s.behavior==='instant'));
   assert.equal(history.at(-1),'#miembros');
 });
 
@@ -119,7 +122,7 @@ test('history quota cannot interrupt navigation or background data refresh', () 
   const {context,frame,timer,sections} = navigation();
   let refreshed=false;
   context.history.replaceState=()=>{throw Object.assign(new Error('Rate limited'),{name:'SecurityError'});};
-  context.loadHelpCenter=()=>{refreshed=true;};
+  context.Tickets={refresh(){refreshed=true;},activeId:()=>null};
   context.goTo('ayuda'); frame.flush(); timer.flush();
   assert.equal(sections.find(s=>s.classList.contains('active')).id,'ayuda');
   assert.equal(refreshed,true);
@@ -129,7 +132,7 @@ test('profile DOM is retained for repeated taps and refreshed when member data c
   let renders=0;
   const member={id:1,name:'Kike',username:'kike',tags:[]};
   const content={set innerHTML(value){renders++;}};
-  const context=vm.createContext({profileRender:null,currentUser:member,getMember:()=>member,achievementsForMember:()=>[],memberDisplayNumber:()=>1,
+  const context=vm.createContext({/*GLOBALS*/sections:[],profileRender:null,currentUser:member,getMember:()=>member,achievementsForMember:()=>[],memberDisplayNumber:()=>1,
     getAvatar:m=>`avatar:${m.avatarUrl||''}`,escapeHtml:s=>s,renderMemberAchievements:()=>'',renderAchievementChallengeTrigger:()=>'',goTo(){},openProfileEditor(){},
     document:{querySelector:()=>({hidden:false}),getElementById:id=>id==='profileContent'?content:null}});
   vm.runInContext(extract('renderProfile'),context);

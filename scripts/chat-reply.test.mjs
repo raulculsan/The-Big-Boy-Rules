@@ -20,7 +20,7 @@ function replyFixture() {
   };
   const listen = (type, callback) => { const list = listeners.get(type) || []; list.push(callback); listeners.set(type, list); };
   const context = vm.createContext({
-    document: {addEventListener: listen, getElementById: () => ({disabled: false})},
+    document: {addEventListener: listen, getElementById: () => ({disabled: false, addEventListener: listen})},
     window: {addEventListener: listen}, performance: {now: () => 10},
     requestAnimationFrame: callback => { frames.set(++serial, callback); return serial; },
     cancelAnimationFrame: id => frames.delete(id), setTimeout: callback => { timers.set(++serial, callback); return serial; },

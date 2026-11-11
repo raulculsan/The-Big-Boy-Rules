@@ -6541,8 +6541,20 @@ function connectRealtime() {
     .subscribe();
 }
 
+// Safari cannot encode WebP from a canvas: it silently returns a PNG, which is
+// several times larger. Keep WebP where it works and use JPEG otherwise, and
+// always name and label the file after what was really produced.
+async function canvasImageFile(canvas, baseName, quality = .85) {
+  const encode = type => new Promise(resolve => canvas.toBlob(resolve, type, quality));
+  let blob = await encode("image/webp");
+  if (blob?.type !== "image/webp") blob = await encode("image/jpeg");
+  if (!blob) return null;
+  const extension = blob.type === "image/webp" ? "webp" : blob.type === "image/jpeg" ? "jpg" : "png";
+  return new File([blob], `${baseName}.${extension}`, {type: blob.type});
+}
+
 async function prepareChatImage(file) {
-  if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 500000) return file;
+  if (!/^image\/(jpeg|png|webp)$/.test(file?.type || "") || file.size < 500000) return file;
   const objectUrl = URL.createObjectURL(file);
   try {
     const image = new Image(); image.src = objectUrl; await image.decode();
@@ -6551,13 +6563,15 @@ async function prepareChatImage(file) {
     canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
     canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
     canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", .85));
-    return blob && blob.size < file.size ? new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), {type: "image/webp"}) : file;
+    const prepared = await canvasImageFile(canvas, file.name.replace(/\.[^.]+$/, "") || "imagen", .85);
+    return prepared && prepared.size < file.size ? prepared : file;
   } catch { return file; }
   finally { URL.revokeObjectURL(objectUrl); }
 }
+globalThis.ClubImages = Object.freeze({prepare: prepareChatImage});
 
 async function uploadGroupMedia(file, folder) {
+  file = await prepareChatImage(file);
   validateFileSize(file, uploadLimitForFolder(folder));
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const path = `${currentAuthUser.id}/${folder}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
@@ -7552,17 +7566,10 @@ function loadAvatarCrop(file) {
   });
 }
 
-function createCroppedAvatarFile() {
-  return new Promise((resolve, reject) => {
-    const canvas = document.getElementById("avatarCropCanvas");
-    canvas.toBlob(blob => {
-      if (!blob) {
-        reject(new Error("No se pudo preparar la foto."));
-        return;
-      }
-      resolve(new File([blob], "avatar.webp", {type: "image/webp"}));
-    }, "image/webp", .9);
-  });
+async function createCroppedAvatarFile() {
+  const file = await canvasImageFile(document.getElementById("avatarCropCanvas"), "avatar", .85);
+  if (!file) throw new Error("No se pudo preparar la foto.");
+  return file;
 }
 
 async function saveProfile(form) {
@@ -7604,14 +7611,15 @@ async function saveProfile(form) {
       }
       avatarUrl = "";
     } else if (pendingAvatarFile) {
-      const croppedAvatarFile = avatarCropImage ? await createCroppedAvatarFile() : pendingAvatarFile;
+      const croppedAvatarFile = avatarCropImage ? await createCroppedAvatarFile() : await prepareChatImage(pendingAvatarFile);
       if (backendReady) {
         const extension = croppedAvatarFile.name.split(".").pop().toLowerCase();
         const path = `${targetAuthId}/avatar.${extension}`;
         const {error} = await db.storage.from("avatars").upload(path, croppedAvatarFile, {
           upsert: true,
           contentType: croppedAvatarFile.type,
-          cacheControl: "86400"
+          // The saved URL carries ?v=<time>, so a new photo is a new address.
+          cacheControl: "31536000"
         });
         if (error) throw error;
         avatarUrl = `${db.storage.from("avatars").getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;

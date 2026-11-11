@@ -177,14 +177,15 @@
  document.addEventListener('submit',e=>{
   const f=e.target;if(!dialog?.contains(f)||!f.matches('[data-cl-compose],[data-cl-reveal],[data-cl-place],[data-cl-recap],[data-cl-caption],[data-cl-memory]'))return;e.preventDefault();const data=new FormData(f);
   if(f.hasAttribute('data-cl-memory'))return void mutate(async()=>{
-   const file=data.get('media'),caption=String(data.get('caption')||'').trim(),eventId=state.event.id,occurrence=state.occurrence,owner=uid();
+   let file=data.get('media');const caption=String(data.get('caption')||'').trim(),eventId=state.event.id,occurrence=state.occurrence,owner=uid();
    if(!caption&&!file?.size)throw new Error('Añade una foto, un vídeo o una anécdota.');
    let path=null,type=null;
    if(file?.size){
+    file=await globalThis.ClubImages?.prepare?.(file)||file;
     const extensions={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','video/mp4':'mp4','video/quicktime':'mov'};
     if(!extensions[file.type]||file.size>20*1024*1024)throw new Error('Usa una foto o vídeo compatible de hasta 20 MB.');
     type=file.type.startsWith('video/')?'video':'image';path=`${owner}/${eventId}/${crypto.randomUUID()}.${extensions[file.type]}`;
-    const upload=await cfg.db.storage.from('club-memories').upload(path,file,{contentType:file.type,upsert:false});if(upload.error)throw upload.error;
+    const upload=await cfg.db.storage.from('club-memories').upload(path,file,{contentType:file.type,upsert:false,cacheControl:'31536000'});if(upload.error)throw upload.error;
    }
    try{await query(cfg.db.from('club_event_memories').insert({event_id:eventId,occurrence,created_by:owner,caption,media_path:path,media_type:type,featured:!!path}));}
    catch(error){if(path)await cfg.db.storage.from('club-memories').remove([path]);throw error;}

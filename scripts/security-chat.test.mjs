@@ -56,22 +56,24 @@ test('private Storage RLS enforces participants and prevents forged references; 
 
 function edge(path, createClient, extra={}) {
   const source=stripTypeScriptTypes(read(path).replace(/^import .*;\n/gm,''),{mode:'strip'}).replace('export default','globalThis.handler =');
-  const ctx=vm.createContext({Response,Request,URL,Date,Set,crypto,console,Deno:{env:{get:name=>name==='SUPABASE_URL'?'https://project.supabase.co':'test-value'}},createClient,...extra});
+  const ctx=vm.createContext({Response,Request,URL,Date,Set,crypto,console,TextDecoder,TextEncoder,Deno:{env:{get:name=>name==='SUPABASE_URL'?'https://project.supabase.co':'test-value'}},createClient,
+    // Second-factor gate is tested on its own; here the caller has satisfied it.
+    accountSecurityFailure:async()=>null,...extra});
   vm.runInContext(source,ctx);return ctx.handler;
 }
-const request=body=>new Request('https://example.org/function',{method:'POST',headers:{Authorization:'Bearer dummy'},body:JSON.stringify(body)});
+const request=body=>new Request('https://example.org/function',{method:'POST',headers:{Authorization:'Bearer dummy','Content-Type':'application/json'},body:JSON.stringify(body)});
 test('club admins cannot rename/reset other admins; superadmin can manage visible admin',async()=>{
   for(const callerRole of ['admin','superadmin']) for(const action of ['rename','reset-password']) {
     let updates=0;
-    const client={auth:{getUser:async()=>({data:{user:{id:alice}}}),admin:{getUserById:async()=>({data:{user:{app_metadata:{}}}}),updateUserById:async()=>{updates++;return {};}}},from(){let id;return {select(){return this},eq(key,value){id=value;return this},single:async()=>({data:id===alice?{role:callerRole,is_hidden:callerRole==='superadmin'}:{role:'admin',is_hidden:false,username:'old'}}),update(){updates++;return this},then(resolve){resolve({});}};}};
-    const response=await edge('supabase/functions/admin-users/index.ts',()=>client).fetch(request({action,userId:bob,username:'newname',password:'password123'}));
+    const client={auth:{getUser:async()=>({data:{user:{id:alice}}}),admin:{getUserById:async()=>({data:{user:{app_metadata:{}}}}),updateUserById:async()=>{updates++;return {};}}},rpc:async()=>({data:null,error:null}),from(){let id;return {select(){return this},eq(key,value){id=value;return this},single:async()=>({data:id===alice?{role:callerRole,is_hidden:callerRole==='superadmin'}:{role:'admin',is_hidden:false,username:'old'}}),update(){updates++;return this},then(resolve){resolve({});}};}};
+    const response=await edge('supabase/functions/admin-users/index.ts',()=>client).fetch(request(action==='rename'?{action,userId:bob,username:'newname'}:{action,userId:bob,password:'Nueva-clave-2026!'}));
     assert.equal(response.status,callerRole==='admin'?403:200);
     if(callerRole==='admin') assert.equal(updates,0);
   }
 });
 test('concurrent replayed push requests send once and exclude external avatar URLs',async()=>{
   let claims=new Set(), sent=[];
-  const client={auth:{getUser:async()=>({data:{user:{id:alice}}})},from(table){return {select(){return this},eq(){return this},neq(){return this},in(){return this},single:async()=>({data:table==='profiles'?{display_name:'Alice',avatar_url:'https://tracker.example/icon'}:{user_id:alice,body:'Hi'}}),then(resolve){resolve({data:table==='profiles'?[{id:bob}]:[{id:'sub',endpoint:'https://push.example/',p256dh:'test',auth:'test'}]});},insert(value){const key=JSON.stringify(value);if(claims.has(key))return Promise.resolve({error:{code:'23505'}});claims.add(key);return Promise.resolve({});}};}};
+  const client={auth:{getUser:async()=>({data:{user:{id:alice}}})},from(table){return {select(){return this},eq(){return this},neq(){return this},in(){return this},gte(){return this},delete(){return this},single:async()=>({data:table==='profiles'?{display_name:'Alice',avatar_url:'https://tracker.example/icon'}:{user_id:alice,body:'Hi'}}),then(resolve){resolve({data:table==='profiles'?[{id:bob}]:[{id:'sub',endpoint:'https://push.example/',p256dh:'test',auth:'test'}]});},insert(value){const key=JSON.stringify(value);if(claims.has(key))return Promise.resolve({error:{code:'23505'}});claims.add(key);return Promise.resolve({});}};}};
   const handler=edge('supabase/functions/push-dispatch/index.ts',()=>client,{webpush:{setVapidDetails(){},async sendNotification(subscription,payload){sent.push(JSON.parse(payload));}}});
   const responses=await Promise.all(Array.from({length:8},()=>handler.fetch(request({kind:'group_message',entityId:'1'}))));
   assert.ok(responses.every(r=>r.status===200));assert.equal(sent.length,1);assert.equal(sent[0].icon,'');

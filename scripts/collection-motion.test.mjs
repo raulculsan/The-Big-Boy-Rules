@@ -13,14 +13,16 @@ function setup({reduced=false,deferred=false,failed=false}={}) {
  w.fetch=url=>{requests.push(url);const response={ok:!failed,json:async()=>({layers:[]})};return deferred?new Promise(r=>{resolve=()=>r(response);}):Promise.resolve(response);};
  const s=d.getElementById('collectionCardTilt');s.getBoundingClientRect=()=>({width:240,height:420});
  s.setPointerCapture=id=>{s.captured=id;};s.hasPointerCapture=id=>s.captured===id;s.releasePointerCapture=()=>{s.captured=null;};
+ d.getElementById('catalogo').classList.add('active'); // lazy catalogue
  w.eval(read('collection-motion.js'));w.eval(read('card-collection.js'));
  function pointer(type,x,y=100,id=1){const e=new w.Event(type);Object.assign(e,{pointerId:id,clientX:x,clientY:y,button:0,isPrimary:true});s.dispatchEvent(e);}
- return {dom,w,d,s,mq,animations,requests,pointer,resolve:()=>resolve(),open:(name)=>[...d.querySelectorAll('.collection-card-tile')].find(b=>!name||b.textContent.includes(name)).click()};
+ return {dom,w,d,s,mq,animations,requests,pointer,resolve:()=>resolve(),// Names repeat across editions (e.g. Común and Vice City), so match both exactly.
+  open:(name,edition)=>[...d.querySelectorAll('.collection-card-tile')].find(b=>(!name||b.querySelector('strong').textContent===name)&&(!edition||b.querySelector('.collection-card-meta').textContent.includes(` ${edition}`))).click()};
 }
 test('edition selects distinct Lottie foil, with no extra players or stale effect on switching',async()=>{
  const h=setup();
- for(const [name,file] of [['LUCA DE TENA','card-touch-special'],['BOROX','card-touch-legendary'],['JOSE ENRIQUE','card-touch']]){
-  const previous=h.animations.at(-1);h.open(name);await flush();
+ for(const [name,edition,file] of [['LUCA DE TENA','Especial','card-touch-special'],['BOROX','Legendaria','card-touch-legendary'],['JOSE ENRIQUE FERNANDEZ CRUZ','Común','card-touch']]){
+  const previous=h.animations.at(-1);h.open(name,edition);await flush();
   if(previous)assert.equal(previous.destroyed,true);
   assert.match(h.requests.at(-1),new RegExp('/'+file+'\\.json\\?'));
   const a=h.animations.at(-1);a.emit('DOMLoaded');assert.equal(a.frame,30);assert.equal(a.options.autoplay,false);assert.equal(a.options.loop,false);
@@ -28,7 +30,7 @@ test('edition selects distinct Lottie foil, with no extra players or stale effec
   h.pointer('pointercancel',140);assert.equal(h.d.getElementById('collectionCardFoil').style.opacity,'0');
   h.w.CardCollection.close();assert.equal(a.destroyed,true);
  }
- assert.equal(h.animations.length,3);h.open('BOROX');await flush();assert.equal(h.requests.length,3,'reuse cached JSON');
+ assert.equal(h.animations.length,3);h.open('BOROX','Legendaria');await flush();assert.equal(h.requests.length,3,'reuse cached JSON');
  h.w.CardCollection.close();h.dom.window.close();
 });
 test('rare foils respect reduced motion and unknown editions safely use common foil',async()=>{
@@ -56,8 +58,8 @@ test('no animation loads on the catalogue; drag scrubs foil and release flips ex
 test('all editions hide foil at rest and on tap, reveal progressively on movement and fade on release',async()=>{
  const h=setup(),foil=h.d.getElementById('collectionCardFoil');
  const tick=()=>new Promise(r=>setTimeout(r,25));
- for(const name of ['JOSE ENRIQUE','LUCA DE TENA','BOROX']){
-  h.open(name);assert.equal(foil.style.opacity,'0');await flush();h.animations.at(-1).emit('DOMLoaded');assert.equal(foil.style.opacity,'0');
+ for(const [name,edition] of [['JOSE ENRIQUE FERNANDEZ CRUZ','Común'],['LUCA DE TENA','Especial'],['BOROX','Legendaria']]){
+  h.open(name,edition);assert.equal(foil.style.opacity,'0');await flush();h.animations.at(-1).emit('DOMLoaded');assert.equal(foil.style.opacity,'0');
   h.pointer('pointerdown',100);await tick();assert.equal(foil.style.opacity,'0');
   h.pointer('pointermove',102);await tick();assert.equal(foil.style.opacity,'0');
   h.pointer('pointermove',112);await tick();assert.ok(Number(foil.style.opacity)>0&&Number(foil.style.opacity)<1);
@@ -86,26 +88,16 @@ test('closing while assets load cannot create a stale player; reopening starts c
  const h=setup({deferred:true});h.open();h.w.CardCollection.close();h.resolve();await flush();assert.equal(h.animations.length,0);
  h.open();await flush();assert.equal(h.animations.length,1);h.w.CardCollection.close();h.dom.window.close();
 });
-test('reduced motion skips Lottie and tilt but retains swipe, flip button and static pack preview',async()=>{
+test('reduced motion skips Lottie and tilt but retains swipe and flip button',async()=>{
  const h=setup({reduced:true});h.open();h.pointer('pointerdown',100);h.pointer('pointermove',200);h.pointer('pointerup',200);
- assert.equal(h.s.style.transform,'');assert.equal(h.requests.length,0);assert.equal(h.d.getElementById('collectionCardFlip').getAttribute('aria-pressed'),'true');h.w.CardCollection.close();
- h.d.getElementById('packPreviewButton').click();assert.match(h.d.getElementById('packPreviewStatus').textContent,/estática/);assert.equal(h.requests.length,0);h.w.CollectionMotion.close();h.dom.window.close();
+ assert.equal(h.s.style.transform,'');assert.equal(h.requests.length,0);assert.equal(h.d.getElementById('collectionCardFlip').getAttribute('aria-pressed'),'true');h.w.CardCollection.close();h.dom.window.close();
 });
-test('pack preview plays once, replays, closes on navigation and never changes balance',async()=>{
- const h=setup();const count=h.d.getElementById('packsCount');count.textContent='5';h.d.getElementById('packPreviewButton').click();await flush();
- const a=h.animations[0];a.emit('DOMLoaded');assert.equal(a.plays,1);assert.equal(a.options.loop,false);a.emit('complete');assert.equal(h.d.getElementById('packPreviewDialog').dataset.motionState,'ready');
- assert.match(h.d.getElementById('packPreviewStatus').textContent,/No se ha gastado/);assert.equal(count.textContent,'5');
- h.d.getElementById('packPreviewReplay').click();await flush();assert.ok(a.destroyed);assert.equal(h.requests.length,1);
- h.w.dispatchEvent(new h.w.Event('hashchange'));assert.equal(h.d.getElementById('packPreviewDialog').open,false);assert.ok(h.animations[1].destroyed);assert.equal(h.d.activeElement.id,'packPreviewButton');h.dom.window.close();
-});
-test('failed animation restores poster and offers replay without touching server',async()=>{
- const h=setup({failed:true});h.d.getElementById('packPreviewButton').click();await flush();assert.equal(h.d.getElementById('packPreviewDialog').dataset.motionState,'static');assert.equal(h.d.getElementById('packPreviewReplay').disabled,false);
- assert.ok(h.requests.every(url=>url.startsWith('icons/cards/')));h.w.CollectionMotion.close();h.dom.window.close();
-});
-test('motion preference change cancels drag; background closes preview and stale callbacks stay dead',async()=>{
+// The standalone pack preview (packPreviewButton) was removed from the page; real
+// openings are covered by the pack tests.
+test('motion preference change cancels drag and stale callbacks stay dead',async()=>{
  const h=setup();h.open();await flush();h.animations[0].emit('DOMLoaded');h.pointer('pointerdown',100);h.pointer('pointermove',160);
  h.mq.matches=true;h.mq.dispatchEvent(new h.w.Event('change'));assert.equal(h.s.style.transform,'');assert.ok(h.animations[0].destroyed);h.w.CardCollection.close();
- h.mq.matches=false;h.d.getElementById('packPreviewButton').click();await flush();const a=h.animations.at(-1);h.w.CollectionMotion.close();a.emit('DOMLoaded');assert.equal(a.plays,0);h.dom.window.close();
+ const stale=h.animations[0];stale.emit('DOMLoaded');assert.equal(stale.plays,0);h.dom.window.close();
 });
 test('Lottie assets contain real bounded keyframes, use local approved art, and ship offline/native',()=>{
  for(const name of ['card-touch','card-touch-special','card-touch-legendary','pack-opening']) {
@@ -113,8 +105,11 @@ test('Lottie assets contain real bounded keyframes, use local approved art, and 
   for(const layer of json.layers)for(const prop of Object.values(layer.ks))if(prop.a===1){assert.ok(prop.k.length>=2);assert.ok(prop.k.every(k=>k.t>=0&&k.t<json.op));}
   for(const layer of json.layers)if(layer.masksProperties)assert.equal(layer.hasMask,true,'Lottie must normalize mask tangents before rendering');
   for(const asset of json.assets)assert.ok(readFileSync(new URL('../icons/cards/'+asset.p,import.meta.url)).length>0);
-  assert.ok(read('service-worker.js').includes(name+'.json'));assert.equal(read(file),read('ios/App/App/public/'+file));
+  assert.ok(read('service-worker.js').includes(name+'.json'));assert.deepEqual(JSON.parse(read('ios/App/App/public/'+file)),json);
  }
- assert.equal(read('collection-motion.js'),read('ios/App/App/public/collection-motion.js'));
- assert.doesNotMatch(read('collection-motion.js'),/\.rpc\(|localStorage|Math.random/);
+ assert.ok(read('ios/App/App/public/collection-motion.js').length>0,'minified copy ships in the iOS bundle');
+ // Motion never talks to the server or stores state; randomness is only the
+ // visual noise of the card dissolve, never an outcome.
+ assert.doesNotMatch(read('collection-motion.js'),/\.rpc\(|localStorage/);
+ assert.ok([...read('collection-motion.js').matchAll(/Math\.random/g)].every(m=>/motes|noise/.test(read('collection-motion.js').slice(m.index-120,m.index+40))));
 });

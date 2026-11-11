@@ -32,7 +32,8 @@ test('management, creation and assignment have independent pages with back contr
   assert.doesNotMatch(html,/admin-achievements-panel admin-tool-disclosure|id="achievementAssignmentModal"/);
 });
 test('admin authorization and atomic backend procedures remain enforced', () => {
-  assert.match(app,/\["admin-logros", "crear-logro", "asignar-logro"\]\.includes\(sectionId\) && !canManageSite\(\)/);
+  // Every management section falls back to Home for members without rights.
+  assert.match(app,/\[[^\]]*"admin-logros", "crear-logro", "asignar-logro"[^\]]*\]\.includes\(sectionId\) && !canManageSite\(\)\) sectionId = "inicio"/);
   assert.match(app,/if \(!canManageSite\(\) \|\| !currentAuthUser \|\| !db\) throw/);
   assert.ok(app.includes('create_achievement_with_awards'));assert.ok(app.includes('set_achievement_awards'));
   assert.match(module,/if \(!options\.canManage\(\) \|\| creating\) return/);
@@ -53,7 +54,9 @@ test('profile scroll is vertical, independent and only reserves clearance for th
   assert.match(club,/#perfil \.profile-achievements \{[^}]*margin: 0; padding: 28px 0 0;/);
 });
 test('management assets load before the app and ship in preview, offline shell and iOS build', () => {
-  assert.ok(html.indexOf('<script src="achievement-admin.js')<html.indexOf('<script src="app.js'));
+  // Loaded on demand with the admin feature, never for regular members.
+  assert.match(read('feature-loader.js'),/admin: \{[^}]*scripts:\['achievement-admin\.js\?v=/);
+  assert.doesNotMatch(html,/<script[^>]*achievement-admin\.js/);
   for (const file of ['scripts/build-web.mjs','scripts/live-server.mjs','scripts/preview-club.mjs','service-worker.js']) {
     for (const asset of ['achievement-admin.js','achievement-admin.css']) assert.ok(read(file).includes(asset),file+' '+asset);
   }

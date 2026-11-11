@@ -210,10 +210,17 @@ test('collection migration adds validated goals without changing earlier trophie
   await db.exec(await sql('supabase-collection-achievements.sql'));
   await db.exec(await sql('supabase-collection-achievements.sql'));
   assert.equal((await progress(messageRule,alice)).current_value,previous.current_value);
-  await assert.rejects(create('cards_explored',14),/supera/);
-  await assert.rejects(create('special_cards_explored',2),/supera/);
-  await assert.rejects(create('legendary_cards_explored',2),/supera/);
-  await assert.rejects(create('locations_explored',3),/supera/);
+  // Each goal may not exceed the active cards in its category; the catalog
+  // grows with every release, so read the limits from the catalog itself.
+  const [limits]=await query(`select count(*)::int as cards_explored,
+    count(*) filter (where edition='special')::int as special_cards_explored,
+    count(*) filter (where edition='legendary')::int as legendary_cards_explored,
+    count(*) filter (where kind='location')::int as locations_explored
+    from public.achievement_card_catalog where active`);
+  for(const [rule,limit] of Object.entries(limits)) {
+    assert.ok(limit>0,rule);
+    await assert.rejects(create(rule,limit+1),/supera/,rule);
+  }
   await assert.rejects(asUser(alice,()=>query("select create_automatic_achievement('Hack','','gold','cards_explored',1)")),/permiso/);
 });
 

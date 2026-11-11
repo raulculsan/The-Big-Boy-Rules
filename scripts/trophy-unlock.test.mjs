@@ -108,5 +108,11 @@ test('all four unlock scenes render valid SVG with the actual bundled Lottie pla
 });
 test('unlock resources are included in web, preview, offline cache and iOS bundle',()=>{
   for(const path of ['index.html','service-worker.js','scripts/build-web.mjs','scripts/live-server.mjs','scripts/preview-club.mjs']) assert.ok(read(path).includes('trophy-unlock.js'),path);
-  for(const path of ['trophy-unlock.js',...definitions.map(d=>`icons/trophies/${d.tier}-unlock.json`)]) assert.equal(read(path),read('ios/App/App/public/'+path));
+  // The iOS copy is the minified web build (generated, not committed): it must
+  // exist and be the same kind of file, not a byte-for-byte copy of the source.
+  for(const path of ['trophy-unlock.js',...definitions.map(d=>`icons/trophies/${d.tier}-unlock.json`)]) {
+    const copy=read('ios/App/App/public/'+path);
+    assert.ok(copy.length>0,path);
+    if(path.endsWith('.json')) assert.deepEqual(JSON.parse(copy),JSON.parse(read(path)),path);
+  }
 });

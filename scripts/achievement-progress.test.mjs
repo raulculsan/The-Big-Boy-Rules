@@ -102,7 +102,8 @@ test('offline visits retry and late results after logout or account changes cann
 
 test('visit hooks cover auth restoration, foreground return, reconnection and foreground midnight',()=>{
   assert.match(app,/await dailyParticipation.record\(\);\s*if \(!isCurrent\(\)\) return/);
-  assert.match(app,/if \(!document.hidden && currentAuthUser\) void refreshDailyParticipation\(true\)/);
+  // Returning to the foreground refreshes at most every 15 s.
+  assert.match(app,/if \(!document.hidden && currentAuthUser && Date\.now\(\) - lastForegroundRefreshAt >= 15000\) \{\s*lastForegroundRefreshAt = Date\.now\(\);\s*void refreshDailyParticipation\(true\)/);
   assert.match(app,/window.addEventListener\("online", \(\) => \{ void refreshDailyParticipation\(true\)/);
   assert.match(app,/setInterval\(\(\) => \{ if \(!document.hidden\) void refreshDailyParticipation\(\); \}, 60000\)/);
   assert.match(app,/dailyParticipation.reset\(\)/);
@@ -187,7 +188,7 @@ test('collection creation exposes all categories, caps catalog goals and explain
     c.ui.openCreate();c.input('achievementName','Primera leyenda');c.$('achievementAutomaticMode').click();
     c.input('achievementTarget','10');c.input('achievementMetric','legendary_cards_explored');
     assert.equal(c.$('achievementTarget').value,'1');assert.equal(c.$('achievementTarget').max,'1');
-    assert.match(c.$('achievementMetricHint').textContent,/Disponibles en el catálogo: 1/);
+    assert.match(c.$('achievementMetricHint').textContent,/Disponibles ahora: 1/);
     assert.match(c.$('achievementCreatePreview').textContent,/Explora 1 carta legendaria/);
     c.state.error={message:'El objetivo no es válido.'};
     c.$('achievementForm').requestSubmit();await c.tick();
@@ -236,7 +237,8 @@ function loader() {
   const c=vm.createContext({currentAuthUser:{id:'alice'},backendReady:true,achievementsRequest:null,achievementsLoading:false,achievementsLoaded:false,
     achievementProgressUserId:null,achievementProgressStatus:'loading',achievementProgress:[],achievements:[],achievementAwards:[],activeProfileId:null,
     renderAdminAchievements(){},renderAchievementDetail(){},dailyParticipation:{record:async()=>false},canManageSite:()=>false,document:{getElementById:()=>null},
-    db:{from(table){const batch=Math.floor(calls.length/4);calls.push(table);return {select(){return this;},order(){return this;},eq(key,id){assert.equal(key,'user_id');this.userId=id;return this;},then(resolve,reject){gates[batch].promise.then(results=>results[table]).then(resolve,reject);}};}}});
+    achievementCardScopes:null,achievementVisitFailed:false,rememberAchievementSnapshot(){},renderProfile(){},
+    db:{rpc:async()=>({data:null}),from(table){const batch=Math.floor(calls.length/4);calls.push(table);return {select(){return this;},is(){return this;},order(){return this;},eq(key,id){assert.equal(key,'user_id');this.userId=id;return this;},then(resolve,reject){gates[batch].promise.then(results=>results[table]).then(resolve,reject);}};}}});
   vm.runInContext(extract('loadAchievements','async function deleteAchievement'),c);
   const gate=()=>{let resolve;const promise=new Promise(r=>resolve=r);gates.push({promise,resolve});return resolve;};
   const data=(value,error)=>({achievements:{data:[{id:1,name:'Auto',tier:'gold'}]},achievement_awards:{data:[]},
@@ -253,7 +255,7 @@ test('late requests from a previous account cannot populate the next account’s
 });
 test('a refresh during loading waits for a follow-up read, and schema absence preserves manual trophies',async()=>{
   const {c,gate,data,calls}=loader();const first=gate(),second=gate();
-  const request=c.loadAchievements();assert.equal(c.loadAchievements(),request);
+  const request=c.loadAchievements();assert.equal(c.loadAchievements({force:true}),request);
   first(data(1));await new Promise(resolve=>setImmediate(resolve));second(data(4));await request;
   assert.equal(calls.length,8);assert.equal(c.achievementProgress[0].value,4);
   const missing=gate();const pending=c.loadAchievements();missing(data(0,{code:'PGRST205'}));await pending;
@@ -262,7 +264,8 @@ test('a refresh during loading waits for a follow-up read, and schema absence pr
 });
 test('progress ships everywhere, refreshes after sleep, and does not reset the trophy animation',()=>{
   for(const file of ['index.html','service-worker.js','scripts/build-web.mjs','scripts/live-server.mjs','scripts/preview-club.mjs']) assert.ok(read(file).includes('achievement-progress.js'),file);
-  assert.ok(read('index.html').indexOf('<script src="achievement-progress.js') < read('index.html').indexOf('<script src="achievement-admin.js'));
+  // Progress loads with the app; the admin tools load on demand afterwards.
+  assert.ok(/<script[^>]*src="achievement-progress\.js/.test(read('index.html')) && read('index.html').indexOf('achievement-progress.js') < read('index.html').indexOf('src="app.js'));
   assert.match(app,/table: "achievement_progress", filter: `user_id=eq\.\$\{currentAuthUser.id\}`/);
   assert.match(app,/status === "SUBSCRIBED"\) \{[^]*?refreshDailyParticipation\(true\)/);
   assert.match(app,/previousVisual\?\.dataset.visualKey === visualKey/);

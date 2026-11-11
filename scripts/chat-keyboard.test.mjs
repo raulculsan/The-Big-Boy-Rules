@@ -43,7 +43,7 @@ test('native events track dismissal and hide browser accessory only inside chat'
         setAccessoryBarVisible:async value=>calls.push(['accessory',value.isVisible]),
         setScroll:async value=>calls.push(['scroll',value.isDisabled])
       })}},
-    document:{body:{classList:{contains:name=>classes.has(name),toggle(){}}},querySelectorAll:()=>[]},
+    document:{addEventListener(){},body:{classList:{contains:name=>classes.has(name),toggle(){}}},querySelectorAll:()=>[]},
     MutationObserver:class {constructor(callback){onClassChange=callback;}observe(){}},
     ResizeObserver:class {observe(){}}
   });
@@ -68,7 +68,7 @@ function navigationKeyboard({visible = true} = {}) {
         setAccessoryBarVisible:async()=>{},setScroll:async()=>{},
         hide:options=>{calls.push(['hide',options.animated]);return new Promise(resolve=>{finishHide=resolve;});}
       })}},
-    document:{activeElement:composer,body:{classList:{contains:()=>true,toggle(){}}},querySelectorAll:()=>[]},
+    document:{addEventListener(){},activeElement:composer,body:{classList:{contains:()=>true,toggle(){}}},querySelectorAll:()=>[]},
     MutationObserver:class {observe(){}},ResizeObserver:class {observe(){}}
   });
   vm.runInContext(read('chat-keyboard.js'), context);
@@ -123,7 +123,7 @@ for (const restore of [false,true]) test(`horizontal keyboard surface follows th
   const context=vm.createContext({
     window:{__bigboysNativeKeyboardLayout:true,addEventListener:(name,callback)=>events[name]=callback,
       Capacitor:{isPluginAvailable:()=>true,registerPlugin:name=>name==='ClubChatKeyboard'?bridge:{setAccessoryBarVisible:async()=>{},setScroll:async()=>{}}}},
-    document:{body:{classList:{contains:()=>true,toggle(){}}},querySelectorAll:()=>[]},
+    document:{addEventListener(){},body:{classList:{contains:()=>true,toggle(){}}},querySelectorAll:()=>[]},
     MutationObserver:class {observe(){}},ResizeObserver:class {observe(){}}
   });
   vm.runInContext(read('chat-keyboard.js'),context);

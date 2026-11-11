@@ -13,12 +13,14 @@ function inbox() {
     currentUser:{id:1},currentAuthUser:{id:'a'},activePrivateMemberId:null,
     localStorage:{data:{},getItem(key){return this.data[key]??null;},setItem(key,value){this.data[key]=value;}},
     members:[{id:1,authId:'a',name:'Yo'},{id:2,authId:'b',name:'Álex',username:'alex'},{id:3,authId:'c',name:'María',username:'mari'}],
-    messages:[],chatChannels:[],
+    messages:[],chatChannels:[],/*GLOBALS*/surfaceMarkup:new WeakMap(),conversationTimeFormatter:new Intl.DateTimeFormat("es-ES", {hour: "2-digit", minute: "2-digit"}),onlineUsers:[],calendarChatAnnouncements:[],channelAutomationMessages:[],chatDateCache:new Map(),siteSettings:{},
     privateMessages:[{senderId:'a',recipientId:'b',body:'Hola <script>',createdAt:new Date().toISOString()}],
     notifications:[{type:'private_message',actorId:'b',readAt:null}],
     getAvatar:()=>'<span class="avatar">A</span>',groupAvatarMarkup:()=>'<span class="chat-group-avatar">BB</span>'
   });
-  vm.runInContext(app.slice(app.indexOf('function formatInboxTime('),app.indexOf('async function openPrivateConversation(')),context);
+  // Top-level helpers the inbox calls but that live elsewhere in app.js.
+  const helper = name => { const start = app.indexOf(`\nfunction ${name}(`); return start < 0 ? '' : app.slice(start, app.indexOf('\n}\n', start) + 3); };
+  vm.runInContext(/*HELPERS*/['updateSurfaceMarkup','formatConversationTime','memberIsOnline','chatDate','messageTimestamp'].map(helper).join('\n') + app.slice(app.indexOf('function formatInboxTime('),app.indexOf('async function openPrivateConversation(')),context);
   context.renderPrivateContacts();
   return {dom,document,context,visible:()=>[...document.querySelectorAll('.private-contact:not([hidden])')],
     filter:mode=>document.querySelector(`[data-inbox-filter="${mode}"]`).click()};
@@ -79,7 +81,7 @@ test('new appearance preserves keyboard owners, native gestures, assets and 16px
   assert.match(css,/inbox-search input[^}]*16px/);
   assert.match(css,/message-form input[^}]*font-size: 16px/);
   assert.match(css,/private-contact\[hidden\][^}]*display: none/);
-  for(const file of ['index.html','service-worker.js']) for(const asset of ['club.css?v=20261006-157','chat.css?v=20261006-157','app.js?v=20261006-157']) assert.ok(read(file).includes(asset));
+  for(const file of ['index.html','service-worker.js']) for(const asset of ['club.css','chat.css','app.js']) assert.match(read(file),new RegExp(`["/]${asset.replace('.','\\.')}\\?v=`),`${file} ${asset}`);
   assert.match(app,/data-edit-private-message/);assert.match(app,/data-delete-private-message/);
   assert.match(app,/class="private-message-time" datetime=/);
 });

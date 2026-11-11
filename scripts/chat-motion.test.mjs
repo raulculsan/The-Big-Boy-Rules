@@ -39,7 +39,8 @@ function transitionHarness({mobile = true, reduced = false} = {}) {
     },
     settleChatBackScene: (scene, target) => { calls.push(['animate',target]); return finished; },
     dismissChatComposerKeyboard: async options => calls.push(['keyboard', options.navigation]),
-    cleanupChatBackScene: () => calls.push(['cleanup'])
+    cleanupChatBackScene: () => calls.push(['cleanup']),
+    finishChatBackKeyboard: async () => {}
   });
   const fn = source.match(/async function transitionMessageView\(update, \{back = false\} = \{\}\) \{[\s\S]*?\n\}/)[0];
   vm.runInContext(`let messageViewTransitioning = false; ${fn}`, context);
@@ -89,8 +90,8 @@ test('keyboard return keeps outgoing geometry fixed and cancellation restores in
     closest:()=>null,getBoundingClientRect:()=>({width:390,height:463,top:47})};
   const preview = {style:style('100%'),getBoundingClientRect:()=>({top:47})};
   const context=vm.createContext({
-    ChatMotion:globalThis.ChatMotion,mobileViewportBaseline:844,window:{innerWidth:390},
-    document:{body:{classList:{contains:name=>classes.has(name),add:name=>classes.add(name),remove:name=>classes.delete(name)}},querySelector:()=>preview}
+    ChatMotion:globalThis.ChatMotion,mobileViewportBaseline:844,window:{innerWidth:390},chatKeyboard:null,
+    document:{body:{classList:{contains:name=>classes.has(name),add:name=>classes.add(name),remove:name=>classes.delete(name)}},querySelector:()=>preview,getElementById:()=>null,activeElement:null}
   });
   const functions=['prepareChatBackScene','updateChatBackScene','cleanupChatBackScene']
     .map(name=>source.match(new RegExp(`function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}`))[0]).join('\n');
