@@ -1,5 +1,5 @@
 /* Delivery copies only: source art and resolution are never changed. */
-import {readdir, readFile, writeFile, stat, unlink} from 'node:fs/promises';
+import {readdir, readFile, writeFile, stat, unlink, rm} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
 import {join, extname, basename} from 'node:path';
 
@@ -83,6 +83,11 @@ export async function thinNativeCards(output) {
     try { removed += (await stat(join(output, path))).size; await unlink(join(output, path)); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
+  // Art for cards published from the admin console lives only on the web
+  // (icons/cards/published) and is fetched on demand into the bounded cache.
+  const published = join(output, 'icons/cards/published');
+  for (const path of await files(published).catch(() => [])) removed += (await stat(path)).size;
+  await rm(published, {recursive: true, force: true});
   const runtime = join(output, 'card-media.js');
   let code = await readFile(runtime, 'utf8');
   code = code.replace(/^globalThis\.CardDelivery = [^\n]+;\n/, '');
