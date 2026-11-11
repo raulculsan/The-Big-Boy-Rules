@@ -16,3 +16,10 @@
 .trade-member-cta{justify-content:center;font-weight:650}
 .trade-start>.social-send{justify-content:center}
 .social-holders{margin:6px 0 0;color:var(--ds-text-3,#a1a1aa);font-size:11px;line-height:1.35}.social-holder-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.social-holder-actions button{min-height:36px;padding:6px 12px;border:1px solid var(--ds-line-strong,#ffffff38);border-radius:999px;background:transparent;color:var(--ds-text,#fff);font:inherit;font-size:12px;font-weight:600;-webkit-tap-highlight-color:transparent}
+/* Lot trades: up to three cards per side shown as a small fan. */
+.social-trade-lot-cards{display:flex;justify-content:center;margin:0 auto 11px;max-width:150px}
+.social-trade-lot-cards img{width:clamp(44px,30%,70px);margin:0 -10px;border-radius:7px}
+.social-trade-lot-cards img:nth-child(1){transform:rotate(-7deg) translateY(4px)}
+.social-trade-lot-cards img:nth-child(3){transform:rotate(7deg) translateY(4px)}
+.social-trade-lot-cards img:nth-child(2):last-child{transform:rotate(5deg) translateY(2px)}
+.trade-pick-card[aria-disabled="true"]{opacity:.45}

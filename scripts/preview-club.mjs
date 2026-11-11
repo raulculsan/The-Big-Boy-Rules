@@ -61,7 +61,7 @@ allow.add('card-collection.js');
 allow.add('collection-motion.js');
 allow.add('docs/cartas/animaciones/pack-opening-creator.json');
 allow.add('packs.css');
-allow.add('achievement-admin.js');
+allow.add('achievement-admin.js');allow.add('admin-errors.js');
 allow.add('achievement-progress.js');
 allow.add('achievement-admin.css');
 allow.add('vendor/lottie-light.min.js');

@@ -76,6 +76,7 @@ const sources = [
   "spotify-player.css",
   "club-model.js",
   "achievement-admin.js",
+  "admin-errors.js",
   "achievement-progress.js",
   "achievement-admin.css",
   "chat.css",

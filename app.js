@@ -832,7 +832,7 @@ function goTo(sectionId) {
   document.body.classList.toggle("achievement-management-open", ["admin-configuracion", "admin-diagnostico", "admin-cuentas", "admin-logros", "crear-logro", "asignar-logro", "editar-usuario"].includes(sectionId));
   if (sectionId === "ayuda") { globalThis.ClubDrafts?.begin("helpRequestForm", "new"); globalThis.ClubDrafts?.begin("helpReplyForm", globalThis.Tickets?.activeId() == null ? null : `request:${globalThis.Tickets.activeId()}`); }
   if (sectionId === "admin-logros") renderAdminAchievements();
-  if (sectionId === "admin-diagnostico") globalThis.ClubHealth?.show();
+  if (sectionId === "admin-diagnostico") { globalThis.ClubHealth?.show(); if (db) void globalThis.ClubFeatures?.load?.("admin").then(() => globalThis.AdminErrors?.show(db)).catch(() => {}); }
   if (sectionId === "admin-cuentas" || sectionId === "administracion") renderAdminPanel();
   syncChatInboxAccessibility();
   syncMobileViewport();

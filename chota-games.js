@@ -70,7 +70,8 @@
     try{[inventory]=await Promise.all([owned(),loadProgress().catch(()=>{})]);}catch{inventory=new Set();}
     if(token!==serial||actor!==user()||!dialog)return;
     const best=scores();
-    body().innerHTML=`<div class="chota-arcade-games">${Object.entries(games).map(([id,g])=>`<button class="chota-arcade-game" type="button" data-game="${id}" aria-describedby="chotaGameHelpHint" ${inventory.has(id)?'':'data-locked="true"'}><img src="icons/clubhouse/props/${g.art}" alt="" draggable="false"><span><strong>${g.name}</strong><small>${inventory.has(id)?`Nivel ${unlocked(id)} de ${maxLevel} · Récord ${Number(best[id])||0}`:`Necesitas ${g.item.toLowerCase()}`}</small></span><b>${inventory.has(id)?'Jugar':'Tienda'}</b></button>`).join('')}</div><div class="chota-arcade-menu-note"><p>1 sobre por juego al día</p><p id="chotaGameHelpHint">Mantén pulsado un juego para ver cómo jugar.</p></div>`;
+    body().innerHTML=`<section class="chota-duels" data-duels hidden></section><div class="chota-arcade-games">${Object.entries(games).map(([id,g])=>`<button class="chota-arcade-game" type="button" data-game="${id}" aria-describedby="chotaGameHelpHint" ${inventory.has(id)?'':'data-locked="true"'}><img src="icons/clubhouse/props/${g.art}" alt="" draggable="false"><span><strong>${g.name}</strong><small>${inventory.has(id)?`Nivel ${unlocked(id)} de ${maxLevel} · Récord ${Number(best[id])||0}`:`Necesitas ${g.item.toLowerCase()}`}</small></span><b>${inventory.has(id)?'Jugar':'Tienda'}</b></button>`).join('')}</div><div class="chota-arcade-menu-note"><p>1 sobre por juego al día</p><p id="chotaGameHelpHint">Mantén pulsado un juego para ver cómo jugar.</p></div>`;
+    void duels(body().querySelector('[data-duels]'));
     body().querySelectorAll('[data-game]').forEach(button=>{
       let press=null,suppressUntil=0;
       const clearHold=()=>{clearTimeout(holdTimer);holdTimer=0;press=null;button.classList.remove('is-holding');};
@@ -89,6 +90,51 @@
         if(button.dataset.locked){if(config.openShop){close();config.openShop();}return;}
         levels(button.dataset.game);
       });
+    });
+  }
+  // Duels ("retos"): beat a member's saved score on the same game and level.
+  const duelState={incoming:'Te reta',outgoing:'Has retado'};
+  async function duels(node){
+    if(!node||!config.rpc)return;const actor=user();
+    try{
+      const data=await rpc('get_chota_duels');if(!node.isConnected||actor!==user())return;
+      const list=(data?.duels||[]).filter(d=>d.status==='open'||d.can_claim);
+      if(!list.length){node.hidden=true;return;}
+      node.hidden=false;
+      const row=d=>{
+        const g=games[d.game],open=d.status==='open',left=Math.max(0,3-Number(d.attempts||0));
+        const when=new Date(d.expires_at).toLocaleString('es-ES',{weekday:'short',hour:'2-digit',minute:'2-digit'});
+        const result=d.status==='won'?(d.incoming?'¡Le has ganado!':'Te ha superado'):d.status==='lost'?(d.incoming?'No le has superado':'¡Tu marca ha aguantado!'):d.status==='tied'?'Empate':'';
+        const detail=open?(d.incoming?`Supera ${Number(d.target_score)} ${g?.unit||'puntos'} · ${left} intento${left===1?'':'s'} · hasta ${when}`:`Tu marca: ${Number(d.target_score)} · lleva ${Number(d.attempts)} de 3 intentos`):`${result} · su mejor: ${d.rival_best??'—'} de ${Number(d.target_score)}`;
+        const actions=d.can_claim?`<button type="button" data-duel-claim="${esc(d.id)}">Cobrar 40 monedas</button>`:open&&d.incoming?`<button type="button" data-duel-play="${esc(d.game)}" data-duel-level="${Number(d.level)}">Jugar</button><button type="button" class="chota-duel-quiet" data-duel-decline="${esc(d.id)}">${Number(d.attempts)?'Plantarme':'Rechazar'}</button>`:'';
+        return `<article class="chota-duel" data-state="${esc(d.status)}"><div><small>${esc(d.incoming?duelState.incoming:duelState.outgoing)} ${esc(d.incoming?d.other:'a '+d.other)}</small><strong>${esc(g?.name||d.game)} · nivel ${Number(d.level)}</strong><p>${esc(detail)}</p></div>${actions?`<div class="chota-duel-actions">${actions}</div>`:''}</article>`;
+      };
+      node.innerHTML=`<h3>Retos</h3>${list.map(row).join('')}<p class="chota-duel-feedback" role="status" aria-live="polite"></p>`;
+      const feedback=node.querySelector('.chota-duel-feedback');
+      node.querySelectorAll('[data-duel-play]').forEach(button=>button.addEventListener('click',()=>start(button.dataset.duelPlay,Number(button.dataset.duelLevel))));
+      node.querySelectorAll('[data-duel-decline],[data-duel-claim]').forEach(button=>button.addEventListener('click',async()=>{
+        button.disabled=true;const claim=!!button.dataset.duelClaim;
+        try{const r=await rpc(claim?'claim_chota_duel':'decline_chota_duel',{p_duel:button.dataset.duelClaim||button.dataset.duelDecline});if(claim)globalThis.ClubCoinMissions?.activity({coins:r?.awarded_coins});await duels(node);if(claim&&node.isConnected){const f=node.querySelector('.chota-duel-feedback');if(f)f.textContent=`+${Number(r?.awarded_coins)||0} monedas`;}}
+        catch(error){button.disabled=false;feedback.textContent=error?.message||'No se pudo completar. Vuelve a intentarlo.';}
+      }));
+    }catch{node.hidden=true;}
+  }
+  async function challenge(host,sessionId){
+    if(!host||!config.rpc)return;const actor=user();
+    host.innerHTML='<button type="button" class="chota-arcade-secondary" data-duel-open>Retar a alguien con esta marca</button>';
+    host.querySelector('[data-duel-open]').addEventListener('click',async()=>{
+      host.innerHTML='<p>Cargando miembros…</p>';
+      try{
+        const data=await rpc('get_chota_duels');if(!host.isConnected||actor!==user())return;
+        const peers=data?.peers||[];
+        host.innerHTML=`<p class="chota-duel-pick-title">¿A quién retas? Tendrá 48 horas y 3 intentos.</p><div class="chota-duel-peers">${peers.map(p=>`<button type="button" data-duel-peer="${esc(p.id)}">${esc(p.name||'Miembro')}</button>`).join('')}</div><p class="chota-duel-feedback" role="status" aria-live="polite"></p>`;
+        const feedback=host.querySelector('.chota-duel-feedback');
+        host.querySelectorAll('[data-duel-peer]').forEach(button=>button.addEventListener('click',async()=>{
+          host.querySelectorAll('[data-duel-peer]').forEach(b=>b.disabled=true);
+          try{await rpc('create_chota_duel',{p_session:sessionId,p_rival:button.dataset.duelPeer});if(host.isConnected)host.innerHTML=`<p class="chota-duel-sent">Reto enviado a ${esc(button.textContent)}.</p>`;}
+          catch(error){host.querySelectorAll('[data-duel-peer]').forEach(b=>b.disabled=false);feedback.textContent=error?.message||'No se pudo enviar el reto.';}
+        }));
+      }catch{if(host.isConnected)host.innerHTML='<p>No se pudo cargar la lista. Vuelve a intentarlo luego.</p>';}
     });
   }
   async function weeklyChallenge(node){
@@ -339,7 +385,7 @@
     const best=save(game,score);
     const won=r.endReason==='goal';
     const outcome=won?`Nivel ${r.level} superado`:r.endReason==='dust'?'Sin vidas':r.endReason==='collision'?'Te has chocado':r.endReason==='time'?'Objetivo pendiente':'Partida terminada';
-    body().innerHTML=`<section class="chota-arcade-result"><p>${outcome}</p><h2>${score}<small>de ${r.rules.goal} ${games[game].unit}</small></h2><p class="chota-arcade-result-level">Nivel ${r.level} · ${r.rules.name}</p><p>Tu mejor marca: <strong>${best}</strong></p><p data-reward>Guardando partida…</p><button type="button" class="chota-arcade-secondary" data-retry-save hidden>Reintentar guardado</button><div class="chota-arcade-results-actions">${won&&r.level<maxLevel?'<button type="button" data-next disabled>Guardando nivel…</button>':''}<button type="button" data-again>${won?'Repetir nivel':'Reintentar nivel'}</button><button type="button" class="chota-arcade-secondary" data-levels>Ver niveles</button></div>${won&&r.level===maxLevel?'<p>Has completado los cinco niveles.</p>':''}<div class="chota-arcade-ranking" data-ranking></div></section>`;
+    body().innerHTML=`<section class="chota-arcade-result"><p>${outcome}</p><h2>${score}<small>de ${r.rules.goal} ${games[game].unit}</small></h2><p class="chota-arcade-result-level">Nivel ${r.level} · ${r.rules.name}</p><p>Tu mejor marca: <strong>${best}</strong></p><p data-reward>Guardando partida…</p><button type="button" class="chota-arcade-secondary" data-retry-save hidden>Reintentar guardado</button><div class="chota-arcade-results-actions">${won&&r.level<maxLevel?'<button type="button" data-next disabled>Guardando nivel…</button>':''}<button type="button" data-again>${won?'Repetir nivel':'Reintentar nivel'}</button><button type="button" class="chota-arcade-secondary" data-levels>Ver niveles</button></div>${won&&r.level===maxLevel?'<p>Has completado los cinco niveles.</p>':''}<div class="chota-duel-challenge" data-duel-challenge></div><div class="chota-arcade-ranking" data-ranking></div></section>`;
     body().querySelector('[data-again]').addEventListener('click',()=>start(game,r.level));body().querySelector('[data-levels]').addEventListener('click',()=>levels(game));body().querySelector('[data-next]')?.addEventListener('click',()=>start(game,r.level+1));
     const reward=body().querySelector('[data-reward]');
     const unlockNext=data=>{if(data?.level_completed){cacheProgress({...levelProgress,[game]:Math.max(Number(levelProgress[game])||0,Number(data.highest_completed)||r.level)});}const next=body()?.querySelector('[data-next]');if(next&&serial===token&&reward.isConnected&&unlocked(game)>r.level){next.disabled=false;next.textContent='Siguiente nivel';}};
@@ -357,6 +403,7 @@
       const result=config.rpc?await rpc('submit_chota_level_score',{game_session_id:sessionId,submitted_score:score,completed_round:r.completed,level_won:won}):await config.submitScore(game,score,sessionId,r.completed);
       if(user()===actor){unlockNext(result);if(result?.reward_status==='awarded')void globalThis.DailyPacks?.refresh(true);globalThis.ClubCoinMissions?.activity({coins:result?.awarded_coins});}
       confirmed=true;
+      if(score>0&&serial===token&&user()===actor)void challenge(body()?.querySelector('[data-duel-challenge]'),sessionId);
       if(result?.reward_status==='awarded'){if(reward.isConnected)reward.textContent='¡1 sobre ganado! Ya está en tus sobres.';}
       else if(result?.reward_status==='already_claimed'){if(reward.isConnected)reward.textContent='Ya tienes el sobre de este juego de hoy. Vuelve mañana por otro.';}
       else if(reward.isConnected)reward.textContent=r.completed?'Partida guardada. El sobre diario requiere al menos 12 segundos de juego.':'Partida guardada. Termina un nivel para conseguir el sobre diario.';

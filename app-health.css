@@ -92,3 +92,15 @@
 .health-response-row{display:grid;grid-template-columns:1fr auto auto;gap:8px 14px;position:relative;padding:14px 0 18px;border-bottom:1px solid #ffffff12}
 .health-response-row span,.health-response-row small{color:#a7a9b1;font-size:.76rem}.health-response-row small{grid-column:1/-1}.health-response-row b{color:#e2bb73;font-variant-numeric:tabular-nums}
 .health-response-row i{position:absolute;bottom:4px;left:0;height:3px;width:var(--response-width);min-width:2px;border-radius:3px;background:#e2bb73}
+
+/* Administración → Diagnóstico: errors reported by members' phones. Neutral states only. */
+.admin-errors{margin-bottom:28px}
+.admin-error-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.admin-error{padding:14px 16px;border-radius:14px;background:#ffffff0a;box-shadow:inset 0 0 0 1px #ffffff14}
+.admin-error-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.admin-error-head strong{font-size:14px;color:#f1f1f3}
+.admin-error-count{font-variant-numeric:tabular-nums;color:#c9ccd3;font-size:13px;font-weight:700}
+.admin-error-message{margin:6px 0 0;color:#e2e4e8;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.admin-error-meta,.admin-error-time{margin:6px 0 0;color:#969eac;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.admin-error-meta code{font-size:11px;color:#c9ccd3}
+.admin-errors-empty{margin:0 0 12px;color:#969eac;font-size:13px}

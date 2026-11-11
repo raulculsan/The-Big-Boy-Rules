@@ -3,6 +3,9 @@
   let options, owner = null, state = null, request = null, generation = 0, loading = false, buying = null, equipping = null, failure = '', notice = '', fetchedAt = 0;
   let roomTab = 'ambientes';
   let stateTrusted=false,outfitSignature='',modularSignature='';
+  // Saved looks ("conjuntos"): up to four named snapshots of the Chota's clothes.
+  let looks=null,looksOwner=null,looksBusy=false,looksNaming=null,looksError='';
+  const LOOK_SLOTS=[1,2,3,4],LOOK_PARTS={outerwear:'abrigo',topwear:'camiseta',bottomwear:'pantalón',footwear:'zapatillas'};
   const rooms = new Set();
   const visibleRooms = new Set();
   const motion = () => globalThis.ClubMotion?.media || matchMedia('(prefers-reduced-motion: reduce)');
@@ -260,6 +263,7 @@
     const current = options?.session() || null;
     globalThis.ChotaAppearance?.claim?.(current);
     if (owner === current) return;
+    looks=null;looksOwner=null;looksNaming=null;looksError='';
     closeInventory();if(owner&&(state?.wardrobe_version===1||globalThis.ChotaAppearance?.enabled?.()))void globalThis.ChotaWardrobe?.applyOutfit?.(null);modularSignature='';generation++; stateTrusted=false;outfitSignature='';pantsSignature='';shirtSignature='';owner = current; state = null; request = null; loading = false; buying = null; equipping = null; failure = ''; notice = ''; fetchedAt = 0; roomTab = 'ambientes';
     if (owner) try { const cached = JSON.parse(localStorage.getItem(key(owner)) || 'null'); if (cached?.owner === owner && Array.isArray(cached.items)) state = validState(cached); } catch {}
     paintRooms(); render();
@@ -333,6 +337,7 @@
   function render() {
     renderInventory();
     renderClothing();
+    renderLooks();
     const container = document.getElementById('chotaShopItems');
     if (!container) return;
     const status = document.getElementById('chotaShopStatus');
@@ -395,11 +400,46 @@
       try {
         const result=validState(await rpc('get_chota_shop_state'));
         if (token!==generation || actor!==options.session()) return;
-        state=result;stateTrusted=true; fetchedAt=Date.now(); remember(); paintRooms(); return state;
+        state=result;stateTrusted=true; fetchedAt=Date.now(); remember(); paintRooms(); if(document.getElementById('chotaOutfits'))void loadLooks(actor,token); return state;
       } catch(error) { if(token===generation) failure=['PGRST202','42883'].includes(error?.code)?'La tienda del Chota está pendiente de activar.':error.message || 'No se pudieron cargar sus objetos.'; }
       finally { if(token===generation) {loading=false;request=null;render();} }
     })();
     request=pending; return pending;
+  }
+  async function loadLooks(actor,token){
+    try{const data=await rpc('get_chota_outfits');if(token!==generation||actor!==options.session())return;looks=Array.isArray(data)?data:[];looksOwner=actor;looksError='';}
+    catch(error){if(token===generation)looksError=['PGRST202','42883'].includes(error?.code)?'':'No se pudieron cargar tus conjuntos.';}
+    finally{if(token===generation)renderLooks();}
+  }
+  function lookSummary(look){
+    const names=Object.entries(look.items||{}).map(([slot,id])=>state?.items.find(item=>item.id===id)?.name||LOOK_PARTS[slot]).filter(Boolean);
+    return names.length?names.join(' · '):'Sin prendas';
+  }
+  function renderLooks(){
+    const host=document.getElementById('chotaOutfits');if(!host)return;
+    const ready=looks&&looksOwner===owner;
+    if(!ready&&!looksError){host.hidden=true;return;}
+    host.hidden=false;
+    const busy=looksBusy||!!equipping||!!buying||loading||navigator.onLine===false;
+    const slot=position=>{
+      const look=ready&&looks.find(item=>item.position===position);
+      if(looksNaming===position)return `<form class="chota-look is-naming" data-look-save-form="${position}"><label><span>Nombre del conjunto</span><input name="name" maxlength="24" required autocomplete="off" value="${esc(look?.name||'')}" placeholder="Ej. Domingo"></label><div class="chota-look-actions"><button type="submit" ${busy?'disabled':''}>Guardar lo que lleva</button><button type="button" data-look-cancel>Cancelar</button></div></form>`;
+      if(!look)return `<button type="button" class="chota-look is-empty" data-look-name="${position}" ${busy||!ready?'disabled':''}><strong>Hueco ${position}</strong><small>Guardar lo que lleva ahora</small></button>`;
+      return `<div class="chota-look"><button type="button" class="chota-look-wear" data-look-wear="${position}" ${busy?'disabled':''} aria-label="Ponerle ${esc(look.name)}"><strong>${esc(look.name)}</strong><small>${esc(lookSummary(look))}</small></button><div class="chota-look-tools"><button type="button" data-look-name="${position}" ${busy?'disabled':''} aria-label="Guardar lo que lleva en ${esc(look.name)}">Actualizar</button><button type="button" data-look-delete="${position}" ${busy?'disabled':''} aria-label="Borrar ${esc(look.name)}">Borrar</button></div></div>`;
+    };
+    host.innerHTML=`<header class="chota-looks-heading"><h4>Conjuntos</h4><p>Guarda hasta cuatro y cámbiale de ropa de un toque.</p></header>${looksError?`<p class="chota-looks-error" role="status">${esc(looksError)}</p>`:''}<div class="chota-looks">${LOOK_SLOTS.map(slot).join('')}</div>`;
+  }
+  async function lookAction(name,args,success){
+    changeOwner();
+    if(!owner||looksBusy||equipping||buying||loading||navigator.onLine===false)return;
+    const actor=owner,token=generation;looksBusy=true;looksError='';failure='';notice='';renderLooks();
+    try{
+      const data=await rpc(name,args);if(token!==generation||actor!==options.session())return;
+      if(name==='wear_chota_outfit'){state=validState(data);stateTrusted=true;fetchedAt=Date.now();remember();paintRooms();}
+      else looks=Array.isArray(data)?data:looks;
+      looksNaming=null;notice=success;
+    }catch(error){if(token===generation)looksError=error.message||'No se pudo usar el conjunto.';}
+    finally{if(token===generation){looksBusy=false;render();renderLooks();}}
   }
   async function buy(id) {
     changeOwner();
@@ -438,11 +478,20 @@
   }
   function initialize(config) {
     options=config;globalThis.ShopCatalogMedia?.configure(config.cacheNamespace);globalThis.ChotaWardrobe?.configure?.(config.cacheNamespace);
+    document.addEventListener('submit',event=>{
+      const form=event.target.closest?.('[data-look-save-form]');if(!form)return;
+      event.preventDefault();const name=String(new FormData(form).get('name')||'').trim();if(!name)return;
+      void lookAction('save_chota_outfit',{p_position:Number(form.dataset.lookSaveForm),p_name:name},`Conjunto «${name}» guardado.`);
+    });
     document.addEventListener('click',event=>{
       const cabinet=event.target.closest('[data-chota-inventory]');if(cabinet){openInventory(cabinet);return;}
       if(event.target.closest('[data-chota-inventory-close]')){closeInventory();return;}
       const tab=event.target.closest('#chotaShopItems [data-chota-tab]');
       if(tab){selectRoomTab(tab.dataset.chotaTab);return;}
+      const lookName=event.target.closest('[data-look-name]');if(lookName){looksNaming=Number(lookName.dataset.lookName);renderLooks();document.querySelector('[data-look-save-form] input')?.focus();return;}
+      if(event.target.closest('[data-look-cancel]')){looksNaming=null;renderLooks();return;}
+      const lookWear=event.target.closest('[data-look-wear]');if(lookWear){const look=looks?.find(item=>item.position===Number(lookWear.dataset.lookWear));void lookAction('wear_chota_outfit',{p_position:Number(lookWear.dataset.lookWear)},`${look?.name||'Conjunto'} puesto.`);return;}
+      const lookDelete=event.target.closest('[data-look-delete]');if(lookDelete){void lookAction('delete_chota_outfit',{p_position:Number(lookDelete.dataset.lookDelete)},'Conjunto borrado.');return;}
       const tryOn=event.target.closest('[data-clothing-try]');if(tryOn){if(fitting[fittingSlot]!==tryOn.dataset.clothingTry){fitting[fittingSlot]=tryOn.dataset.clothingTry;renderClothing();globalThis.StoreRooms?.showOff(document.querySelector('[data-chota-fitting]'));}return;}
       const stack=event.target.closest('[data-shelf-stack]');if(stack){const ids=stack.dataset.shelfStack.split(','),at=ids.indexOf(fitting[fittingSlot]),next=at<0?ids.at(-1):ids[(at-1+ids.length)%ids.length];if(next&&next!==fitting[fittingSlot]){fitting[fittingSlot]=next;renderClothing();globalThis.StoreRooms?.showOff(document.querySelector('[data-chota-fitting]'));}return;}
       const fitSlot=event.target.closest('[data-fitting-slot]');if(fitSlot){if(fittingSlot!==fitSlot.dataset.fittingSlot){fittingSlot=fitSlot.dataset.fittingSlot;renderClothing();const title=document.getElementById('bannerShopTitle');if(title&&document.getElementById('bannerShopDialog')?.dataset.storeView==='clothing')title.textContent=fitCopy[fittingSlot]?.tab||title.textContent;}return;}

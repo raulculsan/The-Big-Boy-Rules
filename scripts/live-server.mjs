@@ -26,6 +26,7 @@ const allowedFiles = new Set([
   "club.css",
   "club-model.js",
   "achievement-admin.js",
+  "admin-errors.js",
   "achievement-progress.js",
   "achievement-admin.css",
   "chat.css",

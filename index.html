@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#000000" />
   <meta name="color-scheme" content="dark light" />
   <meta name="color-scheme" content="dark" />
-  <link rel="stylesheet" href="app-health.css?v=20261030-neutral-interactions-444">
+  <link rel="stylesheet" href="app-health.css?v=20261111-retos-626">
   <script defer src="error-reports.js?v=20261111-errores-624"></script>
   <script defer src="app-health.js?v=20261101-chota-pose-478"></script>
   <script defer src="ui-motion.js?v=20261111-giro-plano-621"></script>
@@ -59,14 +59,14 @@
   <link rel="stylesheet" href="news.css?v=20261103-news-music-554" />
   <link rel="stylesheet" href="pending-actions.css?v=20261016-release-322" />
   <link rel="stylesheet" href="notifications.css?v=20261102-theme-532" />
-  <link rel="stylesheet" href="collection-social.css?v=20261103-economy-555" />
+  <link rel="stylesheet" href="collection-social.css?v=20261111-retos-626" />
   <link rel="stylesheet" href="card-economy.css?v=20261107-economy-chota-579" />
   <link rel="stylesheet" href="group-interactions.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="visual-system.css?v=20261106-pwa-dock-564" />
   <link rel="stylesheet" href="clubhouse.css?v=20261110-sede-viva-610" />
   <link rel="stylesheet" href="chota-wardrobe.css?v=20261110-entrada-612" />
   <link rel="stylesheet" href="chota-outdoor.css?v=20261030-outdoor-events-448" />
-  <link rel="stylesheet" href="chota-shop.css?v=20261109-armario-609" />
+  <link rel="stylesheet" href="chota-shop.css?v=20261111-retos-626" />
   <link rel="stylesheet" href="club-store.css?v=20261110-zapatillas-616" />
   <link rel="stylesheet" href="store-rooms.css?v=20261110-zapatillas-616" />
   <link rel="stylesheet" href="store-sky.css?v=20261108-rain-v2-593" />
@@ -77,7 +77,7 @@
   <link rel="stylesheet" href="club-night.css?v=20261102-night-507" />
   <link rel="stylesheet" href="club-social.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="club-live.css?v=20261102-theme-510" />
-  <link rel="stylesheet" href="chota-games.css?v=20261030-neutral-interactions-444" />
+  <link rel="stylesheet" href="chota-games.css?v=20261111-retos-626" />
   <link rel="stylesheet" href="club-experiences.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="app-update.css?v=20261111-actualizar-623" />
   <link rel="stylesheet" href="ui-motion.css?v=20261106-pwa-dock-564" />
@@ -465,6 +465,7 @@
       <header class="achievement-page-header"><button class="achievement-back" type="button" data-go="admin-configuracion" aria-label="Volver a configuración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button><div><small>ADMINISTRACIÓN</small><h2>Rendimiento y diagnóstico</h2></div><span aria-hidden="true"></span></header>
       <div class="achievement-page-content health-tools">
         <div class="health-dashboard-heading"><div><span class="eyebrow">EN ESTE DISPOSITIVO</span><p>Mediciones locales durante el uso de la app.</p></div><button type="button" class="secondary-button" onclick="ClubHealth.show()">Actualizar</button></div>
+        <section class="admin-errors" id="adminErrors" aria-live="polite"></section>
         <div id="healthDashboard"></div>
         <p class="health-note">Las pausas se estiman mientras la app está visible. Los tamaños de imágenes externas pueden no estar disponibles. Solo se guardan datos técnicos; nunca mensajes, contraseñas ni direcciones.</p>
         <div class="health-actions"><button type="button" class="secondary-button" onclick="ClubHealth.export()">Compartir diagnóstico</button><button type="button" class="text-button" onclick="ClubHealth.clear()">Limpiar registro</button></div>
@@ -940,7 +941,7 @@
       <section id="shopBannersPanel" role="tabpanel" aria-labelledby="shopBannersTab"><header class="shop-section-heading shop-department-heading"><div><span class="shop-department-label">Banners de perfil</span><h3>Selección de hoy</h3><p>Actualización diaria</p></div><button id="bannerUnequip" class="shop-text-button" type="button" disabled>Quitar banner</button></header><div id="bannerShopItems" class="banner-shop-items"></div></section>
       <section id="shopChotaPanel" role="tabpanel" aria-labelledby="shopChotaTab" hidden><header class="chota-shop-intro shop-department-heading"><div><span class="shop-department-label">El Chota</span><h3>Para su habitación</h3><p>Estilos y objetos para la sede.</p></div></header><p id="chotaShopStatus" role="status" aria-live="polite"></p><div id="chotaShopItems" class="chota-shop-items"></div></section>
       <section id="shopVouchersPanel" class="reward-voucher-shop" role="tabpanel" aria-labelledby="shopVouchersTab" hidden><header class="shop-section-heading shop-department-heading"><div><span class="shop-department-label">Vales</span><h3 id="rewardVoucherTitle">Premios del club</h3><p>Desbloquea un vale y canjéalo cuando quieras.</p></div></header><div id="rewardVoucherItems" class="banner-shop-items"></div></section>
-      <section id="shopClothingPanel" role="tabpanel" aria-labelledby="shopClothingTab" hidden><header class="shop-section-heading"><div><h3>El armario del Chota</h3><p>Prendas que le acompañan al moverse, hablar y descansar.</p></div></header><p id="clothingShopStatus" role="status" aria-live="polite"></p><div id="clothingShopItems"></div></section>
+      <section id="shopClothingPanel" role="tabpanel" aria-labelledby="shopClothingTab" hidden><header class="shop-section-heading"><div><h3>El armario del Chota</h3><p>Prendas que le acompañan al moverse, hablar y descansar.</p></div></header><p id="clothingShopStatus" role="status" aria-live="polite"></p><section id="chotaOutfits" class="chota-outfits" aria-label="Conjuntos guardados" hidden></section><div id="clothingShopItems"></div></section>
     </div>
   </dialog>
 
@@ -956,7 +957,7 @@
   </dialog>
   <script defer src="vendor/supabase.js?v=20260901-125"></script>
   <script defer src="config.js?v=20261008-210"></script>
-  <script defer src="feature-loader.js?v=20261103-accounts-558"></script>
+  <script defer src="feature-loader.js?v=20261111-retos-626"></script>
   <script defer src="club-model.js?v=20260902-126"></script>
   <script defer src="chat-motion.js?v=20260902-128"></script>
   <script defer src="vendor/capacitor.js?v=8.5.0"></script>
@@ -972,7 +973,7 @@
   <script defer src="card-collection.js?v=20261102-pack-stage-549"></script>
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261103-chota-553"></script>
-  <script defer src="collection-social.js?v=20261110-sobres-614"></script>
+  <script defer src="collection-social.js?v=20261111-retos-626"></script>
   <script defer src="card-economy.js?v=20261107-economy-chota-579"></script>
   <script defer src="album.js?v=20261110-sobres-614"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
@@ -981,7 +982,7 @@
   <script defer src="pack-diagnostics.js?v=20261111-medidor-619"></script>
   <script defer src="pack-extras.js?v=20261110-sobre-fijo-617"></script>
   <script defer src="banner-shop.js?v=20261111-giro-plano-621"></script>
-  <script defer src="chota-shop.js?v=20261110-zapatillas-616"></script>
+  <script defer src="chota-shop.js?v=20261111-retos-626"></script>
   <script defer src="club-store.js?v=20261110-zapatillas-616"></script>
   <script defer src="store-rooms.js?v=20261110-zapatillas-616"></script>
   <script defer src="store-sky.js?v=20261108-rain-v2-593"></script>
@@ -998,7 +999,7 @@
   <script defer src="chat-custom.js?v=20261101-chat-custom-473"></script>
   <script defer src="club-social.js?v=20261102-club-day-542"></script>
   <script defer src="club-live.js?v=20261111-imagenes-625"></script>
-  <script defer src="chota-games.js?v=20261109-tailored-v5-609"></script>
+  <script defer src="chota-games.js?v=20261111-retos-626"></script>
   <script defer src="plan-widget.js?v=20261024-social-393"></script>
   <script defer src="group-interactions.js?v=20261025-fluid-motion-407"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
@@ -1012,7 +1013,7 @@
   <script defer src="chota-interact.js?v=20261110-sede-viva-610"></script>
   <script defer src="chota-appearance.js?v=20261110-tela-611"></script>
   <script defer src="chota-wardrobe.js?v=20261110-tela-611"></script>
-  <script defer src="app.js?v=20261111-imagenes-625"></script>
+  <script defer src="app.js?v=20261111-retos-626"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
