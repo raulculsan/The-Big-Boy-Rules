@@ -30,7 +30,7 @@
       if (dialog) return dialog;
       dialog = document.createElement('dialog'); dialog.className = 'app-update-gate'; dialog.id = 'appUpdateGate';
       dialog.setAttribute('aria-labelledby','appUpdateTitle');
-      dialog.innerHTML = '<section class="app-update-sheet"><div class="app-update-brand">The Big Boy Rules<span>Android</span></div><p class="app-update-caption">Versión de la aplicación</p><h1 id="appUpdateTitle">Actualiza para continuar.</h1><p class="app-update-message"></p><dl class="app-update-versions"><div><dt>Instalada</dt><dd data-update-current></dd></div><div><dt>Disponible</dt><dd data-update-latest></dd></div></dl><p class="app-update-minimum"></p><div class="app-update-actions"><button type="button" data-update-download>Descargar actualización</button><button type="button" data-update-recheck>Ya he actualizado</button></div><p class="app-update-feedback" role="status" aria-live="polite"></p><p class="app-update-help">Android te pedirá confirmar la instalación. Actualiza sobre la app actual para conservar tus datos.</p></section>';
+      dialog.innerHTML = '<section class="app-update-sheet"><div class="app-update-hero" aria-hidden="true"><span class="app-update-halo"></span><span class="app-update-chota"></span></div><p class="app-update-caption">Nueva versión de Big Boy</p><h1 id="appUpdateTitle">Actualiza para seguir en el club</h1><div class="app-update-versions"><span class="app-update-chip" data-update-current-version></span><svg class="app-update-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg><span class="app-update-chip is-new" data-update-latest-version></span></div><div class="app-update-news"><p class="app-update-news-label">Novedades</p><p class="app-update-message"></p></div><div class="app-update-actions"><button type="button" data-update-download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Descargar actualización</button><button type="button" data-update-recheck>Ya la he instalado</button></div><p class="app-update-feedback" role="status" aria-live="polite"></p><ol class="app-update-steps"><li><b>1</b>Descarga</li><li><b>2</b>Instala</li><li><b>3</b>Abre Big Boy</li></ol><p class="app-update-minimum"></p></section>';
       dialog.addEventListener('cancel', event => event.preventDefault());
       dialog.querySelector('[data-update-download]').addEventListener('click', async () => {
         const url = safeDownloadUrl(policy?.download_url); if (!url) return;
@@ -53,9 +53,10 @@
       if (!blocked) { dialogObserver?.disconnect(); dialogObserver=null; if (dialog?.open) dialog.close(); return; }
       const node = ensureDialog();
       node.querySelector('.app-update-message').textContent = policy.message || 'Esta versión de Big Boy ya no está disponible. Instala la actualización para entrar al club.';
-      node.querySelector('[data-update-current]').textContent = `${info.version} (${info.build})`;
-      node.querySelector('[data-update-latest]').textContent = `${policy.latest_version} (${policy.latest_build})`;
-      node.querySelector('.app-update-minimum').textContent = `Se requiere la compilación ${policy.minimum_build} o posterior.`;
+      node.querySelector('[data-update-current-version]').textContent = info.version;
+      node.querySelector('[data-update-latest-version]').textContent = policy.latest_version;
+      // Your data stays: the update installs over the current app.
+      node.querySelector('.app-update-minimum').textContent = `Tienes la ${info.version} (${info.build}) · nueva ${policy.latest_version} (${policy.latest_build}). Tus datos se conservan.`;
       if (!node.open) node.showModal();
       if (!dialogObserver) {
         // A delayed account/MFA dialog must not become the top layer above a mandatory update.
