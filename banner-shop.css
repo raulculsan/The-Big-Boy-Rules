@@ -103,6 +103,18 @@
 .pack-reveal-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;overflow:hidden;box-shadow:0 10px 16px #0009}
 .pack-reveal-face img{display:block;width:100%;height:100%;object-fit:contain}
 .pack-reveal-front{transform:rotateY(180deg)}
+/* Flat turn (Android, data-card-flip set in ui-motion.js): the card narrows to an
+   edge, swaps faces and widens again; no 3D context or hidden backfaces. */
+:root[data-card-flip=flat] .pack-reveal-card{transform-style:flat;transition:none}
+:root[data-card-flip=flat] .pack-reveal-card.is-flipped{transform:none;animation:pack-flat-turn .56s cubic-bezier(.3,.7,.3,1) both}
+:root[data-card-flip=flat] .pack-reveal-face{backface-visibility:visible;-webkit-backface-visibility:visible}
+:root[data-card-flip=flat] .pack-reveal-front{transform:none;opacity:0}
+:root[data-card-flip=flat] .pack-reveal-card.is-flipped .pack-reveal-front{animation:pack-flat-show .56s step-end both}
+:root[data-card-flip=flat] .pack-reveal-card.is-flipped .pack-reveal-back{animation:pack-flat-hide .56s step-end both}
+@keyframes pack-flat-turn{0%{transform:scaleX(1)}50%{transform:scaleX(.03)}100%{transform:scaleX(1)}}
+@keyframes pack-flat-show{0%{opacity:0}50%,100%{opacity:1}}
+@keyframes pack-flat-hide{0%{opacity:1}50%,100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){:root[data-card-flip=flat] .pack-reveal-card.is-flipped,:root[data-card-flip=flat] .pack-reveal-card.is-flipped :is(.pack-reveal-front,.pack-reveal-back){animation-duration:1ms}}
 .pack-reveal-info{min-height:85px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}
 .pack-reveal-info h3{font-size:17px;line-height:1.35;margin:0}
 .pack-reveal-info p{font-size:12px;margin:0;color:#d9b667}

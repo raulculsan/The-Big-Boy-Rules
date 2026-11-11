@@ -108,6 +108,9 @@
   let measuredLow = false;
   try { measuredLow = Date.now() - Number(localStorage.getItem(motionKey)) < motionMemory; } catch {}
   document.documentElement.dataset.motionQuality = measuredLow || lowPower || Number(navigator.hardwareConcurrency || 8) <= 4 ? 'low' : 'full';
+  // Android GPUs lose or blink a face of 3D card turns (preserve-3d with hidden
+  // backfaces at high pixel density); there the pack turns its cards flat.
+  document.documentElement.dataset.cardFlip = /Android/i.test(navigator.userAgent || '') ? 'flat' : '3d';
   let motionWatch = 0;
   function watchMotion(duration = 1400) {
     const root = document.documentElement;

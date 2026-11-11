@@ -566,6 +566,15 @@
   }
   function flipReveal() {
     if (!reveal || reveal.flipped || reveal.phase !== 'idle') return;
+    // Turning before the front has decoded showed an empty card on some phones:
+    // wait for the art (never more than 1.5 s), then turn.
+    const art = revealDialog.querySelector('.pack-reveal-front img');
+    if (art && !(art.complete && art.naturalWidth) && reveal.artWaited !== reveal.index) {
+      const waiting = reveal; waiting.phase = 'preparing'; waiting.artWaited = waiting.index;
+      const go = () => { if (reveal !== waiting || waiting.phase !== 'preparing') return; waiting.phase = 'idle'; flipReveal(); };
+      void Promise.race([(art.decode?.() || Promise.resolve()).catch(() => {}), new Promise(resolve => setTimeout(resolve, 1500))]).then(go);
+      return;
+    }
     const current = reveal; current.flipped = true; current.phase = 'flipping'; renderReveal();
     const stage=revealDialog.querySelector('.pack-reveal-stage');
     stage.querySelector('.pack-reveal-card').dataset.packRevealRarity=current.cards[current.index].edition;
