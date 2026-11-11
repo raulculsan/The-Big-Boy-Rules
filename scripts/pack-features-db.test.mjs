@@ -32,6 +32,7 @@ insert into public.achievement_card_catalog(id,kind,edition)
   select k||'-'||e||'-'||n, k, e from (values('member'),('object'),('location')) kinds(k), (values('common'),('special'),('epic'),('legendary')) editions(e), generate_series(1,6) n;
 insert into public.achievement_card_catalog(id,kind,edition) select 'member-'||e||'-'||n,'member',e from (values('full_art'),('vice_city'),('halloween'),('retro')) x(e), generate_series(1,4) n;
 insert into public.achievement_card_catalog(id,kind,edition) select 'location-retro-'||n,'location','retro' from generate_series(1,3) n;
+create function public.daily_pack_streak(actor uuid, upto date) returns integer language sql stable as $$select coalesce(nullif(current_setting('test.streak',true),'')::integer,7)$$;
 create function public.open_owned_card_pack(target_pack_id bigint default null) returns jsonb language sql as $$select '{}'::jsonb$$;
 grant execute on function public.open_owned_card_pack(bigint) to authenticated;
 `);
@@ -196,5 +197,31 @@ test('the carousel lists unopened packs per theme and opens the one on screen', 
     const after = await luck(db);
     assert.equal(after.waiting.vice_city.count, 1); assert.equal(after.waiting.standard.count, 2);
     await as(db, B); assert.deepEqual((await luck(db)).waiting, {});
+  } finally { await db.close(); }
+});
+
+const weeklySql = fs.readFileSync(new URL('../supabase/migrations/20261111090000_choice_packs_weekly.sql', import.meta.url), 'utf8');
+test('choice packs are weekly: one on streak days 7, 14, 21, never on other days, and surplus ones turn normal', async () => {
+  const db = await fixture(); try {
+    await as(db, A);
+    await db.exec(`select set_config('test.streak','5',false)`);
+    await give(db, A, 3, 'source=daily_streak');
+    await db.exec(`select set_config('test.streak','7',false)`);
+    // Packs made under the old rule: a pile of unopened choice packs.
+    await db.exec(`insert into public.card_packs(user_id,earned_day,source,variant) select '${A}', current_date - 1, 'daily', 'choice' from generate_series(1,4)`);
+    await db.exec(weeklySql);
+    assert.equal((await db.query(`select count(*)::int n from public.card_packs where variant='choice'`)).rows[0].n, 1, 'one old choice pack is kept');
+    await db.exec(`delete from public.card_packs`);
+    await db.exec(`select set_config('test.streak','6',false)`);
+    await give(db, A, 4, 'source=daily_streak');
+    assert.equal((await db.query(`select count(*)::int n from public.card_packs where variant='choice'`)).rows[0].n, 0, 'no choice off the weekly day');
+    await db.exec(`delete from public.card_packs`);
+    await db.exec(`select set_config('test.streak','14',false)`);
+    await give(db, A, 4, 'source=daily_streak');
+    assert.equal((await db.query(`select count(*)::int n from public.card_packs where variant='choice'`)).rows[0].n, 1, 'exactly one on day 14');
+    await give(db, A, 2, 'source=daily_streak');
+    assert.equal((await db.query(`select count(*)::int n from public.card_packs where variant='choice'`)).rows[0].n, 1, 'still one that day');
+    await give(db, A, 2);
+    assert.equal((await db.query(`select count(*)::int n from public.card_packs where variant='choice'`)).rows[0].n, 1, 'normal daily packs never become choice');
   } finally { await db.close(); }
 });

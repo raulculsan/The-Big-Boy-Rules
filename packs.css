@@ -230,11 +230,13 @@ body.authenticated .topbar .top-actions{flex-shrink:0;gap:5px}
 
 /* ── Card finishes: a light over the art, never over the frame text. ── */
 :is(.pack-reveal-front,.pack-summary-item,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish]{position:relative;isolation:isolate}
-:is(.pack-reveal-front,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish]::after,.pack-summary-item[data-finish] .pack-summary-card::after{content:"";position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;mix-blend-mode:color-dodge;opacity:.42;background-size:220% 220%;animation:card-finish-sheen 6s ease-in-out infinite}
-:is(.pack-reveal-front,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish="holo"]::after,.pack-summary-item[data-finish="holo"] .pack-summary-card::after{background-image:linear-gradient(115deg,#ff5f6d00 20%,#ff8ec7 32%,#8ee7ff 44%,#b4ff9c 56%,#c69bff 68%,#ff5f6d00 80%)}
-:is(.pack-reveal-front,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish="metal"]::after,.pack-summary-item[data-finish="metal"] .pack-summary-card::after{background-image:linear-gradient(120deg,#ffffff00 25%,#e8eef5 42%,#9aa7b5 50%,#f4f7fa 58%,#ffffff00 75%);opacity:.5}
-:is(.pack-reveal-front,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish="ink"]::after,.pack-summary-item[data-finish="ink"] .pack-summary-card::after{background-image:radial-gradient(circle at 30% 30%,#7ef0ff66,transparent 40%),radial-gradient(circle at 70% 65%,#ff7ad966,transparent 42%),linear-gradient(135deg,#ffffff00 30%,#ffffff55 50%,#ffffff00 70%);opacity:.55}
-@keyframes card-finish-sheen{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+/* Finishes are a light passing over the card, never a colour cast: no blend mode,
+   a narrow glint that crosses now and then, and a thin edge in the finish colour. */
+:is(.pack-reveal-front,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish]::after,.pack-summary-item[data-finish] .pack-summary-card::after{content:"";position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;background-repeat:no-repeat;background-size:320% 100%;background-position:120% 0;animation:card-finish-sheen 6.5s ease-in-out infinite;box-shadow:inset 0 0 0 2px var(--finish-edge)}
+:is(.pack-reveal-front,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish="holo"]::after,.pack-summary-item[data-finish="holo"] .pack-summary-card::after{--finish-edge:#ffffff59;background-image:linear-gradient(110deg,transparent 40%,#ffd6f066 45%,#ffffffa6 50%,#c9f3ff66 55%,transparent 60%)}
+:is(.pack-reveal-front,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish="metal"]::after,.pack-summary-item[data-finish="metal"] .pack-summary-card::after{--finish-edge:#e6edf580;background-image:linear-gradient(110deg,transparent 42%,#ffffff8c 50%,transparent 58%)}
+:is(.pack-reveal-front,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish="ink"]::after,.pack-summary-item[data-finish="ink"] .pack-summary-card::after{--finish-edge:#c9a8ff73;background-image:linear-gradient(110deg,transparent 40%,#b9f2ff59 46%,#ffffff8c 50%,#ffc2ec59 54%,transparent 60%)}
+@keyframes card-finish-sheen{0%,55%{background-position:120% 0}85%,100%{background-position:-20% 0}}
 @media(prefers-reduced-motion:reduce){:is(.pack-reveal-front,.card-album-slot,.shared-pack-strip i,.shared-pack-art)[data-finish]::after,.pack-summary-item[data-finish] .pack-summary-card::after{animation:none}}
 .pack-reveal-finish{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#ffffff1f;color:#fff;font-size:12px;font-weight:600}
 
