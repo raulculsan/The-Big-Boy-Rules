@@ -22,3 +22,4 @@ supabase/.temp/
 __pycache__/
 .taste-skill/
 dist/
+backup-restore/

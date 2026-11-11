@@ -13,6 +13,7 @@ const allowedFiles = new Set([
   "index.html",
   "pack-extras.js",
   "pack-diagnostics.js",
+  "error-reports.js",
   "chota-cloth.js",
   "chota-interact.js",
   "chota-appearance.js",

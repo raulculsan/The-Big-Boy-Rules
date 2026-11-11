@@ -1,0 +1,91 @@
+# Nightly encrypted backup of the Supabase database, and a weekly one of the
+# stored files (photos, voice notes, attachments). Everything is encrypted with
+# BACKUP_PASSPHRASE before it leaves the runner, because this repository is
+# public. Copies are kept 30 days as workflow artifacts.
+# How to restore: docs/backups.md
+name: Copia de seguridad
+
+on:
+  schedule:
+    - cron: '17 3 * * *'   # every night, 03:17 UTC
+  workflow_dispatch:
+    inputs:
+      files:
+        description: 'Copiar también los archivos (fotos, audios…)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      SUPABASE_URL: https://nfvggpgeypkkqceivkaq.supabase.co
+    steps:
+      - name: Comprobar secretos
+        run: |
+          missing=0
+          for name in SUPABASE_DB_URL BACKUP_PASSPHRASE; do
+            if [ -z "${!name}" ]; then echo "::error::Falta el secreto $name"; missing=1; fi
+          done
+          [ "${#BACKUP_PASSPHRASE}" -ge 32 ] || { echo "::error::BACKUP_PASSPHRASE es demasiado corta"; missing=1; }
+          exit $missing
+
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/backup-storage.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: Instalar pg_dump 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17 >/dev/null
+          /usr/lib/postgresql/17/bin/pg_dump --version
+
+      - name: Copiar la base de datos
+        run: |
+          set -euo pipefail
+          stamp=$(date -u +%Y-%m-%d)
+          mkdir -p out
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" --format=custom --compress=9 --no-owner --no-privileges \
+            --exclude-schema='supabase_migrations' --file=db.dump
+          /usr/lib/postgresql/17/bin/pg_restore --list db.dump >/dev/null
+          echo "Tamaño de la copia: $(du -h db.dump | cut -f1)"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -salt -in db.dump -out "out/bigboy-db-$stamp.dump.enc" -pass env:BACKUP_PASSPHRASE
+          rm -f db.dump
+          echo "STAMP=$stamp" >> "$GITHUB_ENV"
+
+      - name: Copiar los archivos (domingos o a mano)
+        env:
+          EVENT: ${{ github.event_name }}
+          WANT_FILES: ${{ inputs.files }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "schedule" ] && [ "$(date -u +%u)" != "7" ]; then echo "Solo los domingos."; exit 0; fi
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$WANT_FILES" != "true" ]; then echo "No se han pedido los archivos."; exit 0; fi
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "::warning::Falta SUPABASE_SERVICE_ROLE_KEY; no se copian los archivos."; exit 0; fi
+          node scripts/backup-storage.mjs files
+          tar -C files -cf - . | gzip -1 | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -salt -out "out/bigboy-files-$STAMP.tar.gz.enc" -pass env:BACKUP_PASSPHRASE
+          rm -rf files
+          echo "Tamaño de los archivos: $(du -h out/bigboy-files-$STAMP.tar.gz.enc | cut -f1)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: copia-${{ env.STAMP }}
+          path: out/
+          retention-days: 30
+          compression-level: 0
+          if-no-files-found: error

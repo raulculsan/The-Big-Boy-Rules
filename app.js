@@ -73,6 +73,7 @@ const db = backendReady
   : null;
 
 const appUpdateGate = globalThis.ClubAppUpdate?.start({client:db});
+if (db) globalThis.ClubErrorReports?.start({client:db});
 
 if (backendReady) {
   const backendOrigin = new URL(config.supabaseUrl).origin;
