@@ -577,9 +577,26 @@
   // The whole pack downloads and decodes while the pack is torn, off the main
   // thread, instead of one card ahead; references are kept so the cache holds.
   let revealPreload = [];
+  // Decoding six full-size fronts at once stalled the tear on Android (100-240 ms
+  // long tasks). What is on screen first loads first: the small thumbnails, the
+  // summary's featured card and the first card's back; the large fronts follow
+  // one at a time, in reveal order, once the tear is under way.
+  let revealPreloadToken = 0;
   function preloadReveal(cards) {
-    const sources = new Set(cards.flatMap(item => {const design = card(item.card_id); return [design?.front, design?.back, design && summaryThumb(item)];}).filter(Boolean));
-    revealPreload = [...sources].map(src => {const image = new Image(); image.decoding = 'async'; image.src = src; void image.decode?.().catch(() => {}); return image;});
+    const token = ++revealPreloadToken, seen = new Set();
+    const load = src => {
+      if (!src || seen.has(src)) return Promise.resolve();
+      seen.add(src);
+      const image = new Image(); image.decoding = 'async'; image.src = src; revealPreload.push(image);
+      return (image.decode?.() || Promise.resolve()).catch(() => {});
+    };
+    revealPreload = [];
+    const featured = cards[summaryOrder(cards)[0]];
+    const designs = cards.map(item => card(item.card_id));
+    void Promise.all([...cards.map(item => load(summaryThumb(item))), load(featured && summaryArt(featured)), load(designs[0]?.back)]);
+    const rest = designs.flatMap(design => [design?.front, design?.back]).filter(Boolean);
+    const next = () => { if (token !== revealPreloadToken || !rest.length) return; void load(rest.shift()).then(next); };
+    setTimeout(next, revealReduced() ? 0 : 650);
   }
   function startReveal(cards, packId = null, theme = null) {
     if (!cards.length) return;
@@ -770,7 +787,7 @@
       else flipReveal();
     }
   });
-  revealDialog.addEventListener('close', () => {globalThis.PackDiagnostics?.stop();revealPreload = [];const syncAfterClose = reveal?.dirty && !reveal.draining;stopRevealOpening();detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;detachViewerMotion?.();detachViewerMotion=null;packViewer=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); (document.querySelector('#packCarouselTrack .pack-slide.is-active button') || el('ownedPackOpen'))?.focus({preventScroll:true});if (syncAfterClose) void refresh();});
+  revealDialog.addEventListener('close', () => {globalThis.PackDiagnostics?.stop();revealPreload = [];revealPreloadToken++;const syncAfterClose = reveal?.dirty && !reveal.draining;stopRevealOpening();detachRevealVfx?.();detachRevealVfx=null;detachRevealFoil?.();detachRevealFoil=null;detachViewerMotion?.();detachViewerMotion=null;packViewer=null;clearTimeout(revealTimer); summarySwipe = null; revealDialog.getAnimations({subtree:true}).forEach(animation => animation.cancel()); revealDialog.classList.remove('is-opening-pack','is-pack-summary'); reveal = null; const gesture = swipe; swipe = null; if (gesture?.stage.hasPointerCapture(gesture.id)) gesture.stage.releasePointerCapture(gesture.id); (document.querySelector('#packCarouselTrack .pack-slide.is-active button') || el('ownedPackOpen'))?.focus({preventScroll:true});if (syncAfterClose) void refresh();});
   const el = id => document.getElementById(id);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);
