@@ -65,7 +65,7 @@
   if(!el('ticketList'))return;
   const page=el('ayuda');
   page.dataset.ticketView=view;
-  el('ticketPageTitle').textContent=staff()?'Tickets del club':'Soporte';
+  el('ticketPageTitle').textContent=staff()?'Tickets del club':'Ayuda';
   el('ticketIntro').textContent=staff()?'Atiende y resuelve lo que piden los miembros.':'Tus consultas privadas con administración.';
   renderList();
   el('ticketNew').hidden=view!=='new';

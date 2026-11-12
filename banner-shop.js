@@ -1,5 +1,6 @@
 /* Wallet, inventory and purchases are authoritative server RPC results. */
 (() => {
+  const groupDigits = value => String(Math.trunc(Number(value) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   let options, state = null, busy = false, loading = false, failure = '', notice = '', generation = 0, request = null, profileTarget = null;
   // Bad-luck protection and opening streak (get_pack_luck); absent until the server has it.
   let packLuck = null, lastOpenedPack = null;
@@ -14,8 +15,8 @@
     const pendingButton = el('packChoicePending'); if (pendingButton) pendingButton.hidden = !luck?.pending_choice;
     if (!luck) return;
     // One quiet line: how far the guaranteed legendary and the boosted pack are.
-    const pity = luck.guaranteed_next || luck.pity_in <= 0 ? 'Legendaria asegurada' : `Legendaria en ${luck.pity_in}`;
-    const boost = luck.next_boosted ? 'sobre mejorado' : `mejorado en ${luck.boost_in}`;
+    const pity = luck.guaranteed_next || luck.pity_in <= 0 ? 'Legendaria asegurada en el próximo' : `Legendaria asegurada en ${luck.pity_in} ${luck.pity_in === 1 ? 'sobre' : 'sobres'}`;
+    const boost = luck.next_boosted ? 'el próximo es mejorado' : `mejorado en ${luck.boost_in}`;
     const target = luck.target ? ` · objetivo ${Math.min(luck.fragments, luck.target.cost)}/${luck.target.cost}` : '';
     const text = `${pity} · ${boost}${target}`;
     if (box.textContent !== text) box.textContent = text;
@@ -802,7 +803,7 @@
   const card = id => globalThis.CardCollection?.catalog.find(item => item.id === id);
   const online = () => navigator.onLine !== false && !!options?.session();
   const rarityNames = {common:'Común',retro:'Retro',special:'Especial',epic:'Épica',legendary:'Legendaria',full_art:'Full Art',vice_city:'Vice City',halloween:'Halloween'};
-  const coins = () => state ? `${state.balance} monedas` : '— monedas';
+  const coins = () => state ? `${groupDigits(state.balance)} monedas` : '— monedas';
   function errorMessage(error) {
     if (navigator.onLine === false) return 'Sin conexión. Conéctate para actualizar tu colección y tus monedas.';
     if (['PGRST202','42883','42P01'].includes(error?.code)) return 'La tienda está en preparación. Prueba de nuevo cuando esté activada.';
@@ -1101,7 +1102,7 @@
     paintMembers();
     renderReveal();
     renderEditor();
-    document.querySelectorAll('[data-duplicates-count]').forEach(node => {node.textContent = state ? extraCopies() : '—'; node.closest('button')?.setAttribute('aria-label', `Gestionar ${state ? extraCopies() : ''} cartas repetidas`);});
+    document.querySelectorAll('[data-duplicates-count]').forEach(node => {node.textContent = state ? groupDigits(extraCopies()) : '—'; node.closest('button')?.setAttribute('aria-label', `Gestionar ${state ? extraCopies() : ''} cartas repetidas`);});
     if (el('duplicatesStatus')) el('duplicatesStatus').textContent = failure || notice || (loading ? 'Actualizando repetidas…' : state ? `${extraCopies()} copias repetidas. Conservas una de cada carta.` : 'Actualiza la colección para consultar las repetidas.');
     if (state?.cards) lastInventory = state.cards;
     globalThis.CardAlbum?.update({cards:lastInventory, catalog:state?.card_catalog, loading:loading || busy, failure, savedAt:inventorySavedAt});
@@ -1122,7 +1123,7 @@
     if (!globalThis.PackExtras?.syncAction?.()) document.querySelectorAll('[data-pack-open]').forEach(button => {button.disabled = !!el('ownedPackOpen')?.disabled; if (button.textContent !== 'Abrir sobre') button.textContent = 'Abrir sobre';});
     if (el('packsInfoBalance')) el('packsInfoBalance').textContent = state ? String(state.available_packs?.length ?? 0) : '—';
     renderPackLuck();
-    if (el('packsInfoCoins')) el('packsInfoCoins').textContent = state ? `${Number(state.balance).toLocaleString('es-ES')} monedas` : '—';
+    if (el('packsInfoCoins')) el('packsInfoCoins').textContent = state ? `${groupDigits(state.balance)} monedas` : '—';
     if (el('packRarityOdds')) el('packRarityOdds').textContent = state?.rarity_probabilities ? Object.keys(rarityNames).filter(rarity => state.rarity_probabilities[rarity] != null).map(rarity => `${rarityNames[rarity]} ${state.rarity_probabilities[rarity]}%`).join(' · ') : 'Probabilidades disponibles al sincronizar.';
     const shopHeading = el('shopBannersPanel')?.querySelector('.shop-section-heading');
     if (shopHeading) {
@@ -1517,7 +1518,9 @@
         selectShopTab(shopTabs[next]); shopTabs[next].focus();
       });
     });
-    el('packsInfoTrigger')?.addEventListener('click', () => {const trigger=el('packsInfoTrigger'), panel=el('packsInfoPanel'), open=trigger.getAttribute('aria-expanded')==='true';panel.hidden=open;trigger.setAttribute('aria-expanded',String(!open));});
+    el('packsInfoTrigger')?.addEventListener('click', () => {const trigger=el('packsInfoTrigger'), panel=el('packsInfoPanel'), open=trigger.getAttribute('aria-expanded')==='true';panel.hidden=open;trigger.setAttribute('aria-expanded',String(!open));
+      // On a phone the panel opens below the fold; bring it into view.
+      if(!open)requestAnimationFrame(()=>panel.scrollIntoView?.({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));});
     el('bannerUnequip').addEventListener('click', () => void mutate('equip_profile_banner', {target_banner_id:null}, 'Banner retirado de tu perfil.'));
     el('packChoicePending')?.addEventListener('click', async () => {
       const pending = packLuck?.pending_choice; if (!pending || !globalThis.PackExtras) return;

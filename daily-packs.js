@@ -61,7 +61,11 @@
     const label = count === '—' ? 'Saldo de sobres pendiente de sincronización' : `${count} ${available === 1 ? 'sobre disponible' : 'sobres disponibles'}`;
     for (const id of ['packsCount', 'packsHomeBalance']) {
       const node = document.getElementById(id);
-      if (node) {node.textContent = count; node.setAttribute('aria-label', label); if (id === 'packsHomeBalance') node.style.fontSize = `${Math.min(9, 30 / Math.max(1, count.length))}px`;}
+      if (!node) continue;
+      node.setAttribute('aria-label', label);
+      // The tab shows a short, neutral count ("99+"), not an alert-style figure.
+      if (id === 'packsHomeBalance') {node.textContent = available > 99 ? '99+' : count; node.dataset.empty = String(!(available > 0)); node.style.fontSize = '';}
+      else node.textContent = count;
     }
     document.getElementById('packsTopButton')?.setAttribute('aria-label', `Abrir mis sobres de la colección Los nuestros. ${label}`);
     // El Chota reads the balance out loud on the collection stage.

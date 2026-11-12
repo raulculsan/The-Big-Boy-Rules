@@ -363,6 +363,7 @@ body.sidebar-compact .brand-mark { width: 42px; min-width: 42px; }
 .admin-crown-button {
   font-size: 18px;
 }
+.admin-crown-button svg { stroke-linejoin: round; }
 
 .monochrome-top-button {
   color: #fff;

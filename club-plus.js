@@ -88,7 +88,7 @@
   const grid=(p.photos||[]).map(x=>{const url=safeFile(x.url);return url?`<figure class="plus-photo"><img src="${esc(url)}" alt="Foto de ${esc(nameOf(x.user))}" loading="lazy"><figcaption>${esc(nameOf(x.user))}${x.late?' · tarde':''}</figcaption></figure>`:'';}).join('');
   if(!p.opens_at)return '<h4>La foto del día</h4><p class="club-day-note">Hoy sale a una hora sorpresa entre las 10:00 y las 21:00. Vuelve más tarde.</p>';
   const upload=p.own?'':`<label class="club-day-action plus-upload">${busy?'Subiendo…':'Subir mi foto'}<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-plus-file="photo" hidden></label>`;
-  return `<h4>La foto del día</h4><p class="club-day-note">${p.on_time?`Es la hora: quedan menos de 10 minutos desde las ${esc(time)}.`:`Salió a las ${esc(time)}.`} ${p.own?'':`${p.count} ${p.count===1?'persona la ha subido':'personas la han subido'}. Sube la tuya para verlas.`}</p>${upload}<div class="plus-photos">${grid}</div>`;
+  return `<h4>La foto del día</h4><p class="club-day-note">${p.on_time?`Es la hora: quedan menos de 10 minutos desde las ${esc(time)}.`:`Salió a las ${esc(time)}.`} ${p.own?'':!p.count?'Nadie la ha subido todavía. Sé el primero.':`${p.count===1?'Una persona la ha subido':`${p.count} personas la han subido`}. Sube la tuya para verlas.`}</p>${upload}<div class="plus-photos">${grid}</div>`;
  }
  function karaoke(){
   const k=state.karaoke||{},me=config.getUser?.()?.id,own=(k.entries||[]).some(e=>e.user===me);
@@ -134,7 +134,8 @@
   if(!config.db||!config.getUser?.())return;
   const run=++epoch,[{data,error},story]=await Promise.all([config.db.rpc('get_club_plus'),config.db.rpc('get_club_story')]);
   if(run!==epoch||error)return;
-  state={...data,...story.data};saveStory();syncSede();config.onChange?.();
+  // A failing story keeps the last one it had; the rest of the club still loads.
+  state={...data,...(story.error?{story:state?.story,nights:state?.nights}:story.data)};saveStory();syncSede();config.onChange?.();
  }
  async function call(name,args,done=''){
   if(busy)return false;busy=true;notice='';

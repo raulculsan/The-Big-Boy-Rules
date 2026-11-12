@@ -263,6 +263,9 @@ let helpRealtime = null;
 let achievementsRealtime = null;
 let profilesRealtime = null;
 let activeNewsCategory = "deportes";
+// The list opens short (six headlines) so the rest of Inicio stays close.
+const NEWS_FIRST_VIEW = 6;
+let newsExpanded = false;
 let lastNewsRefreshAt = 0;
 let newsLoadToken = 0;
 let pendingPrivateMessageFile = null;
@@ -839,7 +842,7 @@ function goTo(sectionId) {
   const titles = {
     "seccion-chat": "Sección del grupo", inicio: "El Club", chat: "Mensajes", miembros: "Miembros",
     privados: "Mensajes privados", perfil: "Perfil", calendario: "Calendario",
-    noticias: "Noticias", administracion: "Administración", ayuda: "Tickets", sobres: "Colección", album: "Álbum", catalogo: "Cartas de la colección", hoy: "Hoy en el club",
+    noticias: "Noticias", administracion: "Administración", ayuda: "Ayuda", sobres: "Colección", album: "Álbum", catalogo: "Cartas de la colección", hoy: "Hoy en el club",
     "admin-configuracion": "Configuración", "admin-diagnostico": "Rendimiento y diagnóstico", "admin-cuentas": "Control de cuentas", "admin-logros": "Configuración de logros", "crear-logro": "Crear un logro", "asignar-logro": "Asignar logro", "editar-usuario": "Editar usuario"
   };
   pageTitle.textContent = titles[sectionId] || titles.inicio;
@@ -1370,12 +1373,21 @@ function renderFeatured() {
 }
 
 let memberProfilesOwner = null, memberProfilesFailedOwner = null;
-function memberTileMarkup(member, index) {
+function memberTileMarkup(member, index, list) {
   return `
     <button class="club-member" type="button" data-profile="${member.id}" data-member-priority="${index < 2}" data-member-banner-user="${escapeHtml(member.authId || '')}" aria-label="Ver perfil de ${escapeHtml(member.name)}">
       <div class="club-member-hero"><div class="club-member-banner" aria-hidden="true"></div>${getAvatar(member, "avatar", index < 2)}</div>
-      <span class="club-member-identity"><strong>${escapeHtml(member.name)}</strong><small>${escapeHtml(globalThis.ClubPlus?.statusFor(member.authId) || `@${member.username}`)}</small></span>
+      <span class="club-member-identity"><strong>${escapeHtml(memberRailName(member, Array.isArray(list) && list.length ? list : members))}</strong><small>${escapeHtml(globalThis.ClubPlus?.statusFor(member.authId) || `@${member.username}`)}</small></span>
     </button>`;
+}
+
+// The home rail is narrow: first names, plus the surname's initial when two
+// members share one ("Daniel G.").
+function memberRailName(member, list = members) {
+  const words = String(member.name || "").trim().split(/\s+/);
+  const first = words[0] || member.name || "";
+  const shared = list.some(other => other.id !== member.id && !other.hidden && String(other.name || "").trim().split(/\s+/)[0]?.toLocaleLowerCase("es") === first.toLocaleLowerCase("es"));
+  return shared && words[1] ? `${first} ${words[1][0]}.` : first;
 }
 
 // Last seen members paint the first frame; identical server data then changes nothing.
@@ -1470,7 +1482,7 @@ function renderMemberAchievements(member) {
     <div class="achievement-showcase">
       ${assigned.length ? visible.map(renderProfileAchievementCard).join("") : `<div class="empty-state compact achievement-empty"><strong>${achievementsLoading ? "Cargando logros…" : "Aún no hay logros"}</strong><span>Los logros conseguidos aparecerán aquí.</span></div>`}
     </div>
-    ${archived.length ? `<button type="button" class="achievement-show-all" data-load-achievement-page="${escapeHtml(pageKey)}">Ver ${Math.min(8, archived.length)} más</button>` : ""}
+    ${archived.length ? `<button type="button" class="achievement-show-all" data-load-achievement-page="${escapeHtml(pageKey)}">Ver más · quedan ${archived.length}</button>` : ""}
   </section>`;
 }
 
@@ -1654,6 +1666,7 @@ function renderProfile(memberId, navigate = true) {
       <div class="club-profile-bottom">
         <div class="profile-actions">
           ${!isOwnProfile ? `<button class="primary-button" data-private-member="${member.id}" type="button">Enviar mensaje</button>` : ""}
+          ${isOwnProfile && !member.hidden ? `<button class="secondary-button profile-help-entry" data-go="ayuda" type="button">¿Algo no va? Escribe a administración</button>` : ""}
         </div>
       </div>
     </article>
@@ -2467,7 +2480,9 @@ function renderPresence() {
   adminConsole?.refreshStats();
   const count = onlineUsers.length;
   const label = count === 1 ? "1 conectado" : `${count} conectados`;
-  updateSurfaceMarkup(document.getElementById("chatOnlineStatus"), `<i></i> ${label}`);
+  // Alone in the club, the counter speaks of you rather than of "1 conectado".
+  const onlyMe = count === 1 && onlineUsers[0]?.legacy_id === currentUser?.id;
+  updateSurfaceMarkup(document.getElementById("chatOnlineStatus"), `<i></i> ${onlyMe ? "Solo tú en línea" : label}`);
   updateSurfaceMarkup(document.getElementById("heroOnlineStatus"), `<i></i> ${count ? `${label} ahora` : "Nadie conectado"}`);
   const panel = document.getElementById("onlineMembers");
   if (!panel) return;
@@ -4790,8 +4805,10 @@ function renderClubhouse(upcoming) {
   const days = next ? tigretonDaysUntil(next.date) : 0;
   const countdown = !next ? "" : days === 0 ? "Es hoy" : days === 1 ? "Mañana" : `En ${days} días`;
   const date = next ? next.date.toLocaleDateString("es-ES", {day: "numeric", month: "short"}).replace(".", "") : "";
-  const schedule = next ? (birthday ? "Cumpleaños" : conversationTimeFormatter.format(next.date)) : "";
-  const signature = JSON.stringify([next ? true : homeEventsReady, birthday, next?.event.id, next?.event.title, next?.event.description, next?.event.eventType, days, date, schedule]);
+  const schedule = next && !birthday ? conversationTimeFormatter.format(next.date) : "";
+  // The note is small: "Cumple de Daniel" reads whole where the full title is cut.
+  const noteTitle = !next ? "" : birthday ? `Cumple de ${String(next.event.title || "").replace(/^\s*(?:cumplea(?:ñ|n)os|cumple)\s+(?:de\s+)?/i, "").trim().split(/\s+/)[0] || "un miembro"}` : next.event.title;
+  const signature = JSON.stringify(["note-v2", next ? true : homeEventsReady, birthday, next?.event.id, next?.event.title, next?.event.description, next?.event.eventType, days, date, schedule]);
   if (content.dataset.roomSignature === signature && content.firstElementChild) {
     globalThis.ChotaShop?.mountRoom(content.firstElementChild);
     globalThis.ChotaGames?.mount(content.querySelector("#chotaArcadeEntry"));
@@ -4801,7 +4818,7 @@ function renderClubhouse(upcoming) {
     return;
   }
   content.dataset.roomSignature = signature;
-  const plan = next ? `<button class="clubhouse-plan" type="button" data-calendar-date="${tigretonDayKey(next.date)}" aria-label="Ver plan: ${escapeHtml(next.event.title)}"><span class="clubhouse-note-label">Próximo plan</span><strong>${escapeHtml(next.event.title)}</strong><span class="clubhouse-plan-date">${escapeHtml(date)} · ${escapeHtml(schedule)}</span><span class="clubhouse-plan-countdown">${countdown}</span></button>` : `<div class="clubhouse-plan clubhouse-plan-empty"><span class="clubhouse-note-label">La agenda</span><strong>${homeEventsReady ? "El próximo plan está por llegar" : "Consultando la agenda…"}</strong>${homeEventsReady ? '<button type="button" data-go="calendario">Ver calendario</button>' : ""}</div>`;
+  const plan = next ? `<button class="clubhouse-plan" type="button" data-calendar-date="${tigretonDayKey(next.date)}" aria-label="Ver plan: ${escapeHtml(next.event.title)}"><span class="clubhouse-note-label">${birthday ? "Próximo cumple" : "Próximo plan"}</span><strong>${escapeHtml(noteTitle)}</strong><span class="clubhouse-plan-date">${escapeHtml(schedule ? `${date} · ${schedule}` : date)}</span><span class="clubhouse-plan-countdown">${countdown}</span></button>` : `<div class="clubhouse-plan clubhouse-plan-empty"><span class="clubhouse-note-label">La agenda</span><strong>${homeEventsReady ? "El próximo plan está por llegar" : "Consultando la agenda…"}</strong>${homeEventsReady ? '<button type="button" data-go="calendario">Ver calendario</button>' : ""}</div>`;
   const liveIcon = next ? `<button type="button" class="clubhouse-live-icon" data-club-live-event="${escapeHtml(next.event.id)}" aria-label="Abrir plan en directo: ${escapeHtml(next.event.title)}" title="Plan en directo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.1 7.1a7 7 0 0 0 0 9.8m9.8-9.8a7 7 0 0 1 0 9.8M4 4a11.3 11.3 0 0 0 0 16M20 4a11.3 11.3 0 0 1 0 16"/></svg></button>` : "";
   const bunting = birthday ? '<div class="clubhouse-bunting" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>' : "";
   // An empty slot keeps the room in place when the first agenda arrives after launch.
@@ -7941,9 +7958,9 @@ function renderNews(items, feedTitle, refreshedAt = Date.now()) {
       <div class="news-card-body"><div class="news-card-meta"><span>${escapeHtml(source)}</span>${time}</div>${headline}</div>
       ${image ? `<div class="news-thumb">${photo}</div>` : ""}${share}
     </article>`;
-    return `<li class="news-card news-latest">${time}<div class="news-card-body"><span class="news-source">${escapeHtml(source)}</span>${headline}</div>${share}</li>`;
+    return `<li class="news-card news-latest"${index >= NEWS_FIRST_VIEW && !newsExpanded ? " hidden" : ""}>${time}<div class="news-card-body"><span class="news-source">${escapeHtml(source)}</span>${headline}</div>${share}</li>`;
   });
-  updateSurfaceMarkup(grid, cards.length ? `${cards.slice(0, 3).join("")}${cards.length > 3 ? `<section class="news-latest-block" aria-label="Última hora"><h4>Última hora</h4><ol class="news-latest-list">${cards.slice(3).join("")}</ol></section>` : ""}`
+  updateSurfaceMarkup(grid, cards.length ? `${cards.slice(0, 3).join("")}${cards.length > 3 ? `<section class="news-latest-block" aria-label="Última hora"><h4>Última hora</h4><ol class="news-latest-list">${cards.slice(3).join("")}</ol>${cards.length > NEWS_FIRST_VIEW && !newsExpanded ? `<button class="news-more-button" type="button" data-news-more>Ver ${cards.length - NEWS_FIRST_VIEW} titulares más</button>` : ""}</section>` : ""}`
     : '<div class="empty-state"><strong>Sin titulares disponibles</strong><span>Actualiza para consultar las últimas noticias.</span></div>');
 }
 
@@ -8023,7 +8040,7 @@ document.addEventListener("click", event => {
     state.offset += next.length;
     const remaining = state.items.length - state.offset;
     if (!remaining) achievementPageButton.remove();
-    else achievementPageButton.textContent = `Ver ${Math.min(8, remaining)} más`;
+    else achievementPageButton.textContent = `Ver más · quedan ${remaining}`;
     return;
   }
   const goTarget = event.target.closest("[data-go]");
@@ -8712,6 +8729,7 @@ document.getElementById("adminDeleteProfileButton").addEventListener("click", as
 });
 document.querySelectorAll("[data-news-category]").forEach(button => button.addEventListener("click", () => {
   activeNewsCategory = button.dataset.newsCategory;
+  newsExpanded = false;
   document.querySelectorAll("[data-news-category]").forEach(item => item.classList.toggle("active", item === button));
   loadNews(false);
 }));
@@ -8731,6 +8749,14 @@ document.getElementById("toggleNewsButton").addEventListener("click", () => {
 });
 setNewsCollapsed(true);
 document.getElementById("refreshNewsButton").addEventListener("click", () => loadNews(true));
+document.getElementById("newsGrid").addEventListener("click", event => {
+  const more = event.target.closest("[data-news-more]");
+  if (!more) return;
+  newsExpanded = true;
+  const list = more.previousElementSibling;
+  list?.querySelectorAll("li[hidden]").forEach(item => { item.hidden = false; });
+  more.remove();
+});
 // Also cover returning online and staying in the foreground across midnight.
 let lastForegroundRefreshAt = 0;
 window.addEventListener("online", () => { void refreshDailyParticipation(true); });

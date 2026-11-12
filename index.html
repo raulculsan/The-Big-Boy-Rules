@@ -46,8 +46,8 @@
   <link rel="stylesheet" href="account-security.css?v=20261102-theme-532" />
   <link rel="preload" as="image" href="icons/clubhouse/club-room-v1.webp" fetchpriority="high" />
   <link rel="preload" as="image" href="icons/mascot/chota-v2/chota-poses.webp" />
-  <link rel="stylesheet" href="styles.css?v=20261102-theme-510" />
-  <link rel="stylesheet" href="chat.css?v=20261102-theme-536" />
+  <link rel="stylesheet" href="styles.css?v=20261112-inicio-627" />
+  <link rel="stylesheet" href="chat.css?v=20261112-inicio-627" />
   <link rel="stylesheet" href="chat-themes.css?v=20261030-neutral-interactions-444" />
   <link rel="stylesheet" href="tickets.css?v=20261102-theme-510" />
   <link rel="stylesheet" href="chat-custom.css?v=20261101-mentions-480" />
@@ -56,7 +56,7 @@
   <link rel="stylesheet" href="club.css?v=20261109-tailored-v5-609" />
   <link rel="stylesheet" href="banner-shop.css?v=20261111-giro-plano-621" />
   <link rel="stylesheet" href="onboarding.css?v=20261030-neutral-interactions-444" />
-  <link rel="stylesheet" href="news.css?v=20261103-news-music-554" />
+  <link rel="stylesheet" href="news.css?v=20261112-inicio-627" />
   <link rel="stylesheet" href="pending-actions.css?v=20261016-release-322" />
   <link rel="stylesheet" href="notifications.css?v=20261102-theme-532" />
   <link rel="stylesheet" href="collection-social.css?v=20261111-retos-626" />
@@ -71,7 +71,7 @@
   <link rel="stylesheet" href="store-rooms.css?v=20261110-zapatillas-616" />
   <link rel="stylesheet" href="store-sky.css?v=20261108-rain-v2-593" />
   <link rel="stylesheet" href="coin-missions.css?v=20261102-theme-519" />
-  <link rel="stylesheet" href="club-day.css?v=20261107-chota-asleep-574" />
+  <link rel="stylesheet" href="club-day.css?v=20261112-inicio-627" />
   <link rel="stylesheet" href="chota-decisions.css?v=20261109-tailored-v5-609" />
   <link rel="stylesheet" href="club-life.css?v=20261108-rain-v2-593" />
   <link rel="stylesheet" href="club-night.css?v=20261102-night-507" />
@@ -82,7 +82,7 @@
   <link rel="stylesheet" href="app-update.css?v=20261111-actualizar-623" />
   <link rel="stylesheet" href="ui-motion.css?v=20261106-pwa-dock-564" />
   <link rel="stylesheet" href="design-system.css?v=20261102-theme-509" />
-  <link rel="stylesheet" href="app-theme.css?v=20261109-tailored-v5-609" />
+  <link rel="stylesheet" href="app-theme.css?v=20261112-inicio-627" />
 </head>
 <body>
 
@@ -167,7 +167,7 @@
             </details>
           </section>
         </div>
-        <button class="icon-button admin-only admin-crown-button monochrome-top-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración">♛</button>
+        <button class="icon-button admin-only admin-crown-button monochrome-top-button" id="adminPanelButton" type="button" aria-label="Abrir administración" title="Administración"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l4 4 4-6 4 6 4-4-1.5 10h-13Z"/><path d="M6 21h12"/></svg></button>
       </div>
     </header>
 
@@ -299,7 +299,7 @@
         <article class="panel chat-panel group-conversation">
           <div class="chat-channel-bar">
             <div class="chat-channels" id="chatChannels"></div>
-            <button class="channel-add-button admin-only" id="addChatChannelButton" type="button" title="Añadir sección">＋ Sección</button>
+            <button class="channel-add-button admin-only" id="addChatChannelButton" type="button" title="Añadir sección">＋ Sección</button><button type="button" id="editChatChannelButton" class="channel-add-button channel-settings-button" aria-label="Configurar esta sección" hidden>Configurar</button>
           </div>
           <div class="chat-header">
             <div class="chat-header-main">
@@ -314,7 +314,6 @@
             </div>
           </div>
 
-          <button type="button" id="editChatChannelButton" class="channel-settings-button" hidden>Configurar sección</button>
           <button type="button" id="groupEventNotice" class="group-event-notice" aria-label="Ver próximo evento y asistencia" aria-haspopup="dialog" hidden></button>
           <div id="groupPolls" class="group-polls-shelf" aria-label="Encuestas del grupo"></div>
           <div class="messages" id="messages">
@@ -438,7 +437,7 @@
     <section class="page-section" id="administracion">
       <div id="superAdminConsole" hidden></div>
       <button type="button" class="control-diagnostics admin-account-security" id="adminSecurityButton"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></svg><span><strong>Seguridad de la cuenta</strong><small>Verifica tu correo o vincula Google y configura el autenticador.</small></span><b>Gestionar</b></button>
-      <button type="button" class="request-admin-entry" data-open-account-requests><span><strong>Solicitudes de cuenta</strong><small>Revisa nuevos accesos al club.</small></span><span data-request-count hidden></span></button>
+      <button type="button" class="request-admin-entry" data-open-account-requests><span><strong>Solicitudes de cuenta</strong><small>Revisa nuevos accesos al club.</small></span><span data-request-count hidden></span><svg class="admin-settings-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
       <div id="standardAdminPanel">
       <div class="section-intro">
         <div>
@@ -449,7 +448,7 @@
       </div>
 
       <div class="admin-summary" id="adminSummary"></div>
-      <button class="secondary-button admin-help-entry" type="button" data-go="ayuda">Atender ayuda</button>
+      <button class="secondary-button admin-help-entry" type="button" data-go="ayuda"><span><strong>Atender ayuda</strong><small>Mensajes y tickets de los miembros.</small></span><svg class="admin-settings-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
       </div>
     </section>
 
@@ -568,7 +567,7 @@
       <div class="ticket-page">
         <header class="ticket-top">
           <button class="ticket-round" type="button" data-ticket-back aria-label="Volver"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
-          <div><h2 id="ticketPageTitle" tabindex="-1">Soporte</h2><p id="ticketIntro"></p></div>
+          <div><h2 id="ticketPageTitle" tabindex="-1">Ayuda</h2><p id="ticketIntro"></p></div>
           <button class="ticket-primary ticket-primary-new" type="button" data-ticket-new>Nuevo ticket</button>
         </header>
         <div class="ticket-layout">
@@ -941,7 +940,7 @@
       <section id="shopBannersPanel" role="tabpanel" aria-labelledby="shopBannersTab"><header class="shop-section-heading shop-department-heading"><div><span class="shop-department-label">Banners de perfil</span><h3>Selección de hoy</h3><p>Actualización diaria</p></div><button id="bannerUnequip" class="shop-text-button" type="button" disabled>Quitar banner</button></header><div id="bannerShopItems" class="banner-shop-items"></div></section>
       <section id="shopChotaPanel" role="tabpanel" aria-labelledby="shopChotaTab" hidden><header class="chota-shop-intro shop-department-heading"><div><span class="shop-department-label">El Chota</span><h3>Para su habitación</h3><p>Estilos y objetos para la sede.</p></div></header><p id="chotaShopStatus" role="status" aria-live="polite"></p><div id="chotaShopItems" class="chota-shop-items"></div></section>
       <section id="shopVouchersPanel" class="reward-voucher-shop" role="tabpanel" aria-labelledby="shopVouchersTab" hidden><header class="shop-section-heading shop-department-heading"><div><span class="shop-department-label">Vales</span><h3 id="rewardVoucherTitle">Premios del club</h3><p>Desbloquea un vale y canjéalo cuando quieras.</p></div></header><div id="rewardVoucherItems" class="banner-shop-items"></div></section>
-      <section id="shopClothingPanel" role="tabpanel" aria-labelledby="shopClothingTab" hidden><header class="shop-section-heading"><div><h3>El armario del Chota</h3><p>Prendas que le acompañan al moverse, hablar y descansar.</p></div></header><p id="clothingShopStatus" role="status" aria-live="polite"></p><section id="chotaOutfits" class="chota-outfits" aria-label="Conjuntos guardados" hidden></section><div id="clothingShopItems"></div></section>
+      <section id="shopClothingPanel" role="tabpanel" aria-labelledby="shopClothingTab" hidden><header class="shop-section-heading"><div><h3>El armario del Chota</h3><p>Prendas que le acompañan al moverse, hablar y descansar.</p></div></header><p id="clothingShopStatus" role="status" aria-live="polite"></p><div id="clothingShopItems"></div><section id="chotaOutfits" class="chota-outfits" aria-label="Conjuntos guardados" hidden></section></section>
     </div>
   </dialog>
 
@@ -966,40 +965,40 @@
   <script defer src="tab-navigation.js?v=20261026-dock-drag-411"></script>
   <script defer src="trophy-motion.js?v=20260904-150"></script>
   <script defer src="trophy-unlock.js?v=20261103-ladders-552"></script>
-  <script defer src="daily-packs.js?v=20261111-premios-622"></script>
+  <script defer src="daily-packs.js?v=20261112-inicio-627"></script>
   <script defer src="collection-motion.js?v=20261104-lite-motion-561"></script>
   <script defer src="card-thumbnails.js?v=20261023-jose-vice-city-388"></script>
   <script defer src="card-media.js?v=20261025-audit-404"></script>
   <script defer src="card-collection.js?v=20261102-pack-stage-549"></script>
   <script defer src="card-catalog-sync.js?v=20261021-dynamic-cards-367"></script>
   <script defer src="achievement-progress.js?v=20261103-chota-553"></script>
-  <script defer src="collection-social.js?v=20261111-retos-626"></script>
+  <script defer src="collection-social.js?v=20261112-inicio-627"></script>
   <script defer src="card-economy.js?v=20261107-economy-chota-579"></script>
-  <script defer src="album.js?v=20261110-sobres-614"></script>
+  <script defer src="album.js?v=20261112-inicio-627"></script>
   <script defer src="onboarding.js?v=20261016-improvements-319"></script>
   <script defer src="shop-catalog-media.js?v=20261030-audit-hardening-443"></script>
   <script defer src="pack-opening.js?v=20261110-carrusel-615"></script>
   <script defer src="pack-diagnostics.js?v=20261111-medidor-619"></script>
   <script defer src="pack-extras.js?v=20261110-sobre-fijo-617"></script>
-  <script defer src="banner-shop.js?v=20261111-giro-plano-621"></script>
+  <script defer src="banner-shop.js?v=20261112-inicio-627"></script>
   <script defer src="chota-shop.js?v=20261111-retos-626"></script>
   <script defer src="club-store.js?v=20261110-zapatillas-616"></script>
   <script defer src="store-rooms.js?v=20261110-zapatillas-616"></script>
   <script defer src="store-sky.js?v=20261108-rain-v2-593"></script>
   <script defer src="coin-missions.js?v=20261103-economy-555"></script>
-  <script defer src="club-day.js?v=20261111-premios-622"></script>
-  <script defer src="club-plus.js?v=20261107-instant-sede-578"></script>
+  <script defer src="club-day.js?v=20261112-inicio-627"></script>
+  <script defer src="club-plus.js?v=20261112-inicio-627"></script>
   <script defer src="chota-scenes.js?v=20261106-chota-alive-568"></script>
   <script defer src="chota-decisions.js?v=20261111-premios-622"></script>
   <script defer src="club-life.js?v=20261108-rain-v2-593"></script>
   <script defer src="club-night.js?v=20261102-night-507"></script>
-  <script defer src="tickets.js?v=20261101-tickets-483"></script>
+  <script defer src="tickets.js?v=20261112-inicio-627"></script>
   <script defer src="pull-refresh.js?v=20261101-pull-482"></script>
   <script defer src="chat-mentions.js?v=20261101-mentions-481"></script>
   <script defer src="chat-custom.js?v=20261101-chat-custom-473"></script>
-  <script defer src="club-social.js?v=20261102-club-day-542"></script>
+  <script defer src="club-social.js?v=20261112-inicio-627"></script>
   <script defer src="club-live.js?v=20261111-imagenes-625"></script>
-  <script defer src="chota-games.js?v=20261111-retos-626"></script>
+  <script defer src="chota-games.js?v=20261112-inicio-627"></script>
   <script defer src="plan-widget.js?v=20261024-social-393"></script>
   <script defer src="group-interactions.js?v=20261025-fluid-motion-407"></script>
   <script defer src="pending-actions.js?v=20261016-release-322"></script>
@@ -1009,11 +1008,11 @@
   <script defer src="account-security.js?v=20261102-login-546"></script>
   <script defer src="account-requests.js?v=20261102-login-546"></script>
   <script defer src="chota-outdoor.js?v=20261030-outdoor-events-448"></script>
-  <script defer src="chota-cloth.js?v=20261110-tela-611"></script>
+  <script defer src="chota-cloth.js?v=20261112-inicio-627"></script>
   <script defer src="chota-interact.js?v=20261110-sede-viva-610"></script>
-  <script defer src="chota-appearance.js?v=20261110-tela-611"></script>
-  <script defer src="chota-wardrobe.js?v=20261110-tela-611"></script>
-  <script defer src="app.js?v=20261111-retos-626"></script>
+  <script defer src="chota-appearance.js?v=20261112-inicio-627"></script>
+  <script defer src="chota-wardrobe.js?v=20261112-inicio-627"></script>
+  <script defer src="app.js?v=20261112-inicio-627"></script>
   <script>
     (() => {
       const ios = /iP(?:hone|ad|od)/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;

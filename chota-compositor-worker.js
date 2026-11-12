@@ -3,7 +3,7 @@
 'use strict';
 const dimensions={base:[6,4],directional:[5,4],contextual:[4,4],room:[4,1],talk:[3,1]};let latestSequence=0;
 self.onmessage=async({data})=>{
-  const{sequence,anatomy,bare,foreground,layers,flip}=data||{};latestSequence=sequence;
+  const{sequence,anatomy,bare,foreground,coatForeground,layers,flip}=data||{};latestSequence=sequence;
   try{
     if(!Number.isSafeInteger(sequence)||!anatomy||!bare||!foreground||!Array.isArray(layers))throw new Error('Invalid outfit composition.');
     const slots=new Set(layers.map(layer=>layer.slot)),results=[];
@@ -22,7 +22,9 @@ self.onmessage=async({data})=>{
       for(const slot of ['bottomwear','footwear','topwear'])if(!slots.has(slot))if(!await draw(bare[slot][sheet]))return;
       if(!await draw(anatomy[sheet]))return;
       for(const slot of ['bottomwear','footwear','topwear','outerwear'])for(const layer of layers.filter(layer=>layer.slot===slot))if(!await draw((pass&&layer.flipAtlases?layer.flipAtlases:layer.atlases)[sheet],true))return;
-      if(layers.some(layer=>layer.slot==='outerwear'||layer.type==='atlas'))if(!await draw(foreground[sheet]))return;
+      // A coat's sleeves cover the forearm of a raised arm; its foreground keeps head and paws only.
+      const coat=layers.some(layer=>layer.slot==='outerwear');
+      if(coat||layers.some(layer=>layer.type==='atlas'))if(!await draw((coat&&coatForeground?coatForeground:foreground)[sheet]))return;
       results.push({sheet:pass+sheet,blob:await canvas.convertToBlob({type:'image/png'})});if(sequence!==latestSequence)return;
     }
     if(sequence===latestSequence)self.postMessage({sequence,results});

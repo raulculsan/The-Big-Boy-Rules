@@ -39,8 +39,10 @@
     const appearance = globalThis.ChotaAppearance, contract = appearance?.contract?.();
     if (!appearance?.enabled?.() || !contract) return (layersCache = {cloth: [], front: null});
     const cloth = (globalThis.ChotaWardrobe?.clothLayers?.() || []).filter(layer => layer.slot === 'topwear' || layer.slot === 'outerwear');
-    const coat = cloth.some(layer => layer.slot === 'outerwear');
-    return (layersCache = {cloth, front: cloth.length ? (coat ? contract.foreground : contract.anatomy) : null});
+    // A padded coat is stiff, and its leaning copy over the composed sprite
+    // slid off the body pose by pose. With a coat on, the cloth stays pinned.
+    if (cloth.some(layer => layer.slot === 'outerwear')) return (layersCache = {cloth: [], front: null});
+    return (layersCache = {cloth, front: cloth.length ? contract.anatomy : null});
   }
   const url = path => `url("${globalThis.ChotaAppearance?.url?.(path) || path}")`;
   function build(node, entry) {

@@ -12,29 +12,35 @@ const json = (body: Record<string, unknown>, status = 200, extraHeaders: Record<
     headers: {...corsHeaders, "content-type": "application/json; charset=utf-8", ...extraHeaders},
   });
 
-const feeds: Record<string, string[]> = {
+// Each feed names its outlet, so a story reads "AS" or "Marca", never the
+// channel's own title ("Portada"). Aggregators (Google News) name the outlet
+// per item in <source>; elsewhere <source> may be a photo credit, so it is ignored.
+type Feed = {url: string; name: string; aggregator?: boolean};
+const feeds: Record<string, Feed[]> = {
   deportes: [
-    "https://e00-marca.uecdn.es/rss/portada.xml",
-    "https://as.com/rss/tags/ultimas_noticias.xml",
-    "https://www.mundodeportivo.com/rss/home.xml",
-    "https://www.rtve.es/api/noticias/deportes.rss",
-    "https://news.google.com/rss/search?q=%22Fabrizio%20Romano%22%20OR%20site%3Amundodeportivo.com%20OR%20site%3Asport.es&hl=es&gl=ES&ceid=ES%3Aes",
+    {url: "https://www.marca.com/rss/portada.xml", name: "Marca"},
+    {url: "https://feeds.as.com/mrss-s/pages/as/site/as.com/portada", name: "AS"},
+    {url: "https://www.mundodeportivo.com/rss/futbol.xml", name: "Mundo Deportivo"},
+    {url: "https://news.google.com/rss/headlines/section/topic/SPORTS?hl=es&gl=ES&ceid=ES:es", name: "Google Noticias", aggregator: true},
   ],
   espana: [
-    "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada",
-    "https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml",
-    "https://www.rtve.es/api/noticias.rss",
-    "https://www.20minutos.es/rss/",
-    "https://www.europapress.es/rss/rss.aspx",
+    {url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada", name: "El País"},
+    {url: "https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml", name: "El Mundo"},
+    {url: "https://www.20minutos.es/rss/", name: "20minutos"},
+    {url: "https://www.europapress.es/rss/rss.aspx", name: "Europa Press"},
   ],
   mundo: [
-    "https://feeds.bbci.co.uk/mundo/rss.xml",
-    "https://es.euronews.com/rss?level=theme&name=news",
-    "https://www.france24.com/es/rss",
-    "https://rss.dw.com/rdf/rss-sp-all",
-    "https://www.rtve.es/api/noticias/internacional.rss",
+    {url: "https://feeds.bbci.co.uk/mundo/rss.xml", name: "BBC Mundo"},
+    {url: "https://www.france24.com/es/rss", name: "France 24"},
+    {url: "https://rss.dw.com/rdf/rss-sp-all", name: "DW"},
+    {url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/internacional/portada", name: "El País"},
+    {url: "https://e00-elmundo.uecdn.es/elmundo/rss/internacional.xml", name: "El Mundo"},
   ],
 };
+// Keep any one outlet from filling the list, and drop stories from feeds that
+// stopped updating.
+const PER_SOURCE = 8;
+const MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
 // Edge isolates are reused, so keep a short in-memory news cache and coalesce
 // refreshes. This makes category switches and repeat visits return immediately.
@@ -92,12 +98,12 @@ function feedImage(item: string) {
   return safeFeedUrl(tag(image, "url") || image);
 }
 
-function parseFeed(xml: string) {
-  const channelSource = tag(xml.slice(0, Math.max(0, xml.search(/<item(?:\s|>)/i))), "title");
+function parseFeed(xml: string, outlet = "", aggregator = false) {
+  const channelSource = outlet || tag(xml.slice(0, Math.max(0, xml.search(/<item(?:\s|>)/i))), "title");
   return [...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].map(match => {
     const item = match[1];
     const title = tag(item, "title");
-    const source = tag(item, "source") || channelSource || title.split(" - ").pop() || "Medio de comunicación";
+    const source = (aggregator || !outlet ? tag(item, "source") : "") || channelSource || title.split(" - ").pop() || "Medio de comunicación";
     return {
       title,
       link: safeFeedUrl(tag(item, "link") || tag(item, "guid")),
@@ -109,7 +115,7 @@ function parseFeed(xml: string) {
   }).filter(item => item.title && item.link);
 }
 
-async function fetchFeed(url: string) {
+async function fetchFeed({url, name, aggregator}: Feed) {
   const response = await fetch(url, {
     headers: {
       "Accept": "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.7",
@@ -118,21 +124,25 @@ async function fetchFeed(url: string) {
     signal: AbortSignal.timeout(6000),
   });
   if (!response.ok) throw new Error(`RSS ${response.status}`);
-  return parseFeed(await response.text());
+  return parseFeed(await response.text(), name, aggregator);
 }
 
 function combine(results: PromiseSettledResult<ReturnType<typeof parseFeed>>[]) {
   const fulfilled = results.filter((result): result is PromiseFulfilledResult<ReturnType<typeof parseFeed>> => result.status === "fulfilled");
-  const seen = new Set<string>();
+  const seen = new Set<string>(), perSource = new Map<string, number>();
+  const oldest = Date.now() - MAX_AGE_MS;
   const items = fulfilled.flatMap(result => result.value)
+    .filter(item => (Date.parse(item.published) || 0) >= oldest)
     .sort((a, b) => (Date.parse(b.published) || 0) - (Date.parse(a.published) || 0))
     .filter(item => {
       const key = item.title.toLocaleLowerCase("es").replace(/\s+-\s+[^-]+$/, "").replace(/\W+/g, " ").trim();
-      if (!key || seen.has(key)) return false;
+      const used = perSource.get(item.source) || 0;
+      if (!key || seen.has(key) || used >= PER_SOURCE) return false;
       seen.add(key);
+      perSource.set(item.source, used + 1);
       return true;
     }).slice(0, 30);
-  return items.length ? {items, sources: fulfilled.length, refreshedAt: new Date().toISOString()} : null;
+  return items.length ? {items, sources: new Set(items.map(item => item.source)).size, refreshedAt: new Date().toISOString()} : null;
 }
 
 function refreshCategory(category: string) {
@@ -143,11 +153,14 @@ function refreshCategory(category: string) {
   let completeCount = 0, successCount = 0, resolveFirst!: (value: ReturnType<typeof combine>) => void;
   const firstBatch = new Promise<ReturnType<typeof combine>>(resolve => { resolveFirst = resolve; });
   let firstBatchResolved = false;
-  const publishFirstBatch = () => {
-    if (firstBatchResolved || (successCount < 2 && completeCount < urls.length)) return;
+  // Answer once every outlet has replied, or after a short wait with what has
+  // arrived, so one fast publisher cannot fill the whole list on its own.
+  const publishFirstBatch = (waited = false) => {
+    if (firstBatchResolved || (completeCount < urls.length && !(waited && successCount))) return;
     firstBatchResolved = true;
     resolveFirst(combine(settled));
   };
+  setTimeout(() => publishFirstBatch(true), 3500);
   const requests = urls.map(url => fetchFeed(url).then(value => {
     settled.push({status:"fulfilled", value}); successCount++;
   }, reason => settled.push({status:"rejected", reason})).finally(() => {

@@ -8,7 +8,7 @@
   function notifyWardrobe(){if(wardrobeNoticePending)return;wardrobeNoticePending=true;queueMicrotask(()=>{wardrobeNoticePending=false;globalThis.dispatchEvent?.(new Event('chota-wardrobe-change'));});}
   let selected=null,equipSequence=0,serverId=null,serverAtlases=null,storageBase='';
   let outfitSequence=0;
-  const localURL=(color,sheet)=>`icons/mascot/chota-v2/wardrobe/tnf-${color}-${sheet}-v3.webp`;
+  const localURL=(color,sheet)=>`icons/mascot/chota-v2/wardrobe/tnf-${color}-${sheet}-v4.webp`;
   const selectedID=()=>serverId || (selected?'chota-tnf-'+selected+'-v1':null);
   const url=(color,sheet)=>serverAtlases&&color===serverId?serverAtlases[sheet]:localURL(color,sheet);
   function configure(origin){try{const parsed=new URL(origin||globalThis.BIG_BOY_CONFIG?.supabaseUrl);storageBase=parsed.protocol==='https:'&&!parsed.username&&!parsed.password?parsed.origin+'/storage/v1/object/public/shop-media/':'';}catch{storageBase='';}}

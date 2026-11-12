@@ -497,3 +497,9 @@ body.superadmin-console-session #administracion#administracion .request-admin-en
 #superAdminConsole .ctl-save-bar .ctl-primary { width:auto; min-height:46px; padding:0 18px; }
 @media (prefers-reduced-motion:reduce) { #superAdminConsole .ctl-odds-bar i { transition:none; } }
 
+
+/* Every row of the admin landing reads the same: title, a line of help, a chevron. */
+#administracion#administracion :is(.request-admin-entry, .admin-help-entry) .admin-settings-chevron { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
+#administracion#administracion .admin-help-entry { text-align: left; }
+#administracion#administracion .admin-help-entry strong { display:block; font-size:16px; font-weight:600; }
+#administracion#administracion .admin-help-entry small { display:block; margin-top:2px; color:var(--row-muted); font-size:13px; font-weight:400; }

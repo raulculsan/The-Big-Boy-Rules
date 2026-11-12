@@ -2,7 +2,7 @@
 (() => {
  'use strict';
  const tabs=[['chota','El Chota'],['pregunta','Pregunta'],['estado','Estado'],['recuerdos','Recuerdos'],['foto','Foto'],['quien','Quién es'],['mentira','Mentira'],['juicio','Tribunal'],['reto','Reto'],['karaoke','Karaoke'],['duelos','Duelos'],['porra','Porra'],['liga','Liga'],['fechas','Fechas'],['bote','Bote'],['radio','Radio'],['carta','Carta'],['capsula','Cápsula'],['premios','Premios'],['ranking','Ranking'],['ano','Mi año'],['mapa','Mapa']];
- const groups=[['hoy','Hoy',['chota','pregunta','estado','recuerdos','foto']],['juegos','Juegos',['quien','mentira','juicio','reto','karaoke','duelos','porra','liga']],['grupo','Grupo',['fechas','bote','radio','carta','capsula','premios','ranking','ano','mapa']]];
+ const groups=[['hoy','Hoy',['chota','pregunta','estado','recuerdos','foto']],['juegos','Juegos',['quien','mentira','juicio','reto','karaoke','duelos','porra','liga']],['grupo','Grupo',['fechas','bote','radio','carta','capsula','premios','ranking','ano']]];
  const plusTabs=['chota','estado','recuerdos','fechas','bote','radio','juicio','reto','mentira','liga','foto','karaoke'];
  // Each activity is a tile with its own icon and tint; the hub replaces the old tab rows.
  const icons={
@@ -30,7 +30,7 @@
   mapa:'<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/>'
  };
  const hues={chota:25,pregunta:210,estado:145,recuerdos:270,foto:330,quien:235,mentira:5,juicio:285,reto:175,karaoke:320,duelos:15,porra:195,liga:255,fechas:350,bote:150,radio:300,carta:220,capsula:185,premios:265,ranking:205,ano:340,mapa:160};
- const blurbs={chota:'Decide qué hace hoy',estado:'Cuenta cómo estás',recuerdos:'Tal día como hoy',foto:'Hora sorpresa',quien:'Adivina quién lo dijo',mentira:'Dos verdades y una mentira',juicio:'El club juzga',reto:'Reto de la semana',karaoke:'Canta y vota',duelos:'Carta contra carta',porra:'Apuesta y acierta',liga:'Partidas del club',fechas:'Elige fecha para un plan',bote:'Quién debe a quién',radio:'Canción de la semana',carta:'La carta de la semana',capsula:'Mensajes al futuro',premios:'Votos del mes',ranking:'Los que más aciertan',ano:'Tu resumen del año',mapa:'Pasaporte del club'};
+ const blurbs={pregunta:'Vota a alguien del club',chota:'Decide qué hace hoy',estado:'Cuenta cómo estás',recuerdos:'Tal día como hoy',foto:'Hora sorpresa',quien:'Adivina quién lo dijo',mentira:'Dos verdades y una mentira',juicio:'El club juzga',reto:'Reto de la semana',karaoke:'Canta y vota',duelos:'Carta contra carta',porra:'Apuesta y acierta',liga:'Partidas del club',fechas:'Elige fecha para un plan',bote:'Quién debe a quién',radio:'Canción de la semana',carta:'La carta de la semana',capsula:'Mensajes al futuro',premios:'Votos del mes',ranking:'Los que más aciertan',ano:'Tu resumen del año',mapa:'Pasaporte del club'};
  const icon=(id,size='')=>`<span class="cd-icon${size}" style="--cd-hue:${hues[id]||210}" aria-hidden="true"><svg viewBox="0 0 24 24">${icons[id]||''}</svg></span>`;
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -45,8 +45,14 @@
   const date=new Date(value);
   return `Cierra el ${date.getDate()} de ${months[date.getMonth()]} a las ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
  };
+ // Avatars sit in a narrow row: first names, with the surname's initial when two match.
+ function shortName(m){
+  const words=String(m.name||'').trim().split(/\s+/),first=words[0]||'Miembro';
+  const twin=people().some(o=>o!==m&&String(o.name||'').trim().split(/\s+/)[0]?.toLocaleLowerCase('es')===first.toLocaleLowerCase('es'));
+  return twin&&words[1]?`${first} ${words[1][0]}.`:first;
+ }
  function chooser(attr,selected=null,category=''){
-  return `<div class="club-day-people">${people().map(m=>`<button type="button" ${attr}="${esc(m.authId)}"${category?` data-day-category="${esc(category)}"`:''} aria-pressed="${m.authId===selected}">${config.avatar(m)}<span>${esc(m.name)}</span></button>`).join('')}</div>`;
+  return `<div class="club-day-people">${people().map(m=>`<button type="button" ${attr}="${esc(m.authId)}"${category?` data-day-category="${esc(category)}"`:''} aria-pressed="${m.authId===selected}">${config.avatar(m)}<span>${esc(shortName(m))}</span></button>`).join('')}</div>`;
  }
  function question(data){
   const q=data.question;
@@ -139,12 +145,6 @@
   else body=`<p class="club-day-note">¿De quién es cada respuesta? Solo tienes un intento. Cada acierto da 4 monedas. Quedan ${timeLeft(r.until)}.</p><form class="club-day-form" data-day-guess>${r.answers.map(a=>`<label><span class="club-day-message">${esc(a.body)}</span><select name="${esc(a.id)}" required><option value="">Elige</option>${r.authors.map(id=>`<option value="${esc(id)}"${guesses[a.id]===id?' selected':''}>${esc(nameOf(id))}</option>`).join('')}</select></label>`).join('')}<div><button type="submit" class="club-day-action">Enviar</button></div></form>`;
   return `<h4>${esc(r.prompt)}</h4>${body}${whoisLast(whois.last)}`;
  }
- function pending(data){
-  const round=whois?.round;
-  return [!data.question.results,round?.phase==='answer'&&!round.own,round?.phase==='guess'&&!round.guessed&&round.answers.length>0,
-   ...data.predictions.map(p=>(!p.closed&&p.pick===null)||(p.resolved&&p.pick===p.correct&&!p.claimed)),
-   ...(extras?.duels||[]).map(d=>d.incoming||(d.winner===actor()&&!d.claimed))].filter(Boolean).length;
- }
  function renderEntry(data){
   const entry=document.getElementById('clubDayEntry');if(!entry)return;
   const small=entry.querySelector('small'),cacheKey=`bb-club-day-entry-${actor()}`;
@@ -153,7 +153,7 @@
    try{small.textContent=localStorage.getItem(cacheKey)||'Pregunta, porra y más';}catch{small.textContent='Pregunta, porra y más';}
    return;
   }
-  const left=pending(data),streak=`${plural(data.streak,'día','días')} de racha`;
+  const left=todoCount(data),streak=`${plural(data.streak,'día','días')} de racha`;
   small.textContent=left?`${plural(left,'cosa pendiente','cosas pendientes')} · ${streak}`:streak;
   try{localStorage.setItem(cacheKey,small.textContent);}catch{}
  }
@@ -178,17 +178,27 @@
  function state(id,data){
   const plus=globalThis.ClubPlus?.snapshot?.()||{},round=whois?.round,me=actor();
   switch(id){
-   case 'pregunta':return data.question.results?{note:`Votado · ${plural(data.question.total,'voto','votos')}`,done:true}:{note:data.question.prompt,todo:true,reward:3};
+   case 'pregunta':return data.question.results?{note:`Votado · ${plural(data.question.total,'voto','votos')}`,done:true}:{note:data.question.prompt,todo:true,reward:6};
    case 'chota':{if(globalThis.ChotaRoom?.sleeping?.())return {note:'Está durmiendo hasta las 06:00',asleep:true};const t=plus.story?.today;return t?(t.mine==null?{note:t.title,todo:true}:{note:'Ya has votado',done:true}):{note:blurbs.chota};}
    case 'estado':{const own=globalThis.ClubPlus?.statusFor?.(me);return own?{note:own,done:true}:{note:blurbs.estado};}
    case 'foto':{const f=plus.photo||{};return !f.opens_at?{note:'Aún no ha salido'}:f.own?{note:'Subida',done:true}:{note:f.on_time?'¡Es la hora!':'Ya ha salido',todo:true};}
-   case 'quien':return !round?{note:blurbs.quien}:round.phase==='answer'?(round.own?{note:'Respondido',done:true}:{note:'Toca responder',todo:true,reward:3}):round.guessed?{note:`${round.guessed.score} de ${round.guessed.total} aciertos`,done:true}:round.answers.length?{note:'Toca adivinar',todo:true}:{note:blurbs.quien};
-   case 'porra':{const open=data.predictions.filter(p=>!p.closed&&p.pick===null).length,claim=data.predictions.some(p=>p.resolved&&p.pick===p.correct&&!p.claimed);return claim?{note:'Tienes un premio',todo:true,reward:15}:open?{note:plural(open,'porra abierta','porras abiertas'),todo:true,reward:15}:{note:blurbs.porra};}
-   case 'duelos':{const d=extras?.duels||[],incoming=d.filter(x=>x.incoming).length,claim=d.some(x=>x.winner===me&&!x.claimed);return claim?{note:'Cobra tu victoria',todo:true,reward:10}:incoming?{note:`${incoming===1?'Te reta alguien':`${incoming} te retan`}`,todo:true}:{note:blurbs.duelos};}
+   case 'quien':return !round?{note:blurbs.quien}:round.phase==='answer'?(round.own?{note:'Respondido',done:true}:{note:'Toca responder',todo:true,reward:6}):round.guessed?{note:`${round.guessed.score} de ${round.guessed.total} aciertos`,done:true}:round.answers.length?{note:'Toca adivinar',todo:true}:{note:blurbs.quien};
+   case 'porra':{const open=data.predictions.filter(p=>!p.closed&&p.pick===null).length,claim=data.predictions.some(p=>p.resolved&&p.pick===p.correct&&!p.claimed);return claim?{note:'Tienes un premio',todo:true,reward:30}:open?{note:plural(open,'porra abierta','porras abiertas'),todo:true,reward:15}:{note:blurbs.porra};}
+   case 'duelos':{const d=extras?.duels||[],incoming=d.filter(x=>x.incoming).length,claim=d.some(x=>x.winner===me&&!x.claimed);return claim?{note:'Cobra tu victoria',todo:true,reward:20}:incoming?{note:`${incoming===1?'Te reta alguien':`${incoming} te retan`}`,todo:true}:{note:blurbs.duelos};}
    case 'carta':{const c=extras?.week_card;return c?(c.claimed?{note:c.name,done:true}:c.owned?{note:'Cobra 20 monedas',todo:true,reward:20}:{note:c.name}):{note:blurbs.carta};}
    default:return {note:blurbs[id]||''};
   }
  }
+ // The same mark on rows and tiles: coins when a prize waits, a dot when
+ // something is pending without one, a check when it is done.
+ function mark(s,tile){
+  if(s.reward&&s.todo)return `<span class="cd-reward${tile?' is-corner':''}" aria-label="Pendiente, ${s.reward} monedas">+${s.reward}</span>`;
+  if(s.todo)return `<i class="cd-dot${tile?'':' is-inline'}" aria-label="Pendiente"></i>`;
+  if(s.done)return `<span class="cd-check${tile?' is-corner':''}" aria-label="Hecho"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span>`;
+  return tile?'':'<svg class="cd-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+ }
+ // One count for Inicio and for the hub: every activity waiting for this member.
+ function todoCount(data){return groups.flatMap(g=>g[2]).filter(available).filter(id=>state(id,data).todo).length;}
  const today=new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'});
  function hub(data){
   const shown=groups.map(([key,label,ids])=>[key,label,ids.filter(available)]);
@@ -196,8 +206,8 @@
   const ratio=done+todo?Math.round(done/(done+todo)*100):100;
   const name=id=>tabs.find(t=>t[0]===id)?.[1]||id;
   const hero=`<header class="cd-hero"><div class="cd-streak"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.6 1 2.5 2 3 0-3 0-5.5 1-8.5z"/></svg><b>${data.streak}</b><small>${data.streak===1?'día':'días'}</small></div><div class="cd-hero-copy"><span>${esc(today.format(new Date()).replace(/^./,c=>c.toUpperCase()))}</span><strong>${todo?plural(todo,'cosa pendiente','cosas pendientes'):'Todo hecho por hoy'}</strong><div class="cd-progress" role="progressbar" aria-label="Hecho hoy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${ratio}"><i style="width:${ratio}%"></i></div></div></header>`;
-  const row=id=>{const s=state(id,data);return `<button type="button" class="cd-row${s.todo?' is-todo':''}${s.done?' is-done':''}${s.asleep?' is-asleep':''}" data-day-tab="${id}"${s.asleep?' disabled':''}>${icon(id)}<span class="cd-row-copy"><strong>${esc(name(id))}</strong><small>${esc(s.note)}</small></span>${s.done?'<span class="cd-check" aria-label="Hecho"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span>':s.reward?`<span class="cd-reward">+${s.reward}</span>`:s.todo?'<i class="cd-dot is-inline" aria-label="Pendiente"></i>':'<svg class="cd-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>'}</button>`;};
-  const tile=id=>{const s=state(id,data);return `<button type="button" class="cd-tile${s.todo?' is-todo':''}${s.asleep?' is-asleep':''}" data-day-tab="${id}"${s.asleep?' disabled':''}>${icon(id,' is-large')}<strong>${esc(name(id))}</strong><small>${esc(s.note)}</small>${s.todo?'<i class="cd-dot" aria-label="Pendiente"></i>':''}</button>`;};
+  const row=id=>{const s=state(id,data);return `<button type="button" class="cd-row${s.todo?' is-todo':''}${s.done?' is-done':''}${s.asleep?' is-asleep':''}" data-day-tab="${id}"${s.asleep?' disabled':''}>${icon(id)}<span class="cd-row-copy"><strong>${esc(name(id))}</strong><small>${esc(s.note)}</small></span>${mark(s,false)}</button>`;};
+  const tile=id=>{const s=state(id,data);return `<button type="button" class="cd-tile${s.todo?' is-todo':''}${s.asleep?' is-asleep':''}" data-day-tab="${id}"${s.asleep?' disabled':''}>${icon(id,' is-large')}<strong>${esc(name(id))}</strong><small>${esc(s.note)}</small>${mark(s,true)}</button>`;};
   const [first,...rest]=shown;
   return `${hero}${first[2].length?`<section class="cd-section"><h3>${esc(first[1]==='Hoy'?'Para hoy':first[1])}</h3><div class="cd-list">${first[2].map(row).join('')}</div></section>`:''}${rest.filter(g=>g[2].length).map(g=>`<section class="cd-section"><h3>${esc(g[0]==='grupo'?'El grupo':g[1])}</h3><div class="cd-grid">${g[2].map(tile).join('')}</div></section>`).join('')}`;
  }
@@ -212,7 +222,7 @@
   if(!tab)return paint(node,'',hub(data));
   const view=plusTabs.includes(tab)?globalThis.ClubPlus.view(tab):{pregunta:question,quien,porra,premios,ranking,duelos,carta,capsula,ano}[tab](data);
   const label=tabs.find(t=>t[0]===tab)?.[1]||'';
-  paint(node,`<div class="cd-detail-head"><button type="button" class="cd-back" data-day-home aria-label="Volver a Hoy en el club"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>${icon(tab)}<div><strong>${esc(label)}</strong><small>${esc(state(tab,data).note)}</small></div></div>`,view);
+  paint(node,`<div class="cd-detail-head"><button type="button" class="cd-back" data-day-home aria-label="Volver a Hoy en el club"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>${icon(tab)}<div><strong>${esc(label)}</strong><small>${esc(blurbs[tab]||state(tab,data).note)}</small></div></div>`,view);
  }
  function message(error){return ['PGRST202','42883','42P01'].includes(error?.code)?'Esta sección se está preparando.':error?.message||'No hemos podido conectar con el club.';}
  async function call(name,args={},done=''){

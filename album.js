@@ -27,7 +27,8 @@
   const coverRarity = ['vice_city','full_art','halloween','legendary','epic','special','retro','common'];
   let coverKey = '';
   function renderCover() {
-    const holders = [...document.querySelectorAll('.bb2-album-card')], catalog = (globalThis.CardCollection?.catalog || []).filter(card => card.front);
+    // Same cards the album counts (main collection, obtainable ones), so the cover and the album agree.
+    const holders = [...document.querySelectorAll('.bb2-album-card')], catalog = (globalThis.CardCollection?.catalog || []).filter(card => card.front && (card.collection || 'los-nuestros-01') === 'los-nuestros-01' && (!collectibleIds || collectibleIds.has(card.id)));
     if (!holders.length || !catalog.length) return;
     const owned = ownedCards(), rank = card => coverRarity.indexOf(rarityOf(card));
     const have = catalog.filter(card => owned.get(card.id) > 0).length;

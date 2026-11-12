@@ -7,6 +7,23 @@
   let state = {connected:false, configured:false, installed:false, linked:false};
   let receivedAt = Date.now(), lastStateRequest = 0, stateRequest = false, hostObserver = null, hostVisible = false, seeking = false;
   const playerVisible = () => !!host?.isConnected && !document.hidden && (hostObserver ? hostVisible : !!host.getClientRects().length);
+  // The playlist's own cover and name (Spotify oEmbed, cached a week) stand in
+  // for the song artwork while nothing is playing.
+  let cover = {id:'', image:'', title:''}, coverRequest = '';
+  function loadCover(id) {
+    if (!id || cover.id === id || coverRequest === id || typeof fetch !== 'function') return;
+    const key = `bb-spotify-cover-${id}`;
+    try { const saved = JSON.parse(localStorage.getItem(key) || 'null'); if (saved && Date.now() - saved.at < 6048e5) { cover = {id, image:saved.image || '', title:saved.title || ''}; return; } } catch {}
+    coverRequest = id;
+    fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/playlist/${id}`)}`).then(response => response.ok ? response.json() : null).then(data => {
+      const image = /^https:\/\//i.test(data?.thumbnail_url || '') ? data.thumbnail_url : '';
+      const title = String(data?.title || '').slice(0, 80);
+      if (!image && !title) return;
+      cover = {id, image, title};
+      try { localStorage.setItem(key, JSON.stringify({at:Date.now(), image, title})); } catch {}
+      if (playlist === id) draw();
+    }).catch(() => {}).finally(() => { if (coverRequest === id) coverRequest = ''; });
+  }
   const clock = ms => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2,'0')}`;
   const svg = kind => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">${kind === 'pause' ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : kind === 'previous' ? '<path d="M5 4h2v16H5zM19 4v16L8 12z"/>' : kind === 'next' ? '<path d="M17 4h2v16h-2zM5 4l11 8-11 8z"/>' : '<path d="M7 3l15 9-15 9z"/>'}</svg>`;
   function receive(value) {
@@ -58,14 +75,16 @@
     const current = state.currentAvailable === true;
     const playbackStatus = ({loading:'Consultando la reproducción de Spotify…', empty:'La playlist está lista. Abre Spotify y vuelve a Big Boy para escucharla.', authorization:'Spotify no permite consultar la reproducción. Revisa los permisos de tu cuenta.', unavailable:current ? 'No se ha podido actualizar la reproducción. Mostramos la última lectura.' : 'La reproducción no está disponible ahora. Volveremos a consultarla.'})[state.playbackStatus];
     const status = notice || (state.linked && !state.controlsAvailable && state.controlsNeedAuthorization ? 'Activa los controles de Spotify una vez para pausar y cambiar canciones desde la app.' : '') || (state.linked && !state.connected ? playbackStatus || (current ? `${state.paused ? 'En pausa' : 'Reproduciendo'} en Spotify. ${state.controlsAvailable ? 'Controles disponibles. Tu cuenta sigue vinculada.' : 'Abre Spotify y vuelve a Big Boy para recuperar la reproducción.'}` : '') : '') || state.message || (state.connected ? 'Conectado a Spotify' : state.connecting ? 'Conectando con Spotify…' : !state.configured ? 'Spotify estará disponible pronto.' : !state.installed ? 'Instala Spotify e inicia sesión para escuchar la playlist.' : state.linked ? 'Cuenta vinculada. Abre Spotify y vuelve a Big Boy para escuchar la playlist.' : 'Vincula Spotify y escucha la playlist completa.');
-    const artwork = current && /^(?:data:image\/jpeg;base64,|https:\/\/)/i.test(state.artwork || '') ? escape(state.artwork) : '';
+    const songArt = current && /^(?:data:image\/jpeg;base64,|https:\/\/)/i.test(state.artwork || '') ? escape(state.artwork) : '';
+    const playlistArt = cover.id === playlist && cover.image ? escape(cover.image) : '';
+    const artwork = songArt || playlistArt;
     const failed = !pending && !state.connecting && (!!notice || state.playbackStatus === 'unavailable');
     const phase = pending || state.connecting || state.playbackStatus === 'loading' ? 'loading' : failed ? 'error' : 'ready';
     const queueTop = host.querySelector('.spotify-queue ol')?.scrollTop || 0;
     // "Conectado a Spotify" is already said by the live label; only guidance and errors are shown.
     const shownStatus = status === 'Conectado a Spotify' && current ? '' : status;
     const live = current ? (state.paused ? 'En pausa' : 'Sonando ahora') : 'La playlist del club';
-    const markup = `<div class="club-spotify-player${current && !state.paused ? ' is-playing' : ''}">${artwork ? `<img class="spotify-backdrop" src="${artwork}" alt="" aria-hidden="true">` : ''}<div class="spotify-now"><div class="spotify-art">${artwork ? `<img src="${artwork}" alt="Carátula">` : '<span aria-hidden="true">♫</span>'}</div><div class="spotify-track"><span class="spotify-brand"><i aria-hidden="true"></i>${escape(live)}</span><strong>${escape(current && state.title ? state.title : 'La música del club')}</strong><span>${escape(current ? state.artist || state.contextTitle || 'Nuestra playlist' : 'Nuestra playlist')}</span></div></div><div class="spotify-progress"><input type="range" min="0" max="${Math.max(1,state.duration || 0)}" value="0" aria-label="Posición de la canción" ${disabled || !state.canSeek ? 'disabled' : ''}><div><span data-spotify-time>0:00</span><span>${clock(state.duration || 0)}</span></div></div><div class="spotify-controls"><button type="button" data-spotify="previous" aria-label="Canción anterior" ${disabled || !state.canSkipPrevious ? 'disabled' : ''}>${svg('previous')}</button><button type="button" class="spotify-toggle" data-spotify="toggle" aria-label="${state.paused ? 'Reanudar' : 'Pausar'}" ${disabled || !state.canToggle ? 'disabled' : ''}>${svg(state.paused ? 'play' : 'pause')}</button><button type="button" data-spotify="next" aria-label="Canción siguiente" ${disabled || !state.canSkipNext ? 'disabled' : ''}>${svg('next')}</button></div><div class="spotify-status service-feedback" data-state="${phase}" role="status"${shownStatus || failed ? '' : ' hidden'}><span>${escape(shownStatus)}</span>${failed ? '<button type="button" data-spotify="refresh">Reintentar</button>' : ''}</div><div class="spotify-account">${accountMarkup()}</div>${state.linked && (state.controlsNeedAuthorization || state.playbackStatus === 'authorization') ? `<button type="button" class="spotify-authorize" data-spotify="authorize" ${pending || state.authorizing ? 'disabled' : ''}>${state.controlsNeedAuthorization ? 'Activar controles' : 'Revisar permisos de Spotify'}</button>` : ''}${queueMarkup()}</div>`;
+    const markup = `<div class="club-spotify-player${current && !state.paused ? ' is-playing' : ''}">${songArt ? `<img class="spotify-backdrop" src="${songArt}" alt="" aria-hidden="true">` : ''}<div class="spotify-now"><div class="spotify-art">${artwork ? `<img src="${artwork}" alt="${songArt ? 'Carátula' : 'Portada de la playlist'}" referrerpolicy="no-referrer">` : '<span aria-hidden="true">♫</span>'}</div><div class="spotify-track"><span class="spotify-brand"><i aria-hidden="true"></i>${escape(live)}</span><strong>${escape(current && state.title ? state.title : 'La música del club')}</strong><span>${escape(current ? state.artist || state.contextTitle || 'Nuestra playlist' : (cover.id === playlist && cover.title) || 'Nuestra playlist')}</span></div></div>${current ? `<div class="spotify-progress"><input type="range" min="0" max="${Math.max(1,state.duration || 0)}" value="0" aria-label="Posición de la canción" ${disabled || !state.canSeek ? 'disabled' : ''}><div><span data-spotify-time>0:00</span><span>${clock(state.duration || 0)}</span></div></div><div class="spotify-controls"><button type="button" data-spotify="previous" aria-label="Canción anterior" ${disabled || !state.canSkipPrevious ? 'disabled' : ''}>${svg('previous')}</button><button type="button" class="spotify-toggle" data-spotify="toggle" aria-label="${state.paused ? 'Reanudar' : 'Pausar'}" ${disabled || !state.canToggle ? 'disabled' : ''}>${svg(state.paused ? 'play' : 'pause')}</button><button type="button" data-spotify="next" aria-label="Canción siguiente" ${disabled || !state.canSkipNext ? 'disabled' : ''}>${svg('next')}</button></div>` : ''}<div class="spotify-status service-feedback" data-state="${phase}" role="status"${shownStatus || failed ? '' : ' hidden'}><span>${escape(shownStatus)}</span>${failed ? '<button type="button" data-spotify="refresh">Reintentar</button>' : ''}</div><div class="spotify-account">${accountMarkup()}</div>${state.linked && (state.controlsNeedAuthorization || state.playbackStatus === 'authorization') ? `<button type="button" class="spotify-authorize" data-spotify="authorize" ${pending || state.authorizing ? 'disabled' : ''}>${state.controlsNeedAuthorization ? 'Activar controles' : 'Revisar permisos de Spotify'}</button>` : ''}${queueMarkup()}</div>`;
     if (host._spotifyMarkup === markup) { updateProgress(); return; }
     // Polls preserve the visible queue and a seek gesture in progress.
     if (seeking) return;
@@ -139,6 +158,7 @@
         hostObserver?.observe(host);
       }
       const id = playlistId(url);
+      loadCover(id);
       if (!id) { playlist = ''; host.innerHTML = '<div class="empty-state"><strong>La música está por llegar.</strong><span>Aquí sonará la playlist del club.</span></div>'; return; }
       if (!native()) {
         if (host.dataset.spotifyPlaylist === id) return;

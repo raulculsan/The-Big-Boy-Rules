@@ -44,7 +44,7 @@ test('all eight new garments cover every repaired cloth pixel in all 536 cells, 
 test('built-in wardrobe resolves tailored v5 assets for legacy and modular states without changing server IDs or coat assets',()=>{
  const source=fs.readFileSync(path.join(root,'chota-wardrobe.js'),'utf8');
  assert.match(source,/tailored-v5\/\$\{key\.replace\(\/-v1\$\/,''\)\}-\$\{sheet\}\.webp/);
- assert.match(source,/wardrobe\/tnf-\$\{color\}-\$\{sheet\}-v3.webp/);
+ assert.match(source,/wardrobe\/tnf-\$\{color\}-\$\{sheet\}-v4.webp/);
 });
 
 test('legacy overlays cover source tee and denim components through the anatomical neckline in every pose',async()=>{

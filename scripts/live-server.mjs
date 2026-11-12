@@ -17,6 +17,7 @@ const allowedFiles = new Set([
   "chota-cloth.js",
   "chota-interact.js",
   "chota-appearance.js",
+  "chota-compositor-worker.js",
   "chota-wardrobe.js",
   "club-store.js",
   "store-rooms.js",

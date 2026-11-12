@@ -11,7 +11,7 @@ Aprobado por el usuario el 2026-11-09, tras la v5 «a medida» (`artwork/chota/w
 - **Logos y estampados van pegados a su tela.** Se anclan a la parte de la prenda que los lleva en cada pose (el parche Carhartt, a la cadera visible del pantalón bajo la camiseta; el logo Supreme, al pecho), nunca a una posición fija del torso. Si la pierna o el brazo se mueven, el logo se mueve con ellos y no puede acabar en la entrepierna, en la otra pierna ni fuera de la tela.
 - **Logos al girarse.** La sede y el dilema dibujan al Chota en espejo (`scaleX(-1)`) cuando va hacia la izquierda. Toda prenda con un logo o texto impreso necesita su variante `-flip` (generada en `assets.mjs` con `flipMark`), con el logo en el mismo lado y legible tras el espejo. Se añade su clave a `FLIPPED` en `chota-wardrobe.js`. Sin esto, el logo salta a la otra pierna o se lee al revés.
 - **Orden de capas:** zonas sin ropa → anatomía → pantalón → zapatillas → camiseta → abrigo → primer plano (cabeza y manos). La cabeza y las patas siempre quedan por encima de la ropa.
-- **Los abrigos tienen que seguir al brazo.** Con los brazos en alto (base 2–4, 14 y 15) la manga sube con el brazo; no puede quedarse colgando. Los plumíferos TNF actuales aún no lo cumplen, así que cualquier abrigo nuevo debe hacerlo bien desde el principio.
+- **Los abrigos tienen que seguir al brazo.** Con los brazos en alto (base 2–4, 14 y 15) la manga sube con el brazo; no puede quedarse colgando. Desde la v4 de los plumíferos TNF (2026-11-12, `artwork/chota/coat-fit-v4/build.mjs`) el abrigo tapa toda la camiseta y cada brazo hasta el puño en las 67 poses, y la manga cubre el antebrazo levantado: con abrigo, el compositor usa `foreground-coat-*` (solo cabeza y patas) en lugar de `foreground-*`. Un abrigo nuevo debe cumplir lo mismo.
 
 ## 2. Quitar prendas (huecos libres)
 
@@ -27,7 +27,7 @@ Aprobado por el usuario el 2026-11-09, tras la v5 «a medida» (`artwork/chota/w
 
 ## 3b. Movimiento de la tela
 
-- La camiseta y el abrigo llevan inercia (`chota-cloth.js`): se redibujan sobre el sprite y se inclinan desde el cuello con un muelle amortiguado, de modo que el bajo se queda atrás al arrancar, se pasa al frenar y bota al saltar. Cabeza, brazos y patas se redibujan encima.
+- La camiseta lleva inercia (`chota-cloth.js`); con abrigo puesto no hay inercia, porque la copia inclinada del plumífero se separaba del cuerpo pose a pose (decisión del usuario, 2026-11-12): se redibujan sobre el sprite y se inclinan desde el cuello con un muelle amortiguado, de modo que el bajo se queda atrás al arrancar, se pasa al frenar y bota al saltar. Cabeza, brazos y patas se redibujan encima.
 - En reposo la tela es idéntica al sprite y las capas se ocultan. Con movimiento reducido no actúa.
 - Una prenda nueva de torso o de abrigo funciona sin más si sigue estas normas. Los pantalones y las zapatillas no llevan inercia.
 - El efecto es de uno a tres píxeles. No subir la ganancia: en pixel art más movimiento se ve falso.

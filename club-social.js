@@ -39,7 +39,7 @@
    if(arcNode&&!arcNode.isConnected)arcNode=null;
    renderArc(shown);
    section.hidden=!own;
-   const markup=own?`<p>${shown.length?'Se muestran junto a tus datos.':'Elige hasta tres cartas para lucirlas en tu perfil.'}</p><button type="button" data-vitrine-edit>${shown.length?'Cambiar cartas':'Elegir cartas'}</button>`:'';
+   const markup=own?`<p>${shown.length?'Tus cartas de escaparate, a la vista de todo el club.':'Elige hasta tres cartas para lucirlas en tu perfil.'}</p><button type="button" data-vitrine-edit>${shown.length?'Cambiar cartas':'Elegir cartas'}</button>`:'';
    if(section.dataset.markup!==markup){section.innerHTML=markup;section.dataset.markup=markup;}
    const edit=section.querySelector('[data-vitrine-edit]');if(edit)edit.onclick=()=>void editShowcase(owner,ids);
   };
