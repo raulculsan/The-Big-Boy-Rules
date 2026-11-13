@@ -101,7 +101,7 @@
     void globalThis.ChotaWardrobe.applyShirt(item || null).catch(error=>{if(token===generation&&signature===shirtSignature){shirtSignature='';failure=error.message || 'No se pudo cargar la prenda.';void globalThis.ChotaWardrobe.applyShirt(null);render();}});
   }
   // The wardrobe is a fitting room: the Chota tries coats and trousers on before anything is bought.
-  const fitting={outerwear:null,topwear:null,bottomwear:null,footwear:null},fittingEquipped={};let fittingSlot='outerwear';
+  const fitting={outerwear:null,topwear:null,bottomwear:null,footwear:null},fittingEquipped={};let fittingSlot='outerwear';let coatsTabChosen=false;
   const coatAtlas=item=>clothingDescriptor(item)?.atlases?.base || '';
   const fitCopy=Object.freeze({
     footwear:{tab:'Zapatillas',none:'Sin zapatillas',noneDesc:'Sus patas, sin calzado.',worn:'Las lleva puestas',stored:'En su armario',put:'Ponérselas',putting:'Poniéndoselas…',remove:'Quitárselas',removing:'Quitándoselas…',bare:'Ir descalzo',trying:'Probando sin zapatillas',now:'Así va ahora',thumb:'--hc:142px;--hx:-.324;--hy:-.39'},
@@ -145,9 +145,18 @@
     if(!state){container.innerHTML=`<div class="chota-shop-empty"><strong>${failure?'No se pudo abrir el armario':'Cargando la ropa del Chota'}</strong><p>${failure?'Vuelve a intentarlo para ver tus prendas y el saldo real.':'Las prendas se consultan con el club.'}</p><button type="button" data-chota-retry ${loading?'disabled':''}>Actualizar</button></div>`;delete container.dataset.catalogue;return;}
     const all=state.items.filter(item=>isClothing(item)&&(item.active||item.owned)&&clothingDescriptor(item));
     const bySlot={outerwear:all.filter(item=>item.slot==='outerwear'),topwear:all.filter(item=>item.slot==='topwear'),bottomwear:all.filter(item=>item.slot==='bottomwear'),footwear:all.filter(item=>item.slot==='footwear')};
-    const slots=Object.keys(bySlot).filter(slot=>bySlot[slot].length);
-    if(!slots.includes(fittingSlot))fittingSlot=slots[0]||'outerwear';
+    // Coats paused on the server (none listed): their tab stays and explains why.
+    const coatsPaused=!bySlot.outerwear.length;
+    const slots=Object.keys(bySlot).filter(slot=>bySlot[slot].length||slot==='outerwear');
+    // Open on clothes that exist; the paused coats tab shows only when chosen.
+    if(!slots.includes(fittingSlot)||(fittingSlot==='outerwear'&&coatsPaused&&!coatsTabChosen))fittingSlot=slots.find(slot=>bySlot[slot].length)||'outerwear';
     for(const slot of Object.keys(bySlot)){const rows=bySlot[slot],previous=fittingEquipped[slot];if(previous!==undefined&&(fitting[slot]===previous||(fitting[slot]==='original'&&previous===null)))fitting[slot]=state[slot]||'original';if(fitting[slot]!=='original'&&!rows.some(item=>item.id===fitting[slot]))fitting[slot]=state[slot]||rows.find(item=>!item.owned)?.id||rows[0]?.id||'original';fittingEquipped[slot]=state[slot]||null;}
+    if(fittingSlot==='outerwear'&&coatsPaused){
+      const tabs=`<div class="fitting-tabs" role="tablist" aria-label="Tipo de prenda">${slots.map(slot=>`<button type="button" role="tab" data-fitting-slot="${slot}" aria-selected="${slot===fittingSlot}">${fitCopy[slot].tab}</button>`).join('')}</div>`;
+      const signature=JSON.stringify(['coats-paused',slots]);
+      if(container.dataset.catalogue!==signature){container.innerHTML=`<div class="fitting">${tabs}<div class="chota-shop-empty coats-paused" role="status"><strong>Abrigos deshabilitados temporalmente</strong><p>Los estamos redibujando para que queden bien en cada postura del Chota. Si compraste alguno, sigue siendo tuyo y volverá a tu armario.</p></div></div>`;container.dataset.catalogue=signature;}
+      return;
+    }
     const items=bySlot[fittingSlot],legacyCopy=fitCopy[fittingSlot],copy=state.wardrobe_version===1?{...legacyCopy,none:bareName(fittingSlot),noneDesc:'Este espacio queda libre.',bare:bareName(fittingSlot),trying:bareName(fittingSlot)}:legacyCopy;
     const signature=JSON.stringify([fittingSlot,slots,all.map(item=>[item.id,item.name,item.description,item.garment])]);
     if(container.dataset.catalogue!==signature){
@@ -494,7 +503,7 @@
       const lookDelete=event.target.closest('[data-look-delete]');if(lookDelete){void lookAction('delete_chota_outfit',{p_position:Number(lookDelete.dataset.lookDelete)},'Conjunto borrado.');return;}
       const tryOn=event.target.closest('[data-clothing-try]');if(tryOn){if(fitting[fittingSlot]!==tryOn.dataset.clothingTry){fitting[fittingSlot]=tryOn.dataset.clothingTry;renderClothing();globalThis.StoreRooms?.showOff(document.querySelector('[data-chota-fitting]'));}return;}
       const stack=event.target.closest('[data-shelf-stack]');if(stack){const ids=stack.dataset.shelfStack.split(','),at=ids.indexOf(fitting[fittingSlot]),next=at<0?ids.at(-1):ids[(at-1+ids.length)%ids.length];if(next&&next!==fitting[fittingSlot]){fitting[fittingSlot]=next;renderClothing();globalThis.StoreRooms?.showOff(document.querySelector('[data-chota-fitting]'));}return;}
-      const fitSlot=event.target.closest('[data-fitting-slot]');if(fitSlot){if(fittingSlot!==fitSlot.dataset.fittingSlot){fittingSlot=fitSlot.dataset.fittingSlot;renderClothing();const title=document.getElementById('bannerShopTitle');if(title&&document.getElementById('bannerShopDialog')?.dataset.storeView==='clothing')title.textContent=fitCopy[fittingSlot]?.tab||title.textContent;}return;}
+      const fitSlot=event.target.closest('[data-fitting-slot]');if(fitSlot){coatsTabChosen=fitSlot.dataset.fittingSlot==='outerwear';if(fittingSlot!==fitSlot.dataset.fittingSlot){fittingSlot=fitSlot.dataset.fittingSlot;renderClothing();const title=document.getElementById('bannerShopTitle');if(title&&document.getElementById('bannerShopDialog')?.dataset.storeView==='clothing')title.textContent=fitCopy[fittingSlot]?.tab||title.textContent;}return;}
       const clothingButton=event.target.closest('[data-chota-clothing-equip]');if(clothingButton){void equipClothing(clothingButton.dataset.chotaClothingEquip,clothingButton.dataset.chotaClothingSlot);return;}
       const styleButton=event.target.closest('[data-chota-equip]');
       if(styleButton){void equip(styleButton.dataset.chotaEquip);return;}
