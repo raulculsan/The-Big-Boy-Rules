@@ -19,7 +19,7 @@ const root = path.resolve(import.meta.dirname, '../../..');
 const poses = JSON.parse(fs.readFileSync(path.join(root, 'artwork/chota/wardrobe-rig-v1/poses.json')));
 const grids = {base: [6, 4], directional: [5, 4], contextual: [4, 4], room: [4, 1], talk: [3, 1]};
 const colors = ['negro', 'crema', 'rojo', 'azul', 'oliva', 'morado'];
-const CELL = 256, SLEEVE = 12, PAW = 6, BULK = 3;
+const CELL = 256, SLEEVE = 12, PAW = 6, BULK = 3, HEAD = .95;
 const wardrobe = path.join(root, 'icons/mascot/chota-v2/wardrobe'), tailored = path.join(root, 'icons/mascot/chota-v2/tailored-v5');
 
 async function raw(file) {
@@ -77,7 +77,12 @@ export async function buildSheet(color, sheet) {
     const inSleeve = (x, y, radius) => (pose.arms || []).some(arm => arm.slice(1).some((point, j) => segmentDistance(x, y, arm[j], point) <= radius));
     // A raised arm is drawn in the foreground (over the coat). Its forearm
     // fur leaves the coat's foreground so the sleeve can cover it; the paw stays.
-    const armFur = (x, y) => foreground.data[at(foreground, sheet, f, x, y) + 3] > 127 && !nearPaw(x, y) && inSleeve(x, y, SLEEVE);
+    // The head always stays on top: an arm resting under the face (asleep,
+    // leaning) must not take cheek or chin pixels out of the foreground.
+    // Arms raised over or beside the head still get their sleeve.
+    const [hx0, hy0, hx1, hy1] = pose.head || [0, 0, 0, 0];
+    const inHead = (x, y) => hx1 > hx0 && y >= (hy0 + hy1) / 2 && ((x - (hx0 + hx1) / 2) / ((hx1 - hx0) / 2 * HEAD)) ** 2 + ((y - (hy0 + hy1) / 2) / ((hy1 - hy0) / 2 * HEAD)) ** 2 <= 1;
+    const armFur = (x, y) => foreground.data[at(foreground, sheet, f, x, y) + 3] > 127 && !nearPaw(x, y) && !inHead(x, y) && inSleeve(x, y, SLEEVE);
     for (let y = 0; y < CELL; y++) for (let x = 0; x < CELL; x++) {
       const k = y * CELL + x;
       if (armFur(x, y)) { const j = at(coatForeground, sheet, f, x, y); coatForeground.data[j + 3] = 0; }
@@ -108,8 +113,8 @@ export async function buildSheet(color, sheet) {
     }
     report.push({sheet, frame: f, added: count});
   }
-  await sharp(out, {raw: {width: coat.width, height: coat.height, channels: 4}}).webp({lossless: true}).toFile(path.join(wardrobe, `tnf-${color}-${sheet}-v4.webp`));
-  if (color === colors[0]) await sharp(coatForeground.data, {raw: {width: foreground.width, height: foreground.height, channels: 4}}).webp({lossless: true}).toFile(path.join(tailored, `foreground-coat-${sheet}.webp`));
+  await sharp(out, {raw: {width: coat.width, height: coat.height, channels: 4}}).webp({lossless: true}).toFile(path.join(wardrobe, `tnf-${color}-${sheet}-v5.webp`));
+  if (color === colors[0]) await sharp(coatForeground.data, {raw: {width: foreground.width, height: foreground.height, channels: 4}}).webp({lossless: true}).toFile(path.join(tailored, `foreground-coat-${sheet}-v5.webp`));
   return report;
 }
 
