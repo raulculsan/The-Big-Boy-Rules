@@ -53,6 +53,10 @@
     element.style.setProperty('--chat-text', accessibleColor(theme.text, surfaces));
     element.style.setProperty('--chat-muted', accessibleColor(theme.muted, surfaces));
     element.style.setProperty('--chat-accent', accessibleColor(theme.accent, surfaces));
+    // The wallpaper fills the whole conversation, so the header and the composer
+    // float over it instead of sitting on their own bars.
+    const panel = element.matches?.('#messages, #privateMessages') ? element.closest('.private-conversation, .group-conversation') : null;
+    if (panel) { panel.dataset.chatTheme = theme.id; panel.style.setProperty('--chat-base', theme.color || '#0c0e12'); panel.style.setProperty('--chat-wallpaper', `url("${theme.background}")`); }
   }
   function sync(kind) {
     const context = getContext(kind), container = document.getElementById(kind === 'private' ? 'privateMessages' : 'messages');
@@ -62,7 +66,7 @@
     if (theme) apply(container, theme);
     afterSync(kind);
     const existing = header?.querySelector('[data-chat-themes]');
-    if (!key(context)) { existing?.remove(); if (container) delete container.dataset.chatTheme; return; }
+    if (!key(context)) { existing?.remove(); if (container) { delete container.dataset.chatTheme; const panel = container.closest('.private-conversation, .group-conversation'); if (panel) delete panel.dataset.chatTheme; } return; }
     if (header && !existing) {
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'chat-theme-button'; button.dataset.chatThemes = kind;

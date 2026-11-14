@@ -555,3 +555,74 @@ body.authenticated #seccion-chat .channel-rule-fields { border-top-color: var(--
 body.authenticated #seccion-chat .channel-setup-status { color: var(--ds-text-2); }
 body.authenticated #seccion-chat .channel-save { min-height: 52px; padding: 0; border-radius: 16px; background: var(--ds-text); color: var(--bb2-canvas, #000); font-size: 17px; font-weight: 700; -webkit-tap-highlight-color: transparent; }
 body.authenticated #seccion-chat .channel-setup-footnote { color: var(--ds-text-3); font-size: var(--ds-text-xs); }
+
+/* Open conversation, clean (2026-11-13): the wallpaper fills the whole screen
+   and the header, section chips and composer float over it with no bars of
+   their own, like a modern messenger. Glass circles for the header buttons,
+   plain centred dates, borderless bubbles. Layout and keyboard handling are
+   unchanged: only surfaces, borders and shapes move. */
+html body.authenticated.chat-focus :is(#privados.conversation-open .private-conversation, #chat.conversation-open .group-conversation) {
+  /* !important: app-theme.css forces a surface on every .panel. */
+  background: var(--chat-base, #0c0e12) var(--chat-wallpaper, none) center / cover !important;
+}
+html body.authenticated.chat-focus :is(#chat, #privados) .messages,
+html body.authenticated.chat-focus :is(#chat, #privados) .messages[data-chat-theme] { background: transparent; }
+html body.authenticated.chat-focus :is(.private-conversation, .group-conversation) .chat-header {
+  min-height: 64px;
+  padding: 8px 12px;
+  border: 0;
+  background: linear-gradient(to bottom, #0009, #0000);
+  box-shadow: none;
+}
+html body.authenticated.chat-focus :is(.chat-back-button, .chat-theme-button) {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #ffffff1a;
+  border-radius: 50%;
+  background: #1c1f26a6;
+  color: #f4f4f6;
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+html body.authenticated.chat-focus :is(.chat-back-button, .chat-theme-button) svg { width: 22px; height: 22px; }
+html body.authenticated.chat-focus .chat-header .chat-theme-button + .chat-theme-button { margin-left: 10px; }
+html body.authenticated.chat-focus :is(.chat-header-main, .private-chat-person) h3 { color: #fff; text-shadow: 0 1px 6px #0008; }
+html body.authenticated.chat-focus :is(.private-chat-person .chat-username, .chat-header .online-label) { color: #ffffffbf; text-shadow: 0 1px 6px #0008; }
+html body.authenticated.chat-focus .group-conversation .chat-channel-bar { padding: 2px 12px 8px; border: 0; background: transparent; }
+html body.authenticated.chat-focus :is(.chat-channel, .channel-add-button) {
+  border: 1px solid #ffffff1a;
+  border-radius: 999px;
+  background: #1c1f26a6;
+  color: #e6e7ea;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+html body.authenticated.chat-focus .chat-channel.active { border-color: #ffffff59; background: #f4f4f6; color: #111317; }
+/* Dates: plain text, no pill. */
+html body.authenticated.chat-focus .messages .conversation-day-divider span,
+html body.authenticated.chat-focus .messages[data-chat-theme] .conversation-day-divider span {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffffd9;
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 1px 6px #0009;
+}
+/* Bubbles: no borders or shadows, rounder. */
+html body.authenticated.chat-focus .message .message-bubble { border: 0; border-radius: 22px 22px 22px 6px; box-shadow: none; }
+html body.authenticated.chat-focus .message.own .message-bubble { border: 0; border-radius: 22px 22px 6px 22px; }
+/* Composer: a glass pill on the wallpaper, camera in a light circle. */
+html body.authenticated.chat-focus .message-form {
+  border: 1px solid #ffffff14;
+  background: #1c1f26b8;
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+html body.authenticated.chat-focus .message-form .composer-camera-button { background: #f1f1f3; color: #111317; }
+html body.authenticated.chat-focus .message-form .composer-send-button { background: #f1f1f3; color: #111317; }
