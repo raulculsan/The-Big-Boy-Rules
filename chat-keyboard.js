@@ -279,6 +279,22 @@ const ChatKeyboard = Object.freeze({
         height = list.clientHeight;
       }).observe(list);
     });
+    // The group transcript runs up under the rows above it (header, sections,
+    // polls, event notice): keep their height in --chat-rows-height for chat.css.
+    const group = document.querySelector?.('#chat .group-conversation'), groupList = group?.querySelector('.messages');
+    if (group && groupList && typeof ResizeObserver === 'function') {
+      const rows = () => [...group.children].filter(node => node !== groupList && Number(getComputedStyle(node).order) < Number(getComputedStyle(groupList).order)
+        && getComputedStyle(node).position !== 'absolute');
+      const measure = () => {
+        const top = group.getBoundingClientRect().top;
+        const bottom = rows().reduce((end, node) => node.getClientRects().length ? Math.max(end, node.getBoundingClientRect().bottom) : end, top);
+        const value = `${Math.max(0, Math.round(bottom - top))}px`;
+        if (group.style.getPropertyValue('--chat-rows-height') !== value) group.style.setProperty('--chat-rows-height', value);
+      };
+      const observer = new ResizeObserver(measure);
+      [...group.children].filter(node => node !== groupList).forEach(node => observer.observe(node));
+      observer.observe(group);
+    }
     return state;
   }
 });

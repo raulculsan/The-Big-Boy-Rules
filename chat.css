@@ -638,11 +638,27 @@ html body.authenticated.chat-focus .message-form .composer-send-button { backgro
 html body.native-keyboard-layout.authenticated.chat-focus .chat-lift-fixed { background: transparent; }
 html body.native-keyboard-layout.authenticated.chat-focus .chat-lift-cover { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 html:has(body.authenticated.chat-focus), html body.authenticated.chat-focus { background: var(--chat-statusbar, #0c0e12); }
-html body.native-keyboard-layout.authenticated.chat-focus:has(#privados.conversation-open, #chat.conversation-open) {
+/* The chat list and an open conversation share the same frame, from the very
+   top of the screen, so going back from a chat never shifts the list. The list
+   keeps its content below the status bar and a still cover hides what scrolls
+   up behind the clock. */
+html body.native-keyboard-layout.authenticated:is(.chat-inbox-view, .chat-focus) {
   --chat-top-inset: var(--pwa-safe-top, env(safe-area-inset-top, 0px));
 }
-html body.native-keyboard-layout.authenticated.chat-focus:has(#privados.conversation-open, #chat.conversation-open) .app { top: 0; }
-html body.native-keyboard-layout.authenticated.chat-focus:has(#chat.conversation-open) #chat .chat-header {
+html body.native-keyboard-layout.authenticated:is(.chat-inbox-view, .chat-focus) .app { top: 0; }
+html body.native-keyboard-layout.authenticated:is(.chat-inbox-view, .chat-focus) #chat .chat-inbox { padding-top: calc(12px + var(--chat-top-inset, 0px)); }
+html body.native-keyboard-layout.authenticated:is(.chat-inbox-view, .chat-focus) #chat .messages-hub::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--chat-top-inset, 0px);
+  background: var(--club-paper);
+  pointer-events: none;
+}
+html body.native-keyboard-layout.authenticated.chat-focus #chat .group-conversation .chat-header {
   padding-top: calc(8px + var(--chat-top-inset, 0px));
 }
 html body.authenticated.chat-focus :is(.private-conversation, .group-conversation) .chat-header::before {
@@ -659,7 +675,17 @@ html body.authenticated.chat-focus :is(.private-conversation, .group-conversatio
   mask-image: linear-gradient(#000 45%, #0000);
   pointer-events: none;
 }
-html body.authenticated.chat-focus .group-conversation .chat-header { position: relative; z-index: 3; }
+/* Group chats: the transcript also runs up under the header, the sections row
+   and any poll or event card above it. chat-keyboard.js measures how tall those
+   rows are (--chat-rows-height), since polls and notices come and go. The
+   sections row has no surface (app-theme.css forces one with !important). */
+html body.authenticated.chat-focus #chat .group-conversation > :is(.chat-header, .chat-channel-bar, .group-event-notice, .group-polls-shelf) { position: relative; z-index: 3; }
+html body.authenticated.chat-focus #chat .group-conversation .chat-channel-bar { background: transparent !important; }
+html body.authenticated.chat-focus #chat .group-conversation .messages {
+  margin-top: calc(-1 * var(--chat-rows-height, 0px));
+  padding-top: calc(var(--chat-rows-height, 0px) + 8px);
+  scroll-padding-top: calc(var(--chat-rows-height, 0px) + 8px);
+}
 /* Private chats: the transcript starts behind the header. The header keeps its
    place in the column (no absolute positioning, so the keyboard lift still
    sees it as a fixed row); only its bottom margin lets the list run under it. */
