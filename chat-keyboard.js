@@ -102,11 +102,14 @@ const ChatKeyboard = Object.freeze({
     // and a shorter list can never rescale the image when the keyboard settles.
     function holdWallpaper(panel, list) {
       if (wallpaper?.isConnected) return;
-      const style = getComputedStyle(list);
+      // The clean conversation paints the wallpaper on the whole panel and
+      // leaves the list transparent: hold the panel's image at its full size.
+      const listStyle = getComputedStyle(list), onPanel = listStyle.backgroundImage === 'none';
+      const style = onPanel ? getComputedStyle(panel) : listStyle;
       wallpaper = document.createElement('div');
       wallpaper.className = 'chat-lift-wallpaper';
       wallpaper.setAttribute('aria-hidden', 'true');
-      Object.assign(wallpaper.style, {top:`${list.offsetTop}px`, height:`${list.offsetHeight}px`, backgroundColor:style.backgroundColor,
+      Object.assign(wallpaper.style, {top:`${onPanel ? 0 : list.offsetTop}px`, height:`${onPanel ? panel.offsetHeight : list.offsetHeight}px`, backgroundColor:style.backgroundColor,
         backgroundImage:style.backgroundImage, backgroundSize:style.backgroundSize, backgroundPosition:style.backgroundPosition, backgroundRepeat:style.backgroundRepeat});
       // The raised transcript must not show through the gaps of the header rows.
       cover = document.createElement('div');

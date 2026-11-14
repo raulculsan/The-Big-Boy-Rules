@@ -571,10 +571,10 @@ html body.authenticated.chat-focus :is(.private-conversation, .group-conversatio
   min-height: 64px;
   padding: 8px 12px;
   border: 0;
-  /* A clear pane of glass: nothing painted, the wallpaper only blurred. */
+  /* No surface at all: the buttons float over the conversation. */
   background: transparent;
-  -webkit-backdrop-filter: blur(22px);
-  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   box-shadow: none;
 }
 html body.authenticated.chat-focus :is(.chat-back-button, .chat-theme-button) {
@@ -630,26 +630,49 @@ html body.authenticated.chat-focus .message-form {
 html body.authenticated.chat-focus .message-form .composer-camera-button { background: #f1f1f3; color: #111317; }
 html body.authenticated.chat-focus .message-form .composer-send-button { background: #f1f1f3; color: #111317; }
 
-/* Clean conversation on iOS: while the keyboard lifts the transcript, the rows
-   above it stay see-through and the cover blurs whatever passes beneath them,
-   and the strip under the status bar takes the wallpaper's colour. */
+/* Clean conversation, as in a modern messenger: the header has no surface.
+   Messages scroll up under the floating buttons in plain sight and only soften
+   in a thin blur at the very top edge. In the iOS app the conversation also
+   runs up behind the status bar, so the wallpaper reaches the top of the
+   screen; --chat-top-inset is how much of it the status bar covers. */
 html body.native-keyboard-layout.authenticated.chat-focus .chat-lift-fixed { background: transparent; }
-html body.native-keyboard-layout.authenticated.chat-focus .chat-lift-cover {
-  background: transparent;
-  -webkit-backdrop-filter: blur(22px);
-  backdrop-filter: blur(22px);
-}
+html body.native-keyboard-layout.authenticated.chat-focus .chat-lift-cover { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 html:has(body.authenticated.chat-focus), html body.authenticated.chat-focus { background: var(--chat-statusbar, #0c0e12); }
-/* Private chats: the transcript scrolls up under the frosted header, as in a
-   modern messenger. The header keeps its place in the column (no absolute
-   positioning, so the keyboard lift still sees it as a fixed row); only its
-   bottom margin lets the list start behind it. */
+html body.native-keyboard-layout.authenticated.chat-focus:has(#privados.conversation-open, #chat.conversation-open) {
+  --chat-top-inset: var(--pwa-safe-top, env(safe-area-inset-top, 0px));
+}
+html body.native-keyboard-layout.authenticated.chat-focus:has(#privados.conversation-open, #chat.conversation-open) .app { top: 0; }
+html body.native-keyboard-layout.authenticated.chat-focus:has(#chat.conversation-open) #chat .chat-header {
+  padding-top: calc(8px + var(--chat-top-inset, 0px));
+}
+html body.authenticated.chat-focus :is(.private-conversation, .group-conversation) .chat-header::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--chat-top-inset, 0px) + 30px);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(#000 45%, #0000);
+  mask-image: linear-gradient(#000 45%, #0000);
+  pointer-events: none;
+}
+html body.authenticated.chat-focus .group-conversation .chat-header { position: relative; z-index: 3; }
+/* Private chats: the transcript starts behind the header. The header keeps its
+   place in the column (no absolute positioning, so the keyboard lift still
+   sees it as a fixed row); only its bottom margin lets the list run under it. */
 html body.authenticated.chat-focus #privados .private-conversation .chat-header {
   position: relative;
   z-index: 3;
   box-sizing: border-box;
-  height: 66px;
-  min-height: 66px;
-  margin-bottom: -66px;
+  height: calc(66px + var(--chat-top-inset, 0px));
+  min-height: calc(66px + var(--chat-top-inset, 0px));
+  padding-top: calc(8px + var(--chat-top-inset, 0px));
+  margin-bottom: calc(-66px - var(--chat-top-inset, 0px));
 }
-html body.authenticated.chat-focus #privados .private-conversation .messages { padding-top: 74px; scroll-padding-top: 74px; }
+html body.authenticated.chat-focus #privados .private-conversation .messages {
+  padding-top: calc(74px + var(--chat-top-inset, 0px));
+  scroll-padding-top: calc(74px + var(--chat-top-inset, 0px));
+}
