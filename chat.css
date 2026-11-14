@@ -571,10 +571,10 @@ html body.authenticated.chat-focus :is(.private-conversation, .group-conversatio
   min-height: 64px;
   padding: 8px 12px;
   border: 0;
-  /* See-through: the wallpaper shows under the header, only blurred. */
-  background: color-mix(in srgb, var(--chat-base, #0c0e12) 28%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
-  backdrop-filter: blur(22px) saturate(160%);
+  /* A clear pane of glass: nothing painted, the wallpaper only blurred. */
+  background: transparent;
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
   box-shadow: none;
 }
 html body.authenticated.chat-focus :is(.chat-back-button, .chat-theme-button) {
@@ -635,9 +635,9 @@ html body.authenticated.chat-focus .message-form .composer-send-button { backgro
    and the strip under the status bar takes the wallpaper's colour. */
 html body.native-keyboard-layout.authenticated.chat-focus .chat-lift-fixed { background: transparent; }
 html body.native-keyboard-layout.authenticated.chat-focus .chat-lift-cover {
-  background: color-mix(in srgb, var(--chat-base, #0c0e12) 28%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
-  backdrop-filter: blur(22px) saturate(160%);
+  background: transparent;
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
 }
 html:has(body.authenticated.chat-focus), html body.authenticated.chat-focus { background: var(--chat-statusbar, #0c0e12); }
 /* Private chats: the transcript scrolls up under the frosted header, as in a
